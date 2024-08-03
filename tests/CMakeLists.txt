@@ -17,6 +17,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 set(SOURCES
     memory/block_allocator.cpp
     container/static_array.cpp
+    container/hashable_tuple.cpp
 )
 
 add_executable(toolkit-tests ${SOURCES})
@@ -25,6 +26,7 @@ target_link_libraries(toolkit-tests PRIVATE Catch2::Catch2WithMain toolkit)
 # These MUST be on for toolkit-tests to work properly
 target_compile_definitions(toolkit PUBLIC KIT_THROW)
 target_compile_definitions(toolkit PUBLIC KIT_ENABLE_WARNING_LOGS)
+target_compile_definitions(toolkit PUBLIC KIT_ENABLE_INFO_LOGS)
 target_compile_definitions(toolkit PUBLIC KIT_ENABLE_ASSERTS)
 target_compile_definitions(toolkit PUBLIC KIT_SILENT_ASSERTS)
 
