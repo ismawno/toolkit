@@ -27,20 +27,20 @@ target_include_directories(toolkit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(toolkit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 target_precompile_headers(toolkit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/core/pch.hpp)
-target_compile_definitions(toolkit PUBLIC IBP_ROOT_PATH="${ROOT_PATH}")
+target_compile_definitions(toolkit PUBLIC KIT_ROOT_PATH="${ROOT_PATH}")
 
 if(ENABLE_INFO_LOGS)
-    target_compile_definitions(toolkit PUBLIC IBP_ENABLE_INFO_LOGS)
+    target_compile_definitions(toolkit PUBLIC KIT_ENABLE_INFO_LOGS)
 endif()
 
 if(ENABLE_WARNING_LOGS)
-    target_compile_definitions(toolkit PUBLIC IBP_ENABLE_WARNING_LOGS)
+    target_compile_definitions(toolkit PUBLIC KIT_ENABLE_WARNING_LOGS)
 endif()
 
 if(ENABLE_ASSERTS)
-    target_compile_definitions(toolkit PUBLIC IBP_ENABLE_ASSERTS)
+    target_compile_definitions(toolkit PUBLIC KIT_ENABLE_ASSERTS)
 endif()
 
 if (ENABLE_LOG_COLORS)
-    target_compile_definitions(toolkit PUBLIC IBP_ENABLE_LOG_COLORS)
+    target_compile_definitions(toolkit PUBLIC KIT_ENABLE_LOG_COLORS)
 endif()
