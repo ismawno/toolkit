@@ -7,6 +7,7 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <tuple>
 
 KIT_NAMESPACE_BEGIN
 
@@ -39,5 +40,7 @@ using HashMap = std::unordered_map<Key, Value, Hash, OpEqual>;
 
 template <typename Key, typename Value, typename Hash = std::hash<Key>, typename OpEqual = std::equal_to<Key>>
 using HashSet = std::unordered_set<Key, Value, Hash, OpEqual>;
+
+template <typename... Args> using Tuple = std::tuple<Args...>;
 
 KIT_NAMESPACE_END

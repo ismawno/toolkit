@@ -3,19 +3,21 @@
 #include "data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 
+KIT_NAMESPACE_BEGIN
+
 // Assumed args contains 5 elements
 template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args... args)
 {
     SECTION("Default constructor")
     {
-        KIT::StaticArray<T, 10> array;
+        StaticArray<T, 10> array;
         REQUIRE(array.size() == 0);
         REQUIRE(array.capacity() == 10);
     }
 
     SECTION("Size constructor")
     {
-        KIT::StaticArray<T, 10> array(5);
+        StaticArray<T, 10> array(5);
         REQUIRE(array.size() == 5);
         REQUIRE(array.capacity() == 10);
     }
@@ -23,7 +25,7 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
     SECTION("Iterator constructor")
     {
         std::array<T, 5> values = {args...};
-        KIT::StaticArray<T, 10> array(values.begin(), values.end());
+        StaticArray<T, 10> array(values.begin(), values.end());
         REQUIRE(array.size() == 5);
         REQUIRE(array.capacity() == 10);
         for (size_t i = 0; i < 5; ++i)
@@ -32,8 +34,8 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
 
     SECTION("Copy constructor")
     {
-        KIT::StaticArray<T, 10> array1 = {args...};
-        KIT::StaticArray<T, 10> array2 = array1;
+        StaticArray<T, 10> array1 = {args...};
+        StaticArray<T, 10> array2 = array1;
         REQUIRE(array1.size() == 5);
         REQUIRE(array1.capacity() == 10);
         REQUIRE(array2.size() == 5);
@@ -44,8 +46,8 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
 
     SECTION("Copy constructor (different capacity)")
     {
-        KIT::StaticArray<T, 10> array1 = {args...};
-        KIT::StaticArray<T, 5> array2 = array1;
+        StaticArray<T, 10> array1 = {args...};
+        StaticArray<T, 5> array2 = array1;
         REQUIRE(array1.size() == 5);
         REQUIRE(array1.capacity() == 10);
         REQUIRE(array2.size() == 5);
@@ -56,8 +58,8 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
 
     SECTION("Copy assignment")
     {
-        KIT::StaticArray<T, 10> array1 = {args...};
-        KIT::StaticArray<T, 10> array2{5};
+        StaticArray<T, 10> array1 = {args...};
+        StaticArray<T, 10> array2{5};
         array2 = array1;
         REQUIRE(array1.size() == 5);
         REQUIRE(array1.capacity() == 10);
@@ -69,8 +71,8 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
 
     SECTION("Copy assignment (different capacity)")
     {
-        KIT::StaticArray<T, 10> array1 = {args...};
-        KIT::StaticArray<T, 5> array2{5};
+        StaticArray<T, 10> array1 = {args...};
+        StaticArray<T, 5> array2{5};
         array2 = array1;
         REQUIRE(array1.size() == 5);
         REQUIRE(array1.capacity() == 10);
@@ -79,7 +81,7 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
         for (size_t i = 0; i < 5; ++i)
             REQUIRE(array1[i] == array2[i]);
 
-        KIT::StaticArray<T, 2> array3;
+        StaticArray<T, 2> array3;
         REQUIRE_THROWS(array3 = array1);
     }
 
@@ -87,7 +89,7 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
     {
         SECTION("Initializer list")
         {
-            KIT::StaticArray<T, 10> array = {args...};
+            StaticArray<T, 10> array = {args...};
             REQUIRE(array.size() == 5);
             REQUIRE(array.capacity() == 10);
             for (int i = 0; i < 5; ++i)
@@ -99,7 +101,7 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
 // Assumed args contains 5 elements
 template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args... args)
 {
-    KIT::StaticArray<T, 10> array = {args...};
+    StaticArray<T, 10> array = {args...};
     REQUIRE_THROWS(array[6]);
     SECTION("Push back")
     {
@@ -254,13 +256,13 @@ TEST_CASE("StaticArray (double)", "[core][container][StaticArray]")
 
 TEST_CASE("StaticArray (string)", "[core][container][StaticArray]")
 {
-    RunStaticArrayConstructorTest<KIT::String>("10", "20", "30", "40", "50");
-    RunStaticArrayOperatorTests<KIT::String>("10", "20", "30", "40", "50");
+    RunStaticArrayConstructorTest<String>("10", "20", "30", "40", "50");
+    RunStaticArrayOperatorTests<String>("10", "20", "30", "40", "50");
 }
 
 TEST_CASE("StaticArray cleanup check", "[core][container][StaticArray]")
 {
-    KIT::StaticArray<NonTrivialData, 10> array{5};
+    StaticArray<NonTrivialData, 10> array{5};
     REQUIRE(NonTrivialData::Instances == 5);
     array.pop_back();
     REQUIRE(NonTrivialData::Instances == 4);
@@ -319,3 +321,5 @@ TEST_CASE("StaticArray cleanup check", "[core][container][StaticArray]")
     array.clear();
     REQUIRE(NonTrivialData::Instances == 0);
 }
+
+KIT_NAMESPACE_END

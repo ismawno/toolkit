@@ -3,7 +3,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include <array>
 
-template <typename T> void RunBasicAllocatorTest(KIT::BlockAllocator<T> &allocator)
+KIT_NAMESPACE_BEGIN
+
+template <typename T> void RunBasicAllocatorTest(BlockAllocator<T> &allocator)
 {
     const size_t chunkSize = sizeof(T) < sizeof(void *) ? sizeof(void *) : sizeof(T);
     const size_t blockSize = chunkSize * 10;
@@ -16,13 +18,13 @@ template <typename T> void RunBasicAllocatorTest(KIT::BlockAllocator<T> &allocat
 
     T *null = nullptr;
     REQUIRE_THROWS(allocator.Deallocate(null));
-    REQUIRE_THROWS(KIT::Deallocate(null));
+    REQUIRE_THROWS(Deallocate(null));
 }
 
 template <typename T> void RunRawAllocationTest()
 {
     REQUIRE(sizeof(T) % alignof(T) == 0);
-    KIT::BlockAllocator<T> allocator(10);
+    BlockAllocator<T> allocator(10);
     RunBasicAllocatorTest(allocator);
 
     SECTION("Allocate and deallocate (raw call)")
@@ -74,8 +76,8 @@ template <typename T> void RunRawAllocationTest()
             REQUIRE(allocator.Owns(data[i]));
             if (i != 0)
             {
-                KIT::Byte *b1 = reinterpret_cast<KIT::Byte *>(data[i - 1]);
-                KIT::Byte *b2 = reinterpret_cast<KIT::Byte *>(data[i]);
+                Byte *b1 = reinterpret_cast<Byte *>(data[i - 1]);
+                Byte *b2 = reinterpret_cast<Byte *>(data[i]);
                 REQUIRE(b2 == b1 + chunkSize);
             }
         }
@@ -87,7 +89,7 @@ template <typename T> void RunRawAllocationTest()
 
 template <typename T> void RunNewDeleteTest()
 {
-    const KIT::BlockAllocator<T> &allocator = T::s_Allocator;
+    const BlockAllocator<T> &allocator = T::s_Allocator;
 
     SECTION("Allocate and deallocate (new/delete)")
     {
@@ -129,8 +131,8 @@ template <typename T> void RunNewDeleteTest()
             REQUIRE(allocator.Owns(data[i]));
             if (i != 0)
             {
-                KIT::Byte *b1 = reinterpret_cast<KIT::Byte *>(data[i - 1]);
-                KIT::Byte *b2 = reinterpret_cast<KIT::Byte *>(data[i]);
+                Byte *b1 = reinterpret_cast<Byte *>(data[i - 1]);
+                Byte *b2 = reinterpret_cast<Byte *>(data[i]);
                 REQUIRE(b2 == b1 + chunkSize);
             }
         }
@@ -204,3 +206,5 @@ TEST_CASE("Block allocator deals with invalid virtual data", "[block_allocator][
 {
     REQUIRE_THROWS(new BadVirtualDerived);
 }
+
+KIT_NAMESPACE_END
