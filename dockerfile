@@ -19,4 +19,4 @@ COPY ./CMakeLists.txt ./
 COPY ./tests/ ./tests/
 
 # Build your application
-RUN mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON && make
+RUN mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DTOOLKIT_BUILD_TESTS=ON && make
