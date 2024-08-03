@@ -268,7 +268,7 @@ class StaticArray
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (p_Size < m_Size)
             {
-                auto itend = rend() - (m_Size - p_Size);
+                auto itend = rbegin() + (m_Size - p_Size);
                 for (auto it = rbegin(); it != itend; ++it)
                     it->~T();
             }

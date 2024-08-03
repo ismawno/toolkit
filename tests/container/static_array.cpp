@@ -271,6 +271,7 @@ TEST_CASE("StaticArray cleanup check", "[core][container][StaticArray]")
     array.clear();
     REQUIRE(NonTrivialData::Instances == 0);
 
+    SECTION("Cleanup check with erase and resize")
     {
         NonTrivialData data1;
         NonTrivialData data2;
@@ -278,18 +279,43 @@ TEST_CASE("StaticArray cleanup check", "[core][container][StaticArray]")
         NonTrivialData data4;
         NonTrivialData data5;
 
-        array.push_back(data1);
-        REQUIRE(NonTrivialData::Instances == 1 + 5);
-        array.insert(array.begin(), data2);
-        REQUIRE(NonTrivialData::Instances == 2 + 5);
-        array.insert(array.begin() + 1, {data3, data4, data5});
-        REQUIRE(NonTrivialData::Instances == 5 + 5);
+        SECTION("Insert and erase")
+        {
+            array.push_back(data1);
+            REQUIRE(NonTrivialData::Instances == 1 + 5);
+            array.insert(array.begin(), data2);
+            REQUIRE(NonTrivialData::Instances == 2 + 5);
+            array.insert(array.begin() + 1, {data3, data4, data5});
+            REQUIRE(NonTrivialData::Instances == 5 + 5);
 
-        array.erase(array.begin());
-        REQUIRE(NonTrivialData::Instances == 4 + 5);
-        array.erase(array.begin(), array.begin() + 2);
-        REQUIRE(NonTrivialData::Instances == 2 + 5);
+            array.erase(array.begin());
+            REQUIRE(NonTrivialData::Instances == 4 + 5);
+            array.erase(array.begin(), array.begin() + 2);
+            REQUIRE(NonTrivialData::Instances == 2 + 5);
+        }
+
+        SECTION("Resize")
+        {
+            array.insert(array.end(), {data1, data2, data3, data4, data5, data1, data2, data3, data4, data5});
+            REQUIRE(NonTrivialData::Instances == 10 + 5);
+
+            array.resize(7);
+            REQUIRE(NonTrivialData::Instances == 7 + 5);
+
+            array.resize(10);
+            REQUIRE(NonTrivialData::Instances == 10 + 5);
+
+            array.resize(2);
+            REQUIRE(NonTrivialData::Instances == 2 + 5);
+
+            array.resize(5);
+            REQUIRE(NonTrivialData::Instances == 5 + 5);
+
+            array.resize(0);
+            REQUIRE(NonTrivialData::Instances == 0 + 5);
+        }
     }
+
     array.clear();
     REQUIRE(NonTrivialData::Instances == 0);
 }
