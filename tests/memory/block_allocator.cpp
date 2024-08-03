@@ -1,5 +1,5 @@
 #include "kit/memory/block_allocator.hpp"
-#include "core/data_types.hpp"
+#include "data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <array>
 

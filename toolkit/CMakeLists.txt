@@ -3,9 +3,9 @@ project(toolkit)
 
 # Source files for the library
 set(SOURCES
-    src/core/logging.cpp
+    src/logging/logging.cpp
     src/core/pch.cpp
-    src/core/memory/memory.cpp
+    src/memory/memory.cpp
 )
 
 # Create the library

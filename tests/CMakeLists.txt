@@ -15,8 +15,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../toolkit/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(SOURCES
-    core/memory/block_allocator.cpp
-    core/container/static_array.cpp
+    memory/block_allocator.cpp
+    container/static_array.cpp
 )
 
 add_executable(tests ${SOURCES})
