@@ -1,3 +1,7 @@
+# IBPhysics
+.vscode/
+build/
+
 # Prerequisites
 *.d
 
