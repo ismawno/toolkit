@@ -246,7 +246,7 @@ class StaticArray
     template <typename... Args> T &emplace_back(Args &&...p_Args) KIT_NOEXCEPT
     {
         KIT_ASSERT(!full(), "Container is already full");
-        ::new (begin() + m_Size) T(std::forward<Args>(p_Args)...);
+        ::new (end()) T(std::forward<Args>(p_Args)...);
         return *(begin() + m_Size++);
     }
 
@@ -261,18 +261,21 @@ class StaticArray
         return *begin();
     }
 
-    void resize(const size_t p_Size) KIT_NOEXCEPT
+    template <typename... Args> void resize(const size_t p_Size, Args &&...args) KIT_NOEXCEPT
     {
         KIT_ASSERT(p_Size <= N, "Size is bigger than capacity");
 
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (p_Size < m_Size)
-                for (auto it = begin() + p_Size; it != end(); ++it)
+            {
+                auto itend = rend() - (m_Size - p_Size);
+                for (auto it = rbegin(); it != itend; ++it)
                     it->~T();
+            }
 
         if (p_Size > m_Size)
             for (size_t i = m_Size; i < p_Size; ++i)
-                ::new (begin() + i) T();
+                ::new (begin() + i) T(std::forward<Args>(args)...);
 
         m_Size = p_Size;
     }

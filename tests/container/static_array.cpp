@@ -178,6 +178,53 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
             else
                 array.erase(array.begin());
         }
+
+        array.insert(array.end(), {args...});
+        array.erase(array.begin(), array.end());
+        REQUIRE(array.size() == 0);
+        REQUIRE_NOTHROW(array.erase(array.begin()));
+    }
+
+    SECTION("Resize")
+    {
+        std::array<T, 5> values = {args...};
+        SECTION("Clear from resize")
+        {
+            array.resize(0);
+            REQUIRE(array.size() == 0);
+            REQUIRE(array.empty());
+            REQUIRE_THROWS(array[0]);
+        }
+
+        SECTION("Decrease size")
+        {
+            array.resize(3);
+            REQUIRE(array.size() == 3);
+            for (size_t i = 0; i < 3; ++i)
+                REQUIRE(array[i] == values[i]);
+            REQUIRE_THROWS(array[3]);
+        }
+
+        SECTION("Increase size")
+        {
+            array.resize(7);
+            REQUIRE(array.size() == 7);
+            for (size_t i = 0; i < 3; ++i)
+                REQUIRE(array[i] == values[i]);
+
+            REQUIRE_THROWS(array[7]);
+        }
+    }
+
+    SECTION("Emplace back")
+    {
+        std::array<T, 5> values = {args...};
+        array.clear();
+        for (size_t i = 0; i < 5; ++i)
+            array.emplace_back(values[i]);
+
+        for (size_t i = 0; i < 5; ++i)
+            REQUIRE(array[i] == values[i]);
     }
 
     SECTION("Clear")
