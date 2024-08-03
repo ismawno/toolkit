@@ -1,0 +1,61 @@
+#ifndef KIT_NO_LOGS
+#    include "core/pch.hpp"
+#    include "kit/logging/logging.hpp"
+#    include <chrono>
+#    include <string>
+#    include <iostream>
+
+#    ifdef KIT_COMPILER_MSVC
+#        include <intrin.h>
+#    endif
+#    ifdef KIT_OS_LINUX
+#        include <fmt/chrono.h>
+#    endif
+
+KIT_NAMESPACE_BEGIN
+
+void debugBreak() KIT_NOEXCEPT
+{
+#    ifdef KIT_COMPILER_CLANG
+    __builtin_debugtrap();
+#    elif defined(KIT_COMPILER_GCC)
+    __builtin_trap();
+#    elif defined(KIT_COMPILER_MSVC)
+    __debugbreak();
+#    elif defined(SIGTRAP)
+    raise(SIGTRAP);
+#    elif defined(SIGABRT)
+    raise(SIGABRT);
+#    endif
+}
+
+KIT_WARNING_IGNORE_PUSH
+KIT_GCC_WARNING_IGNORE("-Wunused-parameter")
+KIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
+void logMessage(const char *p_Level, const String &p_File, const int p_Line, const char *p_Color, const bool p_Crash,
+                const String &p_Message) KIT_NOEXCEPT
+{
+    const String root = KIT_ROOT_PATH;
+    const size_t pos = p_File.find(root);
+    const String file_rel = pos == String::npos ? p_File : p_File.substr(pos + 1 + root.size());
+
+    const String log = KIT_FORMAT("[{:%Y-%m-%d %H:%M}] [{}{}{}] [{}:{}] {}\n", std::chrono::system_clock::now(),
+                                  p_Color, p_Level, KIT_LOG_COLOR_RESET, file_rel, p_Line, p_Message);
+    std::cout << log;
+    if (p_Crash)
+    {
+        KIT_CRASH(p_Message);
+    }
+}
+KIT_WARNING_IGNORE_POP
+
+void logMessageIf(bool condition, const char *p_Level, const String &p_File, const int p_Line, const char *p_Color,
+                  const bool p_Crash, const String &p_Message) KIT_NOEXCEPT
+{
+    if (condition)
+        logMessage(p_Level, p_File, p_Line, p_Color, p_Crash, p_Message);
+}
+
+KIT_NAMESPACE_END
+
+#endif
