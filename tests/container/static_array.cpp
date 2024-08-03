@@ -78,6 +78,9 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
         REQUIRE(array2.capacity() == 5);
         for (size_t i = 0; i < 5; ++i)
             REQUIRE(array1[i] == array2[i]);
+
+        KIT::StaticArray<T, 2> array3;
+        REQUIRE_THROWS(array3 = array1);
     }
 
     if constexpr (std::integral<T>)
@@ -138,6 +141,18 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
         REQUIRE(array.size() == 10);
         for (size_t i = 4; i < 7; ++i)
             REQUIRE(array[i] == array[i + 3]);
+
+        SECTION("Build in reverse")
+        {
+            array.clear();
+            std::array<T, 5> values = {args...};
+            for (const T &value : values)
+                array.insert(array.begin(), value);
+
+            std::size_t index = 0;
+            for (auto it = array.rbegin(); it != array.rend(); ++it)
+                REQUIRE(*it == values[index++]);
+        }
     }
 
     SECTION("Erase")
@@ -150,6 +165,19 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
         array.erase(array.begin(), array.begin() + 2);
         REQUIRE(array.size() == 2);
         REQUIRE(array[0] == elem3);
+
+        array.insert(array.end(), {elem1, elem3});
+        while (!array.empty())
+        {
+            if (array.size() > 1)
+            {
+                const T elem = array[1];
+                array.erase(array.begin());
+                REQUIRE(array[0] == elem);
+            }
+            else
+                array.erase(array.begin());
+        }
     }
 
     SECTION("Clear")
