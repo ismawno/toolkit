@@ -13,48 +13,48 @@ concept Hashable = requires(T a) {
     } -> std::convertible_to<usz>;
 };
 
-template <Hashable... H> struct HashableTuple
+template <Hashable... H> struct KIT_API HashableTuple
 {
     HashableTuple() = default;
-    explicit HashableTuple(const H &...p_Elements) : Elements(p_Elements...)
+    explicit HashableTuple(const H &...p_Elements) KIT_NOEXCEPT : Elements(p_Elements...)
     {
     }
-    explicit(false) HashableTuple(const Tuple<H...> &p_Elements) : Elements(p_Elements)
+    explicit(false) HashableTuple(const Tuple<H...> &p_Elements) KIT_NOEXCEPT : Elements(p_Elements)
     {
     }
 
-    template <usz I> auto &Get() const
+    template <usz I> auto &Get() KIT_NOEXCEPT const
     {
         return std::get<I>(Elements);
     }
-    template <usz I> auto &Get()
+    template <usz I> auto &Get() KIT_NOEXCEPT
     {
         return std::get<I>(Elements);
     }
 
-    template <Hashable T> const T &Get() const
+    template <Hashable T> const T &Get() KIT_NOEXCEPT const
     {
         return std::get<T>(Elements);
     }
-    template <Hashable T> T &Get()
+    template <Hashable T> T &Get() KIT_NOEXCEPT
     {
         return std::get<T>(Elements);
     }
 
-    HashableTuple &operator=(const Tuple<H...> &p_Elements)
+    HashableTuple &operator=(const Tuple<H...> &p_Elements) KIT_NOEXCEPT
     {
         Elements = p_Elements;
         return *this;
     }
 
-    usz operator()() const
+    usz operator()() KIT_NOEXCEPT const
     {
         usz seed = 0x517cc1b7;
         std::apply([&seed](const auto &...elements) { (hashSeed(seed, elements), ...); }, Elements);
         return seed;
     }
 
-    bool operator==(const HashableTuple &p_Other) const
+    bool operator==(const HashableTuple &p_Other) KIT_NOEXCEPT const
     {
         return Elements == p_Other.Elements;
     }
@@ -62,7 +62,7 @@ template <Hashable... H> struct HashableTuple
     Tuple<H...> Elements;
 
   private:
-    template <Hashable T> static void hashSeed(usz &p_Seed, const T &p_Hashable)
+    template <Hashable T> static void hashSeed(usz &p_Seed, const T &p_Hashable) KIT_NOEXCEPT
     {
         const std::hash<T> hasher;
         p_Seed ^= hasher(p_Hashable) + 0x9e3779b9 + (p_Seed << 6) + (p_Seed >> 2);

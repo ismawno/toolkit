@@ -10,13 +10,16 @@ KIT_NAMESPACE_BEGIN
 template <typename T, typename U>
 concept ShallowIsSame = std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<U>>;
 
+// An STL-like array with a fixed size. It can be used as a replacement for std::array in
+// the sense that it offers a bit more control and functionality, but it is not meant to be a drop-in replacement, as
+// the extra functionality comes with some overhead.
 template <typename T, usz N>
     requires(N > 0)
-class StaticArray
+class StaticArray KIT_API
 {
   public:
     using value_type = T;
-    using uszype = usz;
+    using size_ype = usz;
     using difference_type = std::ptrdiff_t;
     using reference = value_type &;
     using const_reference = const value_type &;
@@ -197,12 +200,12 @@ class StaticArray
         m_Size += count;
     }
 
-    void insert(const const_iterator p_Pos, std::initializer_list<T> p_Elements)
+    void insert(const const_iterator p_Pos, std::initializer_list<T> p_Elements) KIT_NOEXCEPT
     {
         insert(p_Pos, p_Elements.begin(), p_Elements.end());
     }
 
-    void erase(const const_iterator p_Pos)
+    void erase(const const_iterator p_Pos) KIT_NOEXCEPT
     {
         if (empty())
             return;
@@ -219,7 +222,7 @@ class StaticArray
         --m_Size;
     }
 
-    void erase(const const_iterator p_Begin, const const_iterator p_End)
+    void erase(const const_iterator p_Begin, const const_iterator p_End) KIT_NOEXCEPT
     {
         if (empty())
             return;
