@@ -39,9 +39,9 @@ KIT_NAMESPACE_BEGIN
 #ifndef KIT_NO_LOGS
 // These are not meant to be used directly, use the macros below instead
 void debugBreak() KIT_NOEXCEPT;
-void logMessage(const char *p_Level, const String &p_File, const int p_Line, const char *p_Color, const bool p_Crash,
+void logMessage(const char *p_Level, const String &p_File, const i32 p_Line, const char *p_Color, const bool p_Crash,
                 const String &p_Message) KIT_NOEXCEPT;
-void logMessageIf(bool condition, const char *p_Level, const String &p_File, const int p_Line, const char *p_Color,
+void logMessageIf(bool condition, const char *p_Level, const String &p_File, const i32 p_Line, const char *p_Color,
                   const bool p_Crash, const String &p_Message) KIT_NOEXCEPT;
 #endif
 

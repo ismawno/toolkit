@@ -11,22 +11,29 @@
 
 KIT_NAMESPACE_BEGIN
 
-// These two are just consistency aliases
-using float32_t = float;
-using float64_t = double;
+// About aliases:
+// Regarding primitive types, I have always liked short and informative names such as u32, f32, etc. I havent seen this
+// convention in many c++ projects around, so Im not sure if its the best option, specially for the size_t case, which
+// doesnt have an immediate alias I can think of.
 
-// These are aliases to get rid of the std:: prefix
-using size_t = std::size_t;
+// Regarding container types, its nice to have some of them aliases in case you want to quickly change the container
+// type or allocator. This is not the case for std::string or std::byte, which dont have a meaningful justification for
+// an alias, but I have added them for "increased" consistency.
 
-using uint8_t = std::uint8_t;
-using uint16_t = std::uint16_t;
-using uint32_t = std::uint32_t;
-using uint64_t = std::uint64_t;
+using f32 = float;
+using f64 = double;
 
-using int8_t = std::int8_t;
-using int16_t = std::int16_t;
-using int32_t = std::int32_t;
-using int64_t = std::int64_t;
+using usz = std::size_t;
+
+using u8 = std::uint8_t;
+using u16 = std::uint16_t;
+using u32 = std::uint32_t;
+using u64 = std::uint64_t;
+
+using i8 = std::int8_t;
+using i16 = std::int16_t;
+using i32 = std::int32_t;
+using i64 = std::int64_t;
 
 // Fits better with the naming convention
 using String = std::string;

@@ -14,7 +14,7 @@ template <typename T> class KIT_API BlockAllocator final
     KIT_NON_COPYABLE(BlockAllocator);
 
   public:
-    explicit BlockAllocator(const size_t p_ChunksPerBlock) KIT_NOEXCEPT : m_BlockSize(alignedSize() * p_ChunksPerBlock)
+    explicit BlockAllocator(const usz p_ChunksPerBlock) KIT_NOEXCEPT : m_BlockSize(alignedSize() * p_ChunksPerBlock)
     {
     }
 
@@ -58,20 +58,20 @@ template <typename T> class KIT_API BlockAllocator final
         return false;
     }
 
-    size_t BlockSize() const KIT_NOEXCEPT
+    usz BlockSize() const KIT_NOEXCEPT
     {
         return m_BlockSize;
     }
-    size_t BlockCount() const KIT_NOEXCEPT
+    usz BlockCount() const KIT_NOEXCEPT
     {
         return m_Blocks.size();
     }
 
-    size_t ChunksPerBlock() const KIT_NOEXCEPT
+    usz ChunksPerBlock() const KIT_NOEXCEPT
     {
         return m_BlockSize / alignedSize();
     }
-    size_t ChunkSize() const KIT_NOEXCEPT
+    usz ChunkSize() const KIT_NOEXCEPT
     {
         return alignedSize();
     }
@@ -80,7 +80,7 @@ template <typename T> class KIT_API BlockAllocator final
     {
         return m_Allocations == 0;
     }
-    uint32_t Allocations() const KIT_NOEXCEPT
+    u32 Allocations() const KIT_NOEXCEPT
     {
         return m_Allocations;
     }
@@ -93,14 +93,14 @@ template <typename T> class KIT_API BlockAllocator final
 
     T *fromFirstChunkOfNewBlock() KIT_NOEXCEPT
     {
-        const size_t chunkSize = alignedSize();
-        const size_t align = alignment();
+        const usz chunkSize = alignedSize();
+        const usz align = alignment();
 
         Byte *data = reinterpret_cast<Byte *>(AllocateAligned(m_BlockSize, align));
         m_FreeList = reinterpret_cast<Chunk *>(data + chunkSize);
 
-        const size_t chunksPerBlock = m_BlockSize / chunkSize;
-        for (size_t i = 0; i < chunksPerBlock - 1; ++i)
+        const usz chunksPerBlock = m_BlockSize / chunkSize;
+        for (usz i = 0; i < chunksPerBlock - 1; ++i)
         {
             Chunk *chunk = reinterpret_cast<Chunk *>(data + i * chunkSize);
             chunk->Next = reinterpret_cast<Chunk *>(data + (i + 1) * chunkSize);
@@ -119,7 +119,7 @@ template <typename T> class KIT_API BlockAllocator final
         return reinterpret_cast<T *>(chunk);
     }
 
-    constexpr size_t alignedSize() const KIT_NOEXCEPT
+    constexpr usz alignedSize() const KIT_NOEXCEPT
     {
         if constexpr (sizeof(T) < sizeof(Chunk))
             return AlignedSize<Chunk>();
@@ -127,7 +127,7 @@ template <typename T> class KIT_API BlockAllocator final
             return AlignedSize<T>();
     }
 
-    constexpr size_t alignment() const KIT_NOEXCEPT
+    constexpr usz alignment() const KIT_NOEXCEPT
     {
         if constexpr (alignof(T) < alignof(Chunk))
             return alignof(Chunk);
@@ -135,8 +135,8 @@ template <typename T> class KIT_API BlockAllocator final
             return alignof(T);
     }
 
-    uint32_t m_Allocations = 0;
-    size_t m_BlockSize;
+    u32 m_Allocations = 0;
+    usz m_BlockSize;
     Chunk *m_FreeList = nullptr;
     DynamicArray<Byte *> m_Blocks;
 };
@@ -146,7 +146,7 @@ KIT_NAMESPACE_END
 #ifndef KIT_DISABLE_BLOCK_ALLOCATOR
 #    define KIT_BLOCK_ALLOCATED(p_ClassName, p_ChunksPerBlock)                                                         \
         static inline KIT::BlockAllocator<p_ClassName> s_Allocator{p_ChunksPerBlock};                                  \
-        void *operator new(size_t p_Size)                                                                              \
+        void *operator new(usz p_Size)                                                                                 \
         {                                                                                                              \
             KIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                  \
                        "Trying to block allocate a derived class from a base class overloaded new/delete");            \

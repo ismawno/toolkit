@@ -10,7 +10,7 @@ template <typename T>
 concept Hashable = requires(T a) {
     {
         std::hash<T>()(a)
-    } -> std::convertible_to<std::size_t>;
+    } -> std::convertible_to<usz>;
 };
 
 template <Hashable... H> struct HashableTuple
@@ -23,11 +23,11 @@ template <Hashable... H> struct HashableTuple
     {
     }
 
-    template <size_t I> auto &Get() const
+    template <usz I> auto &Get() const
     {
         return std::get<I>(Elements);
     }
-    template <size_t I> auto &Get()
+    template <usz I> auto &Get()
     {
         return std::get<I>(Elements);
     }
@@ -47,9 +47,9 @@ template <Hashable... H> struct HashableTuple
         return *this;
     }
 
-    size_t operator()() const
+    usz operator()() const
     {
-        std::size_t seed = 0x517cc1b7;
+        usz seed = 0x517cc1b7;
         std::apply([&seed](const auto &...elements) { (hashSeed(seed, elements), ...); }, Elements);
         return seed;
     }
@@ -62,7 +62,7 @@ template <Hashable... H> struct HashableTuple
     Tuple<H...> Elements;
 
   private:
-    template <Hashable T> static void hashSeed(std::size_t &p_Seed, const T &p_Hashable)
+    template <Hashable T> static void hashSeed(usz &p_Seed, const T &p_Hashable)
     {
         const std::hash<T> hasher;
         p_Seed ^= hasher(p_Hashable) + 0x9e3779b9 + (p_Seed << 6) + (p_Seed >> 2);

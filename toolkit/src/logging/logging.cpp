@@ -32,11 +32,11 @@ void debugBreak() KIT_NOEXCEPT
 KIT_WARNING_IGNORE_PUSH
 KIT_GCC_WARNING_IGNORE("-Wunused-parameter")
 KIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
-void logMessage(const char *p_Level, const String &p_File, const int p_Line, const char *p_Color, const bool p_Crash,
+void logMessage(const char *p_Level, const String &p_File, const i32 p_Line, const char *p_Color, const bool p_Crash,
                 const String &p_Message) KIT_NOEXCEPT
 {
     const String root = KIT_ROOT_PATH;
-    const size_t pos = p_File.find(root);
+    const usz pos = p_File.find(root);
     const String file_rel = pos == String::npos ? p_File : p_File.substr(pos + 1 + root.size());
 
     const String log = KIT_FORMAT("[{:%Y-%m-%d %H:%M}] [{}{}{}] [{}:{}] {}\n", std::chrono::system_clock::now(),
@@ -49,7 +49,7 @@ void logMessage(const char *p_Level, const String &p_File, const int p_Line, con
 }
 KIT_WARNING_IGNORE_POP
 
-void logMessageIf(bool condition, const char *p_Level, const String &p_File, const int p_Line, const char *p_Color,
+void logMessageIf(bool condition, const char *p_Level, const String &p_File, const i32 p_Line, const char *p_Color,
                   const bool p_Crash, const String &p_Message) KIT_NOEXCEPT
 {
     if (condition)

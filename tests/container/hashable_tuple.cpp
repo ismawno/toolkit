@@ -14,41 +14,41 @@ TEST_CASE("HashableTuple hash consistency")
     REQUIRE(tuple1() != tuple3());
 }
 
-TEST_CASE("HashableTuple Chi Square")
+TEST_CASE("HashableTuple deviation")
 {
-    HashableTuple<uint32_t, uint32_t, float, String> tuple;
+    HashableTuple<u32, u32, f32, String> tuple;
 
-    constexpr size_t amount = 97;
-    StaticArray<uint32_t, amount> ocurrences(amount, 0);
+    constexpr usz amount = 97;
+    StaticArray<u32, amount> ocurrences(amount, 0);
 
-    constexpr uint32_t samples = 100000;
-    for (uint32_t i = 0; i < samples; ++i)
+    constexpr u32 samples = 100000;
+    for (u32 i = 0; i < samples; ++i)
     {
         tuple.Get<0>() = i;
         ++ocurrences[tuple() % amount];
     }
-    for (uint32_t i = 0; i < samples; ++i)
+    for (u32 i = 0; i < samples; ++i)
     {
         tuple.Get<1>() = i;
         ++ocurrences[tuple() % amount];
     }
 
-    for (uint32_t i = 0; i < samples; ++i)
+    for (u32 i = 0; i < samples; ++i)
     {
-        tuple.Get<2>() = static_cast<float>(i);
+        tuple.Get<2>() = static_cast<f32>(i);
         ++ocurrences[tuple() % amount];
     }
-    for (uint32_t i = 0; i < samples; ++i)
+    for (u32 i = 0; i < samples; ++i)
     {
         tuple.Get<3>() = std::to_string(i);
         ++ocurrences[tuple() % amount];
     }
 
-    const float expected = static_cast<float>(4 * samples) / amount;
-    float deviation = 0.0f;
-    for (uint32_t i = 0; i < amount; ++i)
+    const f32 expected = static_cast<f32>(4 * samples) / amount;
+    f32 deviation = 0.0f;
+    for (u32 i = 0; i < amount; ++i)
     {
-        const float diff = static_cast<float>(ocurrences[i]) - expected;
+        const f32 diff = static_cast<f32>(ocurrences[i]) - expected;
         deviation += diff * diff;
     }
 

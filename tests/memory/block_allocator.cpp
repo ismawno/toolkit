@@ -7,8 +7,8 @@ KIT_NAMESPACE_BEGIN
 
 template <typename T> void RunBasicAllocatorTest(BlockAllocator<T> &allocator)
 {
-    const size_t chunkSize = sizeof(T) < sizeof(void *) ? sizeof(void *) : sizeof(T);
-    const size_t blockSize = chunkSize * 10;
+    const usz chunkSize = sizeof(T) < sizeof(void *) ? sizeof(void *) : sizeof(T);
+    const usz blockSize = chunkSize * 10;
 
     REQUIRE(allocator.BlockSize() == blockSize);
     REQUIRE(allocator.BlockCount() == 0);
@@ -47,17 +47,17 @@ template <typename T> void RunRawAllocationTest()
 
     SECTION("Allocate and deallocate multiple (raw call)")
     {
-        constexpr uint32_t amount = 20;
+        constexpr u32 amount = 20;
         std::array<T *, amount> data;
-        for (uint32_t j = 0; j < 2; ++j)
+        for (u32 j = 0; j < 2; ++j)
         {
-            for (uint32_t i = 0; i < amount; ++i)
+            for (u32 i = 0; i < amount; ++i)
             {
                 data[i] = allocator.Allocate();
                 REQUIRE(data[i] != nullptr);
                 REQUIRE(allocator.Owns(data[i]));
             }
-            for (uint32_t i = 0; i < amount; ++i)
+            for (u32 i = 0; i < amount; ++i)
                 allocator.Deallocate(data[i]);
             REQUIRE(allocator.BlockCount() == 2);
         }
@@ -66,10 +66,10 @@ template <typename T> void RunRawAllocationTest()
 
     SECTION("Assert contiguous (raw call)")
     {
-        constexpr uint32_t amount = 10;
+        constexpr u32 amount = 10;
         std::array<T *, amount> data;
-        const size_t chunkSize = sizeof(T) < sizeof(void *) ? sizeof(void *) : sizeof(T);
-        for (uint32_t i = 0; i < amount; ++i)
+        const usz chunkSize = sizeof(T) < sizeof(void *) ? sizeof(void *) : sizeof(T);
+        for (u32 i = 0; i < amount; ++i)
         {
             data[i] = allocator.Allocate();
             REQUIRE(data[i] != nullptr);
@@ -81,7 +81,7 @@ template <typename T> void RunRawAllocationTest()
                 REQUIRE(b2 == b1 + chunkSize);
             }
         }
-        for (uint32_t i = 0; i < amount; ++i)
+        for (u32 i = 0; i < amount; ++i)
             allocator.Deallocate(data[i]);
         REQUIRE(allocator.Empty());
     }
@@ -102,17 +102,17 @@ template <typename T> void RunNewDeleteTest()
 
     SECTION("Allocate and deallocate multiple (new/delete)")
     {
-        constexpr uint32_t amount = 20;
+        constexpr u32 amount = 20;
         std::array<T *, amount> data;
-        for (uint32_t j = 0; j < 2; ++j)
+        for (u32 j = 0; j < 2; ++j)
         {
-            for (uint32_t i = 0; i < amount; ++i)
+            for (u32 i = 0; i < amount; ++i)
             {
                 data[i] = new T;
                 REQUIRE(data[i] != nullptr);
                 REQUIRE(allocator.Owns(data[i]));
             }
-            for (uint32_t i = 0; i < amount; ++i)
+            for (u32 i = 0; i < amount; ++i)
                 delete data[i];
             REQUIRE(allocator.BlockCount() == 2);
         }
@@ -121,10 +121,10 @@ template <typename T> void RunNewDeleteTest()
 
     SECTION("Assert contiguous (new/delete)")
     {
-        constexpr uint32_t amount = 10;
+        constexpr u32 amount = 10;
         std::array<T *, amount> data;
-        const size_t chunkSize = sizeof(T) < sizeof(void *) ? sizeof(void *) : sizeof(T);
-        for (uint32_t i = 0; i < amount; ++i)
+        const usz chunkSize = sizeof(T) < sizeof(void *) ? sizeof(void *) : sizeof(T);
+        for (u32 i = 0; i < amount; ++i)
         {
             data[i] = new T;
             REQUIRE(data[i] != nullptr);
@@ -136,7 +136,7 @@ template <typename T> void RunNewDeleteTest()
                 REQUIRE(b2 == b1 + chunkSize);
             }
         }
-        for (uint32_t i = 0; i < amount; ++i)
+        for (u32 i = 0; i < amount; ++i)
             delete data[i];
         REQUIRE(allocator.Empty());
     }
@@ -149,11 +149,11 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
 
     SECTION("Virtual deallocations")
     {
-        constexpr uint32_t amount = 20;
+        constexpr u32 amount = 20;
         std::array<Base *, amount> data;
-        for (uint32_t j = 0; j < 2; ++j)
+        for (u32 j = 0; j < 2; ++j)
         {
-            for (uint32_t i = 0; i < amount; ++i)
+            for (u32 i = 0; i < amount; ++i)
             {
                 Derived *vd = new Derived;
                 data[i] = vd;
@@ -161,7 +161,7 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
                 REQUIRE(allocator.Owns(vd));
             }
             REQUIRE(allocator.Allocations() == amount);
-            for (uint32_t i = 0; i < amount; ++i)
+            for (u32 i = 0; i < amount; ++i)
                 delete data[i];
             REQUIRE(allocator.BlockCount() == 2);
             REQUIRE(allocator.Empty());
