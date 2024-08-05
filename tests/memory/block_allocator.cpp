@@ -173,12 +173,11 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
 
 template <typename T> void RunMultithreadedAllocatorTests()
 {
-    const BlockAllocator<T> &allocator = T::s_Allocator;
-
     SECTION("Multithreaded allocations")
     {
         const auto allocate = []() {
             constexpr usz amount = 1000;
+            const BlockAllocator<T> &allocator = T::s_Allocator;
             thread_local std::array<T *, amount> data{};
             for (usz i = 0; i < amount; ++i)
             {
