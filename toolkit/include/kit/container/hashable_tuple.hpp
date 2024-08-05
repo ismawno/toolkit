@@ -2,16 +2,10 @@
 
 #include "kit/core/core.hpp"
 #include "kit/core/alias.hpp"
+#include "kit/core/concepts.hpp"
 #include <functional>
 
 KIT_NAMESPACE_BEGIN
-
-template <typename T>
-concept Hashable = requires(T a) {
-    {
-        std::hash<T>()(a)
-    } -> std::convertible_to<usz>;
-};
 
 template <Hashable... H> struct KIT_API HashableTuple
 {

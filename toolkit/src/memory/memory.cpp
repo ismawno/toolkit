@@ -4,7 +4,7 @@
 
 KIT_NAMESPACE_BEGIN
 
-void *Allocate(usz p_Size) KIT_NOEXCEPT
+void *Allocate(const usz p_Size) KIT_NOEXCEPT
 {
     void *ptr = malloc(p_Size);
     KIT_ASSERT(ptr, "Failed to allocate memory with size {}", p_Size);
@@ -17,7 +17,7 @@ void Deallocate(void *p_Ptr) KIT_NOEXCEPT
     free(p_Ptr);
 }
 
-void *AllocateAligned(usz p_Size, usz p_Alignment) KIT_NOEXCEPT
+void *AllocateAligned(const usz p_Size, const usz p_Alignment) KIT_NOEXCEPT
 {
     void *ptr = nullptr;
 #ifdef KIT_OS_WINDOWS

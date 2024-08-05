@@ -5,6 +5,7 @@
 #include "kit/interface/non_copyable.hpp"
 #include "kit/memory/memory.hpp"
 #include "kit/logging/logging.hpp"
+#include "kit/core/concepts.hpp"
 
 KIT_NAMESPACE_BEGIN
 
