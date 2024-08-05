@@ -104,7 +104,7 @@ struct VirtualBase
 
     i32 x;
     f64 y;
-    String str[12];
+    std::string str[12];
 };
 
 struct VirtualDerived final : VirtualBase
@@ -123,7 +123,7 @@ struct VirtualDerived final : VirtualBase
     static inline i32 DerivedInstances = 0;
 
     f64 z;
-    String str2[12];
+    std::string str2[12];
 };
 
 struct BadVirtualDerived : VirtualBase
@@ -143,7 +143,7 @@ struct BadVirtualDerived : VirtualBase
     static inline i32 DerivedInstances = 0;
 
     f64 z;
-    String str2[12];
+    std::string str2[12];
 };
 
 KIT_NAMESPACE_END

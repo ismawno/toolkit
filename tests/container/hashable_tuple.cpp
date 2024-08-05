@@ -6,9 +6,9 @@ KIT_NAMESPACE_BEGIN
 
 TEST_CASE("HashableTuple hash consistency")
 {
-    const HashableTuple tuple1(1, 2.0f, String("3"));
-    const HashableTuple tuple2(1, 2.0f, String("3"));
-    const HashableTuple tuple3(1, 2.0f, String("4"));
+    const HashableTuple tuple1(1, 2.0f, std::string("3"));
+    const HashableTuple tuple2(1, 2.0f, std::string("3"));
+    const HashableTuple tuple3(1, 2.0f, std::string("4"));
 
     REQUIRE(tuple1() == tuple2());
     REQUIRE(tuple1() != tuple3());
@@ -16,7 +16,7 @@ TEST_CASE("HashableTuple hash consistency")
 
 TEST_CASE("HashableTuple deviation")
 {
-    HashableTuple<u32, u32, f32, String> tuple;
+    HashableTuple<u32, u32, f32, std::string> tuple;
 
     constexpr usz amount = 97;
     StaticArray<u32, amount> ocurrences(amount, 0);

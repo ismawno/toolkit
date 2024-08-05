@@ -3,11 +3,9 @@
 #include "kit/core/core.hpp"
 #include <cstddef>
 #include <cstdint>
-#include <string>
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include <tuple>
 
 KIT_NAMESPACE_BEGIN
 
@@ -35,11 +33,7 @@ using i16 = std::int16_t;
 using i32 = std::int32_t;
 using i64 = std::int64_t;
 
-// Fits better with the naming convention
-using String = std::string;
-using Byte = std::byte;
-
-// And finally these are nice to have in case we want to change the container/allocator type easily
+// These are nice to have in case we want to change the container/allocator type easily
 template <typename T> using DynamicArray = std::vector<T>;
 
 template <typename Key, typename Value, typename Hash = std::hash<Key>, typename OpEqual = std::equal_to<Key>>
@@ -47,7 +41,5 @@ using HashMap = std::unordered_map<Key, Value, Hash, OpEqual>;
 
 template <typename Key, typename Value, typename Hash = std::hash<Key>, typename OpEqual = std::equal_to<Key>>
 using HashSet = std::unordered_set<Key, Value, Hash, OpEqual>;
-
-template <typename... Args> using Tuple = std::tuple<Args...>;
 
 KIT_NAMESPACE_END

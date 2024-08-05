@@ -254,10 +254,10 @@ TEST_CASE("StaticArray (f64)", "[core][container][StaticArray]")
     RunStaticArrayOperatorTests<f64>(1.0, 2.0, 3.0, 4.0, 5.0);
 }
 
-TEST_CASE("StaticArray (String)", "[core][container][StaticArray]")
+TEST_CASE("StaticArray (std::string)", "[core][container][StaticArray]")
 {
-    RunStaticArrayConstructorTest<String>("10", "20", "30", "40", "50");
-    RunStaticArrayOperatorTests<String>("10", "20", "30", "40", "50");
+    RunStaticArrayConstructorTest<std::string>("10", "20", "30", "40", "50");
+    RunStaticArrayOperatorTests<std::string>("10", "20", "30", "40", "50");
 }
 
 TEST_CASE("StaticArray cleanup check", "[core][container][StaticArray]")

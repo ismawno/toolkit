@@ -76,8 +76,8 @@ template <typename T> void RunRawAllocationTest()
             REQUIRE(allocator.Owns(data[i]));
             if (i != 0)
             {
-                Byte *b1 = reinterpret_cast<Byte *>(data[i - 1]);
-                Byte *b2 = reinterpret_cast<Byte *>(data[i]);
+                std::byte *b1 = reinterpret_cast<std::byte *>(data[i - 1]);
+                std::byte *b2 = reinterpret_cast<std::byte *>(data[i]);
                 REQUIRE(b2 == b1 + chunkSize);
             }
         }
@@ -131,8 +131,8 @@ template <typename T> void RunNewDeleteTest()
             REQUIRE(allocator.Owns(data[i]));
             if (i != 0)
             {
-                Byte *b1 = reinterpret_cast<Byte *>(data[i - 1]);
-                Byte *b2 = reinterpret_cast<Byte *>(data[i]);
+                std::byte *b1 = reinterpret_cast<std::byte *>(data[i - 1]);
+                std::byte *b2 = reinterpret_cast<std::byte *>(data[i]);
                 REQUIRE(b2 == b1 + chunkSize);
             }
         }

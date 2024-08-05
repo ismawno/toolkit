@@ -6,6 +6,8 @@
 #include "kit/memory/memory.hpp"
 #include "kit/logging/logging.hpp"
 #include "kit/core/concepts.hpp"
+#include <shared_mutex>
+#include <atomic>
 
 KIT_NAMESPACE_BEGIN
 
@@ -21,6 +23,7 @@ template <typename T> class KIT_API BlockAllocator final
 
     T *Allocate() KIT_NOEXCEPT
     {
+        std::scoped_lock lock(m_Mutex);
         ++m_Allocations;
         if (m_FreeList)
             return fromNextFreeChunk();
@@ -31,6 +34,7 @@ template <typename T> class KIT_API BlockAllocator final
     {
         KIT_ASSERT(!Empty(), "The current allocator has no active allocations yet");
         KIT_ASSERT(Owns(p_Ptr), "Trying to deallocate a pointer that was not allocated by this allocator");
+        std::scoped_lock lock(m_Mutex);
         --m_Allocations;
         Chunk *chunk = reinterpret_cast<Chunk *>(p_Ptr);
         chunk->Next = m_FreeList;
@@ -46,14 +50,16 @@ template <typename T> class KIT_API BlockAllocator final
 
     void Destroy(T *p_Ptr) KIT_NOEXCEPT
     {
+        // Be wary! destructor must be thread safe
         p_Ptr->~T();
         Deallocate(p_Ptr);
     }
 
     bool Owns(const T *p_Ptr) const KIT_NOEXCEPT
     {
-        const Byte *ptr = reinterpret_cast<const Byte *>(p_Ptr);
-        for (const Byte *block : m_Blocks)
+        std::shared_lock lock(m_Mutex);
+        const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
+        for (const std::byte *block : m_Blocks)
             if (ptr >= block && ptr < block + m_BlockSize)
                 return true;
         return false;
@@ -97,7 +103,7 @@ template <typename T> class KIT_API BlockAllocator final
         const usz chunkSize = alignedSize();
         const usz align = alignment();
 
-        Byte *data = reinterpret_cast<Byte *>(AllocateAligned(m_BlockSize, align));
+        std::byte *data = reinterpret_cast<std::byte *>(AllocateAligned(m_BlockSize, align));
         m_FreeList = reinterpret_cast<Chunk *>(data + chunkSize);
 
         const usz chunksPerBlock = m_BlockSize / chunkSize;
@@ -136,10 +142,12 @@ template <typename T> class KIT_API BlockAllocator final
             return alignof(T);
     }
 
+    // Could be an atomic, but all operations I perform with it are locked, so I guess it's fine
     u32 m_Allocations = 0;
     usz m_BlockSize;
     Chunk *m_FreeList = nullptr;
-    DynamicArray<Byte *> m_Blocks;
+    DynamicArray<std::byte *> m_Blocks;
+    mutable std::shared_mutex m_Mutex;
 };
 
 KIT_NAMESPACE_END

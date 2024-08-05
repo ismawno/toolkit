@@ -9,11 +9,13 @@ KIT_NAMESPACE_BEGIN
 
 template <Hashable... H> struct KIT_API HashableTuple
 {
+    using Tuple = std::tuple<H...>;
+
     HashableTuple() = default;
     explicit HashableTuple(const H &...p_Elements) KIT_NOEXCEPT : Elements(p_Elements...)
     {
     }
-    explicit(false) HashableTuple(const Tuple<H...> &p_Elements) KIT_NOEXCEPT : Elements(p_Elements)
+    explicit(false) HashableTuple(const Tuple &p_Elements) KIT_NOEXCEPT : Elements(p_Elements)
     {
     }
 
@@ -35,7 +37,7 @@ template <Hashable... H> struct KIT_API HashableTuple
         return std::get<T>(Elements);
     }
 
-    HashableTuple &operator=(const Tuple<H...> &p_Elements) KIT_NOEXCEPT
+    HashableTuple &operator=(const Tuple &p_Elements) KIT_NOEXCEPT
     {
         Elements = p_Elements;
         return *this;
@@ -53,7 +55,7 @@ template <Hashable... H> struct KIT_API HashableTuple
         return Elements == p_Other.Elements;
     }
 
-    Tuple<H...> Elements;
+    Tuple Elements;
 
   private:
     template <Hashable T> static void hashSeed(usz &p_Seed, const T &p_Hashable) KIT_NOEXCEPT

@@ -407,7 +407,7 @@ class StaticArray KIT_API
   private:
     struct alignas(T) Element
     {
-        Byte m_Data[sizeof(T)];
+        std::byte m_Data[sizeof(T)];
     };
 
     static_assert(sizeof(Element) == sizeof(T), "Element size is not equal to T size");
