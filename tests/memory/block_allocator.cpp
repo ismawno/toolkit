@@ -2,6 +2,7 @@
 #include "data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <array>
+#include <thread>
 
 KIT_NAMESPACE_BEGIN
 
@@ -47,7 +48,7 @@ template <typename T> void RunRawAllocationTest()
 
     SECTION("Allocate and deallocate multiple (raw call)")
     {
-        constexpr u32 amount = 20;
+        constexpr u32 amount = 10000;
         std::array<T *, amount> data;
         for (u32 j = 0; j < 2; ++j)
         {
@@ -59,7 +60,7 @@ template <typename T> void RunRawAllocationTest()
             }
             for (u32 i = 0; i < amount; ++i)
                 allocator.Deallocate(data[i]);
-            REQUIRE(allocator.BlockCount() == 2);
+            REQUIRE(allocator.BlockCount() == 1000);
         }
         REQUIRE(allocator.Empty());
     }
@@ -170,31 +171,65 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
     }
 }
 
+template <typename T> void RunMultithreadedAllocatorTests()
+{
+    const BlockAllocator<T> &allocator = T::s_Allocator;
+
+    SECTION("Multithreaded allocations")
+    {
+        const auto allocate = []() {
+            constexpr usz amount = 1000;
+            thread_local std::array<T *, amount> data{};
+            for (usz i = 0; i < amount; ++i)
+            {
+                data[i] = new T;
+                REQUIRE(data[i] != nullptr);
+                REQUIRE(allocator.Owns(data[i]));
+            }
+            for (usz i = 0; i < amount; ++i)
+                delete data[i];
+        };
+
+        constexpr usz threadCount = 8;
+        std::array<std::thread, threadCount> threads;
+        for (std::thread &t : threads)
+            t = std::thread(allocate);
+        for (std::thread &t : threads)
+            t.join();
+    }
+}
+
 TEST_CASE("Block allocator deals with small data", "[block_allocator][small]")
 {
     RunRawAllocationTest<SmallData>();
     RunNewDeleteTest<SmallData>();
+    RunMultithreadedAllocatorTests<SmallData>();
 }
 TEST_CASE("Block allocator deals with big data", "[block_allocator][big]")
 {
     RunRawAllocationTest<BigData>();
     RunNewDeleteTest<BigData>();
+    RunMultithreadedAllocatorTests<BigData>();
 }
 TEST_CASE("Block allocator deals with aligned data", "[block_allocator][aligned]")
 {
     RunRawAllocationTest<AlignedData>();
     RunNewDeleteTest<AlignedData>();
+    RunMultithreadedAllocatorTests<AlignedData>();
 }
 TEST_CASE("Block allocator deals with nont trivial data", "[block_allocator][nont trivial]")
 {
     RunRawAllocationTest<NonTrivialData>();
     RunNewDeleteTest<NonTrivialData>();
+    // I skip non trivial data as its constructor and destructor are not thread safe
+    // RunMultithreadedAllocatorTests<NonTrivialData>();
     REQUIRE(NonTrivialData::Instances == 0);
 }
 TEST_CASE("Block allocator deals with derived data", "[block_allocator][derived]")
 {
     RunRawAllocationTest<VirtualDerived>();
     RunNewDeleteTest<VirtualDerived>();
+    RunMultithreadedAllocatorTests<VirtualDerived>();
 }
 TEST_CASE("Block allocator deals with virtual data", "[block_allocator][virtual]")
 {
