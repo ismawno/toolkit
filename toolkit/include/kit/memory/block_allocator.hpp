@@ -7,6 +7,7 @@
 #include "kit/logging/logging.hpp"
 #include "kit/core/concepts.hpp"
 #include <shared_mutex>
+#include <mutex>
 #include <atomic>
 
 KIT_NAMESPACE_BEGIN
