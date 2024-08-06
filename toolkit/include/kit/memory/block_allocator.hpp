@@ -12,7 +12,8 @@
 
 KIT_NAMESPACE_BEGIN
 
-// This is THREAD UNSAFE. TODO: Make it thread safe
+// This is a block allocator whose roll is to 1: speed up single allocations and 2: improve contiguity, which is
+// guaranteed up to the amount of chunks per block (each chunk represents an allocated object)
 template <typename T> class KIT_API BlockAllocator final
 {
     KIT_NON_COPYABLE(BlockAllocator);
@@ -52,7 +53,8 @@ template <typename T> class KIT_API BlockAllocator final
     void Destroy(T *p_Ptr) KIT_NOEXCEPT
     {
         // Be wary! destructor must be thread safe
-        p_Ptr->~T();
+        if constexpr (!std::is_trivially_destructible_v<T>)
+            p_Ptr->~T();
         Deallocate(p_Ptr);
     }
 
@@ -94,6 +96,7 @@ template <typename T> class KIT_API BlockAllocator final
     }
 
   private:
+    // Important: A chunk must be at least sizeof(void *), so allocations have a minimum size of sizeof(void *)
     struct Chunk
     {
         Chunk *Next = nullptr;

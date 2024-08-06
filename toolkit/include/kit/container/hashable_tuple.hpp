@@ -7,6 +7,12 @@
 
 KIT_NAMESPACE_BEGIN
 
+// This is a tuple of hashable elements, useful when you need to hash multiple elements at the same time. Originally, I
+// had implemented a commutative version, which had considerably more overhead and had to use some obscure compile time
+// for loop to work (see cpp-kit). At the end of the day tho, I always took extra care to avoid that overhead by making
+// sure I was good to go with the default non-commutative one, so I wont be including a commutative tuple for this
+// library
+
 template <Hashable... H> struct KIT_API HashableTuple
 {
     using Tuple = std::tuple<H...>;

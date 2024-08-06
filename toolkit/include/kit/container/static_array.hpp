@@ -18,8 +18,11 @@ template <typename T, usz N>
 class StaticArray KIT_API
 {
   public:
+    // I figured that if I want to have a more STL-like interface, I should use the same naming conventions, although I
+    // am not really sure when to "stop"
+
     using value_type = T;
-    using size_ype = usz;
+    using size_type = usz;
     using difference_type = std::ptrdiff_t;
     using reference = value_type &;
     using const_reference = const value_type &;
@@ -48,6 +51,7 @@ class StaticArray KIT_API
         }
     }
 
+    // This constructor WONT include the case M == N (ie, copy constructor)
     template <usz M> explicit(false) StaticArray(const StaticArray<T, M> &p_Other) KIT_NOEXCEPT : m_Size(p_Other.size())
     {
         if constexpr (M > N)
@@ -76,6 +80,7 @@ class StaticArray KIT_API
         clear();
     }
 
+    // Same goes for assignment. It wont include M == N, and use the default assignment operator
     template <usz M> StaticArray &operator=(const StaticArray<T, M> &p_Other) KIT_NOEXCEPT
     {
         if constexpr (M == N)

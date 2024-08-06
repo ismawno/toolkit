@@ -3,7 +3,7 @@
 
 KIT_NAMESPACE_BEGIN
 
-static u64 TimePointToU64(const Clock::TimePoint p_TimePoint) KIT_NOEXCEPT
+static u64 timePointToU64(const Clock::TimePoint p_TimePoint) KIT_NOEXCEPT
 {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(p_TimePoint.time_since_epoch()).count();
 }
@@ -14,7 +14,7 @@ Clock::Clock() KIT_NOEXCEPT : m_Start(CurrentTimePoint())
 
 u64 Clock::StartTime() const KIT_NOEXCEPT
 {
-    return TimePointToU64(m_Start);
+    return timePointToU64(m_Start);
 }
 
 Clock::TimePoint Clock::StartTimePoint() const KIT_NOEXCEPT
@@ -37,7 +37,7 @@ Timespan Clock::Restart() KIT_NOEXCEPT
 
 u64 Clock::CurrentTime() KIT_NOEXCEPT
 {
-    return TimePointToU64(CurrentTimePoint());
+    return timePointToU64(CurrentTimePoint());
 }
 
 Clock::TimePoint Clock::CurrentTimePoint() KIT_NOEXCEPT
