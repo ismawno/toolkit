@@ -1,6 +1,6 @@
+#include "kit/logging/logging.hpp"
 #ifndef KIT_NO_LOGS
 #    include "core/pch.hpp"
-#    include "kit/logging/logging.hpp"
 #    include <chrono>
 #    include <string>
 #    include <iostream>

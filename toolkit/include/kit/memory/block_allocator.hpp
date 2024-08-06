@@ -12,6 +12,14 @@
 
 KIT_NAMESPACE_BEGIN
 
+#ifdef KIT_BLOCK_ALLOCATOR_THREAD_SAFE
+#    define KIT_BLOCK_ALLOCATOR_UNIQUE_LOCK(mutex) std::scoped_lock lock(mutex)
+#    define KIT_BLOCK_ALLOCATOR_SHARED_LOCK(mutex) std::shared_lock lock(mutex)
+#else
+#    define KIT_BLOCK_ALLOCATOR_UNIQUE_LOCK(mutex)
+#    define KIT_BLOCK_ALLOCATOR_SHARED_LOCK(mutex)
+#endif
+
 // This is a block allocator whose roll is to 1: speed up single allocations and 2: improve contiguity, which is
 // guaranteed up to the amount of chunks per block (each chunk represents an allocated object)
 template <typename T> class KIT_API BlockAllocator final
@@ -25,7 +33,7 @@ template <typename T> class KIT_API BlockAllocator final
 
     T *Allocate() KIT_NOEXCEPT
     {
-        std::scoped_lock lock(m_Mutex);
+        KIT_BLOCK_ALLOCATOR_UNIQUE_LOCK(m_Mutex);
         ++m_Allocations;
         if (m_FreeList)
             return fromNextFreeChunk();
@@ -36,7 +44,7 @@ template <typename T> class KIT_API BlockAllocator final
     {
         KIT_ASSERT(!Empty(), "The current allocator has no active allocations yet");
         KIT_ASSERT(Owns(p_Ptr), "Trying to deallocate a pointer that was not allocated by this allocator");
-        std::scoped_lock lock(m_Mutex);
+        KIT_BLOCK_ALLOCATOR_UNIQUE_LOCK(m_Mutex);
         --m_Allocations;
         Chunk *chunk = reinterpret_cast<Chunk *>(p_Ptr);
         chunk->Next = m_FreeList;
@@ -60,7 +68,7 @@ template <typename T> class KIT_API BlockAllocator final
 
     bool Owns(const T *p_Ptr) const KIT_NOEXCEPT
     {
-        std::shared_lock lock(m_Mutex);
+        KIT_BLOCK_ALLOCATOR_SHARED_LOCK(m_Mutex);
         const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
         for (const std::byte *block : m_Blocks)
             if (ptr >= block && ptr < block + m_BlockSize)
@@ -151,7 +159,9 @@ template <typename T> class KIT_API BlockAllocator final
     usz m_BlockSize;
     Chunk *m_FreeList = nullptr;
     DynamicArray<std::byte *> m_Blocks;
+#ifdef KIT_BLOCK_ALLOCATOR_THREAD_SAFE
     mutable std::shared_mutex m_Mutex;
+#endif
 };
 
 KIT_NAMESPACE_END

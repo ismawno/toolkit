@@ -27,6 +27,23 @@ class KIT_API Timespan
         }
     }
 
+    template <Numeric T = u64> T AsNanoseconds() const KIT_NOEXCEPT
+    {
+        return As<Nanoseconds, T>();
+    }
+    template <Numeric T = f32> T AsMicroseconds() const KIT_NOEXCEPT
+    {
+        return As<Microseconds, T>();
+    }
+    template <Numeric T = f32> T AsMilliseconds() const KIT_NOEXCEPT
+    {
+        return As<Milliseconds, T>();
+    }
+    template <Numeric T = f32> T AsSeconds() const KIT_NOEXCEPT
+    {
+        return As<Seconds, T>();
+    }
+
     template <typename TimeUnit, Numeric T> static Timespan From(const T p_Elapsed) KIT_NOEXCEPT
     {
         return Timespan(std::chrono::duration<T, typename TimeUnit::period>(p_Elapsed));
@@ -47,20 +64,20 @@ class KIT_API Timespan
 
     template <Numeric T> friend Timespan operator*(const T scalar, const Timespan &timespan)
     {
-        return Timespan(std::chrono::round<nanoseconds>(timespan.m_Elapsed * scalar));
+        return Timespan(std::chrono::round<Timespan::Nanoseconds>(timespan.m_Elapsed * scalar));
     }
     template <Numeric T> friend Timespan operator/(const T scalar, const Timespan &timespan)
     {
-        return Timespan(std::chrono::round<nanoseconds>(scalar / timespan.m_elapsed));
+        return Timespan(std::chrono::round<Timespan::Nanoseconds>(scalar / timespan.m_Elapsed));
     }
 
     template <Numeric T> friend Timespan operator*(const Timespan &timespan, const T scalar)
     {
-        return Timespan(std::chrono::round<nanoseconds>(timespan.m_Elapsed * scalar));
+        return Timespan(std::chrono::round<Timespan::Nanoseconds>(timespan.m_Elapsed * scalar));
     }
     template <Numeric T> friend Timespan operator/(const Timespan &timespan, const T scalar)
     {
-        return Timespan(std::chrono::round<nanoseconds>(timespan.m_Elapsed / scalar));
+        return Timespan(std::chrono::round<Timespan::Nanoseconds>(timespan.m_Elapsed / scalar));
     }
 
     Timespan &operator+=(const Timespan &other);

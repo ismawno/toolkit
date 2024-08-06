@@ -6,6 +6,9 @@ set(SOURCES
     src/logging/logging.cpp
     src/core/pch.cpp
     src/memory/memory.cpp
+    src/profiling/clock.cpp
+    src/profiling/profiler.cpp
+    src/profiling/timespan.cpp
 )
 
 # Create the library
@@ -43,4 +46,12 @@ endif()
 
 if (TOOLKIT_ENABLE_LOG_COLORS)
     target_compile_definitions(toolkit PUBLIC KIT_ENABLE_LOG_COLORS)
+endif()
+
+if (TOOLKIT_DISABLE_BLOCK_ALLOCATOR)
+    target_compile_definitions(toolkit PUBLIC KIT_DISABLE_BLOCK_ALLOCATOR)
+endif()
+
+if (TOOLKIT_BLOCK_ALLOCATOR_THREAD_SAFE)
+    target_compile_definitions(toolkit PUBLIC KIT_BLOCK_ALLOCATOR_THREAD_SAFE)
 endif()

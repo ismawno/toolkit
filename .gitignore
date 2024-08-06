@@ -1,6 +1,7 @@
 # Toolkit
 .vscode/
 build/
+performance/results
 
 # Prerequisites
 *.d
