@@ -28,7 +28,7 @@ else()
     option(TOOLKIT_ENABLE_ASSERTS "Enable asserts" ON)
     option(TOOLKIT_ENABLE_LOG_COLORS "Enable log colors" ON)
 endif()
-option(TOOLKIT_DISABLE_BLOCK_ALLOCATOR "Enable block allocations" ON)
+option(TOOLKIT_DISABLE_BLOCK_ALLOCATOR "Enable block allocations" OFF)
 option(TOOLKIT_BLOCK_ALLOCATOR_THREAD_SAFE "Enable block allocations to be thread safe" ON)
 
 if (TOOLKIT_BUILD_BENCHMARKS AND (NOT CMAKE_BUILD_TYPE STREQUAL "Dist"))
