@@ -2,6 +2,8 @@
 .vscode/
 build/
 performance/results
+performance/reports
+.venv/
 
 # Prerequisites
 *.d

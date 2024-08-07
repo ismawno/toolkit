@@ -39,6 +39,19 @@ if (TOOLKIT_BUILD_BENCHMARKS AND (TOOLKIT_ENABLE_INFO_LOGS OR TOOLKIT_ENABLE_WAR
     message(WARNING "Building benchamrks with asserts/logs enabled! Results may not be representative")
 endif()
 
+# Print all options
+message(STATUS "TOOLKIT: Some of the following options may be overriden by other targets")
+message(STATUS "TOOLKIT: Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "TOOLKIT: Build tests: ${TOOLKIT_BUILD_TESTS}")
+message(STATUS "TOOLKIT: Build benchmarks: ${TOOLKIT_BUILD_BENCHMARKS}")
+message(STATUS "TOOLKIT: Enable info logs: ${TOOLKIT_ENABLE_INFO_LOGS}")
+message(STATUS "TOOLKIT: Enable warning logs: ${TOOLKIT_ENABLE_WARNING_LOGS}")
+message(STATUS "TOOLKIT: Enable asserts: ${TOOLKIT_ENABLE_ASSERTS}")
+message(STATUS "TOOLKIT: Enable log colors: ${TOOLKIT_ENABLE_LOG_COLORS}")
+message(STATUS "TOOLKIT: Disable block allocator: ${TOOLKIT_DISABLE_BLOCK_ALLOCATOR}")
+message(STATUS "TOOLKIT: Block allocator thread safe: ${TOOLKIT_BLOCK_ALLOCATOR_THREAD_SAFE}")
+
+
 # Save options to cache (currently commented out because it just annoys me)
 # set(TOOLKIT_BUILD_TESTS ${TOOLKIT_BUILD_TESTS} CACHE BOOL "Build the tests")
 # set(TOOLKIT_ENABLE_INFO_LOGS ${TOOLKIT_ENABLE_INFO_LOGS} CACHE BOOL "Enable info logs")
