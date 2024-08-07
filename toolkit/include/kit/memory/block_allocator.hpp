@@ -74,9 +74,9 @@ template <typename T> class KIT_API BlockAllocator final
 
     void Deallocate(T *p_Ptr) KIT_NOEXCEPT
     {
-        KIT_BLOCK_ALLOCATOR_UNIQUE_LOCK(m_Mutex);
         KIT_ASSERT(!Empty(), "The current allocator has no active allocations yet");
         KIT_ASSERT(Owns(p_Ptr), "Trying to deallocate a pointer that was not allocated by this allocator");
+        KIT_BLOCK_ALLOCATOR_UNIQUE_LOCK(m_Mutex);
 
         --m_Allocations;
         Chunk *chunk = reinterpret_cast<Chunk *>(p_Ptr);
