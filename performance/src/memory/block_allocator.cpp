@@ -111,9 +111,9 @@ void RunBlockAllocatorBenchmarks(const BenchmarkSettings &p_Settings)
     std::ofstream traversal{s_Directory.string() + "/traversal.csv"};
     std::ofstream deallocations{s_Directory.string() + "/deallocation.csv"};
 
-    allocations << "allocations,block,malloc\n";
-    traversal << "traversals,block,malloc\n";
-    deallocations << "deallocations,block,malloc\n";
+    allocations << "allocations,block (ms),malloc (ms)\n";
+    traversal << "traversals,block (ms),malloc (ms)\n";
+    deallocations << "deallocations,block (ms),malloc (ms)\n";
 
     for (usz passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
     {
