@@ -31,10 +31,9 @@ template <typename T> class KIT_API BlockAllocator final
     {
     }
 
-    BlockAllocator(BlockAllocator &&p_Other) KIT_NOEXCEPT : m_Allocations(p_Other.m_Allocations),
-                                                            m_BlockSize(p_Other.m_BlockSize),
-                                                            m_FreeList(p_Other.m_FreeList),
-                                                            m_Blocks(std::move(p_Other.m_Blocks))
+    BlockAllocator(BlockAllocator &&p_Other) noexcept
+        : m_Allocations(p_Other.m_Allocations), m_BlockSize(p_Other.m_BlockSize), m_FreeList(p_Other.m_FreeList),
+          m_Blocks(std::move(p_Other.m_Blocks))
     {
         p_Other.m_Allocations = 0;
         p_Other.m_FreeList = nullptr;
@@ -47,7 +46,7 @@ template <typename T> class KIT_API BlockAllocator final
             DeallocateAligned(block);
     }
 
-    BlockAllocator &operator=(BlockAllocator &&p_Other) KIT_NOEXCEPT
+    BlockAllocator &operator=(BlockAllocator &&p_Other) noexcept
     {
         if (this != &p_Other)
         {
