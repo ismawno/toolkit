@@ -31,6 +31,38 @@ template <typename T> class KIT_API BlockAllocator final
     {
     }
 
+    BlockAllocator(BlockAllocator &&p_Other) KIT_NOEXCEPT : m_Allocations(p_Other.m_Allocations),
+                                                            m_BlockSize(p_Other.m_BlockSize),
+                                                            m_FreeList(p_Other.m_FreeList),
+                                                            m_Blocks(std::move(p_Other.m_Blocks))
+    {
+        p_Other.m_Allocations = 0;
+        p_Other.m_FreeList = nullptr;
+        p_Other.m_Blocks.clear();
+    }
+
+    ~BlockAllocator() KIT_NOEXCEPT
+    {
+        for (std::byte *block : m_Blocks)
+            DeallocateAligned(block);
+    }
+
+    BlockAllocator &operator=(BlockAllocator &&p_Other) KIT_NOEXCEPT
+    {
+        if (this != &p_Other)
+        {
+            m_Allocations = p_Other.m_Allocations;
+            m_BlockSize = p_Other.m_BlockSize;
+            m_FreeList = p_Other.m_FreeList;
+            m_Blocks = std::move(p_Other.m_Blocks);
+
+            p_Other.m_Allocations = 0;
+            p_Other.m_FreeList = nullptr;
+            p_Other.m_Blocks.clear();
+        }
+        return *this;
+    }
+
     T *Allocate() KIT_NOEXCEPT
     {
         KIT_BLOCK_ALLOCATOR_UNIQUE_LOCK(m_Mutex);
@@ -42,9 +74,10 @@ template <typename T> class KIT_API BlockAllocator final
 
     void Deallocate(T *p_Ptr) KIT_NOEXCEPT
     {
+        KIT_BLOCK_ALLOCATOR_UNIQUE_LOCK(m_Mutex);
         KIT_ASSERT(!Empty(), "The current allocator has no active allocations yet");
         KIT_ASSERT(Owns(p_Ptr), "Trying to deallocate a pointer that was not allocated by this allocator");
-        KIT_BLOCK_ALLOCATOR_UNIQUE_LOCK(m_Mutex);
+
         --m_Allocations;
         Chunk *chunk = reinterpret_cast<Chunk *>(p_Ptr);
         chunk->Next = m_FreeList;
