@@ -4,6 +4,7 @@ build/
 performance/results
 performance/reports
 .venv/
+.DS_Store
 
 # Prerequisites
 *.d
