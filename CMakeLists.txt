@@ -39,12 +39,12 @@ if (TOOLKIT_BUILD_BENCHMARKS AND (TOOLKIT_ENABLE_INFO_LOGS OR TOOLKIT_ENABLE_WAR
     message(WARNING "Building benchamrks with asserts/logs enabled! Results may not be representative")
 endif()
 
-# Save options to cache
-set(TOOLKIT_BUILD_TESTS ${TOOLKIT_BUILD_TESTS} CACHE BOOL "Build the tests")
-set(TOOLKIT_ENABLE_INFO_LOGS ${TOOLKIT_ENABLE_INFO_LOGS} CACHE BOOL "Enable info logs")
-set(TOOLKIT_ENABLE_WARNING_LOGS ${TOOLKIT_ENABLE_WARNING_LOGS} CACHE BOOL "Enable warning logs")
-set(TOOLKIT_ENABLE_ASSERTS ${TOOLKIT_ENABLE_ASSERTS} CACHE BOOL "Enable asserts")
-set(TOOLKIT_ENABLE_LOG_COLORS ${TOOLKIT_ENABLE_LOG_COLORS} CACHE BOOL "Enable log colors")
+# Save options to cache (currently commented out because it just annoys me)
+# set(TOOLKIT_BUILD_TESTS ${TOOLKIT_BUILD_TESTS} CACHE BOOL "Build the tests")
+# set(TOOLKIT_ENABLE_INFO_LOGS ${TOOLKIT_ENABLE_INFO_LOGS} CACHE BOOL "Enable info logs")
+# set(TOOLKIT_ENABLE_WARNING_LOGS ${TOOLKIT_ENABLE_WARNING_LOGS} CACHE BOOL "Enable warning logs")
+# set(TOOLKIT_ENABLE_ASSERTS ${TOOLKIT_ENABLE_ASSERTS} CACHE BOOL "Enable asserts")
+# set(TOOLKIT_ENABLE_LOG_COLORS ${TOOLKIT_ENABLE_LOG_COLORS} CACHE BOOL "Enable log colors")
 
 # Define linker flags for custom configurations. I dont really know what I'm doing here
 set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG}" CACHE STRING "Linker flags for Debug configuration")

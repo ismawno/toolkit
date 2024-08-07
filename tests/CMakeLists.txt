@@ -12,12 +12,12 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../toolkit/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(SOURCES
-    memory/block_allocator.cpp
-    container/static_array.cpp
-    container/hashable_tuple.cpp
+    src/memory/block_allocator.cpp
+    src/container/static_array.cpp
+    src/container/hashable_tuple.cpp
 )
 
 add_executable(toolkit-tests ${SOURCES})
