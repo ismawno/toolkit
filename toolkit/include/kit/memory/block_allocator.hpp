@@ -20,7 +20,7 @@ KIT_NAMESPACE_BEGIN
 #    define KIT_BLOCK_ALLOCATOR_SHARED_LOCK(mutex)
 #endif
 
-// This is a block allocator whose roll is to 1: speed up single allocations and 2: improve contiguity, which is
+// This is a block allocator whose role is to 1: speed up single allocations and 2: improve contiguity, which is
 // guaranteed up to the amount of chunks per block (each chunk represents an allocated object)
 template <typename T> class KIT_API BlockAllocator final
 {
@@ -33,17 +33,24 @@ template <typename T> class KIT_API BlockAllocator final
 
     BlockAllocator(BlockAllocator &&p_Other) noexcept
         : m_Allocations(p_Other.m_Allocations), m_BlockSize(p_Other.m_BlockSize), m_FreeList(p_Other.m_FreeList),
-          m_Blocks(std::move(p_Other.m_Blocks))
+          m_BlockTail(p_Other.m_BlockTail)
     {
         p_Other.m_Allocations = 0;
         p_Other.m_FreeList = nullptr;
-        p_Other.m_Blocks.clear();
+        p_Other.m_BlockTail = nullptr;
     }
 
     ~BlockAllocator() KIT_NOEXCEPT
     {
-        for (std::byte *block : m_Blocks)
-            DeallocateAligned(block);
+        // The destruction of the block allocator should happen serially
+        Block *blockTail = m_BlockTail.load(std::memory_order_acquire);
+        while (blockTail)
+        {
+            Block *prev = blockTail->Prev;
+            DeallocateAligned(blockTail->Data);
+            delete blockTail;
+            blockTail = prev;
+        }
     }
 
     BlockAllocator &operator=(BlockAllocator &&p_Other) noexcept
@@ -53,34 +60,35 @@ template <typename T> class KIT_API BlockAllocator final
             m_Allocations = p_Other.m_Allocations;
             m_BlockSize = p_Other.m_BlockSize;
             m_FreeList = p_Other.m_FreeList;
-            m_Blocks = std::move(p_Other.m_Blocks);
+            m_BlockTail = p_Other.m_BlockTail;
 
             p_Other.m_Allocations = 0;
             p_Other.m_FreeList = nullptr;
-            p_Other.m_Blocks.clear();
+            p_Other.m_BlockTail = nullptr;
         }
         return *this;
     }
 
     T *Allocate() KIT_NOEXCEPT
     {
-        KIT_BLOCK_ALLOCATOR_UNIQUE_LOCK(m_Mutex);
-        ++m_Allocations;
-        if (m_FreeList)
-            return fromNextFreeChunk();
-        return fromFirstChunkOfNewBlock();
+        m_Allocations.fetch_add(1, std::memory_order_relaxed);
+        return allocateCAS(m_FreeList.load(std::memory_order_acquire));
     }
 
     void Deallocate(T *p_Ptr) KIT_NOEXCEPT
     {
         KIT_ASSERT(!Empty(), "The current allocator has no active allocations yet");
         KIT_ASSERT(Owns(p_Ptr), "Trying to deallocate a pointer that was not allocated by this allocator");
-        KIT_BLOCK_ALLOCATOR_UNIQUE_LOCK(m_Mutex);
 
-        --m_Allocations;
+        m_Allocations.fetch_sub(1, std::memory_order_relaxed);
         Chunk *chunk = reinterpret_cast<Chunk *>(p_Ptr);
-        chunk->Next = m_FreeList;
-        m_FreeList = chunk;
+        Chunk *freeList = m_FreeList.load(std::memory_order_acquire);
+        while (true)
+        {
+            chunk->Next = freeList;
+            if (m_FreeList.compare_exchange_weak(freeList, chunk, std::memory_order_release, std::memory_order_acquire))
+                return;
+        }
     }
 
     template <typename... Args> T *Construct(Args &&...p_Args) KIT_NOEXCEPT
@@ -102,12 +110,14 @@ template <typename T> class KIT_API BlockAllocator final
     // the memory block of the allocator
     bool Owns(const T *p_Ptr) const KIT_NOEXCEPT
     {
-        KIT_BLOCK_ALLOCATOR_SHARED_LOCK(m_Mutex);
         const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
-        for (const std::byte *block : m_Blocks)
-            if (ptr >= block && ptr < block + m_BlockSize)
+        Block *block = m_BlockTail.load(std::memory_order_acquire);
+        while (block)
+        {
+            if (ptr >= block->Data && ptr < block->Data + m_BlockSize)
                 return true;
-        return false;
+            block = block->Prev;
+        }
     }
 
     usz BlockSize() const KIT_NOEXCEPT
@@ -116,7 +126,7 @@ template <typename T> class KIT_API BlockAllocator final
     }
     usz BlockCount() const KIT_NOEXCEPT
     {
-        return m_Blocks.size();
+        return m_BlockCount.load(std::memory_order_relaxed);
     }
 
     usz ChunksPerBlock() const KIT_NOEXCEPT
@@ -130,11 +140,11 @@ template <typename T> class KIT_API BlockAllocator final
 
     bool Empty() const KIT_NOEXCEPT
     {
-        return m_Allocations == 0;
+        return m_Allocations.load(std::memory_order_relaxed) == 0;
     }
     u32 Allocations() const KIT_NOEXCEPT
     {
-        return m_Allocations;
+        return m_Allocations.load(std::memory_order_relaxed);
     }
 
   private:
@@ -143,15 +153,25 @@ template <typename T> class KIT_API BlockAllocator final
     {
         Chunk *Next = nullptr;
     };
-
-    T *fromFirstChunkOfNewBlock() KIT_NOEXCEPT
+    struct Block
     {
+        std::byte *Data = nullptr;
+        Block *Prev = nullptr;
+    };
+
+    T *allocateCAS(Chunk *p_FreeList) KIT_NOEXCEPT
+    {
+        // This while loop attempts to allocate from an existing block
+        while (p_FreeList)
+            if (m_FreeList.compare_exchange_weak(p_FreeList, p_FreeList->Next, std::memory_order_release,
+                                                 std::memory_order_acquire))
+                return reinterpret_cast<T *>(p_FreeList);
+        // If, at some point in time, the free list is empty, we allocate a new block
+
         const usz chunkSize = alignedSize();
         const usz align = alignment();
 
         std::byte *data = reinterpret_cast<std::byte *>(AllocateAligned(m_BlockSize, align));
-        m_FreeList = reinterpret_cast<Chunk *>(data + chunkSize);
-
         const usz chunksPerBlock = m_BlockSize / chunkSize;
         for (usz i = 0; i < chunksPerBlock - 1; ++i)
         {
@@ -161,15 +181,31 @@ template <typename T> class KIT_API BlockAllocator final
         Chunk *last = reinterpret_cast<Chunk *>(data + (chunksPerBlock - 1) * chunkSize);
         last->Next = nullptr;
 
-        m_Blocks.push_back(data);
-        return reinterpret_cast<T *>(data);
-    }
+        // Once the block has been allocated, much stuff may have happened in between. We need to check if the free list
+        // is still nullptr, and if it is, we set it to the new block. If it is not, we have to revert the allocation
+        // and try again
+        if (Chunk *possibleFreeList = reinterpret_cast<Chunk *>(data + chunkSize); !m_FreeList.compare_exchange_strong(
+                p_FreeList, possibleFreeList, std::memory_order_release, std::memory_order_acquire))
+        {
+            DeallocateAligned(data);
+            return allocateCAS(p_FreeList);
+        }
 
-    T *fromNextFreeChunk() KIT_NOEXCEPT
-    {
-        Chunk *chunk = m_FreeList;
-        m_FreeList = chunk->Next;
-        return reinterpret_cast<T *>(chunk);
+        // Free list is updated, so that is sorted. Now we need to create and add the new block to the list of blocks
+        // This use of new is not that great
+        Block *newBlock = new Block;
+        newBlock->Data = data;
+        Block *blockTail = m_BlockTail.load(std::memory_order_acquire);
+        while (true)
+        {
+            newBlock->Prev = blockTail;
+            if (m_BlockTail.compare_exchange_weak(blockTail, newBlock, std::memory_order_release,
+                                                  std::memory_order_acquire))
+                reinterpret_cast<T *>(data);
+        }
+
+        // Unreachable lol
+        return nullptr;
     }
 
     constexpr usz alignedSize() const KIT_NOEXCEPT
@@ -188,14 +224,11 @@ template <typename T> class KIT_API BlockAllocator final
             return alignof(T);
     }
 
-    // Could be an atomic, but all operations I perform with it are locked, so I guess it's fine
-    u32 m_Allocations = 0;
+    std::atomic<u32> m_Allocations = 0;
+    std::atomic<u32> m_BlockCount = 0;
+    std::atomic<Block *> m_BlockTail = nullptr;
+    std::atomic<Chunk *> m_FreeList = nullptr;
     usz m_BlockSize;
-    Chunk *m_FreeList = nullptr;
-    DynamicArray<std::byte *> m_Blocks;
-#ifdef KIT_BLOCK_ALLOCATOR_THREAD_SAFE
-    mutable std::shared_mutex m_Mutex;
-#endif
 };
 
 KIT_NAMESPACE_END
