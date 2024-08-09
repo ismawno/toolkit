@@ -176,7 +176,7 @@ template <typename T> void RunMultithreadedAllocatorTests()
     SECTION("Multithreaded allocations")
     {
         const auto allocate = []() {
-            constexpr usz amount = 1000;
+            constexpr usz amount = 100;
             const BlockAllocator<T> &allocator = T::s_Allocator;
             thread_local std::array<T *, amount> data{};
             for (usz i = 0; i < amount; ++i)
@@ -187,6 +187,13 @@ template <typename T> void RunMultithreadedAllocatorTests()
             }
             for (usz i = 0; i < amount; ++i)
                 delete data[i];
+            for (usz i = 0; i < amount; ++i)
+            {
+                data[i] = new T;
+                REQUIRE(data[i] != nullptr);
+                REQUIRE(allocator.Owns(data[i]));
+                delete data[i];
+            }
         };
 
         constexpr usz threadCount = 8;
