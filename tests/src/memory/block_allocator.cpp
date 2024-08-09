@@ -6,7 +6,7 @@
 
 KIT_NAMESPACE_BEGIN
 
-template <typename T> void RunBasicAllocatorTest(BlockAllocator<T> &allocator)
+template <typename T> static void RunBasicAllocatorTest(BlockAllocator<T> &allocator)
 {
     const usz chunkSize = sizeof(T) < sizeof(void *) ? sizeof(void *) : sizeof(T);
     const usz blockSize = chunkSize * 10;
@@ -22,7 +22,7 @@ template <typename T> void RunBasicAllocatorTest(BlockAllocator<T> &allocator)
     REQUIRE_THROWS(Deallocate(null));
 }
 
-template <typename T> void RunRawAllocationTest()
+template <typename T> static void RunRawAllocationTest()
 {
     REQUIRE(sizeof(T) % alignof(T) == 0);
     BlockAllocator<T> allocator(10);
@@ -88,7 +88,7 @@ template <typename T> void RunRawAllocationTest()
     }
 }
 
-template <typename T> void RunNewDeleteTest()
+template <typename T> static void RunNewDeleteTest()
 {
     const BlockAllocator<T> &allocator = T::s_Allocator;
 
@@ -171,7 +171,8 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
     }
 }
 
-template <typename T> void RunMultithreadedAllocatorTests()
+#ifdef KIT_BLOCK_ALLOCATOR_THREAD_SAFE
+template <typename T> static void RunMultithreadedAllocatorTests()
 {
     SECTION("Multithreaded allocations")
     {
@@ -204,24 +205,28 @@ template <typename T> void RunMultithreadedAllocatorTests()
             t.join();
     }
 }
+#    define RUN_MULTITHREADED_TESTS(Type) RunMultithreadedAllocatorTests<Type>()
+#else
+#    define RUN_MULTITHREADED_TESTS(Type)
+#endif
 
 TEST_CASE("Block allocator deals with small data", "[block_allocator][small]")
 {
     RunRawAllocationTest<SmallData>();
     RunNewDeleteTest<SmallData>();
-    RunMultithreadedAllocatorTests<SmallData>();
+    RUN_MULTITHREADED_TESTS(SmallData);
 }
 TEST_CASE("Block allocator deals with big data", "[block_allocator][big]")
 {
     RunRawAllocationTest<BigData>();
     RunNewDeleteTest<BigData>();
-    RunMultithreadedAllocatorTests<BigData>();
+    RUN_MULTITHREADED_TESTS(BigData);
 }
 TEST_CASE("Block allocator deals with aligned data", "[block_allocator][aligned]")
 {
     RunRawAllocationTest<AlignedData>();
     RunNewDeleteTest<AlignedData>();
-    RunMultithreadedAllocatorTests<AlignedData>();
+    RUN_MULTITHREADED_TESTS(AlignedData);
 }
 TEST_CASE("Block allocator deals with non trivial data", "[block_allocator][nont trivial]")
 {
