@@ -98,6 +98,8 @@ template <typename T> class KIT_API BlockAllocator final
         Deallocate(p_Ptr);
     }
 
+    // This method is not infallible. Deallocated pointers from this allocator will still return true, as they lay in
+    // the memory block of the allocator
     bool Owns(const T *p_Ptr) const KIT_NOEXCEPT
     {
         KIT_BLOCK_ALLOCATOR_SHARED_LOCK(m_Mutex);
