@@ -25,10 +25,11 @@ template <typename T> class KIT_API BlockAllocator final
     {
     }
 
-    BlockAllocator(BlockAllocator &&p_Other) noexcept
-        : m_Allocations(std::move(p_Other.m_Allocations)), m_BlockSize(p_Other.m_BlockSize),
-          m_BlockChunkData(std::move(p_Other.m_BlockChunkData))
+    BlockAllocator(BlockAllocator &&p_Other) noexcept : m_BlockSize(p_Other.m_BlockSize)
     {
+        m_Allocations.store(p_Other.m_Allocations.load(std::memory_order_relaxed), std::memory_order_relaxed);
+        m_BlockChunkData.store(p_Other.m_BlockChunkData.load(std::memory_order_relaxed), std::memory_order_relaxed);
+
         p_Other.m_Allocations.store(0, std::memory_order_relaxed);
         p_Other.m_BlockChunkData.store({}, std::memory_order_relaxed);
     }
@@ -50,9 +51,9 @@ template <typename T> class KIT_API BlockAllocator final
     {
         if (this != &p_Other)
         {
-            m_Allocations = std::move(p_Other.m_Allocations);
+            m_Allocations.store(p_Other.m_Allocations.load(std::memory_order_relaxed), std::memory_order_relaxed);
+            m_BlockChunkData.store(p_Other.m_BlockChunkData.load(std::memory_order_relaxed), std::memory_order_relaxed);
             m_BlockSize = p_Other.m_BlockSize;
-            m_BlockChunkData = std::move(p_Other.m_BlockChunkData);
 
             p_Other.m_Allocations.store(0, std::memory_order_relaxed);
             p_Other.m_BlockChunkData.store({}, std::memory_order_relaxed);
