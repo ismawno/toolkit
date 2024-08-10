@@ -1,6 +1,6 @@
 # Toolkit
 .vscode/
-build/
+build*/
 performance/results
 performance/reports
 .venv/
