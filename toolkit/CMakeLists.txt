@@ -53,8 +53,8 @@ if (TOOLKIT_SILENT_ASSERTS)
     target_compile_definitions(toolkit PUBLIC KIT_SILENT_ASSERTS)
 endif()
 
-if (TOOLKIT_ENABLE_THROW)
-    target_compile_definitions(toolkit PUBLIC KIT_ENABLE_THROW)
+if (TOOLKIT_ENABLE_EXCEPTIONS)
+    target_compile_definitions(toolkit PUBLIC KIT_ENABLE_EXCEPTIONS)
 endif()
 
 if (TOOLKIT_DISABLE_BLOCK_ALLOCATOR)

@@ -47,7 +47,7 @@ void logMessageIf(bool condition, const char *p_Level, std::string_view p_File, 
 
 KIT_NAMESPACE_END
 
-#ifdef KIT_ENABLE_THROW
+#ifdef KIT_ENABLE_EXCEPTIONS
 #    define KIT_CRASH(msg) throw std::runtime_error(msg)
 #else
 #    define KIT_CRASH(msg) KIT_NAMESPACE_NAME::debugBreak()

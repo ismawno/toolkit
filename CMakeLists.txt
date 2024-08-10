@@ -30,7 +30,7 @@ else()
 endif()
 
 option(TOOLKIT_SILENT_ASSERTS "Silence asserts" OFF)
-option(TOOLKIT_ENABLE_THROW "Enable exceptions" OFF)
+option(TOOLKIT_ENABLE_EXCEPTIONS "Enable exceptions" OFF)
 option(TOOLKIT_DISABLE_BLOCK_ALLOCATOR "Enable block allocations" OFF)
 option(TOOLKIT_BLOCK_ALLOCATOR_THREAD_SAFE "Enable block allocations to be thread safe" ON)
 
@@ -52,7 +52,7 @@ message(STATUS "TOOLKIT: Enable warning logs: ${TOOLKIT_ENABLE_WARNING_LOGS}")
 message(STATUS "TOOLKIT: Enable asserts: ${TOOLKIT_ENABLE_ASSERTS}")
 message(STATUS "TOOLKIT: Enable log colors: ${TOOLKIT_ENABLE_LOG_COLORS}")
 message(STATUS "TOOLKIT: Silent asserts: ${TOOLKIT_SILENT_ASSERTS}")
-message(STATUS "TOOLKIT: Enable exceptions: ${TOOLKIT_ENABLE_THROW}")
+message(STATUS "TOOLKIT: Enable exceptions: ${TOOLKIT_ENABLE_EXCEPTIONS}")
 message(STATUS "TOOLKIT: Disable block allocator: ${TOOLKIT_DISABLE_BLOCK_ALLOCATOR}")
 message(STATUS "TOOLKIT: Block allocator thread safe: ${TOOLKIT_BLOCK_ALLOCATOR_THREAD_SAFE}")
 
