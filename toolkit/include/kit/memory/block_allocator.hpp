@@ -26,18 +26,17 @@ template <typename T> class KIT_API BlockAllocator final
     }
 
     BlockAllocator(BlockAllocator &&p_Other) noexcept
-        : m_Allocations(p_Other.m_Allocations), m_BlockSize(p_Other.m_BlockSize), m_FreeList(p_Other.m_FreeList),
-          m_BlockTail(p_Other.m_BlockTail)
+        : m_Allocations(p_Other.m_Allocations), m_BlockSize(p_Other.m_BlockSize),
+          m_BlockChunkData(p_Other.m_BlockChunkData)
     {
         p_Other.m_Allocations = 0;
-        p_Other.m_FreeList = nullptr;
-        p_Other.m_BlockTail = nullptr;
+        p_Other.m_BlockChunkData = {};
     }
 
     ~BlockAllocator() KIT_NOEXCEPT
     {
         // The destruction of the block allocator should happen serially
-        Block *blockTail = m_BlockTail.load(std::memory_order_acquire);
+        Block *blockTail = m_BlockChunkData.load(std::memory_order_acquire).BlockTail;
         while (blockTail)
         {
             Block *prev = blockTail->Prev;
@@ -53,12 +52,10 @@ template <typename T> class KIT_API BlockAllocator final
         {
             m_Allocations = p_Other.m_Allocations;
             m_BlockSize = p_Other.m_BlockSize;
-            m_FreeList = p_Other.m_FreeList;
-            m_BlockTail = p_Other.m_BlockTail;
+            m_BlockChunkData = p_Other.m_BlockChunkData;
 
             p_Other.m_Allocations = 0;
-            p_Other.m_FreeList = nullptr;
-            p_Other.m_BlockTail = nullptr;
+            p_Other.m_BlockChunkData = {};
         }
         return *this;
     }
@@ -66,7 +63,7 @@ template <typename T> class KIT_API BlockAllocator final
     T *Allocate() KIT_NOEXCEPT
     {
         m_Allocations.fetch_add(1, std::memory_order_relaxed);
-        return allocateCAS(m_FreeList.load(std::memory_order_acquire));
+        return allocateCAS(m_BlockChunkData.load(std::memory_order_acquire));
     }
 
     void Deallocate(T *p_Ptr) KIT_NOEXCEPT
@@ -76,13 +73,15 @@ template <typename T> class KIT_API BlockAllocator final
 
         m_Allocations.fetch_sub(1, std::memory_order_relaxed);
         Chunk *chunk = reinterpret_cast<Chunk *>(p_Ptr);
-        Chunk *freeList = m_FreeList.load(std::memory_order_acquire);
-        while (true)
+
+        BlockChunkData oldData = m_BlockChunkData.load(std::memory_order_relaxed);
+        BlockChunkData newData;
+        do
         {
-            chunk->Next = freeList;
-            if (m_FreeList.compare_exchange_weak(freeList, chunk, std::memory_order_release, std::memory_order_acquire))
-                return;
-        }
+            chunk->Next = oldData.FreeList;
+            newData = {oldData.BlockTail, chunk};
+        } while (!m_BlockChunkData.compare_exchange_weak(oldData, newData, std::memory_order_release,
+                                                         std::memory_order_acquire));
     }
 
     template <typename... Args> T *Construct(Args &&...p_Args) KIT_NOEXCEPT
@@ -105,7 +104,7 @@ template <typename T> class KIT_API BlockAllocator final
     bool Owns(const T *p_Ptr) const KIT_NOEXCEPT
     {
         const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
-        Block *block = m_BlockTail.load(std::memory_order_acquire);
+        Block *block = m_BlockChunkData.load(std::memory_order_acquire).BlockTail;
         while (block)
         {
             if (ptr >= block->Data && ptr < block->Data + m_BlockSize)
@@ -143,7 +142,7 @@ template <typename T> class KIT_API BlockAllocator final
     }
 
   private:
-    // Important: A chunk must be at least sizeof(void *), so allocations have a minimum size of sizeof(void *)
+    // Important: A chunk must be at least sizeof(void *), so Chunk objects fit in the memory block of the allocator
     struct Chunk
     {
         Chunk *Next = nullptr;
@@ -153,14 +152,22 @@ template <typename T> class KIT_API BlockAllocator final
         std::byte *Data = nullptr;
         Block *Prev = nullptr;
     };
+    struct BlockChunkData
+    {
+        Block *BlockTail = nullptr;
+        Chunk *FreeList = nullptr;
+    };
 
-    T *allocateCAS(Chunk *p_FreeList) KIT_NOEXCEPT
+    T *allocateCAS(BlockChunkData p_BlockChunkData) KIT_NOEXCEPT
     {
         // This while loop attempts to allocate from an existing block
-        while (p_FreeList)
-            if (m_FreeList.compare_exchange_weak(p_FreeList, p_FreeList->Next, std::memory_order_release,
-                                                 std::memory_order_acquire))
-                return reinterpret_cast<T *>(p_FreeList);
+        while (p_BlockChunkData.FreeList)
+        {
+            const BlockChunkData chunkData = {p_BlockChunkData.BlockTail, p_BlockChunkData.FreeList->Next};
+            if (m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, chunkData, std::memory_order_release,
+                                                       std::memory_order_acquire))
+                return reinterpret_cast<T *>(p_BlockChunkData.FreeList);
+        }
         // If, at some point in time, the free list is empty, we allocate a new block
 
         const usz chunkSize = alignedSize();
@@ -176,31 +183,26 @@ template <typename T> class KIT_API BlockAllocator final
         Chunk *last = reinterpret_cast<Chunk *>(data + (chunksPerBlock - 1) * chunkSize);
         last->Next = nullptr;
 
-        // Once the block has been allocated, much stuff may have happened in between. We need to check if the free list
-        // is still nullptr, and if it is, we set it to the new block. If it is not, we have to revert the allocation
-        // and try again
-        if (Chunk *possibleFreeList = reinterpret_cast<Chunk *>(data + chunkSize); !m_FreeList.compare_exchange_strong(
-                p_FreeList, possibleFreeList, std::memory_order_release, std::memory_order_acquire))
-        {
-            DeallocateAligned(data);
-            return allocateCAS(p_FreeList);
-        }
-
-        // Free list is updated, so that is sorted. Now we need to create and add the new block to the list of blocks
-        // This use of new is not that great
+        // Once the block has been allocated, a lot of stuff may have happened in between. We need to check if the free
+        // list or the block list have changed. If they have, we need to revert what we have done and try again. If they
+        // havent, we must update the block and free list simultaneously
         Block *newBlock = new Block;
         newBlock->Data = data;
-        Block *blockTail = m_BlockTail.load(std::memory_order_acquire);
-        while (true)
+        newBlock->Prev = p_BlockChunkData.BlockTail;
+
+        if (const BlockChunkData possibleData = {newBlock, reinterpret_cast<Chunk *>(data + chunkSize)};
+            !m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, possibleData, std::memory_order_release,
+                                                    std::memory_order_acquire))
         {
-            newBlock->Prev = blockTail;
-            if (m_BlockTail.compare_exchange_weak(blockTail, newBlock, std::memory_order_release,
-                                                  std::memory_order_acquire))
-                return reinterpret_cast<T *>(data);
+            // Another thread was quicker than us, we must deallocate the block and try again
+            DeallocateAligned(data);
+            delete newBlock;
+            return allocateCAS(p_BlockChunkData);
         }
 
-        // Unreachable lol
-        return nullptr;
+        // We were able to proceed! BlockTail and FreeList have been updated simultaneously
+        m_BlockCount.fetch_add(1, std::memory_order_relaxed);
+        return reinterpret_cast<T *>(data);
     }
 
     constexpr usz alignedSize() const KIT_NOEXCEPT
@@ -221,8 +223,7 @@ template <typename T> class KIT_API BlockAllocator final
 
     std::atomic<u32> m_Allocations = 0;
     std::atomic<u32> m_BlockCount = 0;
-    std::atomic<Block *> m_BlockTail = nullptr;
-    std::atomic<Chunk *> m_FreeList = nullptr;
+    std::atomic<BlockChunkData> m_BlockChunkData{};
     usz m_BlockSize;
 };
 #else

@@ -179,7 +179,7 @@ template <typename T> static void RunMultithreadedAllocatorTests()
         const auto allocate = []() {
             constexpr usz amount = 100;
             const BlockAllocator<T> &allocator = T::s_Allocator;
-            thread_local std::array<T *, amount> data{};
+            std::array<T *, amount> data{};
             for (usz i = 0; i < amount; ++i)
             {
                 data[i] = new T;
