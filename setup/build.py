@@ -219,6 +219,8 @@ def main() -> None:
     for section in cfg.sections():
         for key in cfg[section]:
             value = getattr(args, key.replace("-", "_"))
+            if isinstance(value, bool):
+                value = "ON" if value else "OFF"
             build_settings[key] = value if value is not None else cfg[section][key]
 
     cmake_map = create_cmake_parameters_map()
