@@ -44,7 +44,7 @@ void logMessage(const char *p_Level, const std::string_view p_File, const i32 p_
     std::cout << log;
     if (p_Crash)
     {
-        KIT_CRASH(p_Message);
+        KIT_CRASH(std::string(p_Message));
     }
 }
 KIT_WARNING_IGNORE_POP
