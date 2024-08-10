@@ -25,6 +25,8 @@ if (UNIX AND NOT APPLE)
     target_link_libraries(toolkit PUBLIC fmt::fmt)
 endif()
 
+target_link_libraries(toolkit PRIVATE atomic)
+
 # Include directories for the library
 target_include_directories(toolkit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(toolkit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
