@@ -26,17 +26,17 @@ template <typename T> class KIT_API BlockAllocator final
     }
 
     BlockAllocator(BlockAllocator &&p_Other) noexcept
-        : m_Allocations(p_Other.m_Allocations), m_BlockSize(p_Other.m_BlockSize),
-          m_BlockChunkData(p_Other.m_BlockChunkData)
+        : m_Allocations(std::move(p_Other.m_Allocations)), m_BlockSize(p_Other.m_BlockSize),
+          m_BlockChunkData(std::move(p_Other.m_BlockChunkData))
     {
-        p_Other.m_Allocations = 0;
-        p_Other.m_BlockChunkData = {};
+        p_Other.m_Allocations.store(0, std::memory_order_relaxed);
+        p_Other.m_BlockChunkData.store({}, std::memory_order_relaxed);
     }
 
     ~BlockAllocator() KIT_NOEXCEPT
     {
         // The destruction of the block allocator should happen serially
-        Block *blockTail = m_BlockChunkData.load(std::memory_order_acquire).BlockTail;
+        Block *blockTail = m_BlockChunkData.load(std::memory_order_relaxed).BlockTail;
         while (blockTail)
         {
             Block *prev = blockTail->Prev;
@@ -50,12 +50,12 @@ template <typename T> class KIT_API BlockAllocator final
     {
         if (this != &p_Other)
         {
-            m_Allocations = p_Other.m_Allocations;
+            m_Allocations = std::move(p_Other.m_Allocations);
             m_BlockSize = p_Other.m_BlockSize;
-            m_BlockChunkData = p_Other.m_BlockChunkData;
+            m_BlockChunkData = std::move(p_Other.m_BlockChunkData);
 
-            p_Other.m_Allocations = 0;
-            p_Other.m_BlockChunkData = {};
+            p_Other.m_Allocations.store(0, std::memory_order_relaxed);
+            p_Other.m_BlockChunkData.store({}, std::memory_order_relaxed);
         }
         return *this;
     }
