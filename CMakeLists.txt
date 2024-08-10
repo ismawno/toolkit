@@ -101,6 +101,25 @@ endif()
 # Add subdirectories
 add_subdirectory(toolkit)
 
+# Check for 128-bit atomic support
+include(CheckCXXSourceCompiles)
+CHECK_CXX_SOURCE_COMPILES("
+#include <atomic>
+#include <iostream>
+struct A {void *p1; void *p2;};
+int main() {
+    std::atomic<A> atomic128;
+    std::cout << sizeof(atomic128) << std::endl;
+    return 0;
+}" HAVE_128BIT_ATOMICS)
+
+if(HAVE_128BIT_ATOMICS)
+    message(STATUS "128-bit atomic operations are supported")
+else()
+    message(STATUS "128-bit atomic operations are not supported, linking with libatomic")
+    target_link_libraries(toolkit PRIVATE atomic)
+endif()
+
 if (TOOLKIT_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
