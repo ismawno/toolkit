@@ -101,6 +101,11 @@ endif()
 # Add subdirectories
 add_subdirectory(toolkit)
 
+if (TOOLKIT_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+
 if (TOOLKIT_BUILD_BENCHMARKS)
     add_subdirectory(performance)
 endif()
