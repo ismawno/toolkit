@@ -23,9 +23,8 @@ if (UNIX AND NOT APPLE)
     )
     FetchContent_MakeAvailable(fmt)
     target_link_libraries(toolkit PUBLIC fmt::fmt)
+    target_link_libraries(toolkit PRIVATE atomic)
 endif()
-
-target_link_libraries(toolkit PRIVATE atomic)
 
 # Include directories for the library
 target_include_directories(toolkit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
