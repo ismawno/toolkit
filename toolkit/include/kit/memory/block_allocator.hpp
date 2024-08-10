@@ -223,6 +223,9 @@ template <typename T> class KIT_API BlockAllocator final
 
     std::atomic<u32> m_Allocations = 0;
     std::atomic<u32> m_BlockCount = 0;
+
+    // When allocating a new block, we must update the block list and the free list simultaneously. If we dont, it is
+    // impossible (i think) to ensure that the block list and the free list are always in a valid, simultaneous state
     std::atomic<BlockChunkData> m_BlockChunkData{};
     usz m_BlockSize;
 };
