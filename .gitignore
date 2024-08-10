@@ -1,6 +1,7 @@
 # Toolkit
 .vscode/
 build*/
+build*.ini
 performance/results
 performance/reports
 .venv/

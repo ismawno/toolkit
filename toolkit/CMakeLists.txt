@@ -49,6 +49,14 @@ if (TOOLKIT_ENABLE_LOG_COLORS)
     target_compile_definitions(toolkit PUBLIC KIT_ENABLE_LOG_COLORS)
 endif()
 
+if (TOOLKIT_SILENT_ASSERTS)
+    target_compile_definitions(toolkit PUBLIC KIT_SILENT_ASSERTS)
+endif()
+
+if (TOOLKIT_ENABLE_THROW)
+    target_compile_definitions(toolkit PUBLIC KIT_ENABLE_THROW)
+endif()
+
 if (TOOLKIT_DISABLE_BLOCK_ALLOCATOR)
     target_compile_definitions(toolkit PUBLIC KIT_DISABLE_BLOCK_ALLOCATOR)
 endif()

@@ -82,7 +82,7 @@
 #    define KIT_MSVC_WARNING_IGNORE(wrng)
 #endif
 
-#ifdef KIT_THROW
+#ifdef KIT_ENABLE_THROW
 #    define KIT_NOEXCEPT
 #else
 #    define KIT_NOEXCEPT noexcept

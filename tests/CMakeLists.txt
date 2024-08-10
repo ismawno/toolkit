@@ -23,8 +23,15 @@ set(SOURCES
 add_executable(toolkit-tests ${SOURCES})
 target_link_libraries(toolkit-tests PRIVATE Catch2::Catch2WithMain toolkit)
 
+message(STATUS "TOOLKIT TESTS: The following options are overriden by tests:")
+message(STATUS "TOOLKIT TESTS: Enable asserts: ON")
+message(STATUS "TOOLKIT TESTS: Enable warning logs: ON")
+message(STATUS "TOOLKIT TESTS: Enable info logs: ON")
+message(STATUS "TOOLKIT TESTS: Silent asserts: ON")
+message(STATUS "TOOLKIT TESTS: Enable exceptions: ON")
+
 # These MUST be on for toolkit-tests to work properly
-target_compile_definitions(toolkit PUBLIC KIT_THROW)
+target_compile_definitions(toolkit PUBLIC KIT_ENABLE_THROW)
 target_compile_definitions(toolkit PUBLIC KIT_ENABLE_WARNING_LOGS)
 target_compile_definitions(toolkit PUBLIC KIT_ENABLE_INFO_LOGS)
 target_compile_definitions(toolkit PUBLIC KIT_ENABLE_ASSERTS)
