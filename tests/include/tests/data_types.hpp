@@ -5,15 +5,29 @@
 
 KIT_NAMESPACE_BEGIN
 
-struct SmallData
+struct SmallDataTS
 {
-    KIT_BLOCK_ALLOCATED(SmallData, 10);
+    KIT_BLOCK_ALLOCATED(TSafeBlockAllocator, SmallDataTS, 10);
     i32 x;
 };
 
-struct BigData
+struct SmallDataTU
 {
-    KIT_BLOCK_ALLOCATED(BigData, 10);
+    KIT_BLOCK_ALLOCATED(TUnsafeBlockAllocator, SmallDataTU, 10);
+    i32 x;
+};
+
+struct BigDataTS
+{
+    KIT_BLOCK_ALLOCATED(TSafeBlockAllocator, BigDataTS, 10);
+    f64 x;
+    f64 y;
+    f64 z;
+};
+
+struct BigDataTU
+{
+    KIT_BLOCK_ALLOCATED(TUnsafeBlockAllocator, BigDataTU, 10);
     f64 x;
     f64 y;
     f64 z;
@@ -21,9 +35,17 @@ struct BigData
 
 KIT_WARNING_IGNORE_PUSH
 KIT_MSVC_WARNING_IGNORE(4324)
-struct AlignedData
+
+struct AlignedDataTS
 {
-    KIT_BLOCK_ALLOCATED(AlignedData, 10);
+    KIT_BLOCK_ALLOCATED(TSafeBlockAllocator, AlignedDataTS, 10);
+    alignas(16) f64 x, y, z;
+    alignas(32) f64 a, b, c;
+};
+
+struct AlignedDataTU
+{
+    KIT_BLOCK_ALLOCATED(TUnsafeBlockAllocator, AlignedDataTU, 10);
     alignas(16) f64 x, y, z;
     alignas(32) f64 a, b, c;
 };
@@ -31,7 +53,6 @@ KIT_WARNING_IGNORE_POP
 
 struct NonTrivialData
 {
-    KIT_BLOCK_ALLOCATED(NonTrivialData, 10);
     i32 *x = nullptr;
     NonTrivialData() : x(new i32[25])
     {
@@ -87,15 +108,27 @@ struct NonTrivialData
     static inline i32 Instances = 0;
 };
 
-struct VirtualBase
+struct NonTrivialDataTS : NonTrivialData
 {
-    KIT_BLOCK_ALLOCATED(VirtualBase, 10);
-    VirtualBase()
+    KIT_BLOCK_ALLOCATED(TSafeBlockAllocator, NonTrivialDataTS, 10);
+};
+
+struct NonTrivialDataTU : NonTrivialData
+{
+    KIT_BLOCK_ALLOCATED(TUnsafeBlockAllocator, NonTrivialDataTU, 10);
+};
+
+// The following is quite annoying because of the two block allocator variants
+
+struct VirtualBaseTS
+{
+    KIT_BLOCK_ALLOCATED(TSafeBlockAllocator, VirtualBaseTS, 10);
+    VirtualBaseTS()
     {
         ++BaseInstances;
     }
 
-    virtual ~VirtualBase()
+    virtual ~VirtualBaseTS()
     {
         --BaseInstances;
     }
@@ -107,15 +140,35 @@ struct VirtualBase
     std::string str[12];
 };
 
-struct VirtualDerived final : VirtualBase
+struct VirtualBaseTU
 {
-    KIT_BLOCK_ALLOCATED(VirtualDerived, 10);
-    VirtualDerived()
+    KIT_BLOCK_ALLOCATED(TUnsafeBlockAllocator, VirtualBaseTU, 10);
+    VirtualBaseTU()
+    {
+        ++BaseInstances;
+    }
+
+    virtual ~VirtualBaseTU()
+    {
+        --BaseInstances;
+    }
+
+    static inline i32 BaseInstances = 0;
+
+    i32 x;
+    f64 y;
+    std::string str[12];
+};
+
+struct VirtualDerivedTS : VirtualBaseTS
+{
+    KIT_BLOCK_ALLOCATED(TSafeBlockAllocator, VirtualDerivedTS, 10);
+    VirtualDerivedTS()
     {
         ++DerivedInstances;
     }
 
-    ~VirtualDerived() override
+    ~VirtualDerivedTS() override
     {
         --DerivedInstances;
     }
@@ -126,16 +179,55 @@ struct VirtualDerived final : VirtualBase
     std::string str2[12];
 };
 
-struct BadVirtualDerived : VirtualBase
+struct VirtualDerivedTU : VirtualBaseTU
 {
-    // Remove the KIT_BLOCK_ALLOCATED macro to trigger the assert in the block allocator
-    // KIT_BLOCK_ALLOCATED(BadVirtualDerived);
-    BadVirtualDerived()
+    KIT_BLOCK_ALLOCATED(TUnsafeBlockAllocator, VirtualDerivedTU, 10);
+    VirtualDerivedTU()
     {
         ++DerivedInstances;
     }
 
-    ~BadVirtualDerived() override
+    ~VirtualDerivedTU() override
+    {
+        --DerivedInstances;
+    }
+
+    static inline i32 DerivedInstances = 0;
+
+    f64 z;
+    std::string str2[12];
+};
+
+struct BadVirtualDerivedTS : VirtualBaseTS
+{
+    // Remove the KIT_BLOCK_ALLOCATED macro to trigger the assert in the block allocator
+    // KIT_BLOCK_ALLOCATED(TSafeBlockAllocator, BadVirtualDerivedTS, 10);
+    BadVirtualDerivedTS()
+    {
+        ++DerivedInstances;
+    }
+
+    ~BadVirtualDerivedTS() override
+    {
+        --DerivedInstances;
+    }
+
+    static inline i32 DerivedInstances = 0;
+
+    f64 z;
+    std::string str2[12];
+};
+
+struct BadVirtualDerivedTU : VirtualBaseTU
+{
+    // Remove the KIT_BLOCK_ALLOCATED macro to trigger the assert in the block allocator
+    // KIT_BLOCK_ALLOCATED(TUnsafeBlockAllocator, BadVirtualDerivedTU, 10);
+    BadVirtualDerivedTU()
+    {
+        ++DerivedInstances;
+    }
+
+    ~BadVirtualDerivedTU() override
     {
         --DerivedInstances;
     }

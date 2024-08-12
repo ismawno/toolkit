@@ -59,10 +59,7 @@ def create_default_settings_file(path: Path, /) -> ConfigParser:
         "exceptions": "OFF",
         "log-colors": "ON",
     }
-    cfg["memory"] = {
-        "disable-block-allocator": "OFF",
-        "block-allocator-thread-safe": "ON",
-    }
+    cfg["memory"] = {"enable-block-allocator": "ON"}
 
     with open(path, "w") as f:
         cfg.write(f)
@@ -107,77 +104,71 @@ def create_arguments() -> tuple[Namespace, list[str]]:
     parser.add_argument(
         "-r",
         "--rebuild",
-        action="store_true",
+        type=str,
         default=None,
-        help="Whether to rebuild the project",
+        help="(ON or OFF) Whether to rebuild the project",
     )
     parser.add_argument(
         "-t",
         "--build-tests",
-        action="store_true",
+        type=str,
         default=None,
-        help="Whether to build tests",
+        help="(ON or OFF) Whether to build tests",
     )
     parser.add_argument(
         "-p",
         "--build-performance",
-        action="store_true",
+        type=str,
         default=None,
-        help="Whether to build performance",
+        help="(ON or OFF) Whether to build performance",
     )
     parser.add_argument(
         "-i",
         "--info-logs",
-        action="store_true",
+        type=str,
         default=None,
-        help="Whether to log info messages",
+        help="(ON or OFF) Whether to log info messages",
     )
     parser.add_argument(
         "-w",
         "--warning-logs",
-        action="store_true",
+        type=str,
         default=None,
-        help="Whether to log warning messages",
+        help="(ON or OFF) Whether to log warning messages",
     )
     parser.add_argument(
         "-a",
         "--asserts",
-        action="store_true",
+        type=str,
         default=None,
-        help="Whether to enable asserts",
+        help="(ON or OFF) Whether to enable asserts",
     )
     parser.add_argument(
         "-s",
         "--silent-asserts",
-        action="store_true",
+        type=str,
         default=None,
-        help="Whether to make asserts silent",
+        help="(ON or OFF) Whether to make asserts silent",
     )
     parser.add_argument(
         "-e",
         "--exceptions",
-        action="store_true",
+        type=str,
         default=None,
-        help="Whether to enable exceptions",
+        help="(ON or OFF) Whether to enable exceptions",
     )
     parser.add_argument(
         "-c",
         "--log-colors",
-        action="store_true",
+        type=str,
         default=None,
-        help="Whether to enable log colors",
+        help="(ON or OFF) Whether to enable log colors",
     )
     parser.add_argument(
-        "--disable-block-allocator",
-        action="store_true",
+        "--enable-block-allocator",
+        type=str,
         default=None,
-        help="Whether to disable block allocator",
-    )
-    parser.add_argument(
-        "--block-allocator-thread-safe",
-        action="store_true",
-        default=None,
-        help="Whether block allocator should be thread safe",
+        help="(ON or OFF) Whether to disable block allocator",
     )
 
     return parser.parse_known_args()
@@ -194,8 +185,7 @@ def create_cmake_parameters_map() -> dict[str, str]:
         "silent-asserts": "TOOLKIT_SILENT_ASSERTS",
         "exceptions": "TOOLKIT_ENABLE_EXCEPTIONS",
         "log-colors": "TOOLKIT_ENABLE_LOG_COLORS",
-        "disable-block-allocator": "TOOLKIT_DISABLE_BLOCK_ALLOCATOR",
-        "block-allocator-thread-safe": "TOOLKIT_BLOCK_ALLOCATOR_THREAD_SAFE",
+        "enable-block-allocator": "TOOLKIT_ENABLE_BLOCK_ALLOCATOR",
     }
 
 
@@ -218,9 +208,9 @@ def main() -> None:
     build_settings: dict[str, str] = {}
     for section in cfg.sections():
         for key in cfg[section]:
+            if key.startswith(";"):
+                continue
             value = getattr(args, key.replace("-", "_"))
-            if isinstance(value, bool):
-                value = "ON" if value else "OFF"
             build_settings[key] = value if value is not None else cfg[section][key]
 
     cmake_map = create_cmake_parameters_map()

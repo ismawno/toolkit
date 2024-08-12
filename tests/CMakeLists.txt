@@ -36,6 +36,7 @@ target_compile_definitions(toolkit PUBLIC KIT_ENABLE_WARNING_LOGS)
 target_compile_definitions(toolkit PUBLIC KIT_ENABLE_INFO_LOGS)
 target_compile_definitions(toolkit PUBLIC KIT_ENABLE_ASSERTS)
 target_compile_definitions(toolkit PUBLIC KIT_SILENT_ASSERTS)
+target_compile_definitions(toolkit PUBLIC KIT_ENABLE_BLOCK_ALLOCATOR)
 
 include(CTest)
 include(Catch)

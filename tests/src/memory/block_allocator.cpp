@@ -6,7 +6,7 @@
 
 KIT_NAMESPACE_BEGIN
 
-template <typename T> static void RunBasicAllocatorTest(BlockAllocator<T> &allocator)
+template <typename T, template <typename> typename Allocator> static void RunBasicAllocatorTest(Allocator<T> &allocator)
 {
     const usz chunkSize = sizeof(T) < sizeof(void *) ? sizeof(void *) : sizeof(T);
     const usz blockSize = chunkSize * 10;
@@ -22,10 +22,10 @@ template <typename T> static void RunBasicAllocatorTest(BlockAllocator<T> &alloc
     REQUIRE_THROWS(Deallocate(null));
 }
 
-template <typename T> static void RunRawAllocationTest()
+template <typename T, template <typename> typename Allocator> static void RunRawAllocationTest()
 {
     REQUIRE(sizeof(T) % alignof(T) == 0);
-    BlockAllocator<T> allocator(10);
+    Allocator<T> allocator(10);
     RunBasicAllocatorTest(allocator);
 
     SECTION("Allocate and deallocate (raw call)")
@@ -90,7 +90,7 @@ template <typename T> static void RunRawAllocationTest()
 
 template <typename T> static void RunNewDeleteTest()
 {
-    const BlockAllocator<T> &allocator = T::s_Allocator;
+    const auto &allocator = T::s_Allocator;
 
     SECTION("Allocate and deallocate (new/delete)")
     {
@@ -171,14 +171,13 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
     }
 }
 
-#ifdef KIT_BLOCK_ALLOCATOR_THREAD_SAFE
 template <typename T> static void RunMultithreadedAllocatorTests()
 {
     SECTION("Multithreaded allocations")
     {
         const auto allocate = []() {
             constexpr usz amount = 100;
-            const BlockAllocator<T> &allocator = T::s_Allocator;
+            const TSafeBlockAllocator<T> &allocator = T::s_Allocator;
             std::array<T *, amount> data{};
             for (usz i = 0; i < amount; ++i)
             {
@@ -196,7 +195,6 @@ template <typename T> static void RunMultithreadedAllocatorTests()
                 delete data[i];
             }
         };
-
         constexpr usz threadCount = 8;
         std::array<std::thread, threadCount> threads;
         for (std::thread &t : threads)
@@ -205,53 +203,66 @@ template <typename T> static void RunMultithreadedAllocatorTests()
             t.join();
     }
 }
-#    define RUN_MULTITHREADED_TESTS(Type) RunMultithreadedAllocatorTests<Type>()
-#else
-#    define RUN_MULTITHREADED_TESTS(Type)
-#endif
 
 TEST_CASE("Block allocator deals with small data", "[block_allocator][small]")
 {
-    RunRawAllocationTest<SmallData>();
-    RunNewDeleteTest<SmallData>();
-    RUN_MULTITHREADED_TESTS(SmallData);
+    RunRawAllocationTest<SmallDataTS, TSafeBlockAllocator>();
+    RunRawAllocationTest<SmallDataTU, TUnsafeBlockAllocator>();
+    RunNewDeleteTest<SmallDataTS>();
+    RunNewDeleteTest<SmallDataTU>();
+    RunMultithreadedAllocatorTests<SmallDataTS>();
 }
 TEST_CASE("Block allocator deals with big data", "[block_allocator][big]")
 {
-    RunRawAllocationTest<BigData>();
-    RunNewDeleteTest<BigData>();
-    RUN_MULTITHREADED_TESTS(BigData);
+    RunRawAllocationTest<BigDataTS, TSafeBlockAllocator>();
+    RunRawAllocationTest<BigDataTU, TUnsafeBlockAllocator>();
+    RunNewDeleteTest<BigDataTS>();
+    RunNewDeleteTest<BigDataTU>();
+    RunMultithreadedAllocatorTests<BigDataTS>();
 }
 TEST_CASE("Block allocator deals with aligned data", "[block_allocator][aligned]")
 {
-    RunRawAllocationTest<AlignedData>();
-    RunNewDeleteTest<AlignedData>();
-    RUN_MULTITHREADED_TESTS(AlignedData);
+    RunRawAllocationTest<AlignedDataTS, TSafeBlockAllocator>();
+    RunRawAllocationTest<AlignedDataTU, TUnsafeBlockAllocator>();
+    RunNewDeleteTest<AlignedDataTS>();
+    RunNewDeleteTest<AlignedDataTU>();
+    RunMultithreadedAllocatorTests<AlignedDataTS>();
 }
 TEST_CASE("Block allocator deals with non trivial data", "[block_allocator][nont trivial]")
 {
-    RunRawAllocationTest<NonTrivialData>();
-    RunNewDeleteTest<NonTrivialData>();
+    RunRawAllocationTest<NonTrivialDataTS, TSafeBlockAllocator>();
+    RunRawAllocationTest<NonTrivialDataTU, TUnsafeBlockAllocator>();
+    RunNewDeleteTest<NonTrivialDataTS>();
+    RunNewDeleteTest<NonTrivialDataTU>();
     // I skip non trivial data as its constructor and destructor are not thread safe
     // RunMultithreadedAllocatorTests<NonTrivialData>();
-    REQUIRE(NonTrivialData::Instances == 0);
+    REQUIRE(NonTrivialDataTS::Instances == 0);
+    REQUIRE(NonTrivialDataTU::Instances == 0);
 }
 TEST_CASE("Block allocator deals with derived data", "[block_allocator][derived]")
 {
-    RunRawAllocationTest<VirtualDerived>();
-    RunNewDeleteTest<VirtualDerived>();
+    RunRawAllocationTest<VirtualDerivedTS, TSafeBlockAllocator>();
+    RunRawAllocationTest<VirtualDerivedTU, TUnsafeBlockAllocator>();
+    RunNewDeleteTest<VirtualDerivedTS>();
+    RunNewDeleteTest<VirtualDerivedTU>();
     // I skip non virtual derived as its constructor and destructor are not thread safe
     // RunMultithreadedAllocatorTests<VirtualDerived>();
 }
 TEST_CASE("Block allocator deals with virtual data", "[block_allocator][virtual]")
 {
-    RunVirtualAllocatorTests<VirtualBase, VirtualDerived>();
-    REQUIRE(VirtualBase::BaseInstances == 0);
-    REQUIRE(VirtualDerived::DerivedInstances == 0);
+    RunVirtualAllocatorTests<VirtualBaseTS, VirtualDerivedTS>();
+    RunVirtualAllocatorTests<VirtualBaseTU, VirtualDerivedTU>();
+
+    REQUIRE(VirtualBaseTS::BaseInstances == 0);
+    REQUIRE(VirtualDerivedTS::DerivedInstances == 0);
+
+    REQUIRE(VirtualBaseTU::BaseInstances == 0);
+    REQUIRE(VirtualDerivedTU::DerivedInstances == 0);
 }
 TEST_CASE("Block allocator deals with invalid virtual data", "[block_allocator][virtual][invalid]")
 {
-    REQUIRE_THROWS(new BadVirtualDerived);
+    REQUIRE_THROWS(new BadVirtualDerivedTS);
+    REQUIRE_THROWS(new BadVirtualDerivedTU);
 }
 
 KIT_NAMESPACE_END

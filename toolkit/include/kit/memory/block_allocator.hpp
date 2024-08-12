@@ -14,9 +14,7 @@ KIT_NAMESPACE_BEGIN
 
 // This is a block allocator whose role is to 1: speed up single allocations and 2: improve contiguity, which is
 // guaranteed up to the amount of chunks per block (each chunk represents an allocated object)
-#ifdef KIT_BLOCK_ALLOCATOR_THREAD_SAFE
-
-template <typename T> class KIT_API BlockAllocator final
+template <typename T, template <typename> typename Derived> class KIT_API BlockAllocator
 {
     KIT_NON_COPYABLE(BlockAllocator);
 
@@ -25,7 +23,100 @@ template <typename T> class KIT_API BlockAllocator final
     {
     }
 
-    BlockAllocator(BlockAllocator &&p_Other) noexcept : m_BlockSize(p_Other.m_BlockSize)
+    usz BlockSize() const KIT_NOEXCEPT
+    {
+        return m_BlockSize;
+    }
+
+    usz ChunksPerBlock() const KIT_NOEXCEPT
+    {
+        return m_BlockSize / alignedSize();
+    }
+    usz ChunkSize() const KIT_NOEXCEPT
+    {
+        return alignedSize();
+    }
+
+    T *Allocate() KIT_NOEXCEPT
+    {
+        return static_cast<Derived<T> *>(this)->Allocate();
+    }
+    void Deallocate(T *p_Ptr) KIT_NOEXCEPT
+    {
+        static_cast<Derived<T> *>(this)->Deallocate(p_Ptr);
+    }
+
+    template <typename... Args> T *Construct(Args &&...p_Args) KIT_NOEXCEPT
+    {
+        T *ptr = Allocate();
+        ::new (ptr) T(std::forward<Args>(p_Args)...);
+        return ptr;
+    }
+
+    void Destroy(T *p_Ptr) KIT_NOEXCEPT
+    {
+        // Be wary! destructor must be thread safe
+        if constexpr (!std::is_trivially_destructible_v<T>)
+            p_Ptr->~T();
+        Deallocate(p_Ptr);
+    }
+
+    bool Owns(const T *p_Ptr) const KIT_NOEXCEPT
+    {
+        return static_cast<const Derived<T> *>(this)->Owns(p_Ptr);
+    }
+
+    usz BlockCount() const KIT_NOEXCEPT
+    {
+        return static_cast<const Derived<T> *>(this)->BlockCount();
+    }
+
+    bool Empty() const KIT_NOEXCEPT
+    {
+        return static_cast<const Derived<T> *>(this)->Empty();
+    }
+
+    u32 Allocations() const KIT_NOEXCEPT
+    {
+        return static_cast<const Derived<T> *>(this)->Allocations();
+    }
+
+  protected:
+    struct Chunk
+    {
+        Chunk *Next = nullptr;
+    };
+
+    constexpr usz alignedSize() const KIT_NOEXCEPT
+    {
+        if constexpr (sizeof(T) < sizeof(Chunk))
+            return AlignedSize<Chunk>();
+        else
+            return AlignedSize<T>();
+    }
+
+    constexpr usz alignment() const KIT_NOEXCEPT
+    {
+        if constexpr (alignof(T) < alignof(Chunk))
+            return alignof(Chunk);
+        else
+            return alignof(T);
+    }
+
+  private:
+    usz m_BlockSize;
+};
+
+template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllocator<T, TSafeBlockAllocator>
+{
+  public:
+    explicit TSafeBlockAllocator(const usz p_ChunksPerBlock) KIT_NOEXCEPT
+        : BlockAllocator<T, TSafeBlockAllocator>(p_ChunksPerBlock)
+    {
+    }
+
+    TSafeBlockAllocator(TSafeBlockAllocator &&p_Other) noexcept
+        : BlockAllocator<T, TSafeBlockAllocator>(std::move(p_Other))
     {
         m_Allocations.store(p_Other.m_Allocations.load(std::memory_order_relaxed), std::memory_order_relaxed);
         m_BlockChunkData.store(p_Other.m_BlockChunkData.load(std::memory_order_relaxed), std::memory_order_relaxed);
@@ -34,7 +125,7 @@ template <typename T> class KIT_API BlockAllocator final
         p_Other.m_BlockChunkData.store({}, std::memory_order_relaxed);
     }
 
-    ~BlockAllocator() KIT_NOEXCEPT
+    ~TSafeBlockAllocator() KIT_NOEXCEPT
     {
         // The destruction of the block allocator should happen serially
         Block *blockTail = m_BlockChunkData.load(std::memory_order_relaxed).BlockTail;
@@ -47,13 +138,13 @@ template <typename T> class KIT_API BlockAllocator final
         }
     }
 
-    BlockAllocator &operator=(BlockAllocator &&p_Other) noexcept
+    TSafeBlockAllocator &operator=(TSafeBlockAllocator &&p_Other) noexcept
     {
         if (this != &p_Other)
         {
+            BlockAllocator<T, TSafeBlockAllocator>::operator=(std::move(p_Other));
             m_Allocations.store(p_Other.m_Allocations.load(std::memory_order_relaxed), std::memory_order_relaxed);
             m_BlockChunkData.store(p_Other.m_BlockChunkData.load(std::memory_order_relaxed), std::memory_order_relaxed);
-            m_BlockSize = p_Other.m_BlockSize;
 
             p_Other.m_Allocations.store(0, std::memory_order_relaxed);
             p_Other.m_BlockChunkData.store({}, std::memory_order_relaxed);
@@ -85,21 +176,6 @@ template <typename T> class KIT_API BlockAllocator final
                                                          std::memory_order_acquire));
     }
 
-    template <typename... Args> T *Construct(Args &&...p_Args) KIT_NOEXCEPT
-    {
-        T *ptr = Allocate();
-        ::new (ptr) T(std::forward<Args>(p_Args)...);
-        return ptr;
-    }
-
-    void Destroy(T *p_Ptr) KIT_NOEXCEPT
-    {
-        // Be wary! destructor must be thread safe
-        if constexpr (!std::is_trivially_destructible_v<T>)
-            p_Ptr->~T();
-        Deallocate(p_Ptr);
-    }
-
     // This method is not infallible. Deallocated pointers from this allocator will still return true, as they lay in
     // the memory block of the allocator
     bool Owns(const T *p_Ptr) const KIT_NOEXCEPT
@@ -108,29 +184,16 @@ template <typename T> class KIT_API BlockAllocator final
         Block *block = m_BlockChunkData.load(std::memory_order_acquire).BlockTail;
         while (block)
         {
-            if (ptr >= block->Data && ptr < block->Data + m_BlockSize)
+            if (ptr >= block->Data && ptr < block->Data + this->BlockSize())
                 return true;
             block = block->Prev;
         }
         return false;
     }
 
-    usz BlockSize() const KIT_NOEXCEPT
-    {
-        return m_BlockSize;
-    }
     usz BlockCount() const KIT_NOEXCEPT
     {
         return m_BlockCount.load(std::memory_order_relaxed);
-    }
-
-    usz ChunksPerBlock() const KIT_NOEXCEPT
-    {
-        return m_BlockSize / alignedSize();
-    }
-    usz ChunkSize() const KIT_NOEXCEPT
-    {
-        return alignedSize();
     }
 
     bool Empty() const KIT_NOEXCEPT
@@ -144,10 +207,7 @@ template <typename T> class KIT_API BlockAllocator final
 
   private:
     // Important: A chunk must be at least sizeof(void *), so Chunk objects fit in the memory block of the allocator
-    struct Chunk
-    {
-        Chunk *Next = nullptr;
-    };
+    using Chunk = typename BlockAllocator<T, TSafeBlockAllocator>::Chunk;
     struct Block
     {
         std::byte *Data = nullptr;
@@ -171,11 +231,11 @@ template <typename T> class KIT_API BlockAllocator final
         }
         // If, at some point in time, the free list is empty, we allocate a new block
 
-        const usz chunkSize = alignedSize();
-        const usz align = alignment();
+        const usz chunkSize = this->alignedSize();
+        const usz align = this->alignment();
 
-        std::byte *data = reinterpret_cast<std::byte *>(AllocateAligned(m_BlockSize, align));
-        const usz chunksPerBlock = m_BlockSize / chunkSize;
+        std::byte *data = reinterpret_cast<std::byte *>(AllocateAligned(this->BlockSize(), align));
+        const usz chunksPerBlock = this->ChunksPerBlock();
         for (usz i = 0; i < chunksPerBlock - 1; ++i)
         {
             Chunk *chunk = reinterpret_cast<Chunk *>(data + i * chunkSize);
@@ -206,59 +266,42 @@ template <typename T> class KIT_API BlockAllocator final
         return reinterpret_cast<T *>(data);
     }
 
-    constexpr usz alignedSize() const KIT_NOEXCEPT
-    {
-        if constexpr (sizeof(T) < sizeof(Chunk))
-            return AlignedSize<Chunk>();
-        else
-            return AlignedSize<T>();
-    }
-
-    constexpr usz alignment() const KIT_NOEXCEPT
-    {
-        if constexpr (alignof(T) < alignof(Chunk))
-            return alignof(Chunk);
-        else
-            return alignof(T);
-    }
-
     std::atomic<u32> m_Allocations = 0;
     std::atomic<u32> m_BlockCount = 0;
 
     // When allocating a new block, we must update the block list and the free list simultaneously. If we dont, it is
     // impossible (i think) to ensure that the block list and the free list are always in a valid, simultaneous state
     std::atomic<BlockChunkData> m_BlockChunkData{};
-    usz m_BlockSize;
 };
-#else
-template <typename T> class KIT_API BlockAllocator final
-{
-    KIT_NON_COPYABLE(BlockAllocator);
 
+template <typename T> class KIT_API TUnsafeBlockAllocator final : public BlockAllocator<T, TUnsafeBlockAllocator>
+{
   public:
-    explicit BlockAllocator(const usz p_ChunksPerBlock) KIT_NOEXCEPT : m_BlockSize(alignedSize() * p_ChunksPerBlock)
+    explicit TUnsafeBlockAllocator(const usz p_ChunksPerBlock) KIT_NOEXCEPT
+        : BlockAllocator<T, TUnsafeBlockAllocator>(p_ChunksPerBlock)
     {
     }
 
-    BlockAllocator(BlockAllocator &&p_Other) noexcept
-        : m_Allocations(p_Other.m_Allocations), m_BlockSize(p_Other.m_BlockSize), m_FreeList(p_Other.m_FreeList),
-          m_Blocks(std::move(p_Other.m_Blocks))
+    TUnsafeBlockAllocator(TUnsafeBlockAllocator &&p_Other) noexcept
+        : BlockAllocator<T, TUnsafeBlockAllocator>(std::move(p_Other)), m_Allocations(p_Other.m_Allocations),
+          m_BlockSize(p_Other.m_BlockSize), m_FreeList(p_Other.m_FreeList), m_Blocks(std::move(p_Other.m_Blocks))
     {
         p_Other.m_Allocations = 0;
         p_Other.m_FreeList = nullptr;
         p_Other.m_Blocks.clear();
     }
 
-    ~BlockAllocator() KIT_NOEXCEPT
+    ~TUnsafeBlockAllocator() KIT_NOEXCEPT
     {
         for (std::byte *block : m_Blocks)
             DeallocateAligned(block);
     }
 
-    BlockAllocator &operator=(BlockAllocator &&p_Other) noexcept
+    TUnsafeBlockAllocator &operator=(TUnsafeBlockAllocator &&p_Other) noexcept
     {
         if (this != &p_Other)
         {
+            BlockAllocator<T, TUnsafeBlockAllocator>::operator=(std::move(p_Other));
             m_Allocations = p_Other.m_Allocations;
             m_BlockSize = p_Other.m_BlockSize;
             m_FreeList = p_Other.m_FreeList;
@@ -290,48 +333,20 @@ template <typename T> class KIT_API BlockAllocator final
         m_FreeList = chunk;
     }
 
-    template <typename... Args> T *Construct(Args &&...p_Args) KIT_NOEXCEPT
-    {
-        T *ptr = Allocate();
-        ::new (ptr) T(std::forward<Args>(p_Args)...);
-        return ptr;
-    }
-
-    void Destroy(T *p_Ptr) KIT_NOEXCEPT
-    {
-        // Be wary! destructor must be thread safe
-        if constexpr (!std::is_trivially_destructible_v<T>)
-            p_Ptr->~T();
-        Deallocate(p_Ptr);
-    }
-
     // This method is not infallible. Deallocated pointers from this allocator will still return true, as they lay in
     // the memory block of the allocator
     bool Owns(const T *p_Ptr) const KIT_NOEXCEPT
     {
         const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
         for (const std::byte *block : m_Blocks)
-            if (ptr >= block && ptr < block + m_BlockSize)
+            if (ptr >= block && ptr < block + this->BlockSize())
                 return true;
         return false;
     }
 
-    usz BlockSize() const KIT_NOEXCEPT
-    {
-        return m_BlockSize;
-    }
     usz BlockCount() const KIT_NOEXCEPT
     {
         return m_Blocks.size();
-    }
-
-    usz ChunksPerBlock() const KIT_NOEXCEPT
-    {
-        return m_BlockSize / alignedSize();
-    }
-    usz ChunkSize() const KIT_NOEXCEPT
-    {
-        return alignedSize();
     }
 
     bool Empty() const KIT_NOEXCEPT
@@ -345,20 +360,17 @@ template <typename T> class KIT_API BlockAllocator final
 
   private:
     // Important: A chunk must be at least sizeof(void *), so allocations have a minimum size of sizeof(void *)
-    struct Chunk
-    {
-        Chunk *Next = nullptr;
-    };
+    using Chunk = typename BlockAllocator<T, TUnsafeBlockAllocator>::Chunk;
 
     T *fromFirstChunkOfNewBlock() KIT_NOEXCEPT
     {
-        const usz chunkSize = alignedSize();
-        const usz align = alignment();
+        const usz chunkSize = this->alignedSize();
+        const usz align = this->alignment();
 
-        std::byte *data = reinterpret_cast<std::byte *>(AllocateAligned(m_BlockSize, align));
+        std::byte *data = reinterpret_cast<std::byte *>(AllocateAligned(this->BlockSize(), align));
         m_FreeList = reinterpret_cast<Chunk *>(data + chunkSize);
 
-        const usz chunksPerBlock = m_BlockSize / chunkSize;
+        const usz chunksPerBlock = this->ChunksPerBlock();
         for (usz i = 0; i < chunksPerBlock - 1; ++i)
         {
             Chunk *chunk = reinterpret_cast<Chunk *>(data + i * chunkSize);
@@ -378,36 +390,17 @@ template <typename T> class KIT_API BlockAllocator final
         return reinterpret_cast<T *>(chunk);
     }
 
-    constexpr usz alignedSize() const KIT_NOEXCEPT
-    {
-        if constexpr (sizeof(T) < sizeof(Chunk))
-            return AlignedSize<Chunk>();
-        else
-            return AlignedSize<T>();
-    }
-
-    constexpr usz alignment() const KIT_NOEXCEPT
-    {
-        if constexpr (alignof(T) < alignof(Chunk))
-            return alignof(Chunk);
-        else
-            return alignof(T);
-    }
-
-    // Could be an atomic, but all operations I perform with it are locked, so I guess it's fine
     u32 m_Allocations = 0;
     usz m_BlockSize;
     Chunk *m_FreeList = nullptr;
     DynamicArray<std::byte *> m_Blocks;
 };
 
-#endif
-
 KIT_NAMESPACE_END
 
-#ifndef KIT_DISABLE_BLOCK_ALLOCATOR
-#    define KIT_BLOCK_ALLOCATED(p_ClassName, p_ChunksPerBlock)                                                         \
-        static inline KIT::BlockAllocator<p_ClassName> s_Allocator{p_ChunksPerBlock};                                  \
+#ifdef KIT_ENABLE_BLOCK_ALLOCATOR
+#    define KIT_BLOCK_ALLOCATED(p_Allocator, p_ClassName, p_ChunksPerBlock)                                            \
+        static inline p_Allocator<p_ClassName> s_Allocator{p_ChunksPerBlock};                                          \
         void *operator new(usz p_Size)                                                                                 \
         {                                                                                                              \
             KIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                  \
