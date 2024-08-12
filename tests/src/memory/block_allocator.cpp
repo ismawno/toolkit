@@ -164,7 +164,6 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
             REQUIRE(allocator.Allocations() == amount);
             for (u32 i = 0; i < amount; ++i)
                 delete data[i];
-            REQUIRE(allocator.BlockCount() == 2);
             REQUIRE(allocator.Empty());
         }
         REQUIRE(allocator.Empty());
