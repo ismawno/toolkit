@@ -14,6 +14,13 @@ KIT_NAMESPACE_BEGIN
 
 // This is a block allocator whose role is to 1: speed up single allocations and 2: improve contiguity, which is
 // guaranteed up to the amount of chunks per block (each chunk represents an allocated object)
+
+// It comes in two flavors: TSafeBlockAllocator and TUnsafeBlockAllocator. The former is a lock-free thread safe
+// allocator using CAS, optimized to be used in a multi-threaded environment, while the latter is not thread safe,
+// optimized for single-threaded environments
+
+// I have decided to use static polymorphism because both allocator's functionality is exactly the same and I dont see
+// how runtime polymorphism in this case could be useful
 template <typename T, template <typename> typename Derived> class KIT_API BlockAllocator
 {
     KIT_NON_COPYABLE(BlockAllocator);
