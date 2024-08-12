@@ -176,7 +176,7 @@ template <typename T> static void RunMultithreadedAllocatorTests()
     SECTION("Multithreaded allocations")
     {
         const auto allocate = []() {
-            constexpr usz amount = 100;
+            constexpr usz amount = 1000;
             const TSafeBlockAllocator<T> &allocator = T::s_Allocator;
             std::array<T *, amount> data{};
             for (usz i = 0; i < amount; ++i)
@@ -202,6 +202,8 @@ template <typename T> static void RunMultithreadedAllocatorTests()
         for (std::thread &t : threads)
             t.join();
     }
+    const TSafeBlockAllocator<T> &allocator = T::s_Allocator;
+    REQUIRE(allocator.Empty());
 }
 
 TEST_CASE("Block allocator deals with small data", "[block_allocator][small]")
@@ -234,8 +236,7 @@ TEST_CASE("Block allocator deals with non trivial data", "[block_allocator][nont
     RunRawAllocationTest<NonTrivialDataTU, TUnsafeBlockAllocator>();
     RunNewDeleteTest<NonTrivialDataTS>();
     RunNewDeleteTest<NonTrivialDataTU>();
-    // I skip non trivial data as its constructor and destructor are not thread safe
-    // RunMultithreadedAllocatorTests<NonTrivialData>();
+    RunMultithreadedAllocatorTests<NonTrivialDataTS>();
     REQUIRE(NonTrivialDataTS::Instances == 0);
     REQUIRE(NonTrivialDataTU::Instances == 0);
 }
@@ -245,8 +246,13 @@ TEST_CASE("Block allocator deals with derived data", "[block_allocator][derived]
     RunRawAllocationTest<VirtualDerivedTU, TUnsafeBlockAllocator>();
     RunNewDeleteTest<VirtualDerivedTS>();
     RunNewDeleteTest<VirtualDerivedTU>();
-    // I skip non virtual derived as its constructor and destructor are not thread safe
-    // RunMultithreadedAllocatorTests<VirtualDerived>();
+    RunMultithreadedAllocatorTests<VirtualDerivedTS>();
+
+    REQUIRE(VirtualBaseTS::BaseInstances == 0);
+    REQUIRE(VirtualDerivedTS::DerivedInstances == 0);
+
+    REQUIRE(VirtualBaseTU::BaseInstances == 0);
+    REQUIRE(VirtualDerivedTU::DerivedInstances == 0);
 }
 TEST_CASE("Block allocator deals with virtual data", "[block_allocator][virtual]")
 {

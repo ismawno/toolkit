@@ -179,8 +179,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         {
             chunk->Next = oldData.FreeList;
             newData = {oldData.BlockTail, chunk};
-        } while (!m_BlockChunkData.compare_exchange_weak(oldData, newData, std::memory_order_relaxed,
-                                                         std::memory_order_relaxed));
+        } while (!m_BlockChunkData.compare_exchange_weak(oldData, newData, std::memory_order_relaxed));
     }
 
     // This method is not infallible. Deallocated pointers from this allocator will still return true, as they lay in
@@ -232,8 +231,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         while (p_BlockChunkData.FreeList)
         {
             const BlockChunkData chunkData = {p_BlockChunkData.BlockTail, p_BlockChunkData.FreeList->Next};
-            if (m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, chunkData, std::memory_order_relaxed,
-                                                       std::memory_order_relaxed))
+            if (m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, chunkData, std::memory_order_relaxed))
                 return reinterpret_cast<T *>(p_BlockChunkData.FreeList);
         }
         // If, at some point in time, the free list is empty, we allocate a new block
@@ -259,8 +257,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         newBlock->Prev = p_BlockChunkData.BlockTail;
 
         if (const BlockChunkData possibleData = {newBlock, reinterpret_cast<Chunk *>(data + chunkSize)};
-            !m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, possibleData, std::memory_order_relaxed,
-                                                    std::memory_order_relaxed))
+            !m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, possibleData, std::memory_order_relaxed))
         {
             // Another thread was quicker than us, we must deallocate the block and try again
             DeallocateAligned(data);

@@ -56,12 +56,12 @@ struct NonTrivialData
     i32 *x = nullptr;
     NonTrivialData() : x(new i32[25])
     {
-        ++Instances;
+        Instances.fetch_add(1, std::memory_order_relaxed);
     }
 
     NonTrivialData(const NonTrivialData &other) : x(new i32[25])
     {
-        ++Instances;
+        Instances.fetch_add(1, std::memory_order_relaxed);
         for (i32 i = 0; i < 25; ++i)
             x[i] = other.x[i];
     }
@@ -78,7 +78,7 @@ struct NonTrivialData
 
     NonTrivialData(NonTrivialData &&other) noexcept : x(other.x)
     {
-        ++Instances;
+        Instances.fetch_add(1, std::memory_order_relaxed);
         other.x = nullptr;
     }
 
@@ -102,10 +102,10 @@ struct NonTrivialData
         if (x)
             delete[] x;
         x = nullptr;
-        --Instances;
+        Instances.fetch_sub(1, std::memory_order_relaxed);
     }
 
-    static inline i32 Instances = 0;
+    static inline std::atomic<i32> Instances = 0;
 };
 
 struct NonTrivialDataTS : NonTrivialData
@@ -119,21 +119,20 @@ struct NonTrivialDataTU : NonTrivialData
 };
 
 // The following is quite annoying because of the two block allocator variants
-
 struct VirtualBaseTS
 {
     KIT_BLOCK_ALLOCATED(TSafeBlockAllocator, VirtualBaseTS, 10);
     VirtualBaseTS()
     {
-        ++BaseInstances;
+        BaseInstances.fetch_add(1, std::memory_order_relaxed);
     }
 
     virtual ~VirtualBaseTS()
     {
-        --BaseInstances;
+        BaseInstances.fetch_sub(1, std::memory_order_relaxed);
     }
 
-    static inline i32 BaseInstances = 0;
+    static inline std::atomic<i32> BaseInstances = 0;
 
     i32 x;
     f64 y;
@@ -165,15 +164,15 @@ struct VirtualDerivedTS : VirtualBaseTS
     KIT_BLOCK_ALLOCATED(TSafeBlockAllocator, VirtualDerivedTS, 10);
     VirtualDerivedTS()
     {
-        ++DerivedInstances;
+        DerivedInstances.fetch_add(1, std::memory_order_relaxed);
     }
 
     ~VirtualDerivedTS() override
     {
-        --DerivedInstances;
+        DerivedInstances.fetch_sub(1, std::memory_order_relaxed);
     }
 
-    static inline i32 DerivedInstances = 0;
+    static inline std::atomic<i32> DerivedInstances = 0;
 
     f64 z;
     std::string str2[12];
@@ -204,15 +203,15 @@ struct BadVirtualDerivedTS : VirtualBaseTS
     // KIT_BLOCK_ALLOCATED(TSafeBlockAllocator, BadVirtualDerivedTS, 10);
     BadVirtualDerivedTS()
     {
-        ++DerivedInstances;
+        DerivedInstances.fetch_add(1, std::memory_order_relaxed);
     }
 
     ~BadVirtualDerivedTS() override
     {
-        --DerivedInstances;
+        DerivedInstances.fetch_sub(1, std::memory_order_relaxed);
     }
 
-    static inline i32 DerivedInstances = 0;
+    static inline std::atomic<i32> DerivedInstances = 0;
 
     f64 z;
     std::string str2[12];
