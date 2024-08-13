@@ -50,6 +50,12 @@ def create_default_settings_file(path: Path, /) -> ConfigParser:
         "OFF",
     )
 
+    cfg.set(
+        "general",
+        "; If set to 'ON', the project will only be compiled, and the CMake setup will be skipped",
+    )
+    cfg.set("general", "compile-only", "OFF")
+
     cfg["targets"] = {"build-tests": "ON", "build-performance": "ON"}
     cfg["logging"] = {
         "info-logs": "ON",
@@ -60,6 +66,7 @@ def create_default_settings_file(path: Path, /) -> ConfigParser:
         "log-colors": "ON",
     }
     cfg["memory"] = {"enable-block-allocator": "ON"}
+    cfg["debug"] = {"sanitizers": "OFF"}
 
     with open(path, "w") as f:
         cfg.write(f)
@@ -79,25 +86,28 @@ def create_arguments() -> tuple[Namespace, list[str]]:
 
     # Require a value
     parser.add_argument(
-        "-sp",
         "--settings-path",
         type=str,
         default=None,
         help="Path to the build settings file",
     )
     parser.add_argument(
-        "-bp",
         "--build-path",
         type=str,
         default=None,
         help="Path to the build directory",
     )
     parser.add_argument(
-        "-bt",
         "--build-type",
         type=str,
         default=None,
         help="Build type. Can be Debug, Release or Dist",
+    )
+    parser.add_argument(
+        "--compile-only",
+        type=str,
+        default=None,
+        help="If set to 'ON', the project will only be compiled, and the CMake setup will be skipped",
     )
 
     # Booleans
@@ -170,6 +180,12 @@ def create_arguments() -> tuple[Namespace, list[str]]:
         default=None,
         help="(ON or OFF) Whether to disable block allocator",
     )
+    parser.add_argument(
+        "--sanitizers",
+        type=str,
+        default=None,
+        help="Sanitizer to use. Can be whichever one your compiler supports, and compatible ones may be included simultaneously (separated by commas). Set to OFF to disable",
+    )
 
     return parser.parse_known_args()
 
@@ -186,6 +202,7 @@ def create_cmake_parameters_map() -> dict[str, str]:
         "exceptions": "TOOLKIT_ENABLE_EXCEPTIONS",
         "log-colors": "TOOLKIT_ENABLE_LOG_COLORS",
         "enable-block-allocator": "TOOLKIT_ENABLE_BLOCK_ALLOCATOR",
+        "sanitizers": "TOOLKIT_SANITIZERS",
     }
 
 
@@ -213,12 +230,22 @@ def main() -> None:
             value = getattr(args, key.replace("-", "_"))
             build_settings[key] = value if value is not None else cfg[section][key]
 
+    root = Path(__file__).parent.parent
+    build_folder = root / build_settings["build-path"]
+    if build_settings["compile-only"] == "ON":
+        print("Skipping CMake setup and only compiling the project...")
+        os.chdir(root)
+        subprocess.run(
+            ["cmake", "--build", build_folder, "--config", build_settings["build-type"]]
+            + build_args,
+            check=True,
+        )
+        return
+
     cmake_map = create_cmake_parameters_map()
     cmake_settings = {v: build_settings[k] for k, v in cmake_map.items()}
     cmake_args = [f"-D{key}={value}" for key, value in cmake_settings.items()]
 
-    root = Path(__file__).parent.parent
-    build_folder = root / build_settings["build-path"]
     if build_settings["rebuild"] == "ON":
         shutil.rmtree(build_folder, ignore_errors=True)
     if not build_folder.exists():

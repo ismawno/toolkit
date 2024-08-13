@@ -12,6 +12,7 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(TOOLKIT_SANITIZERS "OFF" CACHE STRING "Sanitizer(s) to use. Can be whichever one your compiler supports, and compatible ones may be included simultaneously (separated by commas). Set to OFF to disable")
 
 if (CMAKE_BUILD_TYPE STREQUAL "Dist")
     option(TOOLKIT_BUILD_TESTS "Build the tests" OFF)
@@ -53,6 +54,7 @@ message(STATUS "TOOLKIT: Enable log colors: ${TOOLKIT_ENABLE_LOG_COLORS}")
 message(STATUS "TOOLKIT: Silent asserts: ${TOOLKIT_SILENT_ASSERTS}")
 message(STATUS "TOOLKIT: Enable exceptions: ${TOOLKIT_ENABLE_EXCEPTIONS}")
 message(STATUS "TOOLKIT: Enable block allocator: ${TOOLKIT_ENABLE_BLOCK_ALLOCATOR}")
+message(STATUS "TOOLKIT: Sanitizer: ${TOOLKIT_SANITIZERS}")
 
 
 # Save options to cache (currently commented out because it just annoys me)
@@ -96,9 +98,21 @@ endif()
 if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}} /W4 /WX /MP")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE}} /W4 /WX /MP")
+
+    if (NOT TOOLKIT_SANITIZERS STREQUAL "OFF")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /fsanitize=${TOOLKIT_SANITIZERS} /FS")
+        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /fsanitize=${TOOLKIT_SANITIZERS} /FS")
+    endif()
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}} -Wall -Wextra -Werror")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE}} -Wall -Wextra -Werror")
+
+    if (NOT TOOLKIT_SANITIZERS STREQUAL "OFF")
+        set(TOOLKIT_SANITIZER_FLAGS "-fsanitize=${TOOLKIT_SANITIZERS} -fno-omit-frame-pointer")
+        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${TOOLKIT_SANITIZER_FLAGS}")
+        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} ${TOOLKIT_SANITIZER_FLAGS}")
+        set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} ${TOOLKIT_SANITIZER_FLAGS}")
+    endif()
 endif()
 
 # Add subdirectories
