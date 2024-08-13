@@ -8,6 +8,8 @@ RUN apt-get install -y cmake
 RUN apt-get install -y lldb
 RUN apt-get install -y gdb
 RUN apt-get install -y python3-lldb
+RUN apt-get install -y python3
+RUN apt-get install -y python3-venv
 RUN rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
@@ -17,6 +19,7 @@ WORKDIR /app
 COPY ./toolkit/ ./toolkit/
 COPY ./CMakeLists.txt ./
 COPY ./tests/ ./tests/
+COPY ./setup ./setup
 
 # Build your application
-RUN mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DTOOLKIT_BUILD_TESTS=ON && make
+# RUN mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DTOOLKIT_BUILD_TESTS=ON && make
