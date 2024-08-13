@@ -21,6 +21,15 @@ KIT_NAMESPACE_BEGIN
 
 // I have decided to use static polymorphism because both allocator's functionality is exactly the same and I dont see
 // how runtime polymorphism in this case could be useful
+
+// Known data races
+// -r1- Happens when a thread allocates and deallocates an object almost immediately. If, in that case, two threads
+// allocate simultaneously and one of them is quicker and deallocates while the second is still allocating (and looking
+// for a valid freelist state), you can end up with a data race, where a thread looks at a stale, detached value of the
+// freelist while the other one modifies the corresponding chunk to reattach it. Both of these cases are inside CAS
+// loops, that will only exit if the freelist state is VALIDATED, so it is okay if in the loop, the read counterpart
+// gets a corrupted data, because in that case, it will try again. Because of that, and because I have no idea how to
+// solve this without using locks (I am NOT using locks), I will leave it as it is
 template <typename T, template <typename> typename Derived> class KIT_API BlockAllocator
 {
     KIT_NON_COPYABLE(BlockAllocator);
@@ -174,6 +183,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         BlockChunkData newData;
         do
         {
+            // -r1- This is a data race (write), with its counterpart located in allocateCAS (read). More on this above
             chunk->Next = oldData.FreeList;
             newData = {oldData.BlockTail, chunk};
         } while (!m_BlockChunkData.compare_exchange_weak(oldData, newData, std::memory_order_release,
@@ -246,6 +256,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         // This while loop attempts to allocate from an existing block
         while (p_BlockChunkData.FreeList)
         {
+            // -r1- This is a data race (read), with its counterpart located in Deallocate (write). More on this above
             const BlockChunkData chunkData = {p_BlockChunkData.BlockTail, p_BlockChunkData.FreeList->Next};
             if (m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, chunkData, std::memory_order_release,
                                                        std::memory_order_acquire))
@@ -431,13 +442,13 @@ KIT_NAMESPACE_END
 #ifdef KIT_ENABLE_BLOCK_ALLOCATOR
 #    define KIT_BLOCK_ALLOCATED(p_Allocator, p_ClassName, p_ChunksPerBlock)                                            \
         static inline p_Allocator<p_ClassName> s_Allocator{p_ChunksPerBlock};                                          \
-        void *operator new(usz p_Size)                                                                                 \
+        static void *operator new(usz p_Size)                                                                          \
         {                                                                                                              \
             KIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                  \
                        "Trying to block allocate a derived class from a base class overloaded new/delete");            \
             return s_Allocator.Allocate();                                                                             \
         }                                                                                                              \
-        void operator delete(void *p_Ptr)                                                                              \
+        static void operator delete(void *p_Ptr)                                                                       \
         {                                                                                                              \
             s_Allocator.Deallocate(reinterpret_cast<p_ClassName *>(p_Ptr));                                            \
         }

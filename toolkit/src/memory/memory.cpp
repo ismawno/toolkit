@@ -6,7 +6,7 @@ KIT_NAMESPACE_BEGIN
 
 void *Allocate(const usz p_Size) KIT_NOEXCEPT
 {
-    void *ptr = malloc(p_Size);
+    void *ptr = std::malloc(p_Size);
     KIT_ASSERT(ptr, "Failed to allocate memory with size {}", p_Size);
     return ptr;
 }
@@ -14,7 +14,7 @@ void *Allocate(const usz p_Size) KIT_NOEXCEPT
 void Deallocate(void *p_Ptr) KIT_NOEXCEPT
 {
     KIT_ASSERT(p_Ptr, "Trying to deallocate a nullptr");
-    free(p_Ptr);
+    std::free(p_Ptr);
 }
 
 void *AllocateAligned(const usz p_Size, const usz p_Alignment) KIT_NOEXCEPT
@@ -42,7 +42,7 @@ void DeallocateAligned(void *p_Ptr) KIT_NOEXCEPT
 #ifdef KIT_OS_WINDOWS
     _aligned_free(p_Ptr);
 #else
-    free(p_Ptr);
+    std::free(p_Ptr);
 #endif
 }
 
