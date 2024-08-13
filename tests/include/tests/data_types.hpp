@@ -23,6 +23,7 @@ struct BigDataTS
     f64 x;
     f64 y;
     f64 z;
+    std::string str[3];
 };
 
 struct BigDataTU
@@ -31,6 +32,7 @@ struct BigDataTU
     f64 x;
     f64 y;
     f64 z;
+    std::string str[3];
 };
 
 KIT_WARNING_IGNORE_PUSH
