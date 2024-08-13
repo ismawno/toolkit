@@ -39,7 +39,7 @@ template <typename T> using DynamicArray = std::vector<T>;
 template <typename Key, typename Value, typename Hash = std::hash<Key>, typename OpEqual = std::equal_to<Key>>
 using HashMap = std::unordered_map<Key, Value, Hash, OpEqual>;
 
-template <typename Key, typename Value, typename Hash = std::hash<Key>, typename OpEqual = std::equal_to<Key>>
-using HashSet = std::unordered_set<Key, Value, Hash, OpEqual>;
+template <typename Value, typename Hash = std::hash<Value>, typename OpEqual = std::equal_to<Value>>
+using HashSet = std::unordered_set<Value, Hash, OpEqual>;
 
 KIT_NAMESPACE_END

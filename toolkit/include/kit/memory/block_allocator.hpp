@@ -59,13 +59,17 @@ template <typename T, template <typename> typename Derived> class KIT_API BlockA
         ::new (ptr) T(std::forward<Args>(p_Args)...);
         return ptr;
     }
-
     void Destroy(T *p_Ptr) KIT_NOEXCEPT
     {
         // Be wary! destructor must be thread safe
         if constexpr (!std::is_trivially_destructible_v<T>)
             p_Ptr->~T();
         Deallocate(p_Ptr);
+    }
+
+    void Reset() KIT_NOEXCEPT
+    {
+        static_cast<Derived<T> *>(this)->Reset();
     }
 
     bool Owns(const T *p_Ptr) const KIT_NOEXCEPT
@@ -135,14 +139,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
     ~TSafeBlockAllocator() KIT_NOEXCEPT
     {
         // The destruction of the block allocator should happen serially
-        Block *blockTail = m_BlockChunkData.load(std::memory_order_relaxed).BlockTail;
-        while (blockTail)
-        {
-            Block *prev = blockTail->Prev;
-            DeallocateAligned(blockTail->Data);
-            delete blockTail;
-            blockTail = prev;
-        }
+        Reset();
     }
 
     TSafeBlockAllocator &operator=(TSafeBlockAllocator &&p_Other) noexcept
@@ -162,7 +159,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
     T *Allocate() KIT_NOEXCEPT
     {
         m_Allocations.fetch_add(1, std::memory_order_relaxed);
-        return allocateCAS(m_BlockChunkData.load(std::memory_order_relaxed));
+        return allocateCAS(m_BlockChunkData.load(std::memory_order_acquire));
     }
 
     void Deallocate(T *p_Ptr) KIT_NOEXCEPT
@@ -179,7 +176,26 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         {
             chunk->Next = oldData.FreeList;
             newData = {oldData.BlockTail, chunk};
-        } while (!m_BlockChunkData.compare_exchange_weak(oldData, newData, std::memory_order_relaxed));
+        } while (!m_BlockChunkData.compare_exchange_weak(oldData, newData, std::memory_order_release,
+                                                         std::memory_order_acquire));
+    }
+
+    void Reset()
+    {
+        KIT_LOG_WARNING_IF(!Empty(), "The current allocator has active allocations. Resetting the allocator will "
+                                     "prematurely deallocate all memory, and no destructor will be called");
+        // The destruction/reset of the block allocator should happen serially
+        Block *blockTail = m_BlockChunkData.load(std::memory_order_relaxed).BlockTail;
+        while (blockTail)
+        {
+            Block *prev = blockTail->Prev;
+            DeallocateAligned(blockTail->Data);
+            delete blockTail;
+            blockTail = prev;
+        }
+        m_BlockChunkData.store({}, std::memory_order_relaxed);
+        m_Allocations.store(0, std::memory_order_relaxed);
+        m_BlockCount.store(0, std::memory_order_relaxed);
     }
 
     // This method is not infallible. Deallocated pointers from this allocator will still return true, as they lay in
@@ -187,7 +203,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
     bool Owns(const T *p_Ptr) const KIT_NOEXCEPT
     {
         const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
-        Block *block = m_BlockChunkData.load(std::memory_order_relaxed).BlockTail;
+        Block *block = m_BlockChunkData.load(std::memory_order_acquire).BlockTail;
         while (block)
         {
             if (ptr >= block->Data && ptr < block->Data + this->BlockSize())
@@ -231,7 +247,8 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         while (p_BlockChunkData.FreeList)
         {
             const BlockChunkData chunkData = {p_BlockChunkData.BlockTail, p_BlockChunkData.FreeList->Next};
-            if (m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, chunkData, std::memory_order_relaxed))
+            if (m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, chunkData, std::memory_order_release,
+                                                       std::memory_order_acquire))
                 return reinterpret_cast<T *>(p_BlockChunkData.FreeList);
         }
         // If, at some point in time, the free list is empty, we allocate a new block
@@ -257,7 +274,8 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         newBlock->Prev = p_BlockChunkData.BlockTail;
 
         if (const BlockChunkData possibleData = {newBlock, reinterpret_cast<Chunk *>(data + chunkSize)};
-            !m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, possibleData, std::memory_order_relaxed))
+            !m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, possibleData, std::memory_order_release,
+                                                    std::memory_order_acquire))
         {
             // Another thread was quicker than us, we must deallocate the block and try again
             DeallocateAligned(data);
@@ -288,7 +306,7 @@ template <typename T> class KIT_API TUnsafeBlockAllocator final : public BlockAl
 
     TUnsafeBlockAllocator(TUnsafeBlockAllocator &&p_Other) noexcept
         : BlockAllocator<T, TUnsafeBlockAllocator>(std::move(p_Other)), m_Allocations(p_Other.m_Allocations),
-          m_BlockSize(p_Other.m_BlockSize), m_FreeList(p_Other.m_FreeList), m_Blocks(std::move(p_Other.m_Blocks))
+          m_FreeList(p_Other.m_FreeList), m_Blocks(std::move(p_Other.m_Blocks))
     {
         p_Other.m_Allocations = 0;
         p_Other.m_FreeList = nullptr;
@@ -297,8 +315,7 @@ template <typename T> class KIT_API TUnsafeBlockAllocator final : public BlockAl
 
     ~TUnsafeBlockAllocator() KIT_NOEXCEPT
     {
-        for (std::byte *block : m_Blocks)
-            DeallocateAligned(block);
+        Reset();
     }
 
     TUnsafeBlockAllocator &operator=(TUnsafeBlockAllocator &&p_Other) noexcept
@@ -307,7 +324,6 @@ template <typename T> class KIT_API TUnsafeBlockAllocator final : public BlockAl
         {
             BlockAllocator<T, TUnsafeBlockAllocator>::operator=(std::move(p_Other));
             m_Allocations = p_Other.m_Allocations;
-            m_BlockSize = p_Other.m_BlockSize;
             m_FreeList = p_Other.m_FreeList;
             m_Blocks = std::move(p_Other.m_Blocks);
 
@@ -335,6 +351,17 @@ template <typename T> class KIT_API TUnsafeBlockAllocator final : public BlockAl
         Chunk *chunk = reinterpret_cast<Chunk *>(p_Ptr);
         chunk->Next = m_FreeList;
         m_FreeList = chunk;
+    }
+
+    void Reset()
+    {
+        KIT_LOG_WARNING_IF(!Empty(), "The current allocator has active allocations. Resetting the allocator will "
+                                     "prematurely deallocate all memory, and no destructor will be called");
+        for (std::byte *block : m_Blocks)
+            DeallocateAligned(block);
+        m_Allocations = 0;
+        m_FreeList = nullptr;
+        m_Blocks.clear();
     }
 
     // This method is not infallible. Deallocated pointers from this allocator will still return true, as they lay in
@@ -395,7 +422,6 @@ template <typename T> class KIT_API TUnsafeBlockAllocator final : public BlockAl
     }
 
     u32 m_Allocations = 0;
-    usz m_BlockSize;
     Chunk *m_FreeList = nullptr;
     DynamicArray<std::byte *> m_Blocks;
 };
