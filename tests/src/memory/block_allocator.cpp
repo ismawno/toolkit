@@ -228,33 +228,46 @@ template <typename T> static void RunMultithreadedAllocatorTests()
             const TSafeBlockAllocator<T> &alloc = T::s_Allocator; // msvc yells if i dont do this
             for (usz i = 0; i < amount; ++i)
             {
-                data[tindex][i].data = new T;
-                const bool owned = alloc.Owns(data[tindex][i].data);
+                T *ptr = new T;
+                ptr->ToEdit = tindex * amount + i;
+
+                data[tindex][i].data = ptr;
+                const bool owned = alloc.Owns(ptr);
 
                 std::scoped_lock lock(mutex);
-                REQUIRE(data[tindex][i].data != nullptr);
+                REQUIRE(ptr != nullptr);
                 REQUIRE(owned);
             }
         };
 
         const auto deallocateBulk = [&data](const usz tindex) {
             for (usz i = 0; i < amount; ++i)
-                delete data[tindex][i].data;
+            {
+                T *ptr = data[tindex][i].data;
+                const bool equal = ptr->ToEdit == tindex * amount + i;
+                delete ptr;
+                std::scoped_lock lock(mutex);
+                REQUIRE(equal);
+            }
         };
 
-        const auto allocateDeallocate = []() {
+        const auto allocateDeallocate = [](const usz tindex) {
             const TSafeBlockAllocator<T> &alloc = T::s_Allocator; // msvc yells if i dont do this
             for (usz i = 0; i < amount; ++i)
             {
                 // this scoped code causes a data race :( (benign one if u ask me)
                 T *ptr = new T;
+                ptr->ToEdit = tindex * amount + i;
+
                 const bool owned = alloc.Owns(ptr);
                 const bool notnull = ptr != nullptr;
+                const bool equal = ptr->ToEdit == tindex * amount + i;
                 delete ptr;
 
                 std::scoped_lock lock(mutex);
                 REQUIRE(notnull);
                 REQUIRE(owned);
+                REQUIRE(equal);
             }
         };
 
@@ -278,7 +291,7 @@ template <typename T> static void RunMultithreadedAllocatorTests()
             threads[i].join();
 
         for (usz i = 0; i < threadCount; ++i)
-            threads[i] = std::thread(allocateDeallocate);
+            threads[i] = std::thread(allocateDeallocate, i);
         for (usz i = 0; i < threadCount; ++i)
             threads[i].join();
     }

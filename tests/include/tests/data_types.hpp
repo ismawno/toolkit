@@ -9,6 +9,7 @@ struct SmallDataTS
 {
     KIT_BLOCK_ALLOCATED(TSafeBlockAllocator, SmallDataTS, 10);
     i32 x;
+    usz ToEdit;
 };
 
 struct SmallDataTU
@@ -20,6 +21,7 @@ struct SmallDataTU
 struct BigDataTS
 {
     KIT_BLOCK_ALLOCATED(TSafeBlockAllocator, BigDataTS, 10);
+    usz ToEdit;
     f64 x;
     f64 y;
     f64 z;
@@ -43,6 +45,7 @@ struct AlignedDataTS
     KIT_BLOCK_ALLOCATED(TSafeBlockAllocator, AlignedDataTS, 10);
     alignas(16) f64 x, y, z;
     alignas(32) f64 a, b, c;
+    usz ToEdit;
 };
 
 struct AlignedDataTU
@@ -113,6 +116,7 @@ struct NonTrivialData
 struct NonTrivialDataTS : NonTrivialData
 {
     KIT_BLOCK_ALLOCATED(TSafeBlockAllocator, NonTrivialDataTS, 10);
+    usz ToEdit;
 };
 
 struct NonTrivialDataTU : NonTrivialData

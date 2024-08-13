@@ -22,14 +22,17 @@ KIT_NAMESPACE_BEGIN
 // I have decided to use static polymorphism because both allocator's functionality is exactly the same and I dont see
 // how runtime polymorphism in this case could be useful
 
-// Known data races
+// -Known data races-
 // -r1- Happens when a thread allocates and deallocates an object almost immediately. If, in that case, two threads
 // allocate simultaneously and one of them is quicker and deallocates while the second is still allocating (and looking
 // for a valid freelist state), you can end up with a data race, where a thread looks at a stale, detached value of the
-// freelist while the other one modifies the corresponding chunk to reattach it. Both of these cases are inside CAS
-// loops, that will only exit if the freelist state is VALIDATED, so it is okay if in the loop, the read counterpart
-// gets a corrupted data, because in that case, it will try again. Because of that, and because I have no idea how to
-// solve this without using locks (I am NOT using locks), I will leave it as it is
+// freelist while the other one modifies the corresponding chunk to reattach it.
+
+// Both of these cases are inside CAS loops, that will only exit if the freelist state is VALIDATED, so it is okay if in
+// the loop, the read counterpart gets a corrupted data, because in that case, it will try again. Because of that, and
+// because I have no idea how to solve this without using locks (I am NOT using locks), I will leave it as it is
+
+// NOTE: Data race above can also trigger if the quick thread modifies the data it just allocated
 template <typename T, template <typename> typename Derived> class KIT_API BlockAllocator
 {
     KIT_NON_COPYABLE(BlockAllocator);
@@ -187,7 +190,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
             chunk->Next = oldData.FreeList;
             newData = {oldData.BlockTail, chunk};
         } while (!m_BlockChunkData.compare_exchange_weak(oldData, newData, std::memory_order_release,
-                                                         std::memory_order_acquire));
+                                                         std::memory_order_relaxed));
     }
 
     void Reset()
