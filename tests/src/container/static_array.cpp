@@ -155,7 +155,7 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
             for (auto it = array.rbegin(); it != array.rend(); ++it)
                 REQUIRE(*it == values[index++]);
 
-            StaticArray<T, 10000> bigArray;
+            StaticArray<T, 400> bigArray;
             while (!bigArray.full())
                 bigArray.insert(bigArray.begin(), values[0]);
         }

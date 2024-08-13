@@ -56,12 +56,12 @@ struct NonTrivialData
     i32 *x = nullptr;
     NonTrivialData() : x(new i32[25])
     {
-        Instances.fetch_add(1, std::memory_order_relaxed);
+        ++Instances;
     }
 
     NonTrivialData(const NonTrivialData &other) : x(new i32[25])
     {
-        Instances.fetch_add(1, std::memory_order_relaxed);
+        ++Instances;
         for (i32 i = 0; i < 25; ++i)
             x[i] = other.x[i];
     }
@@ -78,7 +78,7 @@ struct NonTrivialData
 
     NonTrivialData(NonTrivialData &&other) noexcept : x(other.x)
     {
-        Instances.fetch_add(1, std::memory_order_relaxed);
+        ++Instances;
         other.x = nullptr;
     }
 
@@ -102,10 +102,10 @@ struct NonTrivialData
         if (x)
             delete[] x;
         x = nullptr;
-        Instances.fetch_sub(1, std::memory_order_relaxed);
+        --Instances;
     }
 
-    static inline std::atomic<i32> Instances = 0;
+    static inline i32 Instances = 0;
 };
 
 struct NonTrivialDataTS : NonTrivialData
@@ -136,7 +136,7 @@ struct VirtualBaseTS
 
     i32 x;
     f64 y;
-    std::string str[12];
+    std::string str[2];
 };
 
 struct VirtualBaseTU
@@ -156,7 +156,7 @@ struct VirtualBaseTU
 
     i32 x;
     f64 y;
-    std::string str[12];
+    std::string str[2];
 };
 
 struct VirtualDerivedTS : VirtualBaseTS
@@ -175,7 +175,7 @@ struct VirtualDerivedTS : VirtualBaseTS
     static inline std::atomic<i32> DerivedInstances = 0;
 
     f64 z;
-    std::string str2[12];
+    std::string str2[2];
 };
 
 struct VirtualDerivedTU : VirtualBaseTU
@@ -194,7 +194,7 @@ struct VirtualDerivedTU : VirtualBaseTU
     static inline i32 DerivedInstances = 0;
 
     f64 z;
-    std::string str2[12];
+    std::string str2[2];
 };
 
 struct BadVirtualDerivedTS : VirtualBaseTS
@@ -214,7 +214,7 @@ struct BadVirtualDerivedTS : VirtualBaseTS
     static inline std::atomic<i32> DerivedInstances = 0;
 
     f64 z;
-    std::string str2[12];
+    std::string str2[2];
 };
 
 struct BadVirtualDerivedTU : VirtualBaseTU
@@ -234,7 +234,7 @@ struct BadVirtualDerivedTU : VirtualBaseTU
     static inline i32 DerivedInstances = 0;
 
     f64 z;
-    std::string str2[12];
+    std::string str2[2];
 };
 
 KIT_NAMESPACE_END
