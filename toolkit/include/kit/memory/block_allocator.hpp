@@ -38,7 +38,7 @@ template <typename T, template <typename> typename Derived> class KIT_API BlockA
     KIT_NON_COPYABLE(BlockAllocator);
 
   public:
-    explicit BlockAllocator(const usz p_ChunksPerBlock) KIT_NOEXCEPT : m_BlockSize(alignedSize() * p_ChunksPerBlock)
+    explicit BlockAllocator(const usz p_ChunksPerBlock) KIT_NOEXCEPT : m_BlockSize(ChunkSize() * p_ChunksPerBlock)
     {
     }
 
@@ -49,11 +49,19 @@ template <typename T, template <typename> typename Derived> class KIT_API BlockA
 
     usz ChunksPerBlock() const KIT_NOEXCEPT
     {
-        return m_BlockSize / alignedSize();
+        return m_BlockSize / ChunkSize();
     }
-    usz ChunkSize() const KIT_NOEXCEPT
+
+    static constexpr usz ChunkSize() KIT_NOEXCEPT
     {
-        return alignedSize();
+        return Derived<T>::ChunkSize();
+    }
+    static constexpr usz ChunkAlignment() KIT_NOEXCEPT
+    {
+        if constexpr (alignof(T) < alignof(Chunk))
+            return alignof(Chunk);
+        else
+            return alignof(T);
     }
 
     T *Allocate() KIT_NOEXCEPT
@@ -110,22 +118,6 @@ template <typename T, template <typename> typename Derived> class KIT_API BlockA
         Chunk *Next = nullptr;
     };
 
-    constexpr usz alignedSize() const KIT_NOEXCEPT
-    {
-        if constexpr (sizeof(T) < sizeof(Chunk))
-            return AlignedSize<Chunk>();
-        else
-            return AlignedSize<T>();
-    }
-
-    constexpr usz alignment() const KIT_NOEXCEPT
-    {
-        if constexpr (alignof(T) < alignof(Chunk))
-            return alignof(Chunk);
-        else
-            return alignof(T);
-    }
-
   private:
     usz m_BlockSize;
 };
@@ -168,6 +160,16 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         return *this;
     }
 
+    // In this implementation, the chunk size is slightly bigger than the size of the object because chunk metadata must
+    // be allocated in a different and exclusive memory zone. This is extremely important, as if the chunk metadata
+    // shared the "space" with the object memory (similar to an enum), because of the "wild" nature of amultithreaded
+    // environment, the user could indirectly invalidate the data the FreeList points to, causing a lot of issues, such
+    // as segfaults and nasty data races
+    static constexpr usz ChunkSize() KIT_NOEXCEPT
+    {
+        return AlignedSize<Chunk>() + AlignedSize<T>();
+    }
+
     T *Allocate() KIT_NOEXCEPT
     {
         m_Allocations.fetch_add(1, std::memory_order_relaxed);
@@ -180,7 +182,9 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         KIT_ASSERT(Owns(p_Ptr), "Trying to deallocate a pointer that was not allocated by this allocator");
 
         m_Allocations.fetch_sub(1, std::memory_order_relaxed);
-        Chunk *chunk = reinterpret_cast<Chunk *>(p_Ptr);
+
+        std::byte *ptr = reinterpret_cast<std::byte *>(p_Ptr);
+        Chunk *chunk = reinterpret_cast<Chunk *>(ptr + AlignedSize<T>());
 
         BlockChunkData oldData = m_BlockChunkData.load(std::memory_order_relaxed);
         BlockChunkData newData;
@@ -263,21 +267,27 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
             const BlockChunkData chunkData = {p_BlockChunkData.BlockTail, p_BlockChunkData.FreeList->Next};
             if (m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, chunkData, std::memory_order_release,
                                                        std::memory_order_acquire))
-                return reinterpret_cast<T *>(p_BlockChunkData.FreeList);
+            {
+                std::byte *freeList = reinterpret_cast<std::byte *>(p_BlockChunkData.FreeList);
+                return reinterpret_cast<T *>(freeList - AlignedSize<T>());
+            }
         }
         // If, at some point in time, the free list is empty, we allocate a new block
 
-        const usz chunkSize = this->alignedSize();
-        const usz align = this->alignment();
+        constexpr usz chunkSize = ChunkSize();
+        constexpr usz alignment = BlockAllocator<T, TSafeBlockAllocator>::ChunkAlignment();
+        constexpr usz objectSize = AlignedSize<T>();
 
-        std::byte *data = reinterpret_cast<std::byte *>(AllocateAligned(this->BlockSize(), align));
+        std::byte *data = reinterpret_cast<std::byte *>(AllocateAligned(this->BlockSize(), alignment));
+        std::byte *shiftedData = data + objectSize;
+
         const usz chunksPerBlock = this->ChunksPerBlock();
         for (usz i = 0; i < chunksPerBlock - 1; ++i)
         {
-            Chunk *chunk = reinterpret_cast<Chunk *>(data + i * chunkSize);
-            chunk->Next = reinterpret_cast<Chunk *>(data + (i + 1) * chunkSize);
+            Chunk *chunk = reinterpret_cast<Chunk *>(shiftedData + i * chunkSize);
+            chunk->Next = reinterpret_cast<Chunk *>(shiftedData + (i + 1) * chunkSize);
         }
-        Chunk *last = reinterpret_cast<Chunk *>(data + (chunksPerBlock - 1) * chunkSize);
+        Chunk *last = reinterpret_cast<Chunk *>(shiftedData + (chunksPerBlock - 1) * chunkSize);
         last->Next = nullptr;
 
         // Once the block has been allocated, a lot of stuff may have happened in between. We need to check if the free
@@ -287,7 +297,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         newBlock->Data = data;
         newBlock->Prev = p_BlockChunkData.BlockTail;
 
-        if (const BlockChunkData possibleData = {newBlock, reinterpret_cast<Chunk *>(data + chunkSize)};
+        if (const BlockChunkData possibleData = {newBlock, reinterpret_cast<Chunk *>(shiftedData + chunkSize)};
             !m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, possibleData, std::memory_order_release,
                                                     std::memory_order_acquire))
         {
@@ -346,6 +356,14 @@ template <typename T> class KIT_API TUnsafeBlockAllocator final : public BlockAl
             p_Other.m_Blocks.clear();
         }
         return *this;
+    }
+
+    static constexpr usz ChunkSize() KIT_NOEXCEPT
+    {
+        if constexpr (sizeof(T) < sizeof(Chunk))
+            return AlignedSize<Chunk>();
+        else
+            return AlignedSize<T>();
     }
 
     T *Allocate() KIT_NOEXCEPT
@@ -409,10 +427,10 @@ template <typename T> class KIT_API TUnsafeBlockAllocator final : public BlockAl
 
     T *fromFirstChunkOfNewBlock() KIT_NOEXCEPT
     {
-        const usz chunkSize = this->alignedSize();
-        const usz align = this->alignment();
+        constexpr usz chunkSize = ChunkSize();
+        constexpr usz alignment = BlockAllocator<T, TUnsafeBlockAllocator>::ChunkAlignment();
 
-        std::byte *data = reinterpret_cast<std::byte *>(AllocateAligned(this->BlockSize(), align));
+        std::byte *data = reinterpret_cast<std::byte *>(AllocateAligned(this->BlockSize(), alignment));
         m_FreeList = reinterpret_cast<Chunk *>(data + chunkSize);
 
         const usz chunksPerBlock = this->ChunksPerBlock();

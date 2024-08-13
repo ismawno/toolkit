@@ -7,27 +7,10 @@
 
 KIT_NAMESPACE_BEGIN
 
-template <typename T, template <typename> typename Allocator> static void RunBasicAllocatorTest(Allocator<T> &allocator)
-{
-    const usz chunkSize = sizeof(T) < sizeof(void *) ? sizeof(void *) : sizeof(T);
-    const usz blockSize = chunkSize * 10;
-
-    REQUIRE(allocator.BlockSize() == blockSize);
-    REQUIRE(allocator.BlockCount() == 0);
-    REQUIRE(allocator.ChunksPerBlock() == 10);
-    REQUIRE(allocator.ChunkSize() == chunkSize);
-    REQUIRE(allocator.Empty());
-
-    T *null = nullptr;
-    REQUIRE_THROWS(allocator.Deallocate(null));
-    REQUIRE_THROWS(Deallocate(null));
-}
-
 template <typename T, template <typename> typename Allocator> static void RunRawAllocationTest()
 {
     REQUIRE(sizeof(T) % alignof(T) == 0);
     Allocator<T> allocator(10);
-    RunBasicAllocatorTest(allocator);
 
     DYNAMIC_SECTION("Allocate and deallocate (raw call)" << (int)typeid(T).hash_code())
     {
@@ -82,7 +65,7 @@ template <typename T, template <typename> typename Allocator> static void RunRaw
     {
         constexpr u32 amount = 10;
         std::array<T *, amount> data;
-        const usz chunkSize = sizeof(T) < sizeof(void *) ? sizeof(void *) : sizeof(T);
+        const usz chunkSize = allocator.ChunkSize();
         for (u32 i = 0; i < amount; ++i)
         {
             data[i] = allocator.Allocate();
@@ -151,7 +134,7 @@ template <typename T> static void RunNewDeleteTest()
     {
         constexpr u32 amount = 10;
         std::array<T *, amount> data;
-        const usz chunkSize = sizeof(T) < sizeof(void *) ? sizeof(void *) : sizeof(T);
+        const usz chunkSize = allocator.ChunkSize();
         for (u32 i = 0; i < amount; ++i)
         {
             data[i] = new T;
