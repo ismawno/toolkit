@@ -227,7 +227,8 @@ template <typename T> static void RunMultithreadedAllocatorTests()
             for (usz i = 0; i < amount; ++i)
             {
                 T *ptr = data[tindex][i].data;
-                const bool equal = ptr->ToEdit == tindex * amount + i;
+                const usz edit = ptr->ToEdit;
+                const bool equal = edit == tindex * amount + i;
                 delete ptr;
                 std::scoped_lock lock(mutex);
                 REQUIRE(equal);
@@ -244,7 +245,8 @@ template <typename T> static void RunMultithreadedAllocatorTests()
 
                 const bool owned = alloc.Owns(ptr);
                 const bool notnull = ptr != nullptr;
-                const bool equal = ptr->ToEdit == tindex * amount + i;
+                const usz edit = ptr->ToEdit;
+                const bool equal = edit == tindex * amount + i;
                 delete ptr;
 
                 std::scoped_lock lock(mutex);
