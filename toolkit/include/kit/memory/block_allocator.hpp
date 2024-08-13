@@ -265,8 +265,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         {
             // -r1- This is a data race (read), with its counterpart located in Deallocate (write). More on this above
             const BlockChunkData chunkData = {p_BlockChunkData.BlockTail, p_BlockChunkData.FreeList->Next};
-            if (m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, chunkData, std::memory_order_release,
-                                                       std::memory_order_acquire))
+            if (m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, chunkData, std::memory_order_acq_rel))
             {
                 std::byte *freeList = reinterpret_cast<std::byte *>(p_BlockChunkData.FreeList);
                 return reinterpret_cast<T *>(freeList - AlignedSize<T>());
@@ -298,8 +297,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         newBlock->Prev = p_BlockChunkData.BlockTail;
 
         if (const BlockChunkData possibleData = {newBlock, reinterpret_cast<Chunk *>(shiftedData + chunkSize)};
-            !m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, possibleData, std::memory_order_release,
-                                                    std::memory_order_acquire))
+            !m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, possibleData, std::memory_order_acq_rel))
         {
             // Another thread was quicker than us, we must deallocate the block and try again
             DeallocateAligned(data);
