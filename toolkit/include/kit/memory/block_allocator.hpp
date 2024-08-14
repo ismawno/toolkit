@@ -190,7 +190,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         BlockChunkData oldData = m_BlockChunkData.load(std::memory_order_acquire);
         while (true)
         {
-            i32 counter = m_AllocDeallocCounter.load(std::memory_order_acquire);
+            i32 counter = m_AllocDeallocCounter.load(std::memory_order_relaxed);
             if (counter <= 0 &&
                 m_AllocDeallocCounter.compare_exchange_weak(counter, counter - 1, std::memory_order_acq_rel))
                 break;
@@ -271,7 +271,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
     {
         while (true)
         {
-            i32 counter = m_AllocDeallocCounter.load(std::memory_order_acquire);
+            i32 counter = m_AllocDeallocCounter.load(std::memory_order_relaxed);
             if (counter >= 0 &&
                 m_AllocDeallocCounter.compare_exchange_weak(counter, counter + 1, std::memory_order_acq_rel))
                 break;
