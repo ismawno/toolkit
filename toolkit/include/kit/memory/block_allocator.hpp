@@ -186,7 +186,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         std::byte *ptr = reinterpret_cast<std::byte *>(p_Ptr);
         Chunk *chunk = reinterpret_cast<Chunk *>(ptr + AlignedSize<T>());
 
-        BlockChunkData oldData = m_BlockChunkData.load(std::memory_order_relaxed);
+        BlockChunkData oldData = m_BlockChunkData.load(std::memory_order_acquire);
         BlockChunkData newData;
         do
         {
