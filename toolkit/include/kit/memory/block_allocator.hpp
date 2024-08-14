@@ -23,7 +23,8 @@ KIT_NAMESPACE_BEGIN
 // how runtime polymorphism in this case could be useful
 
 // -Known data races-
-// -r1- Happens when a thread allocates and deallocates an object almost immediately. If, in that case, two threads
+// -r1- <EDIT: This data race has been fixed by adding a spinlock>
+// Happens when a thread allocates and deallocates an object almost immediately. If, in that case, two threads
 // allocate simultaneously and one of them is quicker and deallocates while the second is still allocating (and looking
 // for a valid freelist state), you can end up with a data race, where a thread looks at a stale, detached value of the
 // freelist while the other one modifies the corresponding chunk to reattach it.
@@ -195,14 +196,13 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
                 break;
         }
 
-        BlockChunkData newData;
-        do
+        while (true)
         {
-            // -r1- This is a data race (write), with its counterpart located in allocateCAS (read). More on this above
             chunk->Next = oldData.FreeList;
-            newData = {oldData.BlockTail, chunk};
-        } while (!m_BlockChunkData.compare_exchange_weak(oldData, newData, std::memory_order_release,
-                                                         std::memory_order_relaxed));
+            const BlockChunkData newData = {oldData.BlockTail, chunk};
+            if (m_BlockChunkData.compare_exchange_weak(oldData, newData, std::memory_order_acq_rel))
+                break;
+        }
         m_AllocDeallocCounter.fetch_add(1, std::memory_order_release);
     }
 

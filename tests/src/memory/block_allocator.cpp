@@ -239,7 +239,6 @@ template <typename T> static void RunMultithreadedAllocatorTests()
             const TSafeBlockAllocator<T> &alloc = T::s_Allocator; // msvc yells if i dont do this
             for (usz i = 0; i < amount; ++i)
             {
-                // this scoped code causes a data race :( (benign one if u ask me)
                 T *ptr = new T;
                 ptr->ToEdit = tindex * amount + i;
 
