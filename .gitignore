@@ -4,6 +4,7 @@
 build*.ini
 performance/results
 performance/reports
+performance/perf-settings.yaml
 .venv/
 .DS_Store
 
