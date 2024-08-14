@@ -187,6 +187,14 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         Chunk *chunk = reinterpret_cast<Chunk *>(ptr + AlignedSize<T>());
 
         BlockChunkData oldData = m_BlockChunkData.load(std::memory_order_acquire);
+        while (true)
+        {
+            i32 counter = m_AllocDeallocCounter.load(std::memory_order_acquire);
+            if (counter <= 0 &&
+                m_AllocDeallocCounter.compare_exchange_weak(counter, counter - 1, std::memory_order_acq_rel))
+                break;
+        }
+
         BlockChunkData newData;
         do
         {
@@ -195,6 +203,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
             newData = {oldData.BlockTail, chunk};
         } while (!m_BlockChunkData.compare_exchange_weak(oldData, newData, std::memory_order_release,
                                                          std::memory_order_relaxed));
+        m_AllocDeallocCounter.fetch_add(1, std::memory_order_release);
     }
 
     void Reset()
@@ -260,6 +269,14 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
 
     T *allocateCAS(BlockChunkData p_BlockChunkData) KIT_NOEXCEPT
     {
+        while (true)
+        {
+            i32 counter = m_AllocDeallocCounter.load(std::memory_order_acquire);
+            if (counter >= 0 &&
+                m_AllocDeallocCounter.compare_exchange_weak(counter, counter + 1, std::memory_order_acq_rel))
+                break;
+        }
+
         // This while loop attempts to allocate from an existing block
         while (p_BlockChunkData.FreeList)
         {
@@ -267,10 +284,12 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
             const BlockChunkData chunkData = {p_BlockChunkData.BlockTail, p_BlockChunkData.FreeList->Next};
             if (m_BlockChunkData.compare_exchange_weak(p_BlockChunkData, chunkData, std::memory_order_acq_rel))
             {
+                m_AllocDeallocCounter.fetch_sub(1, std::memory_order_release);
                 std::byte *freeList = reinterpret_cast<std::byte *>(p_BlockChunkData.FreeList);
                 return reinterpret_cast<T *>(freeList - AlignedSize<T>());
             }
         }
+        m_AllocDeallocCounter.fetch_sub(1, std::memory_order_release);
         // If, at some point in time, the free list is empty, we allocate a new block
 
         constexpr usz chunkSize = ChunkSize();
@@ -312,6 +331,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
 
     std::atomic<u32> m_Allocations = 0;
     std::atomic<u32> m_BlockCount = 0;
+    std::atomic<i32> m_AllocDeallocCounter = 0;
 
     // When allocating a new block, we must update the block list and the free list simultaneously. If we dont, it is
     // impossible (i think) to ensure that the block list and the free list are always in a valid, simultaneous state
