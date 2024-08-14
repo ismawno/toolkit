@@ -188,6 +188,8 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
         Chunk *chunk = reinterpret_cast<Chunk *>(ptr + AlignedSize<T>());
 
         BlockChunkData oldData = m_BlockChunkData.load(std::memory_order_acquire);
+
+        // Spinlock: Ensure no allocations are taking place
         while (true)
         {
             i32 counter = m_AllocDeallocCounter.load(std::memory_order_relaxed);
@@ -269,6 +271,7 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
 
     T *allocateCAS(BlockChunkData p_BlockChunkData) KIT_NOEXCEPT
     {
+        // Spinlock: Ensure no deallocations are taking place
         while (true)
         {
             i32 counter = m_AllocDeallocCounter.load(std::memory_order_relaxed);
@@ -331,6 +334,10 @@ template <typename T> class KIT_API TSafeBlockAllocator final : public BlockAllo
 
     std::atomic<u32> m_Allocations = 0;
     std::atomic<u32> m_BlockCount = 0;
+
+    // This counter is used within a spinlock before any Allocate or Deallocate operation. This is because an allocation
+    // and deallocation may not happen simultaneously because of data race -r1- (Note that simultaneous
+    // allocations/deallocations can (and do) happen)
     std::atomic<i32> m_AllocDeallocCounter = 0;
 
     // When allocating a new block, we must update the block list and the free list simultaneously. If we dont, it is
