@@ -38,4 +38,5 @@ int main()
 
     KIT::RecordMallocFree(settings);
     KIT::RecordBlockAllocator(settings);
+    KIT::RecordStackAllocator(settings);
 }

@@ -11,6 +11,10 @@ KIT_NAMESPACE_BEGIN
 
 // This is a block allocator whose role is to 1: speed up single allocations and 2: improve contiguity, which is
 // guaranteed up to the amount of chunks per block (each chunk represents an allocated object)
+
+// On my macOS m1 this allocator is able to allocate 10000 elements of 128 bytes in 0.035 ms and deallocate them in
+// 0.012 (3.5ns per allocation and 1.2ns per deallocation). This is a roughly 10x improvement over the default
+// new/delete
 template <typename T> class KIT_API BlockAllocator final
 {
     KIT_NON_COPYABLE(BlockAllocator)
