@@ -24,7 +24,6 @@ if (UNIX AND NOT APPLE)
     )
     FetchContent_MakeAvailable(fmt)
     target_link_libraries(toolkit PUBLIC fmt::fmt)
-    target_link_libraries(toolkit PRIVATE atomic)
 endif()
 
 # Include directories for the library
