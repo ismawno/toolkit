@@ -7,10 +7,10 @@
 
 KIT_NAMESPACE_BEGIN
 
-template <typename T, template <typename> typename Allocator> static void RunRawAllocationTest()
+template <typename T> static void RunRawAllocationTest()
 {
     REQUIRE(sizeof(T) % alignof(T) == 0);
-    Allocator<T> allocator(10);
+    BlockAllocator<T> allocator(10);
 
     DYNAMIC_SECTION("Allocate and deallocate (raw call)" << (int)typeid(T).hash_code())
     {
@@ -86,7 +86,7 @@ template <typename T, template <typename> typename Allocator> static void RunRaw
 
 template <typename T> static void RunNewDeleteTest()
 {
-    auto &allocator = T::s_Allocator;
+    BlockAllocator<T> &allocator = T::s_Allocator;
     REQUIRE(allocator.Empty());
     allocator.Reset();
 
@@ -155,7 +155,7 @@ template <typename T> static void RunNewDeleteTest()
 
 template <typename Base, typename Derived> void RunVirtualAllocatorTests()
 {
-    auto &allocator = Derived::s_Allocator;
+    BlockAllocator<Derived> &allocator = Derived::s_Allocator;
     REQUIRE(allocator.Empty());
     allocator.Reset();
 
@@ -189,167 +189,45 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
     }
 }
 
-template <typename T> static void RunMultithreadedAllocatorTests()
-{
-    TSafeBlockAllocator<T> &allocator = T::s_Allocator;
-    REQUIRE(allocator.Empty());
-    allocator.Reset();
-    DYNAMIC_SECTION("Multithreaded allocations" << (int)typeid(T).hash_code())
-    {
-        struct Data
-        {
-            T *data;
-            std::byte padding[64 - sizeof(T *)];
-        };
-        constexpr usz amount = 1000;
-        constexpr usz threadCount = 8;
-        static std::mutex mutex;
-
-        std::array<std::array<Data, amount>, threadCount> data;
-
-        const auto allocateBulk = [&data](const usz tindex) {
-            const TSafeBlockAllocator<T> &alloc = T::s_Allocator; // msvc yells if i dont do this
-            for (usz i = 0; i < amount; ++i)
-            {
-                T *ptr = new T;
-                ptr->ToEdit = tindex * amount + i;
-
-                data[tindex][i].data = ptr;
-                const bool owned = alloc.Owns(ptr);
-
-                std::scoped_lock lock(mutex);
-                REQUIRE(ptr != nullptr);
-                REQUIRE(owned);
-            }
-        };
-
-        const auto deallocateBulk = [&data](const usz tindex) {
-            for (usz i = 0; i < amount; ++i)
-            {
-                T *ptr = data[tindex][i].data;
-                const usz edit = ptr->ToEdit;
-                const bool equal = edit == tindex * amount + i;
-                delete ptr;
-                std::scoped_lock lock(mutex);
-                REQUIRE(equal);
-            }
-        };
-
-        const auto allocateDeallocate = [](const usz tindex) {
-            const TSafeBlockAllocator<T> &alloc = T::s_Allocator; // msvc yells if i dont do this
-            for (usz i = 0; i < amount; ++i)
-            {
-                T *ptr = new T;
-                ptr->ToEdit = tindex * amount + i;
-
-                const bool owned = alloc.Owns(ptr);
-                const bool notnull = ptr != nullptr;
-                const usz edit = ptr->ToEdit;
-                const bool equal = edit == tindex * amount + i;
-                delete ptr;
-
-                std::scoped_lock lock(mutex);
-                REQUIRE(notnull);
-                REQUIRE(owned);
-                REQUIRE(equal);
-            }
-        };
-
-        std::array<std::thread, threadCount> threads;
-        for (usz i = 0; i < threadCount; ++i)
-            threads[i] = std::thread(allocateBulk, i);
-        for (usz i = 0; i < threadCount; ++i)
-            threads[i].join();
-
-        HashSet<T *> allocated;
-        for (usz i = 0; i < threadCount; ++i)
-            for (usz j = 0; j < amount; ++j)
-            {
-                auto it = allocated.insert(data[i][j].data);
-                REQUIRE(it.second);
-            }
-
-        for (usz i = 0; i < threadCount; ++i)
-            threads[i] = std::thread(deallocateBulk, i);
-        for (usz i = 0; i < threadCount; ++i)
-            threads[i].join();
-
-        for (usz i = 0; i < threadCount; ++i)
-            threads[i] = std::thread(allocateDeallocate, i);
-        for (usz i = 0; i < threadCount; ++i)
-            threads[i].join();
-    }
-
-    REQUIRE(allocator.Empty());
-}
-
 TEST_CASE("Block allocator deals with small data", "[block_allocator][small]")
 {
-    RunRawAllocationTest<SmallDataTS, TSafeBlockAllocator>();
-    RunRawAllocationTest<SmallDataTU, TUnsafeBlockAllocator>();
-    RunNewDeleteTest<SmallDataTS>();
-    RunNewDeleteTest<SmallDataTU>();
-    RunMultithreadedAllocatorTests<SmallDataTS>();
+    RunRawAllocationTest<SmallData>();
+    RunNewDeleteTest<SmallData>();
 }
 TEST_CASE("Block allocator deals with big data", "[block_allocator][big]")
 {
-    RunRawAllocationTest<BigDataTS, TSafeBlockAllocator>();
-    RunRawAllocationTest<BigDataTU, TUnsafeBlockAllocator>();
-    RunNewDeleteTest<BigDataTS>();
-    RunNewDeleteTest<BigDataTU>();
-    RunMultithreadedAllocatorTests<BigDataTS>();
+    RunRawAllocationTest<BigData>();
+    RunNewDeleteTest<BigData>();
 }
 TEST_CASE("Block allocator deals with aligned data", "[block_allocator][aligned]")
 {
-    RunRawAllocationTest<AlignedDataTS, TSafeBlockAllocator>();
-    RunRawAllocationTest<AlignedDataTU, TUnsafeBlockAllocator>();
-    RunNewDeleteTest<AlignedDataTS>();
-    RunNewDeleteTest<AlignedDataTU>();
-    RunMultithreadedAllocatorTests<AlignedDataTS>();
+    RunRawAllocationTest<AlignedData>();
+    RunNewDeleteTest<AlignedData>();
 }
 TEST_CASE("Block allocator deals with non trivial data", "[block_allocator][nont trivial]")
 {
-    RunRawAllocationTest<NonTrivialDataTS, TSafeBlockAllocator>();
-    RunRawAllocationTest<NonTrivialDataTU, TUnsafeBlockAllocator>();
-    RunNewDeleteTest<NonTrivialDataTS>();
-    RunNewDeleteTest<NonTrivialDataTU>();
-    // This test is disabled because NonTrivialData is not thread safe, even though the name may suggest otherwise
-    // RunMultithreadedAllocatorTests<NonTrivialDataTS>();
-    REQUIRE(NonTrivialDataTS::Instances == 0);
-    REQUIRE(NonTrivialDataTU::Instances == 0);
+    RunRawAllocationTest<NonTrivialData>();
+    RunNewDeleteTest<NonTrivialData>();
+    REQUIRE(NonTrivialData::Instances == 0);
 }
 TEST_CASE("Block allocator deals with derived data", "[block_allocator][derived]")
 {
-    RunRawAllocationTest<VirtualDerivedTS, TSafeBlockAllocator>();
-    RunRawAllocationTest<VirtualDerivedTU, TUnsafeBlockAllocator>();
-    RunNewDeleteTest<VirtualDerivedTS>();
-    RunNewDeleteTest<VirtualDerivedTU>();
+    RunRawAllocationTest<VirtualDerived>();
+    RunNewDeleteTest<VirtualDerived>();
 
-    // Construction/destruction of virtual objects is not thread safe in c++!! yay. turns out i didnt know that, so i
-    // wasted quite a lot of time on this.
-    // RunMultithreadedAllocatorTests<VirtualDerivedTS>();
-
-    REQUIRE(VirtualBaseTS::BaseInstances == 0);
-    REQUIRE(VirtualDerivedTS::DerivedInstances == 0);
-
-    REQUIRE(VirtualBaseTU::BaseInstances == 0);
-    REQUIRE(VirtualDerivedTU::DerivedInstances == 0);
+    REQUIRE(VirtualBase::BaseInstances == 0);
+    REQUIRE(VirtualDerived::DerivedInstances == 0);
 }
 TEST_CASE("Block allocator deals with virtual data", "[block_allocator][virtual]")
 {
-    RunVirtualAllocatorTests<VirtualBaseTS, VirtualDerivedTS>();
-    RunVirtualAllocatorTests<VirtualBaseTU, VirtualDerivedTU>();
+    RunVirtualAllocatorTests<VirtualBase, VirtualDerived>();
 
-    REQUIRE(VirtualBaseTS::BaseInstances == 0);
-    REQUIRE(VirtualDerivedTS::DerivedInstances == 0);
-
-    REQUIRE(VirtualBaseTU::BaseInstances == 0);
-    REQUIRE(VirtualDerivedTU::DerivedInstances == 0);
+    REQUIRE(VirtualBase::BaseInstances == 0);
+    REQUIRE(VirtualDerived::DerivedInstances == 0);
 }
 TEST_CASE("Block allocator deals with invalid virtual data", "[block_allocator][virtual][invalid]")
 {
-    REQUIRE_THROWS(new BadVirtualDerivedTS);
-    REQUIRE_THROWS(new BadVirtualDerivedTU);
+    REQUIRE_THROWS(new BadVirtualDerived);
 }
 
 KIT_NAMESPACE_END
