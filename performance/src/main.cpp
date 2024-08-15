@@ -36,7 +36,13 @@ int main()
     }
     std::filesystem::create_directories(KIT::g_Root + "/performance/results");
 
-    KIT::RecordMallocFreeSingleThreaded(settings);
     KIT::RecordBlockAllocatorSingleThreaded<KIT::TSafeBlockAllocator>(settings);
     KIT::RecordBlockAllocatorSingleThreaded<KIT::TUnsafeBlockAllocator>(settings);
+
+    settings.MaxPasses = 50000;
+    KIT::RecordBlockAllocatorMultiThreaded<KIT::TSafeBlockAllocator>(settings, 8);
+    // KIT::RecordBlockAllocatorMultiThreaded<KIT::TUnsafeBlockAllocator>(settings, 8);
+
+    KIT::RecordMallocFreeSingleThreaded(settings);
+    KIT::RecordMallocFreeMultiThreaded(settings, 8);
 }

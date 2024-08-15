@@ -24,4 +24,10 @@ struct ExampleData
     }
 };
 
+struct PaddedData
+{
+    ExampleData *Data;
+    std::byte Padding[64 - sizeof(ExampleData *)];
+};
+
 KIT_NAMESPACE_END
