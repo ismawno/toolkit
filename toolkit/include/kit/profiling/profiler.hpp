@@ -1,7 +1,7 @@
 #pragma once
 
 #include "kit/profiling/clock.hpp"
-#include "kit/interface/non_copyable.hpp"
+#include "kit/core/non_copyable.hpp"
 
 KIT_NAMESPACE_BEGIN
 

@@ -2,7 +2,7 @@
 
 #include "kit/core/core.hpp"
 #include "kit/core/alias.hpp"
-#include "kit/logging/logging.hpp"
+#include "kit/core/logging.hpp"
 #include <array>
 
 KIT_NAMESPACE_BEGIN

@@ -1,6 +1,6 @@
 #include "core/pch.hpp"
 #include "kit/memory/memory.hpp"
-#include "kit/logging/logging.hpp"
+#include "kit/core/logging.hpp"
 
 KIT_NAMESPACE_BEGIN
 
