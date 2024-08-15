@@ -3,9 +3,10 @@ project(toolkit)
 
 # Source files for the library
 set(SOURCES
-    src/logging/logging.cpp
+    src/core/logging.cpp
     src/core/pch.cpp
     src/memory/memory.cpp
+    src/memory/stack_allocator.cpp
     src/profiling/clock.cpp
     src/profiling/profiler.cpp
     src/profiling/timespan.cpp

@@ -2,8 +2,6 @@
 #include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <array>
-#include <thread>
-#include <iostream>
 
 KIT_NAMESPACE_BEGIN
 
@@ -11,6 +9,8 @@ template <typename T> static void RunRawAllocationTest()
 {
     REQUIRE(sizeof(T) % alignof(T) == 0);
     BlockAllocator<T> allocator(10);
+    REQUIRE(allocator.Empty());
+    REQUIRE(allocator.BlockCount() == 0);
 
     DYNAMIC_SECTION("Allocate and deallocate (raw call)" << (int)typeid(T).hash_code())
     {
@@ -26,7 +26,7 @@ template <typename T> static void RunRawAllocationTest()
         T *data = allocator.Construct();
         REQUIRE(data != nullptr);
         REQUIRE(allocator.Owns(data));
-        allocator.Destroy(data);
+        allocator.Destruct(data);
         REQUIRE(allocator.Empty());
     }
 
