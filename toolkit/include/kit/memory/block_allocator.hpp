@@ -157,7 +157,7 @@ template <typename T> class KIT_API BlockAllocator final
         constexpr usz chunkSize = ChunkSize();
         constexpr usz alignment = ChunkAlignment();
 
-        std::byte *data = reinterpret_cast<std::byte *>(AllocateAligned(this->BlockSize(), alignment));
+        std::byte *data = static_cast<std::byte *>(AllocateAligned(this->BlockSize(), alignment));
         m_FreeList = reinterpret_cast<Chunk *>(data + chunkSize);
 
         const usz chunksPerBlock = this->ChunksPerBlock();
