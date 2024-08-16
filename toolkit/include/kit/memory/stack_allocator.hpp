@@ -36,6 +36,15 @@ class StackAllocator final
     void *Allocate(usz p_Size) KIT_NOEXCEPT;
     void Deallocate([[maybe_unused]] const void *p_Ptr) KIT_NOEXCEPT;
 
+    template <typename T> T *Push(const usz n = 1) KIT_NOEXCEPT
+    {
+        return static_cast<T *>(Push(n * sizeof(T)));
+    }
+    template <typename T> T *Allocate(const usz n = 1) KIT_NOEXCEPT
+    {
+        return static_cast<T *>(Allocate(n * sizeof(T)));
+    }
+
     template <typename T, typename... Args> T *Construct(Args &&...p_Args) KIT_NOEXCEPT
     {
         T *ptr = static_cast<T *>(Allocate(sizeof(T)));

@@ -6,6 +6,10 @@ KIT_NAMESPACE_BEGIN
 
 template <typename T> void RunBasicConstructDestructOperations(StackAllocator &allocator)
 {
+    allocator.Push<T>(10);
+    REQUIRE(allocator.Allocated() == 10 * sizeof(T));
+    allocator.Pop();
+
     const T *ptr1 = allocator.Construct<T>();
     const T *ptr2 = allocator.Construct<T>();
 
