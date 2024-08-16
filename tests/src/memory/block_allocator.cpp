@@ -168,13 +168,30 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
             for (usz i = 0; i < amount; ++i)
             {
                 Derived *vd = new Derived;
+                Base *vb = vd;
+                vb->SetValues();
+
+                REQUIRE(vd->x == 10);
+                REQUIRE(vd->y == 20.0);
+                REQUIRE(vd->str[0] == "Hello");
+                REQUIRE(vd->str[1] == "World");
+                REQUIRE(vd->z == 30.0);
+                REQUIRE(vd->str2[0] == "Goodbye");
+                REQUIRE(vd->str2[1] == "Cruel World");
+
                 REQUIRE(vd != nullptr);
                 REQUIRE(allocated.insert(vd).second);
                 REQUIRE(allocator.Owns(vd));
             }
             REQUIRE(allocator.Allocations() == amount);
             for (Base *vb : allocated)
+            {
+                REQUIRE(vb->x == 10);
+                REQUIRE(vb->y == 20.0);
+                REQUIRE(vb->str[0] == "Hello");
+                REQUIRE(vb->str[1] == "World");
                 delete vb;
+            }
 
             // Reuse the same chunk over and over again
             for (usz i = 0; i < amount; ++i)

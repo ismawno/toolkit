@@ -102,6 +102,14 @@ struct VirtualBase
         --BaseInstances;
     }
 
+    virtual void SetValues()
+    {
+        x = 10;
+        y = 20.0;
+        str[0] = "Hello";
+        str[1] = "World";
+    }
+
     static inline i32 BaseInstances = 0;
 
     i32 x;
@@ -120,6 +128,14 @@ struct VirtualDerived : VirtualBase
     ~VirtualDerived() override
     {
         --DerivedInstances;
+    }
+
+    void SetValues() override
+    {
+        VirtualBase::SetValues();
+        z = 30.0;
+        str2[0] = "Goodbye";
+        str2[1] = "Cruel World";
     }
 
     static inline i32 DerivedInstances = 0;
