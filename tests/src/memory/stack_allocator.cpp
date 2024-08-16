@@ -1,8 +1,11 @@
 #include "kit/memory/stack_allocator.hpp"
+#include "kit/core/literals.hpp"
 #include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 
 KIT_NAMESPACE_BEGIN
+
+using namespace Literals;
 
 template <typename T> void RunBasicConstructDestructOperations(StackAllocator &allocator)
 {
@@ -32,13 +35,13 @@ template <typename T> void RunBasicConstructDestructOperations(StackAllocator &a
 
 TEST_CASE("Stack allocator basic operations", "[memory][stack_allocator][basic]")
 {
-    StackAllocator allocator(1024);
-    REQUIRE(allocator.Size() == 1024);
+    StackAllocator allocator(1_kb);
+    REQUIRE(allocator.Size() == 1_kb);
     REQUIRE(allocator.Allocated() == 0);
     REQUIRE(allocator.Empty());
 
-    allocator.Push(1024);
-    REQUIRE(allocator.Allocated() == 1024);
+    allocator.Push(1_kb);
+    REQUIRE(allocator.Allocated() == 1_kb);
     REQUIRE(allocator.Full());
     allocator.Pop();
     REQUIRE(allocator.Allocated() == 0);
@@ -48,14 +51,14 @@ TEST_CASE("Stack allocator basic operations", "[memory][stack_allocator][basic]"
 
     SECTION("Push and pop")
     {
-        allocator.Push(128);
-        REQUIRE(allocator.Allocated() == 128);
+        allocator.Push(128_b);
+        REQUIRE(allocator.Allocated() == 128_b);
 
-        allocator.Push(256);
-        REQUIRE(allocator.Allocated() == 384);
+        allocator.Push(256_b);
+        REQUIRE(allocator.Allocated() == 384_b);
 
         allocator.Pop();
-        REQUIRE(allocator.Allocated() == 128);
+        REQUIRE(allocator.Allocated() == 128_b);
 
         allocator.Pop();
         REQUIRE(allocator.Allocated() == 0);

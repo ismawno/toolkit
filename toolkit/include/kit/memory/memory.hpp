@@ -18,7 +18,7 @@ KIT_API void DeallocateAligned(void *p_Ptr) KIT_NOEXCEPT;
 // This is a function that I have here just in case I (for whatever reasong) need to align a size. Which, to my
 // knowledge, should never happen (I have yet to see a case where the size of a type is not a multiple of its alignment)
 // It is currently being used by the block allocator, but it should always return sizeof(T)
-template <typename T> constexpr usz AlignedSize() KIT_NOEXCEPT
+template <typename T> consteval usz AlignedSize() KIT_NOEXCEPT
 {
     constexpr usz remainder = sizeof(T) % alignof(T);
     if constexpr (remainder == 0)

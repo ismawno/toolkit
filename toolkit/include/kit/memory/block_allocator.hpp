@@ -63,14 +63,14 @@ template <typename T> class KIT_API BlockAllocator final
         return m_BlockSize / ChunkSize();
     }
 
-    static constexpr usz ChunkSize() KIT_NOEXCEPT
+    static consteval usz ChunkSize() KIT_NOEXCEPT
     {
         if constexpr (sizeof(T) < sizeof(Chunk))
             return AlignedSize<Chunk>();
         else
             return AlignedSize<T>();
     }
-    static constexpr usz ChunkAlignment() KIT_NOEXCEPT
+    static consteval usz ChunkAlignment() KIT_NOEXCEPT
     {
         if constexpr (alignof(T) < alignof(Chunk))
             return alignof(Chunk);
