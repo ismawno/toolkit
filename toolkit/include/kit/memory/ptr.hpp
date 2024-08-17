@@ -76,11 +76,15 @@ template <typename T> class RefCounted
 
     mutable std::atomic_int32_t m_RefCount;
 
-    template <RCounted<RefCounted> U> friend class Ref;
+    template <typename U>
+        requires RCounted<U, RefCounted>
+    friend class Ref;
 };
 
 // To use const, Ref<const T> should be enough
-template <RCounted<RefCounted> T> class Ref
+template <typename T>
+    requires RCounted<T, RefCounted>
+class Ref
 {
   public:
     Ref() KIT_NOEXCEPT = default;
@@ -212,7 +216,9 @@ template <RCounted<RefCounted> T> class Ref
     }
 
     T *m_Ptr = nullptr;
-    template <RCounted<RefCounted> U> friend class Ref;
+    template <typename U>
+        requires RCounted<U, RefCounted>
+    friend class Ref;
 };
 
 KIT_NAMESPACE_END
