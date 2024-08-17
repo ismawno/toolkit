@@ -219,7 +219,7 @@ KIT_NAMESPACE_END
 
 namespace std
 {
-template <KIT_NAMESPACE_NAME::RCounted<KIT_NAMESPACE_NAME::RefCounted> T> struct hash<KIT_NAMESPACE_NAME::Ref<T>>
+template <typename T> struct hash<KIT_NAMESPACE_NAME::Ref<T>>
 {
     KIT_NAMESPACE_NAME::usz operator()(const KIT_NAMESPACE_NAME::Ref<T> &p_Ref) const KIT_NOEXCEPT
     {
