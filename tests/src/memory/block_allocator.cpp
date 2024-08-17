@@ -21,12 +21,12 @@ template <typename T> static void RunRawAllocationTest()
         REQUIRE(allocator.Empty());
     }
 
-    DYNAMIC_SECTION("Construct and destroy (raw call)" << (int)typeid(T).hash_code())
+    DYNAMIC_SECTION("Create and destroy (raw call)" << (int)typeid(T).hash_code())
     {
-        T *data = allocator.Construct();
+        T *data = allocator.Create();
         REQUIRE(data != nullptr);
         REQUIRE(allocator.Owns(data));
-        allocator.Destruct(data);
+        allocator.Destroy(data);
         REQUIRE(allocator.Empty());
     }
 

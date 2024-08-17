@@ -45,7 +45,7 @@ class StackAllocator final
         return static_cast<T *>(Allocate(n * sizeof(T)));
     }
 
-    template <typename T, typename... Args> T *Construct(Args &&...p_Args) KIT_NOEXCEPT
+    template <typename T, typename... Args> T *Create(Args &&...p_Args) KIT_NOEXCEPT
     {
         T *ptr = static_cast<T *>(Allocate(sizeof(T)));
         ::new (ptr) T(std::forward<Args>(p_Args)...);
@@ -60,7 +60,7 @@ class StackAllocator final
         return ptr;
     }
 
-    template <typename T> void Destruct(T *p_Ptr) KIT_NOEXCEPT
+    template <typename T> void Destroy(T *p_Ptr) KIT_NOEXCEPT
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {

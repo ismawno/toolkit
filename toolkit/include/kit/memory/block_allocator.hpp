@@ -78,13 +78,13 @@ template <typename T> class KIT_API BlockAllocator final
             return alignof(T);
     }
 
-    template <typename... Args> [[nodiscard]] T *Construct(Args &&...p_Args) KIT_NOEXCEPT
+    template <typename... Args> [[nodiscard]] T *Create(Args &&...p_Args) KIT_NOEXCEPT
     {
         T *ptr = Allocate();
         ::new (ptr) T(std::forward<Args>(p_Args)...);
         return ptr;
     }
-    void Destruct(T *p_Ptr) KIT_NOEXCEPT
+    void Destroy(T *p_Ptr) KIT_NOEXCEPT
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
             p_Ptr->~T();

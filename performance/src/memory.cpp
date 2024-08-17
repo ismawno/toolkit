@@ -40,11 +40,11 @@ void RecordBlockAllocator(const AllocationSettings &p_Settings)
     {
         Clock clock;
         for (usz i = 0; i < passes; ++i)
-            allocated[i] = allocator.Construct();
+            allocated[i] = allocator.Create();
         const Timespan allocTime = clock.Restart();
 
         for (usz i = 0; i < passes; ++i)
-            allocator.Destruct(allocated[i]);
+            allocator.Destroy(allocated[i]);
         const Timespan deallocTime = clock.Elapsed();
 
         file << passes << ',' << allocTime.AsMilliseconds() << ',' << deallocTime.AsMilliseconds() << '\n';
@@ -63,11 +63,11 @@ void RecordStackAllocator(const AllocationSettings &p_Settings)
     {
         Clock clock;
         for (usz i = 0; i < passes; ++i)
-            allocated[i] = allocator.Construct<ExampleData>();
+            allocated[i] = allocator.Create<ExampleData>();
         const Timespan allocTime = clock.Restart();
 
         for (usz i = passes - 1; i < passes; --i)
-            allocator.Destruct(allocated[i]);
+            allocator.Destroy(allocated[i]);
         const Timespan deallocTime = clock.Elapsed();
 
         file << passes << ',' << allocTime.AsMilliseconds() << ',' << deallocTime.AsMilliseconds() << '\n';

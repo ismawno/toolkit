@@ -13,24 +13,24 @@ template <typename T> void RunBasicConstructDestructOperations(StackAllocator &a
     REQUIRE(allocator.Allocated() == 10 * sizeof(T));
     allocator.Pop();
 
-    const T *ptr1 = allocator.Construct<T>();
-    const T *ptr2 = allocator.Construct<T>();
+    const T *ptr1 = allocator.Create<T>();
+    const T *ptr2 = allocator.Create<T>();
 
     REQUIRE(ptr1 + 1 == ptr2);
     REQUIRE(allocator.Allocated() == 2 * sizeof(T));
-    allocator.Destruct(ptr2);
+    allocator.Destroy(ptr2);
 
-    const T *ptr3 = allocator.Construct<T>();
+    const T *ptr3 = allocator.Create<T>();
     REQUIRE(ptr2 == ptr3);
 
     const T *ptr4 = allocator.NConstruct<T>(10);
 
     REQUIRE(allocator.Allocated() == 12 * sizeof(T));
-    const T *ptr5 = allocator.Construct<T>();
+    const T *ptr5 = allocator.Create<T>();
     REQUIRE(ptr4 + 10 == ptr5);
-    allocator.Destruct(ptr5);
+    allocator.Destroy(ptr5);
 
-    REQUIRE_THROWS(allocator.Destruct(ptr1));
+    REQUIRE_THROWS(allocator.Destroy(ptr1));
 }
 
 TEST_CASE("Stack allocator basic operations", "[memory][stack_allocator][basic]")
@@ -64,7 +64,7 @@ TEST_CASE("Stack allocator basic operations", "[memory][stack_allocator][basic]"
         REQUIRE(allocator.Allocated() == 0);
     }
 
-    SECTION("Construct and destroy")
+    SECTION("Create and destroy")
     {
         RunBasicConstructDestructOperations<std::byte>(allocator);
     }
@@ -73,7 +73,7 @@ TEST_CASE("Stack allocator basic operations", "[memory][stack_allocator][basic]"
 TEST_CASE("Stack allocator complex data operations", "[memory][stack_allocator][complex]")
 {
     StackAllocator allocator(1024 * 5);
-    SECTION("Construct and destruct with aligned data")
+    SECTION("Create and destruct with aligned data")
     {
         RunBasicConstructDestructOperations<AlignedData>(allocator);
     }
@@ -81,10 +81,10 @@ TEST_CASE("Stack allocator complex data operations", "[memory][stack_allocator][
     SECTION("Fill allocator")
     {
         while (allocator.Fits(sizeof(AlignedData)))
-            allocator.Construct<AlignedData>();
-        REQUIRE_THROWS(allocator.Construct<AlignedData>());
+            allocator.Create<AlignedData>();
+        REQUIRE_THROWS(allocator.Create<AlignedData>());
         while (!allocator.Empty())
-            allocator.Destruct(allocator.Top<AlignedData>());
+            allocator.Destroy(allocator.Top<AlignedData>());
     }
 }
 
