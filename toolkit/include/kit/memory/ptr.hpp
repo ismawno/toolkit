@@ -42,7 +42,7 @@ template <typename T> class RefCounted
 
     KIT_WARNING_IGNORE_PUSH
     KIT_CLANG_WARNING_IGNORE("-Wexceptions")
-    KIT_GCC_WARNING_IGNORE("-Wexceptions")
+    KIT_GCC_WARNING_IGNORE("-Wterminate")
     ~RefCounted() KIT_NOEXCEPT
     {
         KIT_ASSERT(m_RefCount.load(std::memory_order_relaxed) == 0, "RefCounted object deleted with non-zero refcount");

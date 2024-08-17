@@ -82,6 +82,12 @@
 #    define KIT_MSVC_WARNING_IGNORE(wrng)
 #endif
 
+#if defined(KIT_OS_WINDOWS) || defined(KIT_OS_APPLE)
+#    define KIT_CONSTEVAL consteval
+#else
+#    define KIT_CONSTEVAL constexpr
+#endif
+
 #ifdef KIT_ENABLE_EXCEPTIONS
 #    define KIT_NOEXCEPT
 #else
