@@ -9,8 +9,10 @@ KIT_NAMESPACE_BEGIN
 
 // For now, Scope is a disguised unique_ptr
 template <typename T> using Scope = std::unique_ptr<T>;
-template <typename T, template <typename> typename RC>
-concept RCounted = std::is_base_of_v<RC<typename T::CountedType>, T>;
+
+// I really tried to use this concept, but msvc wont fucking let me
+// template <typename T, template <typename> typename RC>
+// concept RCounted = std::is_base_of_v<RC<typename T::CountedType>, T>;
 
 // This is a small homemade implementation of a reference counter to avoid the shared_ptr's allocations overhead.
 // This way, the reference counter is stored in the object itself. Any object that wishes to be reference counted
@@ -76,15 +78,11 @@ template <typename T> class RefCounted
 
     mutable std::atomic_int32_t m_RefCount;
 
-    template <typename U>
-        requires RCounted<U, RefCounted>
-    friend class Ref;
+    template <typename U> friend class Ref;
 };
 
 // To use const, Ref<const T> should be enough
-template <typename T>
-    requires RCounted<T, RefCounted>
-class Ref
+template <typename T> class Ref
 {
   public:
     Ref() KIT_NOEXCEPT = default;
@@ -216,9 +214,7 @@ class Ref
     }
 
     T *m_Ptr = nullptr;
-    template <typename U>
-        requires RCounted<U, RefCounted>
-    friend class Ref;
+    template <typename U> friend class Ref;
 };
 
 KIT_NAMESPACE_END
