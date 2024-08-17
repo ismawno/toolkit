@@ -33,7 +33,7 @@ class StaticArray KIT_API
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    StaticArray() = default;
+    StaticArray() KIT_NOEXCEPT = default;
 
     template <typename... Args> StaticArray(const usz p_Size, Args &&...p_Args) KIT_NOEXCEPT : m_Size(p_Size)
     {

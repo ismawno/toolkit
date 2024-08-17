@@ -17,7 +17,7 @@ template <Hashable... H> struct KIT_API HashableTuple
 {
     using Tuple = std::tuple<H...>;
 
-    HashableTuple() = default;
+    HashableTuple() KIT_NOEXCEPT = default;
     explicit HashableTuple(const H &...p_Elements) KIT_NOEXCEPT : Elements(p_Elements...)
     {
     }
