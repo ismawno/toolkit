@@ -219,7 +219,7 @@ KIT_NAMESPACE_END
 
 namespace std
 {
-template <typename T>
+template <KIT_NAMESPACE_NAME::RCounted<KIT_NAMESPACE_NAME::RefCounted> T>
     requires std::is_base_of_v<KIT_NAMESPACE_NAME::RefCounted<T>, T>
 struct hash<KIT_NAMESPACE_NAME::Ref<T>>
 {
