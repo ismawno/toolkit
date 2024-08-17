@@ -1,5 +1,6 @@
 #include "kit/memory/ptr.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <array>
 #include <thread>
 
 KIT_NAMESPACE_BEGIN
