@@ -1,5 +1,6 @@
 #include "kit/memory/ptr.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <thread>
 
 KIT_NAMESPACE_BEGIN
 
@@ -8,14 +9,15 @@ class TestRefCounted : public RefCounted<TestRefCounted>
   public:
     TestRefCounted()
     {
-        ++Instances;
+        Instances.fetch_add(1, std::memory_order_relaxed);
     }
     ~TestRefCounted()
     {
-        --Instances;
+        Instances.fetch_sub(1, std::memory_order_relaxed);
     }
 
-    static inline i32 Instances = 0;
+    // Because they are used in threaded tests
+    static inline std::atomic_int32_t Instances{0};
 };
 
 class TestBase : public RefCounted<TestBase>
@@ -30,7 +32,7 @@ class TestBase : public RefCounted<TestBase>
         --BaseInstances;
     }
 
-    static inline i32 BaseInstances = 0;
+    static inline std::atomic_int32_t BaseInstances{0};
 };
 
 class TestDerived : public TestBase
@@ -56,10 +58,10 @@ TEST_CASE("Reference counting basic operations", "[memory][ptr]")
         {
             Ref<TestRefCounted> ref1(new TestRefCounted());
             Ref<TestRefCounted> ref2(ref1);
-            REQUIRE(TestRefCounted::Instances == 1);
+            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 1);
             REQUIRE(ref1->RefCount() == 2);
         }
-        REQUIRE(TestRefCounted::Instances == 0);
+        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
     }
 
     SECTION("Ref copy assignment")
@@ -70,24 +72,27 @@ TEST_CASE("Reference counting basic operations", "[memory][ptr]")
             {
                 Ref<TestRefCounted> ref1(new TestRefCounted());
                 ref = ref1;
-                REQUIRE(TestRefCounted::Instances == 1);
+                REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 1);
                 REQUIRE(ref1->RefCount() == 2);
             }
             REQUIRE(ref->RefCount() == 1);
-            REQUIRE(TestRefCounted::Instances == 1);
+            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 1);
         }
-        REQUIRE(TestRefCounted::Instances == 0);
+        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
     }
 
     SECTION("Ref<const T>")
     {
         {
             Ref<const TestRefCounted> ref(new TestRefCounted());
-            REQUIRE(TestRefCounted::Instances == 1);
+            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 1);
             REQUIRE(ref->RefCount() == 1);
             REQUIRE(std::is_same_v<const TestRefCounted *, decltype(ref.Get())>);
+
+            Ref<TestRefCounted> ref2 = new TestRefCounted();
+            Ref<const TestRefCounted> ref3 = ref2;
         }
-        REQUIRE(TestRefCounted::Instances == 0);
+        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
     }
 }
 
@@ -102,9 +107,9 @@ TEST_CASE("Reference counting with containers", "[memory][ptr][container]")
                     vec.emplace_back(new TestRefCounted());
                 else
                     vec.push_back(vec[i - 1]);
-            REQUIRE(TestRefCounted::Instances == 500);
+            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 500);
         }
-        REQUIRE(TestRefCounted::Instances == 0);
+        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
     }
 
     SECTION("Ref in map")
@@ -116,9 +121,9 @@ TEST_CASE("Reference counting with containers", "[memory][ptr][container]")
                     map.emplace(i, new TestRefCounted());
                 else
                     map.emplace(i, map[i - 1]);
-            REQUIRE(TestRefCounted::Instances == 500);
+            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 500);
         }
-        REQUIRE(TestRefCounted::Instances == 0);
+        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
     }
 }
 
@@ -189,6 +194,32 @@ TEST_CASE("Reference counting with inheritance", "[memory][ptr]")
         REQUIRE(TestDerived::DerivedInstances == 0);
         REQUIRE(TestBase::BaseInstances == 0);
     }
+}
+
+TEST_CASE("Reference counting from multiple threads", "[memory][ptr]")
+{
+    const auto createRefs = [](const std::array<Ref<TestRefCounted>, 100> &p_Refs) {
+        std::array<Ref<TestRefCounted>, 100> refs;
+        for (i32 i = 0; i < 100; ++i)
+        {
+            if (i % 2 == 0)
+                refs[i] = new TestRefCounted();
+            else
+                refs[i] = p_Refs[i];
+        }
+    };
+    {
+        std::array<Ref<TestRefCounted>, 100> refs;
+        for (i32 i = 0; i < 100; ++i)
+            refs[i] = new TestRefCounted;
+
+        std::array<std::thread, 8> threads;
+        for (std::thread &thread : threads)
+            thread = std::thread(createRefs, refs);
+        for (std::thread &thread : threads)
+            thread.join();
+    }
+    REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
 }
 
 KIT_NAMESPACE_END
