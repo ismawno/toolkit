@@ -22,4 +22,6 @@ concept Integer = std::is_integral_v<T>;
 template <typename T>
 concept Float = std::is_floating_point_v<T>;
 
+template <typename T> using NoCVRef = std::remove_cvref_t<T>;
+
 KIT_NAMESPACE_END
