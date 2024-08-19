@@ -88,6 +88,10 @@
 #    define KIT_CONSTEVAL constexpr
 #endif
 
+#ifndef KIT_CACHE_LINE_SIZE
+#    define KIT_CACHE_LINE_SIZE 64
+#endif
+
 #ifdef KIT_ENABLE_EXCEPTIONS
 #    define KIT_NOEXCEPT
 #else

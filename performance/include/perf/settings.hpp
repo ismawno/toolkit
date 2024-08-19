@@ -27,7 +27,7 @@ struct ExampleData
 struct PaddedData
 {
     ExampleData *Data;
-    std::byte Padding[64 - sizeof(ExampleData *)];
+    std::byte Padding[KIT_CACHE_LINE_SIZE - sizeof(ExampleData *)];
 };
 
 KIT_NAMESPACE_END

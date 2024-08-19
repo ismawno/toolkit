@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <deque>
 
 KIT_NAMESPACE_BEGIN
 
@@ -36,6 +37,8 @@ using i64 = std::int64_t;
 
 // These are nice to have in case we want to change the container/allocator type easily
 template <typename T> using DynamicArray = std::vector<T>;
+
+template <typename T> using Deque = std::deque<T>;
 
 template <typename Key, typename Value, typename Hash = std::hash<Key>, typename OpEqual = std::equal_to<Key>>
 using HashMap = std::unordered_map<Key, Value, Hash, OpEqual>;

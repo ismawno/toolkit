@@ -85,6 +85,7 @@ template <typename T> class RefCounted
 // To use const, Ref<const T> should be enough
 template <typename T> class Ref
 {
+    KIT_OVERRIDE_NEW_DELETE(Ref, 32)
   public:
     Ref() KIT_NOEXCEPT = default;
 
@@ -217,6 +218,9 @@ template <typename T> class Ref
     T *m_Ptr = nullptr;
     template <typename U> friend class Ref;
 };
+
+template <typename T>
+concept RCounted = std::is_base_of_v<RefCounted<typename T::CountedType>, T>;
 
 KIT_NAMESPACE_END
 
