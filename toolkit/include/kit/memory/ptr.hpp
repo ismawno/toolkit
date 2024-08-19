@@ -229,7 +229,7 @@ namespace std
 {
 template <typename T> struct hash<KIT_NAMESPACE_NAME::Ref<T>>
 {
-    KIT_NAMESPACE_NAME::usz operator()(const KIT_NAMESPACE_NAME::Ref<T> &p_Ref) const KIT_NOEXCEPT
+    KIT_NAMESPACE_NAME::usize operator()(const KIT_NAMESPACE_NAME::Ref<T> &p_Ref) const KIT_NOEXCEPT
     {
         return hash<T *>()(p_Ref.Get());
     }

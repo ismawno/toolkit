@@ -19,13 +19,13 @@ class ITask : public RefCounted<ITask>
   public:
     struct Range
     {
-        usz Begin;
-        usz End;
+        usize Begin;
+        usize End;
     };
 
     virtual ~ITask() KIT_NOEXCEPT = default;
 
-    virtual void operator()(usz p_ThreadIndex) KIT_NOEXCEPT = 0;
+    virtual void operator()(usize p_ThreadIndex) KIT_NOEXCEPT = 0;
 
     bool Valid() const KIT_NOEXCEPT;
     bool Finished() const KIT_NOEXCEPT;
@@ -51,7 +51,7 @@ template <typename T> class Task final : public ITask
     // commented out until thread safety is added
     // KIT_OVERRIDE_NEW_DELETE(Task<T>, 32)
   public:
-    void operator()(const usz p_ThreadIndex) KIT_NOEXCEPT override
+    void operator()(const usize p_ThreadIndex) KIT_NOEXCEPT override
     {
         m_Result = m_Function(p_ThreadIndex);
         NotifyCompleted();
@@ -78,7 +78,7 @@ template <typename T> class Task final : public ITask
     {
     }
 
-    std::function<T(usz)> m_Function = nullptr;
+    std::function<T(usize)> m_Function = nullptr;
     T m_Result;
 
     friend class TaskManager;
@@ -88,7 +88,7 @@ template <> class Task<void> final : public ITask
 {
     KIT_OVERRIDE_NEW_DELETE(Task<void>, 32)
   public:
-    void operator()(usz p_ThreadIndex) KIT_NOEXCEPT override;
+    void operator()(usize p_ThreadIndex) KIT_NOEXCEPT override;
 
     template <typename Callable, typename... Args>
         requires(!std::is_same_v<Callable, Task>)
@@ -105,7 +105,7 @@ template <> class Task<void> final : public ITask
     }
 
   private:
-    std::function<void(usz)> m_Function = nullptr;
+    std::function<void(usize)> m_Function = nullptr;
     friend class TaskManager;
 };
 

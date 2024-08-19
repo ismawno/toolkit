@@ -10,7 +10,7 @@ template <typename T>
 concept Hashable = requires(T a) {
     {
         std::hash<T>()(a)
-    } -> std::convertible_to<usz>;
+    } -> std::convertible_to<usize>;
 };
 
 template <typename T>

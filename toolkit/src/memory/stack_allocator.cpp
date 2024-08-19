@@ -3,7 +3,7 @@
 
 KIT_NAMESPACE_BEGIN
 
-StackAllocator::StackAllocator(const usz p_Size) KIT_NOEXCEPT : m_Buffer(new std::byte[p_Size]), m_Size(p_Size)
+StackAllocator::StackAllocator(const usize p_Size) KIT_NOEXCEPT : m_Buffer(new std::byte[p_Size]), m_Size(p_Size)
 {
     m_Entries.reserve(p_Size / sizeof(Entry));
 }
@@ -41,7 +41,7 @@ StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other) noexcept
     return *this;
 }
 
-void *StackAllocator::Push(usz p_Size) KIT_NOEXCEPT
+void *StackAllocator::Push(usize p_Size) KIT_NOEXCEPT
 {
     KIT_ASSERT(Fits(p_Size), "Stack allocator cannot fit {} bytes!", p_Size);
     std::byte *ptr = m_Entries.empty() ? m_Buffer : m_Entries.back().Data + m_Entries.back().Size;
@@ -58,7 +58,7 @@ void StackAllocator::Pop() KIT_NOEXCEPT
     m_Entries.pop_back();
 }
 
-void *StackAllocator::Allocate(usz p_Size) KIT_NOEXCEPT
+void *StackAllocator::Allocate(usize p_Size) KIT_NOEXCEPT
 {
     return Push(p_Size);
 }
@@ -76,15 +76,15 @@ const StackAllocator::Entry &StackAllocator::Top() const KIT_NOEXCEPT
     return m_Entries.back();
 }
 
-usz StackAllocator::Size() const KIT_NOEXCEPT
+usize StackAllocator::Size() const KIT_NOEXCEPT
 {
     return m_Size;
 }
-usz StackAllocator::Allocated() const KIT_NOEXCEPT
+usize StackAllocator::Allocated() const KIT_NOEXCEPT
 {
     return m_Allocated;
 }
-usz StackAllocator::Remaining() const KIT_NOEXCEPT
+usize StackAllocator::Remaining() const KIT_NOEXCEPT
 {
     return m_Size - m_Allocated;
 }
@@ -99,7 +99,7 @@ bool StackAllocator::Full() const KIT_NOEXCEPT
     return m_Allocated == m_Size;
 }
 
-bool StackAllocator::Fits(usz p_Size) const KIT_NOEXCEPT
+bool StackAllocator::Fits(usize p_Size) const KIT_NOEXCEPT
 {
     return m_Allocated + p_Size <= m_Size;
 }

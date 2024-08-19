@@ -30,9 +30,9 @@ int main()
     {
         const YAML::Node node = YAML::LoadFile(KIT::g_Root + "/performance/perf-settings.yaml");
         const YAML::Node memory = node["Memory"];
-        settings.MinPasses = memory["MinPasses"].as<KIT::usz>();
-        settings.MaxPasses = memory["MaxPasses"].as<KIT::usz>();
-        settings.PassIncrement = memory["PassIncrement"].as<KIT::usz>();
+        settings.MinPasses = memory["MinPasses"].as<KIT::usize>();
+        settings.MaxPasses = memory["MaxPasses"].as<KIT::usize>();
+        settings.PassIncrement = memory["PassIncrement"].as<KIT::usize>();
     }
     std::filesystem::create_directories(KIT::g_Root + "/performance/results");
 

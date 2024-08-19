@@ -17,9 +17,9 @@ class TaskManager
     // This has a very big problem: If new is overloaded to use the block allocator, this method stops being thread-safe
     template <typename Callable, typename... Args>
     auto CreateTask(Callable &&p_Callable,
-                    Args &&...p_Args) KIT_NOEXCEPT->Ref<Task<std::invoke_result_t<Callable, Args..., usz>>>
+                    Args &&...p_Args) KIT_NOEXCEPT->Ref<Task<std::invoke_result_t<Callable, Args..., usize>>>
     {
-        using RType = std::invoke_result_t<Callable, Args..., usz>;
+        using RType = std::invoke_result_t<Callable, Args..., usize>;
         Task<RType> *task = new Task<RType>(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
         task->m_Manager = this;
         return Ref<Task<RType>>(task);
@@ -27,9 +27,9 @@ class TaskManager
 
     template <typename Callable, typename... Args>
     auto CreateAndSubmit(Callable &&p_Callable,
-                         Args &&...p_Args) KIT_NOEXCEPT->Ref<Task<std::invoke_result_t<Callable, Args..., usz>>>
+                         Args &&...p_Args) KIT_NOEXCEPT->Ref<Task<std::invoke_result_t<Callable, Args..., usize>>>
     {
-        using RType = std::invoke_result_t<Callable, Args..., usz>;
+        using RType = std::invoke_result_t<Callable, Args..., usize>;
         const Ref<Task<RType>> task = CreateTask(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
         SubmitTask(task);
         return task;

@@ -18,7 +18,7 @@ TEST_CASE("HashableTuple deviation")
 {
     HashableTuple<u32, u32, f32, std::string> tuple;
 
-    constexpr usz amount = 97;
+    constexpr usize amount = 97;
     StaticArray<u32, amount> ocurrences(amount, 0);
 
     constexpr u32 samples = 100000;

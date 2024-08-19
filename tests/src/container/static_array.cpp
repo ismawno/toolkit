@@ -28,7 +28,7 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
         StaticArray<T, 10> array(values.begin(), values.end());
         REQUIRE(array.size() == 5);
         REQUIRE(array.capacity() == 10);
-        for (usz i = 0; i < 5; ++i)
+        for (usize i = 0; i < 5; ++i)
             REQUIRE(array[i] == values[i]);
     }
 
@@ -40,7 +40,7 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
         REQUIRE(array1.capacity() == 10);
         REQUIRE(array2.size() == 5);
         REQUIRE(array2.capacity() == 10);
-        for (usz i = 0; i < 5; ++i)
+        for (usize i = 0; i < 5; ++i)
             REQUIRE(array1[i] == array2[i]);
     }
 
@@ -52,7 +52,7 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
         REQUIRE(array1.capacity() == 10);
         REQUIRE(array2.size() == 5);
         REQUIRE(array2.capacity() == 5);
-        for (usz i = 0; i < 5; ++i)
+        for (usize i = 0; i < 5; ++i)
             REQUIRE(array1[i] == array2[i]);
     }
 
@@ -65,7 +65,7 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
         REQUIRE(array1.capacity() == 10);
         REQUIRE(array2.size() == 5);
         REQUIRE(array2.capacity() == 10);
-        for (usz i = 0; i < 5; ++i)
+        for (usize i = 0; i < 5; ++i)
             REQUIRE(array1[i] == array2[i]);
     }
 
@@ -78,7 +78,7 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
         REQUIRE(array1.capacity() == 10);
         REQUIRE(array2.size() == 5);
         REQUIRE(array2.capacity() == 5);
-        for (usz i = 0; i < 5; ++i)
+        for (usize i = 0; i < 5; ++i)
             REQUIRE(array1[i] == array2[i]);
 
         StaticArray<T, 2> array3;
@@ -105,7 +105,7 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
     REQUIRE_THROWS(array[6]);
     SECTION("Push back")
     {
-        for (usz i = 0; i < 5; i++)
+        for (usize i = 0; i < 5; i++)
         {
             array.push_back(array[i]);
             REQUIRE(array.size() == i + 6);
@@ -141,7 +141,7 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
         T elem6 = array[6];
         array.insert(array.begin() + 4, {elem4, elem5, elem6});
         REQUIRE(array.size() == 10);
-        for (usz i = 4; i < 7; ++i)
+        for (usize i = 4; i < 7; ++i)
             REQUIRE(array[i] == array[i + 3]);
 
         SECTION("Build in reverse")
@@ -151,7 +151,7 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
             for (const T &value : values)
                 array.insert(array.begin(), value);
 
-            usz index = 0;
+            usize index = 0;
             for (auto it = array.rbegin(); it != array.rend(); ++it)
                 REQUIRE(*it == values[index++]);
 
@@ -206,7 +206,7 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
         {
             array.resize(3);
             REQUIRE(array.size() == 3);
-            for (usz i = 0; i < 3; ++i)
+            for (usize i = 0; i < 3; ++i)
                 REQUIRE(array[i] == values[i]);
             REQUIRE_THROWS(array[3]);
         }
@@ -215,7 +215,7 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
         {
             array.resize(7);
             REQUIRE(array.size() == 7);
-            for (usz i = 0; i < 3; ++i)
+            for (usize i = 0; i < 3; ++i)
                 REQUIRE(array[i] == values[i]);
 
             REQUIRE_THROWS(array[7]);
@@ -226,10 +226,10 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
     {
         std::array<T, 5> values = {args...};
         array.clear();
-        for (usz i = 0; i < 5; ++i)
+        for (usize i = 0; i < 5; ++i)
             array.emplace_back(values[i]);
 
-        for (usz i = 0; i < 5; ++i)
+        for (usize i = 0; i < 5; ++i)
             REQUIRE(array[i] == values[i]);
     }
 

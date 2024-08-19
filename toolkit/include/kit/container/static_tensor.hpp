@@ -4,12 +4,12 @@
 
 KIT_NAMESPACE_BEGIN
 
-template <typename T, usz N, usz... Ns> class StaticTensor : public StaticArray<StaticArray<T, Ns...>, N>
+template <typename T, usize N, usize... Ns> class StaticTensor : public StaticArray<StaticArray<T, Ns...>, N>
 {
     using StaticArray<StaticArray<T, Ns...>, N>::StaticArray;
 };
 
-template <typename T, usz N> class StaticTensor<T, N> : public StaticArray<T, N>
+template <typename T, usize N> class StaticTensor<T, N> : public StaticArray<T, N>
 {
     using StaticArray<T, N>::StaticArray;
 };

@@ -30,7 +30,7 @@ void ITask::NotifyCompleted() KIT_NOEXCEPT
     m_Finished.notify_all();
 }
 
-void Task<void>::operator()(const usz p_ThreadIndex) KIT_NOEXCEPT
+void Task<void>::operator()(const usize p_ThreadIndex) KIT_NOEXCEPT
 {
     m_Function(p_ThreadIndex);
 }

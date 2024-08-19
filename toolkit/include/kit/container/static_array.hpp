@@ -13,7 +13,7 @@ concept ShallowIsSame = std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref
 // An STL-like array with a fixed size. It can be used as a replacement for std::array in
 // the sense that it offers a bit more control and functionality, but it is not meant to be a drop-in replacement, as
 // the extra functionality comes with some overhead.
-template <typename T, usz N>
+template <typename T, usize N>
     requires(N > 0)
 class StaticArray KIT_API
 {
@@ -22,7 +22,7 @@ class StaticArray KIT_API
     // am not really sure when to "stop"
 
     using value_type = T;
-    using size_type = usz;
+    using size_type = usize;
     using difference_type = std::ptrdiff_t;
     using reference = value_type &;
     using const_reference = const value_type &;
@@ -35,7 +35,7 @@ class StaticArray KIT_API
 
     StaticArray() KIT_NOEXCEPT = default;
 
-    template <typename... Args> StaticArray(const usz p_Size, Args &&...p_Args) KIT_NOEXCEPT : m_Size(p_Size)
+    template <typename... Args> StaticArray(const usize p_Size, Args &&...p_Args) KIT_NOEXCEPT : m_Size(p_Size)
     {
         KIT_ASSERT(p_Size <= N, "Size is bigger than capacity");
         for (auto it = begin(); it != end(); ++it)
@@ -52,26 +52,27 @@ class StaticArray KIT_API
     }
 
     // This constructor WONT include the case M == N (ie, copy constructor)
-    template <usz M> explicit(false) StaticArray(const StaticArray<T, M> &p_Other) KIT_NOEXCEPT : m_Size(p_Other.size())
+    template <usize M>
+    explicit(false) StaticArray(const StaticArray<T, M> &p_Other) KIT_NOEXCEPT : m_Size(p_Other.size())
     {
         if constexpr (M > N)
         {
             KIT_ASSERT(p_Other.size() <= N, "Size is bigger than capacity");
         }
-        for (usz i = 0; i < m_Size; ++i)
+        for (usize i = 0; i < m_Size; ++i)
             ::new (begin() + i) T(p_Other[i]);
     }
 
     StaticArray(const StaticArray<T, N> &p_Other) KIT_NOEXCEPT : m_Size(p_Other.size())
     {
-        for (usz i = 0; i < m_Size; ++i)
+        for (usize i = 0; i < m_Size; ++i)
             ::new (begin() + i) T(p_Other[i]);
     }
 
     StaticArray(std::initializer_list<T> p_List) KIT_NOEXCEPT : m_Size(p_List.size())
     {
         KIT_ASSERT(p_List.size() <= N, "Size is bigger than capacity");
-        for (usz i = 0; i < m_Size; ++i)
+        for (usize i = 0; i < m_Size; ++i)
             ::new (begin() + i) T(*(p_List.begin() + i));
     }
 
@@ -81,7 +82,7 @@ class StaticArray KIT_API
     }
 
     // Same goes for assignment. It wont include M == N, and use the default assignment operator
-    template <usz M> StaticArray &operator=(const StaticArray<T, M> &p_Other) KIT_NOEXCEPT
+    template <usize M> StaticArray &operator=(const StaticArray<T, M> &p_Other) KIT_NOEXCEPT
     {
         if constexpr (M == N)
         {
@@ -94,7 +95,7 @@ class StaticArray KIT_API
         }
         clear();
         m_Size = p_Other.size();
-        for (usz i = 0; i < m_Size; ++i)
+        for (usize i = 0; i < m_Size; ++i)
             ::new (begin() + i) T(p_Other[i]);
         return *this;
     }
@@ -105,7 +106,7 @@ class StaticArray KIT_API
             return *this;
         clear();
         m_Size = p_Other.size();
-        for (usz i = 0; i < m_Size; ++i)
+        for (usize i = 0; i < m_Size; ++i)
             ::new (begin() + i) T(p_Other[i]);
         return *this;
     }
@@ -177,17 +178,17 @@ class StaticArray KIT_API
 
         const difference_type offset = std::distance(cbegin(), p_Pos);
         const iterator pos = begin() + offset;
-        const usz count = std::distance(p_Begin, p_End);
-        const usz outOfBounds = count < m_Size - offset ? count : m_Size - offset;
+        const usize count = std::distance(p_Begin, p_End);
+        const usize outOfBounds = count < m_Size - offset ? count : m_Size - offset;
         KIT_ASSERT(m_Size + count <= N, "New size exceeds capacity");
 
         // Current end() + outOfBounds pointers are uninitialized, so they must be handled manually
-        for (usz i = 0; i < count; ++i)
+        for (usize i = 0; i < count; ++i)
         {
-            const usz idx1 = count - i - 1;
+            const usize idx1 = count - i - 1;
             if (i < outOfBounds)
             {
-                const usz idx2 = outOfBounds - i - 1;
+                const usize idx2 = outOfBounds - i - 1;
                 ::new (end() + idx1) T(std::move(*(pos + idx2)));
             }
             else
@@ -196,7 +197,7 @@ class StaticArray KIT_API
 
         if (const iterator shiftedEnd = end() - count; pos < shiftedEnd)
             std::copy_backward(std::make_move_iterator(pos), std::make_move_iterator(shiftedEnd), end());
-        for (usz i = 0; i < outOfBounds; ++i)
+        for (usize i = 0; i < outOfBounds; ++i)
         {
             if constexpr (!std::is_trivially_destructible_v<T>)
                 (pos + i)->~T();
@@ -237,7 +238,7 @@ class StaticArray KIT_API
 
         const difference_type offset = std::distance(cbegin(), p_Begin);
         const iterator it1 = begin() + offset;
-        const usz count = std::distance(p_Begin, p_End);
+        const usize count = std::distance(p_Begin, p_End);
         KIT_ASSERT(m_Size >= count, "New size is negative");
 
         // Copy the elements after the erased ones
@@ -245,7 +246,7 @@ class StaticArray KIT_API
 
         // And destroy the last elements
         if constexpr (!std::is_trivially_destructible_v<T>)
-            for (usz i = 0; i < count; ++i)
+            for (usize i = 0; i < count; ++i)
                 (end() - i - 1)->~T();
         m_Size -= count;
     }
@@ -268,7 +269,7 @@ class StaticArray KIT_API
         return *begin();
     }
 
-    template <typename... Args> void resize(const usz p_Size, Args &&...args) KIT_NOEXCEPT
+    template <typename... Args> void resize(const usize p_Size, Args &&...args) KIT_NOEXCEPT
     {
         KIT_ASSERT(p_Size <= N, "Size is bigger than capacity");
 
@@ -281,7 +282,7 @@ class StaticArray KIT_API
             }
 
         if (p_Size > m_Size)
-            for (usz i = m_Size; i < p_Size; ++i)
+            for (usize i = m_Size; i < p_Size; ++i)
                 ::new (begin() + i) T(std::forward<Args>(args)...);
 
         m_Size = p_Size;
@@ -298,23 +299,23 @@ class StaticArray KIT_API
         return *(begin() + m_Size - 1);
     }
 
-    const T &operator[](const usz p_Index) const KIT_NOEXCEPT
+    const T &operator[](const usize p_Index) const KIT_NOEXCEPT
     {
         KIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
         return *(begin() + p_Index);
     }
-    T &operator[](const usz p_Index) KIT_NOEXCEPT
+    T &operator[](const usize p_Index) KIT_NOEXCEPT
     {
         KIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
         return *(begin() + p_Index);
     }
 
-    const T &at(const usz p_Index) const KIT_NOEXCEPT
+    const T &at(const usize p_Index) const KIT_NOEXCEPT
     {
         KIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
         return *(begin() + p_Index);
     }
-    T &at(const usz p_Index) KIT_NOEXCEPT
+    T &at(const usize p_Index) KIT_NOEXCEPT
     {
         KIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
         return *(begin() + p_Index);
@@ -338,11 +339,11 @@ class StaticArray KIT_API
     }
 
     // Keep stl convention?
-    constexpr usz capacity() const KIT_NOEXCEPT
+    constexpr usize capacity() const KIT_NOEXCEPT
     {
         return N;
     }
-    usz size() const KIT_NOEXCEPT
+    usize size() const KIT_NOEXCEPT
     {
         return m_Size;
     }
@@ -419,7 +420,7 @@ class StaticArray KIT_API
     static_assert(alignof(Element) == alignof(T), "Element alignment is not equal to T alignment");
 
     std::array<Element, N> m_Data{};
-    usz m_Size = 0;
+    usize m_Size = 0;
 };
 
 KIT_NAMESPACE_END

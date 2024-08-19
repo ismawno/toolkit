@@ -6,7 +6,7 @@ KIT_NAMESPACE_BEGIN
 ThreadPool::ThreadPool(const u32 p_ThreadCount) : TaskManager(p_ThreadCount)
 {
     m_Threads.reserve(p_ThreadCount);
-    const auto worker = [this](const usz p_ThreadIndex) {
+    const auto worker = [this](const usize p_ThreadIndex) {
         for (;;)
         {
             m_TaskReady.wait(false, std::memory_order_relaxed);

@@ -65,7 +65,7 @@ template <typename T> static void RunRawAllocationTest()
     {
         constexpr u32 amount = 10;
         std::array<T *, amount> data;
-        const usz chunkSize = allocator.ChunkSize();
+        const usize chunkSize = allocator.ChunkSize();
         for (u32 i = 0; i < amount; ++i)
         {
             data[i] = allocator.Allocate();
@@ -134,7 +134,7 @@ template <typename T> static void RunNewDeleteTest()
     {
         constexpr u32 amount = 10;
         std::array<T *, amount> data;
-        const usz chunkSize = allocator.ChunkSize();
+        const usize chunkSize = allocator.ChunkSize();
         for (u32 i = 0; i < amount; ++i)
         {
             data[i] = new T;
@@ -161,11 +161,11 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
 
     DYNAMIC_SECTION("Virtual deallocations" << (int)typeid(Derived).hash_code())
     {
-        constexpr usz amount = 1000;
-        for (usz j = 0; j < 2; ++j)
+        constexpr usize amount = 1000;
+        for (usize j = 0; j < 2; ++j)
         {
             HashSet<Base *> allocated;
-            for (usz i = 0; i < amount; ++i)
+            for (usize i = 0; i < amount; ++i)
             {
                 Derived *vd = new Derived;
                 Base *vb = vd;
@@ -194,7 +194,7 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
             }
 
             // Reuse the same chunk over and over again
-            for (usz i = 0; i < amount; ++i)
+            for (usize i = 0; i < amount; ++i)
             {
                 Derived *vd = new Derived;
                 REQUIRE(vd != nullptr);

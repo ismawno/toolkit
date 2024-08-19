@@ -9,9 +9,9 @@ inline std::string g_Root = KIT_ROOT_PATH;
 
 struct AllocationSettings
 {
-    usz MinPasses = 10;
-    usz MaxPasses = 10000;
-    usz PassIncrement = 1;
+    usize MinPasses = 10;
+    usize MaxPasses = 10000;
+    usize PassIncrement = 1;
 };
 
 struct ExampleData
@@ -19,7 +19,7 @@ struct ExampleData
     f64 Values[16];
     void SetValues()
     {
-        for (usz i = 0; i < 16; ++i)
+        for (usize i = 0; i < 16; ++i)
             Values[i] = static_cast<f64>(i);
     }
 };

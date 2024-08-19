@@ -25,11 +25,11 @@ template <Hashable... H> struct KIT_API HashableTuple
     {
     }
 
-    template <usz I> auto &Get() KIT_NOEXCEPT const
+    template <usize I> auto &Get() KIT_NOEXCEPT const
     {
         return std::get<I>(Elements);
     }
-    template <usz I> auto &Get() KIT_NOEXCEPT
+    template <usize I> auto &Get() KIT_NOEXCEPT
     {
         return std::get<I>(Elements);
     }
@@ -49,9 +49,9 @@ template <Hashable... H> struct KIT_API HashableTuple
         return *this;
     }
 
-    usz operator()() KIT_NOEXCEPT const
+    usize operator()() KIT_NOEXCEPT const
     {
-        usz seed = 0x517cc1b7;
+        usize seed = 0x517cc1b7;
         std::apply([&seed](const auto &...elements) { (hashSeed(seed, elements), ...); }, Elements);
         return seed;
     }
@@ -64,7 +64,7 @@ template <Hashable... H> struct KIT_API HashableTuple
     Tuple Elements;
 
   private:
-    template <Hashable T> static void hashSeed(usz &p_Seed, const T &p_Hashable) KIT_NOEXCEPT
+    template <Hashable T> static void hashSeed(usize &p_Seed, const T &p_Hashable) KIT_NOEXCEPT
     {
         const std::hash<T> hasher;
         p_Seed ^= hasher(p_Hashable) + 0x9e3779b9 + (p_Seed << 6) + (p_Seed >> 2);

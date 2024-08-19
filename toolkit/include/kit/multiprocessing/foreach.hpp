@@ -10,7 +10,7 @@ template <typename TManager, std::random_access_iterator It1, std::output_iterat
 void ForEach(TManager &p_Manager, It1 p_First, It1 p_Last, It2 p_Dest, const u32 p_Tasks, Callable &&p_Callable,
              Args &&...p_Args)
 {
-    const usz size = std::distance(p_First, p_Last);
+    const usize size = std::distance(p_First, p_Last);
     u32 start = 0;
     for (u32 i = 0; i < p_Tasks; ++i)
     {

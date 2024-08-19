@@ -36,7 +36,7 @@ void logMessage(const char *p_Level, const std::string_view p_File, const i32 p_
                 const bool p_Crash, const std::string_view p_Message) KIT_NOEXCEPT
 {
     const std::string root = KIT_ROOT_PATH;
-    const usz pos = p_File.find(root);
+    const usize pos = p_File.find(root);
     const std::string_view file_rel = pos == std::string::npos ? p_File : p_File.substr(pos + 1 + root.size());
 
     const std::string log = KIT_FORMAT("[{:%Y-%m-%d %H:%M}] [{}{}{}] [{}:{}] {}\n", std::chrono::system_clock::now(),

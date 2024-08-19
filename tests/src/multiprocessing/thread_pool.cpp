@@ -14,8 +14,8 @@ TEST_CASE("ThreadPool", "[multiprocessing]")
     {
         for (u32 i = 0; i < amount; i++)
         {
-            const auto task1 = pool.CreateAndSubmit([](const usz) { return 7 + 1; });
-            const auto task2 = pool.CreateAndSubmit([](const usz) { return 9 + 11; });
+            const auto task1 = pool.CreateAndSubmit([](const usize) { return 7 + 1; });
+            const auto task2 = pool.CreateAndSubmit([](const usize) { return 9 + 11; });
             REQUIRE(task1->WaitForResult() == 8);
             REQUIRE(task2->WaitForResult() == 20);
         }
@@ -39,7 +39,7 @@ TEST_CASE("ThreadPool", "[multiprocessing]")
 
         std::array<Ref<Task<u32>>, threadCount> tasks;
         ForEach(pool, numbers.begin(), numbers.end(), tasks.begin(), threadCount,
-                [](auto p_It1, auto p_It2, const usz) {
+                [](auto p_It1, auto p_It2, const usize) {
                     u32 sum = 0;
                     for (auto it = p_It1; it != p_It2; ++it)
                         sum += it->Value;

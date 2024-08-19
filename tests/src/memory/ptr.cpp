@@ -103,7 +103,7 @@ TEST_CASE("Reference counting with containers", "[memory][ptr][container]")
     {
         {
             std::vector<Ref<TestRefCounted>> vec;
-            for (usz i = 0; i < 1000; ++i)
+            for (usize i = 0; i < 1000; ++i)
                 if (i % 2 == 0)
                     vec.emplace_back(new TestRefCounted());
                 else
@@ -162,7 +162,7 @@ TEST_CASE("Reference counting with inheritance", "[memory][ptr]")
     {
         {
             std::vector<Ref<TestBase>> vec;
-            for (usz i = 0; i < 1000; ++i)
+            for (usize i = 0; i < 1000; ++i)
                 if (i % 2 == 0)
                 {
                     Ref<TestDerived> derived(new TestDerived());
