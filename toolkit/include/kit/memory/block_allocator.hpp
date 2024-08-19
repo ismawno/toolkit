@@ -15,6 +15,9 @@ KIT_NAMESPACE_BEGIN
 // On my macOS m1 this allocator is able to allocate 10000 elements of 128 bytes in 0.035 ms and deallocate them in
 // 0.012 (3.5ns per allocation and 1.2ns per deallocation). This is roughly a 10x improvement over the default
 // new/delete
+
+// The block allocator per-se is not thread-safe, but it can be used in a thread-safe by using the standalone functions
+// BAllocate, BDeallocate, BCreate and BDestroy. These functions use a thread_local instance of the block allocator
 template <typename T> class KIT_API BlockAllocator final
 {
     KIT_NON_COPYABLE(BlockAllocator)
@@ -187,19 +190,42 @@ template <typename T> class KIT_API BlockAllocator final
     usize m_BlockSize;
 };
 
+template <typename T, usize ChunksPerBlock> BlockAllocator<T> &LocalBlockAllocatorInstance() KIT_NOEXCEPT
+{
+    thread_local BlockAllocator<T> allocator{ChunksPerBlock};
+    return allocator;
+}
+
+template <typename T, usize ChunksPerBlock> T *BAllocate() KIT_NOEXCEPT
+{
+    return LocalBlockAllocatorInstance<T, ChunksPerBlock>().Allocate();
+}
+template <typename T, usize ChunksPerBlock> void BDeallocate(T *p_Ptr) KIT_NOEXCEPT
+{
+    LocalBlockAllocatorInstance<T, ChunksPerBlock>().Deallocate(p_Ptr);
+}
+
+template <typename T, usize ChunksPerBlock, typename... Args> T *BCreate(Args &&...p_Args) KIT_NOEXCEPT
+{
+    return LocalBlockAllocatorInstance<T, ChunksPerBlock>().Create(std::forward<Args>(p_Args)...);
+}
+template <typename T, usize ChunksPerBlock> void BDestroy(T *p_Ptr) KIT_NOEXCEPT
+{
+    LocalBlockAllocatorInstance<T, ChunksPerBlock>().Destroy(p_Ptr);
+}
+
 KIT_NAMESPACE_END
 
 #define KIT_BLOCK_ALLOCATED(p_ClassName, p_ChunksPerBlock)                                                             \
-    static inline BlockAllocator<p_ClassName> s_Allocator{p_ChunksPerBlock};                                           \
     static void *operator new(usize p_Size)                                                                            \
     {                                                                                                                  \
         KIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                      \
                    "Trying to block allocate a derived class from a base class overloaded new/delete");                \
-        return s_Allocator.Allocate();                                                                                 \
+        return KIT_NAMESPACE_NAME::BAllocate<p_ClassName, p_ChunksPerBlock>();                                         \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr)                                                                           \
     {                                                                                                                  \
-        s_Allocator.Deallocate(static_cast<p_ClassName *>(p_Ptr));                                                     \
+        KIT_NAMESPACE_NAME::BDeallocate<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));             \
     }
 
 #ifndef KIT_OVERRIDE_NEW_DELETE

@@ -86,7 +86,7 @@ template <typename T> static void RunRawAllocationTest()
 
 template <typename T> static void RunNewDeleteTest()
 {
-    BlockAllocator<T> &allocator = T::s_Allocator;
+    BlockAllocator<T> &allocator = LocalBlockAllocatorInstance<T, 10>();
     REQUIRE(allocator.Empty());
     allocator.Reset();
 
@@ -134,7 +134,7 @@ template <typename T> static void RunNewDeleteTest()
     {
         constexpr u32 amount = 10;
         std::array<T *, amount> data;
-        const usize chunkSize = allocator.ChunkSize();
+        constexpr usize chunkSize = BlockAllocator<T>::ChunkSize();
         for (u32 i = 0; i < amount; ++i)
         {
             data[i] = new T;
@@ -155,7 +155,7 @@ template <typename T> static void RunNewDeleteTest()
 
 template <typename Base, typename Derived> void RunVirtualAllocatorTests()
 {
-    BlockAllocator<Derived> &allocator = Derived::s_Allocator;
+    BlockAllocator<Derived> &allocator = LocalBlockAllocatorInstance<Derived, 10>();
     REQUIRE(allocator.Empty());
     allocator.Reset();
 
