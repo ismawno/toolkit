@@ -194,6 +194,8 @@ template <typename T> class KIT_API BlockAllocator final
     usize m_BlockSize;
 };
 
+// TODO: Consider replacing all of this with a thread-safe version of the block allocator using a SpinMutex instead of a
+// plain lock
 template <typename T, usize ChunksPerBlock> BlockAllocator<T> &LocalBlockAllocatorInstance() KIT_NOEXCEPT
 {
     thread_local BlockAllocator<T> allocator{ChunksPerBlock};

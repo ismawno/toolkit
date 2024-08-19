@@ -1,5 +1,6 @@
 #pragma once
 
+#include "kit/core/concepts.hpp"
 #include "kit/multiprocessing/task_manager.hpp"
 #include <thread>
 
@@ -11,7 +12,7 @@ KIT_NAMESPACE_BEGIN
 
 // TODO: Implement a lock-free queue
 // TODO: Consider adding dependencies
-class ThreadPool final : public TaskManager
+template <Mutex MTX> class ThreadPool final : public TaskManager
 {
   public:
     explicit ThreadPool(u32 p_ThreadCount);
@@ -31,7 +32,7 @@ class ThreadPool final : public TaskManager
     std::atomic<u32> m_TerminatedCount = 0;
     std::atomic<u32> m_PendingCount = 0;
 
-    mutable std::mutex m_Mutex;
+    mutable MTX m_Mutex;
 };
 
 KIT_NAMESPACE_END

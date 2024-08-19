@@ -1,15 +1,16 @@
 #include "kit/multiprocessing/thread_pool.hpp"
 #include "kit/multiprocessing/foreach.hpp"
+#include "kit/multiprocessing/spin_mutex.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <array>
 
 KIT_NAMESPACE_BEGIN
 
-TEST_CASE("ThreadPool", "[multiprocessing]")
+template <Mutex MTX> void RunThreadPoolTest()
 {
     constexpr u32 threadCount = 4;
     constexpr u32 amount = 1000;
-    ThreadPool pool(threadCount);
+    ThreadPool<MTX> pool(threadCount);
 
     SECTION("CreateAndSubmit")
     {
@@ -51,6 +52,16 @@ TEST_CASE("ThreadPool", "[multiprocessing]")
             sum += task->WaitForResult();
         REQUIRE(sum == realSum);
     }
+}
+
+TEST_CASE("ThreadPool (std::mutex)", "[multiprocessing]")
+{
+    RunThreadPoolTest<std::mutex>();
+}
+
+TEST_CASE("ThreadPool (SpinMutex)", "[multiprocessing]")
+{
+    RunThreadPoolTest<SpinMutex>();
 }
 
 KIT_NAMESPACE_END
