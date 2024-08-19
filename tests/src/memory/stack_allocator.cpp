@@ -31,6 +31,10 @@ template <typename T> void RunBasicConstructDestructOperations(StackAllocator &a
     allocator.Destroy(ptr5);
 
     REQUIRE_THROWS(allocator.Destroy(ptr1));
+    allocator.Destroy(ptr4);
+    allocator.Destroy(ptr3);
+    allocator.Destroy(ptr1);
+    REQUIRE(allocator.Allocated() == 0);
 }
 
 TEST_CASE("Stack allocator basic operations", "[memory][stack_allocator][basic]")

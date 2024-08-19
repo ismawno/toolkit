@@ -1,4 +1,6 @@
 #include "kit/memory/block_allocator.hpp"
+#include "kit/multiprocessing/thread_pool.hpp"
+#include "kit/multiprocessing/foreach.hpp"
 #include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <array>
@@ -153,6 +155,51 @@ template <typename T> static void RunNewDeleteTest()
     }
 }
 
+template <typename T> static void RunMultithreadedAllocationsTest()
+{
+    struct Data
+    {
+        KIT_BLOCK_ALLOCATED(Data, 125);
+        T Custom;
+        u32 Value1 = 0;
+        u32 Value2 = 0;
+        u64 Result = 0;
+    };
+    struct PaddedData
+    {
+        Data *Ptr;
+        std::byte Padding[KIT_CACHE_LINE_SIZE - sizeof(T *)];
+    };
+    constexpr usize amount = 1000;
+    constexpr usize threadCount = 8;
+    ThreadPool pool(threadCount);
+    std::array<PaddedData, amount> data;
+    std::array<Ref<Task<bool>>, threadCount> tasks;
+
+    ForEach(pool, data.begin(), data.end(), tasks.begin(), threadCount,
+            [](auto p_It1, auto p_It2, const usize p_ThreadIndex) {
+                bool valid = true;
+                for (auto it = p_It1; it != p_It2; ++it)
+                {
+                    it->Ptr = new Data;
+                    it->Ptr->Value1 = static_cast<u32>(p_ThreadIndex);
+                    it->Ptr->Value2 = static_cast<u32>(p_ThreadIndex) * 10;
+                    it->Ptr->Result = it->Ptr->Value1 + it->Ptr->Value2;
+                }
+
+                for (auto it = p_It1; it != p_It2; ++it)
+                {
+                    valid = valid && (it->Ptr->Value1 == p_ThreadIndex);
+                    valid = valid && (it->Ptr->Value2 == p_ThreadIndex * 10);
+                    valid = valid && (it->Ptr->Result == it->Ptr->Value1 + it->Ptr->Value2);
+                    delete it->Ptr;
+                }
+                return valid;
+            });
+    for (auto &task : tasks)
+        REQUIRE(task->WaitForResult());
+}
+
 template <typename Base, typename Derived> void RunVirtualAllocatorTests()
 {
     BlockAllocator<Derived> &allocator = LocalBlockAllocatorInstance<Derived, 10>();
@@ -210,6 +257,7 @@ TEST_CASE("Block allocator deals with small data", "[block_allocator][small]")
 {
     RunRawAllocationTest<SmallData>();
     RunNewDeleteTest<SmallData>();
+    RunMultithreadedAllocationsTest<SmallData>();
 }
 TEST_CASE("Block allocator deals with big data", "[block_allocator][big]")
 {
