@@ -11,6 +11,7 @@ class ThreadPool final : public TaskManager
     explicit ThreadPool(u32 p_ThreadCount);
 
     void SubmitTask(const Ref<ITask> &p_Task) KIT_NOEXCEPT override;
+    void AwaitPendingTasks() const KIT_NOEXCEPT;
 
     ~ThreadPool() KIT_NOEXCEPT override;
 

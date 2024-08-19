@@ -169,8 +169,8 @@ template <typename T> class Ref
             decreaseRef();
             m_Ptr = p_Other.m_Ptr;
             p_Other.m_Ptr = nullptr;
-            return *this;
         }
+        return *this;
     }
 
     ~Ref() KIT_NOEXCEPT

@@ -56,6 +56,10 @@ class KIT_API Profiler
   private:
     using OngoingMeasurement = std::pair<const char *, Clock>;
 
+    // I have considered using a stack allocator to store measurement, but its a bit pointless. These wont be resized
+    // often, and already serve somewhat as a stack. One of the advantages of a stack allocator is that you can have
+    // different data types in the same stack, close together in memory. But in this case, all memory is the same and
+    // will be close enough anyway
     static inline DynamicArray<Measurement> s_Measurements{};
     static inline DynamicArray<OngoingMeasurement> s_OngoingMeasurements{};
 };

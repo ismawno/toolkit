@@ -34,6 +34,12 @@ ThreadPool::ThreadPool(const u32 p_ThreadCount) : TaskManager(p_ThreadCount)
         m_Threads.emplace_back(worker, i);
 }
 
+void ThreadPool::AwaitPendingTasks() const KIT_NOEXCEPT
+{
+    while (m_PendingCount.load(std::memory_order_relaxed) != 0)
+        std::this_thread::yield();
+}
+
 ThreadPool::~ThreadPool() KIT_NOEXCEPT
 {
     // It is up to the user to make sure that all tasks are finished before destroying the thread pool

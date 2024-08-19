@@ -1,4 +1,5 @@
 #include "kit/multiprocessing/thread_pool.hpp"
+#include "kit/multiprocessing/foreach.hpp"
 #include <catch2/catch_test_macros.hpp>
 
 KIT_NAMESPACE_BEGIN
@@ -9,13 +10,8 @@ TEST_CASE("ThreadPool", "[multiprocessing]")
     constexpr u32 amount = 1000;
     ThreadPool pool(threadCount);
 
-    SECTION("SubmitTask")
+    SECTION("CreateAndSubmit")
     {
-        struct Number
-        {
-            u32 Value;
-            std::byte Padding[KIT_CACHE_LINE_SIZE - sizeof(u32)];
-        };
         for (u32 i = 0; i < amount; i++)
         {
             const auto task1 = pool.CreateAndSubmit([](const usz) { return 7 + 1; });
@@ -23,6 +19,36 @@ TEST_CASE("ThreadPool", "[multiprocessing]")
             REQUIRE(task1->WaitForResult() == 8);
             REQUIRE(task2->WaitForResult() == 20);
         }
+    }
+
+    SECTION("Parallel for")
+    {
+        struct Number
+        {
+            u32 Value;
+            std::byte Padding[KIT_CACHE_LINE_SIZE - sizeof(u32)];
+        };
+
+        std::array<Number, amount> numbers;
+        u32 realSum = 0;
+        for (u32 i = 0; i < amount; i++)
+        {
+            numbers[i].Value = i;
+            realSum += i;
+        }
+
+        std::array<Ref<Task<u32>>, threadCount> tasks;
+        ForEach(pool, numbers.begin(), numbers.end(), tasks.begin(), threadCount,
+                [](auto p_It1, auto p_It2, const usz) {
+                    u32 sum = 0;
+                    for (auto it = p_It1; it != p_It2; ++it)
+                        sum += it->Value;
+                    return sum;
+                });
+        u32 sum = 0;
+        for (auto &task : tasks)
+            sum += task->WaitForResult();
+        REQUIRE(sum == realSum);
     }
 }
 

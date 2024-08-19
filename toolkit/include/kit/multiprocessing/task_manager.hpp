@@ -1,7 +1,6 @@
 #pragma once
 
 #include "kit/multiprocessing/task.hpp"
-#include "kit/memory/ptr.hpp"
 #include <type_traits>
 
 KIT_NAMESPACE_BEGIN
