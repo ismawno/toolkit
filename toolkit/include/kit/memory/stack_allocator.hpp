@@ -5,6 +5,12 @@
 
 KIT_NAMESPACE_BEGIN
 
+// Stack allocator is a simple allocator that allocates memory in a stack-like fashion. It is useful for temporary
+// allocations and allows many types of elements to coexist in a single contiguous chunk of memory. It is not
+// thread-safe
+
+// TODO: There is a slight overhead when using Entry with a DynamicArray. Consider trying to reduce it (currently this
+// allocator allocates/deallocates slower then the block allocator by aprox 1 ns per call, measured in my MacOS M1)
 class StackAllocator final
 {
     KIT_NON_COPYABLE(StackAllocator)

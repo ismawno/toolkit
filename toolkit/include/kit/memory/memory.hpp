@@ -9,6 +9,8 @@ KIT_NAMESPACE_BEGIN
 // Could abstract this in some way (by defining those as function pointers) to allow for custom allocators
 // For now, I'll leave it as it is
 
+// TODO: Have an atomic counter to track allocations (conditionally with some macros)
+
 KIT_API void *Allocate(usize p_Size) KIT_NOEXCEPT;
 KIT_API void Deallocate(void *p_Ptr) KIT_NOEXCEPT;
 

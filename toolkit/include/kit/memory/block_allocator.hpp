@@ -18,6 +18,10 @@ KIT_NAMESPACE_BEGIN
 
 // The block allocator per-se is not thread-safe, but it can be used in a thread-safe by using the standalone functions
 // BAllocate, BDeallocate, BCreate and BDestroy. These functions use a thread_local instance of the block allocator
+
+// TODO: Current implementation is thread safe but by using a thread_local instance. This is not ideal for some use
+// cases, as elements allocated from one thread must be deallocated by that same thread. In addition, elements allocated
+// from fidderent threads will not be close to each other in memory
 template <typename T> class KIT_API BlockAllocator final
 {
     KIT_NON_COPYABLE(BlockAllocator)
