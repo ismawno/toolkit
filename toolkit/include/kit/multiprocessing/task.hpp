@@ -70,7 +70,7 @@ template <typename T> class Task final : public ITask
         : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
 #ifdef KIT_ENABLE_ASSERTS
-        if constexpr (sizeof...(Args) > 0)
+        if constexpr (sizeof...(Args) == 0)
         {
             KIT_ERROR("Wrong constructor used for Task<T>");
         }
