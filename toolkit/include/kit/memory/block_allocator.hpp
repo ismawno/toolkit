@@ -230,7 +230,8 @@ KIT_NAMESPACE_END
 
 #ifndef KIT_OVERRIDE_NEW_DELETE
 #    ifdef KIT_ENABLE_BLOCK_ALLOCATOR
-#        define KIT_OVERRIDE_NEW_DELETE(...) KIT_BLOCK_ALLOCATED(__VA_ARGS__)
+#        define KIT_OVERRIDE_NEW_DELETE(p_ClassName, p_ChunksPerBlock)                                                 \
+            KIT_BLOCK_ALLOCATED(p_ClassName, p_ChunksPerBlock)
 #    else
 #        define KIT_OVERRIDE_NEW_DELETE(...)
 #    endif

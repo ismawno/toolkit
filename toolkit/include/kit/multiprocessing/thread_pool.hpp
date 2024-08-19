@@ -5,6 +5,9 @@
 
 KIT_NAMESPACE_BEGIN
 
+// An implementation of a TaskManager that uses a thread pool to execute tasks. Currently, queue synchronization is
+// achieved by a plain mutex lock, which is not ideal. I have considered implementing a lock-free approach, but I wont
+// do it until the need arises, as those are very complex to get right
 class ThreadPool final : public TaskManager
 {
   public:

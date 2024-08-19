@@ -69,7 +69,12 @@ template <typename T> class Task final : public ITask
     explicit Task(Callable &&p_Callable, Args &&...p_Args) KIT_NOEXCEPT
         : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
-        KIT_ASSERT(sizeof...(Args) > 0, "Wrong constructor used for Task<T>");
+#ifdef KIT_ENABLE_ASSERTS
+        if constexpr (sizeof...(Args) > 0)
+        {
+            KIT_ERROR("Wrong constructor used for Task<T>");
+        }
+#endif
     }
 
     template <typename Callable>
@@ -79,7 +84,7 @@ template <typename T> class Task final : public ITask
     }
 
     std::function<T(usize)> m_Function = nullptr;
-    T m_Result;
+    T m_Result{};
 
     friend class TaskManager;
 };
