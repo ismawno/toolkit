@@ -10,6 +10,9 @@ set(SOURCES
     src/profiling/clock.cpp
     src/profiling/profiler.cpp
     src/profiling/timespan.cpp
+    src/multiprocessing/task.cpp
+    src/multiprocessing/task_manager.cpp
+    src/multiprocessing/thread_pool.cpp
 )
 
 # Create the library

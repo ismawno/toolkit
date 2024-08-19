@@ -20,6 +20,7 @@ set(SOURCES
     src/memory/ptr.cpp
     src/container/static_array.cpp
     src/container/hashable_tuple.cpp
+    src/multiprocessing/thread_pool.cpp
 )
 
 add_executable(toolkit-tests ${SOURCES})

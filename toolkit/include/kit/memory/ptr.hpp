@@ -2,6 +2,7 @@
 
 #include "kit/core/logging.hpp"
 #include "kit/core/concepts.hpp"
+#include "kit/memory/block_allocator.hpp"
 #include <memory>
 #include <atomic>
 
@@ -85,7 +86,7 @@ template <typename T> class RefCounted
 // To use const, Ref<const T> should be enough
 template <typename T> class Ref
 {
-    KIT_OVERRIDE_NEW_DELETE(Ref, 32)
+    KIT_OVERRIDE_NEW_DELETE(Ref<T>, 32)
   public:
     Ref() KIT_NOEXCEPT = default;
 

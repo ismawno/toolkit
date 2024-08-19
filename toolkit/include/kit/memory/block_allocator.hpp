@@ -199,7 +199,7 @@ KIT_NAMESPACE_END
     }                                                                                                                  \
     static void operator delete(void *p_Ptr)                                                                           \
     {                                                                                                                  \
-        s_Allocator.Deallocate(reinterpret_cast<p_ClassName *>(p_Ptr));                                                \
+        s_Allocator.Deallocate(static_cast<p_ClassName *>(p_Ptr));                                                     \
     }
 
 #ifndef KIT_OVERRIDE_NEW_DELETE
