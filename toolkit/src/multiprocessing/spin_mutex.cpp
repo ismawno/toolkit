@@ -5,8 +5,9 @@ KIT_NAMESPACE_BEGIN
 
 void SpinMutex::lock() KIT_NOEXCEPT
 {
-    while (m_Flag.test_and_set(std::memory_order_acquire))
-        ;
+    while (m_Flag.test_and_set(std::memory_order_relaxed))
+        std::this_thread::yield();
+    std::atomic_thread_fence(std::memory_order_acquire);
 }
 
 void SpinMutex::unlock() KIT_NOEXCEPT

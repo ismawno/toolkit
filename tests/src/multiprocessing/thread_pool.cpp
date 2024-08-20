@@ -1,5 +1,5 @@
 #include "kit/multiprocessing/thread_pool.hpp"
-#include "kit/multiprocessing/foreach.hpp"
+#include "kit/multiprocessing/for_each.hpp"
 #include "kit/multiprocessing/spin_mutex.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <array>
