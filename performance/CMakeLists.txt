@@ -23,6 +23,8 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(SOURCES
     src/main.cpp
     src/memory.cpp
+    src/multiprocessing.cpp
+    src/settings.cpp
 )
 
 add_executable(toolkit-performance ${SOURCES})

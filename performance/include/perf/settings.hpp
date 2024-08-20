@@ -14,20 +14,18 @@ struct AllocationSettings
     usize PassIncrement = 1;
 };
 
-struct ExampleData
+struct ThreadPoolSumSettings
 {
-    f64 Values[16];
-    void SetValues()
-    {
-        for (usize i = 0; i < 16; ++i)
-            Values[i] = static_cast<f64>(i);
-    }
+    usize SumCount = 1000000000;
 };
 
-struct PaddedData
+struct Settings
 {
-    ExampleData *Data;
-    std::byte Padding[KIT_CACHE_LINE_SIZE - sizeof(ExampleData *)];
+    usize MaxThreads = 8;
+    AllocationSettings Allocation{};
+    ThreadPoolSumSettings ThreadPoolSum{};
 };
+
+Settings ReadOrWriteSettingsFile();
 
 KIT_NAMESPACE_END

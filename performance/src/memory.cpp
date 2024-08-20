@@ -7,6 +7,16 @@
 
 KIT_NAMESPACE_BEGIN
 
+struct ExampleData
+{
+    f64 Values[16];
+    void SetValues()
+    {
+        for (usize i = 0; i < 16; ++i)
+            Values[i] = static_cast<f64>(i);
+    }
+};
+
 void RecordMallocFreeST(const AllocationSettings &p_Settings)
 {
     std::ofstream file(g_Root + "/performance/results/malloc_free_st.csv");
