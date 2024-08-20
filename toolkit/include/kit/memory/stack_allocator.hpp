@@ -9,6 +9,10 @@ KIT_NAMESPACE_BEGIN
 // allocations and allows many types of elements to coexist in a single contiguous chunk of memory. It is not
 // thread-safe
 
+// Thread safe considerations: This allocator requires precise ordering of allocations and deallocations. A
+// multithreaded environment has the exact opposite property, so this allocator is not thread saf because *I think* it
+// doesnt make sense to use it in a multithreaded environment as a shared variable
+
 // TODO: There is a slight overhead when using Entry with a DynamicArray. Consider trying to reduce it (currently this
 // allocator allocates/deallocates slower then the block allocator by aprox 1 ns per call, measured in my MacOS M1)
 class StackAllocator final

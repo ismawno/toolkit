@@ -16,10 +16,10 @@ template <typename T> static void RunRawAllocationTest()
 
     DYNAMIC_SECTION("Allocate and deallocate (raw call)" << (int)typeid(T).hash_code())
     {
-        T *data = allocator.Allocate();
+        T *data = allocator.AllocateUnsafe();
         REQUIRE(data != nullptr);
         REQUIRE(allocator.Owns(data));
-        allocator.Deallocate(data);
+        allocator.DeallocateUnsafe(data);
         REQUIRE(allocator.Empty());
     }
 
@@ -40,7 +40,7 @@ template <typename T> static void RunRawAllocationTest()
             HashSet<T *> allocated;
             for (u32 i = 0; i < amount; ++i)
             {
-                T *ptr = allocator.Allocate();
+                T *ptr = allocator.AllocateUnsafe();
                 REQUIRE(ptr != nullptr);
                 REQUIRE(allocated.insert(ptr).second);
                 REQUIRE(allocator.Owns(ptr));
@@ -48,15 +48,15 @@ template <typename T> static void RunRawAllocationTest()
             REQUIRE(allocator.Allocations() == amount);
 
             for (T *ptr : allocated)
-                allocator.Deallocate(ptr);
+                allocator.DeallocateUnsafe(ptr);
 
             // Reuse the same chunk over and over again
             for (u32 i = 0; i < amount; ++i)
             {
-                T *ptr = allocator.Allocate();
+                T *ptr = allocator.AllocateUnsafe();
                 REQUIRE(ptr != nullptr);
                 REQUIRE(allocator.Owns(ptr));
-                allocator.Deallocate(ptr);
+                allocator.DeallocateUnsafe(ptr);
             }
             REQUIRE(allocator.BlockCount() == amount / 10);
         }
@@ -70,7 +70,7 @@ template <typename T> static void RunRawAllocationTest()
         const usize chunkSize = allocator.ChunkSize();
         for (u32 i = 0; i < amount; ++i)
         {
-            data[i] = allocator.Allocate();
+            data[i] = allocator.AllocateUnsafe();
             REQUIRE(data[i] != nullptr);
             REQUIRE(allocator.Owns(data[i]));
             if (i != 0)

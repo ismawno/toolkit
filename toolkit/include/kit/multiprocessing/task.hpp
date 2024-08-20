@@ -47,9 +47,7 @@ class ITask : public RefCounted<ITask>
 // void, however this use case is simple enough to not warrant the extra complexity.
 template <typename T> class Task final : public ITask
 {
-    // As of right now, block allocator (the default new/delete override) has no thread safe capabilities. This will be
-    // commented out until thread safety is added
-    // KIT_OVERRIDE_NEW_DELETE(Task<T>, 32)
+    KIT_OVERRIDE_NEW_DELETE(Task<T>, 32)
   public:
     void operator()(const usize p_ThreadIndex) KIT_NOEXCEPT override
     {

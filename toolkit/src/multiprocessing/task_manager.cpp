@@ -3,7 +3,7 @@
 
 KIT_NAMESPACE_BEGIN
 
-TaskManager::TaskManager(u32 p_ThreadCount) : m_ThreadCount(p_ThreadCount)
+TaskManager::TaskManager(u32 p_ThreadCount) KIT_NOEXCEPT : m_ThreadCount(p_ThreadCount)
 {
 }
 

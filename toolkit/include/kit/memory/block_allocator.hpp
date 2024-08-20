@@ -1,11 +1,11 @@
 #pragma once
 
-#include "kit/core/core.hpp"
 #include "kit/core/alias.hpp"
 #include "kit/core/non_copyable.hpp"
 #include "kit/memory/memory.hpp"
 #include "kit/core/logging.hpp"
 #include "kit/core/concepts.hpp"
+#include "kit/multiprocessing/spin_mutex.hpp"
 
 KIT_NAMESPACE_BEGIN
 
@@ -15,13 +15,6 @@ KIT_NAMESPACE_BEGIN
 // On my macOS m1 this allocator is able to allocate 10000 elements of 128 bytes in 0.035 ms and deallocate them in
 // 0.012 (3.5ns per allocation and 1.2ns per deallocation). This is roughly a 10x improvement over the default
 // new/delete
-
-// The block allocator per-se is not thread-safe, but it can be used in a thread-safe by using the standalone functions
-// BAllocate, BDeallocate, BCreate and BDestroy. These functions use a thread_local instance of the block allocator
-
-// TODO: Current implementation is thread safe but by using a thread_local instance. This is not ideal for some use
-// cases, as elements allocated from one thread must be deallocated by that same thread. In addition, elements allocated
-// from fidderent threads will not be close to each other in memory
 template <typename T> class KIT_API BlockAllocator final
 {
     KIT_NON_COPYABLE(BlockAllocator)
@@ -98,7 +91,32 @@ template <typename T> class KIT_API BlockAllocator final
         Deallocate(p_Ptr);
     }
 
+    template <typename... Args> [[nodiscard]] T *CreateUnsafe(Args &&...p_Args) KIT_NOEXCEPT
+    {
+        T *ptr = AllocateUnsafe();
+        ::new (ptr) T(std::forward<Args>(p_Args)...);
+        return ptr;
+    }
+    void DestroyUnsafe(T *p_Ptr) KIT_NOEXCEPT
+    {
+        if constexpr (!std::is_trivially_destructible_v<T>)
+            p_Ptr->~T();
+        DeallocateUnsafe(p_Ptr);
+    }
+
     [[nodiscard]] T *Allocate() KIT_NOEXCEPT
+    {
+        std::scoped_lock lock(m_Mutex);
+        return AllocateUnsafe();
+    }
+
+    void Deallocate(T *p_Ptr) KIT_NOEXCEPT
+    {
+        std::scoped_lock lock(m_Mutex);
+        DeallocateUnsafe(p_Ptr);
+    }
+
+    [[nodiscard]] T *AllocateUnsafe() KIT_NOEXCEPT
     {
         ++m_Allocations;
         if (m_FreeList)
@@ -106,7 +124,7 @@ template <typename T> class KIT_API BlockAllocator final
         return fromFirstChunkOfNewBlock();
     }
 
-    void Deallocate(T *p_Ptr) KIT_NOEXCEPT
+    void DeallocateUnsafe(T *p_Ptr) KIT_NOEXCEPT
     {
         KIT_ASSERT(!Empty(), "The current allocator has no active allocations yet");
         KIT_ASSERT(Owns(p_Ptr), "Trying to deallocate a pointer that was not allocated by this allocator");
@@ -192,13 +210,14 @@ template <typename T> class KIT_API BlockAllocator final
     Chunk *m_FreeList = nullptr;
     DynamicArray<std::byte *> m_Blocks;
     usize m_BlockSize;
+    SpinMutex m_Mutex;
 };
 
 // TODO: Consider replacing all of this with a thread-safe version of the block allocator using a SpinMutex instead of a
 // plain lock
 template <typename T, usize ChunksPerBlock> BlockAllocator<T> &LocalBlockAllocatorInstance() KIT_NOEXCEPT
 {
-    thread_local BlockAllocator<T> allocator{ChunksPerBlock};
+    static BlockAllocator<T> allocator{ChunksPerBlock};
     return allocator;
 }
 
@@ -211,6 +230,15 @@ template <typename T, usize ChunksPerBlock> void BDeallocate(T *p_Ptr) KIT_NOEXC
     LocalBlockAllocatorInstance<T, ChunksPerBlock>().Deallocate(p_Ptr);
 }
 
+template <typename T, usize ChunksPerBlock> T *BAllocateUnsafe() KIT_NOEXCEPT
+{
+    return LocalBlockAllocatorInstance<T, ChunksPerBlock>().AllocateUnsafe();
+}
+template <typename T, usize ChunksPerBlock> void BDeallocateUnsafe(T *p_Ptr) KIT_NOEXCEPT
+{
+    LocalBlockAllocatorInstance<T, ChunksPerBlock>().DeallocateUnsafe(p_Ptr);
+}
+
 template <typename T, usize ChunksPerBlock, typename... Args> T *BCreate(Args &&...p_Args) KIT_NOEXCEPT
 {
     return LocalBlockAllocatorInstance<T, ChunksPerBlock>().Create(std::forward<Args>(p_Args)...);
@@ -220,10 +248,19 @@ template <typename T, usize ChunksPerBlock> void BDestroy(T *p_Ptr) KIT_NOEXCEPT
     LocalBlockAllocatorInstance<T, ChunksPerBlock>().Destroy(p_Ptr);
 }
 
+template <typename T, usize ChunksPerBlock, typename... Args> T *BCreateUnsafe(Args &&...p_Args) KIT_NOEXCEPT
+{
+    return LocalBlockAllocatorInstance<T, ChunksPerBlock>().CreateUnsafe(std::forward<Args>(p_Args)...);
+}
+template <typename T, usize ChunksPerBlock> void BDestroyUnsafe(T *p_Ptr) KIT_NOEXCEPT
+{
+    LocalBlockAllocatorInstance<T, ChunksPerBlock>().DestroyUnsafe(p_Ptr);
+}
+
 KIT_NAMESPACE_END
 
 #define KIT_BLOCK_ALLOCATED(p_ClassName, p_ChunksPerBlock)                                                             \
-    static void *operator new(usize p_Size)                                                                            \
+    static void *operator new([[maybe_unused]] usize p_Size)                                                           \
     {                                                                                                                  \
         KIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                      \
                    "Trying to block allocate a derived class from a base class overloaded new/delete");                \

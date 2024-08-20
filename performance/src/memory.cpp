@@ -40,11 +40,11 @@ void RecordBlockAllocator(const AllocationSettings &p_Settings)
     {
         Clock clock;
         for (usize i = 0; i < passes; ++i)
-            allocated[i] = allocator.Create();
+            allocated[i] = allocator.CreateUnsafe();
         const Timespan allocTime = clock.Restart();
 
         for (usize i = 0; i < passes; ++i)
-            allocator.Destroy(allocated[i]);
+            allocator.DestroyUnsafe(allocated[i]);
         const Timespan deallocTime = clock.Elapsed();
 
         file << passes << ',' << allocTime.AsMilliseconds() << ',' << deallocTime.AsMilliseconds() << '\n';
