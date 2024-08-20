@@ -244,7 +244,7 @@ def main() -> None:
     root = Path(__file__).parent.parent
     build_folder = root / build_settings["build-path"]
     if build_settings["compile-only"] == "ON":
-        print("Skipping CMake setup and only compiling the project...")
+        print("Compilation skipped...")
         os.chdir(root)
         subprocess.run(
             ["cmake", "--build", build_folder, "--config", build_settings["build-type"]]

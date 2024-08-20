@@ -15,7 +15,7 @@ KIT_NAMESPACE_BEGIN
 template <Mutex MTX> class ThreadPool final : public TaskManager
 {
   public:
-    explicit ThreadPool(u32 p_ThreadCount);
+    explicit ThreadPool(usize p_ThreadCount);
 
     void SubmitTask(const Ref<ITask> &p_Task) KIT_NOEXCEPT override;
     void AwaitPendingTasks() const KIT_NOEXCEPT;

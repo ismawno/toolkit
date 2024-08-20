@@ -6,6 +6,7 @@
 #include "kit/core/logging.hpp"
 #include "kit/core/concepts.hpp"
 #include "kit/multiprocessing/spin_mutex.hpp"
+#include <mutex>
 
 KIT_NAMESPACE_BEGIN
 

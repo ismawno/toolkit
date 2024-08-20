@@ -3,11 +3,11 @@
 
 KIT_NAMESPACE_BEGIN
 
-TaskManager::TaskManager(u32 p_ThreadCount) KIT_NOEXCEPT : m_ThreadCount(p_ThreadCount)
+TaskManager::TaskManager(const usize p_ThreadCount) KIT_NOEXCEPT : m_ThreadCount(p_ThreadCount)
 {
 }
 
-u32 TaskManager::ThreadCount() const KIT_NOEXCEPT
+usize TaskManager::ThreadCount() const KIT_NOEXCEPT
 {
     return m_ThreadCount;
 }

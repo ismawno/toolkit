@@ -4,7 +4,7 @@
 
 KIT_NAMESPACE_BEGIN
 
-template <Mutex MTX> ThreadPool<MTX>::ThreadPool(const u32 p_ThreadCount) : TaskManager(p_ThreadCount)
+template <Mutex MTX> ThreadPool<MTX>::ThreadPool(const usize p_ThreadCount) : TaskManager(p_ThreadCount)
 {
     m_Threads.reserve(p_ThreadCount);
     const auto worker = [this](const usize p_ThreadIndex) {
@@ -31,7 +31,7 @@ template <Mutex MTX> ThreadPool<MTX>::ThreadPool(const u32 p_ThreadCount) : Task
         }
         m_TerminatedCount.fetch_add(1, std::memory_order_relaxed);
     };
-    for (u32 i = 0; i < p_ThreadCount; ++i)
+    for (usize i = 0; i < p_ThreadCount; ++i)
         m_Threads.emplace_back(worker, i);
 }
 

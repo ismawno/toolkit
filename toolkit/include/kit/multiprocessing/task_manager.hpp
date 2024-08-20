@@ -9,7 +9,7 @@ KIT_NAMESPACE_BEGIN
 class TaskManager
 {
   public:
-    explicit TaskManager(u32 p_ThreadCount) KIT_NOEXCEPT;
+    explicit TaskManager(usize p_ThreadCount) KIT_NOEXCEPT;
     virtual ~TaskManager() KIT_NOEXCEPT = default;
 
     // Default implementation just adds the task to the dynamic array
@@ -36,10 +36,10 @@ class TaskManager
         return task;
     }
 
-    u32 ThreadCount() const KIT_NOEXCEPT;
+    usize ThreadCount() const KIT_NOEXCEPT;
 
   private:
-    u32 m_ThreadCount;
+    usize m_ThreadCount;
     friend class ITask;
 };
 
