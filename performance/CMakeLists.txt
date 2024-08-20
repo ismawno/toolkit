@@ -4,7 +4,7 @@ project(toolkit-performance)
 include(FetchContent)
 
 set(OLD_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}} -Wno-error")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}")
 
 FetchContent_Declare(
   yaml-cpp

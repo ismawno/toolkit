@@ -19,7 +19,7 @@ template <typename MTX> void RecordThreadPoolSum(const ThreadPoolSumSettings &p_
     Clock clock;
 
     // u32 sum = 0;
-    // for (usize i = 0; i < p_Settings.SumCount; i++)
+    // for (u32 i = 0; i < p_Settings.SumCount; i++)
     //     sum += i;
 
     // const Timespan stTime = clock.Elapsed();
@@ -29,7 +29,7 @@ template <typename MTX> void RecordThreadPoolSum(const ThreadPoolSumSettings &p_
     DynamicArray<Ref<Task<u32>>> tasks(p_Maxthreads);
     DynamicArray<u32> values(p_Settings.SumCount);
 
-    for (usize i = 0; i < p_Settings.SumCount; i++)
+    for (u32 i = 0; i < p_Settings.SumCount; i++)
         values[i] = i;
 
     usize nthreads = 1;
