@@ -9,7 +9,7 @@ import shutil
 # Next steps: Add support for more generators
 
 
-def create_default_settings_file(path: Path, /) -> ConfigParser:
+def create_default_settings_file(path: Path, /) -> None:
     cfg = ConfigParser(allow_no_value=True)
     cfg.add_section("some-comments")
     cfg.set(
@@ -75,7 +75,6 @@ def create_default_settings_file(path: Path, /) -> ConfigParser:
 
     with open(path, "w") as f:
         cfg.write(f)
-    return cfg
 
 
 def load_settings_file(path: Path, /) -> ConfigParser:
@@ -227,9 +226,10 @@ def main() -> None:
     )
     if not settings_path.exists():
         print(
-            f"The path '{settings_path}' does not exist. Creating a default settings file at that same location..."
+            f"The path '{settings_path}' does not exist. Creating a default settings file at that same location... Re-run the script to build/configure the project"
         )
-        cfg = create_default_settings_file(settings_path)
+        create_default_settings_file(settings_path)
+        return
     else:
         cfg = load_settings_file(settings_path)
 
