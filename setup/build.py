@@ -55,6 +55,11 @@ def create_default_settings_file(path: Path, /) -> ConfigParser:
         "; If set to 'ON', the project will only be compiled, and the CMake setup will be skipped",
     )
     cfg.set("general", "compile-only", "OFF")
+    cfg.set(
+        "general",
+        "; If set to 'ON', the compilation will be skipped and only the CMake setup will be done",
+    )
+    cfg.set("general", "cmake-only", "OFF")
 
     cfg["targets"] = {"build-tests": "ON", "build-performance": "ON"}
     cfg["logging"] = {
@@ -108,6 +113,12 @@ def create_arguments() -> tuple[Namespace, list[str]]:
         type=str,
         default=None,
         help="If set to 'ON', the project will only be compiled, and the CMake setup will be skipped",
+    )
+    parser.add_argument(
+        "--cmake-only",
+        type=str,
+        default=None,
+        help="If set to 'ON', the project will only be configured with CMake, and not built",
     )
 
     # Booleans
@@ -253,6 +264,9 @@ def main() -> None:
 
     os.chdir(root)
     subprocess.run(["cmake", "-B", build_folder, "-S", "."] + cmake_args, check=True)
+    if build_settings["cmake-only"] == "ON":
+        print("Skipping compilation and only configuring the project with CMake...")
+        return
     subprocess.run(
         ["cmake", "--build", build_folder, "--config", build_settings["build-type"]]
         + build_args,
