@@ -92,9 +92,31 @@ void RecordMallocFreeMT(const AllocationSettings &p_Settings, const usize p_MaxT
     }
 }
 
-void RecordBlockAllocatorST(const AllocationSettings &p_Settings)
+void RecordBlockAllocatorSafeST(const AllocationSettings &p_Settings)
 {
-    std::ofstream file(g_Root + "/performance/results/block_allocator_st.csv");
+    std::ofstream file(g_Root + "/performance/results/block_allocator_safe_st.csv");
+    DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
+    file << "passes,block_alloc_st (ms),block_dealloc_st (ms)\n";
+
+    BlockAllocator<ExampleData> allocator{p_Settings.MaxPasses / 2};
+    for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
+    {
+        Clock clock;
+        for (usize i = 0; i < passes; ++i)
+            allocated[i] = allocator.Create();
+        const Timespan allocTime = clock.Restart();
+
+        for (usize i = 0; i < passes; ++i)
+            allocator.Destroy(allocated[i]);
+        const Timespan deallocTime = clock.Elapsed();
+
+        file << passes << ',' << allocTime.AsMilliseconds() << ',' << deallocTime.AsMilliseconds() << '\n';
+    }
+}
+
+void RecordBlockAllocatorUnsafeST(const AllocationSettings &p_Settings)
+{
+    std::ofstream file(g_Root + "/performance/results/block_allocator_unsafe_st.csv");
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
     file << "passes,block_alloc_st (ms),block_dealloc_st (ms)\n";
 

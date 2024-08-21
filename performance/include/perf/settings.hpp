@@ -9,9 +9,9 @@ inline std::string g_Root = KIT_ROOT_PATH;
 
 struct AllocationSettings
 {
-    usize MinPasses = 10;
+    usize MinPasses = 100;
     usize MaxPasses = 10000;
-    usize PassIncrement = 1;
+    usize PassIncrement = 100;
 };
 
 struct ThreadPoolSumSettings
