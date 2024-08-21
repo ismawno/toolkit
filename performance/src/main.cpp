@@ -31,6 +31,6 @@ int main()
     KIT_LOG_INFO("Running stack allocator...");
     RecordStackAllocator(settings.Allocation);
 
-    KIT_LOG_INFO("Done! ({.1f} seconds) Results have been written to 'performance/results'",
+    KIT_LOG_INFO("Done! ({:.1f} seconds) Results have been written to 'performance/results'",
                  clock.Elapsed().AsSeconds());
 }
