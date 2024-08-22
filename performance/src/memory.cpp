@@ -22,7 +22,7 @@ void RecordMallocFreeST(const AllocationSettings &p_Settings)
     std::ofstream file(g_Root + "/performance/results/malloc_free_st.csv");
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
 
-    file << "passes,malloc_st (ms),free_st (ms)\n";
+    file << "passes,malloc_st (ns),free_st (ns)\n";
     for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
     {
         Clock clock;
@@ -34,7 +34,7 @@ void RecordMallocFreeST(const AllocationSettings &p_Settings)
             delete allocated[i];
         const Timespan deallocTime = clock.Elapsed();
 
-        file << passes << ',' << allocTime.AsMilliseconds() << ',' << deallocTime.AsMilliseconds() << '\n';
+        file << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds() << '\n';
     }
 }
 
@@ -53,7 +53,7 @@ void RecordMallocFreeMT(const AllocationSettings &p_Settings, const usize p_MaxT
             delete allocated[i];
     };
 
-    file << "threads,passes,malloc_mt (ms),free_mt (ms)\n";
+    file << "threads,passes,malloc_mt (ns),free_mt (ns)\n";
 
     usize nthreads = 1;
     while (nthreads <= p_MaxThreads)
@@ -85,8 +85,8 @@ void RecordMallocFreeMT(const AllocationSettings &p_Settings, const usize p_MaxT
                 threads[th].join();
             const Timespan deallocTime = clock.Elapsed();
 
-            file << nthreads << ',' << passes << ',' << allocTime.AsMilliseconds() << ','
-                 << deallocTime.AsMilliseconds() << '\n';
+            file << nthreads << ',' << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds()
+                 << '\n';
         }
         nthreads *= 2;
     }
@@ -96,9 +96,11 @@ void RecordBlockAllocatorSafeST(const AllocationSettings &p_Settings)
 {
     std::ofstream file(g_Root + "/performance/results/block_allocator_safe_st.csv");
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
-    file << "passes,block_alloc_st (ms),block_dealloc_st (ms)\n";
+    file << "passes,block_alloc_st (ns),block_dealloc_st (ns)\n";
 
-    BlockAllocator<ExampleData> allocator{p_Settings.MaxPasses / 2};
+    BlockAllocator<ExampleData> allocator{p_Settings.MaxPasses};
+    allocator.Reserve();
+
     for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
     {
         Clock clock;
@@ -110,7 +112,7 @@ void RecordBlockAllocatorSafeST(const AllocationSettings &p_Settings)
             allocator.Destroy(allocated[i]);
         const Timespan deallocTime = clock.Elapsed();
 
-        file << passes << ',' << allocTime.AsMilliseconds() << ',' << deallocTime.AsMilliseconds() << '\n';
+        file << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds() << '\n';
     }
 }
 
@@ -118,9 +120,10 @@ void RecordBlockAllocatorUnsafeST(const AllocationSettings &p_Settings)
 {
     std::ofstream file(g_Root + "/performance/results/block_allocator_unsafe_st.csv");
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
-    file << "passes,block_alloc_st (ms),block_dealloc_st (ms)\n";
+    file << "passes,block_alloc_st (ns),block_dealloc_st (ns)\n";
 
-    BlockAllocator<ExampleData> allocator{p_Settings.MaxPasses / 2};
+    BlockAllocator<ExampleData> allocator{p_Settings.MaxPasses};
+    allocator.ReserveUnsafe();
     for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
     {
         Clock clock;
@@ -132,7 +135,7 @@ void RecordBlockAllocatorUnsafeST(const AllocationSettings &p_Settings)
             allocator.DestroyUnsafe(allocated[i]);
         const Timespan deallocTime = clock.Elapsed();
 
-        file << passes << ',' << allocTime.AsMilliseconds() << ',' << deallocTime.AsMilliseconds() << '\n';
+        file << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds() << '\n';
     }
 }
 
@@ -142,7 +145,8 @@ void RecordBlockAllocatorMT(const AllocationSettings &p_Settings, const usize p_
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
     DynamicArray<std::thread> threads{p_MaxThreads};
 
-    BlockAllocator<ExampleData> allocator{p_Settings.MaxPasses / 2};
+    BlockAllocator<ExampleData> allocator{p_Settings.MaxPasses};
+    allocator.ReserveUnsafe();
     const auto allocate = [&allocated, &allocator](const usize p_Start, const usize p_End) {
         for (usize i = p_Start; i < p_End; ++i)
             allocated[i] = allocator.Create();
@@ -152,7 +156,7 @@ void RecordBlockAllocatorMT(const AllocationSettings &p_Settings, const usize p_
             allocator.Destroy(allocated[i]);
     };
 
-    file << "threads,passes,block_alloc_mt (ms),block_dealloc_mt (ms)\n";
+    file << "threads,passes,block_alloc_mt (ns),block_dealloc_mt (ns)\n";
 
     usize nthreads = 1;
     while (nthreads <= p_MaxThreads)
@@ -183,8 +187,8 @@ void RecordBlockAllocatorMT(const AllocationSettings &p_Settings, const usize p_
                 threads[th].join();
             const Timespan deallocTime = clock.Elapsed();
 
-            file << nthreads << ',' << passes << ',' << allocTime.AsMilliseconds() << ','
-                 << deallocTime.AsMilliseconds() << '\n';
+            file << nthreads << ',' << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds()
+                 << '\n';
         }
         nthreads *= 2;
     }
@@ -195,7 +199,7 @@ void RecordStackAllocator(const AllocationSettings &p_Settings)
     const char *path = "/performance/results/stack_allocator.csv";
     std::ofstream file(g_Root + path);
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
-    file << "passes,stack_alloc (ms),stack_dealloc (ms)\n";
+    file << "passes,stack_alloc (ns),stack_dealloc (ns)\n";
 
     StackAllocator allocator{p_Settings.MaxPasses * sizeof(ExampleData)};
     for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
@@ -209,7 +213,7 @@ void RecordStackAllocator(const AllocationSettings &p_Settings)
             allocator.Destroy(allocated[i]);
         const Timespan deallocTime = clock.Elapsed();
 
-        file << passes << ',' << allocTime.AsMilliseconds() << ',' << deallocTime.AsMilliseconds() << '\n';
+        file << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds() << '\n';
     }
 }
 

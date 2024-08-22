@@ -38,7 +38,7 @@ if (TOOLKIT_BUILD_PERFORMANCE AND (NOT CMAKE_BUILD_TYPE STREQUAL "Dist"))
     message(WARNING "Building benchamrks in a non-distribution configuration! Results may not be representative")
 endif()
 
-if (TOOLKIT_BUILD_PERFORMANCE AND (TOOLKIT_ENABLE_INFO_LOGS OR TOOLKIT_ENABLE_WARNING_LOGS OR TOOLKIT_ENABLE_ASSERTS))
+if (TOOLKIT_BUILD_PERFORMANCE AND (TOOLKIT_ENABLE_WARNING_LOGS OR TOOLKIT_ENABLE_ASSERTS))
     message(WARNING "Building benchamrks with asserts/logs enabled! Results may not be representative")
 endif()
 

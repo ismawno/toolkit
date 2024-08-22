@@ -5,168 +5,212 @@ import plotly.graph_objects as go
 import dash
 
 
-def read_csvs() -> dict[str, dict[str, pd.DataFrame]]:
+def read_and_classify_benchmark_data() -> dict[str, dict[str, pd.DataFrame]]:
     path = Path("performance/results")
-    dfs = {"plain": {}, "per-thread": {}, "thread-scale": {}}
+    dfs = {"single-thread": {}, "multi-thread": {}, "thread-scale": {}}
     for csv in path.glob("*.csv"):
         df = pd.read_csv(csv)
         if "passes" in df.columns and "threads" not in df.columns:
-            dfs["plain"][csv.stem] = df
+            dfs["single-thread"][csv.stem] = df
         elif "threads" in df.columns and "passes" not in df.columns:
             dfs["thread-scale"][csv.stem] = df
         else:
             for thread in df["threads"].unique():
                 df_thread = df[df["threads"] == thread].drop(columns="threads")
-                dfs["per-thread"][f"{csv.stem}_threads_{thread}"] = df_thread
+                dfs["multi-thread"][f"{csv.stem}_threads_{thread}"] = df_thread
     return dfs
 
 
 app = dash.Dash(__name__)
-dfs = read_csvs()
+benchmark_data = read_and_classify_benchmark_data()
 title = "Time (ms)"
+
+dark_background_color = "#2c2c2c"
+dark_text_color = "#84ACCE"
+dark_graph_background = "#1c1c1c"
+dark_grid_color = "#444444"
+dropdown_background_color = "#3b3b3b"
+dropdown_hover_background_color = "#4c4c4c"
+dropdown_border_color = "#5a5a5a"
 
 
 def main() -> None:
 
     elements = [
         [
-            dash.html.H3(f"{name.capitalize().replace('-', ' ')} measurements"),
+            dash.html.H1(f"{btype.capitalize().replace('-', ' ')} benchmarks"),
+            dash.html.Label("Plot mode"),
+            dash.dcc.Dropdown(
+                id=f"{btype}-plot-mode",
+                options=[
+                    {"label": "Lines + markers", "value": "lines+markers"},
+                    {"label": "Lines", "value": "lines"},
+                    {"label": "Markers", "value": "markers"},
+                ],
+                value="lines+markers",
+                style={
+                    "color": dark_text_color,
+                },
+            ),
+            dash.html.Label("Select axis scale"),
             dash.dcc.Checklist(
-                id=f"{name}-checklist",
+                id=f"{btype}-axis-type",
+                options=[
+                    {"label": "X-Axis logarithmic", "value": "xlog"},
+                    {"label": "Y-Axis logarithmic", "value": "ylog"},
+                ],
+                value=[],
+            ),
+            dash.html.Label("Select benchmarks"),
+            dash.dcc.Checklist(
+                id=f"{btype}-checklist",
                 options=[
                     {
                         "label": csv_file.capitalize().replace("_", " "),
                         "value": csv_file,
                     }
-                    for csv_file in dfs[name]
+                    for csv_file in benchmark_data[btype]
                 ],
                 value=[],
             ),
-            dash.dcc.Graph(id=f"{name}-graph"),
+            dash.dcc.Graph(
+                id=f"{btype}-graph",
+                style={"padding": "10px", "border": f"1px solid {dark_grid_color}"},
+            ),
         ]
-        for name in dfs
+        for btype in benchmark_data
     ]
     elements = [element for sublist in elements for element in sublist]
+
     app.layout = dash.html.Div(
-        [
-            dash.dcc.Checklist(
-                id="yaxis-type",
-                options=[{"label": "Logarithmic scale", "value": "log"}],
-                value=[],
-            ),
-            *elements,
-        ]
+        style={
+            "backgroundColor": dark_background_color,
+            "color": dark_text_color,
+            "padding": "20px",
+            "margin": "0",
+        },
+        children=elements,
     )
     app.run_server(debug=True)
 
 
-@app.callback(
-    dash.dependencies.Output("plain-graph", "figure"),
-    [
-        dash.dependencies.Input("plain-checklist", "value"),
-        dash.dependencies.Input("yaxis-type", "value"),
-    ],
-)
-def update_plain_graph(names: list[str], yaxis_type: list[str]) -> go.Figure:
-    if not names:
-        return go.Figure()
-
-    yaxis_scale = "log" if "log" in yaxis_type else "linear"
-
+def update_graph(
+    benchmarks: list[str],
+    plot_mode: str,
+    axis_type: list[str],
+    /,
+    *,
+    benchmark_type: str,
+    title: str,
+    exclude: str | list[str] | None = None,
+) -> go.Figure:
     data = []
-    for name in names:
-        df = dfs["plain"][name]
+    xaxis_type = "log" if "xlog" in axis_type else "linear"
+    yaxis_type = "log" if "ylog" in axis_type else "linear"
+    xcol = "<Unsepcified>"
+
+    for benchmark in benchmarks:
+        df = benchmark_data[benchmark_type][benchmark]
+        if exclude is not None:
+            df = df.drop(columns=exclude)
+
+        # Assuming the first column is the x-axis
         xcol = df.columns[0]
         data.extend(
             [
                 go.Scatter(
                     x=df[xcol],
                     y=df[col],
-                    mode="markers",
+                    mode=plot_mode,
                     marker={"size": 8},
-                    name=f"{col} ({name})",
+                    name=f"{col} ({benchmark})",
                 )
                 for col in df.columns[1:]
             ]
         )
 
-    fig = go.Figure(data=data)
-    fig.update_layout(
-        title="Plain measurements",
-        xaxis_title=dfs["plain"][name].columns[0].capitalize(),
-        yaxis_title=title,
-        yaxis_type=yaxis_scale,
+    layout = go.Layout(
+        title={"text": title, "font": {"color": dark_text_color}},
+        plot_bgcolor=dark_graph_background,
+        paper_bgcolor=dark_background_color,
+        font={"color": dark_text_color},
+        xaxis={
+            "title": xcol.capitalize(),
+            "gridcolor": dark_grid_color,
+            "type": xaxis_type,
+            "tickmode": "auto",
+        },
+        yaxis={
+            "title": "Time (ms)",
+            "gridcolor": dark_grid_color,
+            "type": yaxis_type,
+            "tickmode": "auto",
+        },
+        showlegend=True,
+        legend=dict(font=dict(color=dark_text_color)),
     )
-    return fig
+    return go.Figure(data=data, layout=layout)
 
 
 @app.callback(
-    dash.dependencies.Output("per-thread-graph", "figure"),
+    dash.dependencies.Output("single-thread-graph", "figure"),
     [
-        dash.dependencies.Input("per-thread-checklist", "value"),
-        dash.dependencies.Input("yaxis-type", "value"),
+        dash.dependencies.Input("single-thread-checklist", "value"),
+        dash.dependencies.Input("single-thread-plot-mode", "value"),
+        dash.dependencies.Input("single-thread-axis-type", "value"),
     ],
 )
-def update_per_thread_graph(names: list[str], yaxis_type: list[str]) -> go.Figure:
-    if not names:
-        return go.Figure()
-
-    yaxis_scale = "log" if "log" in yaxis_type else "linear"
-
-    data = []
-    for name in names:
-        df = dfs["per-thread"][name]
-        xcol = df.columns[0]
-        data.extend(
-            [
-                go.Scatter(
-                    x=df[xcol],
-                    y=df[col],
-                    mode="markers",
-                    marker={"size": 8},
-                    name=f"{col} ({name})",
-                )
-                for col in df.columns[1:]
-            ]
-        )
-
-    fig = go.Figure(data=data)
-    fig.update_layout(
-        title="Per thread measurements",
-        xaxis_title=dfs["per-thread"][name].columns[0].capitalize(),
-        yaxis_title=title,
-        yaxis_type=yaxis_scale,
+def update_plain_graph(
+    names: list[str], plot_mode: str, axis_type: list[str], /
+) -> go.Figure:
+    return update_graph(
+        names,
+        plot_mode,
+        axis_type,
+        benchmark_type="single-thread",
+        title="Single thread benchmarks",
     )
-    return fig
+
+
+@app.callback(
+    dash.dependencies.Output("multi-thread-graph", "figure"),
+    [
+        dash.dependencies.Input("multi-thread-checklist", "value"),
+        dash.dependencies.Input("multi-thread-plot-mode", "value"),
+        dash.dependencies.Input("multi-thread-axis-type", "value"),
+    ],
+)
+def update_per_thread_graph(
+    names: list[str], plot_mode: str, axis_type: list[str], /
+) -> go.Figure:
+    return update_graph(
+        names,
+        plot_mode,
+        axis_type,
+        benchmark_type="multi-thread",
+        title="Multi thread benchmarks",
+    )
 
 
 @app.callback(
     dash.dependencies.Output("thread-scale-graph", "figure"),
-    [dash.dependencies.Input("thread-scale-checklist", "value")],
+    [
+        dash.dependencies.Input("thread-scale-checklist", "value"),
+        dash.dependencies.Input("thread-scale-plot-mode", "value"),
+        dash.dependencies.Input("thread-scale-axis-type", "value"),
+    ],
 )
-def update_thread_scale_graph(names: list[str]) -> go.Figure:
-    if not names:
-        return go.Figure()
-
-    data = []
-    for name in names:
-        df = dfs["thread-scale"][name]
-        xcol = df.columns[0]
-        data.extend(
-            [
-                go.Line(x=df[xcol], y=df[col], name=f"{col} ({name})")
-                for col in df.columns[1:]
-                if col != "result"
-            ]
-        )
-
-    fig = go.Figure(data=data)
-    fig.update_layout(
-        title="Thread scale measurements",
-        xaxis_title=dfs["thread-scale"][name].columns[0].capitalize(),
-        yaxis_title=title,
+def update_thread_scale_graph(
+    names: list[str], plot_mode: str, axis_type: list[str], /
+) -> go.Figure:
+    return update_graph(
+        names,
+        plot_mode,
+        axis_type,
+        benchmark_type="thread-scale",
+        title="Thread scale benchmarks",
+        exclude="result",
     )
-    return fig
 
 
 if __name__ == "__main__":

@@ -15,7 +15,7 @@ struct Number
 template <typename MTX> void RecordThreadPoolSum(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads)
 {
     std::ofstream file(g_Root + "/performance/results/thread_pool_sum.csv");
-    file << "threads,sum (ms),result\n";
+    file << "threads,sum (ns),result\n";
 
     ThreadPool<MTX> threadPool(p_Maxthreads);
     DynamicArray<Ref<Task<u32>>> tasks(p_Maxthreads);
@@ -41,7 +41,7 @@ template <typename MTX> void RecordThreadPoolSum(const ThreadPoolSumSettings &p_
             sum += tasks[i]->WaitForResult();
 
         const Timespan mtTime = clock.Elapsed();
-        file << nthreads << ',' << mtTime.AsMilliseconds() << ',' << sum << '\n';
+        file << nthreads << ',' << mtTime.AsNanoseconds() << ',' << sum << '\n';
         nthreads *= 2;
     }
 }
@@ -49,7 +49,7 @@ template <typename MTX> void RecordThreadPoolSum(const ThreadPoolSumSettings &p_
 void RecordParallelSum(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads)
 {
     std::ofstream file(g_Root + "/performance/results/parallel_sum.csv");
-    file << "threads,sum (ms),result\n";
+    file << "threads,sum (ns),result\n";
 
     DynamicArray<std::thread> threads(p_Maxthreads);
     DynamicArray<u32> sums(p_Maxthreads);
@@ -83,7 +83,7 @@ void RecordParallelSum(const ThreadPoolSumSettings &p_Settings, usize p_Maxthrea
         }
 
         const Timespan mtTime = clock.Elapsed();
-        file << nthreads << ',' << mtTime.AsMilliseconds() << ',' << sum << '\n';
+        file << nthreads << ',' << mtTime.AsNanoseconds() << ',' << sum << '\n';
         nthreads *= 2;
     }
 }

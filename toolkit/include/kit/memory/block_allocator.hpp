@@ -137,6 +137,25 @@ template <typename T> class KIT_API BlockAllocator final
         m_FreeList = chunk;
     }
 
+    void Reserve()
+    {
+        if (m_FreeList)
+            return;
+        std::scoped_lock lock(m_Mutex);
+        std::byte *data = allocateNewBlock(m_BlockSize);
+        m_FreeList = reinterpret_cast<Chunk *>(data);
+        m_Blocks.push_back(data);
+    }
+
+    void ReserveUnsafe()
+    {
+        if (m_FreeList)
+            return;
+        std::byte *data = allocateNewBlock(m_BlockSize);
+        m_FreeList = reinterpret_cast<Chunk *>(data);
+        m_Blocks.push_back(data);
+    }
+
     void Reset()
     {
         KIT_LOG_WARNING_IF(!Empty(), "The current allocator has active allocations. Resetting the allocator will "
@@ -180,15 +199,14 @@ template <typename T> class KIT_API BlockAllocator final
         Chunk *Next = nullptr;
     };
 
-    T *fromFirstChunkOfNewBlock() KIT_NOEXCEPT
+    static std::byte *allocateNewBlock(const usize p_BlockSize) KIT_NOEXCEPT
     {
         constexpr usize chunkSize = ChunkSize();
         constexpr usize alignment = ChunkAlignment();
 
-        std::byte *data = static_cast<std::byte *>(AllocateAligned(this->BlockSize(), alignment));
-        m_FreeList = reinterpret_cast<Chunk *>(data + chunkSize);
+        std::byte *data = static_cast<std::byte *>(AllocateAligned(p_BlockSize, alignment));
 
-        const usize chunksPerBlock = this->ChunksPerBlock();
+        const usize chunksPerBlock = p_BlockSize / chunkSize;
         for (usize i = 0; i < chunksPerBlock - 1; ++i)
         {
             Chunk *chunk = reinterpret_cast<Chunk *>(data + i * chunkSize);
@@ -196,7 +214,13 @@ template <typename T> class KIT_API BlockAllocator final
         }
         Chunk *last = reinterpret_cast<Chunk *>(data + (chunksPerBlock - 1) * chunkSize);
         last->Next = nullptr;
+        return data;
+    }
 
+    T *fromFirstChunkOfNewBlock() KIT_NOEXCEPT
+    {
+        std::byte *data = allocateNewBlock(m_BlockSize);
+        m_FreeList = reinterpret_cast<Chunk *>(data + ChunkSize());
         m_Blocks.push_back(data);
         return reinterpret_cast<T *>(data);
     }
@@ -215,9 +239,7 @@ template <typename T> class KIT_API BlockAllocator final
     SpinMutex m_Mutex;
 };
 
-// TODO: Consider replacing all of this with a thread-safe version of the block allocator using a SpinMutex instead of a
-// plain lock
-template <typename T, usize ChunksPerBlock> BlockAllocator<T> &LocalBlockAllocatorInstance() KIT_NOEXCEPT
+template <typename T, usize ChunksPerBlock> BlockAllocator<T> &GlobalBlockAllocatorInstance() KIT_NOEXCEPT
 {
     static BlockAllocator<T> allocator{ChunksPerBlock};
     return allocator;
@@ -225,38 +247,38 @@ template <typename T, usize ChunksPerBlock> BlockAllocator<T> &LocalBlockAllocat
 
 template <typename T, usize ChunksPerBlock> T *BAllocate() KIT_NOEXCEPT
 {
-    return LocalBlockAllocatorInstance<T, ChunksPerBlock>().Allocate();
+    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().Allocate();
 }
 template <typename T, usize ChunksPerBlock> void BDeallocate(T *p_Ptr) KIT_NOEXCEPT
 {
-    LocalBlockAllocatorInstance<T, ChunksPerBlock>().Deallocate(p_Ptr);
+    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().Deallocate(p_Ptr);
 }
 
 template <typename T, usize ChunksPerBlock> T *BAllocateUnsafe() KIT_NOEXCEPT
 {
-    return LocalBlockAllocatorInstance<T, ChunksPerBlock>().AllocateUnsafe();
+    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().AllocateUnsafe();
 }
 template <typename T, usize ChunksPerBlock> void BDeallocateUnsafe(T *p_Ptr) KIT_NOEXCEPT
 {
-    LocalBlockAllocatorInstance<T, ChunksPerBlock>().DeallocateUnsafe(p_Ptr);
+    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().DeallocateUnsafe(p_Ptr);
 }
 
 template <typename T, usize ChunksPerBlock, typename... Args> T *BCreate(Args &&...p_Args) KIT_NOEXCEPT
 {
-    return LocalBlockAllocatorInstance<T, ChunksPerBlock>().Create(std::forward<Args>(p_Args)...);
+    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().Create(std::forward<Args>(p_Args)...);
 }
 template <typename T, usize ChunksPerBlock> void BDestroy(T *p_Ptr) KIT_NOEXCEPT
 {
-    LocalBlockAllocatorInstance<T, ChunksPerBlock>().Destroy(p_Ptr);
+    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().Destroy(p_Ptr);
 }
 
 template <typename T, usize ChunksPerBlock, typename... Args> T *BCreateUnsafe(Args &&...p_Args) KIT_NOEXCEPT
 {
-    return LocalBlockAllocatorInstance<T, ChunksPerBlock>().CreateUnsafe(std::forward<Args>(p_Args)...);
+    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().CreateUnsafe(std::forward<Args>(p_Args)...);
 }
 template <typename T, usize ChunksPerBlock> void BDestroyUnsafe(T *p_Ptr) KIT_NOEXCEPT
 {
-    LocalBlockAllocatorInstance<T, ChunksPerBlock>().DestroyUnsafe(p_Ptr);
+    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().DestroyUnsafe(p_Ptr);
 }
 
 KIT_NAMESPACE_END
