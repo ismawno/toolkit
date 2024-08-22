@@ -23,7 +23,6 @@ def read_and_classify_benchmark_data() -> dict[str, dict[str, pd.DataFrame]]:
 
 app = dash.Dash(__name__)
 benchmark_data = read_and_classify_benchmark_data()
-title = "Time (ms)"
 
 dark_background_color = "#2c2c2c"
 dark_text_color = "#84ACCE"
@@ -51,6 +50,17 @@ def main() -> None:
                 style={
                     "color": dark_text_color,
                 },
+            ),
+            dash.html.Label("Time unit"),
+            dash.dcc.Dropdown(
+                id=f"{btype}-time-unit",
+                options=[
+                    {"label": "Nanoseconds", "value": "ns"},
+                    {"label": "Microseconds", "value": "us"},
+                    {"label": "Milliseconds", "value": "ms"},
+                    {"label": "Seconds", "value": "s"},
+                ],
+                value="s",
             ),
             dash.html.Label("Select axis scale"),
             dash.dcc.Checklist(
@@ -94,9 +104,19 @@ def main() -> None:
     app.run_server(debug=True)
 
 
+def time_unit_to_factor(time_unit: str) -> int:
+    return {
+        "ns": 1,
+        "us": 1.0 / 1_000,
+        "ms": 1.0 / 1_000_000,
+        "s": 1.0 / 1_000_000_000,
+    }[time_unit]
+
+
 def update_graph(
     benchmarks: list[str],
     plot_mode: str,
+    time_unit: str,
     axis_type: list[str],
     /,
     *,
@@ -107,8 +127,9 @@ def update_graph(
     data = []
     xaxis_type = "log" if "xlog" in axis_type else "linear"
     yaxis_type = "log" if "ylog" in axis_type else "linear"
-    xcol = "<Unsepcified>"
+    xcol = "<unsepcified>"
 
+    factor = time_unit_to_factor(time_unit)
     for benchmark in benchmarks:
         df = benchmark_data[benchmark_type][benchmark]
         if exclude is not None:
@@ -120,10 +141,10 @@ def update_graph(
             [
                 go.Scatter(
                     x=df[xcol],
-                    y=df[col],
+                    y=df[col] * factor,
                     mode=plot_mode,
                     marker={"size": 8},
-                    name=f"{col} ({benchmark})",
+                    name=f"{col.replace('ns', time_unit)} ({benchmark})",
                 )
                 for col in df.columns[1:]
             ]
@@ -141,7 +162,7 @@ def update_graph(
             "tickmode": "auto",
         },
         yaxis={
-            "title": "Time (ms)",
+            "title": "Time (ns)".replace("ns", time_unit),
             "gridcolor": dark_grid_color,
             "type": yaxis_type,
             "tickmode": "auto",
@@ -157,15 +178,17 @@ def update_graph(
     [
         dash.dependencies.Input("single-thread-checklist", "value"),
         dash.dependencies.Input("single-thread-plot-mode", "value"),
+        dash.dependencies.Input("single-thread-time-unit", "value"),
         dash.dependencies.Input("single-thread-axis-type", "value"),
     ],
 )
 def update_plain_graph(
-    names: list[str], plot_mode: str, axis_type: list[str], /
+    names: list[str], plot_mode: str, time_unit: str, axis_type: list[str], /
 ) -> go.Figure:
     return update_graph(
         names,
         plot_mode,
+        time_unit,
         axis_type,
         benchmark_type="single-thread",
         title="Single thread benchmarks",
@@ -177,15 +200,17 @@ def update_plain_graph(
     [
         dash.dependencies.Input("multi-thread-checklist", "value"),
         dash.dependencies.Input("multi-thread-plot-mode", "value"),
+        dash.dependencies.Input("multi-thread-time-unit", "value"),
         dash.dependencies.Input("multi-thread-axis-type", "value"),
     ],
 )
 def update_per_thread_graph(
-    names: list[str], plot_mode: str, axis_type: list[str], /
+    names: list[str], plot_mode: str, time_unit: str, axis_type: list[str], /
 ) -> go.Figure:
     return update_graph(
         names,
         plot_mode,
+        time_unit,
         axis_type,
         benchmark_type="multi-thread",
         title="Multi thread benchmarks",
@@ -197,15 +222,17 @@ def update_per_thread_graph(
     [
         dash.dependencies.Input("thread-scale-checklist", "value"),
         dash.dependencies.Input("thread-scale-plot-mode", "value"),
+        dash.dependencies.Input("thread-scale-time-unit", "value"),
         dash.dependencies.Input("thread-scale-axis-type", "value"),
     ],
 )
 def update_thread_scale_graph(
-    names: list[str], plot_mode: str, axis_type: list[str], /
+    names: list[str], plot_mode: str, time_unit: str, axis_type: list[str], /
 ) -> go.Figure:
     return update_graph(
         names,
         plot_mode,
+        time_unit,
         axis_type,
         benchmark_type="thread-scale",
         title="Thread scale benchmarks",
