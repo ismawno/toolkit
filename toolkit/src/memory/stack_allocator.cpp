@@ -124,7 +124,7 @@ void StackAllocator::deallocateBuffer() KIT_NOEXCEPT
                        "Deallocating a stack allocator with active allocations. Consider calling Pop() until the "
                        "allocator is empty. If the elements are not trivially destructible, you will have to call "
                        "Destroy() for each element (this deallocation will not call the destructor)");
-    delete[] m_Buffer;
+    DeallocateAligned(m_Buffer);
     m_Buffer = nullptr;
     m_Size = 0;
     m_Remaining = 0;
