@@ -204,6 +204,9 @@ template <typename T> class KIT_API BlockAllocator final
         constexpr usize chunkSize = ChunkSize();
         constexpr usize alignment = ChunkAlignment();
 
+        // With AllocateAligned, I dont need to worry about the alignment of the block itself, or subsequent individual
+        // elements. They are of the same type, so adress + n * sizeof(T) will always be aligned if the start adress is
+        // aligned (guaranteed by AllocateAligned)
         std::byte *data = static_cast<std::byte *>(AllocateAligned(p_BlockSize, alignment));
 
         const usize chunksPerBlock = p_BlockSize / chunkSize;

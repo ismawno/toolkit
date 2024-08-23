@@ -7,8 +7,8 @@
 #    define KIT_NO_LOGS
 #endif
 
-// We dont use enough formatting features to justify the overhead of fmtlib, but linux doesnt have std::format, so we
-// are forced to use it in that case
+// We dont use enough formatting features to justify the overhead of fmtlib, but linux doesnt have std::format, so I
+// am forced to use it in that case
 #ifndef KIT_NO_LOGS
 #    ifdef KIT_OS_LINUX
 #        include <fmt/format.h>

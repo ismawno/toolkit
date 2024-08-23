@@ -2,31 +2,57 @@
 #include "kit/core/literals.hpp"
 #include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <iostream>
 
 KIT_NAMESPACE_BEGIN
 
 using namespace Literals;
 
-template <typename T> void RunBasicConstructDestructOperations(StackAllocator &allocator)
+template <typename T> void RunBasicConstructDestructOperations()
 {
+    // Set the starting alignment...
+    StackAllocator allocator(4_kb, alignof(T) < sizeof(void *) ? sizeof(void *) : alignof(T));
     allocator.Push<T>(10);
+
+    // ...so that this is guaranteed to pass (in case I coded it right lol)
     REQUIRE(allocator.Allocated() == 10 * sizeof(T));
     allocator.Pop();
 
-    const T *ptr1 = allocator.Create<T>();
-    const T *ptr2 = allocator.Create<T>();
+    allocator.Push<u32>();
+    REQUIRE(allocator.Allocated() == sizeof(u32));
+    T *ptr = allocator.Create<T>();
+
+    usize factor = alignof(T) > alignof(u32) ? alignof(T) - sizeof(u32) % alignof(T) : 0;
+    REQUIRE(allocator.Allocated() == sizeof(u32) + sizeof(T) + factor); // Because of the alignment
+
+    REQUIRE(reinterpret_cast<const uptr>(ptr) % alignof(T) == 0);
+    allocator.Destroy(ptr);
+    allocator.Pop();
+
+    allocator.Push<u8>();
+    ptr = allocator.Create<T>();
+
+    factor = alignof(T) > alignof(u8) ? alignof(T) - sizeof(u8) % alignof(T) : 0;
+    REQUIRE(allocator.Allocated() == sizeof(u8) + sizeof(T) + factor); // Because of the alignment
+
+    REQUIRE(reinterpret_cast<const uptr>(ptr) % alignof(T) == 0);
+    allocator.Destroy(ptr);
+    allocator.Pop();
+
+    T *ptr1 = allocator.Create<T>();
+    T *ptr2 = allocator.Create<T>();
 
     REQUIRE(ptr1 + 1 == ptr2);
     REQUIRE(allocator.Allocated() == 2 * sizeof(T));
     allocator.Destroy(ptr2);
 
-    const T *ptr3 = allocator.Create<T>();
+    T *ptr3 = allocator.Create<T>();
     REQUIRE(ptr2 == ptr3);
 
-    const T *ptr4 = allocator.NConstruct<T>(10);
+    T *ptr4 = allocator.NConstruct<T>(10);
 
     REQUIRE(allocator.Allocated() == 12 * sizeof(T));
-    const T *ptr5 = allocator.Create<T>();
+    T *ptr5 = allocator.Create<T>();
     REQUIRE(ptr4 + 10 == ptr5);
     allocator.Destroy(ptr5);
 
@@ -68,27 +94,42 @@ TEST_CASE("Stack allocator basic operations", "[memory][stack_allocator][basic]"
         REQUIRE(allocator.Allocated() == 0);
     }
 
-    SECTION("Create and destroy")
+    SECTION("Create and destroy (std::byte)")
     {
-        RunBasicConstructDestructOperations<std::byte>(allocator);
+        RunBasicConstructDestructOperations<std::byte>();
+    }
+    SECTION("Create and destroy (std::string)")
+    {
+        RunBasicConstructDestructOperations<std::string>();
+    }
+    SECTION("Create and destroy (NonTrivialData)")
+    {
+        RunBasicConstructDestructOperations<NonTrivialData>();
+    }
+    SECTION("Create and destroy (SmallData)")
+    {
+        RunBasicConstructDestructOperations<SmallData>();
+    }
+    SECTION("Create and destroy (BigData)")
+    {
+        RunBasicConstructDestructOperations<BigData>();
     }
 }
 
 TEST_CASE("Stack allocator complex data operations", "[memory][stack_allocator][complex]")
 {
-    StackAllocator allocator(1024 * 5);
+    StackAllocator allocator(5_kb);
     SECTION("Create and destruct with aligned data")
     {
-        RunBasicConstructDestructOperations<AlignedData>(allocator);
+        RunBasicConstructDestructOperations<AlignedData>();
     }
 
     SECTION("Fill allocator")
     {
-        while (allocator.Fits(sizeof(AlignedData)))
-            allocator.Create<AlignedData>();
-        REQUIRE_THROWS(allocator.Create<AlignedData>());
+        while (allocator.Push<AlignedData>())
+            ;
         while (!allocator.Empty())
-            allocator.Destroy(allocator.Top<AlignedData>());
+            allocator.Pop();
     }
 }
 

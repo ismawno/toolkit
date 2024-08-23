@@ -14,7 +14,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(yaml-cpp)
 
-# yaml-cpp has warnings, so we need to disable -Werror...
+# yaml-cpp has warnings, so I need to disable -Werror...
 
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../toolkit/include)

@@ -19,6 +19,7 @@ void Deallocate(void *p_Ptr) KIT_NOEXCEPT
 
 void *AllocateAligned(const usize p_Size, const usize p_Alignment) KIT_NOEXCEPT
 {
+    KIT_ASSERT(p_Alignment >= sizeof(void *), "Alignment must be at least the size of a pointer");
     void *ptr = nullptr;
 #ifdef KIT_OS_WINDOWS
     ptr = _aligned_malloc(p_Size, p_Alignment);

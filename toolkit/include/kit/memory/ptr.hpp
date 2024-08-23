@@ -26,7 +26,7 @@ template <typename T> class RefCounted
     RefCounted() KIT_NOEXCEPT = default;
 
     /* COPY-MOVE OPERATIONS */
-    // Refcount should not be copied. When doing *ptr1 = *ptr2, we only want to transfer the user's data
+    // Refcount should not be copied. When doing *ptr1 = *ptr2, I only want to transfer the user's data
     RefCounted(const RefCounted &) KIT_NOEXCEPT
     {
     }

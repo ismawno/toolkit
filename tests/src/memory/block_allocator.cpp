@@ -88,7 +88,7 @@ template <typename T> static void RunRawAllocationTest()
 
 template <typename T> static void RunNewDeleteTest()
 {
-    BlockAllocator<T> &allocator = LocalBlockAllocatorInstance<T, 10>();
+    BlockAllocator<T> &allocator = GlobalBlockAllocatorInstance<T, 10>();
     REQUIRE(allocator.Empty());
     allocator.Reset();
 
@@ -202,7 +202,7 @@ template <typename T> static void RunMultithreadedAllocationsTest()
 
 template <typename Base, typename Derived> void RunVirtualAllocatorTests()
 {
-    BlockAllocator<Derived> &allocator = LocalBlockAllocatorInstance<Derived, 10>();
+    BlockAllocator<Derived> &allocator = GlobalBlockAllocatorInstance<Derived, 10>();
     REQUIRE(allocator.Empty());
     allocator.Reset();
 

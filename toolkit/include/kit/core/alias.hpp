@@ -35,7 +35,7 @@ using i16 = std::int16_t;
 using i32 = std::int32_t;
 using i64 = std::int64_t;
 
-// These are nice to have in case we want to change the container/allocator type easily
+// These are nice to have in case I want to change the container/allocator type easily
 template <typename T> using DynamicArray = std::vector<T>;
 
 template <typename T> using Deque = std::deque<T>;
