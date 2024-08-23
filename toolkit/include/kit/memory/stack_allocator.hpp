@@ -23,17 +23,14 @@ class StackAllocator final
     {
         // If asserts are enabled, I store the alignment offset so that I can assert the order of
         // allocations/deallocations is respected
-#ifdef KIT_ENABLE_ASSERTS
-        usize AlignmentOffset;
+
         Entry(std::byte *p_Ptr, const usize p_Size, const usize p_AlignmentOffset)
-            : AlignmentOffset(p_AlignmentOffset), Ptr(p_Ptr), Size(p_Size)
-#else
-        Entry(std::byte *p_Ptr, const usize p_Size) : Ptr(p_Ptr), Size(p_Size)
-#endif
+            : Ptr(p_Ptr), Size(p_Size), AlignmentOffset(p_AlignmentOffset)
         {
         }
         std::byte *Ptr;
         usize Size;
+        usize AlignmentOffset;
     };
 
     // The alignment parameter specifies the starting alignment of the whole block so that your first allocation will
@@ -96,6 +93,12 @@ class StackAllocator final
                 p_Ptr[i].~T();
         }
         Deallocate(p_Ptr);
+    }
+
+    const Entry &Top() const KIT_NOEXCEPT;
+    template <typename T> T *Top() KIT_NOEXCEPT
+    {
+        return reinterpret_cast<T *>(Top().Ptr);
     }
 
     usize Size() const KIT_NOEXCEPT;

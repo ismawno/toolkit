@@ -21,6 +21,7 @@ template <typename T> void RunBasicConstructDestructOperations()
     allocator.Push<u32>();
     REQUIRE(allocator.Allocated() == sizeof(u32));
     T *ptr = allocator.Create<T>();
+    REQUIRE(allocator.Top<T>() == ptr);
 
     usize factor = alignof(T) > alignof(u32) ? alignof(T) - sizeof(u32) % alignof(T) : 0;
     REQUIRE(allocator.Allocated() == sizeof(u32) + sizeof(T) + factor); // Because of the alignment
@@ -31,6 +32,7 @@ template <typename T> void RunBasicConstructDestructOperations()
 
     allocator.Push<u8>();
     ptr = allocator.Create<T>();
+    REQUIRE(allocator.Top<T>() == ptr);
 
     factor = alignof(T) > alignof(u8) ? alignof(T) - sizeof(u8) % alignof(T) : 0;
     REQUIRE(allocator.Allocated() == sizeof(u8) + sizeof(T) + factor); // Because of the alignment

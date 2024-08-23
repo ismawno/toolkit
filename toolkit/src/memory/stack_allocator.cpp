@@ -46,11 +46,6 @@ StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other) noexcept
 
 void *StackAllocator::Push(const usize p_Size, const usize p_Alignment) KIT_NOEXCEPT
 {
-    if (m_Remaining < p_Size)
-    {
-        KIT_LOG_WARNING("Stack allocator cannot fit {} bytes!", p_Size);
-        return nullptr;
-    }
     void *ptr = m_Entries.empty() ? m_Buffer : m_Entries.back().Ptr + m_Entries.back().Size;
     usize remaining = m_Remaining;
 
@@ -62,22 +57,14 @@ void *StackAllocator::Push(const usize p_Size, const usize p_Alignment) KIT_NOEX
     const usize offset = m_Remaining - remaining;
     m_Remaining = remaining - p_Size;
 
-#ifdef KIT_ENABLE_ASSERTS
     m_Entries.emplace_back(alignedPtr, p_Size, offset);
-#else
-    m_Entries.emplace_back(static_cast<std::byte *>(ptr), p_Size + offset);
-#endif
     return alignedPtr;
 }
 
 void StackAllocator::Pop() KIT_NOEXCEPT
 {
     KIT_LOG_WARNING_IF(m_Entries.empty(), "Popping from an empty allocator");
-#ifdef KIT_ENABLE_ASSERTS
     m_Remaining += m_Entries.back().Size + m_Entries.back().AlignmentOffset;
-#else
-    m_Remaining += m_Entries.back().Size;
-#endif
     m_Entries.pop_back();
 }
 
@@ -98,6 +85,12 @@ void StackAllocator::Deallocate([[maybe_unused]] const void *p_Ptr) KIT_NOEXCEPT
     KIT_ASSERT(!m_Entries.empty(), "Unable to deallocate because the stack allocator is empty");
     KIT_ASSERT(m_Entries.back().Ptr == p_Ptr, "Elements must be deallocated in the reverse order they were allocated");
     Pop();
+}
+
+const StackAllocator::Entry &StackAllocator::Top() const KIT_NOEXCEPT
+{
+    KIT_ASSERT(!m_Entries.empty(), "No elements in the stack allocator");
+    return m_Entries.back();
 }
 
 usize StackAllocator::Size() const KIT_NOEXCEPT
