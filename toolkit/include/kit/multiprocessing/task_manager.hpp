@@ -6,7 +6,7 @@
 KIT_NAMESPACE_BEGIN
 
 // A simple TaskManager interface that allows users to implement their own task system with their own threading model
-class TaskManager
+class KIT_API TaskManager
 {
   public:
     explicit TaskManager(usize p_ThreadCount) KIT_NOEXCEPT;

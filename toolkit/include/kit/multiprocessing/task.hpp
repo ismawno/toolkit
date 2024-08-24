@@ -9,7 +9,7 @@ KIT_NAMESPACE_BEGIN
 class TaskManager;
 
 // TODO: Align/add padding to 64 bytes to avoid false sharing? Profile first.
-class ITask : public RefCounted<ITask>
+class KIT_API ITask : public RefCounted<ITask>
 {
     // This is commented out because it is wasteful to instance a block allocator for ITask that will never be used.
     // Having the overloads does grant us some asserts in case something goes terribly wrong or user forgets to use
@@ -87,7 +87,7 @@ template <typename T> class Task final : public ITask
     friend class TaskManager;
 };
 
-template <> class Task<void> final : public ITask
+template <> class KIT_API Task<void> final : public ITask
 {
     KIT_OVERRIDE_NEW_DELETE(Task<void>, 32)
   public:

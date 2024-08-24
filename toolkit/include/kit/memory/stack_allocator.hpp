@@ -15,7 +15,7 @@ KIT_NAMESPACE_BEGIN
 
 // TODO: There is a slight overhead when using Entry with a DynamicArray. Consider trying to reduce it (currently this
 // allocator allocates/deallocates slower then the block allocator by aprox 1 ns per call, measured in my MacOS M1)
-class StackAllocator final
+class KIT_API StackAllocator
 {
     KIT_NON_COPYABLE(StackAllocator)
   public:

@@ -15,7 +15,7 @@ concept ShallowIsSame = std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref
 // the extra functionality comes with some overhead.
 template <typename T, usize N>
     requires(N > 0)
-class StaticArray KIT_API
+class StaticArray
 {
   public:
     // I figured that if I want to have a more STL-like interface, I should use the same naming conventions, although I

@@ -5,7 +5,7 @@
 
 KIT_NAMESPACE_BEGIN
 
-class SpinMutex
+class KIT_API SpinMutex
 {
   public:
     void lock() KIT_NOEXCEPT;

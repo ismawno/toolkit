@@ -5,6 +5,7 @@ project(toolkit)
 set(SOURCES
     src/core/logging.cpp
     src/core/pch.cpp
+    src/core/literals.cpp
     src/memory/memory.cpp
     src/memory/stack_allocator.cpp
     src/profiling/clock.cpp

@@ -13,7 +13,7 @@ KIT_NAMESPACE_BEGIN
 // sure I was good to go with the default non-commutative one, so I wont be including a commutative tuple for this
 // library
 
-template <Hashable... H> struct KIT_API HashableTuple
+template <Hashable... H> struct HashableTuple
 {
     using Tuple = std::tuple<H...>;
 
