@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(toolkit-performance)
 
+set(NAME toolkit-performance)
+
 include(FetchContent)
 
 set(OLD_CXX_FLAGS "${CMAKE_CXX_FLAGS}")

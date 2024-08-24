@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(toolkit)
 
+set(NAME toolkit)
+
 # Source files for the library
 set(SOURCES
     src/core/logging.cpp

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(toolkit-tests)
 
+set(NAME toolkit-tests)
+
 include(FetchContent)
 
 FetchContent_Declare(

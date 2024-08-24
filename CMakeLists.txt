@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(toolkit-root)
 
+set(NAME toolkit-root)
+
 # Set the C++ standard to C++20
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
