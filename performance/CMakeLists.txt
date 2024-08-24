@@ -18,10 +18,6 @@ FetchContent_MakeAvailable(yaml-cpp)
 
 # yaml-cpp has warnings, so I need to disable -Werror...
 
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../toolkit/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
 set(SOURCES
     src/main.cpp
     src/memory.cpp
@@ -31,5 +27,6 @@ set(SOURCES
 
 add_executable(toolkit-performance ${SOURCES})
 target_link_libraries(toolkit-performance PRIVATE toolkit yaml-cpp)
+target_include_directories(toolkit-performance PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(CMAKE_CXX_FLAGS "${OLD_CXX_FLAGS}")

@@ -13,9 +13,6 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(Catch2)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../toolkit/include)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
 set(SOURCES
     src/memory/block_allocator.cpp
     src/memory/stack_allocator.cpp
@@ -27,6 +24,7 @@ set(SOURCES
 
 add_executable(toolkit-tests ${SOURCES})
 target_link_libraries(toolkit-tests PRIVATE Catch2::Catch2WithMain toolkit)
+target_include_directories(toolkit-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 message(STATUS "TOOLKIT TESTS: The following options are overriden by tests:")
 message(STATUS "TOOLKIT TESTS: Enable asserts: ON")
