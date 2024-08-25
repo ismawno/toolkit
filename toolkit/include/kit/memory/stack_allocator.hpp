@@ -105,6 +105,7 @@ class KIT_API StackAllocator
     usize Allocated() const KIT_NOEXCEPT;
     usize Remaining() const KIT_NOEXCEPT;
 
+    bool Belongs(const void *p_Ptr) const KIT_NOEXCEPT;
     bool Empty() const KIT_NOEXCEPT;
     bool Full() const KIT_NOEXCEPT;
 

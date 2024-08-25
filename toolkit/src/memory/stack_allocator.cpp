@@ -106,6 +106,14 @@ usize StackAllocator::Remaining() const KIT_NOEXCEPT
     return m_Remaining;
 }
 
+bool StackAllocator::Belongs(const void *p_Ptr) const KIT_NOEXCEPT
+{
+    if (m_Entries.empty())
+        return false;
+    const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
+    return ptr >= m_Buffer && ptr < m_Entries.back().Ptr + m_Entries.back().Size;
+}
+
 bool StackAllocator::Empty() const KIT_NOEXCEPT
 {
     return m_Remaining == m_Size;
