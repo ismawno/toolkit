@@ -10,14 +10,18 @@
 
 KIT_NAMESPACE_BEGIN
 
+// Add a namespace so that other libraries can adopt them...
+namespace Aliases
+{
+
 // About aliases:
-// Regarding primitive types, I have always liked short and informative names such as u32, f32, etc. I havent seen this
-// convention in many c++ projects around, so Im not sure if its the best option, specially for the size_t case, which
-// doesnt have an immediate alias I can think of.
+// Regarding primitive types, I have always liked short and informative names such as u32, f32, etc. I havent seen
+// this convention in many c++ projects around, so Im not sure if its the best option, specially for the size_t
+// case, which doesnt have an immediate alias I can think of.
 
 // Regarding container types, its nice to have some of them aliases in case you want to quickly change the container
-// type or allocator. This is not the case for std::string or std::byte, which dont have a meaningful justification for
-// an alias, but I have added them for "increased" consistency.
+// type or allocator. This is not the case for std::string or std::byte, which dont have a meaningful justification
+// for an alias, but I have added them for "increased" consistency.
 
 using f32 = float;
 using f64 = double;
@@ -45,5 +49,9 @@ using HashMap = std::unordered_map<Key, Value, Hash, OpEqual>;
 
 template <typename Value, typename Hash = std::hash<Value>, typename OpEqual = std::equal_to<Value>>
 using HashSet = std::unordered_set<Value, Hash, OpEqual>;
+} // namespace Aliases
+
+//... and use them immediately in the toolkit namespace
+using namespace Aliases;
 
 KIT_NAMESPACE_END
