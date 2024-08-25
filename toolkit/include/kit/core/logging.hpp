@@ -90,7 +90,9 @@ KIT_NAMESPACE_END
             if (!(condition))                                                                                          \
             KIT_CRASH(KIT_FORMAT(__VA_ARGS__))
 #    endif
+#    define KIT_ASSERT_RETURNS(expression, expected, ...) KIT_ASSERT((expression) == (expected), __VA_ARGS__)
 #else
 #    define KIT_ERROR(...)
 #    define KIT_ASSERT(...)
+#    define KIT_ASSERT_RETURNS(expression, expected, ...) expression
 #endif
