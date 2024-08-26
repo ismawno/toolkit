@@ -8,8 +8,8 @@
 #include <unordered_set>
 #include <deque>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 // Add a namespace so that other libraries can adopt them...
 namespace Aliases
 {
@@ -53,5 +53,4 @@ using HashSet = std::unordered_set<Value, Hash, OpEqual>;
 
 //... and use them immediately in the toolkit namespace
 using namespace Aliases;
-
-KIT_NAMESPACE_END
+} // namespace KIT

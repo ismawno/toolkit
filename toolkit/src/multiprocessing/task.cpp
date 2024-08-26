@@ -2,8 +2,8 @@
 #include "kit/multiprocessing/task.hpp"
 #include "kit/multiprocessing/task_manager.hpp"
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 bool ITask::Valid() const KIT_NOEXCEPT
 {
     return m_Manager != nullptr;
@@ -34,5 +34,4 @@ void Task<void>::operator()(const usize p_ThreadIndex) KIT_NOEXCEPT
 {
     m_Function(p_ThreadIndex);
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

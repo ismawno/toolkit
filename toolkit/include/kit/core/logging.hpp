@@ -34,8 +34,8 @@
 #    define KIT_LOG_COLOR_BLUE ""
 #endif
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 #ifndef KIT_NO_LOGS
 // These are not meant to be used directly, use the macros below instead
 KIT_API void debugBreak() KIT_NOEXCEPT;
@@ -44,21 +44,19 @@ KIT_API void logMessage(const char *p_Level, std::string_view p_File, const i32 
 KIT_API void logMessageIf(bool condition, const char *p_Level, std::string_view p_File, const i32 p_Line,
                           const char *p_Color, const bool p_Crash, std::string_view p_Message) KIT_NOEXCEPT;
 #endif
-
-KIT_NAMESPACE_END
+} // namespace KIT
 
 #ifdef KIT_ENABLE_EXCEPTIONS
 #    define KIT_CRASH(msg) throw std::runtime_error(msg)
 #else
-#    define KIT_CRASH(msg) KIT_NAMESPACE_NAME::debugBreak()
+#    define KIT_CRASH(msg) KIT::debugBreak()
 #endif
 
 #ifdef KIT_ENABLE_INFO_LOGS
 #    define KIT_LOG_INFO(...)                                                                                          \
-        KIT_NAMESPACE_NAME::logMessage("INFO", __FILE__, __LINE__, KIT_LOG_COLOR_GREEN, false, KIT_FORMAT(__VA_ARGS__))
+        KIT::logMessage("INFO", __FILE__, __LINE__, KIT_LOG_COLOR_GREEN, false, KIT_FORMAT(__VA_ARGS__))
 #    define KIT_LOG_INFO_IF(condition, ...)                                                                            \
-        KIT_NAMESPACE_NAME::logMessageIf(condition, "INFO", __FILE__, __LINE__, KIT_LOG_COLOR_GREEN, false,            \
-                                         KIT_FORMAT(__VA_ARGS__))
+        KIT::logMessageIf(condition, "INFO", __FILE__, __LINE__, KIT_LOG_COLOR_GREEN, false, KIT_FORMAT(__VA_ARGS__))
 #else
 #    define KIT_LOG_INFO(...)
 #    define KIT_LOG_INFO_IF(...)
@@ -66,11 +64,10 @@ KIT_NAMESPACE_END
 
 #ifdef KIT_ENABLE_WARNING_LOGS
 #    define KIT_LOG_WARNING(...)                                                                                       \
-        KIT_NAMESPACE_NAME::logMessage("WARNING", __FILE__, __LINE__, KIT_LOG_COLOR_YELLOW, false,                     \
-                                       KIT_FORMAT(__VA_ARGS__))
+        KIT::logMessage("WARNING", __FILE__, __LINE__, KIT_LOG_COLOR_YELLOW, false, KIT_FORMAT(__VA_ARGS__))
 #    define KIT_LOG_WARNING_IF(condition, ...)                                                                         \
-        KIT_NAMESPACE_NAME::logMessageIf(condition, "WARNING", __FILE__, __LINE__, KIT_LOG_COLOR_YELLOW, false,        \
-                                         KIT_FORMAT(__VA_ARGS__))
+        KIT::logMessageIf(condition, "WARNING", __FILE__, __LINE__, KIT_LOG_COLOR_YELLOW, false,                       \
+                          KIT_FORMAT(__VA_ARGS__))
 #else
 #    define KIT_LOG_WARNING(...)
 #    define KIT_LOG_WARNING_IF(...)
@@ -79,11 +76,10 @@ KIT_NAMESPACE_END
 #ifdef KIT_ENABLE_ASSERTS
 #    ifndef KIT_SILENT_ASSERTS
 #        define KIT_ERROR(...)                                                                                         \
-            KIT_NAMESPACE_NAME::logMessage("ERROR", __FILE__, __LINE__, KIT_LOG_COLOR_RED, true,                       \
-                                           KIT_FORMAT(__VA_ARGS__))
+            KIT::logMessage("ERROR", __FILE__, __LINE__, KIT_LOG_COLOR_RED, true, KIT_FORMAT(__VA_ARGS__))
 #        define KIT_ASSERT(condition, ...)                                                                             \
-            KIT_NAMESPACE_NAME::logMessageIf(!(condition), "ERROR", __FILE__, __LINE__, KIT_LOG_COLOR_RED, true,       \
-                                             KIT_FORMAT(__VA_ARGS__))
+            KIT::logMessageIf(!(condition), "ERROR", __FILE__, __LINE__, KIT_LOG_COLOR_RED, true,                      \
+                              KIT_FORMAT(__VA_ARGS__))
 #    else
 #        define KIT_ERROR(...) KIT_CRASH(KIT_FORMAT(__VA_ARGS__))
 #        define KIT_ASSERT(condition, ...)                                                                             \

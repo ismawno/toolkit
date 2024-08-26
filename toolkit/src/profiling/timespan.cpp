@@ -1,8 +1,8 @@
 #include "core/pch.hpp"
 #include "kit/profiling/timespan.hpp"
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 Timespan::Timespan(Nanoseconds p_Elapsed) KIT_NOEXCEPT : m_Elapsed(p_Elapsed)
 {
 }
@@ -23,5 +23,4 @@ Timespan &Timespan::operator-=(const Timespan &other)
     m_Elapsed -= other.m_Elapsed;
     return *this;
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

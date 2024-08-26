@@ -1,8 +1,8 @@
 #include "core/pch.hpp"
 #include "kit/profiling/clock.hpp"
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 static u64 timePointToU64(const Clock::TimePoint p_TimePoint) KIT_NOEXCEPT
 {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(p_TimePoint.time_since_epoch()).count();
@@ -44,5 +44,4 @@ Clock::TimePoint Clock::CurrentTimePoint() KIT_NOEXCEPT
 {
     return std::chrono::high_resolution_clock::now();
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

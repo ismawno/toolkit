@@ -2,8 +2,8 @@
 
 #include "kit/core/alias.hpp"
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 namespace Literals
 {
 KIT_CONSTEVAL unsigned long long operator"" _b(const unsigned long long p_Value)
@@ -31,5 +31,4 @@ KIT_CONSTEVAL unsigned long long operator"" _tb(const unsigned long long p_Value
     return p_Value * 1024_gb;
 }
 }; // namespace Literals
-
-KIT_NAMESPACE_END
+} // namespace KIT

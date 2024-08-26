@@ -2,8 +2,8 @@
 
 #include "kit/profiling/timespan.hpp"
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 class KIT_API Clock
 {
   public:
@@ -23,5 +23,4 @@ class KIT_API Clock
   private:
     TimePoint m_Start;
 };
-
-KIT_NAMESPACE_END
+} // namespace KIT

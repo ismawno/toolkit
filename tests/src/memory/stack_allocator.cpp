@@ -4,8 +4,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 using namespace Literals;
 
 template <typename T> void RunBasicConstructDestructOperations()
@@ -134,5 +134,4 @@ TEST_CASE("Stack allocator complex data operations", "[memory][stack_allocator][
             allocator.Pop();
     }
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

@@ -5,7 +5,8 @@
 #include <functional>
 #include <future>
 
-KIT_NAMESPACE_BEGIN
+namespace KIT
+{
 class TaskManager;
 
 // TODO: Align/add padding to 64 bytes to avoid false sharing? Profile first.
@@ -111,5 +112,4 @@ template <> class KIT_API Task<void> final : public ITask
     std::function<void(usize)> m_Function = nullptr;
     friend class TaskManager;
 };
-
-KIT_NAMESPACE_END
+} // namespace KIT

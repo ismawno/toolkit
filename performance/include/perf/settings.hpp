@@ -3,8 +3,8 @@
 #include "kit/core/alias.hpp"
 #include <string>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 inline std::string g_Root = KIT_ROOT_PATH;
 
 struct AllocationSettings
@@ -27,5 +27,4 @@ struct Settings
 };
 
 Settings ReadOrWriteSettingsFile();
-
-KIT_NAMESPACE_END
+} // namespace KIT

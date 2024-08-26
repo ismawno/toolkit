@@ -1,8 +1,7 @@
 #include "perf/settings.hpp"
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 template <typename MTX> void RecordThreadPoolSum(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads);
 void RecordParallelSum(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads);
-
-KIT_NAMESPACE_END
+} // namespace KIT

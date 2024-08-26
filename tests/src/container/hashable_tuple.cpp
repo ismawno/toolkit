@@ -2,8 +2,8 @@
 #include "kit/container/static_array.hpp"
 #include <catch2/catch_test_macros.hpp>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 TEST_CASE("HashableTuple hash consistency")
 {
     const HashableTuple tuple1(1, 2.0f, std::string("3"));
@@ -55,5 +55,4 @@ TEST_CASE("HashableTuple deviation")
     deviation = sqrtf(deviation / expected);
     KIT_LOG_INFO("HashableTuple deviation ({} samples with {} ocurrences): {}", samples, amount, deviation);
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

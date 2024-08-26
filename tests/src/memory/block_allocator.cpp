@@ -5,8 +5,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <array>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 template <typename T> static void RunRawAllocationTest()
 {
     REQUIRE(sizeof(T) % alignof(T) == 0);
@@ -294,5 +294,4 @@ TEST_CASE("Block allocator deals with invalid virtual data", "[block_allocator][
 {
     REQUIRE_THROWS(new BadVirtualDerived);
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

@@ -6,8 +6,8 @@
 #include <memory>
 #include <atomic>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 // For now, Scope is a disguised unique_ptr
 template <typename T> using Scope = std::unique_ptr<T>;
 
@@ -222,14 +222,13 @@ template <typename T> class Ref
 
 template <typename T>
 concept RCounted = std::is_base_of_v<RefCounted<typename T::CountedType>, T>;
-
-KIT_NAMESPACE_END
+} // namespace KIT
 
 namespace std
 {
-template <typename T> struct hash<KIT_NAMESPACE_NAME::Ref<T>>
+template <typename T> struct hash<KIT::Ref<T>>
 {
-    KIT_NAMESPACE_NAME::usize operator()(const KIT_NAMESPACE_NAME::Ref<T> &p_Ref) const KIT_NOEXCEPT
+    KIT::usize operator()(const KIT::Ref<T> &p_Ref) const KIT_NOEXCEPT
     {
         return hash<T *>()(p_Ref.Get());
     }

@@ -9,8 +9,8 @@ KIT_MSVC_WARNING_IGNORE(4100)
 #include <yaml-cpp/yaml.h>
 KIT_WARNING_IGNORE_POP
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 Settings ReadOrWriteSettingsFile()
 {
     Settings settings;
@@ -48,5 +48,4 @@ Settings ReadOrWriteSettingsFile()
     std::filesystem::create_directories(g_Root + "/performance/results");
     return settings;
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

@@ -5,8 +5,8 @@
 #include "kit/core/logging.hpp"
 #include <array>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 template <typename T, typename U>
 concept ShallowIsSame = std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<U>>;
 
@@ -422,5 +422,4 @@ class StaticArray
     std::array<Element, N> m_Data{};
     usize m_Size = 0;
 };
-
-KIT_NAMESPACE_END
+} // namespace KIT

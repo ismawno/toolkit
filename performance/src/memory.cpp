@@ -5,8 +5,8 @@
 #include <fstream>
 #include <thread>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 struct ExampleData
 {
     f64 Values[16];
@@ -216,5 +216,4 @@ void RecordStackAllocator(const AllocationSettings &p_Settings)
         file << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds() << '\n';
     }
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

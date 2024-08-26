@@ -4,8 +4,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <array>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 template <Mutex MTX> void RunThreadPoolTest()
 {
     constexpr u32 threadCount = 4;
@@ -63,5 +63,4 @@ TEST_CASE("ThreadPool (SpinMutex)", "[multiprocessing]")
 {
     RunThreadPoolTest<SpinMutex>();
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

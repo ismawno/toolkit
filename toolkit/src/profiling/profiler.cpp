@@ -1,8 +1,8 @@
 #include "core/pch.hpp"
 #include "kit/profiling/profiler.hpp"
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 Profiler::Timer::Timer(const char *name) KIT_NOEXCEPT
 {
     Profiler::BeginMeasurement(name);
@@ -68,5 +68,4 @@ HashMap<const char *, AggregatedMeasurement> Profiler::AggregateMeasurements() K
 
     return aggregated;
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

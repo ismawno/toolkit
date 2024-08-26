@@ -2,8 +2,8 @@
 #include "kit/memory/stack_allocator.hpp"
 #include "kit/memory/memory.hpp"
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 StackAllocator::StackAllocator(const usize p_Size, const usize p_Alignment) KIT_NOEXCEPT : m_Size(p_Size),
                                                                                            m_Remaining(p_Size)
 {
@@ -138,5 +138,4 @@ void StackAllocator::deallocateBuffer() KIT_NOEXCEPT
     m_Remaining = 0;
     m_Entries.clear();
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

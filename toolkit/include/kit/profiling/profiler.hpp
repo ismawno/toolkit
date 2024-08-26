@@ -3,8 +3,8 @@
 #include "kit/profiling/clock.hpp"
 #include "kit/core/non_copyable.hpp"
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 struct KIT_API Measurement
 {
     const char *Name = nullptr;
@@ -63,5 +63,4 @@ class KIT_API Profiler
     static inline DynamicArray<Measurement> s_Measurements{};
     static inline DynamicArray<OngoingMeasurement> s_OngoingMeasurements{};
 };
-
-KIT_NAMESPACE_END
+} // namespace KIT

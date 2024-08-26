@@ -2,8 +2,8 @@
 
 #include "kit/multiprocessing/task_manager.hpp"
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 template <typename TManager, std::random_access_iterator It1, std::output_iterator<Ref<ITask>> It2, typename Callable,
           typename... Args>
     requires std::is_base_of_v<TaskManager, TManager>
@@ -25,5 +25,4 @@ void ForEach(TManager &p_Manager, It1 p_First, It1 p_Last, It2 p_Dest, const usi
         start = end;
     }
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

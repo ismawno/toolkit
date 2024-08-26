@@ -3,7 +3,7 @@
 #include "kit/memory/block_allocator.hpp"
 #include "kit/profiling/clock.hpp"
 
-using namespace KIT_NAMESPACE_NAME;
+using namespace KIT;
 
 int main()
 {

@@ -4,8 +4,8 @@
 #include "kit/core/alias.hpp"
 #include <functional>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 // Could abstract this in some way (by defining those as function pointers) to allow for custom allocators
 // For now, I'll leave it as it is
 
@@ -28,5 +28,4 @@ template <typename T> consteval usize AlignedSize() KIT_NOEXCEPT
     else
         return sizeof(T) + alignof(T) - remainder;
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

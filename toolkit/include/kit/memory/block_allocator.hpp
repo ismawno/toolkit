@@ -8,8 +8,8 @@
 #include "kit/multiprocessing/spin_mutex.hpp"
 #include <mutex>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 // This is a block allocator whose role is to 1: speed up single allocations and 2: improve contiguity, which is
 // guaranteed up to the amount of chunks per block (each chunk represents an allocated object)
 
@@ -283,19 +283,18 @@ template <typename T, usize ChunksPerBlock> void BDestroyUnsafe(T *p_Ptr) KIT_NO
 {
     GlobalBlockAllocatorInstance<T, ChunksPerBlock>().DestroyUnsafe(p_Ptr);
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT
 
 #define KIT_BLOCK_ALLOCATED(p_ClassName, p_ChunksPerBlock)                                                             \
     static void *operator new([[maybe_unused]] usize p_Size)                                                           \
     {                                                                                                                  \
         KIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                      \
                    "Trying to block allocate a derived class from a base class overloaded new/delete");                \
-        return KIT_NAMESPACE_NAME::BAllocate<p_ClassName, p_ChunksPerBlock>();                                         \
+        return KIT::BAllocate<p_ClassName, p_ChunksPerBlock>();                                                        \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr)                                                                           \
     {                                                                                                                  \
-        KIT_NAMESPACE_NAME::BDeallocate<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));             \
+        KIT::BDeallocate<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                            \
     }
 
 #ifndef KIT_OVERRIDE_NEW_DELETE

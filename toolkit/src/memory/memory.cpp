@@ -2,8 +2,8 @@
 #include "kit/memory/memory.hpp"
 #include "kit/core/logging.hpp"
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 void *Allocate(const usize p_Size) KIT_NOEXCEPT
 {
     void *ptr = std::malloc(p_Size);
@@ -46,5 +46,4 @@ void DeallocateAligned(void *p_Ptr) KIT_NOEXCEPT
     std::free(p_Ptr);
 #endif
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

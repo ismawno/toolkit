@@ -3,8 +3,8 @@
 #include "kit/core/core.hpp"
 #include "kit/memory/block_allocator.hpp"
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 struct SmallData
 {
     KIT_BLOCK_ALLOCATED(SmallData, 10);
@@ -163,5 +163,4 @@ struct BadVirtualDerived : VirtualBase
     f64 z;
     std::string str2[2];
 };
-
-KIT_NAMESPACE_END
+} // namespace KIT

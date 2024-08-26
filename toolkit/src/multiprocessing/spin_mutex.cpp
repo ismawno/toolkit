@@ -1,8 +1,8 @@
 #include "core/pch.hpp"
 #include "kit/multiprocessing/spin_mutex.hpp"
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 void SpinMutex::lock() KIT_NOEXCEPT
 {
     while (m_Flag.test_and_set(std::memory_order_relaxed))
@@ -19,5 +19,4 @@ bool SpinMutex::try_lock() KIT_NOEXCEPT
 {
     return !m_Flag.test_and_set(std::memory_order_acquire);
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

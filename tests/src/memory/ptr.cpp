@@ -3,8 +3,8 @@
 #include <array>
 #include <thread>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 class TestRefCounted : public RefCounted<TestRefCounted>
 {
   public:
@@ -222,5 +222,4 @@ TEST_CASE("Reference counting from multiple threads", "[memory][ptr]")
     }
     REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT

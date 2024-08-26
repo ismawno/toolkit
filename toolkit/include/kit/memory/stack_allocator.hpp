@@ -3,8 +3,8 @@
 #include "kit/core/logging.hpp"
 #include "kit/core/non_copyable.hpp"
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 // Stack allocator is a simple allocator that allocates memory in a stack-like fashion. It is useful for temporary
 // allocations and allows many types of elements to coexist in a single contiguous chunk of memory. It is not
 // thread-safe
@@ -117,5 +117,4 @@ class KIT_API StackAllocator
     usize m_Remaining = 0;
     DynamicArray<Entry> m_Entries;
 };
-
-KIT_NAMESPACE_END
+} // namespace KIT

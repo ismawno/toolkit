@@ -4,8 +4,8 @@
 #include "kit/core/concepts.hpp"
 #include <chrono>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 class KIT_API Timespan
 {
   public:
@@ -97,5 +97,4 @@ class KIT_API Timespan
   private:
     Nanoseconds m_Elapsed;
 };
-
-KIT_NAMESPACE_END
+} // namespace KIT

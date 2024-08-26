@@ -4,8 +4,8 @@
 #include "kit/profiling/clock.hpp"
 #include <fstream>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 struct Number
 {
     u32 Value;
@@ -90,5 +90,4 @@ void RecordParallelSum(const ThreadPoolSumSettings &p_Settings, usize p_Maxthrea
 
 template void RecordThreadPoolSum<std::mutex>(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads);
 template void RecordThreadPoolSum<SpinMutex>(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads);
-
-KIT_NAMESPACE_END
+} // namespace KIT

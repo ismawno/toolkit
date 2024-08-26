@@ -3,8 +3,8 @@
 #include "kit/core/core.hpp"
 #include <atomic>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 class KIT_API SpinMutex
 {
   public:
@@ -15,5 +15,4 @@ class KIT_API SpinMutex
   private:
     std::atomic_flag m_Flag = ATOMIC_FLAG_INIT;
 };
-
-KIT_NAMESPACE_END
+} // namespace KIT

@@ -4,8 +4,8 @@
 #include "kit/multiprocessing/task_manager.hpp"
 #include <thread>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 // An implementation of a TaskManager that uses a thread pool to execute tasks. Currently, queue synchronization is
 // achieved by a plain mutex lock, which is not ideal. I have considered implementing a lock-free approach, but I wont
 // do it until the need arises, as those are very complex to get right
@@ -34,5 +34,4 @@ template <Mutex MTX> class ThreadPool final : public TaskManager
 
     mutable MTX m_Mutex;
 };
-
-KIT_NAMESPACE_END
+} // namespace KIT

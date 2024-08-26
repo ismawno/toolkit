@@ -12,8 +12,8 @@
 #        include <fmt/chrono.h>
 #    endif
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 void debugBreak() KIT_NOEXCEPT
 {
 #    ifdef KIT_COMPILER_CLANG
@@ -55,7 +55,6 @@ void logMessageIf(bool condition, const char *p_Level, const std::string_view p_
     if (condition)
         logMessage(p_Level, p_File, p_Line, p_Color, p_Crash, p_Message);
 }
-
-KIT_NAMESPACE_END
+} // namespace KIT
 
 #endif

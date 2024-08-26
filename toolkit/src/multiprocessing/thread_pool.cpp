@@ -2,8 +2,8 @@
 #include "kit/multiprocessing/thread_pool.hpp"
 #include "kit/multiprocessing/spin_mutex.hpp"
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 template <Mutex MTX> ThreadPool<MTX>::ThreadPool(const usize p_ThreadCount) : TaskManager(p_ThreadCount)
 {
     m_Threads.reserve(p_ThreadCount);
@@ -79,5 +79,4 @@ template <Mutex MTX> void ThreadPool<MTX>::SubmitTask(const Ref<ITask> &p_Task) 
 
 template class ThreadPool<std::mutex>;
 template class ThreadPool<SpinMutex>;
-
-KIT_NAMESPACE_END
+} // namespace KIT

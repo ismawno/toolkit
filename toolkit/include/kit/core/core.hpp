@@ -97,12 +97,3 @@
 #else
 #    define KIT_NOEXCEPT noexcept
 #endif
-
-#ifndef KIT_NAMESPACE_NAME
-#    define KIT_NAMESPACE_NAME KIT
-#endif
-
-#define KIT_NAMESPACE_BEGIN                                                                                            \
-    namespace KIT_NAMESPACE_NAME                                                                                       \
-    {
-#define KIT_NAMESPACE_END }

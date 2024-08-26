@@ -3,8 +3,8 @@
 #include "kit/multiprocessing/task.hpp"
 #include <type_traits>
 
-KIT_NAMESPACE_BEGIN
-
+namespace KIT
+{
 // A simple TaskManager interface that allows users to implement their own task system with their own threading model
 class KIT_API TaskManager
 {
@@ -42,5 +42,4 @@ class KIT_API TaskManager
     usize m_ThreadCount;
     friend class ITask;
 };
-
-KIT_NAMESPACE_END
+} // namespace KIT
