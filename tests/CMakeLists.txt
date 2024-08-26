@@ -23,8 +23,15 @@ set(SOURCES
 )
 
 add_executable(toolkit-tests ${SOURCES})
+
 target_link_libraries(toolkit-tests PRIVATE Catch2::Catch2WithMain toolkit)
 target_include_directories(toolkit-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+if (MSVC)
+    configure_compile_link_options(toolkit-tests "/W4 /WX")
+else()
+    configure_compile_link_options(toolkit-tests "-Wall -Wextra -Wpedantic -Werror")
+endif()
 
 message(STATUS "TOOLKIT TESTS: The following options are overriden by tests:")
 message(STATUS "TOOLKIT TESTS: Enable asserts: ON")

@@ -5,9 +5,6 @@ set(NAME toolkit-performance)
 
 include(FetchContent)
 
-set(OLD_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}}")
-
 FetchContent_Declare(
   yaml-cpp
   GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
@@ -29,4 +26,4 @@ add_executable(toolkit-performance ${SOURCES})
 target_link_libraries(toolkit-performance PRIVATE toolkit yaml-cpp)
 target_include_directories(toolkit-performance PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-set(CMAKE_CXX_FLAGS "${OLD_CXX_FLAGS}")
+configure_compile_link_options(toolkit-performance "")

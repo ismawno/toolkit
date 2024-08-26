@@ -69,85 +69,57 @@ set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG}" CACHE S
 set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE}" CACHE STRING "Linker flags for Release configuration")
 set(CMAKE_SHARED_LINKER_FLAGS_DIST "${CMAKE_SHARED_LINKER_FLAGS_DIST}" CACHE STRING "Linker flags for Dist configuration")
 
-if (MSVC)
-    # DEBUG CONFIGURATION
-    set(CMAKE_CXX_FLAGS_DEBUG "/ZI /Od")
-    set(CMAKE_C_FLAGS_DEBUG "/ZI /Od")
-    set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /DEBUG")
-    set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /DEBUG")
+function(configure_compile_link_options target warning_flags)
+    string(REPLACE " " ";" warning_flags_list "${warning_flags}")
 
-    # RELEASE CONFIGURATION
-    set(CMAKE_CXX_FLAGS_RELEASE "/ZI /O2")
-    set(CMAKE_C_FLAGS_RELEASE "/ZI /O2")
-    set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /DEBUG")
-    set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DEBUG")
+    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        if (MSVC)
+            target_compile_options(${target} PRIVATE /ZI /Od /MP ${warning_flags_list})
+            target_link_options(${target} PRIVATE /DEBUG /INCREMENTAL:NO)
+        else()
+            target_compile_options(${target} PRIVATE -g -O0 ${warning_flags_list})
+        endif()
 
-    # DIST CONFIGURATION
-    set(CMAKE_CXX_FLAGS_DIST "/Ox /GL")
-    set(CMAKE_C_FLAGS_DIST "/Ox /GL")
-    set(CMAKE_EXE_LINKER_FLAGS_DIST "${CMAKE_EXE_LINKER_FLAGS_DIST} /LTCG")
-    set(CMAKE_SHARED_LINKER_FLAGS_DIST "${CMAKE_SHARED_LINKER_FLAGS_DIST} /LTCG")
+        # Some warnings for debug builds
+        if (NOT TOOLKIT_ENABLE_INFO_LOGS)
+            message(WARNING "Info logs are disabled in a debug build. This is not recommended")
+        endif()
+        if (NOT TOOLKIT_ENABLE_WARNING_LOGS)
+            message(WARNING "Warning logs are disabled in a debug build. This is not recommended")
+        endif()
+        if (NOT TOOLKIT_ENABLE_ASSERTS)
+            message(WARNING "Asserts are disabled in a debug build. This is not recommended")
+        endif()
+        
+    elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+        if (MSVC)
+            target_compile_options(${target} PRIVATE /ZI /O2 /MP ${warning_flags_list})
+            target_link_options(${target} PRIVATE /DEBUG /INCREMENTAL:NO)
+        else()
+            target_compile_options(${target} PRIVATE -g -O2 ${warning_flags_list})
+        endif()
 
-    # DEFINE GLOBAL FLAGS
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}} /W4 /WX /MP")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE}} /W4 /WX /MP")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS_${CMAKE_BUILD_TYPE}} /INCREMENTAL:NO")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS_${CMAKE_BUILD_TYPE}} /INCREMENTAL:NO")
-
-    # SANITIZERS
-    if (NOT TOOLKIT_SANITIZERS STREQUAL "OFF")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fsanitize=${TOOLKIT_SANITIZERS} /FS")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /fsanitize=${TOOLKIT_SANITIZERS} /FS")
+    elseif(CMAKE_BUILD_TYPE STREQUAL "Dist")
+        if (MSVC)
+            target_compile_options(${target} PRIVATE /Ox /GL /MP ${warning_flags_list})
+            target_link_options(${target} PRIVATE /LTCG /INCREMENTAL:NO)
+        else()
+            target_compile_options(${target} PRIVATE -O3 -flto ${warning_flags_list})
+            target_link_options(${target} PRIVATE -flto)
+        endif()
     endif()
-else()
-    # DEBUG CONFIGURATION
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
-    set(CMAKE_C_FLAGS_DEBUG "-g -O0")
 
-    # RELEASE CONFIGURATION
-    set(CMAKE_CXX_FLAGS_RELEASE "-g -O2")
-    set(CMAKE_C_FLAGS_RELEASE "-g -O2")
-
-    # DIST CONFIGURATION
-    set(CMAKE_CXX_FLAGS_DIST "-O3 -flto")
-    set(CMAKE_C_FLAGS_DIST "-O3 -flto")
-    set(CMAKE_EXE_LINKER_FLAGS_DIST "${CMAKE_EXE_LINKER_FLAGS_DIST} -flto")
-    set(CMAKE_SHARED_LINKER_FLAGS_DIST "${CMAKE_SHARED_LINKER_FLAGS_DIST} -flto")
-
-    # DEFINE GLOBAL FLAGS
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}} -Wall -Wextra -Werror")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE}} -Wall -Wextra -Werror")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS_${CMAKE_BUILD_TYPE}}")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS_${CMAKE_BUILD_TYPE}}")
-    
-    # SANITIZERS
-    if (NOT TOOLKIT_SANITIZERS STREQUAL "OFF")
-        set(TOOLKIT_SANITIZER_FLAGS "-fsanitize=${TOOLKIT_SANITIZERS} -fno-omit-frame-pointer")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TOOLKIT_SANITIZER_FLAGS}")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TOOLKIT_SANITIZER_FLAGS}")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${TOOLKIT_SANITIZER_FLAGS}")
+    if (TOOLKIT_SANITIZERS STREQUAL "OFF")
+        return()
     endif()
-endif()
 
-if (MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}} /W4 /WX /MP")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE}} /W4 /WX /MP")
-
-    if (NOT TOOLKIT_SANITIZERS STREQUAL "OFF")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /fsanitize=${TOOLKIT_SANITIZERS} /FS")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /fsanitize=${TOOLKIT_SANITIZERS} /FS")
+    if (MSVC)
+        target_compile_options(${target} PRIVATE /fsanitize=${TOOLKIT_SANITIZERS} /FS)
+    else()
+        target_compile_options(${target} PRIVATE -fsanitize=${TOOLKIT_SANITIZERS} -fno-omit-frame-pointer)
+        target_link_options(${target} PRIVATE -fsanitize=${TOOLKIT_SANITIZERS} -fno-omit-frame-pointer)
     endif()
-else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_${CMAKE_BUILD_TYPE}} -Wall -Wextra -Werror")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE}} -Wall -Wextra -Werror")
-
-    if (NOT TOOLKIT_SANITIZERS STREQUAL "OFF")
-        set(TOOLKIT_SANITIZER_FLAGS "-fsanitize=${TOOLKIT_SANITIZERS} -fno-omit-frame-pointer")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TOOLKIT_SANITIZER_FLAGS}")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TOOLKIT_SANITIZER_FLAGS}")
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${TOOLKIT_SANITIZER_FLAGS}")
-    endif()
-endif()
+endfunction()
 
 # Add subdirectories
 add_subdirectory(toolkit)
