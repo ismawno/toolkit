@@ -209,7 +209,6 @@ def create_cmake_parameters_map() -> dict[str, str]:
         "warning-logs": "TOOLKIT_ENABLE_WARNING_LOGS",
         "asserts": "TOOLKIT_ENABLE_ASSERTS",
         "silent-asserts": "TOOLKIT_SILENT_ASSERTS",
-        "exceptions": "TOOLKIT_ENABLE_EXCEPTIONS",
         "log-colors": "TOOLKIT_ENABLE_LOG_COLORS",
         "enable-block-allocator": "TOOLKIT_ENABLE_BLOCK_ALLOCATOR",
         "sanitizers": "TOOLKIT_SANITIZERS",

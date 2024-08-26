@@ -4,14 +4,14 @@
 
 namespace KIT
 {
-StackAllocator::StackAllocator(const usize p_Size, const usize p_Alignment) KIT_NOEXCEPT : m_Size(p_Size),
-                                                                                           m_Remaining(p_Size)
+StackAllocator::StackAllocator(const usize p_Size, const usize p_Alignment) noexcept
+    : m_Size(p_Size), m_Remaining(p_Size)
 {
     m_Buffer = static_cast<std::byte *>(AllocateAligned(p_Size, p_Alignment));
     m_Entries.reserve(p_Size / sizeof(Entry));
 }
 
-StackAllocator::~StackAllocator() KIT_NOEXCEPT
+StackAllocator::~StackAllocator() noexcept
 {
     deallocateBuffer();
 }
@@ -44,7 +44,7 @@ StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other) noexcept
     return *this;
 }
 
-void *StackAllocator::Push(const usize p_Size, const usize p_Alignment) KIT_NOEXCEPT
+void *StackAllocator::Push(const usize p_Size, const usize p_Alignment) noexcept
 {
     void *ptr = m_Entries.empty() ? m_Buffer : m_Entries.back().Ptr + m_Entries.back().Size;
     usize remaining = m_Remaining;
@@ -61,52 +61,52 @@ void *StackAllocator::Push(const usize p_Size, const usize p_Alignment) KIT_NOEX
     return alignedPtr;
 }
 
-void StackAllocator::Pop() KIT_NOEXCEPT
+void StackAllocator::Pop() noexcept
 {
     KIT_LOG_WARNING_IF(m_Entries.empty(), "Popping from an empty allocator");
     m_Remaining += m_Entries.back().Size + m_Entries.back().AlignmentOffset;
     m_Entries.pop_back();
 }
 
-void StackAllocator::Pop(const usize p_N) KIT_NOEXCEPT
+void StackAllocator::Pop(const usize p_N) noexcept
 {
     KIT_LOG_WARNING_IF(m_Entries.size() < p_N, "Popping more elements than the allocator has");
     for (usize i = 0; i < p_N; ++i)
         Pop();
 }
 
-void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment) KIT_NOEXCEPT
+void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment) noexcept
 {
     return Push(p_Size, p_Alignment);
 }
 
-void StackAllocator::Deallocate([[maybe_unused]] const void *p_Ptr) KIT_NOEXCEPT
+void StackAllocator::Deallocate([[maybe_unused]] const void *p_Ptr) noexcept
 {
     KIT_ASSERT(!m_Entries.empty(), "Unable to deallocate because the stack allocator is empty");
     KIT_ASSERT(m_Entries.back().Ptr == p_Ptr, "Elements must be deallocated in the reverse order they were allocated");
     Pop();
 }
 
-const StackAllocator::Entry &StackAllocator::Top() const KIT_NOEXCEPT
+const StackAllocator::Entry &StackAllocator::Top() const noexcept
 {
     KIT_ASSERT(!m_Entries.empty(), "No elements in the stack allocator");
     return m_Entries.back();
 }
 
-usize StackAllocator::Size() const KIT_NOEXCEPT
+usize StackAllocator::Size() const noexcept
 {
     return m_Size;
 }
-usize StackAllocator::Allocated() const KIT_NOEXCEPT
+usize StackAllocator::Allocated() const noexcept
 {
     return m_Size - m_Remaining;
 }
-usize StackAllocator::Remaining() const KIT_NOEXCEPT
+usize StackAllocator::Remaining() const noexcept
 {
     return m_Remaining;
 }
 
-bool StackAllocator::Belongs(const void *p_Ptr) const KIT_NOEXCEPT
+bool StackAllocator::Belongs(const void *p_Ptr) const noexcept
 {
     if (m_Entries.empty())
         return false;
@@ -114,17 +114,17 @@ bool StackAllocator::Belongs(const void *p_Ptr) const KIT_NOEXCEPT
     return ptr >= m_Buffer && ptr < m_Entries.back().Ptr + m_Entries.back().Size;
 }
 
-bool StackAllocator::Empty() const KIT_NOEXCEPT
+bool StackAllocator::Empty() const noexcept
 {
     return m_Remaining == m_Size;
 }
 
-bool StackAllocator::Full() const KIT_NOEXCEPT
+bool StackAllocator::Full() const noexcept
 {
     return m_Remaining == 0;
 }
 
-void StackAllocator::deallocateBuffer() KIT_NOEXCEPT
+void StackAllocator::deallocateBuffer() noexcept
 {
     if (!m_Buffer)
         return;

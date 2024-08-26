@@ -14,7 +14,7 @@
 
 namespace KIT
 {
-void debugBreak() KIT_NOEXCEPT
+void debugBreak() noexcept
 {
 #    ifdef KIT_COMPILER_CLANG
     __builtin_debugtrap();
@@ -33,7 +33,7 @@ KIT_WARNING_IGNORE_PUSH
 KIT_GCC_WARNING_IGNORE("-Wunused-parameter")
 KIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
 void logMessage(const char *p_Level, const std::string_view p_File, const i32 p_Line, const char *p_Color,
-                const bool p_Crash, const std::string_view p_Message) KIT_NOEXCEPT
+                const bool p_Crash, const std::string_view p_Message) noexcept
 {
     const std::string root = KIT_ROOT_PATH;
     const usize pos = p_File.find(root);
@@ -43,14 +43,12 @@ void logMessage(const char *p_Level, const std::string_view p_File, const i32 p_
                                        p_Color, p_Level, KIT_LOG_COLOR_RESET, file_rel, p_Line, p_Message);
     std::cout << log;
     if (p_Crash)
-    {
-        KIT_CRASH(std::string(p_Message));
-    }
+        debugBreak();
 }
 KIT_WARNING_IGNORE_POP
 
 void logMessageIf(bool condition, const char *p_Level, const std::string_view p_File, const i32 p_Line,
-                  const char *p_Color, const bool p_Crash, const std::string_view p_Message) KIT_NOEXCEPT
+                  const char *p_Color, const bool p_Crash, const std::string_view p_Message) noexcept
 {
     if (condition)
         logMessage(p_Level, p_File, p_Line, p_Color, p_Crash, p_Message);

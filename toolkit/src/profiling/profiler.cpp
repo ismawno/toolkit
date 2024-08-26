@@ -3,21 +3,21 @@
 
 namespace KIT
 {
-Profiler::Timer::Timer(const char *name) KIT_NOEXCEPT
+Profiler::Timer::Timer(const char *name) noexcept
 {
     Profiler::BeginMeasurement(name);
 }
-Profiler::Timer::~Timer() KIT_NOEXCEPT
+Profiler::Timer::~Timer() noexcept
 {
     Profiler::EndMeasurement();
 }
 
-void Profiler::BeginMeasurement(const char *name) KIT_NOEXCEPT
+void Profiler::BeginMeasurement(const char *name) noexcept
 {
     s_OngoingMeasurements.emplace_back(name, Clock{});
 }
 
-void Profiler::EndMeasurement() KIT_NOEXCEPT
+void Profiler::EndMeasurement() noexcept
 {
     Measurement measurement;
 
@@ -29,27 +29,27 @@ void Profiler::EndMeasurement() KIT_NOEXCEPT
     s_Measurements.push_back(measurement);
 }
 
-const Measurement &Profiler::GetLast() KIT_NOEXCEPT
+const Measurement &Profiler::GetLast() noexcept
 {
     return s_Measurements.back();
 }
 
-void Profiler::Clear() KIT_NOEXCEPT
+void Profiler::Clear() noexcept
 {
     s_Measurements.clear();
 }
 
-bool Profiler::Empty() KIT_NOEXCEPT
+bool Profiler::Empty() noexcept
 {
     return s_Measurements.empty();
 }
 
-const DynamicArray<Measurement> &Profiler::Measurements() KIT_NOEXCEPT
+const DynamicArray<Measurement> &Profiler::Measurements() noexcept
 {
     return s_Measurements;
 }
 
-HashMap<const char *, AggregatedMeasurement> Profiler::AggregateMeasurements() KIT_NOEXCEPT
+HashMap<const char *, AggregatedMeasurement> Profiler::AggregateMeasurements() noexcept
 {
     HashMap<const char *, AggregatedMeasurement> aggregated;
 

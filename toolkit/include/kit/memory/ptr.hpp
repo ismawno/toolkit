@@ -23,18 +23,18 @@ template <typename T> class RefCounted
   public:
     using CountedType = T;
     // No initialization of refcount. Refcount adds/removes are handled by Ref
-    RefCounted() KIT_NOEXCEPT = default;
+    RefCounted() noexcept = default;
 
     /* COPY-MOVE OPERATIONS */
     // Refcount should not be copied. When doing *ptr1 = *ptr2, I only want to transfer the user's data
-    RefCounted(const RefCounted &) KIT_NOEXCEPT
+    RefCounted(const RefCounted &) noexcept
     {
     }
     RefCounted(RefCounted &&) noexcept
     {
     }
 
-    RefCounted &operator=(const RefCounted &) KIT_NOEXCEPT
+    RefCounted &operator=(const RefCounted &) noexcept
     {
         return *this;
     }
@@ -47,13 +47,13 @@ template <typename T> class RefCounted
     KIT_CLANG_WARNING_IGNORE("-Wexceptions")
     KIT_GCC_WARNING_IGNORE("-Wterminate")
     KIT_MSVC_WARNING_IGNORE(4297)
-    ~RefCounted() KIT_NOEXCEPT
+    ~RefCounted() noexcept
     {
         KIT_ASSERT(m_RefCount.load(std::memory_order_relaxed) == 0, "RefCounted object deleted with non-zero refcount");
     }
     KIT_WARNING_IGNORE_POP
 
-    u32 RefCount() const KIT_NOEXCEPT
+    u32 RefCount() const noexcept
     {
         return m_RefCount.load(std::memory_order_relaxed);
     }
@@ -61,18 +61,18 @@ template <typename T> class RefCounted
   protected:
     // User may want to have control over the objects's destruction, so they can implement this method instead of using
     // the default
-    void selfDestruct() const KIT_NOEXCEPT
+    void selfDestruct() const noexcept
     {
         delete static_cast<const T *>(this);
     }
 
   private:
-    void increaseRef() const KIT_NOEXCEPT
+    void increaseRef() const noexcept
     {
         m_RefCount.fetch_add(1, std::memory_order_relaxed);
     }
 
-    void decreaseRef() const KIT_NOEXCEPT
+    void decreaseRef() const noexcept
     {
         if (m_RefCount.fetch_sub(1, std::memory_order_acq_rel) == 1)
             static_cast<const T *>(this)->selfDestruct();
@@ -88,14 +88,14 @@ template <typename T> class Ref
 {
     KIT_OVERRIDE_NEW_DELETE(Ref<T>, 32)
   public:
-    Ref() KIT_NOEXCEPT = default;
+    Ref() noexcept = default;
 
     /* COPY-MOVE CTORS */
-    explicit(false) Ref(T *p_Ptr) KIT_NOEXCEPT : m_Ptr(p_Ptr)
+    explicit(false) Ref(T *p_Ptr) noexcept : m_Ptr(p_Ptr)
     {
         increaseRef();
     }
-    Ref(const Ref &p_Other) KIT_NOEXCEPT : m_Ptr(p_Other.m_Ptr)
+    Ref(const Ref &p_Other) noexcept : m_Ptr(p_Other.m_Ptr)
     {
         increaseRef();
     }
@@ -105,7 +105,7 @@ template <typename T> class Ref
     }
 
     /* COPY-MOVE ASSIGNMENTS */
-    Ref &operator=(T *p_Ptr) KIT_NOEXCEPT
+    Ref &operator=(T *p_Ptr) noexcept
     {
         if (m_Ptr != p_Ptr)
         {
@@ -115,7 +115,7 @@ template <typename T> class Ref
         }
         return *this;
     }
-    Ref &operator=(const Ref &p_Other) KIT_NOEXCEPT
+    Ref &operator=(const Ref &p_Other) noexcept
     {
         if (m_Ptr != p_Other.m_Ptr)
         {
@@ -140,7 +140,7 @@ template <typename T> class Ref
     }
 
     /* COPY-MOVE CTORS TEMPLATED VARIANTS */
-    template <typename U> explicit(false) Ref(const Ref<U> &p_Other) KIT_NOEXCEPT : m_Ptr(p_Other.m_Ptr)
+    template <typename U> explicit(false) Ref(const Ref<U> &p_Other) noexcept : m_Ptr(p_Other.m_Ptr)
     {
         increaseRef();
     }
@@ -151,7 +151,7 @@ template <typename T> class Ref
     }
 
     /* COPY-MOVE ASSIGNMENTS TEMPLATED VARIANTS */
-    template <typename U> Ref &operator=(const Ref<U> &p_Other) KIT_NOEXCEPT
+    template <typename U> Ref &operator=(const Ref<U> &p_Other) noexcept
     {
         if (m_Ptr != p_Other.m_Ptr)
         {
@@ -162,7 +162,7 @@ template <typename T> class Ref
         return *this;
     }
 
-    template <typename U> Ref &operator=(Ref<U> &&p_Other) KIT_NOEXCEPT
+    template <typename U> Ref &operator=(Ref<U> &&p_Other) noexcept
     {
         if (m_Ptr != p_Other.m_Ptr)
         {
@@ -173,43 +173,43 @@ template <typename T> class Ref
         return *this;
     }
 
-    ~Ref() KIT_NOEXCEPT
+    ~Ref() noexcept
     {
         decreaseRef();
     }
 
-    T *operator->() const KIT_NOEXCEPT
+    T *operator->() const noexcept
     {
         return m_Ptr;
     }
-    T &operator*() const KIT_NOEXCEPT
+    T &operator*() const noexcept
     {
         return *m_Ptr;
     }
-    explicit(false) operator T *() const KIT_NOEXCEPT
+    explicit(false) operator T *() const noexcept
     {
         return m_Ptr;
     }
-    explicit(false) operator bool() const KIT_NOEXCEPT
+    explicit(false) operator bool() const noexcept
     {
         return m_Ptr != nullptr;
     }
 
-    T *Get() const KIT_NOEXCEPT
+    T *Get() const noexcept
     {
         return m_Ptr;
     }
 
-    std::strong_ordering operator<=>(const Ref &p_Other) const KIT_NOEXCEPT = default;
+    std::strong_ordering operator<=>(const Ref &p_Other) const noexcept = default;
 
   private:
-    void increaseRef() const KIT_NOEXCEPT
+    void increaseRef() const noexcept
     {
         // Must static_cast to RefCounted to access increaseRef
         if (m_Ptr)
             static_cast<const RefCounted<typename T::CountedType> *>(m_Ptr)->increaseRef();
     }
-    void decreaseRef() const KIT_NOEXCEPT
+    void decreaseRef() const noexcept
     {
         // Must static_cast to RefCounted to access decreaseRef
         if (m_Ptr)
@@ -228,7 +228,7 @@ namespace std
 {
 template <typename T> struct hash<KIT::Ref<T>>
 {
-    KIT::usize operator()(const KIT::Ref<T> &p_Ref) const KIT_NOEXCEPT
+    KIT::usize operator()(const KIT::Ref<T> &p_Ref) const noexcept
     {
         return hash<T *>()(p_Ref.Get());
     }

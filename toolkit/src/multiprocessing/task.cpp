@@ -4,22 +4,22 @@
 
 namespace KIT
 {
-bool ITask::Valid() const KIT_NOEXCEPT
+bool ITask::Valid() const noexcept
 {
     return m_Manager != nullptr;
 }
 
-bool ITask::Finished() const KIT_NOEXCEPT
+bool ITask::Finished() const noexcept
 {
     return Valid() && m_Finished.test(std::memory_order_relaxed);
 }
 
-void ITask::WaitUntilFinished() const KIT_NOEXCEPT
+void ITask::WaitUntilFinished() const noexcept
 {
     m_Finished.wait(false, std::memory_order_acquire);
 }
 
-void ITask::NotifyCompleted() KIT_NOEXCEPT
+void ITask::NotifyCompleted() noexcept
 {
 #ifdef KIT_ENABLE_ASSERTS
     const bool flag = m_Finished.test_and_set(std::memory_order_release);
@@ -30,7 +30,7 @@ void ITask::NotifyCompleted() KIT_NOEXCEPT
     m_Finished.notify_all();
 }
 
-void Task<void>::operator()(const usize p_ThreadIndex) KIT_NOEXCEPT
+void Task<void>::operator()(const usize p_ThreadIndex) noexcept
 {
     m_Function(p_ThreadIndex);
 }

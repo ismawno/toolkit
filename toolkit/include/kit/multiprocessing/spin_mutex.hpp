@@ -8,9 +8,9 @@ namespace KIT
 class KIT_API SpinMutex
 {
   public:
-    void lock() KIT_NOEXCEPT;
-    void unlock() KIT_NOEXCEPT;
-    bool try_lock() KIT_NOEXCEPT;
+    void lock() noexcept;
+    void unlock() noexcept;
+    bool try_lock() noexcept;
 
   private:
     std::atomic_flag m_Flag = ATOMIC_FLAG_INIT;

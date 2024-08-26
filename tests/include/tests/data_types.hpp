@@ -143,24 +143,4 @@ struct VirtualDerived : VirtualBase
     f64 z;
     std::string str2[2];
 };
-
-struct BadVirtualDerived : VirtualBase
-{
-    // Remove the KIT_BLOCK_ALLOCATED macro to trigger the assert in the block allocator
-    // KIT_BLOCK_ALLOCATED(BadVirtualDerived, 10);
-    BadVirtualDerived()
-    {
-        ++DerivedInstances;
-    }
-
-    ~BadVirtualDerived() override
-    {
-        --DerivedInstances;
-    }
-
-    static inline i32 DerivedInstances = 0;
-
-    f64 z;
-    std::string str2[2];
-};
 } // namespace KIT

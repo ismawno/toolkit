@@ -17,10 +17,10 @@ template <Mutex MTX> class ThreadPool final : public TaskManager
   public:
     explicit ThreadPool(usize p_ThreadCount);
 
-    void SubmitTask(const Ref<ITask> &p_Task) KIT_NOEXCEPT override;
-    void AwaitPendingTasks() const KIT_NOEXCEPT;
+    void SubmitTask(const Ref<ITask> &p_Task) noexcept override;
+    void AwaitPendingTasks() const noexcept;
 
-    ~ThreadPool() KIT_NOEXCEPT override;
+    ~ThreadPool() noexcept override;
 
   private:
     DynamicArray<std::thread> m_Threads;

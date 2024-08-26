@@ -41,7 +41,6 @@ message(STATUS "TOOLKIT TESTS: Silent asserts: ON")
 message(STATUS "TOOLKIT TESTS: Enable exceptions: ON")
 
 # These MUST be on for toolkit-tests to work properly
-target_compile_definitions(toolkit PUBLIC KIT_ENABLE_EXCEPTIONS)
 target_compile_definitions(toolkit PUBLIC KIT_ENABLE_WARNING_LOGS)
 target_compile_definitions(toolkit PUBLIC KIT_ENABLE_INFO_LOGS)
 target_compile_definitions(toolkit PUBLIC KIT_ENABLE_ASSERTS)

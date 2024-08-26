@@ -35,23 +35,23 @@ class KIT_API Profiler
     struct Timer
     {
         KIT_NON_COPYABLE(Timer)
-        explicit Timer(const char *name) KIT_NOEXCEPT;
-        ~Timer() KIT_NOEXCEPT;
+        explicit Timer(const char *name) noexcept;
+        ~Timer() noexcept;
     };
 
     // I had originally thought of returning the measurement when calling EndMeasurement, but 1: It will be discarded
     // often (specially when using Timer), 2: returning a reference to the allocated DynamicArray slot is dangerous
     // because of resizing and 3: returning a copy when it is not guaranteed to be used seems wasteful. Im sure compiler
     // may optimize it away with copy ellision or some other crap, but still
-    static void BeginMeasurement(const char *name) KIT_NOEXCEPT;
-    static void EndMeasurement() KIT_NOEXCEPT;
-    static const Measurement &GetLast() KIT_NOEXCEPT;
+    static void BeginMeasurement(const char *name) noexcept;
+    static void EndMeasurement() noexcept;
+    static const Measurement &GetLast() noexcept;
 
-    static void Clear() KIT_NOEXCEPT;
-    static bool Empty() KIT_NOEXCEPT;
+    static void Clear() noexcept;
+    static bool Empty() noexcept;
 
-    static const DynamicArray<Measurement> &Measurements() KIT_NOEXCEPT;
-    static HashMap<const char *, AggregatedMeasurement> AggregateMeasurements() KIT_NOEXCEPT;
+    static const DynamicArray<Measurement> &Measurements() noexcept;
+    static HashMap<const char *, AggregatedMeasurement> AggregateMeasurements() noexcept;
 
   private:
     using OngoingMeasurement = std::pair<const char *, Clock>;

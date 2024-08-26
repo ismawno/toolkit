@@ -63,10 +63,6 @@ if (TOOLKIT_SILENT_ASSERTS)
     target_compile_definitions(toolkit PUBLIC KIT_SILENT_ASSERTS)
 endif()
 
-if (TOOLKIT_ENABLE_EXCEPTIONS)
-    target_compile_definitions(toolkit PUBLIC KIT_ENABLE_EXCEPTIONS)
-endif()
-
 if (TOOLKIT_ENABLE_BLOCK_ALLOCATOR)
     target_compile_definitions(toolkit PUBLIC KIT_ENABLE_BLOCK_ALLOCATOR)
 endif()

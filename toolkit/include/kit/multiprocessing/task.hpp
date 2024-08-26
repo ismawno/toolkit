@@ -24,18 +24,18 @@ class KIT_API ITask : public RefCounted<ITask>
         usize End;
     };
 
-    virtual ~ITask() KIT_NOEXCEPT = default;
+    virtual ~ITask() noexcept = default;
 
-    virtual void operator()(usize p_ThreadIndex) KIT_NOEXCEPT = 0;
+    virtual void operator()(usize p_ThreadIndex) noexcept = 0;
 
-    bool Valid() const KIT_NOEXCEPT;
-    bool Finished() const KIT_NOEXCEPT;
-    void WaitUntilFinished() const KIT_NOEXCEPT;
+    bool Valid() const noexcept;
+    bool Finished() const noexcept;
+    void WaitUntilFinished() const noexcept;
 
   protected:
-    ITask() KIT_NOEXCEPT = default;
+    ITask() noexcept = default;
 
-    void NotifyCompleted() KIT_NOEXCEPT;
+    void NotifyCompleted() noexcept;
 
   private:
     TaskManager *m_Manager = nullptr;
@@ -50,13 +50,13 @@ template <typename T> class Task final : public ITask
 {
     KIT_OVERRIDE_NEW_DELETE(Task<T>, 32)
   public:
-    void operator()(const usize p_ThreadIndex) KIT_NOEXCEPT override
+    void operator()(const usize p_ThreadIndex) noexcept override
     {
         m_Result = m_Function(p_ThreadIndex);
         NotifyCompleted();
     }
 
-    const T &WaitForResult() const KIT_NOEXCEPT
+    const T &WaitForResult() const noexcept
     {
         WaitUntilFinished();
         return m_Result;
@@ -65,7 +65,7 @@ template <typename T> class Task final : public ITask
   private:
     template <typename Callable, typename... Args>
         requires(!std::is_same_v<Callable, Task>)
-    explicit Task(Callable &&p_Callable, Args &&...p_Args) KIT_NOEXCEPT
+    explicit Task(Callable &&p_Callable, Args &&...p_Args) noexcept
         : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
 #ifdef KIT_ENABLE_ASSERTS
@@ -78,7 +78,7 @@ template <typename T> class Task final : public ITask
 
     template <typename Callable>
         requires(!std::is_same_v<Callable, Task>)
-    explicit Task(Callable &&p_Callable) KIT_NOEXCEPT : m_Function(std::forward<Callable>(p_Callable))
+    explicit Task(Callable &&p_Callable) noexcept : m_Function(std::forward<Callable>(p_Callable))
     {
     }
 
@@ -92,11 +92,11 @@ template <> class KIT_API Task<void> final : public ITask
 {
     KIT_OVERRIDE_NEW_DELETE(Task<void>, 32)
   public:
-    void operator()(usize p_ThreadIndex) KIT_NOEXCEPT override;
+    void operator()(usize p_ThreadIndex) noexcept override;
 
     template <typename Callable, typename... Args>
         requires(!std::is_same_v<Callable, Task>)
-    explicit Task(Callable &&p_Callable, Args &&...p_Args) KIT_NOEXCEPT
+    explicit Task(Callable &&p_Callable, Args &&...p_Args) noexcept
         : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
         KIT_ASSERT(sizeof...(Args) > 0, "Wrong constructor used for Task<void>");
@@ -104,7 +104,7 @@ template <> class KIT_API Task<void> final : public ITask
 
     template <typename Callable>
         requires(!std::is_same_v<Callable, Task>)
-    explicit Task(Callable &&p_Callable) KIT_NOEXCEPT : m_Function(std::forward<Callable>(p_Callable))
+    explicit Task(Callable &&p_Callable) noexcept : m_Function(std::forward<Callable>(p_Callable))
     {
     }
 

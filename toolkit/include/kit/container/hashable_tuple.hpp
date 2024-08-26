@@ -17,46 +17,46 @@ template <Hashable... H> struct HashableTuple
 {
     using Tuple = std::tuple<H...>;
 
-    HashableTuple() KIT_NOEXCEPT = default;
-    explicit HashableTuple(const H &...p_Elements) KIT_NOEXCEPT : Elements(p_Elements...)
+    HashableTuple() noexcept = default;
+    explicit HashableTuple(const H &...p_Elements) noexcept : Elements(p_Elements...)
     {
     }
-    explicit(false) HashableTuple(const Tuple &p_Elements) KIT_NOEXCEPT : Elements(p_Elements)
+    explicit(false) HashableTuple(const Tuple &p_Elements) noexcept : Elements(p_Elements)
     {
     }
 
-    template <usize I> auto &Get() KIT_NOEXCEPT const
+    template <usize I> auto &Get() const noexcept
     {
         return std::get<I>(Elements);
     }
-    template <usize I> auto &Get() KIT_NOEXCEPT
+    template <usize I> auto &Get() noexcept
     {
         return std::get<I>(Elements);
     }
 
-    template <Hashable T> const T &Get() KIT_NOEXCEPT const
+    template <Hashable T> const T &Get() const noexcept
     {
         return std::get<T>(Elements);
     }
-    template <Hashable T> T &Get() KIT_NOEXCEPT
+    template <Hashable T> T &Get() noexcept
     {
         return std::get<T>(Elements);
     }
 
-    HashableTuple &operator=(const Tuple &p_Elements) KIT_NOEXCEPT
+    HashableTuple &operator=(const Tuple &p_Elements) noexcept
     {
         Elements = p_Elements;
         return *this;
     }
 
-    usize operator()() KIT_NOEXCEPT const
+    usize operator()() const noexcept
     {
         usize seed = 0x517cc1b7;
         std::apply([&seed](const auto &...elements) { (hashSeed(seed, elements), ...); }, Elements);
         return seed;
     }
 
-    bool operator==(const HashableTuple &p_Other) KIT_NOEXCEPT const
+    bool operator==(const HashableTuple &p_Other) const noexcept
     {
         return Elements == p_Other.Elements;
     }
@@ -64,7 +64,7 @@ template <Hashable... H> struct HashableTuple
     Tuple Elements;
 
   private:
-    template <Hashable T> static void hashSeed(usize &p_Seed, const T &p_Hashable) KIT_NOEXCEPT
+    template <Hashable T> static void hashSeed(usize &p_Seed, const T &p_Hashable) noexcept
     {
         const std::hash<T> hasher;
         p_Seed ^= hasher(p_Hashable) + 0x9e3779b9 + (p_Seed << 6) + (p_Seed >> 2);

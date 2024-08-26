@@ -290,8 +290,4 @@ TEST_CASE("Block allocator deals with virtual data", "[block_allocator][virtual]
     REQUIRE(VirtualBase::BaseInstances == 0);
     REQUIRE(VirtualDerived::DerivedInstances == 0);
 }
-TEST_CASE("Block allocator deals with invalid virtual data", "[block_allocator][virtual][invalid]")
-{
-    REQUIRE_THROWS(new BadVirtualDerived);
-}
 } // namespace KIT

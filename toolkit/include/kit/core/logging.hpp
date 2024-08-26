@@ -38,19 +38,13 @@ namespace KIT
 {
 #ifndef KIT_NO_LOGS
 // These are not meant to be used directly, use the macros below instead
-KIT_API void debugBreak() KIT_NOEXCEPT;
+KIT_API void debugBreak() noexcept;
 KIT_API void logMessage(const char *p_Level, std::string_view p_File, const i32 p_Line, const char *p_Color,
-                        const bool p_Crash, std::string_view p_Message) KIT_NOEXCEPT;
+                        const bool p_Crash, std::string_view p_Message) noexcept;
 KIT_API void logMessageIf(bool condition, const char *p_Level, std::string_view p_File, const i32 p_Line,
-                          const char *p_Color, const bool p_Crash, std::string_view p_Message) KIT_NOEXCEPT;
+                          const char *p_Color, const bool p_Crash, std::string_view p_Message) noexcept;
 #endif
 } // namespace KIT
-
-#ifdef KIT_ENABLE_EXCEPTIONS
-#    define KIT_CRASH(msg) throw std::runtime_error(msg)
-#else
-#    define KIT_CRASH(msg) KIT::debugBreak()
-#endif
 
 #ifdef KIT_ENABLE_INFO_LOGS
 #    define KIT_LOG_INFO(...)                                                                                          \
@@ -81,10 +75,10 @@ KIT_API void logMessageIf(bool condition, const char *p_Level, std::string_view 
             KIT::logMessageIf(!(condition), "ERROR", __FILE__, __LINE__, KIT_LOG_COLOR_RED, true,                      \
                               KIT_FORMAT(__VA_ARGS__))
 #    else
-#        define KIT_ERROR(...) KIT_CRASH(KIT_FORMAT(__VA_ARGS__))
+#        define KIT_ERROR(...) debugBreak()
 #        define KIT_ASSERT(condition, ...)                                                                             \
             if (!(condition))                                                                                          \
-            KIT_CRASH(KIT_FORMAT(__VA_ARGS__))
+            debugBreak()
 #    endif
 #    define KIT_ASSERT_RETURNS(expression, expected, ...) KIT_ASSERT((expression) == (expected), __VA_ARGS__)
 #else

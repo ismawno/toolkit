@@ -3,11 +3,11 @@
 
 namespace KIT
 {
-Timespan::Timespan(Nanoseconds p_Elapsed) KIT_NOEXCEPT : m_Elapsed(p_Elapsed)
+Timespan::Timespan(Nanoseconds p_Elapsed) noexcept : m_Elapsed(p_Elapsed)
 {
 }
 
-void Timespan::Sleep(Timespan p_Duration) KIT_NOEXCEPT
+void Timespan::Sleep(Timespan p_Duration) noexcept
 {
     std::this_thread::sleep_for(p_Duration.m_Elapsed);
 }

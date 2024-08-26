@@ -80,9 +80,6 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
         REQUIRE(array2.capacity() == 5);
         for (usize i = 0; i < 5; ++i)
             REQUIRE(array1[i] == array2[i]);
-
-        StaticArray<T, 2> array3;
-        REQUIRE_THROWS(array3 = array1);
     }
 
     if constexpr (std::integral<T>)
@@ -102,7 +99,6 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
 template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args... args)
 {
     StaticArray<T, 10> array = {args...};
-    REQUIRE_THROWS(array[6]);
     SECTION("Push back")
     {
         for (usize i = 0; i < 5; i++)
@@ -112,15 +108,13 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
             REQUIRE(array.back() == array[i]);
         }
         REQUIRE(array.full());
-        REQUIRE_THROWS(array.push_back(array.front()));
     }
 
     SECTION("Pop back")
     {
         while (!array.empty())
             array.pop_back();
-
-        REQUIRE_THROWS(array.pop_back());
+        REQUIRE(array.size() == 0);
     }
 
     SECTION("Insert")
@@ -199,7 +193,6 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
             array.resize(0);
             REQUIRE(array.size() == 0);
             REQUIRE(array.empty());
-            REQUIRE_THROWS(array[0]);
         }
 
         SECTION("Decrease size")
@@ -208,7 +201,6 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
             REQUIRE(array.size() == 3);
             for (usize i = 0; i < 3; ++i)
                 REQUIRE(array[i] == values[i]);
-            REQUIRE_THROWS(array[3]);
         }
 
         SECTION("Increase size")
@@ -217,8 +209,6 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
             REQUIRE(array.size() == 7);
             for (usize i = 0; i < 3; ++i)
                 REQUIRE(array[i] == values[i]);
-
-            REQUIRE_THROWS(array[7]);
         }
     }
 

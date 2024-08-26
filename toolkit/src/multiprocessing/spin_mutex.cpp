@@ -3,19 +3,19 @@
 
 namespace KIT
 {
-void SpinMutex::lock() KIT_NOEXCEPT
+void SpinMutex::lock() noexcept
 {
     while (m_Flag.test_and_set(std::memory_order_relaxed))
         std::this_thread::yield();
     std::atomic_thread_fence(std::memory_order_acquire);
 }
 
-void SpinMutex::unlock() KIT_NOEXCEPT
+void SpinMutex::unlock() noexcept
 {
     m_Flag.clear(std::memory_order_release);
 }
 
-bool SpinMutex::try_lock() KIT_NOEXCEPT
+bool SpinMutex::try_lock() noexcept
 {
     return !m_Flag.test_and_set(std::memory_order_acquire);
 }

@@ -4,20 +4,20 @@
 
 namespace KIT
 {
-void *Allocate(const usize p_Size) KIT_NOEXCEPT
+void *Allocate(const usize p_Size) noexcept
 {
     void *ptr = std::malloc(p_Size);
     KIT_ASSERT(ptr, "Failed to allocate memory with size {}", p_Size);
     return ptr;
 }
 
-void Deallocate(void *p_Ptr) KIT_NOEXCEPT
+void Deallocate(void *p_Ptr) noexcept
 {
     KIT_ASSERT(p_Ptr, "Trying to deallocate a nullptr");
     std::free(p_Ptr);
 }
 
-void *AllocateAligned(const usize p_Size, const usize p_Alignment) KIT_NOEXCEPT
+void *AllocateAligned(const usize p_Size, const usize p_Alignment) noexcept
 {
     KIT_ASSERT(p_Alignment >= sizeof(void *), "Alignment must be at least the size of a pointer");
     void *ptr = nullptr;
@@ -37,7 +37,7 @@ void *AllocateAligned(const usize p_Size, const usize p_Alignment) KIT_NOEXCEPT
     return ptr;
 }
 
-void DeallocateAligned(void *p_Ptr) KIT_NOEXCEPT
+void DeallocateAligned(void *p_Ptr) noexcept
 {
     KIT_ASSERT(p_Ptr, "Trying to deallocate a nullptr");
 #ifdef KIT_OS_WINDOWS

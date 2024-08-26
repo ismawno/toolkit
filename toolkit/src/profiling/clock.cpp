@@ -3,31 +3,31 @@
 
 namespace KIT
 {
-static u64 timePointToU64(const Clock::TimePoint p_TimePoint) KIT_NOEXCEPT
+static u64 timePointToU64(const Clock::TimePoint p_TimePoint) noexcept
 {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(p_TimePoint.time_since_epoch()).count();
 }
 
-Clock::Clock() KIT_NOEXCEPT : m_Start(CurrentTimePoint())
+Clock::Clock() noexcept : m_Start(CurrentTimePoint())
 {
 }
 
-u64 Clock::StartTime() const KIT_NOEXCEPT
+u64 Clock::StartTime() const noexcept
 {
     return timePointToU64(m_Start);
 }
 
-Clock::TimePoint Clock::StartTimePoint() const KIT_NOEXCEPT
+Clock::TimePoint Clock::StartTimePoint() const noexcept
 {
     return m_Start;
 }
 
-Timespan Clock::Elapsed() const KIT_NOEXCEPT
+Timespan Clock::Elapsed() const noexcept
 {
     return Timespan(CurrentTimePoint() - m_Start);
 }
 
-Timespan Clock::Restart() KIT_NOEXCEPT
+Timespan Clock::Restart() noexcept
 {
     const auto now = CurrentTimePoint();
     const auto elapsed = now - m_Start;
@@ -35,12 +35,12 @@ Timespan Clock::Restart() KIT_NOEXCEPT
     return Timespan(elapsed);
 }
 
-u64 Clock::CurrentTime() KIT_NOEXCEPT
+u64 Clock::CurrentTime() noexcept
 {
     return timePointToU64(CurrentTimePoint());
 }
 
-Clock::TimePoint Clock::CurrentTimePoint() KIT_NOEXCEPT
+Clock::TimePoint Clock::CurrentTimePoint() noexcept
 {
     return std::chrono::high_resolution_clock::now();
 }

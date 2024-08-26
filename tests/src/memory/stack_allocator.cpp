@@ -58,7 +58,6 @@ template <typename T> void RunBasicConstructDestructOperations()
     REQUIRE(ptr4 + 10 == ptr5);
     allocator.Destroy(ptr5);
 
-    REQUIRE_THROWS(allocator.Destroy(ptr1));
     allocator.Destroy(ptr4);
     allocator.Destroy(ptr3);
     allocator.Destroy(ptr1);
@@ -78,8 +77,6 @@ TEST_CASE("Stack allocator basic operations", "[memory][stack_allocator][basic]"
     allocator.Pop();
     REQUIRE(allocator.Allocated() == 0);
     REQUIRE(allocator.Empty());
-
-    REQUIRE_THROWS(allocator.Deallocate(nullptr));
 
     SECTION("Push and pop")
     {

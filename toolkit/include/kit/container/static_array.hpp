@@ -33,16 +33,16 @@ class StaticArray
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    StaticArray() KIT_NOEXCEPT = default;
+    StaticArray() noexcept = default;
 
-    template <typename... Args> StaticArray(const usize p_Size, Args &&...p_Args) KIT_NOEXCEPT : m_Size(p_Size)
+    template <typename... Args> StaticArray(const usize p_Size, Args &&...p_Args) noexcept : m_Size(p_Size)
     {
         KIT_ASSERT(p_Size <= N, "Size is bigger than capacity");
         for (auto it = begin(); it != end(); ++it)
             ::new (it) T(std::forward<Args>(p_Args)...);
     }
 
-    template <std::input_iterator It> StaticArray(It p_Begin, It p_End) KIT_NOEXCEPT
+    template <std::input_iterator It> StaticArray(It p_Begin, It p_End) noexcept
     {
         for (auto it = p_Begin; it != p_End; ++it)
         {
@@ -52,8 +52,7 @@ class StaticArray
     }
 
     // This constructor WONT include the case M == N (ie, copy constructor)
-    template <usize M>
-    explicit(false) StaticArray(const StaticArray<T, M> &p_Other) KIT_NOEXCEPT : m_Size(p_Other.size())
+    template <usize M> explicit(false) StaticArray(const StaticArray<T, M> &p_Other) noexcept : m_Size(p_Other.size())
     {
         if constexpr (M > N)
         {
@@ -63,26 +62,26 @@ class StaticArray
             ::new (begin() + i) T(p_Other[i]);
     }
 
-    StaticArray(const StaticArray<T, N> &p_Other) KIT_NOEXCEPT : m_Size(p_Other.size())
+    StaticArray(const StaticArray<T, N> &p_Other) noexcept : m_Size(p_Other.size())
     {
         for (usize i = 0; i < m_Size; ++i)
             ::new (begin() + i) T(p_Other[i]);
     }
 
-    StaticArray(std::initializer_list<T> p_List) KIT_NOEXCEPT : m_Size(p_List.size())
+    StaticArray(std::initializer_list<T> p_List) noexcept : m_Size(p_List.size())
     {
         KIT_ASSERT(p_List.size() <= N, "Size is bigger than capacity");
         for (usize i = 0; i < m_Size; ++i)
             ::new (begin() + i) T(*(p_List.begin() + i));
     }
 
-    ~StaticArray() KIT_NOEXCEPT
+    ~StaticArray() noexcept
     {
         clear();
     }
 
     // Same goes for assignment. It wont include M == N, and use the default assignment operator
-    template <usize M> StaticArray &operator=(const StaticArray<T, M> &p_Other) KIT_NOEXCEPT
+    template <usize M> StaticArray &operator=(const StaticArray<T, M> &p_Other) noexcept
     {
         if constexpr (M == N)
         {
@@ -100,7 +99,7 @@ class StaticArray
         return *this;
     }
 
-    StaticArray &operator=(const StaticArray<T, N> &p_Other) KIT_NOEXCEPT
+    StaticArray &operator=(const StaticArray<T, N> &p_Other) noexcept
     {
         if (this == &p_Other)
             return *this;
@@ -114,13 +113,13 @@ class StaticArray
     // Add additional template to allow perfect forwarding
     template <typename U>
         requires(ShallowIsSame<T, U>)
-    void push_back(U &&p_Value) KIT_NOEXCEPT
+    void push_back(U &&p_Value) noexcept
     {
         KIT_ASSERT(!full(), "Container is already full");
         ::new (begin() + m_Size++) T(std::forward<U>(p_Value));
     }
 
-    void pop_back() KIT_NOEXCEPT
+    void pop_back() noexcept
     {
         KIT_ASSERT(!empty(), "Container is already empty");
         --m_Size;
@@ -131,7 +130,7 @@ class StaticArray
     // Add additional template to allow perfect forwarding
     template <typename U>
         requires(ShallowIsSame<T, U>)
-    void insert(const const_iterator p_Pos, U &&p_Value) KIT_NOEXCEPT
+    void insert(const const_iterator p_Pos, U &&p_Value) noexcept
     {
         KIT_ASSERT(!full(), "Container is already full");
         KIT_ASSERT(p_Pos >= cbegin() && p_Pos <= cend(), "Iterator is out of bounds");
@@ -155,7 +154,7 @@ class StaticArray
         ++m_Size;
     }
 
-    template <std::input_iterator It> void insert(const const_iterator p_Pos, It p_Begin, It p_End) KIT_NOEXCEPT
+    template <std::input_iterator It> void insert(const const_iterator p_Pos, It p_Begin, It p_End) noexcept
     {
         KIT_ASSERT(p_Pos >= cbegin() && p_Pos <= cend(), "Iterator is out of bounds");
         if (empty() || p_Pos == end())
@@ -206,12 +205,12 @@ class StaticArray
         m_Size += count;
     }
 
-    void insert(const const_iterator p_Pos, std::initializer_list<T> p_Elements) KIT_NOEXCEPT
+    void insert(const const_iterator p_Pos, std::initializer_list<T> p_Elements) noexcept
     {
         insert(p_Pos, p_Elements.begin(), p_Elements.end());
     }
 
-    void erase(const const_iterator p_Pos) KIT_NOEXCEPT
+    void erase(const const_iterator p_Pos) noexcept
     {
         if (empty())
             return;
@@ -228,7 +227,7 @@ class StaticArray
         --m_Size;
     }
 
-    void erase(const const_iterator p_Begin, const const_iterator p_End) KIT_NOEXCEPT
+    void erase(const const_iterator p_Begin, const const_iterator p_End) noexcept
     {
         if (empty())
             return;
@@ -251,25 +250,25 @@ class StaticArray
         m_Size -= count;
     }
 
-    template <typename... Args> T &emplace_back(Args &&...p_Args) KIT_NOEXCEPT
+    template <typename... Args> T &emplace_back(Args &&...p_Args) noexcept
     {
         KIT_ASSERT(!full(), "Container is already full");
         ::new (end()) T(std::forward<Args>(p_Args)...);
         return *(begin() + m_Size++);
     }
 
-    const T &front() const KIT_NOEXCEPT
+    const T &front() const noexcept
     {
         KIT_ASSERT(!empty(), "Container is empty");
         return *begin();
     }
-    T &front() KIT_NOEXCEPT
+    T &front() noexcept
     {
         KIT_ASSERT(!empty(), "Container is empty");
         return *begin();
     }
 
-    template <typename... Args> void resize(const usize p_Size, Args &&...args) KIT_NOEXCEPT
+    template <typename... Args> void resize(const usize p_Size, Args &&...args) noexcept
     {
         KIT_ASSERT(p_Size <= N, "Size is bigger than capacity");
 
@@ -288,49 +287,49 @@ class StaticArray
         m_Size = p_Size;
     }
 
-    const T &back() const KIT_NOEXCEPT
+    const T &back() const noexcept
     {
         KIT_ASSERT(!empty(), "Container is empty");
         return *(begin() + m_Size - 1);
     }
-    T &back() KIT_NOEXCEPT
+    T &back() noexcept
     {
         KIT_ASSERT(!empty(), "Container is empty");
         return *(begin() + m_Size - 1);
     }
 
-    const T &operator[](const usize p_Index) const KIT_NOEXCEPT
+    const T &operator[](const usize p_Index) const noexcept
     {
         KIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
         return *(begin() + p_Index);
     }
-    T &operator[](const usize p_Index) KIT_NOEXCEPT
-    {
-        KIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
-        return *(begin() + p_Index);
-    }
-
-    const T &at(const usize p_Index) const KIT_NOEXCEPT
-    {
-        KIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
-        return *(begin() + p_Index);
-    }
-    T &at(const usize p_Index) KIT_NOEXCEPT
+    T &operator[](const usize p_Index) noexcept
     {
         KIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
         return *(begin() + p_Index);
     }
 
-    T *data() KIT_NOEXCEPT
+    const T &at(const usize p_Index) const noexcept
+    {
+        KIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
+        return *(begin() + p_Index);
+    }
+    T &at(const usize p_Index) noexcept
+    {
+        KIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
+        return *(begin() + p_Index);
+    }
+
+    T *data() noexcept
     {
         return begin();
     }
-    const T *data() const KIT_NOEXCEPT
+    const T *data() const noexcept
     {
         return begin();
     }
 
-    void clear() KIT_NOEXCEPT
+    void clear() noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
             for (auto it = begin(); it != end(); ++it)
@@ -339,73 +338,73 @@ class StaticArray
     }
 
     // Keep stl convention?
-    constexpr usize capacity() const KIT_NOEXCEPT
+    constexpr usize capacity() const noexcept
     {
         return N;
     }
-    usize size() const KIT_NOEXCEPT
+    usize size() const noexcept
     {
         return m_Size;
     }
-    bool empty() const KIT_NOEXCEPT
+    bool empty() const noexcept
     {
         return m_Size == 0;
     }
-    bool full() const KIT_NOEXCEPT
+    bool full() const noexcept
     {
         return m_Size == N;
     }
 
-    iterator begin() KIT_NOEXCEPT
+    iterator begin() noexcept
     {
         return reinterpret_cast<pointer>(&m_Data[0]);
     }
-    iterator end() KIT_NOEXCEPT
+    iterator end() noexcept
     {
         return reinterpret_cast<pointer>(&m_Data[0]) + m_Size;
     }
 
-    const_iterator begin() const KIT_NOEXCEPT
+    const_iterator begin() const noexcept
     {
         return reinterpret_cast<const_pointer>(&m_Data[0]);
     }
-    const_iterator end() const KIT_NOEXCEPT
+    const_iterator end() const noexcept
     {
         return reinterpret_cast<const_pointer>(&m_Data[0]) + m_Size;
     }
 
-    const_iterator cbegin() const KIT_NOEXCEPT
+    const_iterator cbegin() const noexcept
     {
         return reinterpret_cast<const_pointer>(&m_Data[0]);
     }
-    const_iterator cend() const KIT_NOEXCEPT
+    const_iterator cend() const noexcept
     {
         return reinterpret_cast<const_pointer>(&m_Data[0]) + m_Size;
     }
 
-    reverse_iterator rbegin() KIT_NOEXCEPT
+    reverse_iterator rbegin() noexcept
     {
         return reverse_iterator(end());
     }
-    reverse_iterator rend() KIT_NOEXCEPT
+    reverse_iterator rend() noexcept
     {
         return reverse_iterator(begin());
     }
 
-    const_reverse_iterator rbegin() const KIT_NOEXCEPT
+    const_reverse_iterator rbegin() const noexcept
     {
         return const_reverse_iterator(end());
     }
-    const_reverse_iterator rend() const KIT_NOEXCEPT
+    const_reverse_iterator rend() const noexcept
     {
         return const_reverse_iterator(begin());
     }
 
-    const_reverse_iterator crbegin() const KIT_NOEXCEPT
+    const_reverse_iterator crbegin() const noexcept
     {
         return const_reverse_iterator(cend());
     }
-    const_reverse_iterator crend() const KIT_NOEXCEPT
+    const_reverse_iterator crend() const noexcept
     {
         return const_reverse_iterator(cbegin());
     }

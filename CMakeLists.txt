@@ -33,7 +33,6 @@ else()
 endif()
 
 option(TOOLKIT_SILENT_ASSERTS "Silence asserts" OFF)
-option(TOOLKIT_ENABLE_EXCEPTIONS "Enable exceptions" OFF)
 option(TOOLKIT_ENABLE_BLOCK_ALLOCATOR "Enable block allocations" ON)
 
 if (TOOLKIT_BUILD_PERFORMANCE AND (NOT CMAKE_BUILD_TYPE STREQUAL "Dist"))
@@ -54,7 +53,6 @@ message(STATUS "TOOLKIT: Enable warning logs: ${TOOLKIT_ENABLE_WARNING_LOGS}")
 message(STATUS "TOOLKIT: Enable asserts: ${TOOLKIT_ENABLE_ASSERTS}")
 message(STATUS "TOOLKIT: Enable log colors: ${TOOLKIT_ENABLE_LOG_COLORS}")
 message(STATUS "TOOLKIT: Silent asserts: ${TOOLKIT_SILENT_ASSERTS}")
-message(STATUS "TOOLKIT: Enable exceptions: ${TOOLKIT_ENABLE_EXCEPTIONS}")
 message(STATUS "TOOLKIT: Enable block allocator: ${TOOLKIT_ENABLE_BLOCK_ALLOCATOR}")
 message(STATUS "TOOLKIT: Sanitizer: ${TOOLKIT_SANITIZERS}")
 

@@ -9,16 +9,16 @@ class KIT_API Clock
   public:
     using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
-    Clock() KIT_NOEXCEPT;
+    Clock() noexcept;
 
-    u64 StartTime() const KIT_NOEXCEPT;
-    TimePoint StartTimePoint() const KIT_NOEXCEPT;
+    u64 StartTime() const noexcept;
+    TimePoint StartTimePoint() const noexcept;
 
-    Timespan Elapsed() const KIT_NOEXCEPT;
-    Timespan Restart() KIT_NOEXCEPT;
+    Timespan Elapsed() const noexcept;
+    Timespan Restart() noexcept;
 
-    static u64 CurrentTime() KIT_NOEXCEPT;
-    static TimePoint CurrentTimePoint() KIT_NOEXCEPT;
+    static u64 CurrentTime() noexcept;
+    static TimePoint CurrentTimePoint() noexcept;
 
   private:
     TimePoint m_Start;

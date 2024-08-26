@@ -14,9 +14,9 @@ class KIT_API Timespan
     using Milliseconds = std::chrono::milliseconds;
     using Seconds = std::chrono::seconds;
 
-    explicit(false) Timespan(Nanoseconds p_Elapsed = Nanoseconds::zero()) KIT_NOEXCEPT;
+    explicit(false) Timespan(Nanoseconds p_Elapsed = Nanoseconds::zero()) noexcept;
 
-    template <typename TimeUnit, Numeric T = f32> T As() const KIT_NOEXCEPT
+    template <typename TimeUnit, Numeric T = f32> T As() const noexcept
     {
         if constexpr (Float<T>)
             return std::chrono::duration<T, typename TimeUnit::period>(m_Elapsed).count();
@@ -27,29 +27,29 @@ class KIT_API Timespan
         }
     }
 
-    template <Numeric T = u64> T AsNanoseconds() const KIT_NOEXCEPT
+    template <Numeric T = u64> T AsNanoseconds() const noexcept
     {
         return As<Nanoseconds, T>();
     }
-    template <Numeric T = f32> T AsMicroseconds() const KIT_NOEXCEPT
+    template <Numeric T = f32> T AsMicroseconds() const noexcept
     {
         return As<Microseconds, T>();
     }
-    template <Numeric T = f32> T AsMilliseconds() const KIT_NOEXCEPT
+    template <Numeric T = f32> T AsMilliseconds() const noexcept
     {
         return As<Milliseconds, T>();
     }
-    template <Numeric T = f32> T AsSeconds() const KIT_NOEXCEPT
+    template <Numeric T = f32> T AsSeconds() const noexcept
     {
         return As<Seconds, T>();
     }
 
-    template <typename TimeUnit, Numeric T> static Timespan From(const T p_Elapsed) KIT_NOEXCEPT
+    template <typename TimeUnit, Numeric T> static Timespan From(const T p_Elapsed) noexcept
     {
         return Timespan(std::chrono::duration<T, typename TimeUnit::period>(p_Elapsed));
     }
 
-    static void Sleep(Timespan p_Duration) KIT_NOEXCEPT;
+    static void Sleep(Timespan p_Duration) noexcept;
 
     std::strong_ordering operator<=>(const Timespan &other) const = default;
 

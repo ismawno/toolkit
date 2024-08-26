@@ -35,14 +35,14 @@ template <Mutex MTX> ThreadPool<MTX>::ThreadPool(const usize p_ThreadCount) : Ta
         m_Threads.emplace_back(worker, i);
 }
 
-template <Mutex MTX> void ThreadPool<MTX>::AwaitPendingTasks() const KIT_NOEXCEPT
+template <Mutex MTX> void ThreadPool<MTX>::AwaitPendingTasks() const noexcept
 {
     // TODO: Consider using _mm_pause() instead of std::this_thread::yield()
     while (m_PendingCount.load(std::memory_order_relaxed) != 0)
         std::this_thread::yield();
 }
 
-template <Mutex MTX> ThreadPool<MTX>::~ThreadPool() KIT_NOEXCEPT
+template <Mutex MTX> ThreadPool<MTX>::~ThreadPool() noexcept
 {
     // It is up to the user to make sure that all tasks are finished before destroying the thread pool
     m_Shutdown.test_and_set(std::memory_order_relaxed);
@@ -66,7 +66,7 @@ template <Mutex MTX> ThreadPool<MTX>::~ThreadPool() KIT_NOEXCEPT
     }
 }
 
-template <Mutex MTX> void ThreadPool<MTX>::SubmitTask(const Ref<ITask> &p_Task) KIT_NOEXCEPT
+template <Mutex MTX> void ThreadPool<MTX>::SubmitTask(const Ref<ITask> &p_Task) noexcept
 {
     m_PendingCount.fetch_add(1, std::memory_order_relaxed);
     {

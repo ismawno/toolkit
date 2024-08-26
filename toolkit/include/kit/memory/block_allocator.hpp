@@ -21,7 +21,7 @@ template <typename T> class KIT_API BlockAllocator final
 {
     KIT_NON_COPYABLE(BlockAllocator)
   public:
-    explicit BlockAllocator(const usize p_ChunksPerBlock) KIT_NOEXCEPT : m_BlockSize(ChunkSize() * p_ChunksPerBlock)
+    explicit BlockAllocator(const usize p_ChunksPerBlock) noexcept : m_BlockSize(ChunkSize() * p_ChunksPerBlock)
     {
     }
 
@@ -34,7 +34,7 @@ template <typename T> class KIT_API BlockAllocator final
         p_Other.m_Blocks.clear();
     }
 
-    ~BlockAllocator() KIT_NOEXCEPT
+    ~BlockAllocator() noexcept
     {
         Reset();
     }
@@ -55,24 +55,24 @@ template <typename T> class KIT_API BlockAllocator final
         return *this;
     }
 
-    usize BlockSize() const KIT_NOEXCEPT
+    usize BlockSize() const noexcept
     {
         return m_BlockSize;
     }
 
-    usize ChunksPerBlock() const KIT_NOEXCEPT
+    usize ChunksPerBlock() const noexcept
     {
         return m_BlockSize / ChunkSize();
     }
 
-    static KIT_CONSTEVAL usize ChunkSize() KIT_NOEXCEPT
+    static KIT_CONSTEVAL usize ChunkSize() noexcept
     {
         if constexpr (sizeof(T) < sizeof(Chunk))
             return AlignedSize<Chunk>();
         else
             return AlignedSize<T>();
     }
-    static KIT_CONSTEVAL usize ChunkAlignment() KIT_NOEXCEPT
+    static KIT_CONSTEVAL usize ChunkAlignment() noexcept
     {
         if constexpr (alignof(T) < alignof(Chunk))
             return alignof(Chunk);
@@ -80,45 +80,45 @@ template <typename T> class KIT_API BlockAllocator final
             return alignof(T);
     }
 
-    template <typename... Args> [[nodiscard]] T *Create(Args &&...p_Args) KIT_NOEXCEPT
+    template <typename... Args> [[nodiscard]] T *Create(Args &&...p_Args) noexcept
     {
         T *ptr = Allocate();
         ::new (ptr) T(std::forward<Args>(p_Args)...);
         return ptr;
     }
-    void Destroy(T *p_Ptr) KIT_NOEXCEPT
+    void Destroy(T *p_Ptr) noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
             p_Ptr->~T();
         Deallocate(p_Ptr);
     }
 
-    template <typename... Args> [[nodiscard]] T *CreateUnsafe(Args &&...p_Args) KIT_NOEXCEPT
+    template <typename... Args> [[nodiscard]] T *CreateUnsafe(Args &&...p_Args) noexcept
     {
         T *ptr = AllocateUnsafe();
         ::new (ptr) T(std::forward<Args>(p_Args)...);
         return ptr;
     }
-    void DestroyUnsafe(T *p_Ptr) KIT_NOEXCEPT
+    void DestroyUnsafe(T *p_Ptr) noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
             p_Ptr->~T();
         DeallocateUnsafe(p_Ptr);
     }
 
-    [[nodiscard]] T *Allocate() KIT_NOEXCEPT
+    [[nodiscard]] T *Allocate() noexcept
     {
         std::scoped_lock lock(m_Mutex);
         return AllocateUnsafe();
     }
 
-    void Deallocate(T *p_Ptr) KIT_NOEXCEPT
+    void Deallocate(T *p_Ptr) noexcept
     {
         std::scoped_lock lock(m_Mutex);
         DeallocateUnsafe(p_Ptr);
     }
 
-    [[nodiscard]] T *AllocateUnsafe() KIT_NOEXCEPT
+    [[nodiscard]] T *AllocateUnsafe() noexcept
     {
         ++m_Allocations;
         if (m_FreeList)
@@ -126,7 +126,7 @@ template <typename T> class KIT_API BlockAllocator final
         return fromFirstChunkOfNewBlock();
     }
 
-    void DeallocateUnsafe(T *p_Ptr) KIT_NOEXCEPT
+    void DeallocateUnsafe(T *p_Ptr) noexcept
     {
         KIT_ASSERT(!Empty(), "The current allocator has no active allocations yet");
         KIT_ASSERT(Owns(p_Ptr), "Trying to deallocate a pointer that was not allocated by this allocator");
@@ -169,7 +169,7 @@ template <typename T> class KIT_API BlockAllocator final
 
     // This method is not infallible. Deallocated pointers from this allocator will still return true, as they lay in
     // the memory block of the allocator
-    bool Owns(const T *p_Ptr) const KIT_NOEXCEPT
+    bool Owns(const T *p_Ptr) const noexcept
     {
         const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
         for (const std::byte *block : m_Blocks)
@@ -178,16 +178,16 @@ template <typename T> class KIT_API BlockAllocator final
         return false;
     }
 
-    usize BlockCount() const KIT_NOEXCEPT
+    usize BlockCount() const noexcept
     {
         return m_Blocks.size();
     }
 
-    bool Empty() const KIT_NOEXCEPT
+    bool Empty() const noexcept
     {
         return m_Allocations == 0;
     }
-    u32 Allocations() const KIT_NOEXCEPT
+    u32 Allocations() const noexcept
     {
         return m_Allocations;
     }
@@ -199,7 +199,7 @@ template <typename T> class KIT_API BlockAllocator final
         Chunk *Next = nullptr;
     };
 
-    static std::byte *allocateNewBlock(const usize p_BlockSize) KIT_NOEXCEPT
+    static std::byte *allocateNewBlock(const usize p_BlockSize) noexcept
     {
         constexpr usize chunkSize = ChunkSize();
         constexpr usize alignment = ChunkAlignment();
@@ -220,7 +220,7 @@ template <typename T> class KIT_API BlockAllocator final
         return data;
     }
 
-    T *fromFirstChunkOfNewBlock() KIT_NOEXCEPT
+    T *fromFirstChunkOfNewBlock() noexcept
     {
         std::byte *data = allocateNewBlock(m_BlockSize);
         m_FreeList = reinterpret_cast<Chunk *>(data + ChunkSize());
@@ -228,7 +228,7 @@ template <typename T> class KIT_API BlockAllocator final
         return reinterpret_cast<T *>(data);
     }
 
-    T *fromNextFreeChunk() KIT_NOEXCEPT
+    T *fromNextFreeChunk() noexcept
     {
         Chunk *chunk = m_FreeList;
         m_FreeList = chunk->Next;
@@ -242,44 +242,44 @@ template <typename T> class KIT_API BlockAllocator final
     SpinMutex m_Mutex;
 };
 
-template <typename T, usize ChunksPerBlock> BlockAllocator<T> &GlobalBlockAllocatorInstance() KIT_NOEXCEPT
+template <typename T, usize ChunksPerBlock> BlockAllocator<T> &GlobalBlockAllocatorInstance() noexcept
 {
     static BlockAllocator<T> allocator{ChunksPerBlock};
     return allocator;
 }
 
-template <typename T, usize ChunksPerBlock> T *BAllocate() KIT_NOEXCEPT
+template <typename T, usize ChunksPerBlock> T *BAllocate() noexcept
 {
     return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().Allocate();
 }
-template <typename T, usize ChunksPerBlock> void BDeallocate(T *p_Ptr) KIT_NOEXCEPT
+template <typename T, usize ChunksPerBlock> void BDeallocate(T *p_Ptr) noexcept
 {
     GlobalBlockAllocatorInstance<T, ChunksPerBlock>().Deallocate(p_Ptr);
 }
 
-template <typename T, usize ChunksPerBlock> T *BAllocateUnsafe() KIT_NOEXCEPT
+template <typename T, usize ChunksPerBlock> T *BAllocateUnsafe() noexcept
 {
     return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().AllocateUnsafe();
 }
-template <typename T, usize ChunksPerBlock> void BDeallocateUnsafe(T *p_Ptr) KIT_NOEXCEPT
+template <typename T, usize ChunksPerBlock> void BDeallocateUnsafe(T *p_Ptr) noexcept
 {
     GlobalBlockAllocatorInstance<T, ChunksPerBlock>().DeallocateUnsafe(p_Ptr);
 }
 
-template <typename T, usize ChunksPerBlock, typename... Args> T *BCreate(Args &&...p_Args) KIT_NOEXCEPT
+template <typename T, usize ChunksPerBlock, typename... Args> T *BCreate(Args &&...p_Args) noexcept
 {
     return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().Create(std::forward<Args>(p_Args)...);
 }
-template <typename T, usize ChunksPerBlock> void BDestroy(T *p_Ptr) KIT_NOEXCEPT
+template <typename T, usize ChunksPerBlock> void BDestroy(T *p_Ptr) noexcept
 {
     GlobalBlockAllocatorInstance<T, ChunksPerBlock>().Destroy(p_Ptr);
 }
 
-template <typename T, usize ChunksPerBlock, typename... Args> T *BCreateUnsafe(Args &&...p_Args) KIT_NOEXCEPT
+template <typename T, usize ChunksPerBlock, typename... Args> T *BCreateUnsafe(Args &&...p_Args) noexcept
 {
     return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().CreateUnsafe(std::forward<Args>(p_Args)...);
 }
-template <typename T, usize ChunksPerBlock> void BDestroyUnsafe(T *p_Ptr) KIT_NOEXCEPT
+template <typename T, usize ChunksPerBlock> void BDestroyUnsafe(T *p_Ptr) noexcept
 {
     GlobalBlockAllocatorInstance<T, ChunksPerBlock>().DestroyUnsafe(p_Ptr);
 }

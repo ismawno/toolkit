@@ -3,11 +3,11 @@
 
 namespace KIT
 {
-TaskManager::TaskManager(const usize p_ThreadCount) KIT_NOEXCEPT : m_ThreadCount(p_ThreadCount)
+TaskManager::TaskManager(const usize p_ThreadCount) noexcept : m_ThreadCount(p_ThreadCount)
 {
 }
 
-usize TaskManager::ThreadCount() const KIT_NOEXCEPT
+usize TaskManager::ThreadCount() const noexcept
 {
     return m_ThreadCount;
 }
