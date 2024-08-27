@@ -23,14 +23,14 @@ template <Mutex MTX> void RunThreadPoolTest()
         }
     }
 
+    struct Number
+    {
+        u32 Value;
+        std::byte Padding[KIT_CACHE_LINE_SIZE - sizeof(u32)];
+    };
+
     SECTION("Parallel for")
     {
-        struct Number
-        {
-            u32 Value;
-            std::byte Padding[KIT_CACHE_LINE_SIZE - sizeof(u32)];
-        };
-
         std::array<Number, amount> numbers;
         u32 realSum = 0;
         for (u32 i = 0; i < amount; i++)
@@ -51,6 +51,33 @@ template <Mutex MTX> void RunThreadPoolTest()
         for (auto &task : tasks)
             sum += task->WaitForResult();
         REQUIRE(sum == realSum);
+    }
+
+    SECTION("Parallel for (void return)")
+    {
+        std::array<Number, amount> numbers;
+        u32 realSum = 0;
+        for (u32 i = 0; i < amount; i++)
+        {
+            numbers[i].Value = i;
+            realSum += i;
+        }
+
+        static std::mutex mutex;
+        u32 taskSum = 0;
+        std::array<Ref<Task<void>>, threadCount> tasks;
+        ForEach(pool, numbers.begin(), numbers.end(), tasks.begin(), threadCount,
+                [&taskSum](auto p_It1, auto p_It2, const usize) {
+                    u32 sum = 0;
+                    for (auto it = p_It1; it != p_It2; ++it)
+                        sum += it->Value;
+
+                    std::scoped_lock lock{mutex};
+                    taskSum += sum;
+                });
+        for (auto &task : tasks)
+            task->WaitUntilFinished();
+        REQUIRE(taskSum == realSum);
     }
 }
 

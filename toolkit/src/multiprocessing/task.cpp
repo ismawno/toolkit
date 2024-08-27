@@ -33,5 +33,6 @@ void ITask::NotifyCompleted() noexcept
 void Task<void>::operator()(const usize p_ThreadIndex) noexcept
 {
     m_Function(p_ThreadIndex);
+    NotifyCompleted();
 }
 } // namespace KIT
