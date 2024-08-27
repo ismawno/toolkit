@@ -9,6 +9,10 @@ namespace KIT
 template <typename T, typename U>
 concept ShallowIsSame = std::is_same_v<NoCVRef<T>, NoCVRef<U>>;
 
+// An STL-like array interface that manages a fixed size buffer of data. This base class does not own the data, and it
+// is up to the implementation to provide means to clean up the resources. This interface can be used as a wrapper
+// around a chunk of data to provide array-like functionality without owning the chunk itself. The implementation is
+// also responsible for providing the data() and capacity() methods
 template <typename T, typename Derived> class IArray
 {
   public:
@@ -24,12 +28,10 @@ template <typename T, typename Derived> class IArray
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    IArray() noexcept = default;
+    // I figured that if I want to have a more STL-like interface, I should use the same naming conventions, although I
+    // am not really sure when to "stop"
 
-    explicit IArray(const usize p_Size) noexcept : m_Size(p_Size)
-    {
-        KIT_ASSERT(p_Size <= capacity(), "Size is bigger than capacity");
-    }
+    IArray() noexcept = default;
 
     template <typename... Args> IArray(const usize p_Size, Args &&...p_Args) noexcept : m_Size(p_Size)
     {

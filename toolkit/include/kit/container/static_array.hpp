@@ -14,9 +14,6 @@ template <typename T, usize N>
 class StaticArray : public IArray<T, StaticArray<T, N>>
 {
   public:
-    // I figured that if I want to have a more STL-like interface, I should use the same naming conventions, although I
-    // am not really sure when to "stop"
-
     using BaseArray = IArray<T, StaticArray<T, N>>;
     using BaseArray::BaseArray;
 
