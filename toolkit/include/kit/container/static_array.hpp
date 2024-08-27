@@ -15,18 +15,50 @@ class StaticArray : public IArray<T, StaticArray<T, N>>
 {
   public:
     using BaseArray = IArray<T, StaticArray<T, N>>;
-    using BaseArray::BaseArray;
+
+    StaticArray() noexcept = default;
+
+    template <typename... Args> StaticArray(const usize p_Size, Args &&...p_Args) noexcept : BaseArray(p_Size)
+    {
+        this->Constructor(std::forward<Args>(p_Args)...);
+    }
+
+    template <std::input_iterator It> StaticArray(It p_Begin, It p_End) noexcept
+    {
+        this->Constructor(p_Begin, p_End);
+    }
+
+    StaticArray(const StaticArray &p_Other) noexcept : BaseArray(p_Other.size())
+    {
+        this->Constructor(p_Other);
+    }
+
+    explicit(false) StaticArray(std::initializer_list<T> p_List) noexcept : BaseArray(p_List.size())
+    {
+        this->Constructor(p_List);
+    }
 
     // This constructor WONT include the case M == N (ie, copy constructor), because the native copty constructor will
     // always be a perfect match
-    template <usize M>
-    explicit(false) StaticArray(const StaticArray<T, M> &p_Other) noexcept : BaseArray(p_Other.begin(), p_Other.end())
+    template <usize M> explicit(false) StaticArray(const StaticArray<T, M> &p_Other) noexcept
     {
+        this->Constructor(p_Other.begin(), p_Other.end());
     }
 
     ~StaticArray() noexcept
     {
         this->clear();
+    }
+
+    StaticArray &operator=(const StaticArray &p_Other) noexcept
+    {
+        this->CopyAssignment(p_Other);
+        return *this;
+    }
+    StaticArray &operator=(std::initializer_list<T> p_List) noexcept
+    {
+        this->CopyAssignment(p_List);
+        return *this;
     }
 
     // Same goes for assignment. It wont include M == N, and use the default assignment operator

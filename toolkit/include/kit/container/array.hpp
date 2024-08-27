@@ -32,46 +32,18 @@ template <typename T, typename Derived> class IArray
     // am not really sure when to "stop"
 
     IArray() noexcept = default;
-
-    template <typename... Args> IArray(const usize p_Size, Args &&...p_Args) noexcept : m_Size(p_Size)
+    explicit IArray(const usize p_Size) noexcept : m_Size(p_Size)
     {
         KIT_ASSERT(p_Size <= capacity(), "Size is bigger than capacity");
-        for (auto it = begin(); it != end(); ++it)
-            ::new (it) T(std::forward<Args>(p_Args)...);
     }
 
-    template <std::input_iterator It> IArray(It p_Begin, It p_End) noexcept
-    {
-        for (auto it = p_Begin; it != p_End; ++it)
-        {
-            KIT_ASSERT(m_Size <= capacity(), "Size is bigger than capacity");
-            ::new (begin() + m_Size++) T(*it);
-        }
-    }
+    // Constructors that manage the derived's data buffer are not safe to implement, as that data may not have been
+    // initialized properly yet (base class always goes first). In the 'protected' area, some constructors are provided
+    // that can be used to initialize the data from the derived's end
 
-    IArray(const IArray &p_Other) noexcept : m_Size(p_Other.size())
-    {
-        for (usize i = 0; i < m_Size; ++i)
-            ::new (begin() + i) T(p_Other[i]);
-    }
-
-    explicit(false) IArray(std::initializer_list<T> p_List) noexcept : m_Size(p_List.size())
-    {
-        KIT_ASSERT(p_List.size() <= capacity(), "Size is bigger than capacity");
-        for (usize i = 0; i < m_Size; ++i)
-            ::new (begin() + i) T(*(p_List.begin() + i));
-    }
-
-    IArray &operator=(const IArray &p_Other) noexcept
-    {
-        if (this == &p_Other)
-            return *this;
-        clear();
-        m_Size = p_Other.size();
-        for (usize i = 0; i < m_Size; ++i)
-            ::new (begin() + i) T(p_Other[i]);
-        return *this;
-    }
+    // In the case of the assignment operators, the derived class should already be initialized, so it is safe to manage
+    // the derived's data directly, but for consistency reasons, it is also provided in the protected area for the
+    // derived to explicitly implement it
 
     template <typename U>
         requires(ShallowIsSame<T, U>)
@@ -369,6 +341,50 @@ template <typename T, typename Derived> class IArray
     bool full() const noexcept
     {
         return m_Size == capacity();
+    }
+
+  protected:
+    template <typename... Args> void Constructor(Args &&...p_Args) noexcept
+    {
+        for (auto it = begin(); it != end(); ++it)
+            ::new (it) T(std::forward<Args>(p_Args)...);
+    }
+
+    template <std::input_iterator It> void Constructor(It p_Begin, It p_End) noexcept
+    {
+        for (auto it = p_Begin; it != p_End; ++it)
+        {
+            KIT_ASSERT(m_Size <= capacity(), "Size is bigger than capacity");
+            ::new (begin() + m_Size++) T(*it);
+        }
+    }
+
+    void Constructor(const Derived &p_Other) noexcept
+    {
+        for (usize i = 0; i < m_Size; ++i)
+            ::new (begin() + i) T(p_Other[i]);
+    }
+
+    void Constructor(std::initializer_list<T> p_List) noexcept
+    {
+        for (usize i = 0; i < m_Size; ++i)
+            ::new (begin() + i) T(*(p_List.begin() + i));
+    }
+
+    void CopyAssignment(const Derived &p_Other) noexcept
+    {
+        if (this == &p_Other)
+            return;
+        clear();
+        m_Size = p_Other.size();
+        for (usize i = 0; i < m_Size; ++i)
+            ::new (begin() + i) T(p_Other[i]);
+    }
+    void CopyAssignment(std::initializer_list<T> p_List) noexcept
+    {
+        clear();
+        for (auto it = p_List.begin(); it != p_List.end(); ++it)
+            ::new (begin() + m_Size++) T(*it);
     }
 
   private:
