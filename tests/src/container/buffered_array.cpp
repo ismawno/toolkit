@@ -2,6 +2,7 @@
 #include "kit/core/alias.hpp"
 #include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <array>
 
 namespace KIT
 {
