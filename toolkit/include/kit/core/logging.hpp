@@ -1,6 +1,6 @@
 #pragma once
 
-#include "kit/core/core.hpp"
+#include "kit/core/api.hpp"
 #include "kit/core/alias.hpp"
 
 #if !defined(KIT_ENABLE_INFO_LOGS) && !defined(KIT_ENABLE_WARNING_LOGS) && !defined(KIT_ENABLE_ASSERTS)

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "kit/core/core.hpp"
+#include "kit/core/api.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <vector>

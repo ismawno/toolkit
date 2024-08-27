@@ -130,7 +130,6 @@ TEST_CASE("Reference counting with containers", "[memory][ptr][container]")
 
 TEST_CASE("Reference counting with inheritance", "[memory][ptr]")
 {
-
     SECTION("Ref<TestBase> to Ref<TestDerived>")
     {
         {
