@@ -256,7 +256,7 @@ TEST_CASE("StaticArray (std::string)", "[core][container][StaticArray]")
 
 TEST_CASE("StaticArray cleanup check", "[core][container][StaticArray]")
 {
-    StaticArray<NonTrivialData, 10> array{5};
+    StaticArray<NonTrivialData, 10> array{5, NonTrivialData{}};
     REQUIRE(NonTrivialData::Instances == 5);
     array.pop_back();
     REQUIRE(NonTrivialData::Instances == 4);
