@@ -99,7 +99,10 @@ template <> class KIT_API Task<void> final : public ITask
     explicit Task(Callable &&p_Callable, Args &&...p_Args) noexcept
         : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
-        KIT_ASSERT(sizeof...(Args) > 0, "Wrong constructor used for Task<void>");
+        if constexpr (sizeof...(Args) == 0)
+        {
+            KIT_ERROR("Wrong constructor used for Task<void>");
+        }
     }
 
     template <typename Callable>
