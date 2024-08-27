@@ -34,7 +34,6 @@ template <typename T, typename Derived> class IArray
     IArray() noexcept = default;
     explicit IArray(const usize p_Size) noexcept : m_Size(p_Size)
     {
-        KIT_ASSERT(p_Size <= capacity(), "Size is bigger than capacity");
     }
 
     // Constructors that manage the derived's data buffer are not safe to implement, as that data may not have been
@@ -344,8 +343,12 @@ template <typename T, typename Derived> class IArray
     }
 
   protected:
+    // TODO: improve this
+    //  All constructors that use m_Size without modifying it first need the IArray constructor called in the derived's
+    //  class initializer list (quite confusing because some of them require it, some dont)
     template <typename... Args> void Constructor(Args &&...p_Args) noexcept
     {
+        KIT_ASSERT(m_Size <= capacity(), "Size is bigger than capacity");
         for (auto it = begin(); it != end(); ++it)
             ::new (it) T(std::forward<Args>(p_Args)...);
     }
@@ -361,12 +364,14 @@ template <typename T, typename Derived> class IArray
 
     void Constructor(const Derived &p_Other) noexcept
     {
+        KIT_ASSERT(m_Size <= capacity(), "Size is bigger than capacity");
         for (usize i = 0; i < m_Size; ++i)
             ::new (begin() + i) T(p_Other[i]);
     }
 
     void Constructor(std::initializer_list<T> p_List) noexcept
     {
+        KIT_ASSERT(m_Size <= capacity(), "Size is bigger than capacity");
         for (usize i = 0; i < m_Size; ++i)
             ::new (begin() + i) T(*(p_List.begin() + i));
     }
@@ -377,6 +382,7 @@ template <typename T, typename Derived> class IArray
             return;
         clear();
         m_Size = p_Other.size();
+        KIT_ASSERT(m_Size <= capacity(), "Size is bigger than capacity");
         for (usize i = 0; i < m_Size; ++i)
             ::new (begin() + i) T(p_Other[i]);
     }
@@ -384,7 +390,10 @@ template <typename T, typename Derived> class IArray
     {
         clear();
         for (auto it = p_List.begin(); it != p_List.end(); ++it)
+        {
+            KIT_ASSERT(m_Size <= capacity(), "Size is bigger than capacity");
             ::new (begin() + m_Size++) T(*it);
+        }
     }
 
   private:

@@ -18,6 +18,7 @@ set(SOURCES
     src/memory/stack_allocator.cpp
     src/memory/ptr.cpp
     src/container/static_array.cpp
+    src/container/buffered_array.cpp
     src/container/hashable_tuple.cpp
     src/multiprocessing/thread_pool.cpp
 )
