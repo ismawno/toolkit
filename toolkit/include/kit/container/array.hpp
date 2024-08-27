@@ -45,7 +45,7 @@ template <typename T, typename Derived> class IArray
     // derived to explicitly implement it
 
     template <typename U>
-        requires(ShallowIsSame<T, U>)
+        requires(std::convertible_to<U, T>)
     void push_back(U &&p_Value) noexcept
     {
         KIT_ASSERT(!full(), "Container is already full");
