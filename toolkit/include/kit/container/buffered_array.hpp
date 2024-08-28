@@ -58,11 +58,13 @@ template <typename T> class BufferedArray : public IArray<T, BufferedArray<T>>
 
     BufferedArray &operator=(const BufferedArray &p_Other) noexcept
     {
+        KIT_ASSERT(m_Data, "BufferedArray has not been provided with a buffer");
         this->CopyAssignment(p_Other);
         return *this;
     }
     BufferedArray &operator=(BufferedArray &&p_Other) noexcept
     {
+        // This can cause a leak if m_Data is set and is heap allocated
         m_Data = p_Other.m_Data;
         m_Capacity = p_Other.m_Capacity;
         p_Other.m_Data = nullptr;
@@ -72,6 +74,7 @@ template <typename T> class BufferedArray : public IArray<T, BufferedArray<T>>
 
     BufferedArray &operator=(std::initializer_list<T> p_List) noexcept
     {
+        KIT_ASSERT(m_Data, "BufferedArray has not been provided with a buffer");
         this->CopyAssignment(p_List);
         return *this;
     }
