@@ -75,7 +75,8 @@ template <> struct OpAlias<std::string>
     using Type = std::equal_to<>;
 };
 
-// These are nice to have in case I want to change the container/allocator type easily
+// These are nice to have in case I want to change the container/allocator type easily or to use the transparent
+// operations
 template <typename T> using DynamicArray = std::vector<T>;
 
 template <typename T> using Deque = std::deque<T>;
