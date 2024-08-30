@@ -7,6 +7,24 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <deque>
+#include <string_view>
+#include <string>
+
+// This is a special hash overload for associative containers that uses transparent hashing and comparison (advised by
+// sonarlint)
+namespace std
+{
+struct string_hash
+{
+    using is_transparent = void; // Enables heterogeneous operations.
+
+    size_t operator()(string_view sv) const
+    {
+        hash<string_view> hasher;
+        return hasher(sv);
+    }
+};
+} // namespace std
 
 namespace KIT
 {
@@ -39,15 +57,35 @@ using i16 = std::int16_t;
 using i32 = std::int32_t;
 using i64 = std::int64_t;
 
+template <typename T> struct HashAlias
+{
+    using Type = std::hash<T>;
+};
+template <> struct HashAlias<std::string>
+{
+    using Type = std::string_hash;
+};
+
+template <typename T> struct OpAlias
+{
+    using Type = std::equal_to<T>;
+};
+template <> struct OpAlias<std::string>
+{
+    using Type = std::equal_to<>;
+};
+
 // These are nice to have in case I want to change the container/allocator type easily
 template <typename T> using DynamicArray = std::vector<T>;
 
 template <typename T> using Deque = std::deque<T>;
 
-template <typename Key, typename Value, typename Hash = std::hash<Key>, typename OpEqual = std::equal_to<Key>>
+template <typename Key, typename Value, typename Hash = typename HashAlias<Key>::Type,
+          typename OpEqual = typename OpAlias<Key>::Type>
 using HashMap = std::unordered_map<Key, Value, Hash, OpEqual>;
 
-template <typename Value, typename Hash = std::hash<Value>, typename OpEqual = std::equal_to<Value>>
+template <typename Value, typename Hash = typename HashAlias<Value>::Type,
+          typename OpEqual = typename OpAlias<Value>::Type>
 using HashSet = std::unordered_set<Value, Hash, OpEqual>;
 } // namespace Aliases
 
