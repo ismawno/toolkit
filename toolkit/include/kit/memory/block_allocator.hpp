@@ -297,11 +297,14 @@ template <typename T, usize ChunksPerBlock> void BDestroyUnsafe(T *p_Ptr) noexce
         KIT::BDeallocate<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                            \
     }
 
-#ifndef KIT_OVERRIDE_NEW_DELETE
-#    ifdef KIT_ENABLE_BLOCK_ALLOCATOR
-#        define KIT_OVERRIDE_NEW_DELETE(p_ClassName, p_ChunksPerBlock)                                                 \
-            KIT_BLOCK_ALLOCATED(p_ClassName, p_ChunksPerBlock)
-#    else
-#        define KIT_OVERRIDE_NEW_DELETE(...)
-#    endif
-#endif
+#define KIT_BLOCK_ALLOCATED_UNSAFE(p_ClassName, p_ChunksPerBlock)                                                      \
+    static void *operator new([[maybe_unused]] usize p_Size)                                                           \
+    {                                                                                                                  \
+        KIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                      \
+                   "Trying to block allocate a derived class from a base class overloaded new/delete");                \
+        return KIT::BAllocateUnsafe<p_ClassName, p_ChunksPerBlock>();                                                  \
+    }                                                                                                                  \
+    static void operator delete(void *p_Ptr)                                                                           \
+    {                                                                                                                  \
+        KIT::BDeallocateUnsafe<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                      \
+    }

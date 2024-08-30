@@ -15,7 +15,7 @@ class KIT_API ITask : public RefCounted<ITask>
     // This is commented out because it is wasteful to instance a block allocator for ITask that will never be used.
     // Having the overloads does grant us some asserts in case something goes terribly wrong or user forgets to use
     // their/our overriden new/delete, but it is not worth the cost.
-    // KIT_OVERRIDE_NEW_DELETE(ITask, 32)
+    // KIT_BLOCK_ALLOCATED(ITask, 32)
     KIT_NON_COPYABLE(ITask)
   public:
     struct Range
@@ -48,7 +48,7 @@ class KIT_API ITask : public RefCounted<ITask>
 // void, however this use case is simple enough to not warrant the extra complexity.
 template <typename T> class Task final : public ITask
 {
-    KIT_OVERRIDE_NEW_DELETE(Task<T>, 32)
+    KIT_BLOCK_ALLOCATED(Task<T>, 32)
   public:
     void operator()(const usize p_ThreadIndex) noexcept override
     {
@@ -90,7 +90,7 @@ template <typename T> class Task final : public ITask
 
 template <> class KIT_API Task<void> final : public ITask
 {
-    KIT_OVERRIDE_NEW_DELETE(Task<void>, 32)
+    KIT_BLOCK_ALLOCATED(Task<void>, 32)
   public:
     void operator()(usize p_ThreadIndex) noexcept override;
 
