@@ -9,9 +9,18 @@
 
 namespace KIT
 {
-// For now, Scope is a disguised unique_ptr
-template <typename T> using Scope = std::unique_ptr<T>;
+// This is a small, homemade implementation of a scope pointer, which is equivalent to a unique_ptr but designed to work
+// only with the new/delete operators. Creating a Ref class was somewhat a bit more justified, as I can design it so
+// that the user data always holds the reference count, avoiding possible overhead (using those types in a non-reference
+// counting scheme is a bit wasteful and inefficient tho). The Scope implementation may seem unnecessary why
+// not just use a unique_ptr and thats it? Well, a Scope pointer is easy enough to implement, and it allows me to have a
+// bit more consistency with names conventions/factories (+ its fun). Also, I believe unique_ptr has some extra overhead
+// due to the need to be able to handle exceptions, which I dont need because I dont use them at all (you can optimize
+// that away with a noexcept, true, but I still like the idea of having a custom implementation)
 
+// All in all, I am aware moving out of my way to reinvent the wheel like this is not a good practice, and making
+// assumptions about unique_ptr's possible overhead is not a good idea. But for now, this is not important enough to
+// change, and I am happy with the result
 template <typename T> class Scope
 {
     KIT_NON_COPYABLE(Scope)
@@ -20,24 +29,26 @@ template <typename T> class Scope
     explicit(false) Scope(T *p_Ptr) noexcept : m_Ptr(p_Ptr)
     {
     }
-
-    Scope(const Scope &) = delete;
     Scope(Scope &&p_Other) noexcept : m_Ptr(p_Other.m_Ptr)
     {
         p_Other.m_Ptr = nullptr;
     }
-
-    Scope &operator=(T *p_Ptr) noexcept
+    template <typename U> explicit(false) Scope(Scope<U> &&p_Other) noexcept : m_Ptr(p_Other.m_Ptr)
     {
-        if (m_Ptr != p_Ptr)
+        p_Other.m_Ptr = nullptr;
+    }
+
+    Scope &operator=(Scope &&p_Other) noexcept
+    {
+        if (m_Ptr != p_Other.m_Ptr)
         {
             delete m_Ptr;
-            m_Ptr = p_Ptr;
+            m_Ptr = p_Other.m_Ptr;
+            p_Other.m_Ptr = nullptr;
         }
         return *this;
     }
-    Scope &operator=(const Scope &) = delete;
-    Scope &operator=(Scope &&p_Other) noexcept
+    template <typename U> Scope &operator=(Scope<U> &&p_Other) noexcept
     {
         if (m_Ptr != p_Other.m_Ptr)
         {
@@ -50,7 +61,13 @@ template <typename T> class Scope
 
     ~Scope() noexcept
     {
+        Release();
+    }
+
+    void Release() noexcept
+    {
         delete m_Ptr;
+        m_Ptr = nullptr;
     }
 
     T *operator->() const noexcept

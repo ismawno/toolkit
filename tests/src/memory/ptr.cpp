@@ -221,4 +221,38 @@ TEST_CASE("Reference counting from multiple threads", "[memory][ptr]")
     }
     REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
 }
+
+TEST_CASE("Scope basic operations", "[memory][ptr]")
+{
+    SECTION("Scope")
+    {
+        {
+            Scope<TestRefCounted> scope(new TestRefCounted());
+            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 1);
+        }
+        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
+    }
+
+    SECTION("Scope with move")
+    {
+        {
+            Scope<TestRefCounted> scope(new TestRefCounted());
+            Scope<TestRefCounted> scope2(std::move(scope));
+            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 1);
+        }
+        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
+    }
+
+    SECTION("Scope with move assignment")
+    {
+        {
+            Scope<TestRefCounted> scope(new TestRefCounted());
+            Scope<TestRefCounted> scope2;
+            scope2 = std::move(scope);
+            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 1);
+        }
+        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
+    }
+}
+
 } // namespace KIT
