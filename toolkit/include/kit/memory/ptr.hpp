@@ -3,6 +3,7 @@
 #include "kit/core/logging.hpp"
 #include "kit/core/concepts.hpp"
 #include "kit/memory/block_allocator.hpp"
+#include "kit/core/non_copyable.hpp"
 #include <memory>
 #include <atomic>
 
@@ -10,6 +11,80 @@ namespace KIT
 {
 // For now, Scope is a disguised unique_ptr
 template <typename T> using Scope = std::unique_ptr<T>;
+
+template <typename T> class Scope
+{
+    KIT_NON_COPYABLE(Scope)
+  public:
+    Scope() noexcept = default;
+    explicit(false) Scope(T *p_Ptr) noexcept : m_Ptr(p_Ptr)
+    {
+    }
+
+    Scope(const Scope &) = delete;
+    Scope(Scope &&p_Other) noexcept : m_Ptr(p_Other.m_Ptr)
+    {
+        p_Other.m_Ptr = nullptr;
+    }
+
+    Scope &operator=(T *p_Ptr) noexcept
+    {
+        if (m_Ptr != p_Ptr)
+        {
+            delete m_Ptr;
+            m_Ptr = p_Ptr;
+        }
+        return *this;
+    }
+    Scope &operator=(const Scope &) = delete;
+    Scope &operator=(Scope &&p_Other) noexcept
+    {
+        if (m_Ptr != p_Other.m_Ptr)
+        {
+            delete m_Ptr;
+            m_Ptr = p_Other.m_Ptr;
+            p_Other.m_Ptr = nullptr;
+        }
+        return *this;
+    }
+
+    ~Scope() noexcept
+    {
+        delete m_Ptr;
+    }
+
+    T *operator->() const noexcept
+    {
+        return m_Ptr;
+    }
+    T &operator*() const noexcept
+    {
+        return *m_Ptr;
+    }
+    explicit(false) operator T *() const noexcept
+    {
+        return m_Ptr;
+    }
+    explicit(false) operator bool() const noexcept
+    {
+        return m_Ptr != nullptr;
+    }
+
+    T *Get() const noexcept
+    {
+        return m_Ptr;
+    }
+
+    template <typename... Args> static Scope Create(Args &&...p_Args) noexcept
+    {
+        return Scope(new T(std::forward<Args>(p_Args)...));
+    }
+
+    std::strong_ordering operator<=>(const Scope &p_Other) const noexcept = default;
+
+  private:
+    T *m_Ptr = nullptr;
+};
 
 // I really tried to use this concept, but msvc wont fucking let me
 // template <typename T, template <typename> typename RC>
@@ -198,6 +273,11 @@ template <typename T> class Ref
     T *Get() const noexcept
     {
         return m_Ptr;
+    }
+
+    template <typename... Args> static Ref Create(Args &&...p_Args) noexcept
+    {
+        return Ref(new T(std::forward<Args>(p_Args)...));
     }
 
     std::strong_ordering operator<=>(const Ref &p_Other) const noexcept = default;
