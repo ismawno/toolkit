@@ -42,7 +42,7 @@ template <typename T> class Scope
     {
         if (m_Ptr != p_Other.m_Ptr)
         {
-            delete m_Ptr;
+            Release();
             m_Ptr = p_Other.m_Ptr;
             p_Other.m_Ptr = nullptr;
         }
@@ -52,7 +52,7 @@ template <typename T> class Scope
     {
         if (m_Ptr != p_Other.m_Ptr)
         {
-            delete m_Ptr;
+            Release();
             m_Ptr = p_Other.m_Ptr;
             p_Other.m_Ptr = nullptr;
         }
@@ -66,6 +66,8 @@ template <typename T> class Scope
 
     void Release() noexcept
     {
+        if (!m_Ptr)
+            return;
         delete m_Ptr;
         m_Ptr = nullptr;
     }
@@ -78,10 +80,7 @@ template <typename T> class Scope
     {
         return *m_Ptr;
     }
-    explicit(false) operator T *() const noexcept
-    {
-        return m_Ptr;
-    }
+
     explicit(false) operator bool() const noexcept
     {
         return m_Ptr != nullptr;
@@ -101,6 +100,8 @@ template <typename T> class Scope
 
   private:
     T *m_Ptr = nullptr;
+
+    template <typename U> friend class Scope;
 };
 
 // I really tried to use this concept, but msvc wont fucking let me

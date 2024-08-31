@@ -255,4 +255,34 @@ TEST_CASE("Scope basic operations", "[memory][ptr]")
     }
 }
 
+TEST_CASE("Scope ptr with inheritance", "[memory][ptr]")
+{
+    SECTION("Scope<TestBase> to Scope<TestDerived>")
+    {
+        {
+            Scope<TestBase> base(new TestDerived());
+            REQUIRE(TestBase::BaseInstances == 1);
+            REQUIRE(TestDerived::DerivedInstances == 1);
+        }
+        REQUIRE(TestBase::BaseInstances == 0);
+        REQUIRE(TestDerived::DerivedInstances == 0);
+    }
+
+    SECTION("Scope<TestDerived> to Scope<TestBase>")
+    {
+        {
+            Scope<TestDerived> derived(new TestDerived());
+            Scope<TestBase> base(new TestBase());
+
+            // This should leave refcount unaffected
+            base = std::move(derived);
+            Scope<TestBase> extraBase(new TestBase());
+            REQUIRE(TestBase::BaseInstances == 2);
+            REQUIRE(TestDerived::DerivedInstances == 1);
+        }
+        REQUIRE(TestBase::BaseInstances == 0);
+        REQUIRE(TestDerived::DerivedInstances == 0);
+    }
+}
+
 } // namespace KIT
