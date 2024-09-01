@@ -7,7 +7,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <deque>
-#include <queue>
 #include <string_view>
 #include <string>
 
@@ -80,7 +79,6 @@ template <> struct OpAlias<std::string>
 // operations
 template <typename T> using DynamicArray = std::vector<T>;
 template <typename T> using Deque = std::deque<T>;
-template <typename T> using Queue = std::queue<T>;
 
 template <typename Key, typename Value, typename Hash = typename HashAlias<Key>::Type,
           typename OpEqual = typename OpAlias<Key>::Type>
