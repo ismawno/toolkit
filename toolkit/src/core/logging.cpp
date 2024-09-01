@@ -35,13 +35,23 @@ KIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
 void logMessage(const char *p_Level, const std::string_view p_File, const i32 p_Line, const char *p_Color,
                 const bool p_Crash, const std::string_view p_Message) noexcept
 {
-    const std::string root = KIT_ROOT_PATH;
-    const usize pos = p_File.find(root);
-    const std::string_view file_rel = pos == std::string::npos ? p_File : p_File.substr(pos + 1 + root.size());
+    if (p_Line != INT32_MAX)
+    {
+        const std::string root = KIT_ROOT_PATH;
+        const usize pos = p_File.find(root);
+        const std::string_view file_rel = pos == std::string::npos ? p_File : p_File.substr(pos + 1 + root.size());
 
-    const std::string log = KIT_FORMAT("[{:%Y-%m-%d %H:%M}] [{}{}{}] [{}:{}] {}\n", std::chrono::system_clock::now(),
-                                       p_Color, p_Level, KIT_LOG_COLOR_RESET, file_rel, p_Line, p_Message);
-    std::cout << log;
+        const std::string log =
+            KIT_FORMAT("[{:%Y-%m-%d %H:%M}] [{}{}{}] [{}:{}] {}\n", std::chrono::system_clock::now(), p_Color, p_Level,
+                       KIT_LOG_COLOR_RESET, file_rel, p_Line, p_Message);
+        std::cout << log;
+    }
+    else
+    {
+        const std::string log = KIT_FORMAT("[{:%Y-%m-%d %H:%M}] [{}{}{}] {}\n", std::chrono::system_clock::now(),
+                                           p_Color, p_Level, KIT_LOG_COLOR_RESET, p_Message);
+        std::cout << log;
+    }
     if (p_Crash)
         debugBreak();
 }

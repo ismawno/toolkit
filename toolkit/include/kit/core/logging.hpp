@@ -48,9 +48,9 @@ KIT_API void logMessageIf(bool condition, const char *p_Level, std::string_view 
 
 #ifdef KIT_ENABLE_INFO_LOGS
 #    define KIT_LOG_INFO(...)                                                                                          \
-        KIT::logMessage("INFO", __FILE__, __LINE__, KIT_LOG_COLOR_GREEN, false, KIT_FORMAT(__VA_ARGS__))
+        KIT::logMessage("INFO", __FILE__, INT32_MAX, KIT_LOG_COLOR_GREEN, false, KIT_FORMAT(__VA_ARGS__))
 #    define KIT_LOG_INFO_IF(condition, ...)                                                                            \
-        KIT::logMessageIf(condition, "INFO", __FILE__, __LINE__, KIT_LOG_COLOR_GREEN, false, KIT_FORMAT(__VA_ARGS__))
+        KIT::logMessageIf(condition, "INFO", __FILE__, INT32_MAX, KIT_LOG_COLOR_GREEN, false, KIT_FORMAT(__VA_ARGS__))
 #else
 #    define KIT_LOG_INFO(...)
 #    define KIT_LOG_INFO_IF(...)
