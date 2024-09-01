@@ -1,6 +1,6 @@
 #include "kit/multiprocessing/thread_pool.hpp"
 #include "kit/multiprocessing/for_each.hpp"
-#include "kit/multiprocessing/spin_mutex.hpp"
+#include "kit/multiprocessing/spin_lock.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <array>
 
@@ -86,8 +86,8 @@ TEST_CASE("ThreadPool (std::mutex)", "[multiprocessing]")
     RunThreadPoolTest<std::mutex>();
 }
 
-TEST_CASE("ThreadPool (SpinMutex)", "[multiprocessing]")
+TEST_CASE("ThreadPool (SpinLock)", "[multiprocessing]")
 {
-    RunThreadPoolTest<SpinMutex>();
+    RunThreadPoolTest<SpinLock>();
 }
 } // namespace KIT

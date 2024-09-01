@@ -1,6 +1,6 @@
 #include "core/pch.hpp"
 #include "kit/multiprocessing/thread_pool.hpp"
-#include "kit/multiprocessing/spin_mutex.hpp"
+#include "kit/multiprocessing/spin_lock.hpp"
 
 namespace KIT
 {
@@ -78,5 +78,5 @@ template <Mutex MTX> void ThreadPool<MTX>::SubmitTask(const Ref<ITask> &p_Task) 
 }
 
 template class ThreadPool<std::mutex>;
-template class ThreadPool<SpinMutex>;
+template class ThreadPool<SpinLock>;
 } // namespace KIT

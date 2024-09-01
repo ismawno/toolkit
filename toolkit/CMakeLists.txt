@@ -15,7 +15,7 @@ set(SOURCES
     src/multiprocessing/task.cpp
     src/multiprocessing/task_manager.cpp
     src/multiprocessing/thread_pool.cpp
-    src/multiprocessing/spin_mutex.cpp
+    src/multiprocessing/spin_lock.cpp
 )
 
 # Create the library

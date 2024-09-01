@@ -5,7 +5,7 @@
 
 namespace KIT
 {
-class KIT_API SpinMutex
+class KIT_API SpinLock
 {
   public:
     void lock() noexcept;

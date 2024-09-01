@@ -89,5 +89,5 @@ void RecordParallelSum(const ThreadPoolSumSettings &p_Settings, usize p_Maxthrea
 }
 
 template void RecordThreadPoolSum<std::mutex>(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads);
-template void RecordThreadPoolSum<SpinMutex>(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads);
+template void RecordThreadPoolSum<SpinLock>(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads);
 } // namespace KIT

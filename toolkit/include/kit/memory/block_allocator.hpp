@@ -5,7 +5,7 @@
 #include "kit/memory/memory.hpp"
 #include "kit/core/logging.hpp"
 #include "kit/core/concepts.hpp"
-#include "kit/multiprocessing/spin_mutex.hpp"
+#include "kit/multiprocessing/spin_lock.hpp"
 #include <mutex>
 
 namespace KIT
@@ -239,7 +239,7 @@ template <typename T> class KIT_API BlockAllocator final
     Chunk *m_FreeList = nullptr;
     DynamicArray<std::byte *> m_Blocks;
     usize m_BlockSize;
-    SpinMutex m_Mutex;
+    SpinLock m_Mutex;
 };
 
 template <typename T, usize ChunksPerBlock> BlockAllocator<T> &GlobalBlockAllocatorInstance() noexcept
