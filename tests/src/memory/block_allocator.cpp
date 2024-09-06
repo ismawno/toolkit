@@ -16,19 +16,19 @@ template <typename T> static void RunRawAllocationTest()
 
     DYNAMIC_SECTION("Allocate and deallocate (raw call)" << (int)typeid(T).hash_code())
     {
-        T *data = allocator.AllocateUnsafe();
+        T *data = allocator.AllocateSerial();
         REQUIRE(data != nullptr);
         REQUIRE(allocator.Owns(data));
-        allocator.DeallocateUnsafe(data);
+        allocator.DeallocateSerial(data);
         REQUIRE(allocator.Empty());
     }
 
     DYNAMIC_SECTION("Create and destroy (raw call)" << (int)typeid(T).hash_code())
     {
-        T *data = allocator.Create();
+        T *data = allocator.CreateSerial();
         REQUIRE(data != nullptr);
         REQUIRE(allocator.Owns(data));
-        allocator.Destroy(data);
+        allocator.DestroySerial(data);
         REQUIRE(allocator.Empty());
     }
 
@@ -40,7 +40,7 @@ template <typename T> static void RunRawAllocationTest()
             HashSet<T *> allocated;
             for (u32 i = 0; i < amount; ++i)
             {
-                T *ptr = allocator.AllocateUnsafe();
+                T *ptr = allocator.AllocateSerial();
                 REQUIRE(ptr != nullptr);
                 REQUIRE(allocated.insert(ptr).second);
                 REQUIRE(allocator.Owns(ptr));
@@ -48,15 +48,15 @@ template <typename T> static void RunRawAllocationTest()
             REQUIRE(allocator.Allocations() == amount);
 
             for (T *ptr : allocated)
-                allocator.DeallocateUnsafe(ptr);
+                allocator.DeallocateSerial(ptr);
 
             // Reuse the same chunk over and over again
             for (u32 i = 0; i < amount; ++i)
             {
-                T *ptr = allocator.AllocateUnsafe();
+                T *ptr = allocator.AllocateSerial();
                 REQUIRE(ptr != nullptr);
                 REQUIRE(allocator.Owns(ptr));
-                allocator.DeallocateUnsafe(ptr);
+                allocator.DeallocateSerial(ptr);
             }
             REQUIRE(allocator.BlockCount() == amount / 10);
         }
@@ -70,7 +70,7 @@ template <typename T> static void RunRawAllocationTest()
         const usize chunkSize = allocator.ChunkSize();
         for (u32 i = 0; i < amount; ++i)
         {
-            data[i] = allocator.AllocateUnsafe();
+            data[i] = allocator.AllocateSerial();
             REQUIRE(data[i] != nullptr);
             REQUIRE(allocator.Owns(data[i]));
             if (i != 0)
@@ -81,7 +81,7 @@ template <typename T> static void RunRawAllocationTest()
             }
         }
         for (u32 i = 0; i < amount; ++i)
-            allocator.Deallocate(data[i]);
+            allocator.DeallocateSerial(data[i]);
         REQUIRE(allocator.Empty());
     }
 }
@@ -159,7 +159,7 @@ template <typename T> static void RunMultithreadedAllocationsTest()
 {
     struct Data
     {
-        KIT_BLOCK_ALLOCATED(Data, 125);
+        KIT_BLOCK_ALLOCATED_CONCURRENT(Data, 125);
         T Custom;
         u32 Value1 = 0;
         u32 Value2 = 0;

@@ -7,13 +7,13 @@ namespace KIT
 {
 struct SmallData
 {
-    KIT_BLOCK_ALLOCATED(SmallData, 10);
+    KIT_BLOCK_ALLOCATED_CONCURRENT(SmallData, 10);
     i32 x;
 };
 
 struct BigData
 {
-    KIT_BLOCK_ALLOCATED(BigData, 10);
+    KIT_BLOCK_ALLOCATED_CONCURRENT(BigData, 10);
     f64 x;
     f64 y;
     f64 z;
@@ -25,7 +25,7 @@ KIT_MSVC_WARNING_IGNORE(4324)
 
 struct AlignedData
 {
-    KIT_BLOCK_ALLOCATED(AlignedData, 10);
+    KIT_BLOCK_ALLOCATED_CONCURRENT(AlignedData, 10);
     alignas(16) f64 x, y, z;
     alignas(32) f64 a, b, c;
 };
@@ -33,7 +33,7 @@ KIT_WARNING_IGNORE_POP
 
 struct NonTrivialData
 {
-    KIT_BLOCK_ALLOCATED(NonTrivialData, 10);
+    KIT_BLOCK_ALLOCATED_CONCURRENT(NonTrivialData, 10);
     i32 *x = nullptr;
     NonTrivialData() : x(new i32[25])
     {
@@ -91,7 +91,7 @@ struct NonTrivialData
 
 struct VirtualBase
 {
-    KIT_BLOCK_ALLOCATED(VirtualBase, 10);
+    KIT_BLOCK_ALLOCATED_CONCURRENT(VirtualBase, 10);
     VirtualBase()
     {
         ++BaseInstances;
@@ -119,7 +119,7 @@ struct VirtualBase
 
 struct VirtualDerived : VirtualBase
 {
-    KIT_BLOCK_ALLOCATED(VirtualDerived, 10);
+    KIT_BLOCK_ALLOCATED_CONCURRENT(VirtualDerived, 10);
     VirtualDerived()
     {
         ++DerivedInstances;

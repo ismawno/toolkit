@@ -20,8 +20,8 @@ int main()
     RecordMallocFreeST(settings.Allocation);
 
     KIT_LOG_INFO("Running block allocator ST...");
-    RecordBlockAllocatorSafeST(settings.Allocation);
-    RecordBlockAllocatorUnsafeST(settings.Allocation);
+    RecordBlockAllocatorConcurrentST(settings.Allocation);
+    RecordBlockAllocatorSerialST(settings.Allocation);
 
     KIT_LOG_INFO("Running malloc/free MT...");
     RecordMallocFreeMT(settings.Allocation, settings.MaxThreads);

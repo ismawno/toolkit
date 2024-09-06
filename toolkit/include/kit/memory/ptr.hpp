@@ -179,7 +179,7 @@ template <typename T> class RefCounted
 // To use const, Ref<const T> should be enough
 template <typename T> class Ref
 {
-    KIT_BLOCK_ALLOCATED(Ref<T>, 32)
+    KIT_BLOCK_ALLOCATED_CONCURRENT(Ref<T>, 32)
   public:
     Ref() noexcept = default;
 

@@ -15,7 +15,7 @@ namespace KIT
 
 // On my macOS m1 this allocator is able to allocate 10000 elements of 128 bytes in 0.035 ms and deallocate them in
 // 0.012 (3.5ns per allocation and 1.2ns per deallocation). This is roughly a 10x improvement over the default
-// new/delete, using the unsafe variants. When usingthe safe variants, latency is doubled (aprox)
+// new/delete, using the Serial variants. When usingthe safe variants, latency is doubled (aprox)
 
 template <typename T> class KIT_API BlockAllocator final
 {
@@ -80,45 +80,45 @@ template <typename T> class KIT_API BlockAllocator final
             return alignof(T);
     }
 
-    template <typename... Args> [[nodiscard]] T *Create(Args &&...p_Args) noexcept
+    template <typename... Args> [[nodiscard]] T *CreateConcurrent(Args &&...p_Args) noexcept
     {
-        T *ptr = Allocate();
+        T *ptr = AllocateConcurrent();
         ::new (ptr) T(std::forward<Args>(p_Args)...);
         return ptr;
     }
-    void Destroy(T *p_Ptr) noexcept
+    void DestroyConcurrent(T *p_Ptr) noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
             p_Ptr->~T();
-        Deallocate(p_Ptr);
+        DeallocateConcurrent(p_Ptr);
     }
 
-    template <typename... Args> [[nodiscard]] T *CreateUnsafe(Args &&...p_Args) noexcept
+    template <typename... Args> [[nodiscard]] T *CreateSerial(Args &&...p_Args) noexcept
     {
-        T *ptr = AllocateUnsafe();
+        T *ptr = AllocateSerial();
         ::new (ptr) T(std::forward<Args>(p_Args)...);
         return ptr;
     }
-    void DestroyUnsafe(T *p_Ptr) noexcept
+    void DestroySerial(T *p_Ptr) noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
             p_Ptr->~T();
-        DeallocateUnsafe(p_Ptr);
+        DeallocateSerial(p_Ptr);
     }
 
-    [[nodiscard]] T *Allocate() noexcept
+    [[nodiscard]] T *AllocateConcurrent() noexcept
     {
         std::scoped_lock lock(m_Mutex);
-        return AllocateUnsafe();
+        return AllocateSerial();
     }
 
-    void Deallocate(T *p_Ptr) noexcept
+    void DeallocateConcurrent(T *p_Ptr) noexcept
     {
         std::scoped_lock lock(m_Mutex);
-        DeallocateUnsafe(p_Ptr);
+        DeallocateSerial(p_Ptr);
     }
 
-    [[nodiscard]] T *AllocateUnsafe() noexcept
+    [[nodiscard]] T *AllocateSerial() noexcept
     {
         ++m_Allocations;
         if (m_FreeList)
@@ -126,7 +126,7 @@ template <typename T> class KIT_API BlockAllocator final
         return fromFirstChunkOfNewBlock();
     }
 
-    void DeallocateUnsafe(T *p_Ptr) noexcept
+    void DeallocateSerial(T *p_Ptr) noexcept
     {
         KIT_ASSERT(!Empty(), "The current allocator has no active allocations yet");
         KIT_ASSERT(Owns(p_Ptr), "Trying to deallocate a pointer that was not allocated by this allocator");
@@ -137,7 +137,7 @@ template <typename T> class KIT_API BlockAllocator final
         m_FreeList = chunk;
     }
 
-    void Reserve()
+    void ReserveConcurrent()
     {
         if (m_FreeList)
             return;
@@ -147,7 +147,7 @@ template <typename T> class KIT_API BlockAllocator final
         m_Blocks.push_back(data);
     }
 
-    void ReserveUnsafe()
+    void ReserveSerial()
     {
         if (m_FreeList)
             return;
@@ -248,63 +248,63 @@ template <typename T, usize ChunksPerBlock> BlockAllocator<T> &GlobalBlockAlloca
     return allocator;
 }
 
-template <typename T, usize ChunksPerBlock> T *BAllocate() noexcept
+template <typename T, usize ChunksPerBlock> T *BAllocateConcurrent() noexcept
 {
-    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().Allocate();
+    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().AllocateConcurrent();
 }
-template <typename T, usize ChunksPerBlock> void BDeallocate(T *p_Ptr) noexcept
+template <typename T, usize ChunksPerBlock> void BDeallocateConcurrent(T *p_Ptr) noexcept
 {
-    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().Deallocate(p_Ptr);
+    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().DeallocateConcurrent(p_Ptr);
 }
 
-template <typename T, usize ChunksPerBlock> T *BAllocateUnsafe() noexcept
+template <typename T, usize ChunksPerBlock> T *BAllocateSerial() noexcept
 {
-    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().AllocateUnsafe();
+    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().AllocateSerial();
 }
-template <typename T, usize ChunksPerBlock> void BDeallocateUnsafe(T *p_Ptr) noexcept
+template <typename T, usize ChunksPerBlock> void BDeallocateSerial(T *p_Ptr) noexcept
 {
-    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().DeallocateUnsafe(p_Ptr);
+    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().DeallocateSerial(p_Ptr);
 }
 
 template <typename T, usize ChunksPerBlock, typename... Args> T *BCreate(Args &&...p_Args) noexcept
 {
-    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().Create(std::forward<Args>(p_Args)...);
+    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().CreateConcurrent(std::forward<Args>(p_Args)...);
 }
 template <typename T, usize ChunksPerBlock> void BDestroy(T *p_Ptr) noexcept
 {
-    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().Destroy(p_Ptr);
+    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().DestroyConcurrent(p_Ptr);
 }
 
-template <typename T, usize ChunksPerBlock, typename... Args> T *BCreateUnsafe(Args &&...p_Args) noexcept
+template <typename T, usize ChunksPerBlock, typename... Args> T *BCreateSerial(Args &&...p_Args) noexcept
 {
-    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().CreateUnsafe(std::forward<Args>(p_Args)...);
+    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().CreateSerial(std::forward<Args>(p_Args)...);
 }
-template <typename T, usize ChunksPerBlock> void BDestroyUnsafe(T *p_Ptr) noexcept
+template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexcept
 {
-    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().DestroyUnsafe(p_Ptr);
+    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().DestroySerial(p_Ptr);
 }
 } // namespace KIT
 
-#define KIT_BLOCK_ALLOCATED(p_ClassName, p_ChunksPerBlock)                                                             \
+#define KIT_BLOCK_ALLOCATED_CONCURRENT(p_ClassName, p_ChunksPerBlock)                                                  \
     static void *operator new([[maybe_unused]] usize p_Size)                                                           \
     {                                                                                                                  \
         KIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                      \
                    "Trying to block allocate a derived class from a base class overloaded new/delete");                \
-        return KIT::BAllocate<p_ClassName, p_ChunksPerBlock>();                                                        \
+        return KIT::BAllocateConcurrent<p_ClassName, p_ChunksPerBlock>();                                              \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr)                                                                           \
     {                                                                                                                  \
-        KIT::BDeallocate<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                            \
+        KIT::BDeallocateConcurrent<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                  \
     }
 
-#define KIT_BLOCK_ALLOCATED_UNSAFE(p_ClassName, p_ChunksPerBlock)                                                      \
+#define KIT_BLOCK_ALLOCATED_SERIAL(p_ClassName, p_ChunksPerBlock)                                                      \
     static void *operator new([[maybe_unused]] usize p_Size)                                                           \
     {                                                                                                                  \
         KIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                      \
                    "Trying to block allocate a derived class from a base class overloaded new/delete");                \
-        return KIT::BAllocateUnsafe<p_ClassName, p_ChunksPerBlock>();                                                  \
+        return KIT::BAllocateSerial<p_ClassName, p_ChunksPerBlock>();                                                  \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr)                                                                           \
     {                                                                                                                  \
-        KIT::BDeallocateUnsafe<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                      \
+        KIT::BDeallocateSerial<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                      \
     }

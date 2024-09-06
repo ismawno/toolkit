@@ -8,8 +8,8 @@ namespace KIT
 void RecordMallocFreeST(const AllocationSettings &p_Settings);
 void RecordMallocFreeMT(const AllocationSettings &p_Settings, usize p_MaxThreads);
 
-void RecordBlockAllocatorSafeST(const AllocationSettings &p_Settings);
-void RecordBlockAllocatorUnsafeST(const AllocationSettings &p_Settings);
+void RecordBlockAllocatorConcurrentST(const AllocationSettings &p_Settings);
+void RecordBlockAllocatorSerialST(const AllocationSettings &p_Settings);
 void RecordBlockAllocatorMT(const AllocationSettings &p_Settings, usize p_MaxThreads);
 
 void RecordStackAllocator(const AllocationSettings &p_Settings);
