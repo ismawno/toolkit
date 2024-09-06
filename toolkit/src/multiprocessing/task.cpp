@@ -4,19 +4,17 @@
 
 namespace KIT
 {
-bool ITask::Valid() const noexcept
-{
-    return m_Manager != nullptr;
-}
-
 bool ITask::Finished() const noexcept
 {
-    return Valid() && m_Finished.test(std::memory_order_relaxed);
+    return m_Finished.test(std::memory_order_relaxed);
 }
-
 void ITask::WaitUntilFinished() const noexcept
 {
     m_Finished.wait(false, std::memory_order_acquire);
+}
+void ITask::Reset() noexcept
+{
+    m_Finished.clear(std::memory_order_relaxed);
 }
 
 void ITask::NotifyCompleted() noexcept

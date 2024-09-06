@@ -24,21 +24,19 @@ class KIT_API ITask : public RefCounted<ITask>
         usize End;
     };
 
+    ITask() noexcept = default;
     virtual ~ITask() noexcept = default;
 
     virtual void operator()(usize p_ThreadIndex) noexcept = 0;
 
-    bool Valid() const noexcept;
     bool Finished() const noexcept;
     void WaitUntilFinished() const noexcept;
+    void Reset() noexcept;
 
   protected:
-    ITask() noexcept = default;
-
     void NotifyCompleted() noexcept;
 
   private:
-    TaskManager *m_Manager = nullptr;
     std::atomic_flag m_Finished = ATOMIC_FLAG_INIT;
 
     friend class TaskManager;
@@ -48,8 +46,8 @@ class KIT_API ITask : public RefCounted<ITask>
 // void, however this use case is simple enough to not warrant the extra complexity.
 template <typename T> class Task final : public ITask
 {
-    KIT_BLOCK_ALLOCATED(Task<T>, 32)
   public:
+    KIT_BLOCK_ALLOCATED(Task<T>, 32)
     void operator()(const usize p_ThreadIndex) noexcept override
     {
         m_Result = m_Function(p_ThreadIndex);
@@ -62,7 +60,6 @@ template <typename T> class Task final : public ITask
         return m_Result;
     }
 
-  private:
     template <typename Callable, typename... Args>
         requires(!std::is_same_v<Callable, Task>)
     explicit Task(Callable &&p_Callable, Args &&...p_Args) noexcept
@@ -90,8 +87,8 @@ template <typename T> class Task final : public ITask
 
 template <> class KIT_API Task<void> final : public ITask
 {
-    KIT_BLOCK_ALLOCATED(Task<void>, 32)
   public:
+    KIT_BLOCK_ALLOCATED(Task<void>, 32)
     void operator()(usize p_ThreadIndex) noexcept override;
 
     template <typename Callable, typename... Args>
