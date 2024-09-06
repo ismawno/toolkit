@@ -6,7 +6,10 @@
 namespace KIT
 {
 // A simple TaskManager interface that allows users to implement their own task system with their own threading model
-// TODO: A task may only be submitted again if it has finished execution
+
+// A task may only be submitted again if it has finished execution and its Reset() method has been called. Beware,
+// if multiple threads are waiting for the same task to finish and one of them finishes waiting and resets it "too
+// quickly", the other threads may be left waiting indefinitely
 class KIT_API TaskManager
 {
   public:
