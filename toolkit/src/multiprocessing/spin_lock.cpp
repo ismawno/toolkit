@@ -5,9 +5,8 @@ namespace KIT
 {
 void SpinLock::lock() noexcept
 {
-    while (m_Flag.test_and_set(std::memory_order_relaxed))
+    while (m_Flag.test_and_set(std::memory_order_acquire))
         std::this_thread::yield();
-    std::atomic_thread_fence(std::memory_order_acquire);
 }
 
 void SpinLock::unlock() noexcept
