@@ -31,8 +31,8 @@ template <typename T, typename Derived> class IArray
     // I figured that if I want to have a more STL-like interface, I should use the same naming conventions, although I
     // am not really sure when to "stop"
 
-    IArray() noexcept = default;
-    explicit IArray(const usize p_Size) noexcept : m_Size(p_Size)
+    constexpr IArray() noexcept = default;
+    explicit constexpr IArray(const usize p_Size) noexcept : m_Size(p_Size)
     {
     }
 
@@ -328,7 +328,7 @@ template <typename T, typename Derived> class IArray
     {
         return m_Size;
     }
-    usize capacity() const noexcept
+    constexpr usize capacity() const noexcept
     {
         return static_cast<const Derived *>(this)->capacity();
     }
