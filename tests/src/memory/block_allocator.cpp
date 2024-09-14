@@ -11,8 +11,8 @@ template <typename T> static void RunRawAllocationTest()
 {
     REQUIRE(sizeof(T) % alignof(T) == 0);
     BlockAllocator<T> allocator(10);
-    REQUIRE(allocator.Empty());
-    REQUIRE(allocator.BlockCount() == 0);
+    REQUIRE(allocator.IsEmpty());
+    REQUIRE(allocator.GetBlockCount() == 0);
 
     DYNAMIC_SECTION("Allocate and deallocate (raw call)" << (int)typeid(T).hash_code())
     {
@@ -20,7 +20,7 @@ template <typename T> static void RunRawAllocationTest()
         REQUIRE(data != nullptr);
         REQUIRE(allocator.Owns(data));
         allocator.DeallocateSerial(data);
-        REQUIRE(allocator.Empty());
+        REQUIRE(allocator.IsEmpty());
     }
 
     DYNAMIC_SECTION("Create and destroy (raw call)" << (int)typeid(T).hash_code())
@@ -29,7 +29,7 @@ template <typename T> static void RunRawAllocationTest()
         REQUIRE(data != nullptr);
         REQUIRE(allocator.Owns(data));
         allocator.DestroySerial(data);
-        REQUIRE(allocator.Empty());
+        REQUIRE(allocator.IsEmpty());
     }
 
     DYNAMIC_SECTION("Allocate and deallocate multiple (raw call)" << (int)typeid(T).hash_code())
@@ -45,7 +45,7 @@ template <typename T> static void RunRawAllocationTest()
                 REQUIRE(allocated.insert(ptr).second);
                 REQUIRE(allocator.Owns(ptr));
             }
-            REQUIRE(allocator.Allocations() == amount);
+            REQUIRE(allocator.GetAllocations() == amount);
 
             for (T *ptr : allocated)
                 allocator.DeallocateSerial(ptr);
@@ -58,16 +58,16 @@ template <typename T> static void RunRawAllocationTest()
                 REQUIRE(allocator.Owns(ptr));
                 allocator.DeallocateSerial(ptr);
             }
-            REQUIRE(allocator.BlockCount() == amount / 10);
+            REQUIRE(allocator.GetBlockCount() == amount / 10);
         }
-        REQUIRE(allocator.Empty());
+        REQUIRE(allocator.IsEmpty());
     }
 
     DYNAMIC_SECTION("Assert contiguous (raw call)" << (int)typeid(T).hash_code())
     {
         constexpr u32 amount = 10;
         std::array<T *, amount> data;
-        const usize chunkSize = allocator.ChunkSize();
+        const usize chunkSize = allocator.GetChunkSize();
         for (u32 i = 0; i < amount; ++i)
         {
             data[i] = allocator.AllocateSerial();
@@ -82,14 +82,14 @@ template <typename T> static void RunRawAllocationTest()
         }
         for (u32 i = 0; i < amount; ++i)
             allocator.DeallocateSerial(data[i]);
-        REQUIRE(allocator.Empty());
+        REQUIRE(allocator.IsEmpty());
     }
 }
 
 template <typename T> static void RunNewDeleteTest()
 {
     BlockAllocator<T> &allocator = GlobalBlockAllocatorInstance<T, 10>();
-    REQUIRE(allocator.Empty());
+    REQUIRE(allocator.IsEmpty());
     allocator.Reset();
 
     DYNAMIC_SECTION("Allocate and deallocate (new/delete)" << (int)typeid(T).hash_code())
@@ -98,7 +98,7 @@ template <typename T> static void RunNewDeleteTest()
         REQUIRE(data != nullptr);
         REQUIRE(allocator.Owns(data));
         delete data;
-        REQUIRE(allocator.Empty());
+        REQUIRE(allocator.IsEmpty());
     }
 
     DYNAMIC_SECTION("Allocate and deallocate multiple (new/delete)" << (int)typeid(T).hash_code())
@@ -114,7 +114,7 @@ template <typename T> static void RunNewDeleteTest()
                 REQUIRE(allocated.insert(ptr).second);
                 REQUIRE(allocator.Owns(ptr));
             }
-            REQUIRE(allocator.Allocations() == amount);
+            REQUIRE(allocator.GetAllocations() == amount);
             for (T *ptr : allocated)
                 delete ptr;
 
@@ -127,16 +127,16 @@ template <typename T> static void RunNewDeleteTest()
                 delete ptr;
             }
 
-            REQUIRE(allocator.BlockCount() == amount / 10);
+            REQUIRE(allocator.GetBlockCount() == amount / 10);
         }
-        REQUIRE(allocator.Empty());
+        REQUIRE(allocator.IsEmpty());
     }
 
     DYNAMIC_SECTION("Assert contiguous (new/delete)" << (int)typeid(T).hash_code())
     {
         constexpr u32 amount = 10;
         std::array<T *, amount> data;
-        constexpr usize chunkSize = BlockAllocator<T>::ChunkSize();
+        constexpr usize chunkSize = BlockAllocator<T>::GetChunkSize();
         for (u32 i = 0; i < amount; ++i)
         {
             data[i] = new T;
@@ -151,7 +151,7 @@ template <typename T> static void RunNewDeleteTest()
         }
         for (u32 i = 0; i < amount; ++i)
             delete data[i];
-        REQUIRE(allocator.Empty());
+        REQUIRE(allocator.IsEmpty());
     }
 }
 
@@ -203,7 +203,7 @@ template <typename T> static void RunMultithreadedAllocationsTest()
 template <typename Base, typename Derived> void RunVirtualAllocatorTests()
 {
     BlockAllocator<Derived> &allocator = GlobalBlockAllocatorInstance<Derived, 10>();
-    REQUIRE(allocator.Empty());
+    REQUIRE(allocator.IsEmpty());
     allocator.Reset();
 
     DYNAMIC_SECTION("Virtual deallocations" << (int)typeid(Derived).hash_code())
@@ -230,7 +230,7 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
                 REQUIRE(allocated.insert(vd).second);
                 REQUIRE(allocator.Owns(vd));
             }
-            REQUIRE(allocator.Allocations() == amount);
+            REQUIRE(allocator.GetAllocations() == amount);
             for (Base *vb : allocated)
             {
                 REQUIRE(vb->x == 10);
@@ -248,7 +248,7 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
                 REQUIRE(allocator.Owns(vd));
                 delete vd;
             }
-            REQUIRE(allocator.Empty());
+            REQUIRE(allocator.IsEmpty());
         }
     }
 }

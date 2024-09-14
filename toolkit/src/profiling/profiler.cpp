@@ -23,7 +23,7 @@ void Profiler::EndMeasurement() noexcept
 
     const auto [name, clock] = s_OngoingMeasurements.back();
     measurement.Name = name;
-    measurement.Elapsed = clock.Elapsed();
+    measurement.Elapsed = clock.GetElapsed();
     s_OngoingMeasurements.pop_back();
 
     s_Measurements.push_back(measurement);
@@ -39,12 +39,12 @@ void Profiler::Clear() noexcept
     s_Measurements.clear();
 }
 
-bool Profiler::Empty() noexcept
+bool Profiler::IsEmpty() noexcept
 {
     return s_Measurements.empty();
 }
 
-const DynamicArray<Measurement> &Profiler::Measurements() noexcept
+const DynamicArray<Measurement> &Profiler::GetMeasurements() noexcept
 {
     return s_Measurements;
 }

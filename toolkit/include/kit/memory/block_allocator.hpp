@@ -21,7 +21,7 @@ template <typename T> class KIT_API BlockAllocator final
 {
     KIT_NON_COPYABLE(BlockAllocator)
   public:
-    explicit BlockAllocator(const usize p_ChunksPerBlock) noexcept : m_BlockSize(ChunkSize() * p_ChunksPerBlock)
+    explicit BlockAllocator(const usize p_ChunksPerBlock) noexcept : m_BlockSize(GetChunkSize() * p_ChunksPerBlock)
     {
     }
 
@@ -55,24 +55,24 @@ template <typename T> class KIT_API BlockAllocator final
         return *this;
     }
 
-    usize BlockSize() const noexcept
+    usize GetBlockSize() const noexcept
     {
         return m_BlockSize;
     }
 
-    usize ChunksPerBlock() const noexcept
+    usize GetChunksPerBlock() const noexcept
     {
-        return m_BlockSize / ChunkSize();
+        return m_BlockSize / GetChunkSize();
     }
 
-    static KIT_CONSTEVAL usize ChunkSize() noexcept
+    static KIT_CONSTEVAL usize GetChunkSize() noexcept
     {
         if constexpr (sizeof(T) < sizeof(Chunk))
             return AlignedSize<Chunk>();
         else
             return AlignedSize<T>();
     }
-    static KIT_CONSTEVAL usize ChunkAlignment() noexcept
+    static KIT_CONSTEVAL usize GetChunkAlignment() noexcept
     {
         if constexpr (alignof(T) < alignof(Chunk))
             return alignof(Chunk);
@@ -128,7 +128,7 @@ template <typename T> class KIT_API BlockAllocator final
 
     void DeallocateSerial(T *p_Ptr) noexcept
     {
-        KIT_ASSERT(!Empty(), "The current allocator has no active allocations yet");
+        KIT_ASSERT(!IsEmpty(), "The current allocator has no active allocations yet");
         KIT_ASSERT(Owns(p_Ptr), "Trying to deallocate a pointer that was not allocated by this allocator");
 
         --m_Allocations;
@@ -158,8 +158,8 @@ template <typename T> class KIT_API BlockAllocator final
 
     void Reset()
     {
-        KIT_LOG_WARNING_IF(!Empty(), "The current allocator has active allocations. Resetting the allocator will "
-                                     "prematurely deallocate all memory, and no destructor will be called");
+        KIT_LOG_WARNING_IF(!IsEmpty(), "The current allocator has active allocations. Resetting the allocator will "
+                                       "prematurely deallocate all memory, and no destructor will be called");
         for (std::byte *block : m_Blocks)
             DeallocateAligned(block);
         m_Allocations = 0;
@@ -173,21 +173,21 @@ template <typename T> class KIT_API BlockAllocator final
     {
         const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
         for (const std::byte *block : m_Blocks)
-            if (ptr >= block && ptr < block + this->BlockSize())
+            if (ptr >= block && ptr < block + this->GetBlockSize())
                 return true;
         return false;
     }
 
-    usize BlockCount() const noexcept
+    usize GetBlockCount() const noexcept
     {
         return m_Blocks.size();
     }
 
-    bool Empty() const noexcept
+    bool IsEmpty() const noexcept
     {
         return m_Allocations == 0;
     }
-    u32 Allocations() const noexcept
+    u32 GetAllocations() const noexcept
     {
         return m_Allocations;
     }
@@ -201,8 +201,8 @@ template <typename T> class KIT_API BlockAllocator final
 
     static std::byte *allocateNewBlock(const usize p_BlockSize) noexcept
     {
-        constexpr usize chunkSize = ChunkSize();
-        constexpr usize alignment = ChunkAlignment();
+        constexpr usize chunkSize = GetChunkSize();
+        constexpr usize alignment = GetChunkAlignment();
 
         // With AllocateAligned, I dont need to worry about the alignment of the block itself, or subsequent individual
         // elements. They are of the same type, so adress + n * sizeof(T) will always be aligned if the start adress is
@@ -223,7 +223,7 @@ template <typename T> class KIT_API BlockAllocator final
     T *fromFirstChunkOfNewBlock() noexcept
     {
         std::byte *data = allocateNewBlock(m_BlockSize);
-        m_FreeList = reinterpret_cast<Chunk *>(data + ChunkSize());
+        m_FreeList = reinterpret_cast<Chunk *>(data + GetChunkSize());
         m_Blocks.push_back(data);
         return reinterpret_cast<T *>(data);
     }

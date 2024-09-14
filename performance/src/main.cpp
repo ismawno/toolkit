@@ -33,5 +33,5 @@ int main()
     RecordStackAllocator(settings.Allocation);
 
     KIT_LOG_INFO("Done! ({:.1f} seconds) Results have been written to 'performance/results'",
-                 clock.Elapsed().AsSeconds());
+                 clock.GetElapsed().AsSeconds());
 }

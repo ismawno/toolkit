@@ -48,9 +48,9 @@ class KIT_API Profiler
     static const Measurement &GetLast() noexcept;
 
     static void Clear() noexcept;
-    static bool Empty() noexcept;
+    static bool IsEmpty() noexcept;
 
-    static const DynamicArray<Measurement> &Measurements() noexcept;
+    static const DynamicArray<Measurement> &GetMeasurements() noexcept;
     static HashMap<const char *, AggregatedMeasurement> AggregateMeasurements() noexcept;
 
   private:

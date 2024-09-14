@@ -93,15 +93,15 @@ const StackAllocator::Entry &StackAllocator::Top() const noexcept
     return m_Entries.back();
 }
 
-usize StackAllocator::Size() const noexcept
+usize StackAllocator::GetSize() const noexcept
 {
     return m_Size;
 }
-usize StackAllocator::Allocated() const noexcept
+usize StackAllocator::GetAllocated() const noexcept
 {
     return m_Size - m_Remaining;
 }
-usize StackAllocator::Remaining() const noexcept
+usize StackAllocator::GetRemaining() const noexcept
 {
     return m_Remaining;
 }
@@ -114,12 +114,12 @@ bool StackAllocator::Belongs(const void *p_Ptr) const noexcept
     return ptr >= m_Buffer && ptr < m_Entries.back().Ptr + m_Entries.back().Size;
 }
 
-bool StackAllocator::Empty() const noexcept
+bool StackAllocator::IsEmpty() const noexcept
 {
     return m_Remaining == m_Size;
 }
 
-bool StackAllocator::Full() const noexcept
+bool StackAllocator::IsFull() const noexcept
 {
     return m_Remaining == 0;
 }

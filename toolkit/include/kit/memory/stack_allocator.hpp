@@ -101,13 +101,13 @@ class KIT_API StackAllocator
         return reinterpret_cast<T *>(Top().Ptr);
     }
 
-    usize Size() const noexcept;
-    usize Allocated() const noexcept;
-    usize Remaining() const noexcept;
+    usize GetSize() const noexcept;
+    usize GetAllocated() const noexcept;
+    usize GetRemaining() const noexcept;
 
     bool Belongs(const void *p_Ptr) const noexcept;
-    bool Empty() const noexcept;
-    bool Full() const noexcept;
+    bool IsEmpty() const noexcept;
+    bool IsFull() const noexcept;
 
   private:
     void deallocateBuffer() noexcept;

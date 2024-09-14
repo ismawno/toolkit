@@ -32,7 +32,7 @@ void RecordMallocFreeST(const AllocationSettings &p_Settings)
 
         for (usize i = 0; i < passes; ++i)
             delete allocated[i];
-        const Timespan deallocTime = clock.Elapsed();
+        const Timespan deallocTime = clock.GetElapsed();
 
         file << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds() << '\n';
     }
@@ -71,7 +71,7 @@ void RecordMallocFreeMT(const AllocationSettings &p_Settings, const usize p_MaxT
             Clock clock;
             for (usize th = 0; th < nthreads; ++th)
                 threads[th].join();
-            const Timespan allocTime = clock.Elapsed();
+            const Timespan allocTime = clock.GetElapsed();
 
             for (usize th = 0; th < nthreads; ++th)
             {
@@ -83,7 +83,7 @@ void RecordMallocFreeMT(const AllocationSettings &p_Settings, const usize p_MaxT
             clock.Restart();
             for (usize th = 0; th < nthreads; ++th)
                 threads[th].join();
-            const Timespan deallocTime = clock.Elapsed();
+            const Timespan deallocTime = clock.GetElapsed();
 
             file << nthreads << ',' << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds()
                  << '\n';
@@ -110,7 +110,7 @@ void RecordBlockAllocatorConcurrentST(const AllocationSettings &p_Settings)
 
         for (usize i = 0; i < passes; ++i)
             allocator.DestroyConcurrent(allocated[i]);
-        const Timespan deallocTime = clock.Elapsed();
+        const Timespan deallocTime = clock.GetElapsed();
 
         file << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds() << '\n';
     }
@@ -133,7 +133,7 @@ void RecordBlockAllocatorSerialST(const AllocationSettings &p_Settings)
 
         for (usize i = 0; i < passes; ++i)
             allocator.DestroySerial(allocated[i]);
-        const Timespan deallocTime = clock.Elapsed();
+        const Timespan deallocTime = clock.GetElapsed();
 
         file << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds() << '\n';
     }
@@ -185,7 +185,7 @@ void RecordBlockAllocatorMT(const AllocationSettings &p_Settings, const usize p_
             clock.Restart();
             for (usize th = 0; th < nthreads; ++th)
                 threads[th].join();
-            const Timespan deallocTime = clock.Elapsed();
+            const Timespan deallocTime = clock.GetElapsed();
 
             file << nthreads << ',' << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds()
                  << '\n';
@@ -211,7 +211,7 @@ void RecordStackAllocator(const AllocationSettings &p_Settings)
 
         for (usize i = passes - 1; i < passes; --i)
             allocator.Destroy(allocated[i]);
-        const Timespan deallocTime = clock.Elapsed();
+        const Timespan deallocTime = clock.GetElapsed();
 
         file << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds() << '\n';
     }

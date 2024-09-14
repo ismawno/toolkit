@@ -7,7 +7,7 @@ TaskManager::TaskManager(const usize p_ThreadCount) noexcept : m_ThreadCount(p_T
 {
 }
 
-usize TaskManager::ThreadCount() const noexcept
+usize TaskManager::GetThreadCount() const noexcept
 {
     return m_ThreadCount;
 }

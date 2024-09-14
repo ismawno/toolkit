@@ -4,7 +4,7 @@
 
 namespace KIT
 {
-bool ITask::Finished() const noexcept
+bool ITask::IsFinished() const noexcept
 {
     return m_Finished.test(std::memory_order_relaxed);
 }

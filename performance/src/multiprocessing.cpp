@@ -40,7 +40,7 @@ template <typename MTX> void RecordThreadPoolSum(const ThreadPoolSumSettings &p_
         for (usize i = 0; i < nthreads; i++)
             sum += tasks[i]->WaitForResult();
 
-        const Timespan mtTime = clock.Elapsed();
+        const Timespan mtTime = clock.GetElapsed();
         file << nthreads << ',' << mtTime.AsNanoseconds() << ',' << sum << '\n';
         nthreads *= 2;
     }
@@ -82,7 +82,7 @@ void RecordParallelSum(const ThreadPoolSumSettings &p_Settings, usize p_Maxthrea
             sum += sums[i];
         }
 
-        const Timespan mtTime = clock.Elapsed();
+        const Timespan mtTime = clock.GetElapsed();
         file << nthreads << ',' << mtTime.AsNanoseconds() << ',' << sum << '\n';
         nthreads *= 2;
     }

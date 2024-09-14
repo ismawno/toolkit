@@ -8,39 +8,39 @@ static u64 timePointToU64(const Clock::TimePoint p_TimePoint) noexcept
     return std::chrono::duration_cast<std::chrono::nanoseconds>(p_TimePoint.time_since_epoch()).count();
 }
 
-Clock::Clock() noexcept : m_Start(CurrentTimePoint())
+Clock::Clock() noexcept : m_Start(GetCurrentTimePoint())
 {
 }
 
-u64 Clock::StartTime() const noexcept
+u64 Clock::GetStartTime() const noexcept
 {
     return timePointToU64(m_Start);
 }
 
-Clock::TimePoint Clock::StartTimePoint() const noexcept
+Clock::TimePoint Clock::GetStartTimePoint() const noexcept
 {
     return m_Start;
 }
 
-Timespan Clock::Elapsed() const noexcept
+Timespan Clock::GetElapsed() const noexcept
 {
-    return Timespan(CurrentTimePoint() - m_Start);
+    return Timespan(GetCurrentTimePoint() - m_Start);
 }
 
 Timespan Clock::Restart() noexcept
 {
-    const auto now = CurrentTimePoint();
+    const auto now = GetCurrentTimePoint();
     const auto elapsed = now - m_Start;
     m_Start = now;
     return Timespan(elapsed);
 }
 
-u64 Clock::CurrentTime() noexcept
+u64 Clock::GetCurrentTime() noexcept
 {
-    return timePointToU64(CurrentTimePoint());
+    return timePointToU64(GetCurrentTimePoint());
 }
 
-Clock::TimePoint Clock::CurrentTimePoint() noexcept
+Clock::TimePoint Clock::GetCurrentTimePoint() noexcept
 {
     return std::chrono::high_resolution_clock::now();
 }

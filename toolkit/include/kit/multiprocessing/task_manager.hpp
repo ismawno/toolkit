@@ -36,7 +36,7 @@ class KIT_API TaskManager
         return task;
     }
 
-    usize ThreadCount() const noexcept;
+    usize GetThreadCount() const noexcept;
 
   private:
     usize m_ThreadCount;

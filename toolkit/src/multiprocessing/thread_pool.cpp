@@ -49,7 +49,7 @@ template <Mutex MTX> ThreadPool<MTX>::~ThreadPool() noexcept
 
     // Aggressively force all threads out
     while (m_PendingCount.load(std::memory_order_relaxed) != 0 ||
-           m_TerminatedCount.load(std::memory_order_relaxed) != ThreadCount())
+           m_TerminatedCount.load(std::memory_order_relaxed) != GetThreadCount())
     {
         m_TaskReady.test_and_set(std::memory_order_relaxed);
         m_TaskReady.notify_all();

@@ -11,14 +11,14 @@ class KIT_API Clock
 
     Clock() noexcept;
 
-    u64 StartTime() const noexcept;
-    TimePoint StartTimePoint() const noexcept;
+    u64 GetStartTime() const noexcept;
+    TimePoint GetStartTimePoint() const noexcept;
 
-    Timespan Elapsed() const noexcept;
+    Timespan GetElapsed() const noexcept;
     Timespan Restart() noexcept;
 
-    static u64 CurrentTime() noexcept;
-    static TimePoint CurrentTimePoint() noexcept;
+    static u64 GetCurrentTime() noexcept;
+    static TimePoint GetCurrentTimePoint() noexcept;
 
   private:
     TimePoint m_Start;

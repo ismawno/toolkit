@@ -29,7 +29,7 @@ class KIT_API ITask : public RefCounted<ITask>
 
     virtual void operator()(usize p_ThreadIndex) noexcept = 0;
 
-    bool Finished() const noexcept;
+    bool IsFinished() const noexcept;
     void WaitUntilFinished() const noexcept;
     void Reset() noexcept;
 
