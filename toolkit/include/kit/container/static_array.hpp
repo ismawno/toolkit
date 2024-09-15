@@ -1,6 +1,6 @@
 #pragma once
 
-#include "kit/container/array.hpp"
+#include "kit/container/iarray.hpp"
 #include <array>
 
 namespace KIT

@@ -1,4 +1,4 @@
-#include "kit/container/buffered_array.hpp"
+#include "kit/container/array_view.hpp"
 #include "kit/core/alias.hpp"
 #include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
@@ -7,19 +7,19 @@
 namespace KIT
 {
 // Assumed args contains 5 elements
-template <typename T, typename... Args> void RunBufferedArrayConstructorTest(Args... args)
+template <typename T, typename... Args> void RunArrayViewConstructorTest(Args... args)
 {
     std::array<T, 10> buffer;
     SECTION("Default constructor")
     {
-        BufferedArray<T> array(buffer.data(), buffer.size());
+        ArrayView<T> array(buffer.data(), buffer.size());
         REQUIRE(array.size() == 0);
         REQUIRE(array.capacity() == 10);
     }
 
     SECTION("Size constructor")
     {
-        BufferedArray<T> array(buffer.data(), buffer.size(), 5);
+        ArrayView<T> array(buffer.data(), buffer.size(), 5);
         REQUIRE(array.size() == 5);
         REQUIRE(array.capacity() == 10);
     }
@@ -27,7 +27,7 @@ template <typename T, typename... Args> void RunBufferedArrayConstructorTest(Arg
     SECTION("Iterator constructor")
     {
         std::array<T, 5> values = {args...};
-        BufferedArray<T> array(buffer.data(), buffer.size(), values.begin(), values.end());
+        ArrayView<T> array(buffer.data(), buffer.size(), values.begin(), values.end());
         REQUIRE(array.size() == 5);
         REQUIRE(array.capacity() == 10);
         for (usize i = 0; i < 5; ++i)
@@ -36,8 +36,8 @@ template <typename T, typename... Args> void RunBufferedArrayConstructorTest(Arg
 
     SECTION("Copy constructor")
     {
-        BufferedArray<T> array1{buffer.data(), buffer.size(), {args...}};
-        BufferedArray<T> array2{buffer.data(), array1};
+        ArrayView<T> array1{buffer.data(), buffer.size(), {args...}};
+        ArrayView<T> array2{buffer.data(), array1};
         REQUIRE(array1.size() == 5);
         REQUIRE(array1.capacity() == 10);
         REQUIRE(array2.size() == 5);
@@ -48,8 +48,8 @@ template <typename T, typename... Args> void RunBufferedArrayConstructorTest(Arg
 
     SECTION("Copy assignment")
     {
-        BufferedArray<T> array1{buffer.data(), buffer.size(), {args...}};
-        BufferedArray<T> array2{buffer.data(), buffer.size(), 5};
+        ArrayView<T> array1{buffer.data(), buffer.size(), {args...}};
+        ArrayView<T> array2{buffer.data(), buffer.size(), 5};
         array2 = array1;
         REQUIRE(array1.size() == 5);
         REQUIRE(array1.capacity() == 10);
@@ -61,8 +61,8 @@ template <typename T, typename... Args> void RunBufferedArrayConstructorTest(Arg
 
     SECTION("Copy assignment (different capacity)")
     {
-        BufferedArray<T> array1{buffer.data(), buffer.size(), {args...}};
-        BufferedArray<T> array2{buffer.data(), buffer.size() / 2, 5};
+        ArrayView<T> array1{buffer.data(), buffer.size(), {args...}};
+        ArrayView<T> array2{buffer.data(), buffer.size() / 2, 5};
         array2 = array1;
         REQUIRE(array1.size() == 5);
         REQUIRE(array1.capacity() == 10);
@@ -76,7 +76,7 @@ template <typename T, typename... Args> void RunBufferedArrayConstructorTest(Arg
     {
         SECTION("Initializer list")
         {
-            BufferedArray<T> array{buffer.data(), buffer.size(), {args...}};
+            ArrayView<T> array{buffer.data(), buffer.size(), {args...}};
             REQUIRE(array.size() == 5);
             REQUIRE(array.capacity() == 10);
             for (i32 i = 0; i < 5; ++i)
@@ -86,12 +86,12 @@ template <typename T, typename... Args> void RunBufferedArrayConstructorTest(Arg
 }
 
 // Assumed args contains 5 elements
-template <typename T, typename... Args> void RunBufferedArrayOperatorTests(Args... args)
+template <typename T, typename... Args> void RunArrayViewOperatorTests(Args... args)
 {
     std::array<T, 10> buffer;
     std::array<T, 400> bigBuffer;
 
-    BufferedArray<T> array{buffer.data(), buffer.size(), {args...}};
+    ArrayView<T> array{buffer.data(), buffer.size(), {args...}};
     SECTION("Push back")
     {
         for (usize i = 0; i < 5; i++)
@@ -142,7 +142,7 @@ template <typename T, typename... Args> void RunBufferedArrayOperatorTests(Args.
             for (auto it = array.rbegin(); it != array.rend(); ++it)
                 REQUIRE(*it == values[index++]);
 
-            BufferedArray<T> bigArray{bigBuffer.data(), bigBuffer.size()};
+            ArrayView<T> bigArray{bigBuffer.data(), bigBuffer.size()};
             while (!bigArray.full())
                 bigArray.insert(bigArray.begin(), values[0]);
         }
@@ -223,38 +223,38 @@ template <typename T, typename... Args> void RunBufferedArrayOperatorTests(Args.
     }
 }
 
-TEST_CASE("BufferedArray (i32)", "[core][container][BufferedArray]")
+TEST_CASE("ArrayView (i32)", "[core][container][ArrayView]")
 {
-    RunBufferedArrayConstructorTest<i32>(1, 2, 3, 4, 5);
-    RunBufferedArrayOperatorTests<i32>(1, 2, 3, 4, 5);
+    RunArrayViewConstructorTest<i32>(1, 2, 3, 4, 5);
+    RunArrayViewOperatorTests<i32>(1, 2, 3, 4, 5);
 }
 
-TEST_CASE("BufferedArray (f32)", "[core][container][BufferedArray]")
+TEST_CASE("ArrayView (f32)", "[core][container][ArrayView]")
 {
-    RunBufferedArrayConstructorTest<f32>(1.0f, 2.0f, 3.0f, 4.0f, 5.0f);
-    RunBufferedArrayOperatorTests<f32>(1.0f, 2.0f, 3.0f, 4.0f, 5.0f);
+    RunArrayViewConstructorTest<f32>(1.0f, 2.0f, 3.0f, 4.0f, 5.0f);
+    RunArrayViewOperatorTests<f32>(1.0f, 2.0f, 3.0f, 4.0f, 5.0f);
 }
 
-TEST_CASE("BufferedArray (f64)", "[core][container][BufferedArray]")
+TEST_CASE("ArrayView (f64)", "[core][container][ArrayView]")
 {
-    RunBufferedArrayConstructorTest<f64>(1.0, 2.0, 3.0, 4.0, 5.0);
-    RunBufferedArrayOperatorTests<f64>(1.0, 2.0, 3.0, 4.0, 5.0);
+    RunArrayViewConstructorTest<f64>(1.0, 2.0, 3.0, 4.0, 5.0);
+    RunArrayViewOperatorTests<f64>(1.0, 2.0, 3.0, 4.0, 5.0);
 }
 
-TEST_CASE("BufferedArray (std::string)", "[core][container][BufferedArray]")
+TEST_CASE("ArrayView (std::string)", "[core][container][ArrayView]")
 {
-    RunBufferedArrayConstructorTest<std::string>("10", "20", "30", "40", "50");
-    RunBufferedArrayOperatorTests<std::string>("10", "20", "30", "40", "50");
+    RunArrayViewConstructorTest<std::string>("10", "20", "30", "40", "50");
+    RunArrayViewOperatorTests<std::string>("10", "20", "30", "40", "50");
 }
 
-TEST_CASE("BufferedArray cleanup check", "[core][container][BufferedArray]")
+TEST_CASE("ArrayView cleanup check", "[core][container][ArrayView]")
 {
     constexpr usize capacity = 10;
 
     NonTrivialData *buffer =
         static_cast<NonTrivialData *>(AllocateAligned(sizeof(NonTrivialData) * capacity, alignof(NonTrivialData)));
 
-    BufferedArray<NonTrivialData> array{buffer, capacity, 5};
+    ArrayView<NonTrivialData> array{buffer, capacity, 5};
 
     REQUIRE(NonTrivialData::Instances == 5);
     array.pop_back();
