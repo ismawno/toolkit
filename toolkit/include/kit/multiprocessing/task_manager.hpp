@@ -19,7 +19,7 @@ class KIT_API TaskManager
     virtual void SubmitTask(const Ref<ITask> &p_Task) noexcept = 0;
 
     template <typename Callable, typename... Args>
-    auto CreateTask(Callable &&p_Callable, Args &&...p_Args) noexcept
+    auto CreateTask(Callable &&p_Callable, Args &&...p_Args) const noexcept
         -> Ref<Task<std::invoke_result_t<Callable, Args..., usize>>>
     {
         using RType = std::invoke_result_t<Callable, Args..., usize>;
