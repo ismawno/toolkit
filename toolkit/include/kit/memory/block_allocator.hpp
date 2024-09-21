@@ -17,7 +17,25 @@ namespace KIT
 // 0.012 (3.5ns per allocation and 1.2ns per deallocation). This is roughly a 10x improvement over the default
 // new/delete, using the Serial variants. When using the safe variants, latency is doubled (aprox)
 
-template <typename T> class KIT_API BlockAllocator final
+/**
+ * @brief A block allocator that allocates memory in blocks of a fixed size. Each block consists of a fixed number of
+ * chunks, each chunk being the size of the type T. The allocator allocates new blocks when the current block is full,
+ * and manages a free list of chunks that have been deallocated. The allocator has a thread-safe and a serial variant,
+ * the latter being faster.
+ *
+ * The block allocator deallocates all memory when it is destroyed. It is up to the user to ensure that all memory is
+ * freed at that point, specially when dealing with non-trivial destructors.
+ *
+ * Some performance numbers (measured on my macOS M1):
+ * - Allocating 10000 elements of 128 bytes in 0.035 ms (3.5 ns per allocation)
+ * - Deallocating 10000 elements of 128 bytes in 0.012 ms (1.2 ns per deallocation)
+ *
+ * This is roughly a 10x improvement over the default new/delete, using the serial variants. When using the concurrent
+ * variants, latency is doubled (aprox)
+ *
+ * @tparam T
+ */
+template <typename T> class KIT_API BlockAllocator
 {
     KIT_NON_COPYABLE(BlockAllocator)
   public:
@@ -55,23 +73,40 @@ template <typename T> class KIT_API BlockAllocator final
         return *this;
     }
 
+    /**
+     * @brief Get the size of the allocated blocks in bytes.
+     *
+     */
     usize GetBlockSize() const noexcept
     {
         return m_BlockSize;
     }
 
+    /**
+     * @brief Get the number of chunks per block (the number of objects of type T that fit each block).
+     *
+     */
     usize GetChunksPerBlock() const noexcept
     {
         return m_BlockSize / GetChunkSize();
     }
 
+    /**
+     * @brief Get the size of a chunk in bytes.
+     *
+     */
     static KIT_CONSTEVAL usize GetChunkSize() noexcept
     {
         if constexpr (sizeof(T) < sizeof(Chunk))
-            return AlignedSize<Chunk>();
+            return sizeof(Chunk);
         else
-            return AlignedSize<T>();
+            return sizeof(T);
     }
+
+    /**
+     * @brief Get the alignment of a chunk in bytes.
+     *
+     */
     static KIT_CONSTEVAL usize GetChunkAlignment() noexcept
     {
         if constexpr (alignof(T) < alignof(Chunk))
@@ -80,6 +115,14 @@ template <typename T> class KIT_API BlockAllocator final
             return alignof(T);
     }
 
+    /**
+     * @brief Create an object of type T in the allocator. The object is constructed with the provided arguments.
+     * The memory's object is allocated in a thread-safe manner. The user must ensure that the object's constructor is
+     * thread-safe.
+     *
+     * @param p_Args The arguments to pass to the constructor of T.
+     * @return T* A pointer to the newly created object.
+     */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
     [[nodiscard]] T *CreateConcurrent(Args &&...p_Args) noexcept
@@ -88,6 +131,13 @@ template <typename T> class KIT_API BlockAllocator final
         ::new (ptr) T(std::forward<Args>(p_Args)...);
         return ptr;
     }
+
+    /**
+     * @brief Destroy an object of type T in the allocator. The object is destroyed and the memory deallocated in a
+     * thread-safe manner. The user must ensure that the object's destructor is thread-safe.
+     *
+     * @param p_Ptr A pointer to the object to destroy.
+     */
     void DestroyConcurrent(T *p_Ptr) noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
@@ -95,6 +145,13 @@ template <typename T> class KIT_API BlockAllocator final
         DeallocateConcurrent(p_Ptr);
     }
 
+    /**
+     * @brief Create an object of type T in the allocator. The object is constructed with the provided arguments.
+     * The memory's object is allocated in a serial manner with no thread-safety guarantees.
+     *
+     * @param p_Args The arguments to pass to the constructor of T.
+     * @return T* A pointer to the newly created object.
+     */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
     [[nodiscard]] T *CreateSerial(Args &&...p_Args) noexcept
@@ -103,6 +160,13 @@ template <typename T> class KIT_API BlockAllocator final
         ::new (ptr) T(std::forward<Args>(p_Args)...);
         return ptr;
     }
+
+    /**
+     * @brief Destroy an object of type T in the allocator. The object is destroyed and the memory deallocated with no
+     * thread-safety guarantees.
+     *
+     * @param p_Ptr A pointer to the object to destroy.
+     */
     void DestroySerial(T *p_Ptr) noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
@@ -110,18 +174,33 @@ template <typename T> class KIT_API BlockAllocator final
         DeallocateSerial(p_Ptr);
     }
 
+    /**
+     * @brief Allocate memory for an object of type T in a thread-safe manner.
+     *
+     * @return T* A pointer to the allocated memory.
+     */
     [[nodiscard]] T *AllocateConcurrent() noexcept
     {
         std::scoped_lock lock(m_Mutex);
         return AllocateSerial();
     }
 
+    /**
+     * @brief Deallocate memory for an object of type T in a thread-safe manner.
+     *
+     * @param p_Ptr A pointer to the memory to deallocate.
+     */
     void DeallocateConcurrent(T *p_Ptr) noexcept
     {
         std::scoped_lock lock(m_Mutex);
         DeallocateSerial(p_Ptr);
     }
 
+    /**
+     * @brief Allocate memory for an object of type T with no thread-safety guarantees.
+     *
+     * @return T* A pointer to the allocated memory.
+     */
     [[nodiscard]] T *AllocateSerial() noexcept
     {
         ++m_Allocations;
@@ -130,6 +209,11 @@ template <typename T> class KIT_API BlockAllocator final
         return fromFirstChunkOfNewBlock();
     }
 
+    /**
+     * @brief Deallocate memory for an object of type T with no thread-safety guarantees.
+     *
+     * @param p_Ptr A pointer to the memory to deallocate.
+     */
     void DeallocateSerial(T *p_Ptr) noexcept
     {
         KIT_ASSERT(!IsEmpty(), "The current allocator has no active allocations yet");
@@ -141,6 +225,11 @@ template <typename T> class KIT_API BlockAllocator final
         m_FreeList = chunk;
     }
 
+    /**
+     * @brief Reserve memory for a new block of chunks in a thread-safe manner. If the allocator already has a free
+     * chunk available, this method does nothing.
+     *
+     */
     void ReserveConcurrent()
     {
         if (m_FreeList)
@@ -151,6 +240,11 @@ template <typename T> class KIT_API BlockAllocator final
         m_Blocks.push_back(data);
     }
 
+    /**
+     * @brief Reserve memory for a new block of chunks with no thread-safety guarantees. If the allocator already has a
+     * free chunk available, this method does nothing.
+     *
+     */
     void ReserveSerial()
     {
         if (m_FreeList)
@@ -160,6 +254,10 @@ template <typename T> class KIT_API BlockAllocator final
         m_Blocks.push_back(data);
     }
 
+    /**
+     * @brief Deallocate all memory in the allocator.
+     *
+     */
     void Reset()
     {
         KIT_LOG_WARNING_IF(!IsEmpty(), "The current allocator has active allocations. Resetting the allocator will "
@@ -171,8 +269,14 @@ template <typename T> class KIT_API BlockAllocator final
         m_Blocks.clear();
     }
 
-    // This method is not infallible. Deallocated pointers from this allocator will still return true, as they lay in
-    // the memory block of the allocator
+    /**
+     * @brief Check if a pointer belongs to this allocator. This method is not infallible, as deallocated pointers from
+     * this allocator will still return true, as they lay in the memory block of the allocator.
+     *
+     * @param p_Ptr A pointer to check.
+     * @return true If the pointer belongs to this allocator.
+     * @return false If the pointer does not belong to this allocator.
+     */
     bool Owns(const T *p_Ptr) const noexcept
     {
         const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
@@ -182,15 +286,30 @@ template <typename T> class KIT_API BlockAllocator final
         return false;
     }
 
+    /**
+     * @brief Get the number of blocks allocated by this allocator.
+     *
+     */
     usize GetBlockCount() const noexcept
     {
         return m_Blocks.size();
     }
 
+    /**
+     * @brief Check if the allocator is empty (has no active allocations).
+     *
+     * @return true If the allocator is empty.
+     * @return false If the allocator has active allocations.
+     */
     bool IsEmpty() const noexcept
     {
         return m_Allocations == 0;
     }
+
+    /**
+     * @brief Get the number of active allocations in the allocator.
+     *
+     */
     u32 GetAllocations() const noexcept
     {
         return m_Allocations;
@@ -246,46 +365,127 @@ template <typename T> class KIT_API BlockAllocator final
     SpinLock m_Mutex;
 };
 
-template <typename T, usize ChunksPerBlock> BlockAllocator<T> &GlobalBlockAllocatorInstance() noexcept
+/**
+ * @brief Get the global instance of a block allocator for type T with a fixed number of chunks per block. The instance
+ * is created the first time this function is called.
+ *
+ * @tparam T The type of the objects to allocate.
+ * @tparam ChunksPerBlock The number of chunks per block.
+ * @return BlockAllocator<T>& A reference to the global instance of the block allocator.
+ */
+template <typename T, usize ChunksPerBlock> BlockAllocator<T> &GetGlobalBlockAllocatorInstance() noexcept
 {
     static BlockAllocator<T> allocator{ChunksPerBlock};
     return allocator;
 }
 
+/**
+ * @brief Allocate memory for an object of type T in a thread-safe manner using the global block allocator for type T
+ * with a fixed number of chunks per block.
+ *
+ * @tparam T The type of the object to allocate.
+ * @tparam ChunksPerBlock The number of chunks per block.
+ * @return T* A pointer to the allocated memory.
+ */
 template <typename T, usize ChunksPerBlock> T *BAllocateConcurrent() noexcept
 {
-    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().AllocateConcurrent();
+    return GetGlobalBlockAllocatorInstance<T, ChunksPerBlock>().AllocateConcurrent();
 }
+
+/**
+ * @brief Deallocate memory for an object of type T in a thread-safe manner using the global block allocator for type T
+ * with a fixed number of chunks per block.
+ *
+ * @tparam T The type of the object to deallocate.
+ * @tparam ChunksPerBlock The number of chunks per block.
+ * @param p_Ptr A pointer to the memory to deallocate.
+ */
 template <typename T, usize ChunksPerBlock> void BDeallocateConcurrent(T *p_Ptr) noexcept
 {
-    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().DeallocateConcurrent(p_Ptr);
+    GetGlobalBlockAllocatorInstance<T, ChunksPerBlock>().DeallocateConcurrent(p_Ptr);
 }
 
+/**
+ * @brief Allocate memory for an object of type T with no thread-safety guarantees using the global block allocator for
+ * type T with a fixed number of chunks per block.
+ *
+ * @tparam T The type of the object to allocate.
+ * @tparam ChunksPerBlock The number of chunks per block.
+ * @return T* A pointer to the allocated memory.
+ */
 template <typename T, usize ChunksPerBlock> T *BAllocateSerial() noexcept
 {
-    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().AllocateSerial();
+    return GetGlobalBlockAllocatorInstance<T, ChunksPerBlock>().AllocateSerial();
 }
+
+/**
+ * @brief Deallocate memory for an object of type T with no thread-safety guarantees using the global block allocator
+ * for type T with a fixed number of chunks per block.
+ *
+ * @tparam T The type of the object to deallocate.
+ * @tparam ChunksPerBlock The number of chunks per block.
+ * @param p_Ptr A pointer to the memory to deallocate.
+ */
 template <typename T, usize ChunksPerBlock> void BDeallocateSerial(T *p_Ptr) noexcept
 {
-    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().DeallocateSerial(p_Ptr);
+    GetGlobalBlockAllocatorInstance<T, ChunksPerBlock>().DeallocateSerial(p_Ptr);
 }
 
+/**
+ * @brief Create an object of type T in the global block allocator for type T with a fixed number of chunks per block.
+ * The object is constructed with the provided arguments. The memory's object is allocated in a thread-safe manner. The
+ * user must ensure that the object's constructor is thread-safe.
+ *
+ * @tparam T The type of the object to create.
+ * @tparam ChunksPerBlock The number of chunks per block.
+ * @param p_Args The arguments to pass to the constructor of T.
+ * @return T* A pointer to the newly created object.
+ */
 template <typename T, usize ChunksPerBlock, typename... Args> T *BCreate(Args &&...p_Args) noexcept
 {
-    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().CreateConcurrent(std::forward<Args>(p_Args)...);
-}
-template <typename T, usize ChunksPerBlock> void BDestroy(T *p_Ptr) noexcept
-{
-    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().DestroyConcurrent(p_Ptr);
+    return GetGlobalBlockAllocatorInstance<T, ChunksPerBlock>().CreateConcurrent(std::forward<Args>(p_Args)...);
 }
 
+/**
+ * @brief Destroy an object of type T in the global block allocator for type T with a fixed number of chunks per block.
+ * The object is destroyed and the memory deallocated in a thread-safe manner. The user must ensure that the object's
+ * destructor is thread-safe.
+ *
+ * @tparam T The type of the object to destroy.
+ * @tparam ChunksPerBlock The number of chunks per block.
+ * @param p_Ptr A pointer to the object to destroy.
+ */
+template <typename T, usize ChunksPerBlock> void BDestroy(T *p_Ptr) noexcept
+{
+    GetGlobalBlockAllocatorInstance<T, ChunksPerBlock>().DestroyConcurrent(p_Ptr);
+}
+
+/**
+ * @brief Create an object of type T in the global block allocator for type T with a fixed number of chunks per block.
+ * The object is constructed with the provided arguments. The memory's object is allocated in a serial manner with no
+ * thread-safety guarantees.
+ *
+ * @tparam T The type of the object to create.
+ * @tparam ChunksPerBlock The number of chunks per block.
+ * @param p_Args The arguments to pass to the constructor of T.
+ * @return T* A pointer to the newly created object.
+ */
 template <typename T, usize ChunksPerBlock, typename... Args> T *BCreateSerial(Args &&...p_Args) noexcept
 {
-    return GlobalBlockAllocatorInstance<T, ChunksPerBlock>().CreateSerial(std::forward<Args>(p_Args)...);
+    return GetGlobalBlockAllocatorInstance<T, ChunksPerBlock>().CreateSerial(std::forward<Args>(p_Args)...);
 }
+
+/**
+ * @brief Destroy an object of type T in the global block allocator for type T with a fixed number of chunks per block.
+ * The object is destroyed and the memory deallocated with no thread-safety guarantees.
+ *
+ * @tparam T The type of the object to destroy.
+ * @tparam ChunksPerBlock The number of chunks per block.
+ * @param p_Ptr A pointer to the object to destroy.
+ */
 template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexcept
 {
-    GlobalBlockAllocatorInstance<T, ChunksPerBlock>().DestroySerial(p_Ptr);
+    GetGlobalBlockAllocatorInstance<T, ChunksPerBlock>().DestroySerial(p_Ptr);
 }
 } // namespace KIT
 

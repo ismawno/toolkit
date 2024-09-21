@@ -11,21 +11,38 @@ namespace KIT
 
 // TODO: Have an atomic counter to track allocations (conditionally with some macros)
 
+/**
+ * @brief Allocate a chunk of memory of a given size. Uses default malloc. It is here as a placeholder for future
+ * custom global allocators.
+ *
+ * @param p_Size The size of the memory to allocate.
+ * @return void* A pointer to the allocated memory.
+ */
 KIT_API void *Allocate(usize p_Size) noexcept;
+
+/**
+ * @brief Deallocate a chunk of memory. Uses default free. It is here as a placeholder for future custom global
+ * allocators.
+ *
+ * @param p_Ptr A pointer to the memory to deallocate.
+ */
 KIT_API void Deallocate(void *p_Ptr) noexcept;
 
+/**
+ * @brief Allocate a chunk of memory of a given size with a given alignment. Uses the default platform-specific aligned
+ * allocation. It is here as a placeholder for future custom global allocators.
+ *
+ * @param p_Size The size of the memory to allocate.
+ * @param p_Alignment The alignment of the memory to allocate.
+ * @return void* A pointer to the allocated memory.
+ */
 KIT_API void *AllocateAligned(usize p_Size, usize p_Alignment) noexcept;
-KIT_API void DeallocateAligned(void *p_Ptr) noexcept;
 
-// This is a function that I have here just in case I (for whatever reasong) need to align a size. Which, to my
-// knowledge, should never happen (I have yet to see a case where the size of a type is not a multiple of its alignment)
-// It is currently being used by the block allocator, but it should always return sizeof(T)
-template <typename T> consteval usize AlignedSize() noexcept
-{
-    constexpr usize remainder = sizeof(T) % alignof(T);
-    if constexpr (remainder == 0)
-        return sizeof(T);
-    else
-        return sizeof(T) + alignof(T) - remainder;
-}
+/**
+ * @brief Deallocate a chunk of memory. Uses default platform-specific aligned deallocation. It is here as a placeholder
+ * for future custom global allocators.
+ *
+ * @param p_Ptr A pointer to the memory to deallocate.
+ */
+KIT_API void DeallocateAligned(void *p_Ptr) noexcept;
 } // namespace KIT
