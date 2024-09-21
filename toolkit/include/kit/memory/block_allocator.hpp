@@ -15,7 +15,7 @@ namespace KIT
 
 // On my macOS m1 this allocator is able to allocate 10000 elements of 128 bytes in 0.035 ms and deallocate them in
 // 0.012 (3.5ns per allocation and 1.2ns per deallocation). This is roughly a 10x improvement over the default
-// new/delete, using the Serial variants. When usingthe safe variants, latency is doubled (aprox)
+// new/delete, using the Serial variants. When using the safe variants, latency is doubled (aprox)
 
 template <typename T> class KIT_API BlockAllocator final
 {
@@ -80,7 +80,9 @@ template <typename T> class KIT_API BlockAllocator final
             return alignof(T);
     }
 
-    template <typename... Args> [[nodiscard]] T *CreateConcurrent(Args &&...p_Args) noexcept
+    template <typename... Args>
+        requires std::constructible_from<T, Args...>
+    [[nodiscard]] T *CreateConcurrent(Args &&...p_Args) noexcept
     {
         T *ptr = AllocateConcurrent();
         ::new (ptr) T(std::forward<Args>(p_Args)...);
@@ -93,7 +95,9 @@ template <typename T> class KIT_API BlockAllocator final
         DeallocateConcurrent(p_Ptr);
     }
 
-    template <typename... Args> [[nodiscard]] T *CreateSerial(Args &&...p_Args) noexcept
+    template <typename... Args>
+        requires std::constructible_from<T, Args...>
+    [[nodiscard]] T *CreateSerial(Args &&...p_Args) noexcept
     {
         T *ptr = AllocateSerial();
         ::new (ptr) T(std::forward<Args>(p_Args)...);

@@ -61,7 +61,7 @@ template <typename T> class Task final : public ITask
     }
 
     template <typename Callable, typename... Args>
-        requires(!std::is_same_v<Callable, Task>)
+        requires std::invocable<Callable, Args..., usize>
     explicit Task(Callable &&p_Callable, Args &&...p_Args) noexcept
         : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
@@ -92,7 +92,7 @@ template <> class KIT_API Task<void> final : public ITask
     void operator()(usize p_ThreadIndex) noexcept override;
 
     template <typename Callable, typename... Args>
-        requires(!std::is_same_v<Callable, Task>)
+        requires std::invocable<Callable, Args..., usize>
     explicit Task(Callable &&p_Callable, Args &&...p_Args) noexcept
         : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {

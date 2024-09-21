@@ -4,9 +4,8 @@
 
 namespace KIT
 {
-template <typename TManager, std::random_access_iterator It1, std::output_iterator<Ref<ITask>> It2, typename Callable,
-          typename... Args>
-    requires std::is_base_of_v<TaskManager, TManager>
+template <std::derived_from<TaskManager> TManager, std::random_access_iterator It1,
+          std::output_iterator<Ref<ITask>> It2, typename Callable, typename... Args>
 void ForEach(TManager &p_Manager, It1 p_First, It1 p_Last, It2 p_Dest, const usize p_Tasks, Callable &&p_Callable,
              Args &&...p_Args)
 {

@@ -6,13 +6,17 @@
 
 namespace KIT
 {
-template <typename T, typename U>
-concept ShallowIsSame = std::is_same_v<NoCVRef<T>, NoCVRef<U>>;
-
-// An STL-like array interface that manages a fixed size buffer of data. This base class does not own the data, and it
-// is up to the implementation to provide means to clean up the resources. This interface can be used as a wrapper
-// around a chunk of data to provide array-like functionality without owning the chunk itself. The implementation is
-// also responsible for providing the data() and capacity() methods
+/**
+ * @brief An STL-like array interface that manages a fixed size buffer of data. This base class does not own the data,
+ * and it is up to the implementation to provide means to acquire/clean up the resources. This interface can be used as
+ * a wrapper around a chunk of data to provide array-like functionality without owning the chunk itself. The
+ * implementation is also responsible for providing the data() and capacity() methods.
+ *
+ * Using same naming conventions as the STL, to improve cnosistency.
+ *
+ * @tparam T The type of the elements in the array.
+ * @tparam Derived The derived class that implements the data() and capacity() methods.
+ */
 template <typename T, typename Derived> class IArray
 {
   public:
@@ -28,9 +32,6 @@ template <typename T, typename Derived> class IArray
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    // I figured that if I want to have a more STL-like interface, I should use the same naming conventions, although I
-    // am not really sure when to "stop"
-
     constexpr IArray() noexcept = default;
     explicit constexpr IArray(const usize p_Size) noexcept : m_Size(p_Size)
     {
@@ -38,12 +39,17 @@ template <typename T, typename Derived> class IArray
 
     // Constructors that manage the derived's data buffer are not safe to implement, as that data may not have been
     // initialized properly yet (base class always goes first). In the 'protected' area, some constructors are provided
-    // that can be used to initialize the data from the derived's end
+    // that can be used to initialize the data from the derived's end.
 
     // In the case of the assignment operators, the derived class should already be initialized, so it is safe to manage
-    // the derived's data directly, but for consistency reasons, it is also provided in the protected area for the
-    // derived to explicitly implement it
+    // the derived's data directly, but for consistency reasons, some methods are also provided in the protected area
+    // for the derived to explicitly implement it.
 
+    /**
+     * @brief Insert a new element at the end of the array. The element is copied or moved into the array.
+     *
+     * @param p_Value The value to insert.
+     */
     template <typename U>
         requires(std::convertible_to<U, T>)
     void push_back(U &&p_Value) noexcept
@@ -52,6 +58,10 @@ template <typename T, typename Derived> class IArray
         ::new (begin() + m_Size++) T(std::forward<U>(p_Value));
     }
 
+    /**
+     * @brief Remove the last element from the array. The element is destroyed.
+     *
+     */
     void pop_back() noexcept
     {
         KIT_ASSERT(!empty(), "Container is already empty");
@@ -60,9 +70,14 @@ template <typename T, typename Derived> class IArray
             end()->~T();
     }
 
-    // Add additional template to allow perfect forwarding
+    /**
+     * @brief Insert a new element at the specified position. The element is copied or moved into the array.
+     *
+     * @param p_Pos The position to insert the element at.
+     * @param p_Value The value to insert.
+     */
     template <typename U>
-        requires(ShallowIsSame<T, U>)
+        requires(std::is_same_v<NoCVRef<T>, NoCVRef<U>>)
     void insert(const const_iterator p_Pos, U &&p_Value) noexcept
     {
         KIT_ASSERT(!full(), "Container is already full");
@@ -87,6 +102,13 @@ template <typename T, typename Derived> class IArray
         ++m_Size;
     }
 
+    /**
+     * @brief Insert a range of elements at the specified position. The elements are copied or moved into the array.
+     *
+     * @param p_Pos The position to insert the elements at.
+     * @param p_Begin The beginning of the range to insert.
+     * @param p_End The end of the range to insert.
+     */
     template <std::input_iterator It> void insert(const const_iterator p_Pos, It p_Begin, It p_End) noexcept
     {
         KIT_ASSERT(p_Pos >= cbegin() && p_Pos <= cend(), "Iterator is out of bounds");
@@ -138,11 +160,22 @@ template <typename T, typename Derived> class IArray
         m_Size += count;
     }
 
+    /**
+     * @brief Insert a range of elements at the specified position. The elements are copied or moved into the array.
+     *
+     * @param p_Pos The position to insert the elements at.
+     * @param p_Elements The initializer list of elements to insert.
+     */
     void insert(const const_iterator p_Pos, std::initializer_list<T> p_Elements) noexcept
     {
         insert(p_Pos, p_Elements.begin(), p_Elements.end());
     }
 
+    /**
+     * @brief Erase the element at the specified position. The element is destroyed.
+     *
+     * @param p_Pos The position to erase the element at.
+     */
     void erase(const const_iterator p_Pos) noexcept
     {
         if (empty())
@@ -160,6 +193,12 @@ template <typename T, typename Derived> class IArray
         --m_Size;
     }
 
+    /**
+     * @brief Erase a range of elements. The elements are destroyed.
+     *
+     * @param p_Begin The beginning of the range to erase.
+     * @param p_End The end of the range to erase.
+     */
     void erase(const const_iterator p_Begin, const const_iterator p_End) noexcept
     {
         if (empty())
@@ -183,25 +222,52 @@ template <typename T, typename Derived> class IArray
         m_Size -= count;
     }
 
-    template <typename... Args> T &emplace_back(Args &&...p_Args) noexcept
+    /**
+     * @brief Emplace a new element at the end of the array. The element is constructed in place.
+     *
+     * @param p_Args The arguments to pass to the constructor of T.
+     * @return T& A reference to the newly constructed element.
+     */
+    template <typename... Args>
+        requires std::constructible_from<T, Args...>
+    T &emplace_back(Args &&...p_Args) noexcept
     {
         KIT_ASSERT(!full(), "Container is already full");
         ::new (end()) T(std::forward<Args>(p_Args)...);
         return *(begin() + m_Size++);
     }
 
+    /**
+     * @brief Get the first element in the array.
+     *
+     */
     const T &front() const noexcept
     {
         KIT_ASSERT(!empty(), "Container is empty");
         return *begin();
     }
+
+    /**
+     * @brief Get the first element in the array.
+     *
+     */
     T &front() noexcept
     {
         KIT_ASSERT(!empty(), "Container is empty");
         return *begin();
     }
 
-    template <typename... Args> void resize(const usize p_Size, Args &&...args) noexcept
+    /**
+     * @brief Resize the array. If the new size is smaller than the current size, the elements are destroyed. If the new
+     * size is bigger than the current size, the elements are constructed in place.
+     *
+     * @param p_Size The new size of the array.
+     * @param args The arguments to pass to the constructor of T (only used if the new size is bigger than the current
+     * size.)
+     */
+    template <typename... Args>
+        requires std::constructible_from<T, Args...>
+    void resize(const usize p_Size, Args &&...args) noexcept
     {
         KIT_ASSERT(p_Size <= capacity(), "Size is bigger than capacity");
 
@@ -220,39 +286,78 @@ template <typename T, typename Derived> class IArray
         m_Size = p_Size;
     }
 
+    /**
+     * @brief Get the last element in the array.
+     *
+     */
     const T &back() const noexcept
     {
         KIT_ASSERT(!empty(), "Container is empty");
         return *(begin() + m_Size - 1);
     }
+
+    /**
+     * @brief Get the last element in the array.
+     *
+     */
     T &back() noexcept
     {
         KIT_ASSERT(!empty(), "Container is empty");
         return *(begin() + m_Size - 1);
     }
 
+    /**
+     * @brief Access an element in the array.
+     *
+     * @param p_Index The index of the element to access.
+     * @return const T& A reference to the element.
+     */
     const T &operator[](const usize p_Index) const noexcept
     {
         KIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
         return *(begin() + p_Index);
     }
+
+    /**
+     * @brief Access an element in the array.
+     *
+     * @param p_Index The index of the element to access.
+     * @return T& A reference to the element.
+     */
     T &operator[](const usize p_Index) noexcept
     {
         KIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
         return *(begin() + p_Index);
     }
 
+    /**
+     * @brief Access an element in the array.
+     *
+     * @param p_Index The index of the element to access.
+     * @return const T& A reference to the element.
+     */
     const T &at(const usize p_Index) const noexcept
     {
         KIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
         return *(begin() + p_Index);
     }
+
+    /**
+     * @brief Access an element in the array.
+     *
+     * @param p_Index The index of the element to access.
+     * @return T& A reference to the element.
+     */
     T &at(const usize p_Index) noexcept
     {
         KIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
         return *(begin() + p_Index);
     }
 
+    /**
+     * @brief Clear the array. All elements are destroyed.
+     *
+     */
     void clear() noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
@@ -261,82 +366,163 @@ template <typename T, typename Derived> class IArray
         m_Size = 0;
     }
 
+    /**
+     * @brief Get an iterator to the beginning of the array.
+     *
+     */
     iterator begin() noexcept
     {
         return data();
     }
+
+    /**
+     * @brief Get an iterator to the end of the array.
+     *
+     */
     iterator end() noexcept
     {
         return data() + m_Size;
     }
 
+    /**
+     * @brief Get a const iterator to the beginning of the array.
+     *
+     */
     const_iterator begin() const noexcept
     {
         return data();
     }
+
+    /**
+     * @brief Get a const iterator to the end of the array.
+     *
+     */
     const_iterator end() const noexcept
     {
         return data() + m_Size;
     }
 
+    /**
+     * @brief Get a const iterator to the beginning of the array.
+     *
+     */
     const_iterator cbegin() const noexcept
     {
         return data();
     }
+
+    /**
+     * @brief Get a const iterator to the end of the array.
+     *
+     */
     const_iterator cend() const noexcept
     {
         return data() + m_Size;
     }
 
+    /**
+     * @brief Get a reverse iterator to the beginning of the array.
+     *
+     */
     reverse_iterator rbegin() noexcept
     {
         return reverse_iterator(end());
     }
+
+    /**
+     * @brief Get a reverse iterator to the end of the array.
+     *
+     */
     reverse_iterator rend() noexcept
     {
         return reverse_iterator(begin());
     }
 
+    /**
+     * @brief Get a const reverse iterator to the beginning of the array.
+     *
+     */
     const_reverse_iterator rbegin() const noexcept
     {
         return const_reverse_iterator(end());
     }
+
+    /**
+     * @brief Get a const reverse iterator to the end of the array.
+     *
+     */
     const_reverse_iterator rend() const noexcept
     {
         return const_reverse_iterator(begin());
     }
 
+    /**
+     * @brief Get a const reverse iterator to the beginning of the array.
+     *
+     */
     const_reverse_iterator crbegin() const noexcept
     {
         return const_reverse_iterator(cend());
     }
+
+    /**
+     * @brief Get a const reverse iterator to the end of the array.
+     *
+     */
     const_reverse_iterator crend() const noexcept
     {
         return const_reverse_iterator(cbegin());
     }
 
+    /**
+     * @brief Get a pointer to the data buffer.
+     *
+     */
     const T *data() const noexcept
     {
         return static_cast<const Derived *>(this)->data();
     }
+
+    /**
+     * @brief Get a pointer to the data buffer.
+     *
+     */
     T *data() noexcept
     {
         return static_cast<Derived *>(this)->data();
     }
 
+    /**
+     * @brief Get the size of the array.
+     *
+     */
     usize size() const noexcept
     {
         return m_Size;
     }
+
+    /**
+     * @brief Get the capacity of the underlying buffer.
+     *
+     */
     constexpr usize capacity() const noexcept
     {
         return static_cast<const Derived *>(this)->capacity();
     }
 
+    /**
+     * @brief Check if the array is empty.
+     *
+     */
     bool empty() const noexcept
     {
         return m_Size == 0;
     }
+
+    /**
+     * @brief Check if the array is full.
+     *
+     */
     bool full() const noexcept
     {
         return m_Size == capacity();
@@ -346,7 +532,10 @@ template <typename T, typename Derived> class IArray
     // TODO: improve this
     //  All constructors that use m_Size without modifying it first need the IArray constructor called in the derived's
     //  class initializer list (quite confusing because some of them require it, some dont)
-    template <typename... Args> void Constructor(Args &&...p_Args) noexcept
+
+    template <typename... Args>
+        requires std::constructible_from<T, Args...>
+    void Constructor(Args &&...p_Args) noexcept
     {
         KIT_ASSERT(m_Size <= capacity(), "Size is bigger than capacity");
         for (auto it = begin(); it != end(); ++it)

@@ -65,14 +65,18 @@ class KIT_API StackAllocator
         return static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
     }
 
-    template <typename T, typename... Args> T *Create(Args &&...p_Args) noexcept
+    template <typename T, typename... Args>
+        requires std::constructible_from<T, Args...>
+    T *Create(Args &&...p_Args) noexcept
     {
         T *ptr = static_cast<T *>(Allocate(sizeof(T), alignof(T)));
         ::new (ptr) T(std::forward<Args>(p_Args)...);
         return ptr;
     }
 
-    template <typename T, typename... Args> T *NConstruct(const usize p_N, Args &&...p_Args) noexcept
+    template <typename T, typename... Args>
+        requires std::constructible_from<T, Args...>
+    T *NConstruct(const usize p_N, Args &&...p_Args) noexcept
     {
         T *ptr = static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
         for (usize i = 0; i < p_N; ++i)

@@ -4,9 +4,12 @@
 
 namespace KIT
 {
-
-// An STL-like array view with a fixed size. It manages a buffer of data without owning/handling the data itself,
-// meaning it is not responsible for its allocation/deallocation, but provides a nice API to work with it
+/**
+ * @brief An STL-like array view with a fixed size. It manages a buffer of data without owning/handling the data itself,
+ * meaning it is not responsible for its allocation/deallocation, but provides a nice API to work with it.
+ *
+ * @tparam T The type of the elements in the array.
+ */
 template <typename T> class ArrayView : public IArray<T, ArrayView<T>>
 {
   public:
@@ -78,15 +81,28 @@ template <typename T> class ArrayView : public IArray<T, ArrayView<T>>
         return *this;
     }
 
+    /**
+     * @brief Get the capacity of the underlying buffer.
+     *
+     */
     usize capacity() const noexcept
     {
         return m_Capacity;
     }
 
+    /**
+     * @brief Get a pointer to the data buffer.
+     *
+     */
     const T *data() const noexcept
     {
         return m_Data;
     }
+
+    /**
+     * @brief Get a pointer to the data buffer.
+     *
+     */
     T *data() noexcept
     {
         return m_Data;

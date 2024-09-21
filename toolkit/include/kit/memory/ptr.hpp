@@ -91,7 +91,9 @@ template <typename T> class Scope
         return m_Ptr;
     }
 
-    template <typename... Args> static Scope Create(Args &&...p_Args) noexcept
+    template <typename... Args>
+        requires std::constructible_from<T, Args...>
+    static Scope Create(Args &&...p_Args) noexcept
     {
         return Scope(new T(std::forward<Args>(p_Args)...));
     }
@@ -293,7 +295,9 @@ template <typename T> class Ref
         return m_Ptr;
     }
 
-    template <typename... Args> static Ref Create(Args &&...p_Args) noexcept
+    template <typename... Args>
+        requires std::constructible_from<T, Args...>
+    static Ref Create(Args &&...p_Args) noexcept
     {
         return Ref(new T(std::forward<Args>(p_Args)...));
     }
@@ -317,9 +321,6 @@ template <typename T> class Ref
     T *m_Ptr = nullptr;
     template <typename U> friend class Ref;
 };
-
-template <typename T>
-concept RCounted = std::is_base_of_v<RefCounted<typename T::CountedType>, T>;
 } // namespace KIT
 
 namespace std

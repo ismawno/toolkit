@@ -9,6 +9,14 @@ namespace KIT
 // An STL-like array with a fixed size. It can be used as a replacement for std::array in
 // the sense that it offers a bit more control and functionality, but it is not meant to be a drop-in replacement, as
 // the extra functionality comes with some overhead.
+
+/**
+ * @brief An STL-like array with a fixed size buffer. It is meant to be used as a drop-in replacement for std::array
+ * when you need a bit more control and functionality, although it comes with some overhead.
+ *
+ * @tparam T The type of the elements in the array.
+ * @tparam N The capacity of the array.
+ */
 template <typename T, usize N>
     requires(N > 0)
 class StaticArray : public IArray<T, StaticArray<T, N>>
@@ -79,15 +87,28 @@ class StaticArray : public IArray<T, StaticArray<T, N>>
         return *this;
     }
 
+    /**
+     * @brief Get the capacity of the underlying buffer.
+     *
+     */
     constexpr usize capacity() const noexcept
     {
         return N;
     }
 
+    /**
+     * @brief Get a pointer to the data buffer.
+     *
+     */
     const T *data() const noexcept
     {
         return reinterpret_cast<const T *>(m_Data.data());
     }
+
+    /**
+     * @brief Get a pointer to the data buffer.
+     *
+     */
     T *data() noexcept
     {
         return reinterpret_cast<T *>(m_Data.data());
@@ -96,7 +117,7 @@ class StaticArray : public IArray<T, StaticArray<T, N>>
   private:
     struct alignas(T) Element
     {
-        std::byte m_Data[sizeof(T)];
+        std::byte Data[sizeof(T)];
     };
 
     static_assert(sizeof(Element) == sizeof(T), "Element size is not equal to T size");

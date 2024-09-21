@@ -13,6 +13,12 @@ namespace KIT
 // sure I was good to go with the default non-commutative one, so I wont be including a commutative tuple for this
 // library
 
+/**
+ * @brief A tuple of hashable elements, useful when you need to hash multiple elements at the same time. The elements
+ * must be hashable, meaning they must have a std::hash specialization.
+ *
+ * @tparam H
+ */
 template <Hashable... H> struct HashableTuple
 {
     using Tuple = std::tuple<H...>;
@@ -25,19 +31,39 @@ template <Hashable... H> struct HashableTuple
     {
     }
 
+    /**
+     * @brief Get the element at index I.
+     *
+     */
     template <usize I> auto &Get() const noexcept
     {
         return std::get<I>(Elements);
     }
+
+    /**
+     * @brief Get the element at index I.
+     *
+     */
     template <usize I> auto &Get() noexcept
     {
         return std::get<I>(Elements);
     }
 
+    /**
+     * @brief Get the element of type T if T is unique in the tuple. If T is not unique, a compile time error will be
+     * raised.
+     *
+     */
     template <Hashable T> const T &Get() const noexcept
     {
         return std::get<T>(Elements);
     }
+
+    /**
+     * @brief Get the element of type T if T is unique in the tuple. If T is not unique, a compile time error will be
+     * raised.
+     *
+     */
     template <Hashable T> T &Get() noexcept
     {
         return std::get<T>(Elements);
@@ -49,6 +75,10 @@ template <Hashable... H> struct HashableTuple
         return *this;
     }
 
+    /**
+     * @brief Compute the hash of the tuple.
+     *
+     */
     usize operator()() const noexcept
     {
         usize seed = 0x517cc1b7;
