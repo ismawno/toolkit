@@ -68,13 +68,6 @@ void StackAllocator::Pop() noexcept
     m_Entries.pop_back();
 }
 
-void StackAllocator::Pop(const usize p_N) noexcept
-{
-    KIT_LOG_WARNING_IF(m_Entries.size() < p_N, "Popping more elements than the allocator has");
-    for (usize i = 0; i < p_N; ++i)
-        Pop();
-}
-
 void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment) noexcept
 {
     return Push(p_Size, p_Alignment);

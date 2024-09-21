@@ -12,13 +12,13 @@ template <typename T> void RunBasicConstructDestructOperations()
 {
     // Set the starting alignment...
     StackAllocator allocator(4_kb, alignof(T) < sizeof(void *) ? sizeof(void *) : alignof(T));
-    allocator.Push<T>(10);
+    allocator.NCreate<T>(10);
 
     // ...so that this is guaranteed to pass (in case I coded it right lol)
     REQUIRE(allocator.GetAllocated() == 10 * sizeof(T));
     allocator.Pop();
 
-    allocator.Push<u32>();
+    allocator.Create<u32>();
     REQUIRE(allocator.GetAllocated() == sizeof(u32));
     T *ptr = allocator.Create<T>();
     REQUIRE(allocator.Top<T>() == ptr);
@@ -30,7 +30,7 @@ template <typename T> void RunBasicConstructDestructOperations()
     allocator.Destroy(ptr);
     allocator.Pop();
 
-    allocator.Push<u8>();
+    allocator.Create<u8>();
     ptr = allocator.Create<T>();
     REQUIRE(allocator.Top<T>() == ptr);
 
@@ -51,7 +51,7 @@ template <typename T> void RunBasicConstructDestructOperations()
     T *ptr3 = allocator.Create<T>();
     REQUIRE(ptr2 == ptr3);
 
-    T *ptr4 = allocator.NConstruct<T>(10);
+    T *ptr4 = allocator.NCreate<T>(10);
 
     REQUIRE(allocator.GetAllocated() == 12 * sizeof(T));
     T *ptr5 = allocator.Create<T>();
@@ -125,7 +125,7 @@ TEST_CASE("Stack allocator complex data operations", "[memory][stack_allocator][
 
     SECTION("Fill allocator")
     {
-        while (allocator.Push<AlignedData>())
+        while (allocator.Create<AlignedData>())
             ;
         while (!allocator.IsEmpty())
             allocator.Pop();

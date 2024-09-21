@@ -5,16 +5,14 @@
 
 namespace KIT
 {
-// Stack allocator is a simple allocator that allocates memory in a stack-like fashion. It is useful for temporary
-// allocations and allows many types of elements to coexist in a single contiguous chunk of memory. It is not
-// thread-safe
-
-// Thread safe considerations: This allocator requires precise ordering of allocations and deallocations. A
-// multithreaded environment has the exact opposite property, so this allocator is not thread saf because *I think* it
-// doesnt make sense to use it in a multithreaded environment as a shared variable
-
-// TODO: There is a slight overhead when using Entry with a DynamicArray. Consider trying to reduce it (currently this
-// allocator allocates/deallocates slower then the block allocator by aprox 1 ns per call, measured in my MacOS M1)
+/**
+ * @brief A simple stack allocator that allocates memory in a stack-like fashion. It is useful for temporary allocations
+ * and allows many types of elements to coexist in a single contiguous chunk of memory.
+ *
+ * @note Thread safety considerations: This allocator requires precise ordering of allocations and deallocations.
+ * A multithreaded environment has the exact opposite property, so this allocator is not thread safe.
+ *
+ */
 class KIT_API StackAllocator
 {
     KIT_NON_COPYABLE(StackAllocator)
@@ -42,29 +40,54 @@ class KIT_API StackAllocator
     StackAllocator(StackAllocator &&p_Other) noexcept;
     StackAllocator &operator=(StackAllocator &&p_Other) noexcept;
 
-    // Push and Allocate do exactly the same, I just wantde to keep both APIs
+    // Push and Allocate do exactly the same, I just wanted to keep both APIs
     // Pop and Deallocate are *almost* the same. Deallocate requires the actual pointer to be passed. It is used mainly
     // for debugging purposes when asserts are enabled, to ensure proper deallocation order. Pop just mindlessly pops,
     // no asserts, no nothing
 
     // Alignment is set to 1, because in place allocations *should* allow any kind of alignment, including ones under 8
     // (not like malloc or posix_memalign). All of this in 64 bit systems
-    void *Push(usize p_Size, usize p_Alignment = 1) noexcept;
-    void Pop() noexcept;
-    void Pop(usize p_N) noexcept;
 
+    /**
+     * @brief Allocate a new block of memory into the stack allocator (Same as Allocate()).
+     *
+     * @param p_Size The size of the block to allocate.
+     * @param p_Alignment The alignment of the block.
+     * @return void* A pointer to the allocated block.
+     */
+    void *Push(usize p_Size, usize p_Alignment = 1) noexcept;
+
+    /**
+     * @brief Pop the last block of memory from the stack allocator.
+     *
+     */
+    void Pop() noexcept;
+
+    /**
+     * @brief Allocate a new block of memory in the stack allocator (Same as Push()).
+     *
+     * @param p_Size The size of the block to allocate.
+     * @param p_Alignment The alignment of the block.
+     * @return void* A pointer to the allocated block.
+     */
     void *Allocate(usize p_Size, usize p_Alignment = 1) noexcept;
+
+    /**
+     * @brief Deallocate a block of memory from the stack allocator. This method, if used correctly, should behave
+     * exactly like Pop(). The pointer is kept there for consistency and for debugging purposes when asserts are
+     * enabled. If disabled, this method is just a wrapper around Pop().
+     *
+     * @param p_Ptr The pointer to the block to deallocate.
+     */
     void Deallocate([[maybe_unused]] const void *p_Ptr) noexcept;
 
-    template <typename T> T *Push(const usize p_N = 1) noexcept
-    {
-        return static_cast<T *>(Push(p_N * sizeof(T), alignof(T)));
-    }
-    template <typename T> T *Allocate(const usize p_N = 1) noexcept
-    {
-        return static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
-    }
-
+    /**
+     * @brief Allocate a new block of memory in the stack allocator and create a new object of type T out of it.
+     *
+     * @tparam T The type of the block.
+     * @param p_N The number of elements of type T to allocate.
+     * @return T* A pointer to the allocated block.
+     */
     template <typename T, typename... Args>
         requires std::constructible_from<T, Args...>
     T *Create(Args &&...p_Args) noexcept
@@ -74,9 +97,17 @@ class KIT_API StackAllocator
         return ptr;
     }
 
+    /**
+     * @brief Allocate a new block of memory in the stack allocator and create an array of objects of type T out of it.
+     * The block is created with the size of T * p_N.
+     *
+     * @tparam T The type of the block.
+     * @param p_N The number of elements of type T to allocate.
+     * @return T* A pointer to the allocated block.
+     */
     template <typename T, typename... Args>
         requires std::constructible_from<T, Args...>
-    T *NConstruct(const usize p_N, Args &&...p_Args) noexcept
+    T *NCreate(const usize p_N, Args &&...p_Args) noexcept
     {
         T *ptr = static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
         for (usize i = 0; i < p_N; ++i)
@@ -84,6 +115,12 @@ class KIT_API StackAllocator
         return ptr;
     }
 
+    /**
+     * @brief Deallocate a block of memory from the stack allocator and destroy the object of type T created from it.
+     *
+     * @tparam T The type of the block.
+     * @param p_Ptr The pointer to the block to deallocate.
+     */
     template <typename T> void Destroy(T *p_Ptr) noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
@@ -99,18 +136,62 @@ class KIT_API StackAllocator
         Deallocate(p_Ptr);
     }
 
+    /**
+     * @brief Get the top entry of the stack allocator.
+     *
+     */
     const Entry &Top() const noexcept;
+
+    /**
+     * @brief Get the top entry of the stack allocator.
+     *
+     */
     template <typename T> T *Top() noexcept
     {
         return reinterpret_cast<T *>(Top().Ptr);
     }
 
+    /**
+     * @brief Get the size of the stack allocator.
+     *
+     */
     usize GetSize() const noexcept;
+
+    /**
+     * @brief Get the total amount of memory allocated in the stack allocator.
+     *
+     */
     usize GetAllocated() const noexcept;
+
+    /**
+     * @brief Get the total amount of memory remaining in the stack allocator.
+     *
+     */
     usize GetRemaining() const noexcept;
 
+    /**
+     * @brief Check if a pointer belongs to the stack allocator.
+     *
+     * @param p_Ptr The pointer to check.
+     * @return true If the pointer belongs to the stack allocator.
+     * @return false If the pointer does not belong to the stack allocator.
+     */
     bool Belongs(const void *p_Ptr) const noexcept;
+
+    /**
+     * @brief Check if the stack allocator is empty.
+     *
+     * @return true If the stack allocator is empty.
+     * @return false If the stack allocator is not empty.
+     */
     bool IsEmpty() const noexcept;
+
+    /**
+     * @brief Check if the stack allocator is full.
+     *
+     * @return true If the stack allocator is full.
+     * @return false If the stack allocator is not full.
+     */
     bool IsFull() const noexcept;
 
   private:

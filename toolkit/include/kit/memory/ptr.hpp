@@ -21,6 +21,17 @@ namespace KIT
 // All in all, I am aware moving out of my way to reinvent the wheel like this is not a good practice, and making
 // assumptions about unique_ptr's possible overhead is not a good idea. But for now, this is not important enough to
 // change, and I am happy with the result
+
+/**
+ * @brief A scope pointer that manages the lifetime of a pointer. It is equivalent to a unique_ptr, but it is designed
+ * to work only with the new/delete operators. It definitely has less features than a unique_ptr, but it is simple
+ * enough for me to implement it and make it work with the rest of the library.
+ *
+ * As with the unique_ptr, the Scope pointer is non-copyable, but it is movable. Once destroyed, the pointer is
+ * automatically deleted.
+ *
+ * @tparam T The type of the pointer.
+ */
 template <typename T> class Scope
 {
     KIT_NON_COPYABLE(Scope)
@@ -64,6 +75,10 @@ template <typename T> class Scope
         Release();
     }
 
+    /**
+     * @brief Release the pointer, deleting it. The pointer is set to nullptr after this operation.
+     *
+     */
     void Release() noexcept
     {
         if (!m_Ptr)
@@ -86,11 +101,21 @@ template <typename T> class Scope
         return m_Ptr != nullptr;
     }
 
+    /**
+     * @brief Get the pointer.
+     *
+     */
     T *Get() const noexcept
     {
         return m_Ptr;
     }
 
+    /**
+     * @brief Create a new object of type T. This is a factory method that creates a new Scope object.
+     *
+     * @param p_Args The arguments to pass to the constructor of T.
+     * @return Scope A new Scope object.
+     */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
     static Scope Create(Args &&...p_Args) noexcept
@@ -113,6 +138,14 @@ template <typename T> class Scope
 // This is a small homemade implementation of a reference counter to avoid the shared_ptr's allocations overhead.
 // This way, the reference counter is stored in the object itself. Any object that wishes to be reference counted
 // should inherit from this class
+
+/**
+ * @brief A special base class to prepare a type T to be reference counted, granting it with an atomic counter. As of
+ * right now, it does not support stack allocated objects. All objects inheriting from this class should be dynamically
+ * allocated in some way with the new/delete operators (which may or may not be overloaded).
+ *
+ * @tparam T The type of the objetc to be reference counted.
+ */
 template <typename T> class RefCounted
 {
   public:
@@ -179,6 +212,14 @@ template <typename T> class RefCounted
 };
 
 // To use const, Ref<const T> should be enough
+
+/**
+ * @brief A small homemade implementation of a reference counter to avoid some of the shared_ptr's allocations overhead.
+ * The reference counter is stored in the object itself. Any object that wishes to be reference counted should inherit
+ * from the RefCounted class.
+ *
+ * @tparam T The type of the pointer.
+ */
 template <typename T> class Ref
 {
     KIT_BLOCK_ALLOCATED_CONCURRENT(Ref<T>, 32)
@@ -290,11 +331,21 @@ template <typename T> class Ref
         return m_Ptr != nullptr;
     }
 
+    /**
+     * @brief Get the pointer.
+     *
+     */
     T *Get() const noexcept
     {
         return m_Ptr;
     }
 
+    /**
+     * @brief Create a new object of type T. This is a factory method that creates a new Ref object.
+     *
+     * @param p_Args The arguments to pass to the constructor of T.
+     * @return Ref A new Ref object.
+     */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
     static Ref Create(Args &&...p_Args) noexcept

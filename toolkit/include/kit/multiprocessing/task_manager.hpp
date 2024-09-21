@@ -5,19 +5,36 @@
 
 namespace KIT
 {
-// A simple TaskManager interface that allows users to implement their own task system with their own threading model
-
-// A task may only be submitted again if it has finished execution and its Reset() method has been called. Beware,
-// if multiple threads are waiting for the same task to finish and one of them finishes waiting and resets it "too
-// quickly", the other threads may be left waiting indefinitely
+/**
+ * @brief A task manager that is responsible for managing tasks and executing them. It is an abstract class that
+ * must be implemented by the user to create a custom task system.
+ *
+ * @note A task may only be submitted again if it has finished execution and its Reset() method has been called.
+ * Multiple threads can wait for the same task at the same time as long as none of them resets it immediately after.
+ * Doing so may cause other threads to wait until the task is submitted and finished again, which may never happen or
+ * may be a nasty bug to track down.
+ *
+ */
 class KIT_API TaskManager
 {
   public:
     explicit TaskManager(usize p_ThreadCount) noexcept;
     virtual ~TaskManager() noexcept = default;
 
+    /**
+     * @brief Submit a task to be executed by the task manager. The task will be executed as soon as possible.
+     *
+     * @param p_Task The task to submit.
+     */
     virtual void SubmitTask(const Ref<ITask> &p_Task) noexcept = 0;
 
+    /**
+     * @brief Create a new task that can be submitted to the task manager. The task is not submitted automatically.
+     *
+     * @param p_Callable The callable object to execute.
+     * @param p_Args Extra arguments to pass to the callable object.
+     * @return A new task object.
+     */
     template <typename Callable, typename... Args>
     auto CreateTask(Callable &&p_Callable, Args &&...p_Args) const noexcept
         -> Ref<Task<std::invoke_result_t<Callable, Args..., usize>>>
@@ -26,6 +43,13 @@ class KIT_API TaskManager
         return Ref<Task<RType>>::Create(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
     }
 
+    /**
+     * @brief Create a new task that can be submitted to the task manager and submit it immediately.
+     *
+     * @param p_Callable The callable object to execute.
+     * @param p_Args Extra arguments to pass to the callable object.
+     * @return A new task object.
+     */
     template <typename Callable, typename... Args>
     auto CreateAndSubmit(Callable &&p_Callable, Args &&...p_Args) noexcept
         -> Ref<Task<std::invoke_result_t<Callable, Args..., usize>>>
@@ -36,6 +60,10 @@ class KIT_API TaskManager
         return task;
     }
 
+    /**
+     * @brief Get the number of threads that the task manager is using.
+     *
+     */
     usize GetThreadCount() const noexcept;
 
   private:
