@@ -20,6 +20,7 @@ set(SOURCES
     src/container/static_array.cpp
     src/container/array_view.cpp
     src/container/hashable_tuple.cpp
+    src/container/storage.cpp
     src/multiprocessing/thread_pool.cpp
 )
 

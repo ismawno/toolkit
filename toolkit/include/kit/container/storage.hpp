@@ -25,7 +25,8 @@ template <usize Size, usize Alignment = alignof(void *)> class RawStorage
 
     /**
      * @brief Construct a new object of type T in the local buffer. Calling Create on top of an existing object will
-     * cause undefined behavior.
+     * cause undefined behavior. The object of type T needs to fit in the local buffer and have an alignment that is
+     * compatible with the local buffer.
      *
      * @tparam T The type of the object to create.
      * @param p_Args The arguments to pass to the constructor of T.
@@ -33,8 +34,9 @@ template <usize Size, usize Alignment = alignof(void *)> class RawStorage
      */
     template <typename T, typename... Args> T *Create(Args &&...p_Args) noexcept
     {
-        T *ptr = new (m_Data) T(std::forward<Args>(p_Args)...);
-        return ptr;
+        static_assert(sizeof(T) <= Size, "Object does not fit in the local buffer");
+        static_assert(alignof(T) <= Alignment, "Object has incompatible alignment");
+        return ::new (m_Data) T(std::forward<Args>(p_Args)...);
     }
 
     /**
@@ -99,24 +101,25 @@ template <typename T> class Storage
     Storage(const Storage &p_Other) noexcept
         requires std::copy_constructible<T>
     {
-        m_Storage.Create<T>(*p_Other.Get());
+        m_Storage.template Create<T>(*p_Other.Get());
     }
     Storage(Storage &&p_Other) noexcept
         requires std::move_constructible<T>
     {
-        m_Storage.Create<T>(std::move(*p_Other.Get()));
+        m_Storage.template Create<T>(std::move(*p_Other.Get()));
     }
 
     Storage &operator=(const Storage &p_Other) noexcept
-        requires std::copy_assignable<T>
+        requires std::is_copy_assignable_v<T>
     {
         if (this == &p_Other)
             return *this;
         *Get() = *p_Other.Get();
         return *this;
     }
+
     Storage &operator=(Storage &&p_Other) noexcept
-        requires std::move_assignable<T>
+        requires std::is_move_assignable_v<T>
     {
         if (this == &p_Other)
             return *this;
@@ -128,7 +131,7 @@ template <typename T> class Storage
         requires(!std::same_as<Storage, std::decay_t<Args>> && ...)
     Storage(Args &&...p_Args) noexcept
     {
-        m_Storage.Create<T>(std::forward<Args>(p_Args)...);
+        m_Storage.template Create<T>(std::forward<Args>(p_Args)...);
     }
 
     /**
@@ -140,7 +143,7 @@ template <typename T> class Storage
      */
     template <typename... Args> T *Create(Args &&...p_Args) noexcept
     {
-        return m_Storage.Create<T>(std::forward<Args>(p_Args)...);
+        return m_Storage.template Create<T>(std::forward<Args>(p_Args)...);
     }
 
     /**
@@ -152,16 +155,16 @@ template <typename T> class Storage
      */
     void Destroy() const noexcept
     {
-        m_Storage.Destroy<T>();
+        m_Storage.template Destroy<T>();
     }
 
     const T *Get() const noexcept
     {
-        return m_Storage.Get<T>();
+        return m_Storage.template Get<T>();
     }
     T *Get() noexcept
     {
-        return m_Storage.Get<T>();
+        return m_Storage.template Get<T>();
     }
 
     const T *operator->() const noexcept
