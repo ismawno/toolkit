@@ -8,9 +8,9 @@ namespace KIT
 {
 /**
  * @brief An STL-like array interface that manages a fixed size buffer of data. This base class does not own the data,
- * and it is up to the implementation to provide means to acquire/clean up the resources. This interface can be used as
- * a wrapper around a chunk of data to provide array-like functionality without owning the chunk itself. The
- * implementation is also responsible for providing the data() and capacity() methods.
+ * and it is up to the implementation to provide means to acquire/clean up the resources. It is not meant to be used
+ * directly. This interface can be used as a wrapper around a chunk of data to provide array-like functionality without
+ * owning the chunk itself. The implementation is also responsible for providing the data() and capacity() methods.
  *
  * Using same naming conventions as the STL, to improve cnosistency.
  *
