@@ -11,7 +11,7 @@ namespace KIT
 
 /**
  * @brief A thread pool that manages tasks and executes them in parallel. It is a concrete class that implements the
- * TaskManager interface.
+ * ITaskManager interface.
  *
  * @note The thread pool is not resizable. Once created, the number of threads is fixed. Currently, queue
  * synchronization is achieved by a plain mutex lock, which is not ideal. I have considered implementing a lock-free
@@ -19,7 +19,7 @@ namespace KIT
  *
  * @tparam MTX The type of mutex to use for synchronization. It must implement the Mutex concept.
  */
-template <Mutex MTX> class ThreadPool final : public TaskManager
+template <Mutex MTX> class ThreadPool final : public ITaskManager
 {
   public:
     explicit ThreadPool(usize p_ThreadCount);

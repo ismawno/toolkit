@@ -11,7 +11,7 @@ namespace KIT
 
 /**
  * @brief A simple task interface that allows the user to create tasks that can be executed by any task manager that
- * inherits from TaskManager. The task is a simple callable object that takes a thread index as an argument.
+ * inherits from ITaskManager. The task is a simple callable object that takes a thread index as an argument.
  *
  */
 class KIT_API ITask : public RefCounted<ITask>

@@ -9,7 +9,7 @@ namespace KIT
  * @brief A function that iterates over a range of elements and processes each of them using a task system. It is most
  * useful when used as a way to parallelize a loop, where each iteration is independent of the others.
  *
- * @param p_Manager The task manager to use, which must be derived from TaskManager.
+ * @param p_Manager The task manager to use, which must be derived from ITaskManager.
  * @param p_First The first element of the range.
  * @param p_Last The last element of the range.
  * @param p_Dest An output iterator where the tasks will be stored. It is up to the user to provide a large enough
@@ -21,7 +21,7 @@ namespace KIT
  * @param p_Args Extra arguments to pass to the callable object. These arguments go before the iterators and thread
  * index.
  */
-template <std::derived_from<TaskManager> TManager, std::random_access_iterator It1,
+template <std::derived_from<ITaskManager> TManager, std::random_access_iterator It1,
           std::output_iterator<Ref<ITask>> It2, typename Callable, typename... Args>
 void ForEach(TManager &p_Manager, It1 p_First, It1 p_Last, It2 p_Dest, const usize p_Tasks, Callable &&p_Callable,
              Args &&...p_Args)

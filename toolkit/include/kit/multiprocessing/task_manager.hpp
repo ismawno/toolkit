@@ -15,11 +15,11 @@ namespace KIT
  * may be a nasty bug to track down.
  *
  */
-class KIT_API TaskManager
+class KIT_API ITaskManager
 {
   public:
-    explicit TaskManager(usize p_ThreadCount) noexcept;
-    virtual ~TaskManager() noexcept = default;
+    explicit ITaskManager(usize p_ThreadCount) noexcept;
+    virtual ~ITaskManager() noexcept = default;
 
     /**
      * @brief Submit a task to be executed by the task manager. The task will be executed as soon as possible.

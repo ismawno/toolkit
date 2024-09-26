@@ -4,7 +4,7 @@
 
 namespace KIT
 {
-template <Mutex MTX> ThreadPool<MTX>::ThreadPool(const usize p_ThreadCount) : TaskManager(p_ThreadCount)
+template <Mutex MTX> ThreadPool<MTX>::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
 {
     m_Threads.reserve(p_ThreadCount);
     const auto worker = [this](const usize p_ThreadIndex) {
