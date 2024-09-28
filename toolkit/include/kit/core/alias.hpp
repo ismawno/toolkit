@@ -10,22 +10,6 @@
 #include <string_view>
 #include <string>
 
-// This is a special hash overload for associative containers that uses transparent hashing and comparison (advised by
-// sonarlint)
-namespace std
-{
-struct string_hash
-{
-    using is_transparent = void; // Enables heterogeneous operations.
-
-    size_t operator()(string_view sv) const
-    {
-        hash<string_view> hasher;
-        return hasher(sv);
-    }
-};
-} // namespace std
-
 namespace KIT
 {
 // Add a namespace so that other libraries can adopt them...
@@ -57,13 +41,26 @@ using i16 = std::int16_t;
 using i32 = std::int32_t;
 using i64 = std::int64_t;
 
+// This is a special hash overload for associative containers that uses transparent hashing and comparison (advised by
+// sonarlint)
+struct StringHash
+{
+    using is_transparent = void; // Enables heterogeneous operations.
+
+    usize operator()(std::string_view sv) const
+    {
+        std::hash<std::string_view> hasher;
+        return hasher(sv);
+    }
+};
+
 template <typename T> struct HashAlias
 {
     using Type = std::hash<T>;
 };
 template <> struct HashAlias<std::string>
 {
-    using Type = std::string_hash;
+    using Type = StringHash;
 };
 
 template <typename T> struct OpAlias

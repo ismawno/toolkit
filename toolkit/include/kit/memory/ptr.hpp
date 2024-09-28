@@ -374,13 +374,10 @@ template <typename T> class Ref
 };
 } // namespace KIT
 
-namespace std
-{
-template <typename T> struct hash<KIT::Ref<T>>
+template <typename T> struct std::hash<KIT::Ref<T>>
 {
     KIT::usize operator()(const KIT::Ref<T> &p_Ref) const noexcept
     {
-        return hash<T *>()(p_Ref.Get());
+        return std::hash<T *>()(p_Ref.Get());
     }
 };
-} // namespace std
