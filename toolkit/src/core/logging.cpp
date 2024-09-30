@@ -12,6 +12,10 @@
 #        include <fmt/chrono.h>
 #    endif
 
+#    ifndef KIT_ROOT_LOG_PATH
+#        define KIT_ROOT_LOG_PATH KIT_ROOT_PATH
+#    endif
+
 namespace KIT
 {
 void debugBreak() noexcept
@@ -37,7 +41,7 @@ void logMessage(const char *p_Level, const std::string_view p_File, const i32 p_
 {
     if (p_Line != INT32_MAX)
     {
-        const std::string root = KIT_ROOT_PATH;
+        const std::string root = KIT_ROOT_LOG_PATH;
         const usize pos = p_File.find(root);
         const std::string_view file_rel = pos == std::string::npos ? p_File : p_File.substr(pos + 1 + root.size());
 
