@@ -51,46 +51,46 @@ class KIT_API Timespan
 
     static void Sleep(Timespan p_Duration) noexcept;
 
-    std::strong_ordering operator<=>(const Timespan &other) const = default;
+    std::strong_ordering operator<=>(const Timespan &p_Other) const = default;
 
-    friend Timespan operator+(const Timespan &lhs, const Timespan &rhs)
+    friend Timespan operator+(const Timespan &p_Left, const Timespan &p_Right)
     {
-        return Timespan(lhs.m_Elapsed + rhs.m_Elapsed);
+        return Timespan(p_Left.m_Elapsed + p_Right.m_Elapsed);
     }
-    friend Timespan operator-(const Timespan &lhs, const Timespan &rhs)
+    friend Timespan operator-(const Timespan &p_Left, const Timespan &p_Right)
     {
-        return Timespan(lhs.m_Elapsed - rhs.m_Elapsed);
-    }
-
-    template <Numeric T> friend Timespan operator*(const T scalar, const Timespan &timespan)
-    {
-        return Timespan(std::chrono::round<Timespan::Nanoseconds>(timespan.m_Elapsed * scalar));
-    }
-    template <Numeric T> friend Timespan operator/(const T scalar, const Timespan &timespan)
-    {
-        return Timespan(std::chrono::round<Timespan::Nanoseconds>(scalar / timespan.m_Elapsed));
+        return Timespan(p_Left.m_Elapsed - p_Right.m_Elapsed);
     }
 
-    template <Numeric T> friend Timespan operator*(const Timespan &timespan, const T scalar)
+    template <Numeric T> friend Timespan operator*(const T p_Scalar, const Timespan &p_Timespan)
     {
-        return Timespan(std::chrono::round<Timespan::Nanoseconds>(timespan.m_Elapsed * scalar));
+        return Timespan(std::chrono::round<Timespan::Nanoseconds>(p_Timespan.m_Elapsed * p_Scalar));
     }
-    template <Numeric T> friend Timespan operator/(const Timespan &timespan, const T scalar)
+    template <Numeric T> friend Timespan operator/(const T p_Scalar, const Timespan &p_Timespan)
     {
-        return Timespan(std::chrono::round<Timespan::Nanoseconds>(timespan.m_Elapsed / scalar));
+        return Timespan(std::chrono::round<Timespan::Nanoseconds>(p_Scalar / p_Timespan.m_Elapsed));
     }
 
-    Timespan &operator+=(const Timespan &other);
-    Timespan &operator-=(const Timespan &other);
-
-    template <Numeric T> Timespan &operator*=(const T scalar)
+    template <Numeric T> friend Timespan operator*(const Timespan &p_Timespan, const T p_Scalar)
     {
-        m_Elapsed *= scalar;
+        return Timespan(std::chrono::round<Timespan::Nanoseconds>(p_Timespan.m_Elapsed * p_Scalar));
+    }
+    template <Numeric T> friend Timespan operator/(const Timespan &p_Timespan, const T p_Scalar)
+    {
+        return Timespan(std::chrono::round<Timespan::Nanoseconds>(p_Timespan.m_Elapsed / p_Scalar));
+    }
+
+    Timespan &operator+=(const Timespan &p_Other);
+    Timespan &operator-=(const Timespan &p_Other);
+
+    template <Numeric T> Timespan &operator*=(const T p_Scalar)
+    {
+        m_Elapsed *= p_Scalar;
         return *this;
     }
-    template <Numeric T> Timespan &operator/=(const T scalar)
+    template <Numeric T> Timespan &operator/=(const T p_Scalar)
     {
-        m_Elapsed /= scalar;
+        m_Elapsed /= p_Scalar;
         return *this;
     }
 

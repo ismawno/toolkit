@@ -12,15 +12,15 @@ void Timespan::Sleep(Timespan p_Duration) noexcept
     std::this_thread::sleep_for(p_Duration.m_Elapsed);
 }
 
-Timespan &Timespan::operator+=(const Timespan &other)
+Timespan &Timespan::operator+=(const Timespan &p_Other)
 {
-    m_Elapsed += other.m_Elapsed;
+    m_Elapsed += p_Other.m_Elapsed;
     return *this;
 }
 
-Timespan &Timespan::operator-=(const Timespan &other)
+Timespan &Timespan::operator-=(const Timespan &p_Other)
 {
-    m_Elapsed -= other.m_Elapsed;
+    m_Elapsed -= p_Other.m_Elapsed;
     return *this;
 }
 } // namespace KIT
