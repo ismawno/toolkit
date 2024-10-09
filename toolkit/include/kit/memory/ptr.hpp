@@ -9,142 +9,6 @@
 
 namespace KIT
 {
-// This is a small, homemade implementation of a scope pointer, which is equivalent to a unique_ptr but designed to work
-// only with the new/delete operators. Creating a Ref class was somewhat a bit more justified, as I can design it so
-// that the user data always holds the reference count, avoiding possible overhead (using those types in a non-reference
-// counting scheme is a bit wasteful and inefficient tho). The Scope implementation may seem unnecessary why
-// not just use a unique_ptr and thats it? Well, a Scope pointer is easy enough to implement, and it allows me to have a
-// bit more consistency with names conventions/factories (+ its fun). Also, I believe unique_ptr has some extra overhead
-// due to the need to be able to handle exceptions, which I dont need because I dont use them at all (you can optimize
-// that away with a noexcept, true, but I still like the idea of having a custom implementation)
-
-// All in all, I am aware moving out of my way to reinvent the wheel like this is not a good practice, and making
-// assumptions about unique_ptr's possible overhead is not a good idea. But for now, this is not important enough to
-// change, and I am happy with the result
-
-/**
- * @brief A scope pointer that manages the lifetime of a pointer. It is equivalent to a unique_ptr, but it is designed
- * to work only with the new/delete operators. It definitely has less features than a unique_ptr, but it is simple
- * enough for me to implement it and make it work with the rest of the library.
- *
- * As with the unique_ptr, the Scope pointer is non-copyable, but it is movable. Once destroyed, the pointer is
- * automatically deleted.
- *
- * @tparam T The type of the pointer.
- */
-template <typename T> class Scope
-{
-    KIT_NON_COPYABLE(Scope)
-  public:
-    Scope() noexcept = default;
-    explicit(false) Scope(T *p_Ptr) noexcept : m_Ptr(p_Ptr)
-    {
-    }
-    Scope(Scope &&p_Other) noexcept : m_Ptr(p_Other.m_Ptr)
-    {
-        p_Other.m_Ptr = nullptr;
-    }
-    template <typename U> explicit(false) Scope(Scope<U> &&p_Other) noexcept : m_Ptr(p_Other.m_Ptr)
-    {
-        p_Other.m_Ptr = nullptr;
-    }
-
-    Scope &operator=(Scope &&p_Other) noexcept
-    {
-        if (m_Ptr != p_Other.m_Ptr)
-        {
-            Reset();
-            m_Ptr = p_Other.m_Ptr;
-            p_Other.m_Ptr = nullptr;
-        }
-        return *this;
-    }
-    template <typename U> Scope &operator=(Scope<U> &&p_Other) noexcept
-    {
-        if (m_Ptr != p_Other.m_Ptr)
-        {
-            Reset();
-            m_Ptr = p_Other.m_Ptr;
-            p_Other.m_Ptr = nullptr;
-        }
-        return *this;
-    }
-
-    ~Scope() noexcept
-    {
-        Reset();
-    }
-
-    /**
-     * @brief Reset the pointer, deleting it and replacing it by the provided one (which can be nullptr).
-     *
-     * @param p_Ptr The new pointer to manage.
-     */
-    void Reset(T *p_Ptr = nullptr) noexcept
-    {
-        if (!m_Ptr)
-            return;
-        delete m_Ptr;
-        m_Ptr = p_Ptr;
-    }
-
-    /**
-     * @brief Release the pointer, returning it and setting the internal pointer to nullptr, which gives up ownership.
-     * The caller is now responsible for deleting the pointer.
-     *
-     * @return T* The released pointer.
-     */
-    T *Release() noexcept
-    {
-        T *ptr = m_Ptr;
-        m_Ptr = nullptr;
-        return ptr;
-    }
-
-    T *operator->() const noexcept
-    {
-        return m_Ptr;
-    }
-    T &operator*() const noexcept
-    {
-        return *m_Ptr;
-    }
-
-    explicit(false) operator bool() const noexcept
-    {
-        return m_Ptr != nullptr;
-    }
-
-    /**
-     * @brief Get the pointer.
-     *
-     */
-    T *Get() const noexcept
-    {
-        return m_Ptr;
-    }
-
-    /**
-     * @brief Create a new object of type T. This is a factory method that creates a new Scope object.
-     *
-     * @param p_Args The arguments to pass to the constructor of T.
-     * @return Scope A new Scope object.
-     */
-    template <typename... Args>
-        requires std::constructible_from<T, Args...>
-    static Scope Create(Args &&...p_Args) noexcept
-    {
-        return Scope(new T(std::forward<Args>(p_Args)...));
-    }
-
-    std::strong_ordering operator<=>(const Scope &p_Other) const noexcept = default;
-
-  private:
-    T *m_Ptr = nullptr;
-
-    template <typename U> friend class Scope;
-};
-
 // I really tried to use this concept, but msvc wont fucking let me
 // template <typename T, template <typename> typename RC>
 // concept RCounted = std::is_base_of_v<RC<typename T::CountedType>, T>;
@@ -385,6 +249,157 @@ template <typename T> class Ref
 
     T *m_Ptr = nullptr;
     template <typename U> friend class Ref;
+};
+
+// This is a small, homemade implementation of a scope pointer, which is equivalent to a unique_ptr but designed to work
+// only with the new/delete operators. Creating a Ref class was somewhat a bit more justified, as I can design it so
+// that the user data always holds the reference count, avoiding possible overhead (using those types in a non-reference
+// counting scheme is a bit wasteful and inefficient tho). The Scope implementation may seem unnecessary why
+// not just use a unique_ptr and thats it? Well, a Scope pointer is easy enough to implement, and it allows me to have a
+// bit more consistency with names conventions/factories (+ its fun). Also, I believe unique_ptr has some extra overhead
+// due to the need to be able to handle exceptions, which I dont need because I dont use them at all (you can optimize
+// that away with a noexcept, true, but I still like the idea of having a custom implementation)
+
+// All in all, I am aware moving out of my way to reinvent the wheel like this is not a good practice, and making
+// assumptions about unique_ptr's possible overhead is not a good idea. But for now, this is not important enough to
+// change, and I am happy with the result
+
+/**
+ * @brief A scope pointer that manages the lifetime of a pointer. It is equivalent to a unique_ptr, but it is designed
+ * to work only with the new/delete operators. It definitely has less features than a unique_ptr, but it is simple
+ * enough for me to implement it and make it work with the rest of the library.
+ *
+ * As with the unique_ptr, the Scope pointer is non-copyable, but it is movable. Once destroyed, the pointer is
+ * automatically deleted.
+ *
+ * @tparam T The type of the pointer.
+ */
+template <typename T> class Scope
+{
+    KIT_NON_COPYABLE(Scope)
+  public:
+    Scope() noexcept = default;
+    explicit(false) Scope(T *p_Ptr) noexcept : m_Ptr(p_Ptr)
+    {
+    }
+    Scope(Scope &&p_Other) noexcept : m_Ptr(p_Other.m_Ptr)
+    {
+        p_Other.m_Ptr = nullptr;
+    }
+    template <typename U> explicit(false) Scope(Scope<U> &&p_Other) noexcept : m_Ptr(p_Other.m_Ptr)
+    {
+        p_Other.m_Ptr = nullptr;
+    }
+
+    Scope &operator=(Scope &&p_Other) noexcept
+    {
+        if (m_Ptr != p_Other.m_Ptr)
+        {
+            Reset();
+            m_Ptr = p_Other.m_Ptr;
+            p_Other.m_Ptr = nullptr;
+        }
+        return *this;
+    }
+    template <typename U> Scope &operator=(Scope<U> &&p_Other) noexcept
+    {
+        if (m_Ptr != p_Other.m_Ptr)
+        {
+            Reset();
+            m_Ptr = p_Other.m_Ptr;
+            p_Other.m_Ptr = nullptr;
+        }
+        return *this;
+    }
+
+    ~Scope() noexcept
+    {
+        Reset();
+    }
+
+    /**
+     * @brief Reset the pointer, deleting it and replacing it by the provided one (which can be nullptr).
+     *
+     * @param p_Ptr The new pointer to manage.
+     */
+    void Reset(T *p_Ptr = nullptr) noexcept
+    {
+        if (!m_Ptr)
+            return;
+        delete m_Ptr;
+        m_Ptr = p_Ptr;
+    }
+
+    /**
+     * @brief Release the pointer, returning it and setting the internal pointer to nullptr, which gives up ownership.
+     * The caller is now responsible for deleting the pointer.
+     *
+     * @return T* The released pointer.
+     */
+    T *Release() noexcept
+    {
+        T *ptr = m_Ptr;
+        m_Ptr = nullptr;
+        return ptr;
+    }
+
+    /**
+     * @brief Transfer the ownership of the pointer to a Ref object, which will manage the lifetime of the pointer.
+     *
+     * @return Ref<T> A new Ref object.
+     */
+    Ref<T> AsRef() noexcept
+    {
+        return Ref<T>(Release());
+    }
+
+    operator Ref<T>() noexcept
+    {
+        return AsRef();
+    }
+
+    T *operator->() const noexcept
+    {
+        return m_Ptr;
+    }
+    T &operator*() const noexcept
+    {
+        return *m_Ptr;
+    }
+
+    explicit(false) operator bool() const noexcept
+    {
+        return m_Ptr != nullptr;
+    }
+
+    /**
+     * @brief Get the pointer.
+     *
+     */
+    T *Get() const noexcept
+    {
+        return m_Ptr;
+    }
+
+    /**
+     * @brief Create a new object of type T. This is a factory method that creates a new Scope object.
+     *
+     * @param p_Args The arguments to pass to the constructor of T.
+     * @return Scope A new Scope object.
+     */
+    template <typename... Args>
+        requires std::constructible_from<T, Args...>
+    static Scope Create(Args &&...p_Args) noexcept
+    {
+        return Scope(new T(std::forward<Args>(p_Args)...));
+    }
+
+    std::strong_ordering operator<=>(const Scope &p_Other) const noexcept = default;
+
+  private:
+    T *m_Ptr = nullptr;
+
+    template <typename U> friend class Scope;
 };
 } // namespace KIT
 
