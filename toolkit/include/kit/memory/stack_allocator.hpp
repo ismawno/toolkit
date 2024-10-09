@@ -9,6 +9,11 @@ namespace KIT
  * @brief A simple stack allocator that allocates memory in a stack-like fashion. It is useful for temporary allocations
  * and allows many types of elements to coexist in a single contiguous chunk of memory.
  *
+ * This allocator can both allocate and initialize objects in place in that same memory. Use the
+ * Allocate/Deallocate/Push/Pop for the former and Create/Destroy for the latter. Never mix them, as it will lead to
+ * undefined behavior. (Allocate/Deallocate are equivalent to Push/Pop, so you can use them interchangeably, but for
+ * every Create, there must be a Destroy)
+ *
  * @note Thread safety considerations: This allocator requires precise ordering of allocations and deallocations.
  * A multithreaded environment has the exact opposite property, so this allocator is not thread safe.
  *
@@ -93,6 +98,8 @@ class KIT_API StackAllocator
     T *Create(Args &&...p_Args) noexcept
     {
         T *ptr = static_cast<T *>(Allocate(sizeof(T), alignof(T)));
+        if (!ptr)
+            return nullptr;
         ::new (ptr) T(std::forward<Args>(p_Args)...);
         return ptr;
     }
@@ -110,6 +117,8 @@ class KIT_API StackAllocator
     T *NCreate(const usize p_N, Args &&...p_Args) noexcept
     {
         T *ptr = static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
+        if (!ptr)
+            return nullptr;
         for (usize i = 0; i < p_N; ++i)
             ::new (&ptr[i]) T(std::forward<Args>(p_Args)...);
         return ptr;

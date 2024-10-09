@@ -12,15 +12,15 @@ template <typename T> void RunBasicConstructDestructOperations()
 {
     // Set the starting alignment...
     StackAllocator allocator(4_kb, alignof(T) < sizeof(void *) ? sizeof(void *) : alignof(T));
-    allocator.NCreate<T>(10);
+    T *ptr = allocator.NCreate<T>(10);
 
     // ...so that this is guaranteed to pass (in case I coded it right lol)
     REQUIRE(allocator.GetAllocated() == 10 * sizeof(T));
-    allocator.Pop();
+    allocator.Destroy(ptr);
 
     allocator.Create<u32>();
     REQUIRE(allocator.GetAllocated() == sizeof(u32));
-    T *ptr = allocator.Create<T>();
+    ptr = allocator.Create<T>();
     REQUIRE(allocator.Top<T>() == ptr);
 
     usize factor = alignof(T) > alignof(u32) ? alignof(T) - sizeof(u32) % alignof(T) : 0;
