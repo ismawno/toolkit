@@ -53,7 +53,7 @@ template <typename T> class Scope
     {
         if (m_Ptr != p_Other.m_Ptr)
         {
-            Release();
+            Reset();
             m_Ptr = p_Other.m_Ptr;
             p_Other.m_Ptr = nullptr;
         }
@@ -63,7 +63,7 @@ template <typename T> class Scope
     {
         if (m_Ptr != p_Other.m_Ptr)
         {
-            Release();
+            Reset();
             m_Ptr = p_Other.m_Ptr;
             p_Other.m_Ptr = nullptr;
         }
@@ -72,19 +72,33 @@ template <typename T> class Scope
 
     ~Scope() noexcept
     {
-        Release();
+        Reset();
     }
 
     /**
-     * @brief Release the pointer, deleting it. The pointer is set to nullptr after this operation.
+     * @brief Reset the pointer, deleting it and replacing it by the provided one (which can be nullptr).
      *
+     * @param p_Ptr The new pointer to manage.
      */
-    void Release() noexcept
+    void Reset(T *p_Ptr = nullptr) noexcept
     {
         if (!m_Ptr)
             return;
         delete m_Ptr;
+        m_Ptr = p_Ptr;
+    }
+
+    /**
+     * @brief Release the pointer, returning it and setting the internal pointer to nullptr, which gives up ownership.
+     * The caller is now responsible for deleting the pointer.
+     *
+     * @return T* The released pointer.
+     */
+    T *Release() noexcept
+    {
+        T *ptr = m_Ptr;
         m_Ptr = nullptr;
+        return ptr;
     }
 
     T *operator->() const noexcept
