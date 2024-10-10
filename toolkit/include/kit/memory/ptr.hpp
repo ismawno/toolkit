@@ -410,3 +410,11 @@ template <typename T> struct std::hash<KIT::Ref<T>>
         return std::hash<T *>()(p_Ref.Get());
     }
 };
+
+template <typename T> struct std::hash<KIT::Scope<T>>
+{
+    KIT::usize operator()(const KIT::Scope<T> &p_Scope) const noexcept
+    {
+        return std::hash<T *>()(p_Scope.Get());
+    }
+};
