@@ -19,6 +19,10 @@
 #    endif
 #endif
 
+#ifndef KIT_ROOT_LOG_PATH
+#    define KIT_ROOT_LOG_PATH KIT_ROOT_PATH
+#endif
+
 // sonarlint yells at me bc of this but idgaf
 #ifdef KIT_ENABLE_LOG_COLORS
 #    define KIT_LOG_COLOR_RESET "\033[0m"

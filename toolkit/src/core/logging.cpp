@@ -12,10 +12,6 @@
 #        include <fmt/chrono.h>
 #    endif
 
-#    ifndef KIT_ROOT_LOG_PATH
-#        define KIT_ROOT_LOG_PATH KIT_ROOT_PATH
-#    endif
-
 namespace KIT
 {
 void debugBreak() noexcept
