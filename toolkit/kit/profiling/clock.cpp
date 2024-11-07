@@ -1,4 +1,4 @@
-#include "core/pch.hpp"
+#include "kit/core/pch.hpp"
 #include "kit/profiling/clock.hpp"
 
 namespace KIT

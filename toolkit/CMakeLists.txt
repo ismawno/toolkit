@@ -5,17 +5,17 @@ set(NAME toolkit)
 
 # Source files for the library
 set(SOURCES
-    src/core/logging.cpp
-    src/core/pch.cpp
-    src/memory/memory.cpp
-    src/memory/stack_allocator.cpp
-    src/profiling/clock.cpp
-    src/profiling/profiler.cpp
-    src/profiling/timespan.cpp
-    src/multiprocessing/task.cpp
-    src/multiprocessing/task_manager.cpp
-    src/multiprocessing/thread_pool.cpp
-    src/multiprocessing/spin_lock.cpp
+    kit/core/logging.cpp
+    kit/core/pch.cpp
+    kit/memory/memory.cpp
+    kit/memory/stack_allocator.cpp
+    kit/profiling/clock.cpp
+    kit/profiling/profiler.cpp
+    kit/profiling/timespan.cpp
+    kit/multiprocessing/task.cpp
+    kit/multiprocessing/task_manager.cpp
+    kit/multiprocessing/thread_pool.cpp
+    kit/multiprocessing/spin_lock.cpp
 )
 
 # Create the library
@@ -32,8 +32,8 @@ if (UNIX AND NOT APPLE)
     target_link_libraries(toolkit PUBLIC fmt::fmt)
 endif()
 
-target_include_directories(toolkit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-target_precompile_headers(toolkit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/core/pch.hpp)
+target_include_directories(toolkit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_precompile_headers(toolkit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/kit/core/pch.hpp)
 
 if (MSVC)
     configure_compile_link_options(toolkit "/W4 /WX")

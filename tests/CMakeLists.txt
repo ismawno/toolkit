@@ -14,19 +14,19 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 set(SOURCES
-    src/memory/block_allocator.cpp
-    src/memory/stack_allocator.cpp
-    src/memory/ptr.cpp
-    src/container/static_array.cpp
-    src/container/hashable_tuple.cpp
-    src/container/storage.cpp
-    src/multiprocessing/thread_pool.cpp
+    tests/memory/block_allocator.cpp
+    tests/memory/stack_allocator.cpp
+    tests/memory/ptr.cpp
+    tests/container/static_array.cpp
+    tests/container/hashable_tuple.cpp
+    tests/container/storage.cpp
+    tests/multiprocessing/thread_pool.cpp
 )
 
 add_executable(toolkit-tests ${SOURCES})
 
 target_link_libraries(toolkit-tests PRIVATE Catch2::Catch2WithMain toolkit)
-target_include_directories(toolkit-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(toolkit-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if (MSVC)
     configure_compile_link_options(toolkit-tests "/W4 /WX")
