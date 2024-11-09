@@ -274,8 +274,7 @@ template <typename T> class KIT_API BlockAllocator
      * this allocator will still return true, as they lay in the memory block of the allocator.
      *
      * @param p_Ptr A pointer to check.
-     * @return true If the pointer belongs to this allocator.
-     * @return false If the pointer does not belong to this allocator.
+     * @return Whether the pointer belongs to this allocator.
      */
     bool Owns(const T *p_Ptr) const noexcept
     {
@@ -298,8 +297,7 @@ template <typename T> class KIT_API BlockAllocator
     /**
      * @brief Check if the allocator is empty (has no active allocations).
      *
-     * @return true If the allocator is empty.
-     * @return false If the allocator has active allocations.
+     * @return Whether the allocator is empty.
      */
     bool IsEmpty() const noexcept
     {

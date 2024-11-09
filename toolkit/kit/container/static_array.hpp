@@ -381,7 +381,7 @@ class StaticArray
      * @brief Access an element in the array.
      *
      * @param p_Index The index of the element to access.
-     * @return const T& A reference to the element.
+     * @return A reference to the element.
      */
     const T &operator[](const usize p_Index) const noexcept
     {
@@ -405,7 +405,7 @@ class StaticArray
      * @brief Access an element in the array.
      *
      * @param p_Index The index of the element to access.
-     * @return const T& A reference to the element.
+     * @return A reference to the element.
      */
     const T &at(const usize p_Index) const noexcept
     {

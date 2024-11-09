@@ -182,24 +182,21 @@ class KIT_API StackAllocator
      * @brief Check if a pointer belongs to the stack allocator.
      *
      * @param p_Ptr The pointer to check.
-     * @return true If the pointer belongs to the stack allocator.
-     * @return false If the pointer does not belong to the stack allocator.
+     * @return Whether the pointer belongs to the stack allocator.
      */
     bool Belongs(const void *p_Ptr) const noexcept;
 
     /**
      * @brief Check if the stack allocator is empty.
      *
-     * @return true If the stack allocator is empty.
-     * @return false If the stack allocator is not empty.
+     * @return Whether the stack allocator is empty.
      */
     bool IsEmpty() const noexcept;
 
     /**
      * @brief Check if the stack allocator is full.
      *
-     * @return true If the stack allocator is full.
-     * @return false If the stack allocator is not full.
+     * @return Whether the stack allocator is full.
      */
     bool IsFull() const noexcept;
 

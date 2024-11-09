@@ -22,12 +22,6 @@ class KIT_API ITask : public RefCounted<ITask>
     // KIT_BLOCK_ALLOCATED_CONCURRENT(ITask, 32)
     KIT_NON_COPYABLE(ITask)
   public:
-    struct Range
-    {
-        usize Begin;
-        usize End;
-    };
-
     ITask() noexcept = default;
     virtual ~ITask() noexcept = default;
 
@@ -36,8 +30,7 @@ class KIT_API ITask : public RefCounted<ITask>
     /**
      * @brief Check if the task has finished executing.
      *
-     * @return true The task has finished executing.
-     * @return false The task has not finished executing.
+     * @return Whether the task has finished executing
      */
     bool IsFinished() const noexcept;
 
@@ -88,9 +81,9 @@ template <typename T> class Task final : public ITask
     }
 
     /**
-     * @brief Blocks the calling thread until the task has finished executing and return the result.
+     * @brief Block the calling thread until the task has finished executing and return the result.
      *
-     * @return const T& The result of the task.
+     * @return The result of the task.
      */
     const T &WaitForResult() const noexcept
     {
