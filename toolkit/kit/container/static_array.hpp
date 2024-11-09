@@ -13,8 +13,10 @@ namespace KIT
 // the extra functionality comes with some overhead.
 
 /**
- * @brief An STL-like array with a fixed size buffer. It is meant to be used as a drop-in replacement for std::array
- * when you need a bit more control and functionality, although it comes with some overhead.
+ * @brief An STL-like array with a fixed size buffer.
+ *
+ * It is meant to be used as a drop-in replacement for std::array when you need a bit more control and functionality,
+ * although it comes with some overhead.
  *
  * @tparam T The type of the elements in the array.
  * @tparam N The capacity of the array.

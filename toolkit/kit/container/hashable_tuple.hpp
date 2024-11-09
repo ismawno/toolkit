@@ -14,8 +14,10 @@ namespace KIT
 // library
 
 /**
- * @brief A tuple of hashable elements, useful when you need to hash multiple elements at the same time. The elements
- * must be hashable, meaning they must have a std::hash specialization.
+ * @brief A tuple of hashable elements.
+ *
+ * Useful when you need to hash multiple elements at the same time. The elements must be hashable, meaning they must
+ * have a std::hash specialization.
  *
  * @tparam H
  */

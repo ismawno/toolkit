@@ -6,8 +6,10 @@
 namespace KIT
 {
 /**
- * @brief A simple spin lock that uses atomic operations to lock and unlock. It is a very simple lock that is useful
- * for short critical sections. It is not recommended for long critical sections, as it can cause a lot of contention.
+ * @brief A simple spin lock that uses atomic operations to lock and unlock.
+ *
+ * It is a very simple lock that is useful for short critical sections. It is not recommended for long critical
+ * sections, as it can cause a lot of contention.
  *
  */
 class KIT_API SpinLock

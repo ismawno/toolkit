@@ -22,14 +22,18 @@ class KIT_API ITaskManager
     virtual ~ITaskManager() noexcept = default;
 
     /**
-     * @brief Submit a task to be executed by the task manager. The task will be executed as soon as possible.
+     * @brief Submit a task to be executed by the task manager.
+     *
+     * The task will be executed as soon as possible.
      *
      * @param p_Task The task to submit.
      */
     virtual void SubmitTask(const Ref<ITask> &p_Task) noexcept = 0;
 
     /**
-     * @brief Create a new task that can be submitted to the task manager. The task is not submitted automatically.
+     * @brief Create a new task that can be submitted to the task manager.
+     *
+     * The task is not submitted automatically.
      *
      * @param p_Callable The callable object to execute.
      * @param p_Args Extra arguments to pass to the callable object.

@@ -8,9 +8,9 @@ namespace KIT
  * @brief A raw storage class mainly used to allow the deferred creation and destruction of objects using a fixed size
  * buffer with no heap allocations.
  *
- * This is useful when having a class with no default constructor (having strict
- * initialization requirements) that is being used in another class for which the construction requirements of the
- * original class may not be met at the time of construction.
+ * This is useful when having a class with no default constructor (having strict initialization requirements) that is
+ * being used in another class for which the construction requirements of the original class may not be met at the time
+ * of construction.
  *
  * This class is trivially copyable and movable. Be cautios when using it with complex types that have non-trivial copy
  * or move constructors.
@@ -24,9 +24,10 @@ template <usize Size, usize Alignment = alignof(void *)> class RawStorage
     RawStorage() noexcept = default;
 
     /**
-     * @brief Construct a new object of type T in the local buffer. Calling Create on top of an existing object will
-     * cause undefined behavior. The object of type T needs to fit in the local buffer and have an alignment that is
-     * compatible with the local buffer.
+     * @brief Construct a new object of type T in the local buffer.
+     *
+     * Calling Create on top of an existing object will cause undefined behavior. The object of type T needs to fit in
+     * the local buffer and have an alignment that is compatible with the local buffer.
      *
      * @tparam T The type of the object to create.
      * @param p_Args The arguments to pass to the constructor of T.
@@ -40,8 +41,10 @@ template <usize Size, usize Alignment = alignof(void *)> class RawStorage
     }
 
     /**
-     * @brief Destroy the object in the local buffer. Calling Destroy on top of an already destroyed
-     * object/uninitialized memory, or calling Destroy with a different type T will cause undefined behavior.
+     * @brief Destroy the object in the local buffer.
+     *
+     * Calling Destroy on top of an already destroyed object/uninitialized memory, or calling Destroy with a different
+     * type T will cause undefined behavior.
      *
      * This function is declared as const to follow the standard pattern where a pointer to const object can be
      * destroyed.
@@ -55,8 +58,9 @@ template <usize Size, usize Alignment = alignof(void *)> class RawStorage
     }
 
     /**
-     * @brief Get a pointer to the object in the local buffer. Calling Get with a different type T will cause undefined
-     * behavior (uses reinterpret_cast under the hood).
+     * @brief Get a pointer to the object in the local buffer.
+     *
+     * Calling Get with a different type T will cause undefined behavior (uses reinterpret_cast under the hood).
      *
      * @tparam T The type of the object to get.
      * @return const T* A pointer to the object in the local buffer.
@@ -67,8 +71,9 @@ template <usize Size, usize Alignment = alignof(void *)> class RawStorage
     }
 
     /**
-     * @brief Get a pointer to the object in the local buffer. Calling Get with a different type T will cause undefined
-     * behavior (uses reinterpret_cast under the hood).
+     * @brief Get a pointer to the object in the local buffer.
+     *
+     * Calling Get with a different type T will cause undefined behavior (uses reinterpret_cast under the hood).
      *
      * @tparam T The type of the object to get.
      * @return T* A pointer to the object in the local buffer.
@@ -84,7 +89,9 @@ template <usize Size, usize Alignment = alignof(void *)> class RawStorage
 
 /**
  * @brief A class that wraps a RawStorage object and provides a more user-friendly interface for creating and destroying
- * objects. It is safer to use as it emposes more restrictions on its usage. It will adapt to the size and alignment of
+ * objects.
+ *
+ * It is safer to use as it emposes more restrictions on its usage. It will adapt to the size and alignment of
  * the specified type, and the copy and move constructors and assignment operators will be generated based on the type
  * T.
  *
@@ -135,8 +142,9 @@ template <typename T> class Storage
     }
 
     /**
-     * @brief Construct a new object of type T in the local buffer. Calling Create on top of an existing object will
-     * cause undefined behavior.
+     * @brief Construct a new object of type T in the local buffer.
+     *
+     * Calling Create on top of an existing object will cause undefined behavior.
      *
      * @param p_Args The arguments to pass to the constructor of T.
      * @return T* A pointer to the newly created object.
@@ -147,8 +155,10 @@ template <typename T> class Storage
     }
 
     /**
-     * @brief Destroy the object in the local buffer. Calling Destroy on top of an already destroyed
-     * object/uninitialized memory, or calling Destroy with a different type T will cause undefined behavior.
+     * @brief Destroy the object in the local buffer.
+     *
+     * Calling Destroy on top of an already destroyed object/uninitialized memory, or calling Destroy with a different
+     * type T will cause undefined behavior.
      *
      * This function is declared as const to follow the standard pattern where a pointer to const object can be
      * destroyed.

@@ -6,8 +6,9 @@ namespace KIT
 {
 
 /**
- * @brief A function that iterates over a range of elements and processes each of them using a task system. It is most
- * useful when used as a way to parallelize a loop, where each iteration is independent of the others.
+ * @brief A function that iterates over a range of elements and processes each of them using a task system.
+ *
+ * It is most useful when used as a way to parallelize a loop, where each iteration is independent of the others.
  *
  * @param p_Manager The task manager to use, which must be derived from ITaskManager.
  * @param p_First The first element of the range.

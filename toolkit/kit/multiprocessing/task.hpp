@@ -11,7 +11,9 @@ namespace KIT
 
 /**
  * @brief A simple task interface that allows the user to create tasks that can be executed by any task manager that
- * inherits from ITaskManager. The task is a simple callable object that takes a thread index as an argument.
+ * inherits from ITaskManager.
+ *
+ * The task is a simple callable object that takes a thread index as an argument.
  *
  */
 class KIT_API ITask : public RefCounted<ITask>
@@ -61,9 +63,10 @@ class KIT_API ITask : public RefCounted<ITask>
 // void, however this use case is simple enough to not warrant the extra complexity.
 
 /**
- * @brief A task object that can be used directly by the user to create tasks that return (or not) a value. The task is
- * a simple callable object that takes a thread index as an argument. If the task is a simple routine that does not
- * return anything, use the specialized Task<void> instead.
+ * @brief A task object that can be used directly by the user to create tasks that return (or not) a value.
+ *
+ * The task is a simple callable object that takes a thread index as an argument. If the task is a simple routine that
+ * does not return anything, use the specialized Task<void> instead.
  *
  * The return type T must be default constructible and copy assignable. Once the task has finished executing, the result
  * will be copied into the task object and can be retrieved by calling the WaitForResult() method.
@@ -116,6 +119,7 @@ template <typename T> class Task final : public ITask
 
 /**
  * @brief A specialized task object that can be used directly by the user to create tasks that do not return a value.
+ *
  * The task is a simple callable object that takes a thread index as an argument.
  *
  */

@@ -6,8 +6,10 @@
 namespace KIT
 {
 /**
- * @brief A simple stack allocator that allocates memory in a stack-like fashion. It is useful for temporary allocations
- * and allows many types of elements to coexist in a single contiguous chunk of memory.
+ * @brief A simple stack allocator that allocates memory in a stack-like fashion.
+ *
+ * It is useful for temporary allocations and allows many types of elements to coexist in a single contiguous chunk of
+ * memory.
  *
  * This allocator can both allocate and initialize objects in place in that same memory. Use the
  * Allocate/Deallocate/Push/Pop for the former and Create/Destroy for the latter. Never mix them, as it will lead to
@@ -78,9 +80,10 @@ class KIT_API StackAllocator
     void *Allocate(usize p_Size, usize p_Alignment = 1) noexcept;
 
     /**
-     * @brief Deallocate a block of memory from the stack allocator. This method, if used correctly, should behave
-     * exactly like Pop(). The pointer is kept there for consistency and for debugging purposes when asserts are
-     * enabled. If disabled, this method is just a wrapper around Pop().
+     * @brief Deallocate a block of memory from the stack allocator.
+     *
+     * @note This method, if used correctly, should behave exactly like Pop(). The pointer is kept there for consistency
+     * and for debugging purposes when asserts are enabled. If disabled, this method is just a wrapper around Pop().
      *
      * @param p_Ptr The pointer to the block to deallocate.
      */
@@ -106,6 +109,7 @@ class KIT_API StackAllocator
 
     /**
      * @brief Allocate a new block of memory in the stack allocator and create an array of objects of type T out of it.
+     *
      * The block is created with the size of T * p_N.
      *
      * @tparam T The type of the block.

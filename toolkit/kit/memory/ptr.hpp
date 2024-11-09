@@ -18,9 +18,10 @@ namespace KIT
 // should inherit from this class
 
 /**
- * @brief A special base class to prepare a type T to be reference counted, granting it with an atomic counter. As of
- * right now, it does not support stack allocated objects. All objects inheriting from this class should be dynamically
- * allocated in some way with the new/delete operators (which may or may not be overloaded).
+ * @brief A special base class to prepare a type T to be reference counted, granting it with an atomic counter.
+ *
+ * As of right now, it does not support stack allocated objects. All objects inheriting from this class should be
+ * dynamically allocated in some way with the new/delete operators (which may or may not be overloaded).
  *
  * @tparam T The type of the objetc to be reference counted.
  */
@@ -93,6 +94,7 @@ template <typename T> class RefCounted
 
 /**
  * @brief A small homemade implementation of a reference counter to avoid some of the shared_ptr's allocations overhead.
+ *
  * The reference counter is stored in the object itself. Any object that wishes to be reference counted should inherit
  * from the RefCounted class.
  *
@@ -219,7 +221,9 @@ template <typename T> class Ref
     }
 
     /**
-     * @brief Create a new object of type T. This is a factory method that creates a new Ref object.
+     * @brief Create a new object of type T.
+     *
+     * This is a factory method that creates a new Ref object.
      *
      * @param p_Args The arguments to pass to the constructor of T.
      * @return Ref A new Ref object.
@@ -265,9 +269,11 @@ template <typename T> class Ref
 // change, and I am happy with the result
 
 /**
- * @brief A scope pointer that manages the lifetime of a pointer. It is equivalent to a unique_ptr, but it is designed
- * to work only with the new/delete operators. It definitely has less features than a unique_ptr, but it is simple
- * enough for me to implement it and make it work with the rest of the library.
+ * @brief A scope pointer that manages the lifetime of a pointer.
+ *
+ * It is equivalent to a unique_ptr, but it is designed to work only with the new/delete operators. It definitely has
+ * less features than a unique_ptr, but it is simple enough for me to implement it and make it work with the rest of the
+ * library.
  *
  * As with the unique_ptr, the Scope pointer is non-copyable, but it is movable. Once destroyed, the pointer is
  * automatically deleted.
@@ -332,6 +338,7 @@ template <typename T> class Scope
 
     /**
      * @brief Release the pointer, returning it and setting the internal pointer to nullptr, which gives up ownership.
+     *
      * The caller is now responsible for deleting the pointer.
      *
      * @return T* The released pointer.
@@ -382,7 +389,9 @@ template <typename T> class Scope
     }
 
     /**
-     * @brief Create a new object of type T. This is a factory method that creates a new Scope object.
+     * @brief Create a new object of type T.
+     *
+     * This is a factory method that creates a new Scope object.
      *
      * @param p_Args The arguments to pass to the constructor of T.
      * @return Scope A new Scope object.

@@ -10,8 +10,9 @@ namespace KIT
 // TODO: Consider adding dependencies
 
 /**
- * @brief A thread pool that manages tasks and executes them in parallel. It is a concrete class that implements the
- * ITaskManager interface.
+ * @brief A thread pool that manages tasks and executes them in parallel.
+ *
+ * It is a concrete class that implements the ITaskManager interface.
  *
  * @note The thread pool is not resizable. Once created, the number of threads is fixed. Currently, queue
  * synchronization is achieved by a plain mutex lock, which is not ideal. I have considered implementing a lock-free
@@ -26,7 +27,9 @@ template <Mutex MTX> class ThreadPool final : public ITaskManager
     ~ThreadPool() noexcept override;
 
     /**
-     * @brief Submit a task to be executed by the thread pool. The task will be executed as soon as possible.
+     * @brief Submit a task to be executed by the thread pool.
+     *
+     * The task will be executed as soon as possible.
      *
      * @param p_Task The task to submit.
      */
