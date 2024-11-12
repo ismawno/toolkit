@@ -32,7 +32,6 @@ class KIT_API ITask : public RefCounted<ITask>
     /**
      * @brief Check if the task has finished executing.
      *
-     * @return Whether the task has finished executing
      */
     bool IsFinished() const noexcept;
 

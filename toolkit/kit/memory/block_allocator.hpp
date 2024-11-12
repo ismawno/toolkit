@@ -306,9 +306,8 @@ template <typename T> class KIT_API BlockAllocator
     }
 
     /**
-     * @brief Check if the allocator is empty (has no active allocations).
+     * @brief Check if the allocator is empty (no active allocations).
      *
-     * @return Whether the allocator is empty.
      */
     bool IsEmpty() const noexcept
     {

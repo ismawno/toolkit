@@ -193,14 +193,12 @@ class KIT_API StackAllocator
     /**
      * @brief Check if the stack allocator is empty.
      *
-     * @return Whether the stack allocator is empty.
      */
     bool IsEmpty() const noexcept;
 
     /**
      * @brief Check if the stack allocator is full.
      *
-     * @return Whether the stack allocator is full.
      */
     bool IsFull() const noexcept;
 
