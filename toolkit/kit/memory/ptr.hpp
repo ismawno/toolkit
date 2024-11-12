@@ -300,21 +300,14 @@ template <typename T> class Scope
     Scope &operator=(Scope &&p_Other) noexcept
     {
         if (m_Ptr != p_Other.m_Ptr)
-        {
-            Reset();
-            m_Ptr = p_Other.m_Ptr;
-            p_Other.m_Ptr = nullptr;
-        }
+            Reset(p_Other.Release());
         return *this;
     }
     template <typename U> Scope &operator=(Scope<U> &&p_Other) noexcept
     {
         if (m_Ptr != p_Other.m_Ptr)
-        {
-            Reset();
-            m_Ptr = p_Other.m_Ptr;
-            p_Other.m_Ptr = nullptr;
-        }
+            Reset(p_Other.Release());
+
         return *this;
     }
 
