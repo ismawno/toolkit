@@ -26,13 +26,6 @@ template <Mutex MTX> class ThreadPool final : public ITaskManager
     explicit ThreadPool(usize p_ThreadCount);
     ~ThreadPool() noexcept override;
 
-    /**
-     * @brief Submit a task to be executed by the thread pool.
-     *
-     * The task will be executed as soon as possible.
-     *
-     * @param p_Task The task to submit.
-     */
     void SubmitTask(const Ref<ITask> &p_Task) noexcept override;
 
     /**
