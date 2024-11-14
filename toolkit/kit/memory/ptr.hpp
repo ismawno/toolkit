@@ -323,8 +323,6 @@ template <typename T> class Scope
      */
     void Reset(T *p_Ptr = nullptr) noexcept
     {
-        if (!m_Ptr)
-            return;
         delete m_Ptr;
         m_Ptr = p_Ptr;
     }
