@@ -71,7 +71,7 @@ def create_default_settings_file(path: Path, /) -> None:
         "log-colors": "ON",
     }
     cfg["memory"] = {"enable-block-allocator": "ON"}
-    cfg["debug"] = {"sanitizers": "OFF"}
+    cfg["debug"] = {"sanitizers": "OFF", "profiling": "OFF"}
 
     with open(path, "w") as f:
         cfg.write(f)
@@ -196,6 +196,9 @@ def create_arguments() -> tuple[Namespace, list[str]]:
         default=None,
         help="Sanitizer to use. Can be whichever one your compiler supports, and compatible ones may be included simultaneously (separated by commas). Set to OFF to disable",
     )
+    parser.add_argument(
+        "--profiling", type=str, default=None, help="Enable the Tracy profiler"
+    )
 
     return parser.parse_known_args()
 
@@ -212,6 +215,7 @@ def create_cmake_parameters_map() -> dict[str, str]:
         "log-colors": "TOOLKIT_ENABLE_LOG_COLORS",
         "enable-block-allocator": "TOOLKIT_ENABLE_BLOCK_ALLOCATOR",
         "sanitizers": "TOOLKIT_SANITIZERS",
+        "profiling": "TOOLKIT_ENABLE_PROFILING",
     }
 
 

@@ -10,7 +10,6 @@ set(SOURCES
     kit/memory/memory.cpp
     kit/memory/stack_allocator.cpp
     kit/profiling/clock.cpp
-    kit/profiling/profiler.cpp
     kit/profiling/timespan.cpp
     kit/multiprocessing/task.cpp
     kit/multiprocessing/task_manager.cpp
@@ -21,8 +20,8 @@ set(SOURCES
 # Create the library
 add_library(toolkit STATIC ${SOURCES})
 
+include(FetchContent)
 if (UNIX AND NOT APPLE)
-    include(FetchContent)
     FetchContent_Declare(
         fmt
         GIT_REPOSITORY https://github.com/fmtlib/fmt.git
@@ -30,6 +29,32 @@ if (UNIX AND NOT APPLE)
     )
     FetchContent_MakeAvailable(fmt)
     target_link_libraries(toolkit PUBLIC fmt::fmt)
+endif()
+
+if (TOOLKIT_ENABLE_PROFILING)
+    FetchContent_Declare(
+        tracy
+        GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+        GIT_TAG v0.11.1
+    )
+    FetchContent_MakeAvailable(tracy)
+    target_link_libraries(toolkit PUBLIC TracyClient)
+    target_compile_definitions(toolkit PUBLIC TRACY_ENABLE)
+    
+    add_subdirectory(${tracy_SOURCE_DIR}/profiler ${CMAKE_BINARY_DIR}/profiler)
+
+    if (MSVC)
+        target_compile_options(tracy-profiler PRIVATE /wd4996)
+        target_compile_options(TracyClient PRIVATE /wd4996)
+        target_compile_options(TracyServer PRIVATE /wd4996)
+    else()
+        target_compile_options(tracy-profiler PRIVATE -Wno-deprecated-declarations)
+        target_compile_options(TracyClient PRIVATE -Wno-deprecated-declarations)
+        target_compile_options(TracyServer PRIVATE -Wno-deprecated-declarations)
+        target_compile_options(tracy-profiler PRIVATE -Wno-deprecated-anon-enum-enum-conversion)
+        target_compile_options(TracyClient PRIVATE -Wno-deprecated-anon-enum-enum-conversion)
+        target_compile_options(TracyServer PRIVATE -Wno-deprecated-anon-enum-enum-conversion)
+    endif()
 endif()
 
 target_include_directories(toolkit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
