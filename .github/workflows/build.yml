@@ -47,6 +47,7 @@ jobs:
             c_compiler: clang
           - os: ubuntu-latest
             c_compiler: cl
+            profiling: ON # ubuntu ships a very old version of wayland, which tracy needs, which is EXTREMELY annoying
           - os: macos-latest
             c_compiler: gcc
           - os: macos-latest
@@ -57,12 +58,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: Install dependencies on Ubuntu
-      if: matrix.os == 'ubuntu-latest' && matrix.profiling == 'ON'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y libdbus-1-dev libegl1-mesa-dev
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
@@ -83,7 +78,6 @@ jobs:
         -DTOOLKIT_BUILD_PERFORMANCE=ON
         -DTOOLKIT_SANITIZERS=OFF
         -DTOOLKIT_ENABLE_PROFILING=${{ matrix.profiling }}
-        -DTRACY_NO_WAYLAND=ON
         -S ${{ github.workspace }}
 
     - name: Build
