@@ -40,6 +40,7 @@ if (TOOLKIT_ENABLE_PROFILING)
     FetchContent_MakeAvailable(tracy)
     target_link_libraries(toolkit PUBLIC TracyClient)
     target_compile_definitions(toolkit PUBLIC TRACY_ENABLE)
+    target_compile_definitions(toolkit PUBLIC KIT_ENABLE_PROFILING)
     
     add_subdirectory(${tracy_SOURCE_DIR}/profiler ${CMAKE_BINARY_DIR}/profiler)
 
