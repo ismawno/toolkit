@@ -62,11 +62,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest' && matrix.profiling == 'ON'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libdbus-1-dev libegl1-mesa-dev libwayland-dev libxkbcommon-dev wayland-protocols
-
-        git clone https://gitlab.freedesktop.org/wayland/wayland-protocols.git
-        sudo mkdir -p /usr/share/wayland-protocols/staging/cursor-shape
-        sudo cp -r wayland-protocols/staging /usr/share/wayland-protocols/
+        sudo apt-get install -y libdbus-1-dev libegl1-mesa-dev
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
@@ -87,6 +83,7 @@ jobs:
         -DTOOLKIT_BUILD_PERFORMANCE=ON
         -DTOOLKIT_SANITIZERS=OFF
         -DTOOLKIT_ENABLE_PROFILING=${{ matrix.profiling }}
+        -DTRACY_NO_WAYLAND=ON
         -S ${{ github.workspace }}
 
     - name: Build
