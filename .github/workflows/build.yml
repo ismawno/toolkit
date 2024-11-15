@@ -59,14 +59,14 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Install dependencies on Ubuntu
-      if: matrix.os == 'ubuntu-latest'
+      if: matrix.os == 'ubuntu-latest' && matrix.profiling == 'ON'
       run: |
         sudo apt-get update
         sudo apt-get install -y libdbus-1-dev libegl1-mesa-dev libwayland-dev libxkbcommon-dev wayland-protocols
 
         git clone https://gitlab.freedesktop.org/wayland/wayland-protocols.git
         sudo mkdir -p /usr/share/wayland-protocols/staging/cursor-shape
-        sudo cp wayland-protocols/staging/cursor-shape/cursor-shape-v1.xml /usr/share/wayland-protocols/staging/cursor-shape/
+        sudo cp -r wayland-protocols/staging /usr/share/wayland-protocols/
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
