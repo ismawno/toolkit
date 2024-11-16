@@ -190,7 +190,7 @@ template <typename T> class KIT_API BlockAllocator
     [[nodiscard]] T *AllocateConcurrent() noexcept
     {
         std::scoped_lock lock(m_Mutex);
-        KIT_PROFILE_MARK_LOCK(lock);
+        KIT_PROFILE_MARK_LOCK(m_Mutex);
         return AllocateSerial();
     }
 
@@ -202,7 +202,7 @@ template <typename T> class KIT_API BlockAllocator
     void DeallocateConcurrent(T *p_Ptr) noexcept
     {
         std::scoped_lock lock(m_Mutex);
-        KIT_PROFILE_MARK_LOCK(lock);
+        KIT_PROFILE_MARK_LOCK(m_Mutex);
         DeallocateSerial(p_Ptr);
     }
 
@@ -246,7 +246,7 @@ template <typename T> class KIT_API BlockAllocator
         if (m_FreeList)
             return;
         std::scoped_lock lock(m_Mutex);
-        KIT_PROFILE_MARK_LOCK(lock);
+        KIT_PROFILE_MARK_LOCK(m_Mutex);
         std::byte *data = allocateNewBlock(m_BlockSize);
         m_FreeList = reinterpret_cast<Chunk *>(data);
         m_Blocks.push_back(data);
