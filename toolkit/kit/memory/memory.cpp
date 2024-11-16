@@ -57,38 +57,50 @@ void DeallocateAligned(void *p_Ptr) noexcept
 
 void *operator new(const KIT::usize p_Size)
 {
-    return KIT::Allocate(p_Size);
+    void *ptr = std::malloc(p_Size);
+    KIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
+    return ptr;
 }
 void *operator new[](const KIT::usize p_Size)
 {
-    return KIT::Allocate(p_Size);
+    void *ptr = std::malloc(p_Size);
+    KIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
+    return ptr;
 }
 
 void operator delete(void *p_Ptr) noexcept
 {
-    KIT::Deallocate(p_Ptr);
+    std::free(p_Ptr);
+    KIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
 }
 void operator delete[](void *p_Ptr) noexcept
 {
-    KIT::Deallocate(p_Ptr);
+    std::free(p_Ptr);
+    KIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
 }
 
 void *operator new(const KIT::usize p_Size, const std::nothrow_t &) noexcept
 {
-    return KIT::Allocate(p_Size);
+    void *ptr = std::malloc(p_Size);
+    KIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
+    return ptr;
 }
 void *operator new[](const KIT::usize p_Size, const std::nothrow_t &) noexcept
 {
-    return KIT::Allocate(p_Size);
+    void *ptr = std::malloc(p_Size);
+    KIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
+    return ptr;
 }
 
 void operator delete(void *p_Ptr, const std::nothrow_t &) noexcept
 {
-    KIT::Deallocate(p_Ptr);
+    std::free(p_Ptr);
+    KIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
 }
 void operator delete[](void *p_Ptr, const std::nothrow_t &) noexcept
 {
-    KIT::Deallocate(p_Ptr);
+    std::free(p_Ptr);
+    KIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
 }
 
 #endif
