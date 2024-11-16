@@ -2,6 +2,7 @@
 
 #include "kit/core/concepts.hpp"
 #include "kit/multiprocessing/task_manager.hpp"
+#include "kit/profiling/macros.hpp"
 #include <thread>
 
 namespace KIT
@@ -44,6 +45,6 @@ template <Mutex MTX> class ThreadPool final : public ITaskManager
     std::atomic<u32> m_TerminatedCount = 0;
     std::atomic<u32> m_PendingCount = 0;
 
-    mutable MTX m_Mutex;
+    mutable KIT_PROFILE_DECLARE_MUTEX(MTX, m_Mutex);
 };
 } // namespace KIT

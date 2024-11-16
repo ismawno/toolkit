@@ -16,6 +16,7 @@ template <Mutex MTX> ThreadPool<MTX>::ThreadPool(const usize p_ThreadCount) : IT
 
             // This could potentially be lock free by implementing a lock free deque
             std::unique_lock lock(m_Mutex);
+            KIT_PROFILE_MARK_LOCK(lock);
             if (m_Queue.empty())
             {
                 m_TaskReady.clear(std::memory_order_relaxed);
@@ -71,6 +72,7 @@ template <Mutex MTX> void ThreadPool<MTX>::SubmitTask(const Ref<ITask> &p_Task) 
     m_PendingCount.fetch_add(1, std::memory_order_relaxed);
     {
         std::scoped_lock lock(m_Mutex);
+        KIT_PROFILE_MARK_LOCK(lock);
         m_Queue.push_back(p_Task);
     }
     m_TaskReady.test_and_set(std::memory_order_release);

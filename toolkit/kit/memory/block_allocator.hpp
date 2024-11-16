@@ -6,6 +6,7 @@
 #include "kit/core/logging.hpp"
 #include "kit/core/concepts.hpp"
 #include "kit/multiprocessing/spin_lock.hpp"
+#include "kit/profiling/macros.hpp"
 #include <mutex>
 
 namespace KIT
@@ -189,6 +190,7 @@ template <typename T> class KIT_API BlockAllocator
     [[nodiscard]] T *AllocateConcurrent() noexcept
     {
         std::scoped_lock lock(m_Mutex);
+        KIT_PROFILE_MARK_LOCK(lock);
         return AllocateSerial();
     }
 
@@ -200,6 +202,7 @@ template <typename T> class KIT_API BlockAllocator
     void DeallocateConcurrent(T *p_Ptr) noexcept
     {
         std::scoped_lock lock(m_Mutex);
+        KIT_PROFILE_MARK_LOCK(lock);
         DeallocateSerial(p_Ptr);
     }
 
@@ -243,6 +246,7 @@ template <typename T> class KIT_API BlockAllocator
         if (m_FreeList)
             return;
         std::scoped_lock lock(m_Mutex);
+        KIT_PROFILE_MARK_LOCK(lock);
         std::byte *data = allocateNewBlock(m_BlockSize);
         m_FreeList = reinterpret_cast<Chunk *>(data);
         m_Blocks.push_back(data);
@@ -370,7 +374,7 @@ template <typename T> class KIT_API BlockAllocator
     Chunk *m_FreeList = nullptr;
     DynamicArray<std::byte *> m_Blocks;
     usize m_BlockSize;
-    SpinLock m_Mutex;
+    KIT_PROFILE_DECLARE_MUTEX(SpinLock, m_Mutex);
 };
 
 /**
