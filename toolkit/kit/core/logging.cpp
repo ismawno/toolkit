@@ -33,7 +33,7 @@ KIT_WARNING_IGNORE_PUSH
 KIT_GCC_WARNING_IGNORE("-Wunused-parameter")
 KIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
 void logMessage(const char *p_Level, const std::string_view p_File, const i32 p_Line, const char *p_Color,
-                const bool p_Crash, const std::string_view p_Message) noexcept
+                [[maybe_unused]] const bool p_Crash, const std::string_view p_Message) noexcept
 {
     if (p_Line != INT32_MAX)
     {
@@ -52,8 +52,7 @@ void logMessage(const char *p_Level, const std::string_view p_File, const i32 p_
                                            p_Color, p_Level, KIT_LOG_COLOR_RESET, p_Message);
         std::cout << log;
     }
-    if (p_Crash)
-        debugBreak();
+    KIT_DEBUG_BREAK_IF(p_Crash);
 }
 KIT_WARNING_IGNORE_POP
 

@@ -516,6 +516,16 @@ template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexce
     static void operator delete(void *p_Ptr)                                                                           \
     {                                                                                                                  \
         KIT::BDeallocateConcurrent<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                  \
+    }                                                                                                                  \
+    static void *operator new([[maybe_unused]] usize p_Size, const std::nothrow_t &)                                   \
+    {                                                                                                                  \
+        KIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                      \
+                   "Trying to block allocate a derived class from a base class overloaded new/delete");                \
+        return KIT::BAllocateConcurrent<p_ClassName, p_ChunksPerBlock>();                                              \
+    }                                                                                                                  \
+    static void operator delete(void *p_Ptr, const std::nothrow_t &)                                                   \
+    {                                                                                                                  \
+        KIT::BDeallocateConcurrent<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                  \
     }
 
 #define KIT_BLOCK_ALLOCATED_SERIAL(p_ClassName, p_ChunksPerBlock)                                                      \
@@ -526,6 +536,16 @@ template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexce
         return KIT::BAllocateSerial<p_ClassName, p_ChunksPerBlock>();                                                  \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr)                                                                           \
+    {                                                                                                                  \
+        KIT::BDeallocateSerial<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                      \
+    }                                                                                                                  \
+    static void *operator new([[maybe_unused]] usize p_Size, const std::nothrow_t &)                                   \
+    {                                                                                                                  \
+        KIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                      \
+                   "Trying to block allocate a derived class from a base class overloaded new/delete");                \
+        return KIT::BAllocateSerial<p_ClassName, p_ChunksPerBlock>();                                                  \
+    }                                                                                                                  \
+    static void operator delete(void *p_Ptr, const std::nothrow_t &)                                                   \
     {                                                                                                                  \
         KIT::BDeallocateSerial<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                      \
     }

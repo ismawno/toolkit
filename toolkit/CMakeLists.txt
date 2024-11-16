@@ -56,6 +56,11 @@ if (TOOLKIT_ENABLE_PROFILING)
         target_compile_options(TracyClient PRIVATE -Wno-deprecated-anon-enum-enum-conversion)
         target_compile_options(TracyServer PRIVATE -Wno-deprecated-anon-enum-enum-conversion)
     endif()
+
+    if (TOOLKIT_ENABLE_VULKAN_PROFILING)
+        target_compile_definitions(toolkit PUBLIC KIT_ENABLE_VULKAN_PROFILING)
+    endif()
+
 endif()
 
 target_include_directories(toolkit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -87,6 +92,10 @@ endif()
 
 if (TOOLKIT_SILENT_ASSERTS)
     target_compile_definitions(toolkit PUBLIC KIT_SILENT_ASSERTS)
+endif()
+
+if (TOOLKIT_WEAK_ASSERTS)
+    target_compile_definitions(toolkit PUBLIC KIT_WEAK_ASSERTS)
 endif()
 
 if (TOOLKIT_ENABLE_BLOCK_ALLOCATOR)

@@ -50,4 +50,21 @@ KIT_API void *AllocateAligned(usize p_Size, usize p_Alignment) noexcept;
  * @param p_Ptr A pointer to the memory to deallocate.
  */
 KIT_API void DeallocateAligned(void *p_Ptr) noexcept;
+
 } // namespace KIT
+
+#ifdef KIT_ENABLE_PROFILING
+
+void *operator new(KIT::usize p_Size);
+void *operator new[](KIT::usize p_Size);
+
+void operator delete(void *p_Ptr) noexcept;
+void operator delete[](void *p_Ptr) noexcept;
+
+void *operator new(KIT::usize p_Size, const std::nothrow_t &) noexcept;
+void *operator new[](KIT::usize p_Size, const std::nothrow_t &) noexcept;
+
+void operator delete(void *p_Ptr, const std::nothrow_t &) noexcept;
+void operator delete[](void *p_Ptr, const std::nothrow_t &) noexcept;
+
+#endif

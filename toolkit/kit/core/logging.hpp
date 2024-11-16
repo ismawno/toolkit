@@ -45,7 +45,7 @@ namespace KIT
 KIT_API void debugBreak() noexcept;
 KIT_API void logMessage(const char *p_Level, std::string_view p_File, const i32 p_Line, const char *p_Color,
                         const bool p_Crash, std::string_view p_Message) noexcept;
-KIT_API void logMessageIf(bool condition, const char *p_Level, std::string_view p_File, const i32 p_Line,
+KIT_API void logMessageIf(bool p_Condition, const char *p_Level, std::string_view p_File, const i32 p_Line,
                           const char *p_Color, const bool p_Crash, std::string_view p_Message) noexcept;
 #endif
 } // namespace KIT
@@ -53,8 +53,8 @@ KIT_API void logMessageIf(bool condition, const char *p_Level, std::string_view 
 #ifdef KIT_ENABLE_INFO_LOGS
 #    define KIT_LOG_INFO(...)                                                                                          \
         KIT::logMessage("INFO", __FILE__, INT32_MAX, KIT_LOG_COLOR_GREEN, false, KIT_FORMAT(__VA_ARGS__))
-#    define KIT_LOG_INFO_IF(condition, ...)                                                                            \
-        KIT::logMessageIf(condition, "INFO", __FILE__, INT32_MAX, KIT_LOG_COLOR_GREEN, false, KIT_FORMAT(__VA_ARGS__))
+#    define KIT_LOG_INFO_IF(p_Condition, ...)                                                                          \
+        KIT::logMessageIf(p_Condition, "INFO", __FILE__, INT32_MAX, KIT_LOG_COLOR_GREEN, false, KIT_FORMAT(__VA_ARGS__))
 #else
 #    define KIT_LOG_INFO(...)
 #    define KIT_LOG_INFO_IF(...)
@@ -63,8 +63,8 @@ KIT_API void logMessageIf(bool condition, const char *p_Level, std::string_view 
 #ifdef KIT_ENABLE_WARNING_LOGS
 #    define KIT_LOG_WARNING(...)                                                                                       \
         KIT::logMessage("WARNING", __FILE__, __LINE__, KIT_LOG_COLOR_YELLOW, false, KIT_FORMAT(__VA_ARGS__))
-#    define KIT_LOG_WARNING_IF(condition, ...)                                                                         \
-        KIT::logMessageIf(condition, "WARNING", __FILE__, __LINE__, KIT_LOG_COLOR_YELLOW, false,                       \
+#    define KIT_LOG_WARNING_IF(p_Condition, ...)                                                                       \
+        KIT::logMessageIf(p_Condition, "WARNING", __FILE__, __LINE__, KIT_LOG_COLOR_YELLOW, false,                     \
                           KIT_FORMAT(__VA_ARGS__))
 #else
 #    define KIT_LOG_WARNING(...)
@@ -72,17 +72,27 @@ KIT_API void logMessageIf(bool condition, const char *p_Level, std::string_view 
 #endif
 
 #ifdef KIT_ENABLE_ASSERTS
+
+#    ifndef KIT_WEAK_ASSERTS
+#        define KIT_DEBUG_BREAK_IF(p_Condition)                                                                        \
+            if (p_Condition)                                                                                           \
+            KIT::debugBreak()
+
+#        define KIT_DEBUG_BREAK() KIT::debugBreak()
+#    else
+#        define KIT_DEBUG_BREAK_IF(p_Condition)
+#        define KIT_DEBUG_BREAK()
+#    endif
+
 #    ifndef KIT_SILENT_ASSERTS
 #        define KIT_ERROR(...)                                                                                         \
             KIT::logMessage("ERROR", __FILE__, __LINE__, KIT_LOG_COLOR_RED, true, KIT_FORMAT(__VA_ARGS__))
-#        define KIT_ASSERT(condition, ...)                                                                             \
-            KIT::logMessageIf(!(condition), "ERROR", __FILE__, __LINE__, KIT_LOG_COLOR_RED, true,                      \
+#        define KIT_ASSERT(p_Condition, ...)                                                                           \
+            KIT::logMessageIf(!(p_Condition), "ERROR", __FILE__, __LINE__, KIT_LOG_COLOR_RED, true,                    \
                               KIT_FORMAT(__VA_ARGS__))
 #    else
-#        define KIT_ERROR(...) debugBreak()
-#        define KIT_ASSERT(condition, ...)                                                                             \
-            if (!(condition))                                                                                          \
-            debugBreak()
+#        define KIT_ERROR(...) KIT_DEBUG_BREAK()
+#        define KIT_ASSERT(p_Condition, ...) KIT_DEBUG_BREAK_IF(!(p_Condition))
 #    endif
 #    define KIT_ASSERT_RETURNS(expression, expected, ...) KIT_ASSERT((expression) == (expected), __VA_ARGS__)
 #else

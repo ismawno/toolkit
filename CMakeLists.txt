@@ -35,6 +35,16 @@ endif()
 option(TOOLKIT_SILENT_ASSERTS "Silence asserts" OFF)
 option(TOOLKIT_ENABLE_BLOCK_ALLOCATOR "Enable block allocations" ON)
 option(TOOLKIT_ENABLE_PROFILING "Enable profiling" OFF)
+option(TOOLKIT_ENABLE_VULKAN_PROFILING "Enable vulkan profiling" OFF)
+option(TOOLKIT_WEAK_ASSERTS "If enabled, asserts will only act as a log" OFF)
+
+if (TOOLKIT_ENABLE_VULKAN_PROFILING AND NOT TOOLKIT_ENABLE_PROFILING)
+    message(WARNING "Vulkan profiling is enabled but general profiling is not. This option will have no effect")
+endif()
+
+if (TOOLKIT_WEAK_ASSERTS AND NOT TOOLKIT_ENABLE_ASSERTS)
+    message(WARNING "Weak asserts are enabled but asserts are not. This option will have no effect")
+endif()
 
 if (TOOLKIT_BUILD_PERFORMANCE AND (NOT CMAKE_BUILD_TYPE STREQUAL "Dist"))
     message(WARNING "Building benchamrks in a non-distribution configuration! Results may not be representative")
@@ -57,6 +67,8 @@ message(STATUS "TOOLKIT: Silent asserts: ${TOOLKIT_SILENT_ASSERTS}")
 message(STATUS "TOOLKIT: Enable block allocator: ${TOOLKIT_ENABLE_BLOCK_ALLOCATOR}")
 message(STATUS "TOOLKIT: Sanitizer: ${TOOLKIT_SANITIZERS}")
 message(STATUS "TOOLKIT: Profiling: ${TOOLKIT_ENABLE_PROFILING}")
+message(STATUS "TOOLKIT: Vulkan profiling: ${TOOLKIT_ENABLE_VULKAN_PROFILING}")
+message(STATUS "TOOLKIT: Weak asserts: ${TOOLKIT_WEAK_ASSERTS}")
 
 set(TOOLKIT_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "Root path to be used")
 
