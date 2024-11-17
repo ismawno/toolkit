@@ -6,17 +6,13 @@
 namespace KIT
 {
 using VkProfilingContext = TracyVkCtx;
-}
+} // namespace KIT
 
-// Calibrated is missing for now
-#    ifdef TRACY_VK_USE_SYMBOL_TABLE
-#        define KIT_PROFILE_CREATE_VULKAN_CONTEXT(p_Instance, p_Physdev, p_Device, p_Queue, p_Cmdbuf,                  \
-                                                  p_InstanceProcAddr, deviceProcAddr)                                  \
-            TracyVkContext(p_Instance, p_Physdev, p_Device, p_Queue, p_Cmdbuf, p_InstanceProcAddr, p_DeviceProcAddr)
-#    else
-#        define KIT_PROFILE_CREATE_VULKAN_CONTEXT(p_Physdev, p_Device, p_Queue, p_Cmdbuf)                              \
-            TracyVkContext(p_Physdev, p_Device, p_Queue, p_Cmdbuf)
-#    endif
+// Symbol table is missing for now
+#    define KIT_PROFILE_CREATE_VULKAN_CONTEXT(p_Physdev, p_Device, p_Queue, p_Cmdbuf)                                  \
+        TracyVkContext(p_Physdev, p_Device, p_Queue, p_Cmdbuf)
+#    define KIT_PROFILE_CREATE_VULKAN_CALIBRATED_CONTEXT(p_Physdev, p_Device, p_Queue, p_Cmdbuf, p_Gpdctd, p_Gct)      \
+        TracyVkContextCalibrated(p_Physdev, p_Device, p_Queue, p_Cmdbuf, p_Gpdctd, p_Gct)
 
 #    define KIT_PROFILE_DESTROY_VULKAN_CONTEXT(p_Context) TracyVkDestroy(p_Context)
 
