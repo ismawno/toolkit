@@ -16,6 +16,16 @@ endif()
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(TOOLKIT_SANITIZERS "OFF" CACHE STRING "Sanitizer(s) to use. Can be whichever one your compiler supports, and compatible ones may be included simultaneously (separated by commas). Set to OFF to disable")
 
+set(CMAKE_C_FLAGS_RELEASE "" CACHE STRING "Flags for RELEASE build" FORCE)
+set(CMAKE_CXX_FLAGS_RELEASE "" CACHE STRING "Flags for RELEASE build" FORCE)
+set(CMAKE_EXE_LINKER_FLAGS_RELEASE "" CACHE STRING "Flags for RELEASE build" FORCE)
+set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "" CACHE STRING "Flags for RELEASE build" FORCE)
+
+set(CMAKE_C_FLAGS_DEBUG "" CACHE STRING "Flags for DEBUG build" FORCE)
+set(CMAKE_CXX_FLAGS_DEBUG "" CACHE STRING "Flags for DEBUG build" FORCE)
+set(CMAKE_EXE_LINKER_FLAGS_DEBUG "" CACHE STRING "Flags for DEBUG build" FORCE)
+set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "" CACHE STRING "Flags for DEBUG build" FORCE)
+
 if (CMAKE_BUILD_TYPE STREQUAL "Dist")
     option(TOOLKIT_BUILD_TESTS "Build the tests" OFF)
     option(TOOLKIT_BUILD_PERFORMANCE "Build performance tests" ON)
