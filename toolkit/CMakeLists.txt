@@ -44,7 +44,7 @@ if (TOOLKIT_ENABLE_PROFILING)
     
     # Because of this check, the profiler binary will always persist and will keep the first cmake options that were set.
     # Recompile with other options by removing the profiler directory inside your build directory
-    if (NOT EXISTS ${tracy_SOURCE_DIR}/profiler)
+    if (NOT EXISTS ${CMAKE_BINARY_DIR}/profiler)
         add_subdirectory(${tracy_SOURCE_DIR}/profiler ${CMAKE_BINARY_DIR}/profiler)
         if (MSVC)
             target_compile_options(tracy-profiler PRIVATE /wd4996)
