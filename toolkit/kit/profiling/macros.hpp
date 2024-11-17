@@ -43,6 +43,8 @@
 #    define KIT_PROFILE_MARK_POOLED_DEALLOCATION(p_Name, p_Ptr) TracyFreeN(p_Ptr, p_Name)
 
 #    ifdef KIT_ENABLE_VULKAN_PROFILING
+// This include is pretty debatable
+#        include <vulkan/vulkan.hpp>
 #        include "tracy/TracyVulkan.hpp"
 
 namespace KIT
