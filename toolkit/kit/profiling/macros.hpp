@@ -42,56 +42,6 @@
 #    define KIT_PROFILE_MARK_POOLED_ALLOCATION(p_Name, p_Ptr, p_Size) TracyAllocN(p_Ptr, p_Size, p_Name)
 #    define KIT_PROFILE_MARK_POOLED_DEALLOCATION(p_Name, p_Ptr) TracyFreeN(p_Ptr, p_Name)
 
-#    ifdef KIT_ENABLE_VULKAN_PROFILING
-// This include is pretty debatable
-#        include <vulkan/vulkan.hpp>
-#        include "tracy/TracyVulkan.hpp"
-
-namespace KIT
-{
-using VkProfilingContext = TracyVkCtx;
-}
-
-// Calibrated is missing for now
-#        ifdef TRACY_VK_USE_SYMBOL_TABLE
-#            define KIT_PROFILE_CREATE_VULKAN_CONTEXT(p_Instance, p_Physdev, p_Device, p_Queue, p_Cmdbuf,              \
-                                                      p_InstanceProcAddr, deviceProcAddr)                              \
-                TracyVkContext(p_Instance, p_Physdev, p_Device, p_Queue, p_Cmdbuf, p_InstanceProcAddr, p_DeviceProcAddr)
-#        else
-#            define KIT_PROFILE_CREATE_VULKAN_CONTEXT(p_Physdev, p_Device, p_Queue, p_Cmdbuf)                          \
-                TracyVkContext(p_Physdev, p_Device, p_Queue, p_Cmdbuf)
-#        endif
-
-#        define KIT_PROFILE_DESTROY_VULKAN_CONTEXT(p_Context) TracyVkDestroy(p_Context)
-
-#        define KIT_PROFILE_VULKAN_SCOPE(p_Name, p_Context, p_Cmdbuf) TracyVkZone(p_Context, p_Cmdbuf, p_Name)
-#        define KIT_PROFILE_VULKAN_CSCOPE(p_Name, p_Color, p_Context, p_Cmdbuf)                                        \
-            TracyVkZoneC(p_Context, p_Cmdbuf, p_Name, p_Color)
-
-#        define KIT_PROFILE_VULKAN_NAMED_SCOPE(p_ScopeName, p_Name, p_Context, p_Cmdbuf, p_Active)                     \
-            TracyVkNamedZone(p_Context, p_ScopeName, p_Cmdbuf, p_Name, p_Active)
-#        define KIT_PROFILE_VULKAN_NAMED_CSCOPE(p_ScopeName, p_Name, p_Color, p_Context, p_Cmdbuf, p_Active)           \
-            TracyVkNamedZoneC(p_Context, p_ScopeName, p_Cmdbuf, p_Name, p_Color, p_Active)
-
-#        define KIT_PROFILE_VULKAN_COLLECT(p_Context, p_Cmdbuf) TracyVkCollect(p_Context, p_Cmdbuf)
-
-#    else
-
-#        define KIT_PROFILE_CREATE_VULKAN_CONTEXT(p_Instance, p_Physdev, p_Device, p_Queue, p_Cmdbuf,                  \
-                                                  p_InstanceProcAddr, p_DeviceProcAddr)                                \
-            nullptr
-#        define KIT_PROFILE_DESTROY_VULKAN_CONTEXT(p_Context)
-
-#        define KIT_PROFILE_VULKAN_SCOPE(p_Name, p_Context, p_Cmdbuf)
-#        define KIT_PROFILE_VULKAN_CSCOPE(p_Name, p_Color, p_Context, p_Cmdbuf)
-
-#        define KIT_PROFILE_VULKAN_NAMED_SCOPE(p_ScopeName, p_Name, p_Context, p_Cmdbuf, p_Active)
-#        define KIT_PROFILE_VULKAN_NAMED_CSCOPE(p_ScopeName, p_Name, p_Color, p_Context, p_Cmdbuf, p_Active)
-
-#        define KIT_PROFILE_VULKAN_COLLECT(p_Context, p_Cmdbuf)
-
-#    endif
-
 #else
 
 #    define KIT_PROFILE_MARK_FRAME
@@ -128,18 +78,5 @@ using VkProfilingContext = TracyVkCtx;
 
 #    define KIT_PROFILE_MARK_POOLED_ALLOCATION(p_Name, p_Ptr, p_Size)
 #    define KIT_PROFILE_MARK_POOLED_DEALLOCATION(p_Name, p_Ptr)
-
-#    define KIT_PROFILE_CREATE_VULKAN_CONTEXT(p_Instance, p_Physdev, p_Device, p_Queue, p_Cmdbuf, p_InstanceProcAddr,  \
-                                              p_DeviceProcAddr)                                                        \
-        nullptr
-#    define KIT_PROFILE_DESTROY_VULKAN_CONTEXT(p_Context)
-
-#    define KIT_PROFILE_VULKAN_SCOPE(p_Name, p_Context, p_Cmdbuf)
-#    define KIT_PROFILE_VULKAN_CSCOPE(p_Name, p_Color, p_Context, p_Cmdbuf)
-
-#    define KIT_PROFILE_VULKAN_NAMED_SCOPE(p_ScopeName, p_Name, p_Context, p_Cmdbuf, p_Active)
-#    define KIT_PROFILE_VULKAN_NAMED_CSCOPE(p_ScopeName, p_Name, p_Color, p_Context, p_Cmdbuf, p_Active)
-
-#    define KIT_PROFILE_VULKAN_COLLECT(p_Context, p_Cmdbuf)
 
 #endif
