@@ -74,9 +74,9 @@ target_include_directories(toolkit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_precompile_headers(toolkit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/kit/core/pch.hpp)
 
 if (MSVC)
-    configure_compile_link_options(toolkit "/W4 /WX")
+    configure_compile_link_options(toolkit "/W4 /WX" "${CMAKE_BUILD_TYPE}")
 else()
-    configure_compile_link_options(toolkit "-Wall -Wextra -Wpedantic -Werror")
+    configure_compile_link_options(toolkit "-Wall -Wextra -Wpedantic -Werror" "${CMAKE_BUILD_TYPE}")
 endif()
 
 target_compile_definitions(toolkit PUBLIC KIT_ROOT_PATH="${TOOLKIT_ROOT_PATH}")
