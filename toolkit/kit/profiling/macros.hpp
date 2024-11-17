@@ -45,6 +45,11 @@
 #    ifdef KIT_ENABLE_VULKAN_PROFILING
 #        include "tracy/TracyVulkan.hpp"
 
+namespace KIT
+{
+using VkProfilingContext = TracyVkCtx;
+}
+
 // Calibrated is missing for now
 #        ifdef TRACY_VK_USE_SYMBOL_TABLE
 #            define KIT_PROFILE_CREATE_VULKAN_CONTEXT(p_Instance, p_Physdev, p_Device, p_Queue, p_Cmdbuf,              \
