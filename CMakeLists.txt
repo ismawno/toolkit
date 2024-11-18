@@ -123,10 +123,10 @@ function(configure_compile_link_options target)
 
     if (ARG_CONFIG STREQUAL "Debug")
         if (MSVC)
-            target_compile_options_vis(${target} ${ARG_VISIBILITY} /ZI /Od /MP ${ARG_FLAGS})
+            target_compile_options(${target} ${ARG_VISIBILITY} /ZI /Od /MP ${ARG_FLAGS})
             target_link_options(${target} ${ARG_VISIBILITY} /DEBUG /INCREMENTAL:NO)
         else()
-            target_compile_options_vis(${target} ${ARG_VISIBILITY} -g -O0 ${ARG_FLAGS})
+            target_compile_options(${target} ${ARG_VISIBILITY} -g -O0 ${ARG_FLAGS})
         endif()
 
         # Some warnings for debug builds
