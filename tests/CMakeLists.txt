@@ -29,9 +29,9 @@ target_link_libraries(toolkit-tests PRIVATE Catch2::Catch2WithMain toolkit)
 target_include_directories(toolkit-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if (MSVC)
-    configure_compile_link_options(toolkit-tests "/W4 /WX" "${CMAKE_BUILD_TYPE}")
+    configure_compile_link_options(toolkit-tests FLAGS /W4 /WX)
 else()
-    configure_compile_link_options(toolkit-tests "-Wall -Wextra -Wpedantic -Werror" "${CMAKE_BUILD_TYPE}")
+    configure_compile_link_options(toolkit-tests FLAGS -Wall -Wextra -Wpedantic -Werror)
 endif()
 
 message(STATUS "TOOLKIT TESTS: The following options are overriden by tests:")
