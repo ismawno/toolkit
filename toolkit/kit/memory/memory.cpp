@@ -16,8 +16,8 @@ void *Allocate(const usize p_Size) noexcept
 void Deallocate(void *p_Ptr) noexcept
 {
     KIT_ASSERT(p_Ptr, "Trying to deallocate a nullptr");
-    std::free(p_Ptr);
     KIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
+    std::free(p_Ptr);
 }
 
 void *AllocateAligned(const usize p_Size, const usize p_Alignment) noexcept
@@ -44,12 +44,12 @@ void *AllocateAligned(const usize p_Size, const usize p_Alignment) noexcept
 void DeallocateAligned(void *p_Ptr) noexcept
 {
     KIT_ASSERT(p_Ptr, "Trying to deallocate a nullptr");
+    KIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
 #ifdef KIT_OS_WINDOWS
     _aligned_free(p_Ptr);
 #else
     std::free(p_Ptr);
 #endif
-    KIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
 }
 } // namespace KIT
 
@@ -70,13 +70,13 @@ void *operator new[](const KIT::usize p_Size)
 
 void operator delete(void *p_Ptr) noexcept
 {
-    std::free(p_Ptr);
     KIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
+    std::free(p_Ptr);
 }
 void operator delete[](void *p_Ptr) noexcept
 {
-    std::free(p_Ptr);
     KIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
+    std::free(p_Ptr);
 }
 
 void *operator new(const KIT::usize p_Size, const std::nothrow_t &) noexcept
@@ -94,13 +94,13 @@ void *operator new[](const KIT::usize p_Size, const std::nothrow_t &) noexcept
 
 void operator delete(void *p_Ptr, const std::nothrow_t &) noexcept
 {
-    std::free(p_Ptr);
     KIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
+    std::free(p_Ptr);
 }
 void operator delete[](void *p_Ptr, const std::nothrow_t &) noexcept
 {
-    std::free(p_Ptr);
     KIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
+    std::free(p_Ptr);
 }
 
 #endif
