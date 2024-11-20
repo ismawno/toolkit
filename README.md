@@ -2,7 +2,7 @@
 ![Build Status](https://github.com/ismawno/toolkit/actions/workflows/build.yml/badge.svg)
 
 # toolkit
-This small toolkit library contains C++ utilities I have developed and find useful in almost every project I start. It is meant for personal use only, although I have tried my best to make it as user-friendly as possible.
+Toolkit is a small library with C++ utilities I have developed and find useful in almost every project I start. It is meant for personal use only, although I have tried my best to make it as user-friendly as possible.
 
 The main features of the library revolve around additional data structures, memory management, multithreading, and small utilities I find handy.
 
