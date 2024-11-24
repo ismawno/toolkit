@@ -13,7 +13,7 @@
 namespace KIT
 {
 // Add a namespace so that other libraries can adopt them...
-namespace Aliases
+namespace Alias
 {
 
 // About aliases:
@@ -84,8 +84,8 @@ using HashMap = std::unordered_map<Key, Value, Hash, OpEqual>;
 template <typename Value, typename Hash = typename HashAlias<Value>::Type,
           typename OpEqual = typename OpAlias<Value>::Type>
 using HashSet = std::unordered_set<Value, Hash, OpEqual>;
-} // namespace Aliases
+} // namespace Alias
 
 //... and use them immediately in the toolkit namespace
-using namespace Aliases;
+using namespace Alias;
 } // namespace KIT
