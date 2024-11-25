@@ -14,19 +14,20 @@ template <Mutex MTX> ThreadPool<MTX>::ThreadPool(const usize p_ThreadCount) : IT
             if (m_Shutdown.test(std::memory_order_relaxed))
                 break;
 
-            // This could potentially be lock free by implementing a lock free deque
-            std::unique_lock lock(m_Mutex);
-            KIT_PROFILE_MARK_LOCK(m_Mutex);
-            if (m_Queue.empty())
-            {
-                m_TaskReady.clear(std::memory_order_relaxed);
-                continue;
+            Ref<ITask> task;
+            { // This could potentially be lock free by implementing a lock free deque
+                std::scoped_lock lock(m_Mutex);
+                KIT_PROFILE_MARK_LOCK(m_Mutex);
+                if (m_Queue.empty())
+                {
+                    m_TaskReady.clear(std::memory_order_relaxed);
+                    continue;
+                }
+
+                task = m_Queue.front();
+                m_Queue.pop_front();
             }
 
-            const Ref<ITask> task = m_Queue.front();
-            m_Queue.pop_front();
-
-            lock.unlock();
             (*task)(p_ThreadIndex);
             m_PendingCount.fetch_sub(1, std::memory_order_relaxed);
         }
