@@ -37,13 +37,9 @@ void logMessage(const char *p_Level, const std::string_view p_File, const i32 p_
 {
     if (p_Line != INT32_MAX)
     {
-        const std::string root = KIT_ROOT_LOG_PATH;
-        const usize pos = p_File.find(root);
-        const std::string_view file_rel = pos == std::string::npos ? p_File : p_File.substr(pos + 1 + root.size());
-
         const std::string log =
             KIT_FORMAT("[{:%Y-%m-%d %H:%M}] [{}{}{}] [{}:{}] {}\n", std::chrono::system_clock::now(), p_Color, p_Level,
-                       KIT_LOG_COLOR_RESET, file_rel, p_Line, p_Message);
+                       KIT_LOG_COLOR_RESET, p_File, p_Line, p_Message);
         std::cout << log;
     }
     else
