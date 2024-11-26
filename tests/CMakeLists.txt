@@ -21,6 +21,7 @@ set(SOURCES
     tests/container/hashable_tuple.cpp
     tests/container/storage.cpp
     tests/multiprocessing/thread_pool.cpp
+    tests/utilities/result.cpp
 )
 
 add_executable(toolkit-tests ${SOURCES})
