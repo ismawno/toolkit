@@ -1,6 +1,6 @@
-#include "kit/multiprocessing/thread_pool.hpp"
-#include "kit/multiprocessing/for_each.hpp"
-#include "kit/multiprocessing/spin_lock.hpp"
+#include "tkit/multiprocessing/thread_pool.hpp"
+#include "tkit/multiprocessing/for_each.hpp"
+#include "tkit/multiprocessing/spin_lock.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <array>
 

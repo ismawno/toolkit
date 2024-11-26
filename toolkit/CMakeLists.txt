@@ -5,16 +5,16 @@ set(NAME toolkit)
 
 # Source files for the library
 set(SOURCES
-    kit/core/logging.cpp
-    kit/core/pch.cpp
-    kit/memory/memory.cpp
-    kit/memory/stack_allocator.cpp
-    kit/profiling/clock.cpp
-    kit/profiling/timespan.cpp
-    kit/multiprocessing/task.cpp
-    kit/multiprocessing/task_manager.cpp
-    kit/multiprocessing/thread_pool.cpp
-    kit/multiprocessing/spin_lock.cpp
+    tkit/core/logging.cpp
+    tkit/core/pch.cpp
+    tkit/memory/memory.cpp
+    tkit/memory/stack_allocator.cpp
+    tkit/profiling/clock.cpp
+    tkit/profiling/timespan.cpp
+    tkit/multiprocessing/task.cpp
+    tkit/multiprocessing/task_manager.cpp
+    tkit/multiprocessing/thread_pool.cpp
+    tkit/multiprocessing/spin_lock.cpp
 )
 
 # Create the library
@@ -72,7 +72,7 @@ if (TOOLKIT_ENABLE_PROFILING)
 endif()
 
 target_include_directories(toolkit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_precompile_headers(toolkit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/kit/core/pch.hpp)
+target_precompile_headers(toolkit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/tkit/core/pch.hpp)
 
 if (MSVC)
     configure_compile_link_options(toolkit FLAGS /W4 /WX)

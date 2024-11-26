@@ -1,7 +1,7 @@
 #include "perf/settings.hpp"
-#include "kit/multiprocessing/thread_pool.hpp"
-#include "kit/multiprocessing/for_each.hpp"
-#include "kit/profiling/clock.hpp"
+#include "tkit/multiprocessing/thread_pool.hpp"
+#include "tkit/multiprocessing/for_each.hpp"
+#include "tkit/profiling/clock.hpp"
 #include <fstream>
 
 namespace TKit

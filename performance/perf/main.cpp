@@ -1,7 +1,7 @@
 #include "perf/memory.hpp"
 #include "perf/multiprocessing.hpp"
-#include "kit/memory/block_allocator.hpp"
-#include "kit/profiling/clock.hpp"
+#include "tkit/memory/block_allocator.hpp"
+#include "tkit/profiling/clock.hpp"
 
 using namespace TKit;
 

@@ -11,17 +11,17 @@ The main features of the library revolve around additional data structures, memo
 
 The features of this library are divided into the following six categories. Specific documentation for each of them can be found in the source code. The documentation can also be built with Doxygen.
 
-- [kit/core](https://github.com/ismawno/toolkit/tree/main/toolkit/kit/core): General-purpose utilities, such as aliases, C++20 concepts, literals, and a simple logging system with macros.
+- [kit/core](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/core): General-purpose utilities, such as aliases, C++20 concepts, literals, and a simple logging system with macros.
 
-- [kit/container](https://github.com/ismawno/toolkit/tree/main/toolkit/kit/container): Handy data structures, such as a multi-hash tuple, a resizable array with an internal buffer of fixed capacity, and a storage class that allows deferring the construction of objects (a nice alternative to a unique pointer in some cases).
+- [kit/container](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/container): Handy data structures, such as a multi-hash tuple, a resizable array with an internal buffer of fixed capacity, and a storage class that allows deferring the construction of objects (a nice alternative to a unique pointer in some cases).
 
-- [kit/memory](https://github.com/ismawno/toolkit/tree/main/toolkit/kit/memory): Two different memory allocators, general allocation functions, `new`/`delete` overloads to track global memory usage, and a custom reference counting system.
+- [kit/memory](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/memory): Two different memory allocators, general allocation functions, `new`/`delete` overloads to track global memory usage, and a custom reference counting system.
 
-- [kit/multiprocessing](https://github.com/ismawno/toolkit/tree/main/toolkit/kit/multiprocessing): A task manager interface that works with the task class, representing small units of work, along with a specific implementation of a thread pool that complies with this interface. A small `for_each` helper function is also provided, which uses the task manager interface to divide chunks of a `for` loop into different tasks.
+- [kit/multiprocessing](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/multiprocessing): A task manager interface that works with the task class, representing small units of work, along with a specific implementation of a thread pool that complies with this interface. A small `for_each` helper function is also provided, which uses the task manager interface to divide chunks of a `for` loop into different tasks.
 
-- [kit/profiling](https://github.com/ismawno/toolkit/tree/main/toolkit/kit/profiling): A wrapper around the Tracy profiler macros to instrument and profile an application, along with some very simple classes to manage timespans.
+- [kit/profiling](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/profiling): A wrapper around the Tracy profiler macros to instrument and profile an application, along with some very simple classes to manage timespans.
 
-- [kit/utilities](https://github.com/ismawno/toolkit/tree/main/toolkit/kit/utilities): Small and very simple standalone functions that are just nice to have.
+- [kit/utilities](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/utilities): Small and very simple standalone functions that are just nice to have.
 
 All of the required build setup is done through CMake, where I have also added some functions to help with compiler and linker flags setup that I find very useful, especially when controlling such flags for third-party libraries (which may not be very "best practicey" but makes my life easier).
 

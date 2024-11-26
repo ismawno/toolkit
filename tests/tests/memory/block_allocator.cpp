@@ -1,6 +1,6 @@
-#include "kit/memory/block_allocator.hpp"
-#include "kit/multiprocessing/thread_pool.hpp"
-#include "kit/multiprocessing/for_each.hpp"
+#include "tkit/memory/block_allocator.hpp"
+#include "tkit/multiprocessing/thread_pool.hpp"
+#include "tkit/multiprocessing/for_each.hpp"
 #include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <array>

@@ -1,5 +1,5 @@
-#include "kit/container/static_array.hpp"
-#include "kit/core/alias.hpp"
+#include "tkit/container/static_array.hpp"
+#include "tkit/core/alias.hpp"
 #include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 

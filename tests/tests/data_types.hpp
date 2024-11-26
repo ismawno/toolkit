@@ -1,7 +1,7 @@
 #pragma once
 
-#include "kit/core/api.hpp"
-#include "kit/memory/block_allocator.hpp"
+#include "tkit/core/api.hpp"
+#include "tkit/memory/block_allocator.hpp"
 
 namespace TKit
 {
