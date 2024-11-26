@@ -2,10 +2,9 @@
 
 #include "tkit/core/alias.hpp"
 
-namespace TKit
+namespace TKit::Literals
 {
-namespace Literals
-{
+
 TKIT_CONSTEVAL unsigned long long operator"" _b(const unsigned long long p_Value)
 {
     return p_Value;
@@ -30,5 +29,4 @@ TKIT_CONSTEVAL unsigned long long operator"" _tb(const unsigned long long p_Valu
 {
     return p_Value * 1024_gb;
 }
-}; // namespace Literals
-} // namespace TKit
+}; // namespace TKit::Literals
