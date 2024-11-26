@@ -3,7 +3,7 @@
 #include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 
-namespace KIT
+namespace TKit
 {
 TEST_CASE("Raw storage", "[core][container][Storage]")
 {
@@ -102,4 +102,4 @@ TEST_CASE("Storage", "[core][container][Storage]")
         storage.Destroy();
     }
 }
-} // namespace KIT
+} // namespace TKit

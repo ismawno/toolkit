@@ -3,35 +3,35 @@
 #include "kit/memory/block_allocator.hpp"
 #include "kit/profiling/clock.hpp"
 
-using namespace KIT;
+using namespace TKit;
 
 int main()
 {
     const Settings settings = ReadOrWriteSettingsFile();
 
     Clock clock;
-    KIT_LOG_INFO("Running thread pool sum...");
+    TKIT_LOG_INFO("Running thread pool sum...");
     RecordThreadPoolSum<std::mutex>(settings.ThreadPoolSum, settings.MaxThreads);
 
-    KIT_LOG_INFO("Running parallel sum...");
+    TKIT_LOG_INFO("Running parallel sum...");
     RecordParallelSum(settings.ThreadPoolSum, settings.MaxThreads);
 
-    KIT_LOG_INFO("Running malloc/free ST...");
+    TKIT_LOG_INFO("Running malloc/free ST...");
     RecordMallocFreeST(settings.Allocation);
 
-    KIT_LOG_INFO("Running block allocator ST...");
+    TKIT_LOG_INFO("Running block allocator ST...");
     RecordBlockAllocatorConcurrentST(settings.Allocation);
     RecordBlockAllocatorSerialST(settings.Allocation);
 
-    KIT_LOG_INFO("Running malloc/free MT...");
+    TKIT_LOG_INFO("Running malloc/free MT...");
     RecordMallocFreeMT(settings.Allocation, settings.MaxThreads);
 
-    KIT_LOG_INFO("Running block allocator MT...");
+    TKIT_LOG_INFO("Running block allocator MT...");
     RecordBlockAllocatorMT(settings.Allocation, settings.MaxThreads);
 
-    KIT_LOG_INFO("Running stack allocator...");
+    TKIT_LOG_INFO("Running stack allocator...");
     RecordStackAllocator(settings.Allocation);
 
-    KIT_LOG_INFO("Done! ({:.1f} seconds) Results have been written to 'performance/results'",
-                 clock.GetElapsed().AsSeconds());
+    TKIT_LOG_INFO("Done! ({:.1f} seconds) Results have been written to 'performance/results'",
+                  clock.GetElapsed().AsSeconds());
 }

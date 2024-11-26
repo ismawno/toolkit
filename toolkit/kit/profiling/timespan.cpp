@@ -1,7 +1,7 @@
 #include "kit/core/pch.hpp"
 #include "kit/profiling/timespan.hpp"
 
-namespace KIT
+namespace TKit
 {
 Timespan::Timespan(Nanoseconds p_Elapsed) noexcept : m_Elapsed(p_Elapsed)
 {
@@ -23,4 +23,4 @@ Timespan &Timespan::operator-=(const Timespan &p_Other)
     m_Elapsed -= p_Other.m_Elapsed;
     return *this;
 }
-} // namespace KIT
+} // namespace TKit

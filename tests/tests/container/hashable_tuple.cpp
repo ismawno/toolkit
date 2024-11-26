@@ -2,7 +2,7 @@
 #include "kit/container/static_array.hpp"
 #include <catch2/catch_test_macros.hpp>
 
-namespace KIT
+namespace TKit
 {
 TEST_CASE("HashableTuple hash consistency")
 {
@@ -53,6 +53,6 @@ TEST_CASE("HashableTuple deviation")
     }
 
     deviation = sqrtf(deviation / expected);
-    KIT_LOG_INFO("HashableTuple deviation ({} samples with {} ocurrences): {}", samples, amount, deviation);
+    TKIT_LOG_INFO("HashableTuple deviation ({} samples with {} ocurrences): {}", samples, amount, deviation);
 }
-} // namespace KIT
+} // namespace TKit

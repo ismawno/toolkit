@@ -3,7 +3,7 @@
 #include <array>
 #include <thread>
 
-namespace KIT
+namespace TKit
 {
 class TestRefCounted : public RefCounted<TestRefCounted>
 {
@@ -285,4 +285,4 @@ TEST_CASE("Scope ptr with inheritance", "[memory][ptr]")
     }
 }
 
-} // namespace KIT
+} // namespace TKit

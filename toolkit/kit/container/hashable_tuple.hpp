@@ -5,7 +5,7 @@
 #include "kit/core/concepts.hpp"
 #include <functional>
 
-namespace KIT
+namespace TKit
 {
 // This is a tuple of hashable elements, useful when you need to hash multiple elements at the same time. Originally, I
 // had implemented a commutative version, which had considerably more overhead and had to use some obscure compile time
@@ -102,4 +102,4 @@ template <Hashable... H> struct HashableTuple
         p_Seed ^= hasher(p_Hashable) + 0x9e3779b9 + (p_Seed << 6) + (p_Seed >> 2);
     }
 };
-} // namespace KIT
+} // namespace TKit

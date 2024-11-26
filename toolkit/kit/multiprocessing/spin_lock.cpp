@@ -1,7 +1,7 @@
 #include "kit/core/pch.hpp"
 #include "kit/multiprocessing/spin_lock.hpp"
 
-namespace KIT
+namespace TKit
 {
 void SpinLock::lock() noexcept
 {
@@ -18,4 +18,4 @@ bool SpinLock::try_lock() noexcept
 {
     return !m_Flag.test_and_set(std::memory_order_acquire);
 }
-} // namespace KIT
+} // namespace TKit

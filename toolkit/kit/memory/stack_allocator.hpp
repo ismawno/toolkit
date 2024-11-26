@@ -3,7 +3,7 @@
 #include "kit/core/logging.hpp"
 #include "kit/core/non_copyable.hpp"
 
-namespace KIT
+namespace TKit
 {
 /**
  * @brief A simple stack allocator that allocates memory in a stack-like fashion.
@@ -20,9 +20,9 @@ namespace KIT
  * A multithreaded environment has the exact opposite property, so this allocator is not thread safe.
  *
  */
-class KIT_API StackAllocator
+class TKIT_API StackAllocator
 {
-    KIT_NON_COPYABLE(StackAllocator)
+    TKIT_NON_COPYABLE(StackAllocator)
   public:
     struct Entry
     {
@@ -138,9 +138,9 @@ class KIT_API StackAllocator
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
-            KIT_ASSERT(!m_Entries.empty(), "Unable to deallocate because the stack allocator is empty");
-            KIT_ASSERT(m_Entries.back().Ptr == reinterpret_cast<std::byte *>(p_Ptr),
-                       "Elements must be deallocated in the reverse order they were allocated");
+            TKIT_ASSERT(!m_Entries.empty(), "Unable to deallocate because the stack allocator is empty");
+            TKIT_ASSERT(m_Entries.back().Ptr == reinterpret_cast<std::byte *>(p_Ptr),
+                        "Elements must be deallocated in the reverse order they were allocated");
 
             const usize n = m_Entries.back().Size / sizeof(T);
             for (usize i = 0; i < n; ++i)
@@ -210,4 +210,4 @@ class KIT_API StackAllocator
     usize m_Remaining = 0;
     DynamicArray<Entry> m_Entries;
 };
-} // namespace KIT
+} // namespace TKit

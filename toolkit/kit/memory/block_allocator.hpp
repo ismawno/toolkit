@@ -9,7 +9,7 @@
 #include "kit/profiling/macros.hpp"
 #include <mutex>
 
-namespace KIT
+namespace TKit
 {
 // This is a block allocator whose role is to 1: speed up single allocations and 2: improve contiguity, which is
 // guaranteed up to the amount of chunks per block (each chunk represents an allocated object)
@@ -37,9 +37,9 @@ namespace KIT
  *
  * @tparam T
  */
-template <typename T> class KIT_API BlockAllocator
+template <typename T> class TKIT_API BlockAllocator
 {
-    KIT_NON_COPYABLE(BlockAllocator)
+    TKIT_NON_COPYABLE(BlockAllocator)
   public:
     explicit BlockAllocator(const usize p_ChunksPerBlock) noexcept : m_BlockSize(GetChunkSize() * p_ChunksPerBlock)
     {
@@ -97,7 +97,7 @@ template <typename T> class KIT_API BlockAllocator
      * @brief Get the size of a chunk in bytes.
      *
      */
-    static KIT_CONSTEVAL usize GetChunkSize() noexcept
+    static TKIT_CONSTEVAL usize GetChunkSize() noexcept
     {
         if constexpr (sizeof(T) < sizeof(Chunk))
             return sizeof(Chunk);
@@ -109,7 +109,7 @@ template <typename T> class KIT_API BlockAllocator
      * @brief Get the alignment of a chunk in bytes.
      *
      */
-    static KIT_CONSTEVAL usize GetChunkAlignment() noexcept
+    static TKIT_CONSTEVAL usize GetChunkAlignment() noexcept
     {
         if constexpr (alignof(T) < alignof(Chunk))
             return alignof(Chunk);
@@ -190,7 +190,7 @@ template <typename T> class KIT_API BlockAllocator
     [[nodiscard]] T *AllocateConcurrent() noexcept
     {
         std::scoped_lock lock(m_Mutex);
-        KIT_PROFILE_MARK_LOCK(m_Mutex);
+        TKIT_PROFILE_MARK_LOCK(m_Mutex);
         return AllocateSerial();
     }
 
@@ -202,7 +202,7 @@ template <typename T> class KIT_API BlockAllocator
     void DeallocateConcurrent(T *p_Ptr) noexcept
     {
         std::scoped_lock lock(m_Mutex);
-        KIT_PROFILE_MARK_LOCK(m_Mutex);
+        TKIT_PROFILE_MARK_LOCK(m_Mutex);
         DeallocateSerial(p_Ptr);
     }
 
@@ -226,8 +226,8 @@ template <typename T> class KIT_API BlockAllocator
      */
     void DeallocateSerial(T *p_Ptr) noexcept
     {
-        KIT_ASSERT(!IsEmpty(), "The current allocator has no active allocations yet");
-        KIT_ASSERT(Owns(p_Ptr), "Trying to deallocate a pointer that was not allocated by this allocator");
+        TKIT_ASSERT(!IsEmpty(), "The current allocator has no active allocations yet");
+        TKIT_ASSERT(Owns(p_Ptr), "Trying to deallocate a pointer that was not allocated by this allocator");
 
         --m_Allocations;
         Chunk *chunk = reinterpret_cast<Chunk *>(p_Ptr);
@@ -246,7 +246,7 @@ template <typename T> class KIT_API BlockAllocator
         if (m_FreeList)
             return;
         std::scoped_lock lock(m_Mutex);
-        KIT_PROFILE_MARK_LOCK(m_Mutex);
+        TKIT_PROFILE_MARK_LOCK(m_Mutex);
         std::byte *data = allocateNewBlock(m_BlockSize);
         m_FreeList = reinterpret_cast<Chunk *>(data);
         m_Blocks.push_back(data);
@@ -273,8 +273,8 @@ template <typename T> class KIT_API BlockAllocator
      */
     void Reset()
     {
-        KIT_LOG_WARNING_IF(!IsEmpty(), "The current allocator has active allocations. Resetting the allocator will "
-                                       "prematurely deallocate all memory, and no destructor will be called");
+        TKIT_LOG_WARNING_IF(!IsEmpty(), "The current allocator has active allocations. Resetting the allocator will "
+                                        "prematurely deallocate all memory, and no destructor will be called");
         for (std::byte *block : m_Blocks)
             DeallocateAligned(block);
         m_Allocations = 0;
@@ -374,7 +374,7 @@ template <typename T> class KIT_API BlockAllocator
     Chunk *m_FreeList = nullptr;
     DynamicArray<std::byte *> m_Blocks;
     usize m_BlockSize;
-    KIT_PROFILE_DECLARE_MUTEX(SpinLock, m_Mutex);
+    TKIT_PROFILE_DECLARE_MUTEX(SpinLock, m_Mutex);
 };
 
 /**
@@ -508,48 +508,48 @@ template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexce
 {
     GetGlobalBlockAllocatorInstance<T, ChunksPerBlock>().DestroySerial(p_Ptr);
 }
-} // namespace KIT
+} // namespace TKit
 
-#define KIT_BLOCK_ALLOCATED_CONCURRENT(p_ClassName, p_ChunksPerBlock)                                                  \
+#define TKIT_BLOCK_ALLOCATED_CONCURRENT(p_ClassName, p_ChunksPerBlock)                                                 \
     static void *operator new([[maybe_unused]] usize p_Size)                                                           \
     {                                                                                                                  \
-        KIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                      \
-                   "Trying to block allocate a derived class from a base class overloaded new/delete");                \
-        return KIT::BAllocateConcurrent<p_ClassName, p_ChunksPerBlock>();                                              \
+        TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
+                    "Trying to block allocate a derived class from a base class overloaded new/delete");               \
+        return TKit::BAllocateConcurrent<p_ClassName, p_ChunksPerBlock>();                                             \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr)                                                                           \
     {                                                                                                                  \
-        KIT::BDeallocateConcurrent<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                  \
+        TKit::BDeallocateConcurrent<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                 \
     }                                                                                                                  \
     static void *operator new([[maybe_unused]] usize p_Size, const std::nothrow_t &)                                   \
     {                                                                                                                  \
-        KIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                      \
-                   "Trying to block allocate a derived class from a base class overloaded new/delete");                \
-        return KIT::BAllocateConcurrent<p_ClassName, p_ChunksPerBlock>();                                              \
+        TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
+                    "Trying to block allocate a derived class from a base class overloaded new/delete");               \
+        return TKit::BAllocateConcurrent<p_ClassName, p_ChunksPerBlock>();                                             \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr, const std::nothrow_t &)                                                   \
     {                                                                                                                  \
-        KIT::BDeallocateConcurrent<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                  \
+        TKit::BDeallocateConcurrent<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                 \
     }
 
-#define KIT_BLOCK_ALLOCATED_SERIAL(p_ClassName, p_ChunksPerBlock)                                                      \
+#define TKIT_BLOCK_ALLOCATED_SERIAL(p_ClassName, p_ChunksPerBlock)                                                     \
     static void *operator new([[maybe_unused]] usize p_Size)                                                           \
     {                                                                                                                  \
-        KIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                      \
-                   "Trying to block allocate a derived class from a base class overloaded new/delete");                \
-        return KIT::BAllocateSerial<p_ClassName, p_ChunksPerBlock>();                                                  \
+        TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
+                    "Trying to block allocate a derived class from a base class overloaded new/delete");               \
+        return TKit::BAllocateSerial<p_ClassName, p_ChunksPerBlock>();                                                 \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr)                                                                           \
     {                                                                                                                  \
-        KIT::BDeallocateSerial<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                      \
+        TKit::BDeallocateSerial<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                     \
     }                                                                                                                  \
     static void *operator new([[maybe_unused]] usize p_Size, const std::nothrow_t &)                                   \
     {                                                                                                                  \
-        KIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                      \
-                   "Trying to block allocate a derived class from a base class overloaded new/delete");                \
-        return KIT::BAllocateSerial<p_ClassName, p_ChunksPerBlock>();                                                  \
+        TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
+                    "Trying to block allocate a derived class from a base class overloaded new/delete");               \
+        return TKit::BAllocateSerial<p_ClassName, p_ChunksPerBlock>();                                                 \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr, const std::nothrow_t &)                                                   \
     {                                                                                                                  \
-        KIT::BDeallocateSerial<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                      \
+        TKit::BDeallocateSerial<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                     \
     }

@@ -3,9 +3,9 @@
 #include "kit/core/alias.hpp"
 #include <string>
 
-namespace KIT
+namespace TKit
 {
-inline std::string g_Root = KIT_ROOT_PATH;
+inline std::string g_Root = TKIT_ROOT_PATH;
 
 struct AllocationSettings
 {
@@ -27,4 +27,4 @@ struct Settings
 };
 
 Settings ReadOrWriteSettingsFile();
-} // namespace KIT
+} // namespace TKit

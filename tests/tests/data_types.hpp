@@ -3,37 +3,37 @@
 #include "kit/core/api.hpp"
 #include "kit/memory/block_allocator.hpp"
 
-namespace KIT
+namespace TKit
 {
 struct SmallData
 {
-    KIT_BLOCK_ALLOCATED_CONCURRENT(SmallData, 10);
+    TKIT_BLOCK_ALLOCATED_CONCURRENT(SmallData, 10);
     i32 x;
 };
 
 struct BigData
 {
-    KIT_BLOCK_ALLOCATED_CONCURRENT(BigData, 10);
+    TKIT_BLOCK_ALLOCATED_CONCURRENT(BigData, 10);
     f64 x;
     f64 y;
     f64 z;
     std::string str[3];
 };
 
-KIT_WARNING_IGNORE_PUSH
-KIT_MSVC_WARNING_IGNORE(4324)
+TKIT_WARNING_IGNORE_PUSH
+TKIT_MSVC_WARNING_IGNORE(4324)
 
 struct AlignedData
 {
-    KIT_BLOCK_ALLOCATED_CONCURRENT(AlignedData, 10);
+    TKIT_BLOCK_ALLOCATED_CONCURRENT(AlignedData, 10);
     alignas(16) f64 x, y, z;
     alignas(32) f64 a, b, c;
 };
-KIT_WARNING_IGNORE_POP
+TKIT_WARNING_IGNORE_POP
 
 struct NonTrivialData
 {
-    KIT_BLOCK_ALLOCATED_CONCURRENT(NonTrivialData, 10);
+    TKIT_BLOCK_ALLOCATED_CONCURRENT(NonTrivialData, 10);
     i32 *x = nullptr;
     NonTrivialData() : x(new i32[25])
     {
@@ -67,11 +67,11 @@ struct NonTrivialData
     {
         if (this != &other)
         {
-            KIT_WARNING_IGNORE_PUSH
-            KIT_GCC_WARNING_IGNORE("-Wmaybe-uninitialized")
+            TKIT_WARNING_IGNORE_PUSH
+            TKIT_GCC_WARNING_IGNORE("-Wmaybe-uninitialized")
             if (x)
                 delete[] x;
-            KIT_WARNING_IGNORE_POP
+            TKIT_WARNING_IGNORE_POP
             x = other.x;
             other.x = nullptr;
         }
@@ -91,7 +91,7 @@ struct NonTrivialData
 
 struct VirtualBase
 {
-    KIT_BLOCK_ALLOCATED_CONCURRENT(VirtualBase, 10);
+    TKIT_BLOCK_ALLOCATED_CONCURRENT(VirtualBase, 10);
     VirtualBase()
     {
         ++BaseInstances;
@@ -119,7 +119,7 @@ struct VirtualBase
 
 struct VirtualDerived : VirtualBase
 {
-    KIT_BLOCK_ALLOCATED_CONCURRENT(VirtualDerived, 10);
+    TKIT_BLOCK_ALLOCATED_CONCURRENT(VirtualDerived, 10);
     VirtualDerived()
     {
         ++DerivedInstances;
@@ -143,4 +143,4 @@ struct VirtualDerived : VirtualBase
     f64 z;
     std::string str2[2];
 };
-} // namespace KIT
+} // namespace TKit

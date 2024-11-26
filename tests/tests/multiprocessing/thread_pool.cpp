@@ -4,7 +4,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <array>
 
-namespace KIT
+namespace TKit
 {
 template <Mutex MTX> void RunThreadPoolTest()
 {
@@ -26,7 +26,7 @@ template <Mutex MTX> void RunThreadPoolTest()
     struct Number
     {
         u32 Value;
-        std::byte Padding[KIT_CACHE_LINE_SIZE - sizeof(u32)];
+        std::byte Padding[TKIT_CACHE_LINE_SIZE - sizeof(u32)];
     };
 
     SECTION("Parallel for")
@@ -90,4 +90,4 @@ TEST_CASE("ThreadPool (SpinLock)", "[multiprocessing]")
 {
     RunThreadPoolTest<SpinLock>();
 }
-} // namespace KIT
+} // namespace TKit

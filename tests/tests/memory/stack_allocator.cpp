@@ -4,7 +4,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
 
-namespace KIT
+namespace TKit
 {
 using namespace Literals;
 
@@ -131,4 +131,4 @@ TEST_CASE("Stack allocator complex data operations", "[memory][stack_allocator][
             allocator.Pop();
     }
 }
-} // namespace KIT
+} // namespace TKit

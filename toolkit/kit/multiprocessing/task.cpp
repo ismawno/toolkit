@@ -2,7 +2,7 @@
 #include "kit/multiprocessing/task.hpp"
 #include "kit/multiprocessing/task_manager.hpp"
 
-namespace KIT
+namespace TKit
 {
 bool ITask::IsFinished() const noexcept
 {
@@ -19,9 +19,9 @@ void ITask::Reset() noexcept
 
 void ITask::NotifyCompleted() noexcept
 {
-#ifdef KIT_ENABLE_ASSERTS
+#ifdef TKIT_ENABLE_ASSERTS
     const bool flag = m_Finished.test_and_set(std::memory_order_release);
-    KIT_ASSERT(!flag, "Notifying an already completed task");
+    TKIT_ASSERT(!flag, "Notifying an already completed task");
 #else
     m_Finished.test_and_set(std::memory_order_release);
 #endif
@@ -33,4 +33,4 @@ void Task<void>::operator()(const usize p_ThreadIndex) noexcept
     m_Function(p_ThreadIndex);
     NotifyCompleted();
 }
-} // namespace KIT
+} // namespace TKit

@@ -1,7 +1,7 @@
 #include "kit/core/pch.hpp"
 #include "kit/profiling/clock.hpp"
 
-namespace KIT
+namespace TKit
 {
 static u64 timePointToU64(const Clock::TimePoint p_TimePoint) noexcept
 {
@@ -44,4 +44,4 @@ Clock::TimePoint Clock::GetCurrentTimePoint() noexcept
 {
     return std::chrono::high_resolution_clock::now();
 }
-} // namespace KIT
+} // namespace TKit

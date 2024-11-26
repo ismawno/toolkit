@@ -2,7 +2,7 @@
 
 #include "kit/core/alias.hpp"
 
-namespace KIT
+namespace TKit
 {
 template <std::floating_point Float> bool ApproachesZero(const Float x)
 {
@@ -19,4 +19,4 @@ template <typename Vec2> auto Cross2D(const Vec2 &a, const Vec2 &b)
     return a.x * b.y - a.y * b.x;
 }
 
-} // namespace KIT
+} // namespace TKit

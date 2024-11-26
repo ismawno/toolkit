@@ -3,7 +3,7 @@
 #include "kit/core/api.hpp"
 #include <atomic>
 
-namespace KIT
+namespace TKit
 {
 /**
  * @brief A simple spin lock that uses atomic operations to lock and unlock.
@@ -12,7 +12,7 @@ namespace KIT
  * sections, as it can cause a lot of contention.
  *
  */
-class KIT_API SpinLock
+class TKIT_API SpinLock
 {
   public:
     void lock() noexcept;
@@ -22,4 +22,4 @@ class KIT_API SpinLock
   private:
     std::atomic_flag m_Flag = ATOMIC_FLAG_INIT;
 };
-} // namespace KIT
+} // namespace TKit

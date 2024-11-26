@@ -3,7 +3,7 @@
 #include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 
-namespace KIT
+namespace TKit
 {
 // Assumed args contains 5 elements
 template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args... args)
@@ -315,4 +315,4 @@ TEST_CASE("StaticArray cleanup check", "[core][container][StaticArray]")
     array.clear();
     REQUIRE(NonTrivialData::Instances == 0);
 }
-} // namespace KIT
+} // namespace TKit

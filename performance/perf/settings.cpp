@@ -2,14 +2,14 @@
 #include <filesystem>
 #include <fstream>
 
-KIT_WARNING_IGNORE_PUSH
-KIT_GCC_WARNING_IGNORE("-Wunused-parameter")
-KIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
-KIT_MSVC_WARNING_IGNORE(4100)
+TKIT_WARNING_IGNORE_PUSH
+TKIT_GCC_WARNING_IGNORE("-Wunused-parameter")
+TKIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
+TKIT_MSVC_WARNING_IGNORE(4100)
 #include <yaml-cpp/yaml.h>
-KIT_WARNING_IGNORE_POP
+TKIT_WARNING_IGNORE_POP
 
-namespace KIT
+namespace TKit
 {
 Settings ReadOrWriteSettingsFile()
 {
@@ -48,4 +48,4 @@ Settings ReadOrWriteSettingsFile()
     std::filesystem::create_directories(g_Root + "/performance/results");
     return settings;
 }
-} // namespace KIT
+} // namespace TKit

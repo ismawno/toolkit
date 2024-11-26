@@ -2,7 +2,7 @@
 #include "kit/multiprocessing/thread_pool.hpp"
 #include "kit/multiprocessing/spin_lock.hpp"
 
-namespace KIT
+namespace TKit
 {
 template <Mutex MTX> ThreadPool<MTX>::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
 {
@@ -17,7 +17,7 @@ template <Mutex MTX> ThreadPool<MTX>::ThreadPool(const usize p_ThreadCount) : IT
             Ref<ITask> task;
             { // This could potentially be lock free by implementing a lock free deque
                 std::scoped_lock lock(m_Mutex);
-                KIT_PROFILE_MARK_LOCK(m_Mutex);
+                TKIT_PROFILE_MARK_LOCK(m_Mutex);
                 if (m_Queue.empty())
                 {
                     m_TaskReady.clear(std::memory_order_relaxed);
@@ -59,7 +59,7 @@ template <Mutex MTX> ThreadPool<MTX>::~ThreadPool() noexcept
 
     for (std::thread &thread : m_Threads)
         thread.join();
-    KIT_LOG_WARNING_IF(!m_Queue.empty(), "Destroying thread pool with pending tasks. Executing them serially now...");
+    TKIT_LOG_WARNING_IF(!m_Queue.empty(), "Destroying thread pool with pending tasks. Executing them serially now...");
     while (!m_Queue.empty())
     {
         const Ref<ITask> task = m_Queue.front();
@@ -73,7 +73,7 @@ template <Mutex MTX> void ThreadPool<MTX>::SubmitTask(const Ref<ITask> &p_Task) 
     m_PendingCount.fetch_add(1, std::memory_order_relaxed);
     {
         std::scoped_lock lock(m_Mutex);
-        KIT_PROFILE_MARK_LOCK(m_Mutex);
+        TKIT_PROFILE_MARK_LOCK(m_Mutex);
         m_Queue.push_back(p_Task);
     }
     m_TaskReady.test_and_set(std::memory_order_release);
@@ -82,4 +82,4 @@ template <Mutex MTX> void ThreadPool<MTX>::SubmitTask(const Ref<ITask> &p_Task) 
 
 template class ThreadPool<std::mutex>;
 template class ThreadPool<SpinLock>;
-} // namespace KIT
+} // namespace TKit

@@ -4,7 +4,7 @@
 #include "kit/core/alias.hpp"
 #include <concepts>
 
-namespace KIT
+namespace TKit
 {
 template <typename T>
 concept Hashable = requires(T a) {
@@ -33,4 +33,4 @@ concept Mutex = requires(T a) {
 };
 
 template <typename T> using NoCVRef = std::remove_cvref_t<T>;
-} // namespace KIT
+} // namespace TKit

@@ -2,9 +2,9 @@
 
 #include "kit/profiling/timespan.hpp"
 
-namespace KIT
+namespace TKit
 {
-class KIT_API Clock
+class TKIT_API Clock
 {
   public:
     using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
@@ -23,4 +23,4 @@ class KIT_API Clock
   private:
     TimePoint m_Start;
 };
-} // namespace KIT
+} // namespace TKit

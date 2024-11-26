@@ -5,7 +5,7 @@
 #include <fstream>
 #include <thread>
 
-namespace KIT
+namespace TKit
 {
 struct ExampleData
 {
@@ -216,4 +216,4 @@ void RecordStackAllocator(const AllocationSettings &p_Settings)
         file << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds() << '\n';
     }
 }
-} // namespace KIT
+} // namespace TKit

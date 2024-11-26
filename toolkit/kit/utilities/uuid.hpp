@@ -2,7 +2,7 @@
 
 #include "Kit/core/concepts.hpp"
 
-namespace KIT
+namespace TKit
 {
 template <Hashable ID = u64> struct UUID
 {
@@ -23,11 +23,11 @@ template <Hashable ID = u64> struct UUID
 
     ID Value;
 };
-} // namespace KIT
+} // namespace TKit
 
-template <KIT::Hashable ID> struct std::hash<KIT::UUID<ID>>
+template <TKit::Hashable ID> struct std::hash<TKit::UUID<ID>>
 {
-    KIT_API usize operator()(const KIT::UUID<ID> &p_UUID) const noexcept
+    TKIT_API usize operator()(const TKit::UUID<ID> &p_UUID) const noexcept
     {
         return std::hash<ID>()(p_UUID.Value);
     }

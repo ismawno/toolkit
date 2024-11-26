@@ -5,7 +5,7 @@
 #include <functional>
 #include <future>
 
-namespace KIT
+namespace TKit
 {
 // TODO: Align/add padding to 64 bytes to avoid false sharing? Profile first.
 
@@ -16,13 +16,13 @@ namespace KIT
  * The task is a simple callable object that takes a thread index as an argument.
  *
  */
-class KIT_API ITask : public RefCounted<ITask>
+class TKIT_API ITask : public RefCounted<ITask>
 {
     // This is commented out because it is wasteful to instance a block allocator for ITask that will never be used.
     // Having the overloads does grant us some asserts in case something goes terribly wrong or user forgets to use
     // their/our overriden new/delete, but it is not worth the cost.
-    // KIT_BLOCK_ALLOCATED_CONCURRENT(ITask, 32)
-    KIT_NON_COPYABLE(ITask)
+    // TKIT_BLOCK_ALLOCATED_CONCURRENT(ITask, 32)
+    TKIT_NON_COPYABLE(ITask)
   public:
     ITask() noexcept = default;
     virtual ~ITask() noexcept = default;
@@ -75,7 +75,7 @@ class KIT_API ITask : public RefCounted<ITask>
 template <typename T> class Task final : public ITask
 {
   public:
-    KIT_BLOCK_ALLOCATED_CONCURRENT(Task<T>, 32)
+    TKIT_BLOCK_ALLOCATED_CONCURRENT(Task<T>, 32)
     void operator()(const usize p_ThreadIndex) noexcept override
     {
         m_Result = m_Function(p_ThreadIndex);
@@ -98,10 +98,10 @@ template <typename T> class Task final : public ITask
     explicit Task(Callable &&p_Callable, Args &&...p_Args) noexcept
         : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
-#ifdef KIT_ENABLE_ASSERTS
+#ifdef TKIT_ENABLE_ASSERTS
         if constexpr (sizeof...(Args) == 0)
         {
-            KIT_ERROR("Wrong constructor used for Task<T>");
+            TKIT_ERROR("Wrong constructor used for Task<T>");
         }
 #endif
     }
@@ -122,10 +122,10 @@ template <typename T> class Task final : public ITask
  * The task is a simple callable object that takes a thread index as an argument.
  *
  */
-template <> class KIT_API Task<void> final : public ITask
+template <> class TKIT_API Task<void> final : public ITask
 {
   public:
-    KIT_BLOCK_ALLOCATED_CONCURRENT(Task<void>, 32)
+    TKIT_BLOCK_ALLOCATED_CONCURRENT(Task<void>, 32)
     void operator()(usize p_ThreadIndex) noexcept override;
 
     template <typename Callable, typename... Args>
@@ -135,7 +135,7 @@ template <> class KIT_API Task<void> final : public ITask
     {
         if constexpr (sizeof...(Args) == 0)
         {
-            KIT_ERROR("Wrong constructor used for Task<void>");
+            TKIT_ERROR("Wrong constructor used for Task<void>");
         }
     }
 
@@ -148,4 +148,4 @@ template <> class KIT_API Task<void> final : public ITask
   private:
     std::function<void(usize)> m_Function = nullptr;
 };
-} // namespace KIT
+} // namespace TKit

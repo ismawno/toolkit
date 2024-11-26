@@ -4,9 +4,9 @@
 #include "kit/core/concepts.hpp"
 #include <chrono>
 
-namespace KIT
+namespace TKit
 {
-class KIT_API Timespan
+class TKIT_API Timespan
 {
   public:
     using Nanoseconds = std::chrono::nanoseconds;
@@ -97,4 +97,4 @@ class KIT_API Timespan
   private:
     Nanoseconds m_Elapsed;
 };
-} // namespace KIT
+} // namespace TKit

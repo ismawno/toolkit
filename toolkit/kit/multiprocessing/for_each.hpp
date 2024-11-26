@@ -2,7 +2,7 @@
 
 #include "kit/multiprocessing/task_manager.hpp"
 
-namespace KIT
+namespace TKit
 {
 
 /**
@@ -32,7 +32,7 @@ void ForEach(TManager &p_Manager, It1 p_First, It1 p_Last, It2 p_Dest, const usi
     for (usize i = 0; i < p_Tasks; ++i)
     {
         const usize end = (i + 1) * size / p_Tasks;
-        KIT_ASSERT(end <= size, "Partition exceeds container size");
+        TKIT_ASSERT(end <= size, "Partition exceeds container size");
         if (end > start)
         {
             *p_Dest = p_Manager.CreateAndSubmit(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...,
@@ -42,4 +42,4 @@ void ForEach(TManager &p_Manager, It1 p_First, It1 p_Last, It2 p_Dest, const usi
         start = end;
     }
 }
-} // namespace KIT
+} // namespace TKit

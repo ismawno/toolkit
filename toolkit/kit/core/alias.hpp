@@ -10,7 +10,7 @@
 #include <string_view>
 #include <string>
 
-namespace KIT
+namespace TKit
 {
 // Add a namespace so that other libraries can adopt them...
 namespace Alias
@@ -88,4 +88,4 @@ using HashSet = std::unordered_set<Value, Hash, OpEqual>;
 
 //... and use them immediately in the toolkit namespace
 using namespace Alias;
-} // namespace KIT
+} // namespace TKit

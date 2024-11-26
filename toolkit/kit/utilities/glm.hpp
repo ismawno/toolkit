@@ -17,7 +17,7 @@
 // This file includes all necessary glm headers and defines some useful aliases. Toolkit istelf cannot use it directly.
 // Its just a utility header to have a glogab glm configuration.
 
-namespace KIT::GLM
+namespace TKit::GLM
 {
 using vec2 = glm::vec2;
 using vec3 = glm::vec3;
@@ -48,4 +48,4 @@ template <> struct RotType<D3>
 
 template <Dimension D> using rot = typename RotType<D>::Type;
 
-} // namespace KIT::GLM
+} // namespace TKit::GLM

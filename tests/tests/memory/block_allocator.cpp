@@ -5,7 +5,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <array>
 
-namespace KIT
+namespace TKit
 {
 template <typename T> static void RunRawAllocationTest()
 {
@@ -159,7 +159,7 @@ template <typename T> static void RunMultithreadedAllocationsTest()
 {
     struct Data
     {
-        KIT_BLOCK_ALLOCATED_CONCURRENT(Data, 125);
+        TKIT_BLOCK_ALLOCATED_CONCURRENT(Data, 125);
         T Custom;
         u32 Value1 = 0;
         u32 Value2 = 0;
@@ -168,7 +168,7 @@ template <typename T> static void RunMultithreadedAllocationsTest()
     struct PaddedData
     {
         Data *Ptr;
-        std::byte Padding[KIT_CACHE_LINE_SIZE - sizeof(T *)];
+        std::byte Padding[TKIT_CACHE_LINE_SIZE - sizeof(T *)];
     };
     constexpr usize amount = 1000;
     constexpr usize threadCount = 8;
@@ -290,4 +290,4 @@ TEST_CASE("Block allocator deals with virtual data", "[block_allocator][virtual]
     REQUIRE(VirtualBase::BaseInstances == 0);
     REQUIRE(VirtualDerived::DerivedInstances == 0);
 }
-} // namespace KIT
+} // namespace TKit

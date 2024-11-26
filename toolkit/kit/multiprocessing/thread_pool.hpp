@@ -5,7 +5,7 @@
 #include "kit/profiling/macros.hpp"
 #include <thread>
 
-namespace KIT
+namespace TKit
 {
 // TODO: Implement a lock-free queue
 // TODO: Consider adding dependencies
@@ -45,6 +45,6 @@ template <Mutex MTX> class ThreadPool final : public ITaskManager
     std::atomic<u32> m_TerminatedCount = 0;
     std::atomic<u32> m_PendingCount = 0;
 
-    mutable KIT_PROFILE_DECLARE_MUTEX(MTX, m_Mutex);
+    mutable TKIT_PROFILE_DECLARE_MUTEX(MTX, m_Mutex);
 };
-} // namespace KIT
+} // namespace TKit

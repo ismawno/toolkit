@@ -2,7 +2,7 @@
 
 #include "kit/container/static_array.hpp"
 
-namespace KIT
+namespace TKit
 {
 template <typename T, usize N, usize... Ns> class StaticTensor : public StaticArray<StaticArray<T, Ns...>, N>
 {
@@ -13,4 +13,4 @@ template <typename T, usize N> class StaticTensor<T, N> : public StaticArray<T, 
 {
     using StaticArray<T, N>::StaticArray;
 };
-} // namespace KIT
+} // namespace TKit

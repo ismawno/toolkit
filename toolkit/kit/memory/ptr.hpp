@@ -7,7 +7,7 @@
 #include <memory>
 #include <atomic>
 
-namespace KIT
+namespace TKit
 {
 // I really tried to use this concept, but msvc wont fucking let me
 // template <typename T, template <typename> typename RC>
@@ -50,15 +50,16 @@ template <typename T> class RefCounted
         return *this;
     }
 
-    KIT_WARNING_IGNORE_PUSH
-    KIT_CLANG_WARNING_IGNORE("-Wexceptions")
-    KIT_GCC_WARNING_IGNORE("-Wterminate")
-    KIT_MSVC_WARNING_IGNORE(4297)
+    TKIT_WARNING_IGNORE_PUSH
+    TKIT_CLANG_WARNING_IGNORE("-Wexceptions")
+    TKIT_GCC_WARNING_IGNORE("-Wterminate")
+    TKIT_MSVC_WARNING_IGNORE(4297)
     ~RefCounted() noexcept
     {
-        KIT_ASSERT(m_RefCount.load(std::memory_order_relaxed) == 0, "RefCounted object deleted with non-zero refcount");
+        TKIT_ASSERT(m_RefCount.load(std::memory_order_relaxed) == 0,
+                    "RefCounted object deleted with non-zero refcount");
     }
-    KIT_WARNING_IGNORE_POP
+    TKIT_WARNING_IGNORE_POP
 
     u32 RefCount() const noexcept
     {
@@ -102,7 +103,7 @@ template <typename T> class RefCounted
  */
 template <typename T> class Ref
 {
-    KIT_BLOCK_ALLOCATED_CONCURRENT(Ref<T>, 32)
+    TKIT_BLOCK_ALLOCATED_CONCURRENT(Ref<T>, 32)
   public:
     Ref() noexcept = default;
 
@@ -282,7 +283,7 @@ template <typename T> class Ref
  */
 template <typename T> class Scope
 {
-    KIT_NON_COPYABLE(Scope)
+    TKIT_NON_COPYABLE(Scope)
   public:
     Scope() noexcept = default;
     explicit(false) Scope(T *p_Ptr) noexcept : m_Ptr(p_Ptr)
@@ -401,19 +402,19 @@ template <typename T> class Scope
 
     template <typename U> friend class Scope;
 };
-} // namespace KIT
+} // namespace TKit
 
-template <typename T> struct std::hash<KIT::Ref<T>>
+template <typename T> struct std::hash<TKit::Ref<T>>
 {
-    KIT::usize operator()(const KIT::Ref<T> &p_Ref) const noexcept
+    TKit::usize operator()(const TKit::Ref<T> &p_Ref) const noexcept
     {
         return std::hash<T *>()(p_Ref.Get());
     }
 };
 
-template <typename T> struct std::hash<KIT::Scope<T>>
+template <typename T> struct std::hash<TKit::Scope<T>>
 {
-    KIT::usize operator()(const KIT::Scope<T> &p_Scope) const noexcept
+    TKit::usize operator()(const TKit::Scope<T> &p_Scope) const noexcept
     {
         return std::hash<T *>()(p_Scope.Get());
     }

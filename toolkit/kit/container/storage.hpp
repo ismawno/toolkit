@@ -2,7 +2,7 @@
 
 #include "kit/core/alias.hpp"
 
-namespace KIT
+namespace TKit
 {
 /**
  * @brief A raw storage class mainly used to allow the deferred creation and destruction of objects using a fixed size
@@ -199,4 +199,4 @@ template <typename T> class Storage
     RawStorage<sizeof(T), alignof(T)> m_Storage;
 };
 
-}; // namespace KIT
+}; // namespace TKit

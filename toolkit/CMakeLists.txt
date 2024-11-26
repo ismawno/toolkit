@@ -40,7 +40,7 @@ if (TOOLKIT_ENABLE_PROFILING)
     FetchContent_MakeAvailable(tracy)
     target_link_libraries(toolkit PUBLIC TracyClient)
     target_compile_definitions(toolkit PUBLIC TRACY_ENABLE)
-    target_compile_definitions(toolkit PUBLIC KIT_ENABLE_PROFILING)
+    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_PROFILING)
     
     # Because of this check, the profiler binary will always persist and will keep the first cmake options that were set.
     # Recompile with other options by removing the profiler directory inside your build directory
@@ -66,7 +66,7 @@ if (TOOLKIT_ENABLE_PROFILING)
     endif()
 
     if (TOOLKIT_ENABLE_VULKAN_PROFILING)
-        target_compile_definitions(toolkit PUBLIC KIT_ENABLE_VULKAN_PROFILING)
+        target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_VULKAN_PROFILING)
     endif()
 
 endif()
@@ -80,32 +80,32 @@ else()
     configure_compile_link_options(toolkit FLAGS -Wall -Wextra -Wpedantic -Werror)
 endif()
 
-target_compile_definitions(toolkit PUBLIC KIT_ROOT_PATH="${TOOLKIT_ROOT_PATH}")
+target_compile_definitions(toolkit PUBLIC TKIT_ROOT_PATH="${TOOLKIT_ROOT_PATH}")
 
 if(TOOLKIT_ENABLE_INFO_LOGS)
-    target_compile_definitions(toolkit PUBLIC KIT_ENABLE_INFO_LOGS)
+    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_INFO_LOGS)
 endif()
 
 if(TOOLKIT_ENABLE_WARNING_LOGS)
-    target_compile_definitions(toolkit PUBLIC KIT_ENABLE_WARNING_LOGS)
+    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_WARNING_LOGS)
 endif()
 
 if(TOOLKIT_ENABLE_ASSERTS)
-    target_compile_definitions(toolkit PUBLIC KIT_ENABLE_ASSERTS)
+    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ASSERTS)
 endif()
 
 if (TOOLKIT_ENABLE_LOG_COLORS)
-    target_compile_definitions(toolkit PUBLIC KIT_ENABLE_LOG_COLORS)
+    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_LOG_COLORS)
 endif()
 
 if (TOOLKIT_SILENT_ASSERTS)
-    target_compile_definitions(toolkit PUBLIC KIT_SILENT_ASSERTS)
+    target_compile_definitions(toolkit PUBLIC TKIT_SILENT_ASSERTS)
 endif()
 
 if (TOOLKIT_WEAK_ASSERTS)
-    target_compile_definitions(toolkit PUBLIC KIT_WEAK_ASSERTS)
+    target_compile_definitions(toolkit PUBLIC TKIT_WEAK_ASSERTS)
 endif()
 
 if (TOOLKIT_ENABLE_BLOCK_ALLOCATOR)
-    target_compile_definitions(toolkit PUBLIC KIT_ENABLE_BLOCK_ALLOCATOR)
+    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_BLOCK_ALLOCATOR)
 endif()

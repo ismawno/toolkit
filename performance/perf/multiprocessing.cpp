@@ -4,12 +4,12 @@
 #include "kit/profiling/clock.hpp"
 #include <fstream>
 
-namespace KIT
+namespace TKit
 {
 struct Number
 {
     u32 Value;
-    std::byte Padding[KIT_CACHE_LINE_SIZE - sizeof(u32)];
+    std::byte Padding[TKIT_CACHE_LINE_SIZE - sizeof(u32)];
 };
 
 template <typename MTX> void RecordThreadPoolSum(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads)
@@ -90,4 +90,4 @@ void RecordParallelSum(const ThreadPoolSumSettings &p_Settings, usize p_Maxthrea
 
 template void RecordThreadPoolSum<std::mutex>(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads);
 template void RecordThreadPoolSum<SpinLock>(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads);
-} // namespace KIT
+} // namespace TKit

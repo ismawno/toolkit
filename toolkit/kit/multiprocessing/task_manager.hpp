@@ -3,7 +3,7 @@
 #include "kit/multiprocessing/task.hpp"
 #include <type_traits>
 
-namespace KIT
+namespace TKit
 {
 /**
  * @brief A task manager that is responsible for managing tasks and executing them. It is an abstract class that
@@ -15,7 +15,7 @@ namespace KIT
  * may be a nasty bug to track down.
  *
  */
-class KIT_API ITaskManager
+class TKIT_API ITaskManager
 {
   public:
     explicit ITaskManager(usize p_ThreadCount) noexcept;
@@ -74,4 +74,4 @@ class KIT_API ITaskManager
     usize m_ThreadCount;
     friend class ITask;
 };
-} // namespace KIT
+} // namespace TKit
