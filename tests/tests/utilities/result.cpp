@@ -1,5 +1,6 @@
 #include "tkit/core/alias.hpp"
 #include "tkit/utilities/result.hpp"
+#include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <string>
 
@@ -16,35 +17,52 @@ struct Test
     f32 Value1;
     u32 Value2;
 };
-} // namespace TKit
 
 TEST_CASE("Result", "[utilities][result]")
 {
-    SECTION("Ok")
+    SECTION("Ok (int)")
     {
-        auto result = TKit::Result<int>::Ok(42);
+        auto result = Result<u32>::Ok(42);
         REQUIRE(result);
-        REQUIRE(result.Value() == 42);
+        REQUIRE(result.GetValue() == 42);
     }
 
-    SECTION("Error")
+    SECTION("Error (int)")
     {
-        auto result = TKit::Result<int>::Error("Error");
+        auto result = Result<u32>::Error("Error");
         REQUIRE(!result);
-        REQUIRE(std::string(result.Error()) == "Error");
+        REQUIRE(std::string(result.GetError()) == "Error");
     }
 
-    SECTION("Ok")
+    SECTION("Ok (struct)")
     {
-        auto result = TKit::Result<TKit::Test>::Ok(42.f, 42);
+        auto result = Result<Test>::Ok(42.f, 42);
         REQUIRE(result);
-        REQUIRE((result.Value().Value1 == 42.f && result.Value().Value2 == 42));
+        REQUIRE((result.GetValue().Value1 == 42.f && result.GetValue().Value2 == 42));
     }
 
-    SECTION("Error")
+    SECTION("Error (struct)")
     {
-        auto result = TKit::Result<TKit::Test>::Error("Error");
+        auto result = Result<Test>::Error("Error");
         REQUIRE(!result);
-        REQUIRE(std::string(result.Error()) == "Error");
+        REQUIRE(std::string(result.GetError()) == "Error");
+    }
+
+    SECTION("Memory correctness")
+    {
+        {
+            auto result1 = Result<NonTrivialData>::Ok();
+            REQUIRE(NonTrivialData::Instances == 1);
+
+            const Result<NonTrivialData> other = result1;
+            REQUIRE(NonTrivialData::Instances == 2);
+
+            auto result2 = Result<NonTrivialData>::Error("Error");
+            REQUIRE(std::string(result2.GetError()) == "Error");
+
+            REQUIRE(NonTrivialData::Instances == 2);
+        }
+        REQUIRE(NonTrivialData::Instances == 0);
     }
 }
+} // namespace TKit

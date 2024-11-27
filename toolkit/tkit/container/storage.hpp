@@ -53,8 +53,11 @@ template <usize Size, usize Alignment = alignof(void *)> class RawStorage
      */
     template <typename T> void Destroy() const noexcept
     {
-        const T *ptr = Get<T>();
-        ptr->~T();
+        if constexpr (!std::is_trivially_destructible_v<T>)
+        {
+            const T *ptr = Get<T>();
+            ptr->~T();
+        }
     }
 
     /**
@@ -119,18 +122,16 @@ template <typename T> class Storage
     Storage &operator=(const Storage &p_Other) noexcept
         requires std::is_copy_assignable_v<T>
     {
-        if (this == &p_Other)
-            return *this;
-        *Get() = *p_Other.Get();
+        if (this != &p_Other)
+            *Get() = *p_Other.Get();
         return *this;
     }
 
     Storage &operator=(Storage &&p_Other) noexcept
         requires std::is_move_assignable_v<T>
     {
-        if (this == &p_Other)
-            return *this;
-        *Get() = std::move(*p_Other.Get());
+        if (this != &p_Other)
+            *Get() = std::move(*p_Other.Get());
         return *this;
     }
 
