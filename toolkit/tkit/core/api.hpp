@@ -11,6 +11,8 @@
 #    define TKIT_OS_LINUX
 #elif defined(__APPLE__)
 #    define TKIT_OS_APPLE
+#elif defined(__ANDROID__)
+#    define TKIT_OS_ANDROID
 #endif
 
 #ifdef __MACH__
