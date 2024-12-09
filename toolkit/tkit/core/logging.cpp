@@ -51,13 +51,6 @@ void logMessage(const char *p_Level, const std::string_view p_File, const i32 p_
     TKIT_DEBUG_BREAK_IF(p_Crash);
 }
 TKIT_WARNING_IGNORE_POP
-
-void logMessageIf(bool condition, const char *p_Level, const std::string_view p_File, const i32 p_Line,
-                  const char *p_Color, const bool p_Crash, const std::string_view p_Message) noexcept
-{
-    if (condition)
-        logMessage(p_Level, p_File, p_Line, p_Color, p_Crash, p_Message);
-}
 } // namespace TKit
 
 #endif
