@@ -18,7 +18,7 @@ namespace Alias
 
 // About aliases:
 // Regarding primitive types, I have always liked short and informative names such as u32, f32, etc. I havent seen
-// this convention in many c++ projects around, so Im not sure if its the best option, specially for the size_t
+// this convention in many c++ projects around, so Im not sure if its the best option, especially for the size_t
 // case, which doesnt have an immediate alias I can think of.
 
 // Regarding container types, its nice to have some of them aliases in case you want to quickly change the container

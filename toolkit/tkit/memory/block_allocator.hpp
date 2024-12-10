@@ -26,7 +26,7 @@ namespace TKit
  * has a thread-safe and a serial variant, the latter being faster.
  *
  * The block allocator deallocates all memory when it is destroyed. It is up to the user to ensure that all memory is
- * freed at that point, specially when dealing with non-trivial destructors.
+ * freed at that point, especially when dealing with non-trivial destructors.
  *
  * Some performance numbers (measured on my macOS M1):
  * - Allocating 10000 elements of 128 bytes in 0.035 ms (3.5 ns per allocation)

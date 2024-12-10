@@ -1,9 +1,9 @@
 ![Tests Status](https://github.com/ismawno/toolkit/actions/workflows/tests.yml/badge.svg)
 ![Build Status](https://github.com/ismawno/toolkit/actions/workflows/build.yml/badge.svg)
 
-# toolkit
+# Toolkit
 
-*Toolkit* is a small library with C++ utilities I have developed and find useful in almost every project I start. It is meant for personal use only, although I have tried my best to make it as user-friendly as possible.
+Toolkit is a small library with C++ utilities I have developed and find useful in almost every project I start. It is meant for personal use only, although I have tried my best to make it as user-friendly as possible.
 
 The main features of the library revolve around additional data structures, memory management, multithreading, and small utilities I find handy.
 
@@ -35,6 +35,6 @@ I have tried to keep dependencies to a minimum, many of them being platform-spec
 
 ## Building
 
-The building process is (fortunately) very straightforward. Create a `build` folder, `cd` into it, and run `cmake ..`. All available *toolkit* options will be printed out, and they are self-explanatory. If an inconsistent combination of these options is entered, a warning or error message should appear (or so I hope).
+The building process is (fortunately) very straightforward. Create a `build` folder, `cd` into it, and run `cmake ..`. All available Toolkit options will be printed out, and they are self-explanatory. If an inconsistent combination of these options is entered, a warning or error message should appear (or so I hope).
 
 Then compile the project with your editor/IDE of choice, and run the tests to make sure everything works as expected. If that is the case, you are done!
