@@ -4,6 +4,7 @@
 #include "tkit/core/logging.hpp"
 #include "tkit/core/concepts.hpp"
 #include <array>
+#include <span>
 
 namespace TKit
 {
@@ -599,6 +600,11 @@ class StaticArray
     bool full() const noexcept
     {
         return m_Size == capacity();
+    }
+
+    explicit(false) operator std::span<T, N>() noexcept
+    {
+        return std::span<T, N>(data(), size());
     }
 
   private:
