@@ -617,6 +617,15 @@ class StaticArray
         return std::span<const T, N>(data(), size());
     }
 
+    explicit(false) operator std::span<T>() noexcept
+    {
+        return std::span<T>(data(), size());
+    }
+    explicit(false) operator std::span<const T>() const noexcept
+    {
+        return std::span<const T>(data(), size());
+    }
+
   private:
     struct alignas(T) Element
     {
