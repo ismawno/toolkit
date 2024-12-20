@@ -72,10 +72,27 @@ class StaticArray
             ::new (begin() + i) T(p_Other[i]);
     }
 
+    // This constructor WONT include the case M == N (ie, move constructor)
+    template <usize M> explicit(false) StaticArray(StaticArray<T, M> &&p_Other) noexcept : m_Size(p_Other.size())
+    {
+        if constexpr (M > N)
+        {
+            TKIT_ASSERT(p_Other.size() <= N, "Size is bigger than capacity");
+        }
+        for (usize i = 0; i < m_Size; ++i)
+            ::new (begin() + i) T(std::move(p_Other[i]));
+    }
+
     StaticArray(const StaticArray<T, N> &p_Other) noexcept : m_Size(p_Other.size())
     {
         for (usize i = 0; i < m_Size; ++i)
             ::new (begin() + i) T(p_Other[i]);
+    }
+
+    StaticArray(StaticArray<T, N> &&p_Other) noexcept : m_Size(p_Other.size())
+    {
+        for (usize i = 0; i < m_Size; ++i)
+            ::new (begin() + i) T(std::move(p_Other[i]));
     }
 
     StaticArray(std::initializer_list<T> p_List) noexcept : m_Size(p_List.size())
