@@ -645,7 +645,10 @@ template <typename T> using StaticArray16 = StaticArray<T, 16>;
 template <typename T> using StaticArray32 = StaticArray<T, 32>;
 template <typename T> using StaticArray64 = StaticArray<T, 64>;
 template <typename T> using StaticArray128 = StaticArray<T, 128>;
+template <typename T> using StaticArray196 = StaticArray<T, 196>;
 template <typename T> using StaticArray256 = StaticArray<T, 256>;
+template <typename T> using StaticArray384 = StaticArray<T, 384>;
 template <typename T> using StaticArray512 = StaticArray<T, 512>;
+template <typename T> using StaticArray768 = StaticArray<T, 768>;
 template <typename T> using StaticArray1024 = StaticArray<T, 1024>;
 } // namespace TKit
