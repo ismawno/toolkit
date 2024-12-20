@@ -126,6 +126,25 @@ class StaticArray
         return *this;
     }
 
+    // Same goes for assignment. It wont include M == N, and use the default assignment operator
+    template <usize M> StaticArray &operator=(StaticArray<T, M> &&p_Other) noexcept
+    {
+        if constexpr (M == N)
+        {
+            if (this == &p_Other)
+                return *this;
+        }
+        if constexpr (M > N)
+        {
+            TKIT_ASSERT(p_Other.size() <= N, "Size is bigger than capacity");
+        }
+        clear();
+        m_Size = p_Other.size();
+        for (usize i = 0; i < m_Size; ++i)
+            ::new (begin() + i) T(std::move(p_Other[i]));
+        return *this;
+    }
+
     StaticArray &operator=(const StaticArray<T, N> &p_Other) noexcept
     {
         if (this == &p_Other)
@@ -134,6 +153,17 @@ class StaticArray
         m_Size = p_Other.size();
         for (usize i = 0; i < m_Size; ++i)
             ::new (begin() + i) T(p_Other[i]);
+        return *this;
+    }
+
+    StaticArray &operator=(StaticArray<T, N> &&p_Other) noexcept
+    {
+        if (this == &p_Other)
+            return *this;
+        clear();
+        m_Size = p_Other.size();
+        for (usize i = 0; i < m_Size; ++i)
+            ::new (begin() + i) T(std::move(p_Other[i]));
         return *this;
     }
 
