@@ -623,4 +623,14 @@ class StaticArray
     std::array<Element, N> m_Data;
     usize m_Size = 0;
 };
+
+template <typename T> using StaticArray4 = StaticArray<T, 4>;
+template <typename T> using StaticArray8 = StaticArray<T, 8>;
+template <typename T> using StaticArray16 = StaticArray<T, 16>;
+template <typename T> using StaticArray32 = StaticArray<T, 32>;
+template <typename T> using StaticArray64 = StaticArray<T, 64>;
+template <typename T> using StaticArray128 = StaticArray<T, 128>;
+template <typename T> using StaticArray256 = StaticArray<T, 256>;
+template <typename T> using StaticArray512 = StaticArray<T, 512>;
+template <typename T> using StaticArray1024 = StaticArray<T, 1024>;
 } // namespace TKit
