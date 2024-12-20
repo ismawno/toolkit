@@ -47,8 +47,9 @@ class StaticArray
     template <typename... Args> StaticArray(const usize p_Size, Args &&...p_Args) noexcept : m_Size(p_Size)
     {
         TKIT_ASSERT(p_Size <= N, "Size is bigger than capacity");
-        for (auto it = begin(); it != end(); ++it)
-            ::new (it) T(std::forward<Args>(p_Args)...);
+        if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
+            for (auto it = begin(); it != end(); ++it)
+                ::new (it) T(std::forward<Args>(p_Args)...);
     }
 
     template <std::input_iterator It> StaticArray(It p_Begin, It p_End) noexcept
@@ -156,7 +157,7 @@ class StaticArray
     {
         TKIT_ASSERT(!full(), "Container is already full");
         TKIT_ASSERT(p_Pos >= cbegin() && p_Pos <= cend(), "Iterator is out of bounds");
-        if (empty() || p_Pos == end())
+        if (empty() || p_Pos == end()) [[unlikely]]
         {
             push_back(std::forward<U>(p_Value));
             return;
@@ -165,11 +166,16 @@ class StaticArray
         const difference_type offset = std::distance(cbegin(), p_Pos);
         const iterator pos = begin() + offset;
 
-        // Current end() pointer is uninitialized, so it must be handled manually
-        ::new (end()) T(std::move(*(end() - 1)));
+        if constexpr (!std::is_trivially_constructible_v<T>)
+        { // Current end() pointer is uninitialized, so it must be handled manually
+            ::new (end()) T(std::move(*(end() - 1)));
 
-        if (const iterator shiftedEnd = end() - 1; pos < shiftedEnd)
-            std::copy_backward(std::make_move_iterator(pos), std::make_move_iterator(shiftedEnd), end());
+            if (const iterator shiftedEnd = end() - 1; pos < shiftedEnd)
+                std::move_backward(pos, shiftedEnd, end());
+        }
+        else
+            std::move_backward(pos, end(), end() + 1);
+
         if constexpr (!std::is_trivially_destructible_v<T>)
             pos->~T();
         ::new (pos) T(std::forward<U>(p_Value));
@@ -224,7 +230,7 @@ class StaticArray
         }
 
         if (const iterator shiftedEnd = end() - count; pos < shiftedEnd)
-            std::copy_backward(std::make_move_iterator(pos), std::make_move_iterator(shiftedEnd), end());
+            std::move_backward(pos, shiftedEnd, end());
         for (usize i = 0; i < outOfBounds; ++i)
         {
             if constexpr (!std::is_trivially_destructible_v<T>)
@@ -259,7 +265,7 @@ class StaticArray
         const iterator pos = begin() + offset;
 
         // Copy the elements after the erased one
-        std::copy(std::make_move_iterator(pos + 1), std::make_move_iterator(end()), pos);
+        std::move(pos + 1, end(), pos);
 
         // And destroy the last element
         if constexpr (!std::is_trivially_destructible_v<T>)
@@ -287,7 +293,7 @@ class StaticArray
         TKIT_ASSERT(m_Size >= count, "New size is negative");
 
         // Copy the elements after the erased ones
-        std::copy(std::make_move_iterator(it1 + count), std::make_move_iterator(end()), it1);
+        std::move(it1 + count, end(), it1);
 
         // And destroy the last elements
         if constexpr (!std::is_trivially_destructible_v<T>)
