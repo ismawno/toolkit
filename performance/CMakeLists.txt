@@ -19,6 +19,7 @@ set(SOURCES
     perf/main.cpp
     perf/memory.cpp
     perf/multiprocessing.cpp
+    perf/container.cpp
     perf/settings.cpp
 )
 

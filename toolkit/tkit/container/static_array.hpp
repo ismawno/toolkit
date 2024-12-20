@@ -151,7 +151,7 @@ class StaticArray
      * @param p_Value The value to insert.
      */
     template <typename U>
-        requires(std::is_same_v<NoCVRef<T>, NoCVRef<U>>)
+        requires(std::is_convertible_v<NoCVRef<T>, NoCVRef<U>>)
     void insert(const const_iterator p_Pos, U &&p_Value) noexcept
     {
         TKIT_ASSERT(!full(), "Container is already full");

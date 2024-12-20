@@ -10,14 +10,14 @@ namespace TKit
 struct ExampleData
 {
     f64 Values[16];
-    void SetValues()
+    void SetValues() noexcept
     {
         for (usize i = 0; i < 16; ++i)
             Values[i] = static_cast<f64>(i);
     }
 };
 
-void RecordMallocFreeST(const AllocationSettings &p_Settings)
+void RecordMallocFreeST(const AllocationSettings &p_Settings) noexcept
 {
     std::ofstream file(g_Root + "/performance/results/malloc_free_st.csv");
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
@@ -38,7 +38,7 @@ void RecordMallocFreeST(const AllocationSettings &p_Settings)
     }
 }
 
-void RecordMallocFreeMT(const AllocationSettings &p_Settings, const usize p_MaxThreads)
+void RecordMallocFreeMT(const AllocationSettings &p_Settings, const usize p_MaxThreads) noexcept
 {
     std::ofstream file(g_Root + "/performance/results/malloc_free_mt.csv");
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
@@ -92,7 +92,7 @@ void RecordMallocFreeMT(const AllocationSettings &p_Settings, const usize p_MaxT
     }
 }
 
-void RecordBlockAllocatorConcurrentST(const AllocationSettings &p_Settings)
+void RecordBlockAllocatorConcurrentST(const AllocationSettings &p_Settings) noexcept
 {
     std::ofstream file(g_Root + "/performance/results/block_allocator_concurrent_st.csv");
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
@@ -116,7 +116,7 @@ void RecordBlockAllocatorConcurrentST(const AllocationSettings &p_Settings)
     }
 }
 
-void RecordBlockAllocatorSerialST(const AllocationSettings &p_Settings)
+void RecordBlockAllocatorSerialST(const AllocationSettings &p_Settings) noexcept
 {
     std::ofstream file(g_Root + "/performance/results/block_allocator_serial_st.csv");
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
@@ -139,7 +139,7 @@ void RecordBlockAllocatorSerialST(const AllocationSettings &p_Settings)
     }
 }
 
-void RecordBlockAllocatorMT(const AllocationSettings &p_Settings, const usize p_MaxThreads)
+void RecordBlockAllocatorMT(const AllocationSettings &p_Settings, const usize p_MaxThreads) noexcept
 {
     std::ofstream file(g_Root + "/performance/results/block_allocator_mt.csv");
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
@@ -194,7 +194,7 @@ void RecordBlockAllocatorMT(const AllocationSettings &p_Settings, const usize p_
     }
 }
 
-void RecordStackAllocator(const AllocationSettings &p_Settings)
+void RecordStackAllocator(const AllocationSettings &p_Settings) noexcept
 {
     const char *path = "/performance/results/stack_allocator.csv";
     std::ofstream file(g_Root + path);

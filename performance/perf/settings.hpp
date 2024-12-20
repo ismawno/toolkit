@@ -14,6 +14,8 @@ struct AllocationSettings
     usize PassIncrement = 100;
 };
 
+using ContainerSettings = AllocationSettings;
+
 struct ThreadPoolSumSettings
 {
     usize SumCount = 1000000000;
@@ -24,6 +26,7 @@ struct Settings
     usize MaxThreads = 8;
     AllocationSettings Allocation{};
     ThreadPoolSumSettings ThreadPoolSum{};
+    ContainerSettings Container{};
 };
 
 Settings ReadOrWriteSettingsFile();

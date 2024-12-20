@@ -28,6 +28,11 @@ Settings ReadOrWriteSettingsFile()
         YAML::Node threadPoolSum = node["ThreadPoolSum"];
         threadPoolSum["SumCount"] = settings.ThreadPoolSum.SumCount;
 
+        YAML::Node container = node["Container"];
+        container["MinPasses"] = settings.Container.MinPasses;
+        container["MaxPasses"] = settings.Container.MaxPasses;
+        container["PassIncrement"] = settings.Container.PassIncrement;
+
         emitter << node;
         std::ofstream file(g_Root + "/performance/perf-settings.yaml");
         file << emitter.c_str();
@@ -44,6 +49,11 @@ Settings ReadOrWriteSettingsFile()
 
         const YAML::Node threadPoolSum = node["ThreadPoolSum"];
         settings.ThreadPoolSum.SumCount = threadPoolSum["SumCount"].as<usize>();
+
+        const YAML::Node container = node["Container"];
+        settings.Container.MinPasses = container["MinPasses"].as<usize>();
+        settings.Container.MaxPasses = container["MaxPasses"].as<usize>();
+        settings.Container.PassIncrement = container["PassIncrement"].as<usize>();
     }
     std::filesystem::create_directories(g_Root + "/performance/results");
     return settings;

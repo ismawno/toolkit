@@ -12,7 +12,8 @@ struct Number
     std::byte Padding[TKIT_CACHE_LINE_SIZE - sizeof(u32)];
 };
 
-template <typename MTX> void RecordThreadPoolSum(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads)
+template <typename MTX>
+void RecordThreadPoolSum(const ThreadPoolSumSettings &p_Settings, const usize p_Maxthreads) noexcept
 {
     std::ofstream file(g_Root + "/performance/results/thread_pool_sum.csv");
     file << "threads,sum (ns),result\n";
@@ -46,7 +47,7 @@ template <typename MTX> void RecordThreadPoolSum(const ThreadPoolSumSettings &p_
     }
 }
 
-void RecordParallelSum(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads)
+void RecordParallelSum(const ThreadPoolSumSettings &p_Settings, const usize p_Maxthreads) noexcept
 {
     std::ofstream file(g_Root + "/performance/results/parallel_sum.csv");
     file << "threads,sum (ns),result\n";
