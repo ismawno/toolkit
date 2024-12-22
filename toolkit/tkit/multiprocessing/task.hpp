@@ -52,7 +52,7 @@ class TKIT_API ITask : public RefCounted<ITask>
      * @brief Notify that the task has finished executing.
      *
      */
-    void NotifyCompleted() noexcept;
+    void notifyCompleted() noexcept;
 
   private:
     std::atomic_flag m_Finished = ATOMIC_FLAG_INIT;
@@ -79,7 +79,7 @@ template <typename T> class Task final : public ITask
     void operator()(const usize p_ThreadIndex) noexcept override
     {
         m_Result = m_Function(p_ThreadIndex);
-        NotifyCompleted();
+        notifyCompleted();
     }
 
     /**

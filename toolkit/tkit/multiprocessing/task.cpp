@@ -17,7 +17,7 @@ void ITask::Reset() noexcept
     m_Finished.clear(std::memory_order_relaxed);
 }
 
-void ITask::NotifyCompleted() noexcept
+void ITask::notifyCompleted() noexcept
 {
 #ifdef TKIT_ENABLE_ASSERTS
     const bool flag = m_Finished.test_and_set(std::memory_order_release);
@@ -31,6 +31,6 @@ void ITask::NotifyCompleted() noexcept
 void Task<void>::operator()(const usize p_ThreadIndex) noexcept
 {
     m_Function(p_ThreadIndex);
-    NotifyCompleted();
+    notifyCompleted();
 }
 } // namespace TKit
