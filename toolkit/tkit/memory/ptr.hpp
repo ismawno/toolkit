@@ -57,7 +57,7 @@ template <typename T> class RefCounted
     ~RefCounted() noexcept
     {
         TKIT_ASSERT(m_RefCount.load(std::memory_order_relaxed) == 0,
-                    "RefCounted object deleted with non-zero refcount");
+                    "[TOOLKIT] RefCounted object deleted with non-zero refcount");
     }
     TKIT_WARNING_IGNORE_POP
 

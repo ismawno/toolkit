@@ -60,7 +60,7 @@ template <Mutex MTX> ThreadPool<MTX>::~ThreadPool() noexcept
     for (std::thread &thread : m_Threads)
         thread.join();
     TKIT_LOG_WARNING_IF(!m_Queue.empty(),
-                        "TOOLKIT: Destroying thread pool with pending tasks. Executing them serially now...");
+                        "[TOOLKIT] Destroying thread pool with pending tasks. Executing them serially now...");
     while (!m_Queue.empty())
     {
         const Ref<ITask> task = m_Queue.front();

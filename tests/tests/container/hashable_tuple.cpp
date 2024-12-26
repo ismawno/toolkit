@@ -53,6 +53,6 @@ TEST_CASE("HashableTuple deviation")
     }
 
     deviation = sqrtf(deviation / expected);
-    TKIT_LOG_INFO("TOOLKIT: HashableTuple deviation ({} samples with {} ocurrences): {}", samples, amount, deviation);
+    TKIT_LOG_INFO("[TOOLKIT] HashableTuple deviation ({} samples with {} ocurrences): {}", samples, amount, deviation);
 }
 } // namespace TKit

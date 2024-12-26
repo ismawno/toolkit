@@ -114,7 +114,7 @@ template <typename T, typename ErrorType = const char *> class Result
      */
     const T &GetValue() const noexcept
     {
-        TKIT_ASSERT(m_Ok, "TOOLKIT: Result is not Ok");
+        TKIT_ASSERT(m_Ok, "[TOOLKIT] Result is not Ok");
         return *m_Value.Get();
     }
 
@@ -126,7 +126,7 @@ template <typename T, typename ErrorType = const char *> class Result
      */
     T &GetValue() noexcept
     {
-        TKIT_ASSERT(m_Ok, "TOOLKIT: Result is not Ok");
+        TKIT_ASSERT(m_Ok, "[TOOLKIT] Result is not Ok");
         return *m_Value.Get();
     }
 
@@ -138,7 +138,7 @@ template <typename T, typename ErrorType = const char *> class Result
      */
     const ErrorType &GetError() const noexcept
     {
-        TKIT_ASSERT(!m_Ok, "TOOLKIT: Result is Ok");
+        TKIT_ASSERT(!m_Ok, "[TOOLKIT] Result is Ok");
         return *m_Error.Get();
     }
 

@@ -226,8 +226,8 @@ template <typename T> class TKIT_API BlockAllocator
      */
     void DeallocateSerial(T *p_Ptr) noexcept
     {
-        TKIT_ASSERT(!IsEmpty(), "TOOLKIT: The current allocator has no active allocations yet");
-        TKIT_ASSERT(Owns(p_Ptr), "TOOLKIT: Trying to deallocate a pointer that was not allocated by this allocator");
+        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT] The current allocator has no active allocations yet");
+        TKIT_ASSERT(Owns(p_Ptr), "[TOOLKIT] Trying to deallocate a pointer that was not allocated by this allocator");
 
         --m_Allocations;
         Chunk *chunk = reinterpret_cast<Chunk *>(p_Ptr);
@@ -274,7 +274,7 @@ template <typename T> class TKIT_API BlockAllocator
     void Reset()
     {
         TKIT_LOG_WARNING_IF(!IsEmpty(),
-                            "TOOLKIT: The current allocator has active allocations. Resetting the allocator will "
+                            "[TOOLKIT] The current allocator has active allocations. Resetting the allocator will "
                             "prematurely deallocate all memory, and no destructor will be called");
         for (std::byte *block : m_Blocks)
             DeallocateAligned(block);
@@ -515,7 +515,7 @@ template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexce
     static void *operator new([[maybe_unused]] usize p_Size)                                                           \
     {                                                                                                                  \
         TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
-                    "Trying to block allocate a derived class from a base class overloaded new/delete");               \
+                    "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
         return TKit::BAllocateConcurrent<p_ClassName, p_ChunksPerBlock>();                                             \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr)                                                                           \
@@ -525,7 +525,7 @@ template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexce
     static void *operator new([[maybe_unused]] usize p_Size, const std::nothrow_t &)                                   \
     {                                                                                                                  \
         TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
-                    "Trying to block allocate a derived class from a base class overloaded new/delete");               \
+                    "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
         return TKit::BAllocateConcurrent<p_ClassName, p_ChunksPerBlock>();                                             \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr, const std::nothrow_t &)                                                   \
@@ -537,7 +537,7 @@ template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexce
     static void *operator new([[maybe_unused]] usize p_Size)                                                           \
     {                                                                                                                  \
         TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
-                    "Trying to block allocate a derived class from a base class overloaded new/delete");               \
+                    "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
         return TKit::BAllocateSerial<p_ClassName, p_ChunksPerBlock>();                                                 \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr)                                                                           \
@@ -547,7 +547,7 @@ template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexce
     static void *operator new([[maybe_unused]] usize p_Size, const std::nothrow_t &)                                   \
     {                                                                                                                  \
         TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
-                    "Trying to block allocate a derived class from a base class overloaded new/delete");               \
+                    "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
         return TKit::BAllocateSerial<p_ClassName, p_ChunksPerBlock>();                                                 \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr, const std::nothrow_t &)                                                   \
