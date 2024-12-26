@@ -682,7 +682,7 @@ class StaticArray
     static_assert(sizeof(Element) == sizeof(T), "Element size is not equal to T size");
     static_assert(alignof(Element) == alignof(T), "Element alignment is not equal to T alignment");
 
-    std::array<Element, N> m_Data;
+    std::array<Element, N> m_Data{};
     usize m_Size = 0;
 };
 
