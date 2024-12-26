@@ -9,14 +9,12 @@
 
 // We dont use enough formatting features to justify the overhead of fmtlib, but linux doesnt have std::format, so I
 // am forced to use it in that case
-#ifndef TKIT_NO_LOGS
-#    ifdef TKIT_OS_LINUX
-#        include <fmt/format.h>
-#        define TKIT_FORMAT(...) fmt::format(__VA_ARGS__)
-#    else
-#        include <format>
-#        define TKIT_FORMAT(...) std::format(__VA_ARGS__)
-#    endif
+#ifdef TKIT_OS_LINUX
+#    include <fmt/format.h>
+#    define TKIT_FORMAT(...) fmt::format(__VA_ARGS__)
+#else
+#    include <format>
+#    define TKIT_FORMAT(...) std::format(__VA_ARGS__)
 #endif
 
 // sonarlint yells at me bc of this but idgaf
