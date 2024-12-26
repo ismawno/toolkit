@@ -46,7 +46,7 @@ class StaticArray
 
     template <typename... Args> StaticArray(const usize p_Size, Args &&...p_Args) noexcept : m_Size(p_Size)
     {
-        TKIT_ASSERT(p_Size <= N, "Size is bigger than capacity");
+        TKIT_ASSERT(p_Size <= N, "TOOLKIT: Size is bigger than capacity");
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
             for (auto it = begin(); it != end(); ++it)
                 ::new (it) T(std::forward<Args>(p_Args)...);
@@ -56,7 +56,7 @@ class StaticArray
     {
         for (auto it = p_Begin; it != p_End; ++it)
         {
-            TKIT_ASSERT(m_Size <= N, "Size is bigger than capacity");
+            TKIT_ASSERT(m_Size <= N, "TOOLKIT: Size is bigger than capacity");
             ::new (begin() + m_Size++) T(*it);
         }
     }
@@ -66,7 +66,7 @@ class StaticArray
     {
         if constexpr (M > N)
         {
-            TKIT_ASSERT(p_Other.size() <= N, "Size is bigger than capacity");
+            TKIT_ASSERT(p_Other.size() <= N, "TOOLKIT: Size is bigger than capacity");
         }
         for (usize i = 0; i < m_Size; ++i)
             ::new (begin() + i) T(p_Other[i]);
@@ -77,7 +77,7 @@ class StaticArray
     {
         if constexpr (M > N)
         {
-            TKIT_ASSERT(p_Other.size() <= N, "Size is bigger than capacity");
+            TKIT_ASSERT(p_Other.size() <= N, "TOOLKIT: Size is bigger than capacity");
         }
         for (usize i = 0; i < m_Size; ++i)
             ::new (begin() + i) T(std::move(p_Other[i]));
@@ -97,7 +97,7 @@ class StaticArray
 
     StaticArray(std::initializer_list<T> p_List) noexcept : m_Size(p_List.size())
     {
-        TKIT_ASSERT(p_List.size() <= N, "Size is bigger than capacity");
+        TKIT_ASSERT(p_List.size() <= N, "TOOLKIT: Size is bigger than capacity");
         for (usize i = 0; i < m_Size; ++i)
             ::new (begin() + i) T(*(p_List.begin() + i));
     }
@@ -117,7 +117,7 @@ class StaticArray
         }
         if constexpr (M > N)
         {
-            TKIT_ASSERT(p_Other.size() <= N, "Size is bigger than capacity");
+            TKIT_ASSERT(p_Other.size() <= N, "TOOLKIT: Size is bigger than capacity");
         }
         clear();
         m_Size = p_Other.size();
@@ -136,7 +136,7 @@ class StaticArray
         }
         if constexpr (M > N)
         {
-            TKIT_ASSERT(p_Other.size() <= N, "Size is bigger than capacity");
+            TKIT_ASSERT(p_Other.size() <= N, "TOOLKIT: Size is bigger than capacity");
         }
         clear();
         m_Size = p_Other.size();
@@ -176,7 +176,7 @@ class StaticArray
         requires(std::convertible_to<U, T>)
     void push_back(U &&p_Value) noexcept
     {
-        TKIT_ASSERT(!full(), "Container is already full");
+        TKIT_ASSERT(!full(), "TOOLKIT: Container is already full");
         ::new (begin() + m_Size++) T(std::forward<U>(p_Value));
     }
 
@@ -186,7 +186,7 @@ class StaticArray
      */
     void pop_back() noexcept
     {
-        TKIT_ASSERT(!empty(), "Container is already empty");
+        TKIT_ASSERT(!empty(), "TOOLKIT: Container is already empty");
         --m_Size;
         if constexpr (!std::is_trivially_destructible_v<T>)
             end()->~T();
@@ -202,8 +202,8 @@ class StaticArray
         requires(std::is_convertible_v<NoCVRef<T>, NoCVRef<U>>)
     void insert(const const_iterator p_Pos, U &&p_Value) noexcept
     {
-        TKIT_ASSERT(!full(), "Container is already full");
-        TKIT_ASSERT(p_Pos >= cbegin() && p_Pos <= cend(), "Iterator is out of bounds");
+        TKIT_ASSERT(!full(), "TOOLKIT: Container is already full");
+        TKIT_ASSERT(p_Pos >= cbegin() && p_Pos <= cend(), "TOOLKIT: Iterator is out of bounds");
         if (empty() || p_Pos == end()) [[unlikely]]
         {
             push_back(std::forward<U>(p_Value));
@@ -238,7 +238,7 @@ class StaticArray
      */
     template <std::input_iterator It> void insert(const const_iterator p_Pos, It p_Begin, It p_End) noexcept
     {
-        TKIT_ASSERT(p_Pos >= cbegin() && p_Pos <= cend(), "Iterator is out of bounds");
+        TKIT_ASSERT(p_Pos >= cbegin() && p_Pos <= cend(), "TOOLKIT: Iterator is out of bounds");
         if (empty() || p_Pos == end())
         {
             for (auto it = p_Begin; it != p_End; ++it)
@@ -261,7 +261,7 @@ class StaticArray
         const iterator pos = begin() + offset;
         const usize count = std::distance(p_Begin, p_End);
         const usize outOfBounds = count < m_Size - offset ? count : m_Size - offset;
-        TKIT_ASSERT(m_Size + count <= capacity(), "New size exceeds capacity");
+        TKIT_ASSERT(m_Size + count <= capacity(), "TOOLKIT: New size exceeds capacity");
 
         // Current end() + outOfBounds pointers are uninitialized, so they must be handled manually
         for (usize i = 0; i < count; ++i)
@@ -307,7 +307,7 @@ class StaticArray
     {
         if (empty())
             return;
-        TKIT_ASSERT(p_Pos >= cbegin() && p_Pos < cend(), "Iterator is out of bounds");
+        TKIT_ASSERT(p_Pos >= cbegin() && p_Pos < cend(), "TOOLKIT: Iterator is out of bounds");
         const difference_type offset = std::distance(cbegin(), p_Pos);
         const iterator pos = begin() + offset;
 
@@ -330,14 +330,14 @@ class StaticArray
     {
         if (empty())
             return;
-        TKIT_ASSERT(p_Begin >= cbegin() && p_Begin <= cend(), "Begin iterator is out of bounds");
-        TKIT_ASSERT(p_End >= cbegin() && p_End <= cend(), "End iterator is out of bounds");
-        TKIT_ASSERT(p_Begin < p_End, "Begin iterator must come before end iterator");
+        TKIT_ASSERT(p_Begin >= cbegin() && p_Begin <= cend(), "TOOLKIT: Begin iterator is out of bounds");
+        TKIT_ASSERT(p_End >= cbegin() && p_End <= cend(), "TOOLKIT: End iterator is out of bounds");
+        TKIT_ASSERT(p_Begin < p_End, "TOOLKIT: Begin iterator must come before end iterator");
 
         const difference_type offset = std::distance(cbegin(), p_Begin);
         const iterator it1 = begin() + offset;
         const usize count = std::distance(p_Begin, p_End);
-        TKIT_ASSERT(m_Size >= count, "New size is negative");
+        TKIT_ASSERT(m_Size >= count, "TOOLKIT: New size is negative");
 
         // Copy the elements after the erased ones
         std::move(it1 + count, end(), it1);
@@ -359,7 +359,7 @@ class StaticArray
         requires std::constructible_from<T, Args...>
     T &emplace_back(Args &&...p_Args) noexcept
     {
-        TKIT_ASSERT(!full(), "Container is already full");
+        TKIT_ASSERT(!full(), "TOOLKIT: Container is already full");
         ::new (end()) T(std::forward<Args>(p_Args)...);
         return *(begin() + m_Size++);
     }
@@ -370,7 +370,7 @@ class StaticArray
      */
     const T &front() const noexcept
     {
-        TKIT_ASSERT(!empty(), "Container is empty");
+        TKIT_ASSERT(!empty(), "TOOLKIT: Container is empty");
         return *begin();
     }
 
@@ -380,7 +380,7 @@ class StaticArray
      */
     T &front() noexcept
     {
-        TKIT_ASSERT(!empty(), "Container is empty");
+        TKIT_ASSERT(!empty(), "TOOLKIT: Container is empty");
         return *begin();
     }
 
@@ -396,7 +396,7 @@ class StaticArray
         requires std::constructible_from<T, Args...>
     void resize(const usize p_Size, Args &&...args) noexcept
     {
-        TKIT_ASSERT(p_Size <= capacity(), "Size is bigger than capacity");
+        TKIT_ASSERT(p_Size <= capacity(), "TOOLKIT: Size is bigger than capacity");
 
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (p_Size < m_Size)
@@ -419,7 +419,7 @@ class StaticArray
      */
     const T &back() const noexcept
     {
-        TKIT_ASSERT(!empty(), "Container is empty");
+        TKIT_ASSERT(!empty(), "TOOLKIT: Container is empty");
         return *(begin() + m_Size - 1);
     }
 
@@ -429,7 +429,7 @@ class StaticArray
      */
     T &back() noexcept
     {
-        TKIT_ASSERT(!empty(), "Container is empty");
+        TKIT_ASSERT(!empty(), "TOOLKIT: Container is empty");
         return *(begin() + m_Size - 1);
     }
 
@@ -441,7 +441,7 @@ class StaticArray
      */
     const T &operator[](const usize p_Index) const noexcept
     {
-        TKIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
+        TKIT_ASSERT(p_Index < m_Size, "TOOLKIT: Index is out of bounds");
         return *(begin() + p_Index);
     }
 
@@ -453,7 +453,7 @@ class StaticArray
      */
     T &operator[](const usize p_Index) noexcept
     {
-        TKIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
+        TKIT_ASSERT(p_Index < m_Size, "TOOLKIT: Index is out of bounds");
         return *(begin() + p_Index);
     }
 
@@ -465,7 +465,7 @@ class StaticArray
      */
     const T &at(const usize p_Index) const noexcept
     {
-        TKIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
+        TKIT_ASSERT(p_Index < m_Size, "TOOLKIT: Index is out of bounds");
         return *(begin() + p_Index);
     }
 
@@ -477,7 +477,7 @@ class StaticArray
      */
     T &at(const usize p_Index) noexcept
     {
-        TKIT_ASSERT(p_Index < m_Size, "Index is out of bounds");
+        TKIT_ASSERT(p_Index < m_Size, "TOOLKIT: Index is out of bounds");
         return *(begin() + p_Index);
     }
 

@@ -138,7 +138,7 @@ class TKIT_API StackAllocator
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
-            TKIT_ASSERT(!m_Entries.empty(), "Unable to deallocate because the stack allocator is empty");
+            TKIT_ASSERT(!m_Entries.empty(), "TOOLKIT: Unable to deallocate because the stack allocator is empty");
             TKIT_ASSERT(m_Entries.back().Ptr == reinterpret_cast<std::byte *>(p_Ptr),
                         "Elements must be deallocated in the reverse order they were allocated");
 

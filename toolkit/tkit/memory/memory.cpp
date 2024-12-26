@@ -8,25 +8,25 @@ namespace TKit
 void *Allocate(const usize p_Size) noexcept
 {
     void *ptr = std::malloc(p_Size);
-    TKIT_ASSERT(ptr, "Failed to allocate memory with size {}", p_Size);
+    TKIT_ASSERT(ptr, "TOOLKIT: Failed to allocate memory with size {}", p_Size);
     TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
     return ptr;
 }
 
 void Deallocate(void *p_Ptr) noexcept
 {
-    TKIT_ASSERT(p_Ptr, "Trying to deallocate a nullptr");
+    TKIT_ASSERT(p_Ptr, "TOOLKIT: Trying to deallocate a nullptr");
     TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
     std::free(p_Ptr);
 }
 
 void *AllocateAligned(const usize p_Size, const usize p_Alignment) noexcept
 {
-    TKIT_ASSERT(p_Alignment >= sizeof(void *), "Alignment must be at least the size of a pointer");
+    TKIT_ASSERT(p_Alignment >= sizeof(void *), "TOOLKIT: Alignment must be at least the size of a pointer");
     void *ptr = nullptr;
 #ifdef TKIT_OS_WINDOWS
     ptr = _aligned_malloc(p_Size, p_Alignment);
-    TKIT_ASSERT(ptr, "Failed to allocate memory with size {} and alignment {}", p_Size, p_Alignment);
+    TKIT_ASSERT(ptr, "TOOLKIT: Failed to allocate memory with size {} and alignment {}", p_Size, p_Alignment);
 #else
     // Add here warning suppression if needed
     TKIT_WARNING_IGNORE_PUSH
@@ -34,8 +34,8 @@ void *AllocateAligned(const usize p_Size, const usize p_Alignment) noexcept
     TKIT_CLANG_WARNING_IGNORE("-Wunused-variable")
     int result = posix_memalign(&ptr, p_Alignment, p_Size);
     TKIT_WARNING_IGNORE_POP
-    TKIT_ASSERT(result == 0, "Failed to allocate aligned memory with size {} and alignment {}. Result: {}", p_Size,
-                p_Alignment, result);
+    TKIT_ASSERT(result == 0, "TOOLKIT: Failed to allocate aligned memory with size {} and alignment {}. Result: {}",
+                p_Size, p_Alignment, result);
 #endif
     TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
     return ptr;
@@ -43,7 +43,7 @@ void *AllocateAligned(const usize p_Size, const usize p_Alignment) noexcept
 
 void DeallocateAligned(void *p_Ptr) noexcept
 {
-    TKIT_ASSERT(p_Ptr, "Trying to deallocate a nullptr");
+    TKIT_ASSERT(p_Ptr, "TOOLKIT: Trying to deallocate a nullptr");
     TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
 #ifdef TKIT_OS_WINDOWS
     _aligned_free(p_Ptr);

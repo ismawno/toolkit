@@ -226,8 +226,8 @@ template <typename T> class TKIT_API BlockAllocator
      */
     void DeallocateSerial(T *p_Ptr) noexcept
     {
-        TKIT_ASSERT(!IsEmpty(), "The current allocator has no active allocations yet");
-        TKIT_ASSERT(Owns(p_Ptr), "Trying to deallocate a pointer that was not allocated by this allocator");
+        TKIT_ASSERT(!IsEmpty(), "TOOLKIT: The current allocator has no active allocations yet");
+        TKIT_ASSERT(Owns(p_Ptr), "TOOLKIT: Trying to deallocate a pointer that was not allocated by this allocator");
 
         --m_Allocations;
         Chunk *chunk = reinterpret_cast<Chunk *>(p_Ptr);
@@ -273,8 +273,9 @@ template <typename T> class TKIT_API BlockAllocator
      */
     void Reset()
     {
-        TKIT_LOG_WARNING_IF(!IsEmpty(), "The current allocator has active allocations. Resetting the allocator will "
-                                        "prematurely deallocate all memory, and no destructor will be called");
+        TKIT_LOG_WARNING_IF(!IsEmpty(),
+                            "TOOLKIT: The current allocator has active allocations. Resetting the allocator will "
+                            "prematurely deallocate all memory, and no destructor will be called");
         for (std::byte *block : m_Blocks)
             DeallocateAligned(block);
         m_Allocations = 0;
