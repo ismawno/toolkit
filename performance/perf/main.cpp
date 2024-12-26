@@ -11,34 +11,34 @@ int main()
     const Settings settings = ReadOrWriteSettingsFile();
 
     Clock clock;
-    TKIT_LOG_INFO("Running thread pool sum...");
+    TKIT_LOG_INFO("TOOLKIT: Running thread pool sum...");
     RecordThreadPoolSum<std::mutex>(settings.ThreadPoolSum, settings.MaxThreads);
 
-    TKIT_LOG_INFO("Running parallel sum...");
+    TKIT_LOG_INFO("TOOLKIT: Running parallel sum...");
     RecordParallelSum(settings.ThreadPoolSum, settings.MaxThreads);
 
-    TKIT_LOG_INFO("Running malloc/free ST...");
+    TKIT_LOG_INFO("TOOLKIT: Running malloc/free ST...");
     RecordMallocFreeST(settings.Allocation);
 
-    TKIT_LOG_INFO("Running block allocator ST...");
+    TKIT_LOG_INFO("TOOLKIT: Running block allocator ST...");
     RecordBlockAllocatorConcurrentST(settings.Allocation);
     RecordBlockAllocatorSerialST(settings.Allocation);
 
-    TKIT_LOG_INFO("Running malloc/free MT...");
+    TKIT_LOG_INFO("TOOLKIT: Running malloc/free MT...");
     RecordMallocFreeMT(settings.Allocation, settings.MaxThreads);
 
-    TKIT_LOG_INFO("Running block allocator MT...");
+    TKIT_LOG_INFO("TOOLKIT: Running block allocator MT...");
     RecordBlockAllocatorMT(settings.Allocation, settings.MaxThreads);
 
-    TKIT_LOG_INFO("Running stack allocator...");
+    TKIT_LOG_INFO("TOOLKIT: Running stack allocator...");
     RecordStackAllocator(settings.Allocation);
 
-    TKIT_LOG_INFO("Running dynamic array...");
+    TKIT_LOG_INFO("TOOLKIT: Running dynamic array...");
     RecordDynamicArray(settings.Container);
 
-    TKIT_LOG_INFO("Running static array...");
+    TKIT_LOG_INFO("TOOLKIT: Running static array...");
     RecordStaticArray(settings.Container);
 
-    TKIT_LOG_INFO("Done! ({:.1f} seconds) Results have been written to 'performance/results'",
+    TKIT_LOG_INFO("TOOLKIT: Done! ({:.1f} seconds) Results have been written to 'performance/results'",
                   clock.GetElapsed().AsSeconds());
 }
