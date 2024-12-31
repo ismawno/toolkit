@@ -45,7 +45,7 @@ def parse_arguments(
     This script takes in a .ini configuration file created from cmake_scanner.py and
     runs CMake with the options specified in the configuration file, avoiding cache shit.
 
-    This file must be in the same directory as build.ini file from where create the building arguments
+    This file must be in the same directory as build.ini file from where create the building arguments.
     """
 
     parser = ArgumentParser(description=desc)
@@ -54,20 +54,20 @@ def parse_arguments(
         "--build",
         default=Path("build"),
         type=Path,
-        help="The location where the project will be built",
+        help="The location where the project will be built.",
     )
     parser.add_argument(
         "-s",
         "--source",
         default=Path("."),
         type=Path,
-        help="The location where the source files are found (where the root CMakeLists.txt is)",
+        help="The location where the source files are found (where the root CMakeLists.txt is).",
     )
     parser.add_argument(
         "--disable-toolkit-conditional-logs",
         action="store_true",
         default=False,
-        help="Disable conditional logs for the toolkit package if exists. By default, toolkit logging will only be enabled on Dist builds. Disabling this option removes this behavior. Logging can still be enabled by entering the argument in the command line no matter what",
+        help="Disable conditional logs for the toolkit package if exists. By default, toolkit logging will only be enabled on Dist builds. Disabling this option removes this behavior. Logging can still be enabled by entering the argument in the command line no matter what.",
     )
 
     arg_map = {}
@@ -78,20 +78,20 @@ def parse_arguments(
                 f"--{varname}",
                 action="store_true",
                 default=False,
-                help=f"Ensures that the CMake option '{ogvarname.upper()}' is set of 'ON'. Its default is '{cmakeval}'",
+                help=f"Ensures that the CMake option '{ogvarname.upper()}' is set of 'ON'. Its default is '{cmakeval}'.",
             )
             parser.add_argument(
                 f"--no-{varname}",
                 action="store_true",
                 default=False,
-                help=f"Ensures that the CMake option '{ogvarname.upper()}' is set of 'OFF'. Its default is '{cmakeval}'",
+                help=f"Ensures that the CMake option '{ogvarname.upper()}' is set of 'OFF'. Its default is '{cmakeval}'.",
             )
         else:
             parser.add_argument(
                 f"--{varname}",
                 type=str,
                 default=val,
-                help=f"Set the value of '{ogvarname.upper()}' to the specified value. Default is '{val}'",
+                help=f"Set the value of '{ogvarname.upper()}' to the specified value. Default is '{val}'.",
             )
 
         arg_map[varname.replace("-", "_")] = ogvarname, val

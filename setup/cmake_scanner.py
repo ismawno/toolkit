@@ -20,7 +20,7 @@ def parse_arguments() -> Namespace:
         "--path",
         type=Path,
         required=True,
-        help="The path to search for CMakelists.txt",
+        help="The path to search for CMakelists.txt.",
     )
     parser.add_argument(
         "--hint",
@@ -29,10 +29,10 @@ def parse_arguments() -> Namespace:
         help="A hint to let the scanner now how to look for options",
     )
     parser.add_argument(
-        "--strip-preffix",
+        "--keep-preffixes",
         action="store_true",
-        default=True,
-        help="Strip the preffix from the option name, such as CMAKE_ or PROJECT_",
+        default=False,
+        help="Keep the preffixes in the option name. Default is to strip them.",
     )
     parser.add_argument(
         "--preffixes",
@@ -50,16 +50,16 @@ def parse_arguments() -> Namespace:
         help="The preffixes to strip.",
     )
     parser.add_argument(
-        "--lower-case",
+        "--keep-case",
         action="store_true",
-        default=True,
-        help="Lower case the option names",
+        default=False,
+        help="Keep the case of the option name. Default is to lowercase it.",
     )
     parser.add_argument(
-        "--dyphen-separator",
+        "--keep-underscore",
         action="store_true",
-        default=True,
-        help="Use dyphen separator for option names",
+        default=False,
+        help="Keep the underscore in the option name. Default is to replace it with a hyphen.",
     )
 
     return parser.parse_args()
@@ -69,17 +69,14 @@ def main() -> None:
     args = parse_arguments()
     hint: str = args.hint
     cmake_path: Path = args.path
-    strip_preffix: bool = args.strip_preffix
+    strip_preffix: bool = not args.keep_preffixes
     preffixes: list[str] = args.preffixes
-    lower_case: bool = args.lower_case
-    dyphen_separator: bool = args.dyphen_separator
+    lower_case: bool = not args.keep_case
+    dyphen_separator: bool = not args.keep_underscore
 
-    def process_option(content: list[str]) -> tuple[str, str, str | bool]:
-        ogvarname, val = content
-        print(f"    Detected option '{ogvarname}' with default value '{val}'")
-
+    def process_ogvarname(ogvarname: str, override_disable_strip: bool = False) -> str:
         varname = ogvarname
-        if strip_preffix:
+        if strip_preffix and not override_disable_strip:
             for preffix in preffixes:
                 if varname.startswith(preffix):
                     varname = varname.removeprefix(preffix)
@@ -87,6 +84,13 @@ def main() -> None:
             varname = varname.lower()
         if dyphen_separator:
             varname = varname.replace("_", "-")
+        return varname
+
+    def process_option(content: list[str]) -> tuple[str, str, str | bool]:
+        ogvarname, val = content
+        print(f"    Detected option '{ogvarname}' with default value '{val}'")
+
+        varname = process_ogvarname(ogvarname)
 
         if val == "ON":
             val = True
@@ -112,9 +116,35 @@ def main() -> None:
         if not options:
             print("    Nothing found...")
 
+    contents = {content[0]: (content[1], content[2]) for content in contents}
+    unique_varnames = {}
+
+    print("")
+    for ogvarname, (varname, val) in contents.items():
+        if varname not in unique_varnames:
+            unique_varnames[varname] = ogvarname
+            continue
+        print(
+            f"Warning: Found name clash with '{varname}'. Trying to resolve by restoring preffixes..."
+        )
+        if not strip_preffix:
+            raise ValueError(
+                f"Name clash with '{varname}' that was not caused by preffix stripping. Aborting..."
+            )
+        other_ogvarname = unique_varnames[varname]
+        contents[other_ogvarname] = (
+            process_ogvarname(other_ogvarname, override_disable_strip=True),
+            contents[other_ogvarname][1],
+        )
+        contents[ogvarname] = (
+            process_ogvarname(ogvarname, override_disable_strip=True),
+            contents[ogvarname][1],
+        )
+        print("Resolved!")
+
     cfg = ConfigParser()
     cfg.add_section("default-values")
-    for ogvarname, varname, val in contents:
+    for ogvarname, (varname, val) in contents.items():
         cfg["default-values"][ogvarname] = f"{varname}: {val}"
 
     path = Path(__file__).parent
