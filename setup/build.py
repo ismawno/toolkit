@@ -1,280 +1,149 @@
 from pathlib import Path
-from configparser import ConfigParser
 from argparse import ArgumentParser, Namespace
+from configparser import ConfigParser
 
-import os
 import subprocess
-import shutil
-
-# Next steps: Add support for more generators
+import os
 
 
-def create_default_settings_file(path: Path, /) -> None:
-    cfg = ConfigParser(allow_no_value=True)
-    cfg.add_section("some-comments")
-    cfg.set(
-        "some-comments",
-        "; This is an auto generated file. Edit it as you please, or create one on your own and specify it through the --settings-path argument with the build.py script",
-    )
-    cfg.set(
-        "some-comments",
-        "; The parameters provided through arguments in the build.py script will override whatever is in the settings file",
-    )
-    cfg.set(
-        "some-comments",
-        "; All path parameters must be relative to the root repository",
-    )
-
-    cfg.add_section("general")
-    cfg.set("general", "; The build folder name should contain the word 'build'")
-    cfg.set(
-        "general",
-        "build-path",
-        "./build",
-    )
-
-    cfg.set("general", "; Debug, Release or Dist")
-    cfg.set(
-        "general",
-        "build-type",
-        "Debug",
-    )
-
-    cfg.set(
-        "general",
-        "; The current build folder will be deleted and rebuilt from scratch if this is set to 'ON'",
-    )
-    cfg.set(
-        "general",
-        "rebuild",
-        "OFF",
-    )
-
-    cfg.set(
-        "general",
-        "; If set to 'ON', the project will only be compiled, and the CMake setup will be skipped",
-    )
-    cfg.set("general", "compile-only", "OFF")
-    cfg.set(
-        "general",
-        "; If set to 'ON', the compilation will be skipped and only the CMake setup will be done",
-    )
-    cfg.set("general", "cmake-only", "OFF")
-
-    cfg["targets"] = {"build-tests": "ON", "build-performance": "ON"}
-    cfg["logging"] = {
-        "info-logs": "ON",
-        "warning-logs": "ON",
-        "asserts": "ON",
-        "silent-asserts": "OFF",
-        "exceptions": "OFF",
-        "log-colors": "ON",
-    }
-    cfg["memory"] = {"enable-block-allocator": "ON"}
-    cfg["debug"] = {"sanitizers": "OFF", "profiling": "OFF"}
-
-    with open(path, "w") as f:
-        cfg.write(f)
+def try_convert_bool(val: str) -> bool | str:
+    if val == "True":
+        return True
+    elif val == "False":
+        return False
+    return val
 
 
-def load_settings_file(path: Path, /) -> ConfigParser:
+def parse_build_ini() -> dict[str, tuple[str, str | bool]]:
     cfg = ConfigParser()
-    cfg.read(path)
-    return cfg
+
+    root = Path(__file__).parent
+    path = root / "build.ini"
+    if not path.exists():
+        raise FileNotFoundError(f"No 'build.ini' file found in {root}")
+
+    with open(path) as f:
+        cfg.read_file(f)
+
+    parsed = {}
+    for ogvarname, kv in cfg["default-values"].items():
+        varname, val = kv.split(": ")
+        if varname in parsed:
+            raise ValueError(
+                f"Name mismatch! Variable '{varname}' already exists in the parsed dictionary"
+            )
+
+        parsed[ogvarname] = (varname, try_convert_bool(val))
+
+    return parsed
 
 
-def create_arguments() -> tuple[Namespace, list[str]]:
-    parser = ArgumentParser(
-        description="This script attempts to ease out build process and have better control over CMake build settings. It is not intended to be used when toolkit is being built as a library in another project, but rather to build its executables, such as the testing or performance modules. The script expects a settings file to be provided. If it is not, and a default 'build-settings.ini' file is not found, it will create one with default parameters. If the provided settings path does not exist, it will do the same but with the provided path. All of the parameters provided through arguments will override whatever is in the settings file that was provided or automatically generated. All path parameters must be relative to the root repository",
-    )
+def parse_arguments(
+    arguments: dict[str, tuple[str, str | bool]]
+) -> tuple[Namespace, dict[str, str | bool]]:
+    desc = """
+    This script takes in a .ini configuration file created from cmake_scanner.py and
+    runs CMake with the options specified in the configuration file, avoiding cache shit.
 
-    # Require a value
-    parser.add_argument(
-        "--settings-path",
-        type=str,
-        default=None,
-        help="Path to the build settings file",
-    )
-    parser.add_argument(
-        "--build-path",
-        type=str,
-        default=None,
-        help="Path to the build directory",
-    )
-    parser.add_argument(
-        "--build-type",
-        type=str,
-        default=None,
-        help="Build type. Can be Debug, Release or Dist",
-    )
-    parser.add_argument(
-        "--compile-only",
-        type=str,
-        default=None,
-        help="If set to 'ON', the project will only be compiled, and the CMake setup will be skipped",
-    )
-    parser.add_argument(
-        "--cmake-only",
-        type=str,
-        default=None,
-        help="If set to 'ON', the project will only be configured with CMake, and not built",
-    )
+    This file must be in the same directory as build.ini file from where create the building arguments
+    """
 
-    # Booleans
+    parser = ArgumentParser(description=desc)
     parser.add_argument(
-        "-r",
-        "--rebuild",
-        type=str,
-        default=None,
-        help="(ON or OFF) Whether to rebuild the project",
-    )
-    parser.add_argument(
-        "-t",
-        "--build-tests",
-        type=str,
-        default=None,
-        help="(ON or OFF) Whether to build tests",
-    )
-    parser.add_argument(
-        "-p",
-        "--build-performance",
-        type=str,
-        default=None,
-        help="(ON or OFF) Whether to build performance",
-    )
-    parser.add_argument(
-        "-i",
-        "--info-logs",
-        type=str,
-        default=None,
-        help="(ON or OFF) Whether to log info messages",
-    )
-    parser.add_argument(
-        "-w",
-        "--warning-logs",
-        type=str,
-        default=None,
-        help="(ON or OFF) Whether to log warning messages",
-    )
-    parser.add_argument(
-        "-a",
-        "--asserts",
-        type=str,
-        default=None,
-        help="(ON or OFF) Whether to enable asserts",
+        "-b",
+        "--build",
+        default=Path("build"),
+        type=Path,
+        help="The location where the project will be built",
     )
     parser.add_argument(
         "-s",
-        "--silent-asserts",
-        type=str,
-        default=None,
-        help="(ON or OFF) Whether to make asserts silent",
+        "--source",
+        default=Path("."),
+        type=Path,
+        help="The location where the source files are found (where the root CMakeLists.txt is)",
     )
     parser.add_argument(
-        "-e",
-        "--exceptions",
-        type=str,
-        default=None,
-        help="(ON or OFF) Whether to enable exceptions",
-    )
-    parser.add_argument(
-        "-c",
-        "--log-colors",
-        type=str,
-        default=None,
-        help="(ON or OFF) Whether to enable log colors",
-    )
-    parser.add_argument(
-        "--enable-block-allocator",
-        type=str,
-        default=None,
-        help="(ON or OFF) Whether to disable block allocator",
-    )
-    parser.add_argument(
-        "--sanitizers",
-        type=str,
-        default=None,
-        help="Sanitizer to use. Can be whichever one your compiler supports, and compatible ones may be included simultaneously (separated by commas). Set to OFF to disable",
-    )
-    parser.add_argument(
-        "--profiling", type=str, default=None, help="Enable the Tracy profiler"
+        "--disable-toolkit-conditional-logs",
+        action="store_true",
+        default=False,
+        help="Disable conditional logs for the toolkit package if exists. By default, toolkit logging will only be enabled on Dist builds. Disabling this option removes this behavior. Logging can still be enabled by entering the argument in the command line no matter what",
     )
 
-    return parser.parse_known_args()
+    arg_map = {}
+    for ogvarname, (varname, val) in arguments.items():
+        if isinstance(val, bool):
+            cmakeval = "ON" if val else "OFF"
+            parser.add_argument(
+                f"--{varname}",
+                action="store_true",
+                default=False,
+                help=f"Ensures that the CMake option '{ogvarname.upper()}' is set of 'ON'. Its default is '{cmakeval}'",
+            )
+            parser.add_argument(
+                f"--no-{varname}",
+                action="store_true",
+                default=False,
+                help=f"Ensures that the CMake option '{ogvarname.upper()}' is set of 'OFF'. Its default is '{cmakeval}'",
+            )
+        else:
+            parser.add_argument(
+                f"--{varname}",
+                type=str,
+                default=val,
+                help=f"Set the value of '{ogvarname.upper()}' to the specified value. Default is '{val}'",
+            )
 
-
-def create_cmake_parameters_map() -> dict[str, str]:
-    return {
-        "build-type": "CMAKE_BUILD_TYPE",
-        "build-tests": "TOOLKIT_BUILD_TESTS",
-        "build-performance": "TOOLKIT_BUILD_PERFORMANCE",
-        "info-logs": "TOOLKIT_ENABLE_INFO_LOGS",
-        "warning-logs": "TOOLKIT_ENABLE_WARNING_LOGS",
-        "asserts": "TOOLKIT_ENABLE_ASSERTS",
-        "silent-asserts": "TOOLKIT_SILENT_ASSERTS",
-        "log-colors": "TOOLKIT_ENABLE_LOG_COLORS",
-        "enable-block-allocator": "TOOLKIT_ENABLE_BLOCK_ALLOCATOR",
-        "sanitizers": "TOOLKIT_SANITIZERS",
-        "profiling": "TOOLKIT_ENABLE_PROFILING",
-    }
+        arg_map[varname.replace("-", "_")] = ogvarname, val
+    return parser.parse_args(), arg_map
 
 
 def main() -> None:
-    args, build_args = create_arguments()
+    arguments = parse_build_ini()
+    args, arg_map = parse_arguments(arguments)
 
-    settings_path = (
-        Path(__file__).parent / "build-settings.ini"
-        if args.settings_path is None
-        else Path(args.settings_path)
-    )
-    if not settings_path.exists():
-        print(
-            f"The path '{settings_path}' does not exist. Creating a default settings file at that same location... Re-run the script to build/configure the project"
-        )
-        create_default_settings_file(settings_path)
-        return
-    else:
-        cfg = load_settings_file(settings_path)
+    build_path: Path = args.build.resolve()
+    source_path: Path = args.source.resolve()
 
-    build_settings: dict[str, str] = {}
-    for section in cfg.sections():
-        for key in cfg[section]:
-            if key.startswith(";"):
-                continue
-            value = getattr(args, key.replace("-", "_"))
-            build_settings[key] = value if value is not None else cfg[section][key]
+    cnd_logs = not args.disable_toolkit_conditional_logs
+    arg_dict = vars(args)
 
-    root = Path(__file__).parent.parent
-    build_folder = root / build_settings["build-path"]
-    if build_settings["compile-only"] == "ON":
-        print("Compilation skipped...")
-        os.chdir(root)
-        subprocess.run(
-            ["cmake", "--build", build_folder, "--config", build_settings["build-type"]]
-            + build_args,
-            check=True,
-        )
-        return
+    cmake_args = {}
+    for k, v in arg_dict.items():
+        if k not in arg_map:
+            continue
 
-    cmake_map = create_cmake_parameters_map()
-    cmake_settings = {v: build_settings[k] for k, v in cmake_map.items()}
-    cmake_args = [f"-D{key}={value}" for key, value in cmake_settings.items()]
+        ogvarname, default = arg_map[k]
+        if not isinstance(v, bool):
+            cmake_args[f"-D{ogvarname.upper()}"] = v.replace('"', "")
+            continue
 
-    if build_settings["rebuild"] == "ON":
-        shutil.rmtree(build_folder, ignore_errors=True)
-    if not build_folder.exists():
-        build_folder.mkdir(parents=True, exist_ok=True)
+        nv = arg_dict[f"no_{k}"]
+        if v and nv:
+            raise ValueError(
+                f"Cannot set both '{k}' and 'no_{k}' to True. Please choose one"
+            )
+        if v:
+            cmake_args[f"-D{ogvarname.upper()}"] = "ON"
+        elif nv:
+            cmake_args[f"-D{ogvarname.upper()}"] = "OFF"
+        elif cnd_logs and (
+            "log" in ogvarname.lower() or "enable_asserts" in ogvarname.lower()
+        ):
+            btype = arguments["cmake_build_type"][1]
+            cmake_args[f"-D{ogvarname.upper()}"] = "ON" if btype != "Dist" else "OFF"
+        else:
+            cmake_args[f"-D{ogvarname.upper()}"] = "ON" if default else "OFF"
 
-    os.chdir(root)
-    subprocess.run(["cmake", "-B", build_folder, "-S", "."] + cmake_args, check=True)
-    if build_settings["cmake-only"] == "ON":
-        print("Skipping compilation and only configuring the project with CMake...")
-        return
-    subprocess.run(
-        ["cmake", "--build", build_folder, "--config", build_settings["build-type"]]
-        + build_args,
-        check=True,
-    )
+    cmake_args = [f"{k}={v}" for k, v in cmake_args.items()]
+    build_path.mkdir(exist_ok=True, parents=True)
+
+    print("Running CMake with the following arguments:")
+    for arg in cmake_args:
+        print(f"    {arg}")
+
+    os.chdir(build_path)
+    subprocess.run(["cmake", str(source_path)] + cmake_args, check=True)
 
 
 if __name__ == "__main__":
