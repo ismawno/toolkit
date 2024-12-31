@@ -68,16 +68,15 @@ def parse_arguments() -> Namespace:
 def main() -> None:
     args = parse_arguments()
     hint: str = args.hint
-    cmake_path: Path = args.path.resolve()
+    cmake_path: Path = args.path
     strip_preffix: bool = args.strip_preffix
     preffixes: list[str] = args.preffixes
     lower_case: bool = args.lower_case
     dyphen_separator: bool = args.dyphen_separator
-    cnd_logs: bool = args.enable_toolkit_conditional_logs
 
     def process_option(content: list[str]) -> tuple[str, str, str | bool]:
         ogvarname, val = content
-        print(f"Detected option '{ogvarname}' with default value '{val}'")
+        print(f"    Detected option '{ogvarname}' with default value '{val}'")
 
         varname = ogvarname
         if strip_preffix:
@@ -98,17 +97,20 @@ def main() -> None:
 
     contents = []
     for cmake_file in cmake_path.rglob("CMakeLists.txt"):
-        print(f"Scanning file at '{cmake_file}'")
+        print(
+            f"Scanning file at '{cmake_file}'. Looking for lines starting with '{hint}'..."
+        )
         with open(cmake_file, "r") as f:
-            contents.extend(
-                [
-                    process_option(
-                        content.removeprefix(f"{hint}(").removesuffix(")").split(" ")
-                    )
-                    for content in f.read().splitlines()
-                    if content.startswith(hint)
-                ]
-            )
+            options = [
+                process_option(
+                    content.removeprefix(f"{hint}(").removesuffix(")").split(" ")
+                )
+                for content in f.read().splitlines()
+                if content.startswith(hint)
+            ]
+            contents.extend(options)
+        if not options:
+            print("    Nothing found...")
 
     cfg = ConfigParser()
     cfg.add_section("default-values")
@@ -118,23 +120,6 @@ def main() -> None:
     path = Path(__file__).parent
     with open(path / "build.ini", "w") as f:
         cfg.write(f)
-
-    option_value_pairs = {
-        ogvarname: (varname, val) for ogvarname, varname, val in contents
-    }
-
-    def enable_cnd_log(ogvarname: str) -> None:
-        btype = option_value_pairs["CMAKE_BUILD_TYPE"][1]
-        varname = option_value_pairs[ogvarname][0]
-        option_value_pairs[ogvarname] = (varname, btype != "Dist")
-
-    if cnd_logs and "CMAKE_BUILD_TYPE" in option_value_pairs:
-        enable_cnd_log("TOOLKIT_ENABLE_INFO_LOGS")
-        enable_cnd_log("TOOLKIT_ENABLE_WARNING_LOGS")
-        enable_cnd_log("TOOLKIT_ENABLE_LOG_COLORS")
-        enable_cnd_log("TOOLKIT_ENABLE_ASSERTS")
-
-    print(option_value_pairs)
 
 
 if __name__ == "__main__":
