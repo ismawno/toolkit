@@ -169,9 +169,12 @@ function(configure_compile_link_options target)
 
     if (MSVC)
         target_compile_options(${target} ${ARG_VISIBILITY} /fsanitize=${TOOLKIT_SANITIZERS} /FS)
+        message(STATUS "    Sanitizer compiler flags: /fsanitize=${TOOLKIT_SANITIZERS};/FS")
     else()
         target_compile_options(${target} ${ARG_VISIBILITY} -fsanitize=${TOOLKIT_SANITIZERS} -fno-omit-frame-pointer)
         target_link_options(${target} ${ARG_VISIBILITY} -fsanitize=${TOOLKIT_SANITIZERS} -fno-omit-frame-pointer)
+        message(STATUS "    Sanitizer compiler flags: -fsanitize=${TOOLKIT_SANITIZERS};-fno-omit-frame-pointer")
+        message(STATUS "    Sanitizer linker flags: -fsanitize=${TOOLKIT_SANITIZERS};-fno-omit-frame-pointer")
     endif()
 endfunction()
 
