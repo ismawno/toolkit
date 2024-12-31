@@ -18,7 +18,6 @@ endfunction()
 define_option(CMAKE_BUILD_TYPE "Debug")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(TOOLKIT_SANITIZERS "OFF")
 
 set(CMAKE_C_FLAGS_RELEASE "")
 set(CMAKE_CXX_FLAGS_RELEASE "")
@@ -41,6 +40,7 @@ define_option(TOOLKIT_ENABLE_BLOCK_ALLOCATOR ON)
 define_option(TOOLKIT_ENABLE_PROFILING OFF)
 define_option(TOOLKIT_ENABLE_VULKAN_PROFILING OFF)
 define_option(TOOLKIT_WEAK_ASSERTS OFF)
+define_option(TOOLKIT_SANITIZERS OFF)
 
 if (TOOLKIT_ENABLE_VULKAN_PROFILING AND NOT TOOLKIT_ENABLE_PROFILING)
     message(WARNING "Vulkan profiling is enabled but general profiling is not. This option will have no effect")
