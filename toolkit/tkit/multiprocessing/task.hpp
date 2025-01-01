@@ -15,6 +15,11 @@ namespace TKit
  *
  * The task is a simple callable object that takes a thread index as an argument.
  *
+ * @note A task may only be submitted again if it has finished execution and its Reset() method has been called.
+ * Multiple threads can wait for the same task at the same time as long as none of them resets it immediately after.
+ * Doing so may cause other threads to wait until the task is submitted and finished again, which may never happen or
+ * may be a nasty bug to track down.
+ *
  */
 class TKIT_API ITask : public RefCounted<ITask>
 {

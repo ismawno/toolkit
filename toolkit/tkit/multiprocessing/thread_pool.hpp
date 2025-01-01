@@ -19,6 +19,9 @@ namespace TKit
  * synchronization is achieved by a plain mutex lock, which is not ideal. I have considered implementing a lock-free
  * approach, but I wont do it until the need arises, as those are very complex to get right.
  *
+ * Take into account all threads this pool uses will be secondary threads. The main thread plays no part in the
+ * task execution.
+ *
  * @tparam MTX The type of mutex to use for synchronization. It must implement the Mutex concept.
  */
 template <Mutex MTX> class ThreadPool final : public ITaskManager

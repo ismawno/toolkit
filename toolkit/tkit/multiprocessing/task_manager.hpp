@@ -9,10 +9,6 @@ namespace TKit
  * @brief A task manager that is responsible for managing tasks and executing them. It is an abstract class that
  * must be implemented by the user to create a custom task system.
  *
- * @note A task may only be submitted again if it has finished execution and its Reset() method has been called.
- * Multiple threads can wait for the same task at the same time as long as none of them resets it immediately after.
- * Doing so may cause other threads to wait until the task is submitted and finished again, which may never happen or
- * may be a nasty bug to track down.
  *
  */
 class TKIT_API ITaskManager
