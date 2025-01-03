@@ -20,7 +20,7 @@
 #    define TKIT_PROFILE_SCOPE_NAME(p_Name, p_Size) ZoneName(p_Name, p_Size)
 #    define TKIT_PROFILE_SCOPE_COLOR(p_Color) ZoneColor(p_Color)
 
-#    define TKIT_PROFILE_NAMED_SCOPE(p_ScopeName, p_Enabled) ZoneNamed(p_ScopeName)
+#    define TKIT_PROFILE_NAMED_SCOPE(p_ScopeName, p_Enabled) ZoneNamed(p_ScopeName, p_Enabled)
 #    define TKIT_PROFILE_NAMED_NSCOPE(p_ScopeName, p_Name, p_Enabled) ZoneNamedN(p_ScopeName, p_Name, p_Enabled)
 #    define TKIT_PROFILE_NAMED_CSCOPE(p_ScopeName, p_Color, p_Enabled) ZoneNamedC(p_ScopeName, p_Color, p_Enabled)
 #    define TKIT_PROFILE_NAMED_NCSCOPE(p_ScopeName, p_Name, p_Color, p_Enabled)                                        \
