@@ -74,7 +74,7 @@ jobs:
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DTOOLKIT_BUILD_TESTS=ON
         -DTOOLKIT_BUILD_PERFORMANCE=OFF
-        -DTOOLKIT_SANITIZERS=OFF
+        -DTOOLKIT_SANITIZERS=none
         -S ${{ github.workspace }}
 
     - name: Build

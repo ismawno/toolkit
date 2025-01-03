@@ -32,9 +32,9 @@ template <typename T, typename ErrorType = const char *> class Result
     }
 
     /**
-     * @brief Construct a Result object with an error message of type ErrorType.
+     * @brief Construct a Result object with an error message of type `ErrorType`.
      *
-     * @param p_Args The arguments to pass to the constructor of ErrorType.
+     * @param p_Args The arguments to pass to the constructor of `ErrorType`.
      */
     template <typename... ErrorArgs> static Result Error(ErrorArgs &&...p_Args) noexcept
     {
