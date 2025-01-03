@@ -16,6 +16,7 @@ FetchContent_MakeAvailable(Catch2)
 set(SOURCES
     tests/memory/block_allocator.cpp
     tests/memory/stack_allocator.cpp
+    tests/memory/arena_allocator.cpp
     tests/memory/ptr.cpp
     tests/container/static_array.cpp
     tests/container/hashable_tuple.cpp

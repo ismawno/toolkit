@@ -9,6 +9,7 @@ set(SOURCES
     tkit/core/pch.cpp
     tkit/memory/memory.cpp
     tkit/memory/stack_allocator.cpp
+    tkit/memory/arena_allocator.cpp
     tkit/profiling/clock.cpp
     tkit/profiling/timespan.cpp
     tkit/multiprocessing/task.cpp
