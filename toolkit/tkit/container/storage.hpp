@@ -24,14 +24,14 @@ template <usize Size, usize Alignment = alignof(void *)> class RawStorage
     RawStorage() noexcept = default;
 
     /**
-     * @brief Construct a new object of type T in the local buffer.
+     * @brief Construct a new object of type `T` in the local buffer.
      *
-     * Calling Create on top of an existing object will cause undefined behavior. The object of type T needs to fit in
-     * the local buffer and have an alignment that is compatible with the local buffer.
+     * Calling `Create()` on top of an existing object will cause undefined behavior. The object of type `T` needs to
+     * fit in the local buffer and have an alignment that is compatible with the local buffer.
      *
      * @tparam T The type of the object to create.
-     * @param p_Args The arguments to pass to the constructor of T.
-     * @return T* A pointer to the newly created object.
+     * @param p_Args The arguments to pass to the constructor of `T`.
+     * @return A pointer to the newly created object.
      */
     template <typename T, typename... Args> T *Create(Args &&...p_Args) noexcept
     {
@@ -43,8 +43,8 @@ template <usize Size, usize Alignment = alignof(void *)> class RawStorage
     /**
      * @brief Destroy the object in the local buffer.
      *
-     * Calling Destroy on top of an already destroyed object/uninitialized memory, or calling Destroy with a different
-     * type T will cause undefined behavior.
+     * Calling `Destroy()` on top of an already destroyed object/uninitialized memory, or calling `Destroy()` with a
+     * different type `T` will cause undefined behavior.
      *
      * This function is declared as const to follow the standard pattern where a pointer to const object can be
      * destroyed.
@@ -63,10 +63,10 @@ template <usize Size, usize Alignment = alignof(void *)> class RawStorage
     /**
      * @brief Get a pointer to the object in the local buffer.
      *
-     * Calling Get with a different type T will cause undefined behavior (uses reinterpret_cast under the hood).
+     * Calling `Get()` with a different type `T` will cause undefined behavior (uses reinterpret_cast under the hood).
      *
      * @tparam T The type of the object to get.
-     * @return const T* A pointer to the object in the local buffer.
+     * @return A pointer to the object in the local buffer.
      */
     template <typename T> const T *Get() const noexcept
     {
@@ -76,10 +76,10 @@ template <usize Size, usize Alignment = alignof(void *)> class RawStorage
     /**
      * @brief Get a pointer to the object in the local buffer.
      *
-     * Calling Get with a different type T will cause undefined behavior (uses reinterpret_cast under the hood).
+     * Calling `Get()` with a different type `T` will cause undefined behavior (uses reinterpret_cast under the hood).
      *
      * @tparam T The type of the object to get.
-     * @return T* A pointer to the object in the local buffer.
+     * @return A pointer to the object in the local buffer.
      */
     template <typename T> T *Get() noexcept
     {
@@ -98,7 +98,7 @@ template <usize Size, usize Alignment = alignof(void *)> class RawStorage
  * the specified type, and the copy and move constructors and assignment operators will be generated based on the type
  * T.
  *
- * To avoid a boolean check overhead and grant the user more constrol over the destruction of the object, the T's
+ * To avoid a boolean check overhead and grant the user more constrol over the destruction of the object, the `T`'s
  * destructor will not be called automatically when the Storage object goes out of scope.
  *
  * @tparam T The type of object to store.
@@ -143,12 +143,12 @@ template <typename T> class Storage
     }
 
     /**
-     * @brief Construct a new object of type T in the local buffer.
+     * @brief Construct a new object of type `T` in the local buffer.
      *
-     * Calling Create on top of an existing object will cause undefined behavior.
+     * Calling `Create()` on top of an existing object will cause undefined behavior.
      *
-     * @param p_Args The arguments to pass to the constructor of T.
-     * @return T* A pointer to the newly created object.
+     * @param p_Args The arguments to pass to the constructor of `T`.
+     * @return A pointer to the newly created object.
      */
     template <typename... Args> T *Create(Args &&...p_Args) noexcept
     {
@@ -158,8 +158,8 @@ template <typename T> class Storage
     /**
      * @brief Destroy the object in the local buffer.
      *
-     * Calling Destroy on top of an already destroyed object/uninitialized memory, or calling Destroy with a different
-     * type T will cause undefined behavior.
+     * Calling `Destroy()` on top of an already destroyed object/uninitialized memory, or calling `Destroy()` with a
+     * different type `T` will cause undefined behavior.
      *
      * This function is declared as const to follow the standard pattern where a pointer to const object can be
      * destroyed.

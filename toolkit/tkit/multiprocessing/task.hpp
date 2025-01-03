@@ -11,11 +11,11 @@ namespace TKit
 
 /**
  * @brief A simple task interface that allows the user to create tasks that can be executed by any task manager that
- * inherits from ITaskManager.
+ * inherits from `ITaskManager`.
  *
  * The task is a simple callable object that takes a thread index as an argument.
  *
- * @note A task may only be submitted again if it has finished execution and its Reset() method has been called.
+ * @note A task may only be submitted again if it has finished execution and its `Reset()` method has been called.
  * Multiple threads can wait for the same task at the same time as long as none of them resets it immediately after.
  * Doing so may cause other threads to wait until the task is submitted and finished again, which may never happen or
  * may be a nasty bug to track down.
@@ -70,10 +70,10 @@ class TKIT_API ITask : public RefCounted<ITask>
  * @brief A task object that can be used directly by the user to create tasks that return (or not) a value.
  *
  * The task is a simple callable object that takes a thread index as an argument. If the task is a simple routine that
- * does not return anything, use the specialized Task<void> instead.
+ * does not return anything, use the specialized `Task<void>` instead.
  *
- * The return type T must be default constructible and copy assignable. Once the task has finished executing, the result
- * will be copied into the task object and can be retrieved by calling the WaitForResult() method.
+ * The return type `T` must be default constructible and copy assignable. Once the task has finished executing, the
+ * result will be copied into the task object and can be retrieved by calling the `WaitForResult()` method.
  *
  * @tparam T The return type of the task.
  */

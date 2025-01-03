@@ -34,7 +34,7 @@ template <Hashable... H> struct HashableTuple
     }
 
     /**
-     * @brief Get the element at index I.
+     * @brief Get the element at index `I`.
      *
      */
     template <usize I> auto &Get() const noexcept
@@ -43,7 +43,7 @@ template <Hashable... H> struct HashableTuple
     }
 
     /**
-     * @brief Get the element at index I.
+     * @brief Get the element at index `I`.
      *
      */
     template <usize I> auto &Get() noexcept
@@ -52,8 +52,8 @@ template <Hashable... H> struct HashableTuple
     }
 
     /**
-     * @brief Get the element of type T if T is unique in the tuple. If T is not unique, a compile time error will be
-     * raised.
+     * @brief Get the element of type `T` if `T` is unique in the tuple. If `T` is not unique, a compile time error will
+     * be raised.
      *
      */
     template <Hashable T> const T &Get() const noexcept
@@ -62,8 +62,8 @@ template <Hashable... H> struct HashableTuple
     }
 
     /**
-     * @brief Get the element of type T if T is unique in the tuple. If T is not unique, a compile time error will be
-     * raised.
+     * @brief Get the element of type `T` if `T` is unique in the tuple. If `T` is not unique, a compile time error will
+     * be raised.
      *
      */
     template <Hashable T> T &Get() noexcept

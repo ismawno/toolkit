@@ -21,9 +21,9 @@ namespace TKit
 /**
  * @brief A block allocator that allocates memory in blocks of a fixed size.
  *
- * Each block consists of a fixed number of chunks, each chunk being the size of the type T. The allocator allocates new
- * blocks when the current block is full, and manages a free list of chunks that have been deallocated. The allocator
- * has a thread-safe and a serial variant, the latter being faster.
+ * Each block consists of a fixed number of chunks, each chunk being the size of the type `T`. The allocator allocates
+ * new blocks when the current block is full, and manages a free list of chunks that have been deallocated. The
+ * allocator has a thread-safe and a serial variant, the latter being faster.
  *
  * The block allocator deallocates all memory when it is destroyed. It is up to the user to ensure that all memory is
  * freed at that point, especially when dealing with non-trivial destructors.
@@ -85,7 +85,7 @@ template <typename T> class TKIT_API BlockAllocator
     }
 
     /**
-     * @brief Get the number of chunks per block (the number of objects of type T that fit each block).
+     * @brief Get the number of chunks per block (the number of objects of type `T` that fit each block).
      *
      */
     usize GetChunksPerBlock() const noexcept
@@ -118,13 +118,13 @@ template <typename T> class TKIT_API BlockAllocator
     }
 
     /**
-     * @brief Create an object of type T in the allocator.
+     * @brief Create an object of type `T` in the allocator.
      *
      * The object is constructed with the provided arguments. The memory's object is allocated in a thread-safe manner.
      * The user must ensure that the object's constructor is thread-safe.
      *
-     * @param p_Args The arguments to pass to the constructor of T.
-     * @return T* A pointer to the newly created object.
+     * @param p_Args The arguments to pass to the constructor of `T`.
+     * @return A pointer to the newly created object.
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
@@ -136,7 +136,7 @@ template <typename T> class TKIT_API BlockAllocator
     }
 
     /**
-     * @brief Destroy an object of type T in the allocator.
+     * @brief Destroy an object of type `T` in the allocator.
      *
      * The object is destroyed and the memory deallocated in a thread-safe manner. The user must ensure that the
      * object's destructor is thread-safe.
@@ -151,13 +151,13 @@ template <typename T> class TKIT_API BlockAllocator
     }
 
     /**
-     * @brief Create an object of type T in the allocator.
+     * @brief Create an object of type `T` in the allocator.
      *
      * The object is constructed with the provided arguments. The memory's object is allocated in a serial manner with
      * no thread-safety guarantees.
      *
-     * @param p_Args The arguments to pass to the constructor of T.
-     * @return T* A pointer to the newly created object.
+     * @param p_Args The arguments to pass to the constructor of `T`.
+     * @return A pointer to the newly created object.
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
@@ -169,7 +169,7 @@ template <typename T> class TKIT_API BlockAllocator
     }
 
     /**
-     * @brief Destroy an object of type T in the allocator.
+     * @brief Destroy an object of type `T` in the allocator.
      *
      * The object is destroyed and the memory deallocated with no thread-safety guarantees.
      *
@@ -183,9 +183,9 @@ template <typename T> class TKIT_API BlockAllocator
     }
 
     /**
-     * @brief Allocate memory for an object of type T in a thread-safe manner.
+     * @brief Allocate memory for an object of type `T` in a thread-safe manner.
      *
-     * @return T* A pointer to the allocated memory.
+     * @return A pointer to the allocated memory.
      */
     [[nodiscard]] T *AllocateConcurrent() noexcept
     {
@@ -195,7 +195,7 @@ template <typename T> class TKIT_API BlockAllocator
     }
 
     /**
-     * @brief Deallocate memory for an object of type T in a thread-safe manner.
+     * @brief Deallocate memory for an object of type `T` in a thread-safe manner.
      *
      * @param p_Ptr A pointer to the memory to deallocate.
      */
@@ -207,9 +207,9 @@ template <typename T> class TKIT_API BlockAllocator
     }
 
     /**
-     * @brief Allocate memory for an object of type T with no thread-safety guarantees.
+     * @brief Allocate memory for an object of type `T` with no thread-safety guarantees.
      *
-     * @return T* A pointer to the allocated memory.
+     * @return A pointer to the allocated memory.
      */
     [[nodiscard]] T *AllocateSerial() noexcept
     {
@@ -220,7 +220,7 @@ template <typename T> class TKIT_API BlockAllocator
     }
 
     /**
-     * @brief Deallocate memory for an object of type T with no thread-safety guarantees.
+     * @brief Deallocate memory for an object of type `T` with no thread-safety guarantees.
      *
      * @param p_Ptr A pointer to the memory to deallocate.
      */
@@ -379,13 +379,13 @@ template <typename T> class TKIT_API BlockAllocator
 };
 
 /**
- * @brief Get the global instance of a block allocator for type T with a fixed number of chunks per block.
+ * @brief Get the global instance of a block allocator for type `T` with a fixed number of chunks per block.
  *
  * The instance is created the first time this function is called.
  *
  * @tparam T The type of the objects to allocate.
  * @tparam ChunksPerBlock The number of chunks per block.
- * @return BlockAllocator<T>& A reference to the global instance of the block allocator.
+ * @return A reference to the global instance of the block allocator.
  */
 template <typename T, usize ChunksPerBlock> BlockAllocator<T> &GetGlobalBlockAllocatorInstance() noexcept
 {
@@ -394,12 +394,12 @@ template <typename T, usize ChunksPerBlock> BlockAllocator<T> &GetGlobalBlockAll
 }
 
 /**
- * @brief Allocate memory for an object of type T in a thread-safe manner using the global block allocator for type T
- * with a fixed number of chunks per block.
+ * @brief Allocate memory for an object of type `T` in a thread-safe manner using the global block allocator for type
+ * `T` with a fixed number of chunks per block.
  *
  * @tparam T The type of the object to allocate.
  * @tparam ChunksPerBlock The number of chunks per block.
- * @return T* A pointer to the allocated memory.
+ * @return A pointer to the allocated memory.
  */
 template <typename T, usize ChunksPerBlock> T *BAllocateConcurrent() noexcept
 {
@@ -407,8 +407,8 @@ template <typename T, usize ChunksPerBlock> T *BAllocateConcurrent() noexcept
 }
 
 /**
- * @brief Deallocate memory for an object of type T in a thread-safe manner using the global block allocator for type T
- * with a fixed number of chunks per block.
+ * @brief Deallocate memory for an object of type `T` in a thread-safe manner using the global block allocator for type
+ * `T` with a fixed number of chunks per block.
  *
  * @tparam T The type of the object to deallocate.
  * @tparam ChunksPerBlock The number of chunks per block.
@@ -420,12 +420,12 @@ template <typename T, usize ChunksPerBlock> void BDeallocateConcurrent(T *p_Ptr)
 }
 
 /**
- * @brief Allocate memory for an object of type T with no thread-safety guarantees using the global block allocator for
- * type T with a fixed number of chunks per block.
+ * @brief Allocate memory for an object of type `T` with no thread-safety guarantees using the global block allocator
+ * for type `T` with a fixed number of chunks per block.
  *
  * @tparam T The type of the object to allocate.
  * @tparam ChunksPerBlock The number of chunks per block.
- * @return T* A pointer to the allocated memory.
+ * @return A pointer to the allocated memory.
  */
 template <typename T, usize ChunksPerBlock> T *BAllocateSerial() noexcept
 {
@@ -433,8 +433,8 @@ template <typename T, usize ChunksPerBlock> T *BAllocateSerial() noexcept
 }
 
 /**
- * @brief Deallocate memory for an object of type T with no thread-safety guarantees using the global block allocator
- * for type T with a fixed number of chunks per block.
+ * @brief Deallocate memory for an object of type `T` with no thread-safety guarantees using the global block allocator
+ * for type `T` with a fixed number of chunks per block.
  *
  * @tparam T The type of the object to deallocate.
  * @tparam ChunksPerBlock The number of chunks per block.
@@ -446,16 +446,16 @@ template <typename T, usize ChunksPerBlock> void BDeallocateSerial(T *p_Ptr) noe
 }
 
 /**
- * @brief Create an object of type T in the global block allocator for type T with a fixed number of chunks per block.
- *
+ * @brief Create an object of type `T` in the global block allocator for type `T` with a fixed number of chunks per
+ * block.
  *
  * The object is constructed with the provided arguments. The memory's object is allocated in a thread-safe manner. The
  * user must ensure that the object's constructor is thread-safe.
  *
  * @tparam T The type of the object to create.
  * @tparam ChunksPerBlock The number of chunks per block.
- * @param p_Args The arguments to pass to the constructor of T.
- * @return T* A pointer to the newly created object.
+ * @param p_Args The arguments to pass to the constructor of `T`.
+ * @return A pointer to the newly created object.
  */
 template <typename T, usize ChunksPerBlock, typename... Args> T *BCreate(Args &&...p_Args) noexcept
 {
@@ -463,7 +463,8 @@ template <typename T, usize ChunksPerBlock, typename... Args> T *BCreate(Args &&
 }
 
 /**
- * @brief Destroy an object of type T in the global block allocator for type T with a fixed number of chunks per block.
+ * @brief Destroy an object of type `T` in the global block allocator for type `T` with a fixed number of chunks per
+ * block.
  *
  *
  * The object is destroyed and the memory deallocated in a thread-safe manner. The user must ensure that the object's
@@ -479,7 +480,8 @@ template <typename T, usize ChunksPerBlock> void BDestroy(T *p_Ptr) noexcept
 }
 
 /**
- * @brief Create an object of type T in the global block allocator for type T with a fixed number of chunks per block.
+ * @brief Create an object of type `T` in the global block allocator for type `T` with a fixed number of chunks per
+ * block.
  *
  *
  * The object is constructed with the provided arguments. The memory's object is allocated in a serial manner with no
@@ -487,8 +489,8 @@ template <typename T, usize ChunksPerBlock> void BDestroy(T *p_Ptr) noexcept
  *
  * @tparam T The type of the object to create.
  * @tparam ChunksPerBlock The number of chunks per block.
- * @param p_Args The arguments to pass to the constructor of T.
- * @return T* A pointer to the newly created object.
+ * @param p_Args The arguments to pass to the constructor of `T`.
+ * @return A pointer to the newly created object.
  */
 template <typename T, usize ChunksPerBlock, typename... Args> T *BCreateSerial(Args &&...p_Args) noexcept
 {
@@ -496,7 +498,8 @@ template <typename T, usize ChunksPerBlock, typename... Args> T *BCreateSerial(A
 }
 
 /**
- * @brief Destroy an object of type T in the global block allocator for type T with a fixed number of chunks per block.
+ * @brief Destroy an object of type `T` in the global block allocator for type `T` with a fixed number of chunks per
+ * block.
  *
  *
  * The object is destroyed and the memory deallocated with no thread-safety guarantees.

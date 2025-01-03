@@ -18,12 +18,12 @@ namespace TKit
 // should inherit from this class
 
 /**
- * @brief A special base class to prepare a type T to be reference counted, granting it with an atomic counter.
+ * @brief A special base class to prepare a type `T` to be reference counted, granting it with an atomic counter.
  *
  * As of right now, it does not support stack allocated objects. All objects inheriting from this class should be
  * dynamically allocated in some way with the new/delete operators (which may or may not be overloaded).
  *
- * @tparam T The type of the objetc to be reference counted.
+ * @tparam T The type of the object to be reference counted.
  */
 template <typename T> class RefCounted
 {
@@ -222,12 +222,12 @@ template <typename T> class Ref
     }
 
     /**
-     * @brief Create a new object of type T.
+     * @brief Create a new object of type `T`.
      *
-     * This is a factory method that creates a new Ref object.
+     * This is a factory method that creates a new `Ref<T>` object.
      *
-     * @param p_Args The arguments to pass to the constructor of T.
-     * @return Ref A new Ref object.
+     * @param p_Args The arguments to pass to the constructor of `T`.
+     * @return Ref A new `Ref<T>` object.
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
@@ -333,7 +333,7 @@ template <typename T> class Scope
      *
      * The caller is now responsible for deleting the pointer.
      *
-     * @return T* The released pointer.
+     * @return The released pointer.
      */
     T *Release() noexcept
     {
@@ -345,7 +345,7 @@ template <typename T> class Scope
     /**
      * @brief Transfer the ownership of the pointer to a Ref object, which will manage the lifetime of the pointer.
      *
-     * @return Ref<T> A new Ref object.
+     * @return Ref<T> A new `Ref<T>` object.
      */
     Ref<T> AsRef() noexcept
     {
@@ -381,11 +381,11 @@ template <typename T> class Scope
     }
 
     /**
-     * @brief Create a new object of type T.
+     * @brief Create a new object of type `T`.
      *
      * This is a factory method that creates a new Scope object.
      *
-     * @param p_Args The arguments to pass to the constructor of T.
+     * @param p_Args The arguments to pass to the constructor of `T`.
      * @return Scope A new Scope object.
      */
     template <typename... Args>

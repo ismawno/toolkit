@@ -63,21 +63,63 @@ template <Mutex MTX> void RunThreadPoolTest()
             realSum += i;
         }
 
-        static std::mutex mutex;
-        u32 taskSum = 0;
-        std::array<Ref<Task<void>>, threadCount> tasks;
-        ForEach(pool, numbers.begin(), numbers.end(), tasks.begin(), threadCount,
-                [&taskSum](auto p_It1, auto p_It2, const usize) {
-                    u32 sum = 0;
-                    for (auto it = p_It1; it != p_It2; ++it)
-                        sum += it->Value;
+        std::atomic<u32> taskSum = 0;
+        ForEach(pool, numbers.begin(), numbers.end(), threadCount, [&taskSum](auto p_It1, auto p_It2, const usize) {
+            u32 sum = 0;
+            for (auto it = p_It1; it != p_It2; ++it)
+                sum += it->Value;
 
-                    std::scoped_lock lock{mutex};
-                    taskSum += sum;
-                });
+            taskSum.fetch_add(sum, std::memory_order_relaxed);
+        });
+        pool.AwaitPendingTasks();
+        REQUIRE(taskSum.load(std::memory_order_relaxed) == realSum);
+    }
+
+    SECTION("Parallel for with main thread")
+    {
+        std::array<Number, amount> numbers;
+        u32 realSum = 0;
+        for (u32 i = 0; i < amount; i++)
+        {
+            numbers[i].Value = i;
+            realSum += i;
+        }
+
+        std::array<Ref<Task<u32>>, threadCount - 1> tasks;
+        u32 finalSum;
+        ForEachMainThreadLead(pool, numbers.begin(), numbers.end(), tasks.begin(), &finalSum, threadCount,
+                              [](auto p_It1, auto p_It2, const usize) {
+                                  u32 sum = 0;
+                                  for (auto it = p_It1; it != p_It2; ++it)
+                                      sum += it->Value;
+                                  return sum;
+                              });
         for (auto &task : tasks)
-            task->WaitUntilFinished();
-        REQUIRE(taskSum == realSum);
+            finalSum += task->WaitForResult();
+        REQUIRE(finalSum == realSum);
+    }
+
+    SECTION("Parallel for with main thread (void return)")
+    {
+        std::array<Number, amount> numbers;
+        u32 realSum = 0;
+        for (u32 i = 0; i < amount; i++)
+        {
+            numbers[i].Value = i;
+            realSum += i;
+        }
+
+        std::atomic<u32> taskSum = 0;
+        ForEachMainThreadLead(pool, numbers.begin(), numbers.end(), threadCount,
+                              [&taskSum](auto p_It1, auto p_It2, const usize) {
+                                  u32 sum = 0;
+                                  for (auto it = p_It1; it != p_It2; ++it)
+                                      sum += it->Value;
+
+                                  taskSum.fetch_add(sum, std::memory_order_relaxed);
+                              });
+        pool.AwaitPendingTasks();
+        REQUIRE(taskSum.load(std::memory_order_relaxed) == realSum);
     }
 }
 

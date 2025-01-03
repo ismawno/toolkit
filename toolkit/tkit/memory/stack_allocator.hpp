@@ -12,9 +12,9 @@ namespace TKit
  * memory.
  *
  * This allocator can both allocate and initialize objects in place in that same memory. Use the
- * Allocate/Deallocate/Push/Pop for the former and Create/Destroy for the latter. Never mix them, as it will lead to
- * undefined behavior. (Allocate/Deallocate are equivalent to Push/Pop, so you can use them interchangeably, but for
- * every Create, there must be a Destroy)
+ * `Allocate()`/`Deallocate()`/`Push()`/`Pop()` for the former and Create/Destroy for the latter. Never mix them, as it
+ * will lead to undefined behavior. (`Allocate()`/`Deallocate()` are equivalent to `Push()`/`Pop()`, so you can use them
+ * interchangeably, but for every Create, there must be a `Destroy()`)
  *
  * @note Thread safety considerations: This allocator requires precise ordering of allocations and deallocations.
  * A multithreaded environment has the exact opposite property, so this allocator is not thread safe.
@@ -56,11 +56,11 @@ class TKIT_API StackAllocator
     // (not like malloc or posix_memalign). All of this in 64 bit systems
 
     /**
-     * @brief Allocate a new block of memory into the stack allocator (Same as Allocate()).
+     * @brief Allocate a new block of memory into the stack allocator (Same as `Allocate()`).
      *
      * @param p_Size The size of the block to allocate.
      * @param p_Alignment The alignment of the block.
-     * @return void* A pointer to the allocated block.
+     * @return A pointer to the allocated block.
      */
     void *Push(usize p_Size, usize p_Alignment = 1) noexcept;
 
@@ -71,30 +71,31 @@ class TKIT_API StackAllocator
     void Pop() noexcept;
 
     /**
-     * @brief Allocate a new block of memory in the stack allocator (Same as Push()).
+     * @brief Allocate a new block of memory in the stack allocator (Same as `Push()`).
      *
      * @param p_Size The size of the block to allocate.
      * @param p_Alignment The alignment of the block.
-     * @return void* A pointer to the allocated block.
+     * @return A pointer to the allocated block.
      */
     void *Allocate(usize p_Size, usize p_Alignment = 1) noexcept;
 
     /**
      * @brief Deallocate a block of memory from the stack allocator.
      *
-     * @note This method, if used correctly, should behave exactly like Pop(). The pointer is kept there for consistency
-     * and for debugging purposes when asserts are enabled. If disabled, this method is just a wrapper around Pop().
+     * @note This method, if used correctly, should behave exactly like `Pop()`. The pointer is kept there for
+     * consistency and for debugging purposes when asserts are enabled. If disabled, this method is just a wrapper
+     * around Pop().
      *
      * @param p_Ptr The pointer to the block to deallocate.
      */
     void Deallocate([[maybe_unused]] const void *p_Ptr) noexcept;
 
     /**
-     * @brief Allocate a new block of memory in the stack allocator and create a new object of type T out of it.
+     * @brief Allocate a new block of memory in the stack allocator and create a new object of type `T` out of it.
      *
      * @tparam T The type of the block.
-     * @param p_N The number of elements of type T to allocate.
-     * @return T* A pointer to the allocated block.
+     * @param p_N The number of elements of type `T` to allocate.
+     * @return A pointer to the allocated block.
      */
     template <typename T, typename... Args>
         requires std::constructible_from<T, Args...>
@@ -108,13 +109,14 @@ class TKIT_API StackAllocator
     }
 
     /**
-     * @brief Allocate a new block of memory in the stack allocator and create an array of objects of type T out of it.
+     * @brief Allocate a new block of memory in the stack allocator and create an array of objects of type `T` out of
+     * it.
      *
-     * The block is created with the size of T * p_N.
+     * The block is created with the size of `sizeof(T) * p_N`.
      *
      * @tparam T The type of the block.
-     * @param p_N The number of elements of type T to allocate.
-     * @return T* A pointer to the allocated block.
+     * @param p_N The number of elements of type `T` to allocate.
+     * @return A pointer to the allocated block.
      */
     template <typename T, typename... Args>
         requires std::constructible_from<T, Args...>
@@ -129,7 +131,7 @@ class TKIT_API StackAllocator
     }
 
     /**
-     * @brief Deallocate a block of memory from the stack allocator and destroy the object of type T created from it.
+     * @brief Deallocate a block of memory from the stack allocator and destroy the object of type `T` created from it.
      *
      * @tparam T The type of the block.
      * @param p_Ptr The pointer to the block to deallocate.

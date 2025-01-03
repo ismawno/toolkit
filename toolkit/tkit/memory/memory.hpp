@@ -12,17 +12,17 @@ namespace TKit
 // TODO: Have an atomic counter to track allocations (conditionally with some macros)
 
 /**
- * @brief Allocate a chunk of memory of a given size. Uses default malloc.
+ * @brief Allocate a chunk of memory of a given size. Uses default `std::malloc()`.
  *
  * It is here as a placeholder for future custom global allocators.
  *
  * @param p_Size The size of the memory to allocate.
- * @return void* A pointer to the allocated memory.
+ * @return A pointer to the allocated memory.
  */
 TKIT_API void *Allocate(usize p_Size) noexcept;
 
 /**
- * @brief Deallocate a chunk of memory. Uses default free.
+ * @brief Deallocate a chunk of memory. Uses default `std::free()`.
  *
  * It is here as a placeholder for future custom global allocators.
  *
@@ -38,7 +38,7 @@ TKIT_API void Deallocate(void *p_Ptr) noexcept;
  *
  * @param p_Size The size of the memory to allocate.
  * @param p_Alignment The alignment of the memory to allocate.
- * @return void* A pointer to the allocated memory.
+ * @return A pointer to the allocated memory.
  */
 TKIT_API void *AllocateAligned(usize p_Size, usize p_Alignment) noexcept;
 

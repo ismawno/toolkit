@@ -34,7 +34,7 @@ template <Mutex MTX> ThreadPool<MTX>::ThreadPool(const usize p_ThreadCount) : IT
         m_TerminatedCount.fetch_add(1, std::memory_order_relaxed);
     };
     for (usize i = 0; i < p_ThreadCount; ++i)
-        m_Threads.emplace_back(worker, i);
+        m_Threads.emplace_back(worker, i + 1);
 }
 
 template <Mutex MTX> void ThreadPool<MTX>::AwaitPendingTasks() const noexcept

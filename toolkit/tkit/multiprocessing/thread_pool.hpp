@@ -13,14 +13,15 @@ namespace TKit
 /**
  * @brief A thread pool that manages tasks and executes them in parallel.
  *
- * It is a concrete class that implements the ITaskManager interface.
+ * It is a concrete class that implements the `ITaskManager` interface.
  *
  * @note The thread pool is not resizable. Once created, the number of threads is fixed. Currently, queue
  * synchronization is achieved by a plain mutex lock, which is not ideal. I have considered implementing a lock-free
  * approach, but I wont do it until the need arises, as those are very complex to get right.
  *
- * Take into account all threads this pool uses will be secondary threads. The main thread plays no part in the
- * task execution.
+ * Take into account all threads this pool uses will be secondary threads. By default, the main thread plays no part in
+ * the task execution. Please, bear in mind that the thread index is 1-based, as it treats 0 as the main thread in case
+ * you want to partition your tasks in such a way that the main thread does some work. If you do not, simply subtract 1
  *
  * @tparam MTX The type of mutex to use for synchronization. It must implement the Mutex concept.
  */

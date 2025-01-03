@@ -6,10 +6,10 @@
 namespace TKit
 {
 /**
- * @brief A result class that can hold either a value of type T or an error message of type ErrorType.
+ * @brief A result class that can hold either a value of type `T` or an error message of type ErrorType.
  *
  * This class is meant to be used in functions that can fail and return an error message, or succeed and return a value.
- * The main difference between this class and std::optional is that this class explicitly holds an error if the result
+ * The main difference between this class and `std::optional` is that this class explicitly holds an error if the result
  * could not be computed. It is meant to make my life easier to be honest.
  *
  * @tparam T The type of the value that can be held.
@@ -19,9 +19,9 @@ template <typename T, typename ErrorType = const char *> class Result
 {
   public:
     /**
-     * @brief Construct a Result object with a value of type T.
+     * @brief Construct a Result object with a value of type `T`.
      *
-     * @param p_Args The arguments to pass to the constructor of T.
+     * @param p_Args The arguments to pass to the constructor of `T`.
      */
     template <typename... ValueArgs> static Result Ok(ValueArgs &&...p_Args) noexcept
     {

@@ -16,7 +16,7 @@ namespace TKit
 /**
  * @brief An STL-like array with a fixed size buffer.
  *
- * It is meant to be used as a drop-in replacement for std::array when you need a bit more control and functionality,
+ * It is meant to be used as a drop-in replacement for `std::array` when you need a bit more control and functionality,
  * although it comes with some overhead.
  *
  * @tparam T The type of the elements in the array.
@@ -107,7 +107,7 @@ class StaticArray
         clear();
     }
 
-    // Same goes for assignment. It wont include M == N, and use the default assignment operator
+    // Same goes for assignment. It wont include `M == N`, and use the default assignment operator
     template <usize M> StaticArray &operator=(const StaticArray<T, M> &p_Other) noexcept
     {
         if constexpr (M == N)
@@ -126,7 +126,7 @@ class StaticArray
         return *this;
     }
 
-    // Same goes for assignment. It wont include M == N, and use the default assignment operator
+    // Same goes for assignment. It wont include `M == N`, and use the default assignment operator
     template <usize M> StaticArray &operator=(StaticArray<T, M> &&p_Other) noexcept
     {
         if constexpr (M == N)
@@ -352,8 +352,8 @@ class StaticArray
     /**
      * @brief Emplace a new element at the end of the array. The element is constructed in place.
      *
-     * @param p_Args The arguments to pass to the constructor of T.
-     * @return T& A reference to the newly constructed element.
+     * @param p_Args The arguments to pass to the constructor of `T`.
+     * @return A reference to the newly constructed element.
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
@@ -389,7 +389,7 @@ class StaticArray
      * size is bigger than the current size, the elements are constructed in place.
      *
      * @param p_Size The new size of the array.
-     * @param args The arguments to pass to the constructor of T (only used if the new size is bigger than the current
+     * @param args The arguments to pass to the constructor of `T` (only used if the new size is bigger than the current
      * size.)
      */
     template <typename... Args>
@@ -449,7 +449,7 @@ class StaticArray
      * @brief Access an element in the array.
      *
      * @param p_Index The index of the element to access.
-     * @return T& A reference to the element.
+     * @return A reference to the element.
      */
     T &operator[](const usize p_Index) noexcept
     {
@@ -473,7 +473,7 @@ class StaticArray
      * @brief Access an element in the array.
      *
      * @param p_Index The index of the element to access.
-     * @return T& A reference to the element.
+     * @return A reference to the element.
      */
     T &at(const usize p_Index) noexcept
     {
