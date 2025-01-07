@@ -65,6 +65,17 @@ class TKIT_API StackAllocator
     void *Push(usize p_Size, usize p_Alignment = 1) noexcept;
 
     /**
+     * @brief Allocate a new block of memory into the stack allocator (Same as `Push()`).
+     *
+     * @param p_N The number of elements of type `T` to allocate.
+     * @return A pointer to the allocated block.
+     */
+    template <typename T> T *Push(const usize p_N) noexcept
+    {
+        return static_cast<T *>(Push(p_N * sizeof(T), alignof(T)));
+    }
+
+    /**
      * @brief Pop the last block of memory from the stack allocator.
      *
      */
