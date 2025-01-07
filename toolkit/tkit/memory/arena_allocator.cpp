@@ -44,12 +44,12 @@ void *ArenaAllocator::Push(const usize p_Size, const usize p_Alignment) noexcept
     usize remaining = m_Remaining;
 
     std::byte *alignedPtr = static_cast<std::byte *>(std::align(p_Alignment, p_Size, ptr, remaining));
-    TKIT_LOG_WARNING_IF(!alignedPtr, "[TOOLKIT] Stack allocator cannot fit {} bytes with {} alignment!", p_Size,
+    TKIT_LOG_WARNING_IF(!alignedPtr, "[TOOLKIT] Arena allocator cannot fit {} bytes with {} alignment!", p_Size,
                         p_Alignment);
     if (!alignedPtr)
         return nullptr;
     TKIT_ASSERT(alignedPtr + p_Size <= m_Buffer + m_Size,
-                "[TOOLKIT] Stack allocator failed to fit {} bytes with {} alignment! This is should not have triggered",
+                "[TOOLKIT] Arena allocator failed to fit {} bytes with {} alignment! This is should not have triggered",
                 p_Size, p_Alignment);
 
     m_Remaining = remaining - p_Size;
@@ -96,7 +96,7 @@ void ArenaAllocator::deallocateBuffer() noexcept
         return;
     TKIT_LOG_WARNING_IF(
         m_Remaining != m_Size,
-        "[TOOLKIT] Deallocating a stack allocator with active allocations. Consider calling Pop() until the "
+        "[TOOLKIT] Deallocating a Arena allocator with active allocations. Consider calling Pop() until the "
         "allocator is empty. If the elements are not trivially destructible, you will have to call "
         "Destroy() for each element (this deallocation will not call the destructor)");
     DeallocateAligned(m_Buffer);
