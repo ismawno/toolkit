@@ -38,10 +38,7 @@ class TKIT_API StackAllocator
         usize AlignmentOffset;
     };
 
-    // The alignment parameter specifies the starting alignment of the whole block so that your first allocation will
-    // not be padded in case you need specific alignment requirements for it, but it does not restrict the alignment of
-    // the individual allocations at all. You can still specify alignments of 64 if you want when allocating
-    explicit StackAllocator(usize p_Size, usize p_Alignment = 8) noexcept;
+    explicit StackAllocator(usize p_Size) noexcept;
     ~StackAllocator() noexcept;
 
     StackAllocator(StackAllocator &&p_Other) noexcept;

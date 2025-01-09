@@ -40,7 +40,7 @@ TKIT_API void Deallocate(void *p_Ptr) noexcept;
  * @param p_Alignment The alignment of the memory to allocate.
  * @return A pointer to the allocated memory.
  */
-TKIT_API void *AllocateAligned(usize p_Size, usize p_Alignment) noexcept;
+TKIT_API void *AllocateAligned(usize p_Size, std::align_val_t p_Alignment) noexcept;
 
 /**
  * @brief Deallocate a chunk of memory. Uses default platform-specific aligned deallocation.
@@ -49,21 +49,37 @@ TKIT_API void *AllocateAligned(usize p_Size, usize p_Alignment) noexcept;
  *
  * @param p_Ptr A pointer to the memory to deallocate.
  */
-TKIT_API void DeallocateAligned(void *p_Ptr) noexcept;
+TKIT_API void DeallocateAligned(void *p_Ptr, std::align_val_t p_Alignment) noexcept;
+
+// template <typename T> class DefaultAllocator
+// {
+//     using value_type = T;
+//     using pointer = T *;
+//     using const_pointer = const T *;
+//     using size_type = u32;
+//     using difference_type = i32;
+
+//     template <typename U> struct rebind
+//     {
+//         using other = DefaultAllocator<U>;
+//     };
+// };
 
 } // namespace TKit
 
-#ifdef TKIT_ENABLE_PROFILING
+#ifndef TKIT_DISABLE_MEMORY_OVERRIDES
 
 void *operator new(TKit::usize p_Size);
 void *operator new[](TKit::usize p_Size);
-
-void operator delete(void *p_Ptr) noexcept;
-void operator delete[](void *p_Ptr) noexcept;
-
+void *operator new(TKit::usize p_Size, std::align_val_t p_Alignment);
+void *operator new[](TKit::usize p_Size, std::align_val_t p_Alignment);
 void *operator new(TKit::usize p_Size, const std::nothrow_t &) noexcept;
 void *operator new[](TKit::usize p_Size, const std::nothrow_t &) noexcept;
 
+void operator delete(void *p_Ptr) noexcept;
+void operator delete[](void *p_Ptr) noexcept;
+void operator delete(void *p_Ptr, std::align_val_t p_Alignment) noexcept;
+void operator delete[](void *p_Ptr, std::align_val_t p_Alignment) noexcept;
 void operator delete(void *p_Ptr, const std::nothrow_t &) noexcept;
 void operator delete[](void *p_Ptr, const std::nothrow_t &) noexcept;
 

@@ -24,11 +24,7 @@ class TKIT_API ArenaAllocator
     TKIT_NON_COPYABLE(ArenaAllocator)
 
   public:
-    // The alignment parameter specifies the starting alignment of the whole block so that your first allocation will
-    // not be padded in case you need specific alignment requirements for it, but it does not restrict the alignment of
-    // the individual allocations at all. You can still specify alignments of 64 if you want when allocating
-
-    explicit ArenaAllocator(usize p_Size, usize p_Alignment = 8) noexcept;
+    explicit ArenaAllocator(usize p_Size) noexcept;
     ~ArenaAllocator() noexcept;
 
     ArenaAllocator(ArenaAllocator &&p_Other) noexcept;

@@ -109,12 +109,12 @@ template <typename T> class TKIT_API BlockAllocator
      * @brief Get the alignment of a chunk in bytes.
      *
      */
-    static TKIT_CONSTEVAL usize GetChunkAlignment() noexcept
+    static TKIT_CONSTEVAL std::align_val_t GetChunkAlignment() noexcept
     {
         if constexpr (alignof(T) < alignof(Chunk))
-            return alignof(Chunk);
+            return std::align_val_t(alignof(Chunk));
         else
-            return alignof(T);
+            return std::align_val_t(alignof(T));
     }
 
     /**
@@ -277,7 +277,7 @@ template <typename T> class TKIT_API BlockAllocator
                             "[TOOLKIT] The current allocator has active allocations. Resetting the allocator will "
                             "prematurely deallocate all memory, and no destructor will be called");
         for (std::byte *block : m_Blocks)
-            DeallocateAligned(block);
+            DeallocateAligned(block, GetChunkAlignment());
         m_Allocations = 0;
         m_FreeList = nullptr;
         m_Blocks.clear();
@@ -338,12 +338,11 @@ template <typename T> class TKIT_API BlockAllocator
     static std::byte *allocateNewBlock(const usize p_BlockSize) noexcept
     {
         constexpr usize chunkSize = GetChunkSize();
-        constexpr usize alignment = GetChunkAlignment();
 
         // With AllocateAligned, I dont need to worry about the alignment of the block itself, or subsequent individual
         // elements. They are of the same type, so adress + n * sizeof(T) will always be aligned if the start adress is
         // aligned (guaranteed by AllocateAligned)
-        std::byte *data = static_cast<std::byte *>(AllocateAligned(p_BlockSize, alignment));
+        std::byte *data = static_cast<std::byte *>(AllocateAligned(p_BlockSize, GetChunkAlignment()));
 
         const usize chunksPerBlock = p_BlockSize / chunkSize;
         for (usize i = 0; i < chunksPerBlock - 1; ++i)

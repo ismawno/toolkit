@@ -7,54 +7,30 @@ namespace TKit
 {
 void *Allocate(const usize p_Size) noexcept
 {
-    void *ptr = std::malloc(p_Size);
+    void *ptr = ::operator new(p_Size);
     TKIT_ASSERT(ptr, "[TOOLKIT] Failed to allocate memory with size {}", p_Size);
-    TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
     return ptr;
 }
 
 void Deallocate(void *p_Ptr) noexcept
 {
-    TKIT_ASSERT(p_Ptr, "[TOOLKIT] Trying to deallocate a nullptr");
-    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
-    std::free(p_Ptr);
+    ::operator delete(p_Ptr);
 }
 
-void *AllocateAligned(const usize p_Size, const usize p_Alignment) noexcept
+void *AllocateAligned(const usize p_Size, const std::align_val_t p_Alignment) noexcept
 {
-    TKIT_ASSERT(p_Alignment >= sizeof(void *), "[TOOLKIT] Alignment must be at least the size of a pointer");
-    void *ptr = nullptr;
-#ifdef TKIT_OS_WINDOWS
-    ptr = _aligned_malloc(p_Size, p_Alignment);
-    TKIT_ASSERT(ptr, "[TOOLKIT] Failed to allocate memory with size {} and alignment {}", p_Size, p_Alignment);
-#else
-    // Add here warning suppression if needed
-    TKIT_WARNING_IGNORE_PUSH
-    TKIT_GCC_WARNING_IGNORE("-Wunused-variable")
-    TKIT_CLANG_WARNING_IGNORE("-Wunused-variable")
-    int result = posix_memalign(&ptr, p_Alignment, p_Size);
-    TKIT_WARNING_IGNORE_POP
-    TKIT_ASSERT(result == 0, "[TOOLKIT] Failed to allocate aligned memory with size {} and alignment {}. Result: {}",
-                p_Size, p_Alignment, result);
-#endif
-    TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
+    void *ptr = ::operator new(p_Size, p_Alignment);
+    TKIT_ASSERT(ptr, "[TOOLKIT] Failed to allocate memory with size {} and alignment {}", p_Size, usize(p_Alignment));
     return ptr;
 }
 
-void DeallocateAligned(void *p_Ptr) noexcept
+void DeallocateAligned(void *p_Ptr, const std::align_val_t p_Alignment) noexcept
 {
-    TKIT_ASSERT(p_Ptr, "[TOOLKIT] Trying to deallocate a nullptr");
-    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
-#ifdef TKIT_OS_WINDOWS
-    _aligned_free(p_Ptr);
-#else
-    std::free(p_Ptr);
-#endif
+    ::operator delete(p_Ptr, p_Alignment);
 }
 } // namespace TKit
 
-#ifdef TKIT_ENABLE_PROFILING
-
+#ifndef TKIT_DISABLE_MEMORY_OVERRIDES
 void *operator new(const TKit::usize p_Size)
 {
     void *ptr = std::malloc(p_Size);
@@ -62,6 +38,48 @@ void *operator new(const TKit::usize p_Size)
     return ptr;
 }
 void *operator new[](const TKit::usize p_Size)
+{
+    void *ptr = std::malloc(p_Size);
+    TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
+    return ptr;
+}
+void *operator new(const TKit::usize p_Size, const std::align_val_t p_Alignment)
+{
+    void *ptr = nullptr;
+#    ifdef TKIT_OS_WINDOWS
+    ptr = _aligned_malloc(p_Size, p_Alignment);
+    TKIT_ASSERT(ptr, "[TOOLKIT] Failed to allocate memory with size {} and alignment {}", p_Size, p_Alignment);
+#    else
+    TKIT_ASSERT_RETURNS(posix_memalign(&ptr, TKit::usize(p_Alignment), p_Size), 0,
+                        "[TOOLKIT] Failed to allocate memory with size {} and alignment {}", p_Size,
+                        TKit::usize(p_Alignment));
+
+#    endif
+    TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
+    return ptr;
+}
+void *operator new[](const TKit::usize p_Size, const std::align_val_t p_Alignment)
+{
+    void *ptr = nullptr;
+#    ifdef TKIT_OS_WINDOWS
+    ptr = _aligned_malloc(p_Size, p_Alignment);
+    TKIT_ASSERT(ptr, "[TOOLKIT] Failed to allocate memory with size {} and alignment {}", p_Size, p_Alignment);
+#    else
+    TKIT_ASSERT_RETURNS(posix_memalign(&ptr, TKit::usize(p_Alignment), p_Size), 0,
+                        "[TOOLKIT] Failed to allocate memory with size {} and alignment {}", p_Size,
+                        TKit::usize(p_Alignment));
+
+#    endif
+    TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
+    return ptr;
+}
+void *operator new(const TKit::usize p_Size, const std::nothrow_t &) noexcept
+{
+    void *ptr = std::malloc(p_Size);
+    TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
+    return ptr;
+}
+void *operator new[](const TKit::usize p_Size, const std::nothrow_t &) noexcept
 {
     void *ptr = std::malloc(p_Size);
     TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
@@ -78,20 +96,24 @@ void operator delete[](void *p_Ptr) noexcept
     TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
     std::free(p_Ptr);
 }
-
-void *operator new(const TKit::usize p_Size, const std::nothrow_t &) noexcept
+void operator delete(void *p_Ptr, const std::align_val_t) noexcept
 {
-    void *ptr = std::malloc(p_Size);
-    TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
-    return ptr;
+    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
+#    ifdef TKIT_OS_WINDOWS
+    _aligned_free(p_Ptr);
+#    else
+    std::free(p_Ptr);
+#    endif
 }
-void *operator new[](const TKit::usize p_Size, const std::nothrow_t &) noexcept
+void operator delete[](void *p_Ptr, const std::align_val_t) noexcept
 {
-    void *ptr = std::malloc(p_Size);
-    TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
-    return ptr;
+    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
+#    ifdef TKIT_OS_WINDOWS
+    _aligned_free(p_Ptr);
+#    else
+    std::free(p_Ptr);
+#    endif
 }
-
 void operator delete(void *p_Ptr, const std::nothrow_t &) noexcept
 {
     TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
