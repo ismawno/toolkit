@@ -35,7 +35,7 @@ TKIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
 void logMessage(const char *p_Level, const std::string_view p_File, const i32 p_Line, const char *p_Color,
                 [[maybe_unused]] const bool p_Crash, const std::string_view p_Message) noexcept
 {
-    if (p_Line != INT32_MAX)
+    if (p_Line != Limits<i32>::max())
     {
         const std::string log =
             TKIT_FORMAT("[{:%Y-%m-%d %H:%M}] [{}{}{}] [{}:{}] {}\n", std::chrono::system_clock::now(), p_Color, p_Level,

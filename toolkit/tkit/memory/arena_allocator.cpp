@@ -4,9 +4,10 @@
 
 namespace TKit
 {
-ArenaAllocator::ArenaAllocator(const usize p_Size) noexcept : m_Size(p_Size), m_Remaining(p_Size)
+ArenaAllocator::ArenaAllocator(const usize p_Size, const usize p_Alignment) noexcept
+    : m_Size(p_Size), m_Remaining(p_Size)
 {
-    m_Buffer = static_cast<std::byte *>(Allocate(p_Size));
+    m_Buffer = static_cast<std::byte *>(AllocateAlignedPlatformSpecific(p_Size, p_Alignment));
 }
 ArenaAllocator::~ArenaAllocator() noexcept
 {
@@ -40,7 +41,7 @@ ArenaAllocator &ArenaAllocator::operator=(ArenaAllocator &&p_Other) noexcept
 void *ArenaAllocator::Push(const usize p_Size, const usize p_Alignment) noexcept
 {
     void *ptr = m_Buffer + (m_Size - m_Remaining);
-    usize remaining = m_Remaining;
+    size_t remaining = static_cast<size_t>(m_Remaining);
 
     std::byte *alignedPtr = static_cast<std::byte *>(std::align(p_Alignment, p_Size, ptr, remaining));
     TKIT_LOG_WARNING_IF(!alignedPtr, "[TOOLKIT] Arena allocator cannot fit {} bytes with {} alignment!", p_Size,
@@ -51,7 +52,7 @@ void *ArenaAllocator::Push(const usize p_Size, const usize p_Alignment) noexcept
                 "[TOOLKIT] Arena allocator failed to fit {} bytes with {} alignment! This is should not have triggered",
                 p_Size, p_Alignment);
 
-    m_Remaining = remaining - p_Size;
+    m_Remaining = static_cast<usize>(remaining) - p_Size;
     return alignedPtr;
 }
 
@@ -98,7 +99,7 @@ void ArenaAllocator::deallocateBuffer() noexcept
         "[TOOLKIT] Deallocating a Arena allocator with active allocations. Consider calling Pop() until the "
         "allocator is empty. If the elements are not trivially destructible, you will have to call "
         "Destroy() for each element (this deallocation will not call the destructor)");
-    Deallocate(m_Buffer);
+    DeallocateAlignedPlatformSpecific(m_Buffer);
     m_Buffer = nullptr;
     m_Size = 0;
     m_Remaining = 0;

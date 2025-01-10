@@ -44,10 +44,10 @@ TKIT_API void logMessage(const char *p_Level, std::string_view p_File, const i32
 
 #ifdef TKIT_ENABLE_INFO_LOGS
 #    define TKIT_LOG_INFO(...)                                                                                         \
-        TKit::logMessage("INFO", __FILE__, INT32_MAX, TKIT_LOG_COLOR_GREEN, false, TKIT_FORMAT(__VA_ARGS__))
+        TKit::logMessage("INFO", __FILE__, Limits<i32>::max(), TKIT_LOG_COLOR_GREEN, false, TKIT_FORMAT(__VA_ARGS__))
 #    define TKIT_LOG_INFO_IF(p_Condition, ...)                                                                         \
         if (p_Condition)                                                                                               \
-        TKit::logMessage("INFO", __FILE__, INT32_MAX, TKIT_LOG_COLOR_GREEN, false, TKIT_FORMAT(__VA_ARGS__))
+        TKit::logMessage("INFO", __FILE__, Limits<i32>::max(), TKIT_LOG_COLOR_GREEN, false, TKIT_FORMAT(__VA_ARGS__))
 #else
 #    define TKIT_LOG_INFO(...)
 #    define TKIT_LOG_INFO_IF(...)

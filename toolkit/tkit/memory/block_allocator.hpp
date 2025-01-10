@@ -7,6 +7,7 @@
 #include "tkit/core/concepts.hpp"
 #include "tkit/multiprocessing/spin_lock.hpp"
 #include "tkit/profiling/macros.hpp"
+#include "tkit/container/alias.hpp"
 #include <mutex>
 
 namespace TKit
@@ -370,10 +371,10 @@ template <typename T> class TKIT_API BlockAllocator
         return reinterpret_cast<T *>(chunk);
     }
 
-    u32 m_Allocations = 0;
-    Chunk *m_FreeList = nullptr;
     DynamicArray<std::byte *> m_Blocks;
     usize m_BlockSize;
+    Chunk *m_FreeList = nullptr;
+    u32 m_Allocations = 0;
     TKIT_PROFILE_DECLARE_MUTEX(SpinLock, m_Mutex);
 };
 
@@ -514,7 +515,7 @@ template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexce
 } // namespace TKit
 
 #define TKIT_BLOCK_ALLOCATED_CONCURRENT(p_ClassName, p_ChunksPerBlock)                                                 \
-    static void *operator new([[maybe_unused]] usize p_Size)                                                           \
+    static void *operator new([[maybe_unused]] size_t p_Size)                                                          \
     {                                                                                                                  \
         TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
                     "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
@@ -524,7 +525,7 @@ template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexce
     {                                                                                                                  \
         TKit::BDeallocateConcurrent<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                 \
     }                                                                                                                  \
-    static void *operator new([[maybe_unused]] usize p_Size, const std::nothrow_t &)                                   \
+    static void *operator new([[maybe_unused]] size_t p_Size, const std::nothrow_t &)                                  \
     {                                                                                                                  \
         TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
                     "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
@@ -536,7 +537,7 @@ template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexce
     }
 
 #define TKIT_BLOCK_ALLOCATED_SERIAL(p_ClassName, p_ChunksPerBlock)                                                     \
-    static void *operator new([[maybe_unused]] usize p_Size)                                                           \
+    static void *operator new([[maybe_unused]] size_t p_Size)                                                          \
     {                                                                                                                  \
         TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
                     "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
@@ -546,7 +547,7 @@ template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexce
     {                                                                                                                  \
         TKit::BDeallocateSerial<p_ClassName, p_ChunksPerBlock>(static_cast<p_ClassName *>(p_Ptr));                     \
     }                                                                                                                  \
-    static void *operator new([[maybe_unused]] usize p_Size, const std::nothrow_t &)                                   \
+    static void *operator new([[maybe_unused]] size_t p_Size, const std::nothrow_t &)                                  \
     {                                                                                                                  \
         TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
                     "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \

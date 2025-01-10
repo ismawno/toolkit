@@ -86,7 +86,7 @@ template <typename T> class RefCounted
             static_cast<const T *>(this)->selfDestruct();
     }
 
-    mutable std::atomic_int32_t m_RefCount;
+    mutable std::atomic_uint32_t m_RefCount;
 
     template <typename U> friend class Ref;
 };

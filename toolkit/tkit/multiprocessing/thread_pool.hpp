@@ -3,6 +3,7 @@
 #include "tkit/core/concepts.hpp"
 #include "tkit/multiprocessing/task_manager.hpp"
 #include "tkit/profiling/macros.hpp"
+#include "tkit/container/alias.hpp"
 #include <thread>
 
 namespace TKit

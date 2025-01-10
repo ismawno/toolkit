@@ -9,26 +9,47 @@ namespace TKit
 // Could abstract this in some way (by defining those as function pointers) to allow for custom allocators
 // For now, I'll leave it as it is
 
-// TODO: Have an atomic counter to track allocations (conditionally with some macros)
-
 /**
- * @brief Allocate a chunk of memory of a given size. Uses default `std::malloc()`.
+ * @brief Allocate a chunk of memory of a given size.
  *
- * It is here as a placeholder for future custom global allocators.
+ * Uses default `::operator new()`. It is here as a placeholder for future custom global allocators.
  *
  * @param p_Size The size of the memory to allocate.
  * @return A pointer to the allocated memory.
  */
-TKIT_API void *Allocate(usize p_Size) noexcept;
+TKIT_API void *Allocate(size_t p_Size) noexcept;
 
 /**
- * @brief Deallocate a chunk of memory. Uses default `std::free()`.
+ * @brief Deallocate a chunk of memory
  *
- * It is here as a placeholder for future custom global allocators.
+ * Uses default `::operator delete()`. It is here as a placeholder for future custom global allocators.
  *
  * @param p_Ptr A pointer to the memory to deallocate.
  */
 TKIT_API void Deallocate(void *p_Ptr) noexcept;
+
+/**
+ * @brief Allocate a chunk of memory of a given size with a given alignment.
+ *
+ * Uses default `::operator new()`. It is here as a placeholder for future custom global
+ * allocators.
+ *
+ * @param p_Size The size of the memory to allocate.
+ * @param p_Alignment The alignment of the memory to allocate.
+ * @return A pointer to the allocated memory.
+ */
+TKIT_API void *AllocateAligned(size_t p_Size, std::align_val_t p_Alignment) noexcept;
+
+/**
+ * @brief Deallocate a chunk of memory with a given alignment.
+ *
+ * Uses default `::operator delete()`. It is here as a placeholder for future custom global
+ * allocators.
+ *
+ * @param p_Ptr A pointer to the memory to deallocate.
+ * @param p_Alignment The alignment of the memory to deallocate.
+ */
+TKIT_API void DeallocateAligned(void *p_Ptr, std::align_val_t p_Alignment) noexcept;
 
 /**
  * @brief Allocate a chunk of memory of a given size with a given alignment.
@@ -40,47 +61,68 @@ TKIT_API void Deallocate(void *p_Ptr) noexcept;
  * @param p_Alignment The alignment of the memory to allocate.
  * @return A pointer to the allocated memory.
  */
-TKIT_API void *AllocateAligned(usize p_Size, std::align_val_t p_Alignment) noexcept;
+TKIT_API void *AllocateAlignedPlatformSpecific(size_t p_Size, size_t p_Alignment) noexcept;
 
 /**
  * @brief Deallocate a chunk of memory. Uses default platform-specific aligned deallocation.
  *
- * It is here as a placeholder for future custom global allocators.
+ * Uses the default platform-specific aligned allocation. It is here as a placeholder for future custom global
+ * allocators.
  *
  * @param p_Ptr A pointer to the memory to deallocate.
  */
-TKIT_API void DeallocateAligned(void *p_Ptr, std::align_val_t p_Alignment) noexcept;
+TKIT_API void DeallocateAlignedPlatformSpecific(void *p_Ptr) noexcept;
 
-// template <typename T> class DefaultAllocator
-// {
-//     using value_type = T;
-//     using pointer = T *;
-//     using const_pointer = const T *;
-//     using size_type = u32;
-//     using difference_type = i32;
+template <typename T> class DefaultAllocator
+{
+  public:
+    using value_type = T;
+    using pointer = T *;
+    using const_pointer = const T *;
+    using size_type = usize;
+    using difference_type = idiff;
 
-//     template <typename U> struct rebind
-//     {
-//         using other = DefaultAllocator<U>;
-//     };
-// };
+    template <typename U> struct rebind
+    {
+        using other = DefaultAllocator<U>;
+    };
+
+    pointer allocate(size_type p_N)
+    {
+        return static_cast<pointer>(Allocate(p_N * sizeof(T)));
+    }
+
+    void deallocate(pointer p_Ptr, size_type)
+    {
+        Deallocate(p_Ptr);
+    }
+
+    bool operator==(const DefaultAllocator &) const noexcept
+    {
+        return true;
+    }
+    bool operator!=(const DefaultAllocator &) const noexcept
+    {
+        return false;
+    }
+};
 
 } // namespace TKit
 
 #ifndef TKIT_DISABLE_MEMORY_OVERRIDES
 
-void *operator new(TKit::usize p_Size);
-void *operator new[](TKit::usize p_Size);
-void *operator new(TKit::usize p_Size, std::align_val_t p_Alignment);
-void *operator new[](TKit::usize p_Size, std::align_val_t p_Alignment);
-void *operator new(TKit::usize p_Size, const std::nothrow_t &) noexcept;
-void *operator new[](TKit::usize p_Size, const std::nothrow_t &) noexcept;
+TKIT_API void *operator new(size_t p_Size);
+TKIT_API void *operator new[](size_t p_Size);
+TKIT_API void *operator new(size_t p_Size, std::align_val_t p_Alignment);
+TKIT_API void *operator new[](size_t p_Size, std::align_val_t p_Alignment);
+TKIT_API void *operator new(size_t p_Size, const std::nothrow_t &) noexcept;
+TKIT_API void *operator new[](size_t p_Size, const std::nothrow_t &) noexcept;
 
-void operator delete(void *p_Ptr) noexcept;
-void operator delete[](void *p_Ptr) noexcept;
-void operator delete(void *p_Ptr, std::align_val_t p_Alignment) noexcept;
-void operator delete[](void *p_Ptr, std::align_val_t p_Alignment) noexcept;
-void operator delete(void *p_Ptr, const std::nothrow_t &) noexcept;
-void operator delete[](void *p_Ptr, const std::nothrow_t &) noexcept;
+TKIT_API void operator delete(void *p_Ptr) noexcept;
+TKIT_API void operator delete[](void *p_Ptr) noexcept;
+TKIT_API void operator delete(void *p_Ptr, std::align_val_t p_Alignment) noexcept;
+TKIT_API void operator delete[](void *p_Ptr, std::align_val_t p_Alignment) noexcept;
+TKIT_API void operator delete(void *p_Ptr, const std::nothrow_t &) noexcept;
+TKIT_API void operator delete[](void *p_Ptr, const std::nothrow_t &) noexcept;
 
 #endif
