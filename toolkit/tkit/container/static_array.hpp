@@ -4,6 +4,7 @@
 #include "tkit/core/concepts.hpp"
 #include "tkit/core/logging.hpp"
 #include <span>
+#include <array>
 
 namespace TKit
 {
