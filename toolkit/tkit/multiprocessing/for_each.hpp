@@ -34,7 +34,7 @@ template <std::derived_from<ITaskManager> TManager, RandomIterOrIndex It1, Outpu
 void ForEach(TManager &p_Manager, It1 p_First, It1 p_Last, It2 p_Dest, const usize p_Partitions, Callable &&p_Callable,
              Args &&...p_Args)
 {
-    const usize size = std::distance(p_First, p_Last);
+    const usize size = static_cast<usize>(std::distance(p_First, p_Last));
     usize start = 0;
     for (usize i = 0; i < p_Partitions; ++i)
     {
@@ -72,7 +72,7 @@ template <std::derived_from<ITaskManager> TManager, RandomIterOrIndex It, typena
 void ForEach(TManager &p_Manager, It p_First, It p_Last, const usize p_Partitions, Callable &&p_Callable,
              Args &&...p_Args)
 {
-    const usize size = std::distance(p_First, p_Last);
+    const usize size = static_cast<usize>(std::distance(p_First, p_Last));
     usize start = 0;
     for (usize i = 0; i < p_Partitions; ++i)
     {
@@ -112,7 +112,7 @@ template <std::derived_from<ITaskManager> TManager, RandomIterOrIndex It1, Outpu
 void ForEachMainThreadLead(TManager &p_Manager, It1 p_First, It1 p_Last, It2 p_Dest, Ret *p_OutRet,
                            const usize p_Partitions, Callable &&p_Callable, Args &&...p_Args)
 {
-    const usize size = std::distance(p_First, p_Last);
+    const usize size = static_cast<usize>(std::distance(p_First, p_Last));
     usize start = size / p_Partitions;
     for (usize i = 1; i < p_Partitions; ++i)
     {
@@ -155,7 +155,7 @@ template <std::derived_from<ITaskManager> TManager, RandomIterOrIndex It, typena
 void ForEachMainThreadLead(TManager &p_Manager, It p_First, It p_Last, const usize p_Partitions, Callable &&p_Callable,
                            Args &&...p_Args)
 {
-    const usize size = std::distance(p_First, p_Last);
+    const usize size = static_cast<usize>(std::distance(p_First, p_Last));
     usize start = size / p_Partitions;
     for (usize i = 1; i < p_Partitions; ++i)
     {
