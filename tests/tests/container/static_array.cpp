@@ -182,7 +182,6 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
         array.insert(array.end(), {args...});
         array.erase(array.begin(), array.end());
         REQUIRE(array.size() == 0);
-        REQUIRE_NOTHROW(array.erase(array.begin()));
     }
 
     SECTION("Resize")

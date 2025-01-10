@@ -1,9 +1,8 @@
 #pragma once
 
-#include "tkit/container/alias.hpp"
-#include "tkit/core/logging.hpp"
+#include "tkit/container/container.hpp"
 #include "tkit/core/concepts.hpp"
-#include <array>
+#include "tkit/core/logging.hpp"
 #include <span>
 
 namespace TKit
@@ -27,9 +26,6 @@ template <typename T, usize N, typename Traits = std::allocator_traits<Memory::D
 class StaticArray
 {
   public:
-    // I figured that if I want to have a more STL-like interface, I should use the same naming conventions, although I
-    // am not really sure when to "stop"
-
     using value_type = T;
     using size_type = typename Traits::size_type;
     using difference_type = typename Traits::difference_type;
@@ -46,17 +42,14 @@ class StaticArray
     {
         TKIT_ASSERT(p_Size <= N, "[TOOLKIT] Size is bigger than capacity");
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
-            for (auto it = begin(); it != end(); ++it)
-                ::new (it) T(std::forward<Args>(p_Args)...);
+            Memory::ConstructRange(begin(), end(), std::forward<Args>(p_Args)...);
     }
 
-    template <std::input_iterator It> StaticArray(It p_Begin, It p_End) noexcept
+    template <std::input_iterator It> StaticArray(const It p_Begin, const It p_End) noexcept
     {
-        for (auto it = p_Begin; it != p_End; ++it)
-        {
-            TKIT_ASSERT(m_Size <= N, "[TOOLKIT] Size is bigger than capacity");
-            ::new (begin() + m_Size++) T(*it);
-        }
+        m_Size = std::distance(p_Begin, p_End);
+        TKIT_ASSERT(m_Size <= N, "[TOOLKIT] Size is bigger than capacity");
+        Memory::ConstructRangeCopy(begin(), p_Begin, p_End);
     }
 
     // This constructor WONT include the case M == N (ie, copy constructor)
@@ -67,8 +60,7 @@ class StaticArray
         {
             TKIT_ASSERT(p_Other.size() <= N, "[TOOLKIT] Size is bigger than capacity");
         }
-        for (size_type i = 0; i < m_Size; ++i)
-            ::new (begin() + i) T(p_Other[i]);
+        Memory::ConstructRangeCopy(begin(), p_Other.begin(), p_Other.end());
     }
 
     // This constructor WONT include the case M == N (ie, move constructor)
@@ -78,27 +70,23 @@ class StaticArray
         {
             TKIT_ASSERT(p_Other.size() <= N, "[TOOLKIT] Size is bigger than capacity");
         }
-        for (size_type i = 0; i < m_Size; ++i)
-            ::new (begin() + i) T(std::move(p_Other[i]));
+        Memory::ConstructRangeMove(begin(), p_Other.begin(), p_Other.end());
     }
 
     StaticArray(const StaticArray<T, N> &p_Other) noexcept : m_Size(p_Other.size())
     {
-        for (size_type i = 0; i < m_Size; ++i)
-            ::new (begin() + i) T(p_Other[i]);
+        Memory::ConstructRangeCopy(begin(), p_Other.begin(), p_Other.end());
     }
 
     StaticArray(StaticArray<T, N> &&p_Other) noexcept : m_Size(p_Other.size())
     {
-        for (size_type i = 0; i < m_Size; ++i)
-            ::new (begin() + i) T(std::move(p_Other[i]));
+        Memory::ConstructRangeMove(begin(), p_Other.begin(), p_Other.end());
     }
 
     StaticArray(const std::initializer_list<T> p_List) noexcept : m_Size(p_List.size())
     {
         TKIT_ASSERT(p_List.size() <= N, "[TOOLKIT] Size is bigger than capacity");
-        for (size_type i = 0; i < m_Size; ++i)
-            ::new (begin() + i) T(*(p_List.begin() + i));
+        Memory::ConstructRangeCopy(begin(), p_List.begin(), p_List.end());
     }
 
     ~StaticArray() noexcept
@@ -120,8 +108,8 @@ class StaticArray
         }
         clear();
         m_Size = p_Other.size();
-        for (size_type i = 0; i < m_Size; ++i)
-            ::new (begin() + i) T(p_Other[i]);
+
+        Memory::ConstructRangeCopy(begin(), p_Other.begin(), p_Other.end());
         return *this;
     }
 
@@ -139,8 +127,7 @@ class StaticArray
         }
         clear();
         m_Size = p_Other.size();
-        for (size_type i = 0; i < m_Size; ++i)
-            ::new (begin() + i) T(std::move(p_Other[i]));
+        Memory::ConstructRangeMove(begin(), p_Other.begin(), p_Other.end());
         return *this;
     }
 
@@ -150,8 +137,7 @@ class StaticArray
             return *this;
         clear();
         m_Size = p_Other.size();
-        for (size_type i = 0; i < m_Size; ++i)
-            ::new (begin() + i) T(p_Other[i]);
+        Memory::ConstructRangeCopy(begin(), p_Other.begin(), p_Other.end());
         return *this;
     }
 
@@ -161,8 +147,7 @@ class StaticArray
             return *this;
         clear();
         m_Size = p_Other.size();
-        for (size_type i = 0; i < m_Size; ++i)
-            ::new (begin() + i) T(std::move(p_Other[i]));
+        Memory::ConstructRangeMove(begin(), p_Other.begin(), p_Other.end());
         return *this;
     }
 
@@ -176,7 +161,7 @@ class StaticArray
     void push_back(U &&p_Value) noexcept
     {
         TKIT_ASSERT(!full(), "[TOOLKIT] Container is already full");
-        ::new (begin() + m_Size++) T(std::forward<U>(p_Value));
+        Memory::Construct(begin() + m_Size++, std::forward<U>(p_Value));
     }
 
     /**
@@ -188,7 +173,7 @@ class StaticArray
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is already empty");
         --m_Size;
         if constexpr (!std::is_trivially_destructible_v<T>)
-            end()->~T();
+            Memory::Destruct(end());
     }
 
     /**
@@ -199,32 +184,11 @@ class StaticArray
      */
     template <typename U>
         requires(std::is_convertible_v<NoCVRef<T>, NoCVRef<U>>)
-    void insert(const const_iterator p_Pos, U &&p_Value) noexcept
+    void insert(const iterator p_Pos, U &&p_Value) noexcept
     {
         TKIT_ASSERT(!full(), "[TOOLKIT] Container is already full");
-        TKIT_ASSERT(p_Pos >= cbegin() && p_Pos <= cend(), "[TOOLKIT] Iterator is out of bounds");
-        if (empty() || p_Pos == end()) [[unlikely]]
-        {
-            push_back(std::forward<U>(p_Value));
-            return;
-        }
-
-        const difference_type offset = std::distance(cbegin(), p_Pos);
-        const iterator pos = begin() + offset;
-
-        if constexpr (!std::is_trivially_constructible_v<T>)
-        { // Current end() pointer is uninitialized, so it must be handled manually
-            ::new (end()) T(std::move(*(end() - 1)));
-
-            if (const iterator shiftedEnd = end() - 1; pos < shiftedEnd)
-                std::move_backward(pos, shiftedEnd, end());
-        }
-        else
-            std::move_backward(pos, end(), end() + 1);
-
-        if constexpr (!std::is_trivially_destructible_v<T>)
-            pos->~T();
-        ::new (pos) T(std::forward<U>(p_Value));
+        TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
+        Container<Traits>::Insert(end(), p_Pos, std::forward<U>(p_Value));
         ++m_Size;
     }
 
@@ -235,55 +199,12 @@ class StaticArray
      * @param p_Begin The beginning of the range to insert.
      * @param p_End The end of the range to insert.
      */
-    template <std::input_iterator It> void insert(const const_iterator p_Pos, It p_Begin, It p_End) noexcept
+    template <std::input_iterator It> void insert(const iterator p_Pos, It p_Begin, It p_End) noexcept
     {
-        TKIT_ASSERT(p_Pos >= cbegin() && p_Pos <= cend(), "[TOOLKIT] Iterator is out of bounds");
-        if (empty() || p_Pos == end())
-        {
-            for (auto it = p_Begin; it != p_End; ++it)
-                push_back(*it);
-            return;
-        }
+        TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
+        TKIT_ASSERT(std::distance(p_Begin, p_End) + m_Size <= N, "[TOOLKIT] New size exceeds capacity");
 
-        // This method is a bit verbose, but it has many edge cases to handle:
-        // If the amount of elements to insert is small (ie, less than the trailing end), then the out of bound elements
-        // must be copy-moved to the end of the array.
-
-        // If the amount of elements to insert is bigger than the trailing end, then the trailing end must be copy-moved
-        // to the end of the array, and the out of bound inserted elements must be copied as well to the remaining, left
-        // portion of the out of bounds array.
-
-        // The remaining elements inside the original array must then be shifted, in case the amount of elements to
-        // insert was small
-
-        const difference_type offset = std::distance(cbegin(), p_Pos);
-        const iterator pos = begin() + offset;
-        const size_type count = std::distance(p_Begin, p_End);
-        const size_type outOfBounds = count < m_Size - offset ? count : m_Size - offset;
-        TKIT_ASSERT(m_Size + count <= capacity(), "[TOOLKIT] New size exceeds capacity");
-
-        // Current end() + outOfBounds pointers are uninitialized, so they must be handled manually
-        for (size_type i = 0; i < count; ++i)
-        {
-            const size_type idx1 = count - i - 1;
-            if (i < outOfBounds)
-            {
-                const size_type idx2 = outOfBounds - i - 1;
-                ::new (end() + idx1) T(std::move(*(pos + idx2)));
-            }
-            else
-                ::new (end() + idx1) T(*(--p_End));
-        }
-
-        if (const iterator shiftedEnd = end() - count; pos < shiftedEnd)
-            std::move_backward(pos, shiftedEnd, end());
-        for (size_type i = 0; i < outOfBounds; ++i)
-        {
-            if constexpr (!std::is_trivially_destructible_v<T>)
-                (pos + i)->~T();
-            ::new (pos + i) T(*(p_Begin++));
-        }
-        m_Size += count;
+        m_Size += Container<Traits>::Insert(end(), p_Pos, p_Begin, p_End);
     }
 
     /**
@@ -292,7 +213,7 @@ class StaticArray
      * @param p_Pos The position to insert the elements at.
      * @param p_Elements The initializer list of elements to insert.
      */
-    void insert(const const_iterator p_Pos, std::initializer_list<T> p_Elements) noexcept
+    void insert(const iterator p_Pos, const std::initializer_list<T> p_Elements) noexcept
     {
         insert(p_Pos, p_Elements.begin(), p_Elements.end());
     }
@@ -302,20 +223,10 @@ class StaticArray
      *
      * @param p_Pos The position to erase the element at.
      */
-    void erase(const const_iterator p_Pos) noexcept
+    void erase(const iterator p_Pos) noexcept
     {
-        if (empty())
-            return;
-        TKIT_ASSERT(p_Pos >= cbegin() && p_Pos < cend(), "[TOOLKIT] Iterator is out of bounds");
-        const difference_type offset = std::distance(cbegin(), p_Pos);
-        const iterator pos = begin() + offset;
-
-        // Copy the elements after the erased one
-        std::move(pos + 1, end(), pos);
-
-        // And destroy the last element
-        if constexpr (!std::is_trivially_destructible_v<T>)
-            (end() - 1)->~T();
+        TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT] Iterator is out of bounds");
+        Container<Traits>::Erase(end(), p_Pos);
         --m_Size;
     }
 
@@ -325,27 +236,13 @@ class StaticArray
      * @param p_Begin The beginning of the range to erase.
      * @param p_End The end of the range to erase.
      */
-    void erase(const const_iterator p_Begin, const const_iterator p_End) noexcept
+    void erase(const iterator p_Begin, const iterator p_End) noexcept
     {
-        if (empty())
-            return;
-        TKIT_ASSERT(p_Begin >= cbegin() && p_Begin <= cend(), "[TOOLKIT] Begin iterator is out of bounds");
-        TKIT_ASSERT(p_End >= cbegin() && p_End <= cend(), "[TOOLKIT] End iterator is out of bounds");
-        TKIT_ASSERT(p_Begin < p_End, "[TOOLKIT] Begin iterator must come before end iterator");
+        TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT] Begin iterator is out of bounds");
+        TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT] End iterator is out of bounds");
+        TKIT_ASSERT(m_Size >= std::distance(p_Begin, p_End), "[TOOLKIT] New size is negative");
 
-        const difference_type offset = std::distance(cbegin(), p_Begin);
-        const iterator it1 = begin() + offset;
-        const size_type count = std::distance(p_Begin, p_End);
-        TKIT_ASSERT(m_Size >= count, "[TOOLKIT] New size is negative");
-
-        // Copy the elements after the erased ones
-        std::move(it1 + count, end(), it1);
-
-        // And destroy the last elements
-        if constexpr (!std::is_trivially_destructible_v<T>)
-            for (size_type i = 0; i < count; ++i)
-                (end() - i - 1)->~T();
-        m_Size -= count;
+        m_Size -= Container<Traits>::Erase(end(), p_Begin, p_End);
     }
 
     /**
@@ -359,8 +256,7 @@ class StaticArray
     T &emplace_back(Args &&...p_Args) noexcept
     {
         TKIT_ASSERT(!full(), "[TOOLKIT] Container is already full");
-        ::new (end()) T(std::forward<Args>(p_Args)...);
-        return *(begin() + m_Size++);
+        return *Memory::Construct(begin() + m_Size++, std::forward<Args>(p_Args)...);
     }
 
     /**
@@ -395,20 +291,15 @@ class StaticArray
         requires std::constructible_from<T, Args...>
     void resize(const size_type p_Size, Args &&...args) noexcept
     {
-        TKIT_ASSERT(p_Size <= capacity(), "[TOOLKIT] Size is bigger than capacity");
+        TKIT_ASSERT(p_Size <= N, "[TOOLKIT] Size is bigger than capacity");
 
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (p_Size < m_Size)
-            {
-                auto itend = rbegin() + (m_Size - p_Size);
-                for (auto it = rbegin(); it != itend; ++it)
-                    it->~T();
-            }
+                Memory::DestructRange(begin() + p_Size, end());
 
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
             if (p_Size > m_Size)
-                for (size_type i = m_Size; i < p_Size; ++i)
-                    ::new (begin() + i) T(std::forward<Args>(args)...);
+                Memory::ConstructRange(begin() + m_Size, begin() + p_Size, std::forward<Args>(args)...);
 
         m_Size = p_Size;
     }
@@ -488,9 +379,26 @@ class StaticArray
     void clear() noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
-            for (auto it = begin(); it != end(); ++it)
-                it->~T();
+            Memory::DestructRange(begin(), end());
         m_Size = 0;
+    }
+
+    /**
+     * @brief Get a pointer to the data buffer.
+     *
+     */
+    const T *data() const noexcept
+    {
+        return reinterpret_cast<const_pointer>(&m_Data[0]);
+    }
+
+    /**
+     * @brief Get a pointer to the data buffer.
+     *
+     */
+    T *data() noexcept
+    {
+        return reinterpret_cast<pointer>(&m_Data[0]);
     }
 
     /**
@@ -499,7 +407,7 @@ class StaticArray
      */
     iterator begin() noexcept
     {
-        return reinterpret_cast<pointer>(&m_Data[0]);
+        return data();
     }
 
     /**
@@ -508,7 +416,7 @@ class StaticArray
      */
     iterator end() noexcept
     {
-        return data() + m_Size;
+        return begin() + m_Size;
     }
 
     /**
@@ -517,7 +425,7 @@ class StaticArray
      */
     const_iterator begin() const noexcept
     {
-        return reinterpret_cast<const_pointer>(&m_Data[0]);
+        return data();
     }
 
     /**
@@ -526,7 +434,7 @@ class StaticArray
      */
     const_iterator end() const noexcept
     {
-        return data() + m_Size;
+        return begin() + m_Size;
     }
 
     /**
@@ -544,7 +452,7 @@ class StaticArray
      */
     const_iterator cend() const noexcept
     {
-        return data() + m_Size;
+        return begin() + m_Size;
     }
 
     /**
@@ -599,24 +507,6 @@ class StaticArray
     const_reverse_iterator crend() const noexcept
     {
         return const_reverse_iterator(cbegin());
-    }
-
-    /**
-     * @brief Get a pointer to the data buffer.
-     *
-     */
-    const T *data() const noexcept
-    {
-        return begin();
-    }
-
-    /**
-     * @brief Get a pointer to the data buffer.
-     *
-     */
-    T *data() noexcept
-    {
-        return begin();
     }
 
     /**

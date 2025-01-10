@@ -132,8 +132,7 @@ template <typename T> class TKIT_API BlockAllocator
     [[nodiscard]] T *CreateConcurrent(Args &&...p_Args) noexcept
     {
         T *ptr = AllocateConcurrent();
-        ::new (ptr) T(std::forward<Args>(p_Args)...);
-        return ptr;
+        return Memory::Construct(ptr, std::forward<Args>(p_Args)...);
     }
 
     /**
@@ -165,8 +164,7 @@ template <typename T> class TKIT_API BlockAllocator
     [[nodiscard]] T *CreateSerial(Args &&...p_Args) noexcept
     {
         T *ptr = AllocateSerial();
-        ::new (ptr) T(std::forward<Args>(p_Args)...);
-        return ptr;
+        return Memory::Construct(ptr, std::forward<Args>(p_Args)...);
     }
 
     /**

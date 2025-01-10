@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tkit/container/alias.hpp"
+#include "tkit/memory/memory.hpp"
 
 namespace TKit
 {
@@ -39,7 +40,7 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
     {
         static_assert(sizeof(T) <= Size, "Object does not fit in the local buffer");
         static_assert(alignof(T) <= Alignment, "Object has incompatible alignment");
-        return ::new (m_Data) T(std::forward<Args>(p_Args)...);
+        return Memory::Construct(Get<T>(), std::forward<Args>(p_Args)...);
     }
 
     /**
@@ -58,10 +59,7 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
     template <typename T> void Destruct() const noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
-        {
-            const T *ptr = Get<T>();
-            ptr->~T();
-        }
+            Memory::Destruct(Get<T>());
     }
 
     /**

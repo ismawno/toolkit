@@ -129,6 +129,62 @@ template <typename T> class DefaultAllocator
     }
 };
 
+template <typename T, typename... Args> T *Construct(T *p_Ptr, Args &&...p_Args) noexcept
+{
+    return ::new (p_Ptr) T(std::forward<Args>(p_Args)...);
+}
+template <typename T> void Destruct(T *p_Ptr) noexcept
+{
+    p_Ptr->~T();
+}
+
+template <typename T, typename It, typename... Args>
+void ConstructRange(const It p_Begin, const It p_End, Args &&...p_Args) noexcept
+{
+    for (auto it = p_Begin; it != p_End; ++it)
+        Construct(&*it, std::forward<Args>(p_Args)...);
+}
+template <typename T, typename... Args> void ConstructRange(T *p_Begin, T *p_End, Args &&...p_Args) noexcept
+{
+    for (auto it = p_Begin; it != p_End; ++it)
+        Construct(it, std::forward<Args>(p_Args)...);
+}
+
+template <typename T, typename It1, typename It2, typename... Args>
+void ConstructRangeCopy(It1 p_Dst, const It2 p_Begin, const It2 p_End) noexcept
+{
+    for (auto it = p_Begin; it != p_End; ++it, ++p_Dst)
+        Construct(&*p_Dst, *it);
+}
+template <typename T, typename U> void ConstructRangeCopy(T *p_Dst, const U *p_Begin, const U *p_End) noexcept
+{
+    for (auto it = p_Begin; it != p_End; ++it, ++p_Dst)
+        Construct(p_Dst, *it);
+}
+
+template <typename T, typename It1, typename It2, typename... Args>
+void ConstructRangeMove(It1 p_Dst, const It2 p_Begin, const It2 p_End) noexcept
+{
+    for (auto it = p_Begin; it != p_End; ++it, ++p_Dst)
+        Construct(&*p_Dst, std::move(*it));
+}
+template <typename T, typename U> void ConstructRangeMove(T *p_Dst, const U *p_Begin, const U *p_End) noexcept
+{
+    for (auto it = p_Begin; it != p_End; ++it, ++p_Dst)
+        Construct(p_Dst, std::move(*it));
+}
+
+template <typename T, typename It> void DestructRange(It p_Begin, It p_End) noexcept
+{
+    for (auto it = p_Begin; it != p_End; ++it)
+        Destruct(&*it);
+}
+template <typename T> void DestructRange(T *p_Begin, T *p_End) noexcept
+{
+    for (auto it = p_Begin; it != p_End; ++it)
+        Destruct(it);
+}
+
 } // namespace TKit::Memory
 
 #ifndef TKIT_DISABLE_MEMORY_OVERRIDES

@@ -2,6 +2,7 @@
 
 #include "tkit/core/logging.hpp"
 #include "tkit/core/non_copyable.hpp"
+#include "tkit/memory/memory.hpp"
 
 namespace TKit
 {
@@ -75,8 +76,7 @@ class TKIT_API ArenaAllocator
         T *ptr = static_cast<T *>(Push(TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
         if (!ptr)
             return nullptr;
-        ::new (ptr) T(std::forward<Args>(p_Args)...);
-        return ptr;
+        return Memory::Construct(ptr, std::forward<Args>(p_Args)...);
     }
 
     /**
@@ -96,8 +96,7 @@ class TKIT_API ArenaAllocator
         T *ptr = static_cast<T *>(Push(p_N * TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
         if (!ptr)
             return nullptr;
-        for (usize i = 0; i < p_N; ++i)
-            ::new (&ptr[i]) T(std::forward<Args>(p_Args)...);
+        Memory::ConstructRange(ptr, ptr + p_N, std::forward<Args>(p_Args)...);
         return ptr;
     }
 
