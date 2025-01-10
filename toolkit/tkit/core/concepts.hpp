@@ -2,6 +2,7 @@
 
 #include "tkit/core/api.hpp"
 #include "tkit/core/alias.hpp"
+#include <functional>
 #include <concepts>
 
 namespace TKit

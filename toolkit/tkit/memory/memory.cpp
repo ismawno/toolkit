@@ -119,4 +119,33 @@ void operator delete[](void *p_Ptr, const std::nothrow_t &) noexcept
     std::free(p_Ptr);
 }
 
+void operator delete(void *p_Ptr, const size_t) noexcept
+{
+    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
+    std::free(p_Ptr);
+}
+void operator delete[](void *p_Ptr, const size_t) noexcept
+{
+    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
+    std::free(p_Ptr);
+}
+void operator delete(void *p_Ptr, const size_t, const std::align_val_t) noexcept
+{
+    TKit::DeallocateAlignedPlatformSpecific(p_Ptr);
+}
+void operator delete[](void *p_Ptr, const size_t, const std::align_val_t) noexcept
+{
+    TKit::DeallocateAlignedPlatformSpecific(p_Ptr);
+}
+void operator delete(void *p_Ptr, const size_t, const std::nothrow_t &) noexcept
+{
+    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
+    std::free(p_Ptr);
+}
+void operator delete[](void *p_Ptr, const size_t, const std::nothrow_t &) noexcept
+{
+    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
+    std::free(p_Ptr);
+}
+
 #endif

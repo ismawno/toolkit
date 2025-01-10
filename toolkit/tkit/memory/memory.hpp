@@ -131,4 +131,11 @@ TKIT_API void operator delete[](void *p_Ptr, std::align_val_t p_Alignment) noexc
 TKIT_API void operator delete(void *p_Ptr, const std::nothrow_t &) noexcept;
 TKIT_API void operator delete[](void *p_Ptr, const std::nothrow_t &) noexcept;
 
+TKIT_API void operator delete(void *p_Ptr, size_t p_Size) noexcept;
+TKIT_API void operator delete[](void *p_Ptr, size_t p_Size) noexcept;
+TKIT_API void operator delete(void *p_Ptr, size_t p_Size, std::align_val_t p_Alignment) noexcept;
+TKIT_API void operator delete[](void *p_Ptr, size_t p_Size, std::align_val_t p_Alignment) noexcept;
+TKIT_API void operator delete(void *p_Ptr, size_t p_Size, const std::nothrow_t &) noexcept;
+TKIT_API void operator delete[](void *p_Ptr, size_t p_Size, const std::nothrow_t &) noexcept;
+
 #endif
