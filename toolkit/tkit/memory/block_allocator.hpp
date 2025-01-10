@@ -373,8 +373,8 @@ template <typename T> class TKIT_API BlockAllocator
     }
 
     DynamicArray<std::byte *> m_Blocks;
-    usize m_BlockSize;
     Chunk *m_FreeList = nullptr;
+    usize m_BlockSize;
     u32 m_Allocations = 0;
     TKIT_PROFILE_DECLARE_MUTEX(SpinLock, m_Mutex);
 };
