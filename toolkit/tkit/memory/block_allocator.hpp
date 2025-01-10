@@ -98,24 +98,24 @@ template <typename T> class TKIT_API BlockAllocator
      * @brief Get the size of a chunk in bytes.
      *
      */
-    static TKIT_CONSTEVAL size_t GetChunkSize() noexcept
+    static TKIT_CONSTEVAL usize GetChunkSize() noexcept
     {
         if constexpr (sizeof(T) < sizeof(Chunk))
-            return sizeof(Chunk);
+            return TKIT_SIZE_OF(Chunk);
         else
-            return sizeof(T);
+            return TKIT_SIZE_OF(T);
     }
 
     /**
      * @brief Get the alignment of a chunk in bytes.
      *
      */
-    static TKIT_CONSTEVAL size_t GetChunkAlignment() noexcept
+    static TKIT_CONSTEVAL usize GetChunkAlignment() noexcept
     {
         if constexpr (alignof(T) < alignof(Chunk))
-            return alignof(Chunk);
+            return TKIT_ALIGN_OF(Chunk);
         else
-            return alignof(T);
+            return TKIT_ALIGN_OF(T);
     }
 
     /**
@@ -518,7 +518,7 @@ template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexce
 #define TKIT_BLOCK_ALLOCATED_CONCURRENT(p_ClassName, p_ChunksPerBlock)                                                 \
     static void *operator new([[maybe_unused]] size_t p_Size)                                                          \
     {                                                                                                                  \
-        TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
+        TKIT_ASSERT(p_Size == TKIT_SIZE_OF(p_ClassName),                                                               \
                     "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
         return TKit::BAllocateConcurrent<p_ClassName, p_ChunksPerBlock>();                                             \
     }                                                                                                                  \
@@ -528,7 +528,7 @@ template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexce
     }                                                                                                                  \
     static void *operator new([[maybe_unused]] size_t p_Size, const std::nothrow_t &)                                  \
     {                                                                                                                  \
-        TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
+        TKIT_ASSERT(p_Size == TKIT_SIZE_OF(p_ClassName),                                                               \
                     "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
         return TKit::BAllocateConcurrent<p_ClassName, p_ChunksPerBlock>();                                             \
     }                                                                                                                  \
@@ -540,7 +540,7 @@ template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexce
 #define TKIT_BLOCK_ALLOCATED_SERIAL(p_ClassName, p_ChunksPerBlock)                                                     \
     static void *operator new([[maybe_unused]] size_t p_Size)                                                          \
     {                                                                                                                  \
-        TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
+        TKIT_ASSERT(p_Size == TKIT_SIZE_OF(p_ClassName),                                                               \
                     "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
         return TKit::BAllocateSerial<p_ClassName, p_ChunksPerBlock>();                                                 \
     }                                                                                                                  \
@@ -550,7 +550,7 @@ template <typename T, usize ChunksPerBlock> void BDestroySerial(T *p_Ptr) noexce
     }                                                                                                                  \
     static void *operator new([[maybe_unused]] size_t p_Size, const std::nothrow_t &)                                  \
     {                                                                                                                  \
-        TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
+        TKIT_ASSERT(p_Size == TKIT_SIZE_OF(p_ClassName),                                                               \
                     "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
         return TKit::BAllocateSerial<p_ClassName, p_ChunksPerBlock>();                                                 \
     }                                                                                                                  \

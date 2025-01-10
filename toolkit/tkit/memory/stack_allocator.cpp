@@ -9,7 +9,7 @@ StackAllocator::StackAllocator(const usize p_Size, const usize p_Alignment) noex
 {
     m_Buffer =
         static_cast<std::byte *>(Memory::AllocateAlignedPlatformSpecific(static_cast<size_t>(p_Size), p_Alignment));
-    m_Entries.reserve(p_Size / static_cast<usize>(sizeof(Entry)));
+    m_Entries.reserve(p_Size / TKIT_SIZE_OF(Entry));
 }
 
 StackAllocator::~StackAllocator() noexcept

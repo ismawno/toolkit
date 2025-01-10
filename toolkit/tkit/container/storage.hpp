@@ -18,7 +18,7 @@ namespace TKit
  * @tparam Size The size of the local allocation.
  * @tparam Alignment The alignment of the local allocation, defaults to the alignment of a pointer.
  */
-template <usize Size, usize Alignment = alignof(void *)> class RawStorage
+template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStorage
 {
   public:
     RawStorage() noexcept = default;
@@ -26,14 +26,16 @@ template <usize Size, usize Alignment = alignof(void *)> class RawStorage
     /**
      * @brief Construct a new object of type `T` in the local buffer.
      *
-     * Calling `Create()` on top of an existing object will cause undefined behavior. The object of type `T` needs to
+     * Calling `Construct()` on top of an existing object will cause undefined behavior. The object of type `T` needs to
      * fit in the local buffer and have an alignment that is compatible with the local buffer.
+     *
+     * If your type is trivially constructible, you dont need to call this function.
      *
      * @tparam T The type of the object to create.
      * @param p_Args The arguments to pass to the constructor of `T`.
      * @return A pointer to the newly created object.
      */
-    template <typename T, typename... Args> T *Create(Args &&...p_Args) noexcept
+    template <typename T, typename... Args> T *Construct(Args &&...p_Args) noexcept
     {
         static_assert(sizeof(T) <= Size, "Object does not fit in the local buffer");
         static_assert(alignof(T) <= Alignment, "Object has incompatible alignment");
@@ -43,15 +45,17 @@ template <usize Size, usize Alignment = alignof(void *)> class RawStorage
     /**
      * @brief Destroy the object in the local buffer.
      *
-     * Calling `Destroy()` on top of an already destroyed object/uninitialized memory, or calling `Destroy()` with a
+     * Calling `Destruct()` on top of an already destroyed object/uninitialized memory, or calling `Destruct()` with a
      * different type `T` will cause undefined behavior.
+     *
+     * If `T`is trivially destructible, this function will do nothing.
      *
      * This function is declared as const to follow the standard pattern where a pointer to const object can be
      * destroyed.
      *
      * @tparam T The type of the object to destroy.
      */
-    template <typename T> void Destroy() const noexcept
+    template <typename T> void Destruct() const noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
@@ -111,12 +115,12 @@ template <typename T> class Storage
     Storage(const Storage &p_Other) noexcept
         requires std::copy_constructible<T>
     {
-        m_Storage.template Create<T>(*p_Other.Get());
+        m_Storage.template Construct<T>(*p_Other.Get());
     }
     Storage(Storage &&p_Other) noexcept
         requires std::move_constructible<T>
     {
-        m_Storage.template Create<T>(std::move(*p_Other.Get()));
+        m_Storage.template Construct<T>(std::move(*p_Other.Get()));
     }
 
     Storage &operator=(const Storage &p_Other) noexcept
@@ -139,34 +143,34 @@ template <typename T> class Storage
         requires(!std::same_as<Storage, std::decay_t<Args>> && ...)
     Storage(Args &&...p_Args) noexcept
     {
-        m_Storage.template Create<T>(std::forward<Args>(p_Args)...);
+        m_Storage.template Construct<T>(std::forward<Args>(p_Args)...);
     }
 
     /**
      * @brief Construct a new object of type `T` in the local buffer.
      *
-     * Calling `Create()` on top of an existing object will cause undefined behavior.
+     * Calling `Construct()` on top of an existing object will cause undefined behavior.
      *
      * @param p_Args The arguments to pass to the constructor of `T`.
      * @return A pointer to the newly created object.
      */
-    template <typename... Args> T *Create(Args &&...p_Args) noexcept
+    template <typename... Args> T *Construct(Args &&...p_Args) noexcept
     {
-        return m_Storage.template Create<T>(std::forward<Args>(p_Args)...);
+        return m_Storage.template Construct<T>(std::forward<Args>(p_Args)...);
     }
 
     /**
-     * @brief Destroy the object in the local buffer.
+     * @brief Destruct the object in the local buffer.
      *
-     * Calling `Destroy()` on top of an already destroyed object/uninitialized memory, or calling `Destroy()` with a
+     * Calling `Destruct()` on top of an already destroyed object/uninitialized memory, or calling `Destruct()` with a
      * different type `T` will cause undefined behavior.
      *
      * This function is declared as const to follow the standard pattern where a pointer to const object can be
      * destroyed.
      */
-    void Destroy() const noexcept
+    void Destruct() const noexcept
     {
-        m_Storage.template Destroy<T>();
+        m_Storage.template Destruct<T>();
     }
 
     const T *Get() const noexcept

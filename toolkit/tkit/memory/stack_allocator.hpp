@@ -42,7 +42,7 @@ class TKIT_API StackAllocator
     // The alignment parameter specifies the starting alignment of the whole block so that your first allocation will
     // not be padded in case you need specific alignment requirements for it, but it does not restrict the alignment of
     // the individual allocations at all. You can still specify alignments of 64 if you want when allocating
-    explicit StackAllocator(usize p_Size, usize p_Alignment = alignof(std::max_align_t)) noexcept;
+    explicit StackAllocator(usize p_Size, usize p_Alignment = TKIT_ALIGN_OF(std::max_align_t)) noexcept;
     ~StackAllocator() noexcept;
 
     StackAllocator(StackAllocator &&p_Other) noexcept;
@@ -73,7 +73,7 @@ class TKIT_API StackAllocator
      */
     template <typename T> T *Push(const usize p_N) noexcept
     {
-        return static_cast<T *>(Push(p_N * sizeof(T), alignof(T)));
+        return static_cast<T *>(Push(p_N * TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
     }
 
     /**
@@ -113,7 +113,7 @@ class TKIT_API StackAllocator
         requires std::constructible_from<T, Args...>
     T *Create(Args &&...p_Args) noexcept
     {
-        T *ptr = static_cast<T *>(Allocate(sizeof(T), alignof(T)));
+        T *ptr = static_cast<T *>(Allocate(TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
         if (!ptr)
             return nullptr;
         ::new (ptr) T(std::forward<Args>(p_Args)...);
@@ -134,7 +134,7 @@ class TKIT_API StackAllocator
         requires std::constructible_from<T, Args...>
     T *NCreate(const usize p_N, Args &&...p_Args) noexcept
     {
-        T *ptr = static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
+        T *ptr = static_cast<T *>(Allocate(p_N * TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
         if (!ptr)
             return nullptr;
         for (usize i = 0; i < p_N; ++i)
@@ -156,7 +156,7 @@ class TKIT_API StackAllocator
             TKIT_ASSERT(m_Entries.back().Ptr == reinterpret_cast<std::byte *>(p_Ptr),
                         "[TOOLKIT] Elements must be deallocated in the reverse order they were allocated");
 
-            const usize n = m_Entries.back().Size / sizeof(T);
+            const usize n = m_Entries.back().Size / TKIT_SIZE_OF(T);
             for (usize i = 0; i < n; ++i)
                 p_Ptr[i].~T();
         }

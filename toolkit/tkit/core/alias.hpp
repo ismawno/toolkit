@@ -6,12 +6,15 @@
 #include <limits>
 
 #ifndef TKIT_SIZE_TYPE
-#    define TKIT_SIZE_TYPE u32 // std::size_t
+#    define TKIT_SIZE_TYPE TKit::Alias::u32 // std::size_t
 #endif
 
 #ifndef TKIT_DIFFERENCE_TYPE
-#    define TKIT_DIFFERENCE_TYPE i32 // std::ptrdiff_t
+#    define TKIT_DIFFERENCE_TYPE TKit::Alias::i32 // std::ptrdiff_t
 #endif
+
+#define TKIT_SIZE_OF(T) static_cast<TKit::Alias::usize>(sizeof(T))
+#define TKIT_ALIGN_OF(T) static_cast<TKit::Alias::usize>(alignof(T))
 
 namespace TKit
 {

@@ -27,7 +27,7 @@ template <typename T, typename ErrorType = const char *> class Result
     {
         Result result{};
         result.m_Ok = true;
-        result.m_Value.Create(std::forward<ValueArgs>(p_Args)...);
+        result.m_Value.Construct(std::forward<ValueArgs>(p_Args)...);
         return result;
     }
 
@@ -40,7 +40,7 @@ template <typename T, typename ErrorType = const char *> class Result
     {
         Result result{};
         result.m_Ok = false;
-        result.m_Error.Create(std::forward<ErrorArgs>(p_Args)...);
+        result.m_Error.Construct(std::forward<ErrorArgs>(p_Args)...);
         return result;
     }
 
@@ -49,18 +49,18 @@ template <typename T, typename ErrorType = const char *> class Result
         : m_Ok(p_Other.m_Ok)
     {
         if (m_Ok)
-            m_Value.Create(*p_Other.m_Value.Get());
+            m_Value.Construct(*p_Other.m_Value.Get());
         else
-            m_Error.Create(*p_Other.m_Error.Get());
+            m_Error.Construct(*p_Other.m_Error.Get());
     }
     Result(Result &&p_Other) noexcept
         requires(std::move_constructible<T> && std::move_constructible<ErrorType>)
         : m_Ok(p_Other.m_Ok)
     {
         if (m_Ok)
-            m_Value.Create(std::move(*p_Other.m_Value.Get()));
+            m_Value.Construct(std::move(*p_Other.m_Value.Get()));
         else
-            m_Error.Create(std::move(*p_Other.m_Error.Get()));
+            m_Error.Construct(std::move(*p_Other.m_Error.Get()));
     }
 
     Result &operator=(const Result &p_Other) noexcept
@@ -71,9 +71,9 @@ template <typename T, typename ErrorType = const char *> class Result
         destroy();
         m_Ok = p_Other.m_Ok;
         if (m_Ok)
-            m_Value.Create(*p_Other.m_Value.Get());
+            m_Value.Construct(*p_Other.m_Value.Get());
         else
-            m_Error.Create(*p_Other.m_Error.Get());
+            m_Error.Construct(*p_Other.m_Error.Get());
 
         return *this;
     }
@@ -85,9 +85,9 @@ template <typename T, typename ErrorType = const char *> class Result
         destroy();
         m_Ok = p_Other.m_Ok;
         if (m_Ok)
-            m_Value.Create(std::move(*p_Other.m_Value.Get()));
+            m_Value.Construct(std::move(*p_Other.m_Value.Get()));
         else
-            m_Error.Create(std::move(*p_Other.m_Error.Get()));
+            m_Error.Construct(std::move(*p_Other.m_Error.Get()));
 
         return *this;
     }
@@ -171,9 +171,9 @@ template <typename T, typename ErrorType = const char *> class Result
     void destroy() noexcept
     {
         if (m_Ok)
-            m_Value.Destroy();
+            m_Value.Destruct();
         else
-            m_Error.Destroy();
+            m_Error.Destruct();
     }
 
     union {
