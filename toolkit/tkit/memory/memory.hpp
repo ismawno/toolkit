@@ -4,7 +4,7 @@
 #include "tkit/core/alias.hpp"
 #include <functional>
 
-namespace TKit
+namespace TKit::Memory
 {
 // Could abstract this in some way (by defining those as function pointers) to allow for custom allocators
 // For now, I'll leave it as it is
@@ -73,6 +73,22 @@ TKIT_API void *AllocateAlignedPlatformSpecific(size_t p_Size, size_t p_Alignment
  */
 TKIT_API void DeallocateAlignedPlatformSpecific(void *p_Ptr) noexcept;
 
+/**
+ * @brief A custom allocator that uses a custom size_type (usually u32) for indexing.
+ *
+ * This allocator is intended for environments or applications where the maximum container size never exceeds 2^32,
+ * making 32-bit indices (u32) sufficient. By using a smaller index type, it can offer performance benefits in tight
+ * loops and reduce cache pressure, particularly when managing a large number of small containers or indices.
+ *
+ * @tparam T The type of object to allocate.
+ *
+ * @note
+ * - This allocator is stateless and always compares equal.
+ *
+ * - It does not provide `construct()` or `destroy()` methods explicitly
+ *   because, in C++17 and later, `std::allocator_traits` can handle
+ *   construction and destruction via placement-new and direct destructor calls.
+ */
 template <typename T> class DefaultAllocator
 {
   public:
@@ -113,7 +129,7 @@ template <typename T> class DefaultAllocator
     }
 };
 
-} // namespace TKit
+} // namespace TKit::Memory
 
 #ifndef TKIT_DISABLE_MEMORY_OVERRIDES
 

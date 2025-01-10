@@ -3,7 +3,7 @@
 #include "tkit/core/logging.hpp"
 #include "tkit/profiling/macros.hpp"
 
-namespace TKit
+namespace TKit::Memory
 {
 void *Allocate(const size_t p_Size) noexcept
 {
@@ -54,7 +54,7 @@ void DeallocateAlignedPlatformSpecific(void *p_Ptr) noexcept
     std::free(p_Ptr);
 #endif
 }
-} // namespace TKit
+} // namespace TKit::Memory
 
 #ifndef TKIT_DISABLE_MEMORY_OVERRIDES
 void *operator new(const size_t p_Size)
@@ -71,11 +71,11 @@ void *operator new[](const size_t p_Size)
 }
 void *operator new(const size_t p_Size, const std::align_val_t p_Alignment)
 {
-    return TKit::AllocateAlignedPlatformSpecific(p_Size, static_cast<size_t>(p_Alignment));
+    return TKit::Memory::AllocateAlignedPlatformSpecific(p_Size, static_cast<size_t>(p_Alignment));
 }
 void *operator new[](const size_t p_Size, const std::align_val_t p_Alignment)
 {
-    return TKit::AllocateAlignedPlatformSpecific(p_Size, static_cast<size_t>(p_Alignment));
+    return TKit::Memory::AllocateAlignedPlatformSpecific(p_Size, static_cast<size_t>(p_Alignment));
 }
 void *operator new(const size_t p_Size, const std::nothrow_t &) noexcept
 {
@@ -102,11 +102,11 @@ void operator delete[](void *p_Ptr) noexcept
 }
 void operator delete(void *p_Ptr, const std::align_val_t) noexcept
 {
-    TKit::DeallocateAlignedPlatformSpecific(p_Ptr);
+    TKit::Memory::DeallocateAlignedPlatformSpecific(p_Ptr);
 }
 void operator delete[](void *p_Ptr, const std::align_val_t) noexcept
 {
-    TKit::DeallocateAlignedPlatformSpecific(p_Ptr);
+    TKit::Memory::DeallocateAlignedPlatformSpecific(p_Ptr);
 }
 void operator delete(void *p_Ptr, const std::nothrow_t &) noexcept
 {
@@ -131,11 +131,11 @@ void operator delete[](void *p_Ptr, const size_t) noexcept
 }
 void operator delete(void *p_Ptr, const size_t, const std::align_val_t) noexcept
 {
-    TKit::DeallocateAlignedPlatformSpecific(p_Ptr);
+    TKit::Memory::DeallocateAlignedPlatformSpecific(p_Ptr);
 }
 void operator delete[](void *p_Ptr, const size_t, const std::align_val_t) noexcept
 {
-    TKit::DeallocateAlignedPlatformSpecific(p_Ptr);
+    TKit::Memory::DeallocateAlignedPlatformSpecific(p_Ptr);
 }
 void operator delete(void *p_Ptr, const size_t, const std::nothrow_t &) noexcept
 {

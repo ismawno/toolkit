@@ -43,15 +43,15 @@ template <> struct OpAlias<std::string>
 
 // These are nice to have in case I want to change the container/allocator type easily or to use the transparent
 // operations
-template <typename T, typename Allocator = DefaultAllocator<T>> using DynamicArray = std::vector<T, Allocator>;
-template <typename T, typename Allocator = DefaultAllocator<T>> using Deque = std::deque<T, Allocator>;
+template <typename T, typename Allocator = Memory::DefaultAllocator<T>> using DynamicArray = std::vector<T, Allocator>;
+template <typename T, typename Allocator = Memory::DefaultAllocator<T>> using Deque = std::deque<T, Allocator>;
 
 template <typename Key, typename Value, typename Hash = typename HashAlias<Key>::Type,
           typename OpEqual = typename OpAlias<Key>::Type,
-          typename Allocator = DefaultAllocator<std::pair<const Key, Value>>>
+          typename Allocator = Memory::DefaultAllocator<std::pair<const Key, Value>>>
 using HashMap = std::unordered_map<Key, Value, Hash, OpEqual, Allocator>;
 
 template <typename Value, typename Hash = typename HashAlias<Value>::Type,
-          typename OpEqual = typename OpAlias<Value>::Type, typename Allocator = DefaultAllocator<Value>>
+          typename OpEqual = typename OpAlias<Value>::Type, typename Allocator = Memory::DefaultAllocator<Value>>
 using HashSet = std::unordered_set<Value, Hash, OpEqual>;
 } // namespace TKit

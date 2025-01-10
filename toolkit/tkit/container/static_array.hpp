@@ -22,7 +22,7 @@ namespace TKit
  * @tparam T The type of the elements in the array.
  * @tparam N The capacity of the array.
  */
-template <typename T, usize N, typename Traits = std::allocator_traits<DefaultAllocator<T>>>
+template <typename T, usize N, typename Traits = std::allocator_traits<Memory::DefaultAllocator<T>>>
     requires(N > 0)
 class StaticArray
 {
@@ -94,7 +94,7 @@ class StaticArray
             ::new (begin() + i) T(std::move(p_Other[i]));
     }
 
-    StaticArray(std::initializer_list<T> p_List) noexcept : m_Size(p_List.size())
+    StaticArray(const std::initializer_list<T> p_List) noexcept : m_Size(p_List.size())
     {
         TKIT_ASSERT(p_List.size() <= N, "[TOOLKIT] Size is bigger than capacity");
         for (size_type i = 0; i < m_Size; ++i)
@@ -405,9 +405,10 @@ class StaticArray
                     it->~T();
             }
 
-        if (p_Size > m_Size)
-            for (size_type i = m_Size; i < p_Size; ++i)
-                ::new (begin() + i) T(std::forward<Args>(args)...);
+        if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
+            if (p_Size > m_Size)
+                for (size_type i = m_Size; i < p_Size; ++i)
+                    ::new (begin() + i) T(std::forward<Args>(args)...);
 
         m_Size = p_Size;
     }
