@@ -16,7 +16,7 @@ struct StringHash
 {
     using is_transparent = void; // Enables heterogeneous operations.
 
-    usize operator()(std::string_view sv) const
+    size_t operator()(std::string_view sv) const
     {
         std::hash<std::string_view> hasher;
         return hasher(sv);
