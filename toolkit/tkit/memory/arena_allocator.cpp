@@ -7,7 +7,7 @@ namespace TKit
 ArenaAllocator::ArenaAllocator(const usize p_Size, const usize p_Alignment) noexcept
     : m_Size(p_Size), m_Remaining(p_Size)
 {
-    m_Buffer = static_cast<std::byte *>(AllocateAlignedPlatformSpecific(p_Size, p_Alignment));
+    m_Buffer = static_cast<std::byte *>(AllocateAlignedPlatformSpecific(static_cast<size_t>(p_Size), p_Alignment));
 }
 ArenaAllocator::~ArenaAllocator() noexcept
 {

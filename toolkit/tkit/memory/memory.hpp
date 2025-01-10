@@ -87,6 +87,12 @@ template <typename T> class DefaultAllocator
         using other = DefaultAllocator<U>;
     };
 
+    DefaultAllocator() noexcept = default;
+
+    template <typename U> DefaultAllocator(const DefaultAllocator<U> &) noexcept
+    {
+    }
+
     pointer allocate(size_type p_N)
     {
         return static_cast<pointer>(Allocate(p_N * sizeof(T)));
