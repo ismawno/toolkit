@@ -28,30 +28,30 @@ jobs:
         c_compiler: [gcc, clang, cl]
         profiling: [OFF, ON]
         include:
-          - os: windows-latest
+          - os: windows-2022
             c_compiler: cl
             cpp_compiler: cl
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             c_compiler: gcc
             cpp_compiler: g++
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             c_compiler: clang
             cpp_compiler: clang++
-          - os: macos-latest
+          - os: macos-12
             c_compiler: clang
             cpp_compiler: clang++
         exclude:
-          - os: windows-latest
+          - os: windows-2022
             c_compiler: gcc
-          - os: windows-latest
+          - os: windows-2022
             c_compiler: clang
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             c_compiler: cl
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             profiling: ON # ubuntu ships a very old version of wayland, which tracy needs, which is EXTREMELY annoying
-          - os: macos-latest
+          - os: macos-12
             c_compiler: gcc
-          - os: macos-latest
+          - os: macos-12
             c_compiler: cl
     env:
       CC: ${{ matrix.c_compiler }}
