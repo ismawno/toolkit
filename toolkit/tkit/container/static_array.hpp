@@ -84,7 +84,7 @@ class StaticArray
         Memory::ConstructRangeMove(begin(), p_Other.begin(), p_Other.end());
     }
 
-    StaticArray(const std::initializer_list<T> p_List) noexcept : m_Size(p_List.size())
+    StaticArray(const std::initializer_list<T> p_List) noexcept : m_Size(static_cast<size_type>(p_List.size()))
     {
         TKIT_ASSERT(p_List.size() <= N, "[TOOLKIT] Size is bigger than capacity");
         Memory::ConstructRangeCopy(begin(), p_List.begin(), p_List.end());
