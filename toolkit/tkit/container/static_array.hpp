@@ -48,7 +48,7 @@ class StaticArray
 
     template <std::input_iterator It> StaticArray(const It p_Begin, const It p_End) noexcept
     {
-        m_Size = std::distance(p_Begin, p_End);
+        m_Size = static_cast<size_type>(std::distance(p_Begin, p_End));
         TKIT_ASSERT(m_Size <= N, "[TOOLKIT] Size is bigger than capacity");
         Memory::ConstructRangeCopy(begin(), p_Begin, p_End);
     }

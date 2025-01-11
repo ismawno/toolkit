@@ -18,21 +18,6 @@ template <typename Traits> struct Container
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    static value_type *AsPtr(const iterator p_Iter) noexcept
-    {
-        if constexpr (std::is_pointer_v<iterator>)
-            return p_Iter;
-        else
-            return &*p_Iter;
-    }
-    static const value_type *AsPtr(const const_iterator p_Iter) noexcept
-    {
-        if constexpr (std::is_pointer_v<const_iterator>)
-            return p_Iter;
-        else
-            return &*p_Iter;
-    }
-
     /**
      * @brief Insert a new element at the specified position. The element is copied or moved into the array.
      *
@@ -44,13 +29,13 @@ template <typename Traits> struct Container
     {
         if (p_Pos == p_End) [[unlikely]]
         {
-            Memory::Construct(AsPtr(p_Pos), std::forward<T>(p_Value));
+            Memory::ConstructFromIterator(p_Pos, std::forward<T>(p_Value));
             return;
         }
 
         if constexpr (!std::is_trivially_constructible_v<value_type>)
         { // Current p_End pointer is uninitialized, so it must be handled manually
-            Memory::Construct(AsPtr(p_End), std::move(*(p_End - 1)));
+            Memory::ConstructFromIterator(p_End, std::move(*(p_End - 1)));
 
             if (const iterator shiftedEnd = p_End - 1; p_Pos < shiftedEnd)
                 std::move_backward(p_Pos, shiftedEnd, p_End);
@@ -59,8 +44,8 @@ template <typename Traits> struct Container
             std::move_backward(p_Pos, p_End, p_End + 1);
 
         if constexpr (!std::is_trivially_destructible_v<value_type>)
-            Memory::Destruct(AsPtr(p_Pos));
-        Memory::Construct(AsPtr(p_Pos), std::forward<T>(p_Value));
+            Memory::DestructFromIterator(p_Pos);
+        Memory::ConstructFromIterator(p_Pos, std::forward<T>(p_Value));
     }
 
     /**
@@ -79,8 +64,8 @@ template <typename Traits> struct Container
         if (p_Pos == p_End)
         {
             for (auto it = p_SrcBegin; it != p_SrcEnd; ++it)
-                Memory::Construct(AsPtr(p_Pos++), *it);
-            return std::distance(p_SrcBegin, p_SrcEnd);
+                Memory::ConstructFromIterator(p_Pos++, *it);
+            return static_cast<size_type>(std::distance(p_SrcBegin, p_SrcEnd));
         }
 
         // This method is a bit verbose, but it has many edge cases to handle:
@@ -94,9 +79,9 @@ template <typename Traits> struct Container
         // The remaining elements inside the original array must then be shifted, in case the amount of elements to
         // insert was small
 
-        const size_type trail = std::distance(p_Pos, p_End);
-        const size_type count = std::distance(p_SrcBegin, p_SrcEnd);
-        const size_type outOfBounds = static_cast<size_type>(count < trail ? count : trail);
+        const size_type trail = static_cast<size_type>(std::distance(p_Pos, p_End));
+        const size_type count = static_cast<size_type>(std::distance(p_SrcBegin, p_SrcEnd));
+        const size_type outOfBounds = count < trail ? count : trail;
 
         // Current p_End + outOfBounds pointers are uninitialized, so they must be handled manually
         for (size_type i = 0; i < count; ++i)
@@ -105,10 +90,10 @@ template <typename Traits> struct Container
             if (i < outOfBounds)
             {
                 const size_type idx2 = outOfBounds - i - 1;
-                Memory::Construct(AsPtr(p_End + idx1), std::move(*(p_Pos + idx2)));
+                Memory::ConstructFromIterator(p_End + idx1, std::move(*(p_Pos + idx2)));
             }
             else
-                Memory::Construct(AsPtr(p_End + idx1), *(--p_SrcEnd));
+                Memory::ConstructFromIterator(p_End + idx1, *(--p_SrcEnd));
         }
 
         if (const iterator shiftedEnd = p_End - count; p_Pos < shiftedEnd)
@@ -116,8 +101,8 @@ template <typename Traits> struct Container
         for (size_type i = 0; i < outOfBounds; ++i)
         {
             if constexpr (!std::is_trivially_destructible_v<value_type>)
-                Memory::Destruct(AsPtr(p_Pos + i));
-            Memory::Construct(AsPtr(p_Pos + i), *(p_SrcBegin++));
+                Memory::DestructFromIterator(p_Pos + i);
+            Memory::ConstructFromIterator(p_Pos + i, *(p_SrcBegin++));
         }
 
         return count;
@@ -128,7 +113,7 @@ template <typename Traits> struct Container
         std::move(p_Pos + 1, p_End, p_Pos);
         // And destroy the last element
         if constexpr (!std::is_trivially_destructible_v<value_type>)
-            Memory::Destruct(AsPtr(p_End - 1));
+            Memory::DestructFromIterator(p_End - 1);
     }
 
     static size_type Erase(const iterator p_End, const iterator p_RemBegin, const iterator p_RemEnd) noexcept
@@ -137,7 +122,7 @@ template <typename Traits> struct Container
         // Copy the elements after the erased ones
         std::move(p_RemEnd, p_End, p_RemBegin);
 
-        const size_type count = std::distance(p_RemBegin, p_RemEnd);
+        const size_type count = static_cast<size_type>(std::distance(p_RemBegin, p_RemEnd));
         // And destroy the last elements
         if constexpr (!std::is_trivially_destructible_v<value_type>)
             Memory::DestructRange(p_End - count, p_End);

@@ -138,51 +138,46 @@ template <typename T> void Destruct(T *p_Ptr) noexcept
     p_Ptr->~T();
 }
 
-template <typename T, typename It, typename... Args>
+template <typename It, typename... Args> auto ConstructFromIterator(const It p_It, Args &&...p_Args) noexcept
+{
+    if constexpr (std::is_pointer_v<It>)
+        return Construct(p_It, std::forward<Args>(p_Args)...);
+    else
+        return Construct(&*p_It, std::forward<Args>(p_Args)...);
+}
+template <typename It> void DestructFromIterator(const It p_It) noexcept
+{
+    if constexpr (std::is_pointer_v<It>)
+        Destruct(p_It);
+    else
+        Destruct(&*p_It);
+}
+
+template <typename It, typename... Args>
 void ConstructRange(const It p_Begin, const It p_End, Args &&...p_Args) noexcept
 {
     for (auto it = p_Begin; it != p_End; ++it)
-        Construct(&*it, std::forward<Args>(p_Args)...);
-}
-template <typename T, typename... Args> void ConstructRange(T *p_Begin, T *p_End, Args &&...p_Args) noexcept
-{
-    for (auto it = p_Begin; it != p_End; ++it)
-        Construct(it, std::forward<Args>(p_Args)...);
+        ConstructFromIterator(it, std::forward<Args>(p_Args)...);
 }
 
-template <typename T, typename It1, typename It2, typename... Args>
+template <typename It1, typename It2, typename... Args>
 void ConstructRangeCopy(It1 p_Dst, const It2 p_Begin, const It2 p_End) noexcept
 {
     for (auto it = p_Begin; it != p_End; ++it, ++p_Dst)
-        Construct(&*p_Dst, *it);
-}
-template <typename T, typename U> void ConstructRangeCopy(T *p_Dst, const U *p_Begin, const U *p_End) noexcept
-{
-    for (auto it = p_Begin; it != p_End; ++it, ++p_Dst)
-        Construct(p_Dst, *it);
+        ConstructFromIterator(p_Dst, *it);
 }
 
-template <typename T, typename It1, typename It2, typename... Args>
+template <typename It1, typename It2, typename... Args>
 void ConstructRangeMove(It1 p_Dst, const It2 p_Begin, const It2 p_End) noexcept
 {
     for (auto it = p_Begin; it != p_End; ++it, ++p_Dst)
-        Construct(&*p_Dst, std::move(*it));
-}
-template <typename T, typename U> void ConstructRangeMove(T *p_Dst, const U *p_Begin, const U *p_End) noexcept
-{
-    for (auto it = p_Begin; it != p_End; ++it, ++p_Dst)
-        Construct(p_Dst, std::move(*it));
+        ConstructFromIterator(p_Dst, std::move(*it));
 }
 
-template <typename T, typename It> void DestructRange(It p_Begin, It p_End) noexcept
+template <typename It> void DestructRange(const It p_Begin, const It p_End) noexcept
 {
     for (auto it = p_Begin; it != p_End; ++it)
-        Destruct(&*it);
-}
-template <typename T> void DestructRange(T *p_Begin, T *p_End) noexcept
-{
-    for (auto it = p_Begin; it != p_End; ++it)
-        Destruct(it);
+        DestructFromIterator(it);
 }
 
 } // namespace TKit::Memory
