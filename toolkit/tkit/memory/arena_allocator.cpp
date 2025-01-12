@@ -3,8 +3,12 @@
 
 namespace TKit
 {
+ArenaAllocator::ArenaAllocator(void *p_Buffer, const usize p_Size) noexcept
+    : m_Buffer(static_cast<std::byte *>(p_Buffer)), m_Size(p_Size), m_Remaining(p_Size), m_Provided(true)
+{
+}
 ArenaAllocator::ArenaAllocator(const usize p_Size, const usize p_Alignment) noexcept
-    : m_Size(p_Size), m_Remaining(p_Size)
+    : m_Size(p_Size), m_Remaining(p_Size), m_Provided(false)
 {
     m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(static_cast<size_t>(p_Size), p_Alignment));
 }
@@ -93,7 +97,7 @@ bool ArenaAllocator::IsFull() const noexcept
 
 void ArenaAllocator::deallocateBuffer() noexcept
 {
-    if (!m_Buffer)
+    if (!m_Buffer || m_Provided)
         return;
     TKIT_LOG_WARNING_IF(
         m_Remaining != m_Size,

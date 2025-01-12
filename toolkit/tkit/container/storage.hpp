@@ -22,7 +22,7 @@ namespace TKit
 template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStorage
 {
   public:
-    RawStorage() noexcept = default;
+    constexpr RawStorage() noexcept = default;
 
     /**
      * @brief Construct a new object of type `T` in the local buffer.
@@ -36,7 +36,7 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
      * @param p_Args The arguments to pass to the constructor of `T`.
      * @return A pointer to the newly created object.
      */
-    template <typename T, typename... Args> T *Construct(Args &&...p_Args) noexcept
+    template <typename T, typename... Args> constexpr T *Construct(Args &&...p_Args) noexcept
     {
         static_assert(sizeof(T) <= Size, "Object does not fit in the local buffer");
         static_assert(alignof(T) <= Alignment, "Object has incompatible alignment");
@@ -56,7 +56,7 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
      *
      * @tparam T The type of the object to destroy.
      */
-    template <typename T> void Destruct() const noexcept
+    template <typename T> constexpr void Destruct() const noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
             Memory::Destruct(Get<T>());
@@ -70,7 +70,7 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
      * @tparam T The type of the object to get.
      * @return A pointer to the object in the local buffer.
      */
-    template <typename T> const T *Get() const noexcept
+    template <typename T> constexpr const T *Get() const noexcept
     {
         return reinterpret_cast<const T *>(m_Data);
     }
@@ -83,7 +83,7 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
      * @tparam T The type of the object to get.
      * @return A pointer to the object in the local buffer.
      */
-    template <typename T> T *Get() noexcept
+    template <typename T> constexpr T *Get() noexcept
     {
         return reinterpret_cast<T *>(m_Data);
     }
@@ -108,20 +108,20 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
 template <typename T> class Storage
 {
   public:
-    Storage() noexcept = default;
+    constexpr Storage() noexcept = default;
 
-    Storage(const Storage &p_Other) noexcept
+    constexpr Storage(const Storage &p_Other) noexcept
         requires std::copy_constructible<T>
     {
         m_Storage.template Construct<T>(*p_Other.Get());
     }
-    Storage(Storage &&p_Other) noexcept
+    constexpr Storage(Storage &&p_Other) noexcept
         requires std::move_constructible<T>
     {
         m_Storage.template Construct<T>(std::move(*p_Other.Get()));
     }
 
-    Storage &operator=(const Storage &p_Other) noexcept
+    constexpr Storage &operator=(const Storage &p_Other) noexcept
         requires std::is_copy_assignable_v<T>
     {
         if (this != &p_Other)
@@ -129,7 +129,7 @@ template <typename T> class Storage
         return *this;
     }
 
-    Storage &operator=(Storage &&p_Other) noexcept
+    constexpr Storage &operator=(Storage &&p_Other) noexcept
         requires std::is_move_assignable_v<T>
     {
         if (this != &p_Other)
@@ -139,7 +139,7 @@ template <typename T> class Storage
 
     template <typename... Args>
         requires(!std::same_as<Storage, std::decay_t<Args>> && ...)
-    Storage(Args &&...p_Args) noexcept
+    constexpr Storage(Args &&...p_Args) noexcept
     {
         m_Storage.template Construct<T>(std::forward<Args>(p_Args)...);
     }
@@ -152,7 +152,7 @@ template <typename T> class Storage
      * @param p_Args The arguments to pass to the constructor of `T`.
      * @return A pointer to the newly created object.
      */
-    template <typename... Args> T *Construct(Args &&...p_Args) noexcept
+    template <typename... Args> constexpr T *Construct(Args &&...p_Args) noexcept
     {
         return m_Storage.template Construct<T>(std::forward<Args>(p_Args)...);
     }
@@ -166,34 +166,34 @@ template <typename T> class Storage
      * This function is declared as const to follow the standard pattern where a pointer to const object can be
      * destroyed.
      */
-    void Destruct() const noexcept
+    constexpr void Destruct() const noexcept
     {
         m_Storage.template Destruct<T>();
     }
 
-    const T *Get() const noexcept
+    constexpr const T *Get() const noexcept
     {
         return m_Storage.template Get<T>();
     }
-    T *Get() noexcept
+    constexpr T *Get() noexcept
     {
         return m_Storage.template Get<T>();
     }
 
-    const T *operator->() const noexcept
+    constexpr const T *operator->() const noexcept
     {
         return Get();
     }
-    T *operator->() noexcept
+    constexpr T *operator->() noexcept
     {
         return Get();
     }
 
-    const T &operator*() const noexcept
+    constexpr const T &operator*() const noexcept
     {
         return *Get();
     }
-    T &operator*() noexcept
+    constexpr T &operator*() noexcept
     {
         return *Get();
     }

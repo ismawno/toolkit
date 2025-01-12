@@ -25,11 +25,11 @@ template <Hashable... H> struct HashableTuple
 {
     using Tuple = std::tuple<H...>;
 
-    HashableTuple() noexcept = default;
-    explicit HashableTuple(const H &...p_Elements) noexcept : Elements(p_Elements...)
+    constexpr HashableTuple() noexcept = default;
+    explicit constexpr HashableTuple(const H &...p_Elements) noexcept : Elements(p_Elements...)
     {
     }
-    explicit(false) HashableTuple(const Tuple &p_Elements) noexcept : Elements(p_Elements)
+    explicit(false) constexpr HashableTuple(const Tuple &p_Elements) noexcept : Elements(p_Elements)
     {
     }
 
@@ -37,7 +37,7 @@ template <Hashable... H> struct HashableTuple
      * @brief Get the element at index `I`.
      *
      */
-    template <usize I> auto &Get() const noexcept
+    template <usize I> constexpr auto &Get() const noexcept
     {
         return std::get<I>(Elements);
     }
@@ -46,7 +46,7 @@ template <Hashable... H> struct HashableTuple
      * @brief Get the element at index `I`.
      *
      */
-    template <usize I> auto &Get() noexcept
+    template <usize I> constexpr auto &Get() noexcept
     {
         return std::get<I>(Elements);
     }
@@ -56,7 +56,7 @@ template <Hashable... H> struct HashableTuple
      * be raised.
      *
      */
-    template <Hashable T> const T &Get() const noexcept
+    template <Hashable T> constexpr const T &Get() const noexcept
     {
         return std::get<T>(Elements);
     }
@@ -66,12 +66,12 @@ template <Hashable... H> struct HashableTuple
      * be raised.
      *
      */
-    template <Hashable T> T &Get() noexcept
+    template <Hashable T> constexpr T &Get() noexcept
     {
         return std::get<T>(Elements);
     }
 
-    HashableTuple &operator=(const Tuple &p_Elements) noexcept
+    constexpr HashableTuple &operator=(const Tuple &p_Elements) noexcept
     {
         Elements = p_Elements;
         return *this;
@@ -81,14 +81,14 @@ template <Hashable... H> struct HashableTuple
      * @brief Compute the hash of the tuple.
      *
      */
-    usize operator()() const noexcept
+    constexpr usize operator()() const noexcept
     {
         usize seed = 0x517cc1b7;
         std::apply([&seed](const auto &...elements) { (hashSeed(seed, elements), ...); }, Elements);
         return seed;
     }
 
-    bool operator==(const HashableTuple &p_Other) const noexcept
+    constexpr bool operator==(const HashableTuple &p_Other) const noexcept
     {
         return Elements == p_Other.Elements;
     }
@@ -96,7 +96,7 @@ template <Hashable... H> struct HashableTuple
     Tuple Elements;
 
   private:
-    template <Hashable T> static void hashSeed(usize &p_Seed, const T &p_Hashable) noexcept
+    template <Hashable T> static constexpr void hashSeed(usize &p_Seed, const T &p_Hashable) noexcept
     {
         const std::hash<T> hasher;
         p_Seed ^= hasher(p_Hashable) + 0x9e3779b9 + (p_Seed << 6) + (p_Seed >> 2);

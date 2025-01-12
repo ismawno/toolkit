@@ -41,7 +41,9 @@ class TKIT_API StackAllocator
 
     // The alignment parameter specifies the starting alignment of the whole block so that your first allocation will
     // not be padded in case you need specific alignment requirements for it, but it does not restrict the alignment of
-    // the individual allocations at all. You can still specify alignments of 64 if you want when allocating
+    // the individual allocations at all. You can still specify alignments of, say, 64 if you want when allocating
+
+    StackAllocator(void *p_Buffer, usize p_Size) noexcept;
     explicit StackAllocator(usize p_Size, usize p_Alignment = TKIT_ALIGN_OF(std::max_align_t)) noexcept;
     ~StackAllocator() noexcept;
 
@@ -221,5 +223,6 @@ class TKIT_API StackAllocator
     usize m_Size = 0;
     usize m_Remaining = 0;
     DynamicArray<Entry> m_Entries;
+    bool m_Provided;
 };
 } // namespace TKit
