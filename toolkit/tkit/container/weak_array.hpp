@@ -17,7 +17,7 @@ template <typename T, usize Capacity = Limits<usize>::max()> // Consider adding 
     requires(Capacity > 0)
 class WeakArray
 {
-    TKIT_NON_COPYABLE(WeakArray);
+    TKIT_NON_COPYABLE(WeakArray)
 
   public:
     using element_type = T;
@@ -288,7 +288,7 @@ class WeakArray
  */
 template <typename T> class WeakArray<T, Limits<usize>::max()>
 {
-    TKIT_NON_COPYABLE(WeakArray);
+    TKIT_NON_COPYABLE(WeakArray)
 
   public:
     using Traits = std::allocator_traits<Memory::DefaultAllocator<T>>;
