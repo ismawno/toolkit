@@ -107,10 +107,17 @@ class StaticArray
         {
             TKIT_ASSERT(p_Other.size() <= N, "[TOOLKIT] Size is bigger than capacity");
         }
-        clear();
-        m_Size = p_Other.size();
+        const usize otherSize = p_Other.size();
+        const usize minSize = m_Size < otherSize ? m_Size : otherSize;
+        for (usize i = 0; i < minSize; ++i)
+            at(i) = p_Other[i];
 
-        Memory::ConstructRangeCopy(begin(), p_Other.begin(), p_Other.end());
+        if (otherSize > m_Size)
+            Memory::ConstructRangeCopy(end(), p_Other.begin() + m_Size, p_Other.end());
+        else if (otherSize < m_Size)
+            Memory::DestructRange(begin() + otherSize, end());
+
+        m_Size = otherSize;
         return *this;
     }
 
@@ -126,9 +133,17 @@ class StaticArray
         {
             TKIT_ASSERT(p_Other.size() <= N, "[TOOLKIT] Size is bigger than capacity");
         }
-        clear();
-        m_Size = p_Other.size();
-        Memory::ConstructRangeMove(begin(), p_Other.begin(), p_Other.end());
+        const usize otherSize = p_Other.size();
+        const usize minSize = m_Size < otherSize ? m_Size : otherSize;
+        for (usize i = 0; i < minSize; ++i)
+            at(i) = std::move(p_Other[i]);
+
+        if (otherSize > m_Size)
+            Memory::ConstructRangeMove(end(), p_Other.begin() + m_Size, p_Other.end());
+        else if (otherSize < m_Size)
+            Memory::DestructRange(begin() + otherSize, end());
+
+        m_Size = otherSize;
         return *this;
     }
 
@@ -136,9 +151,17 @@ class StaticArray
     {
         if (this == &p_Other)
             return *this;
-        clear();
-        m_Size = p_Other.size();
-        Memory::ConstructRangeCopy(begin(), p_Other.begin(), p_Other.end());
+        const usize otherSize = p_Other.size();
+        const usize minSize = m_Size < otherSize ? m_Size : otherSize;
+        for (usize i = 0; i < minSize; ++i)
+            at(i) = p_Other[i];
+
+        if (otherSize > m_Size)
+            Memory::ConstructRangeCopy(end(), p_Other.begin() + m_Size, p_Other.end());
+        else if (otherSize < m_Size)
+            Memory::DestructRange(begin() + otherSize, end());
+
+        m_Size = otherSize;
         return *this;
     }
 
@@ -146,9 +169,17 @@ class StaticArray
     {
         if (this == &p_Other)
             return *this;
-        clear();
-        m_Size = p_Other.size();
-        Memory::ConstructRangeMove(begin(), p_Other.begin(), p_Other.end());
+        const usize otherSize = p_Other.size();
+        const usize minSize = m_Size < otherSize ? m_Size : otherSize;
+        for (usize i = 0; i < minSize; ++i)
+            at(i) = std::move(p_Other[i]);
+
+        if (otherSize > m_Size)
+            Memory::ConstructRangeMove(end(), p_Other.begin() + m_Size, p_Other.end());
+        else if (otherSize < m_Size)
+            Memory::DestructRange(begin() + otherSize, end());
+
+        m_Size = otherSize;
         return *this;
     }
 

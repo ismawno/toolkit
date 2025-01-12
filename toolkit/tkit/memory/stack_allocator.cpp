@@ -58,6 +58,8 @@ void *StackAllocator::Push(const usize p_Size, const usize p_Alignment) noexcept
     TKIT_ASSERT(alignedPtr + p_Size <= m_Buffer + m_Size,
                 "[TOOLKIT] Stack allocator failed to fit {} bytes with {} alignment! This is should not have triggered",
                 p_Size, p_Alignment);
+    TKIT_ASSERT(reinterpret_cast<uptr>(alignedPtr) % p_Alignment == 0,
+                "[TOOLKIT] Aligned pointer is not aligned to the requested alignment");
 
     const usize offset = m_Remaining - static_cast<usize>(remaining);
     m_Remaining = static_cast<usize>(remaining) - p_Size;
