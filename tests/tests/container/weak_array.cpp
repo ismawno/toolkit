@@ -164,7 +164,7 @@ TEST_CASE("WeakArray (i32) Static capacity", "[core][container][WeakArray]")
     g_Arena.Reset();
 }
 
-TEST_CASE("WeakArray (f32)", "[core][container][WeakArray]")
+TEST_CASE("WeakArray (f32) Dynamic capacity", "[core][container][WeakArray]")
 {
     RunStaticArrayOperatorTests<f32>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f});
     g_Arena.Reset();
@@ -175,7 +175,7 @@ TEST_CASE("WeakArray (f32) Static capacity", "[core][container][WeakArray]")
     g_Arena.Reset();
 }
 
-TEST_CASE("WeakArray (f64)", "[core][container][WeakArray]")
+TEST_CASE("WeakArray (f64) Dynamic capacity", "[core][container][WeakArray]")
 {
     RunStaticArrayOperatorTests<f64>({1.0, 2.0, 3.0, 4.0, 5.0});
     g_Arena.Reset();
@@ -186,7 +186,7 @@ TEST_CASE("WeakArray (f64) Static capacity", "[core][container][WeakArray]")
     g_Arena.Reset();
 }
 
-TEST_CASE("WeakArray (std::string)", "[core][container][WeakArray]")
+TEST_CASE("WeakArray (std::string) Dynamic capacity", "[core][container][WeakArray]")
 {
     RunStaticArrayOperatorTests<std::string>({"10", "20", "30", "40", "50"});
     g_Arena.Reset();

@@ -20,6 +20,7 @@ set(SOURCES
     tests/memory/ptr.cpp
     tests/container/static_array.cpp
     tests/container/weak_array.cpp
+    tests/container/span.cpp
     tests/container/hashable_tuple.cpp
     tests/container/storage.cpp
     tests/multiprocessing/thread_pool.cpp
