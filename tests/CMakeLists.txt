@@ -19,6 +19,7 @@ set(SOURCES
     tests/memory/arena_allocator.cpp
     tests/memory/ptr.cpp
     tests/container/static_array.cpp
+    tests/container/weak_array.cpp
     tests/container/hashable_tuple.cpp
     tests/container/storage.cpp
     tests/multiprocessing/thread_pool.cpp
@@ -47,7 +48,6 @@ message(STATUS "TOOLKIT TESTS: Enable exceptions: ON")
 target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_WARNING_LOGS)
 target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_INFO_LOGS)
 target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ASSERTS)
-target_compile_definitions(toolkit PUBLIC TKIT_SILENT_ASSERTS)
 target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_BLOCK_ALLOCATOR)
 
 include(CTest)

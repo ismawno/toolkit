@@ -22,19 +22,31 @@ class WeakArray
   public:
     using element_type = T;
     using value_type = NoCVRef<T>;
+    using size_type = usize;
+    using pointer = T *;
+    using reference = T &;
+    using iterator = pointer;
+    using reverse_iterator = std::reverse_iterator<iterator>;
+
+    using Traits = std::allocator_traits<Memory::DefaultAllocator<value_type>>;
 
     constexpr WeakArray() noexcept : m_Data(nullptr), m_Size(0)
     {
     }
-    constexpr explicit(false) WeakArray(T *p_Data) noexcept : m_Data(p_Data), m_Size(0)
+    constexpr explicit(false) WeakArray(pointer p_Data) noexcept : m_Data(p_Data), m_Size(0)
     {
     }
-    constexpr WeakArray(T *p_Data, const usize p_Size) noexcept : m_Data(p_Data), m_Size(p_Size)
+    constexpr WeakArray(pointer p_Data, const size_type p_Size) noexcept : m_Data(p_Data), m_Size(p_Size)
     {
     }
     constexpr explicit(false) WeakArray(const std::array<T, Capacity> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(0)
     {
+    }
+
+    ~WeakArray() noexcept
+    {
+        clear();
     }
 
     constexpr WeakArray(WeakArray &&p_Other) noexcept : m_Data(p_Other.m_Data), m_Size(p_Other.m_Size)
@@ -62,7 +74,7 @@ class WeakArray
      */
     template <typename U>
         requires(std::convertible_to<U, T>)
-    constexpr void push_back(U &&p_Value) const noexcept
+    constexpr void push_back(U &&p_Value) noexcept
     {
         TKIT_ASSERT(!full(), "[TOOLKIT] Container is already full");
         Memory::Construct(begin() + m_Size++, std::forward<U>(p_Value));
@@ -72,7 +84,7 @@ class WeakArray
      * @brief Remove the last element from the array. The element is destroyed.
      *
      */
-    constexpr void pop_back() const noexcept
+    constexpr void pop_back() noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is already empty");
         --m_Size;
@@ -88,7 +100,7 @@ class WeakArray
      */
     template <typename U>
         requires(std::is_convertible_v<NoCVRef<T>, NoCVRef<U>>)
-    constexpr void insert(const iterator p_Pos, U &&p_Value) const noexcept
+    constexpr void insert(const iterator p_Pos, U &&p_Value) noexcept
     {
         TKIT_ASSERT(!full(), "[TOOLKIT] Container is already full");
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
@@ -103,7 +115,7 @@ class WeakArray
      * @param p_Begin The beginning of the range to insert.
      * @param p_End The end of the range to insert.
      */
-    template <std::input_iterator It> constexpr void insert(const iterator p_Pos, It p_Begin, It p_End) const noexcept
+    template <std::input_iterator It> constexpr void insert(const iterator p_Pos, It p_Begin, It p_End) noexcept
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
         TKIT_ASSERT(std::distance(p_Begin, p_End) + m_Size <= Capacity, "[TOOLKIT] New size exceeds capacity");
@@ -117,7 +129,7 @@ class WeakArray
      * @param p_Pos The position to insert the elements at.
      * @param p_Elements The initializer list of elements to insert.
      */
-    constexpr void insert(const iterator p_Pos, const std::initializer_list<T> p_Elements) const noexcept
+    constexpr void insert(const iterator p_Pos, const std::initializer_list<T> p_Elements) noexcept
     {
         insert(p_Pos, p_Elements.begin(), p_Elements.end());
     }
@@ -127,7 +139,7 @@ class WeakArray
      *
      * @param p_Pos The position to erase the element at.
      */
-    constexpr void erase(const iterator p_Pos) const noexcept
+    constexpr void erase(const iterator p_Pos) noexcept
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT] Iterator is out of bounds");
         Container<Traits>::Erase(end(), p_Pos);
@@ -140,7 +152,7 @@ class WeakArray
      * @param p_Begin The beginning of the range to erase.
      * @param p_End The end of the range to erase.
      */
-    constexpr void erase(const iterator p_Begin, const iterator p_End) const noexcept
+    constexpr void erase(const iterator p_Begin, const iterator p_End) noexcept
     {
         TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT] Begin iterator is out of bounds");
         TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT] End iterator is out of bounds");
@@ -157,7 +169,7 @@ class WeakArray
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
-    constexpr T &emplace_back(Args &&...p_Args) const noexcept
+    constexpr reference emplace_back(Args &&...p_Args) noexcept
     {
         TKIT_ASSERT(!full(), "[TOOLKIT] Container is already full");
         return *Memory::Construct(begin() + m_Size++, std::forward<Args>(p_Args)...);
@@ -173,7 +185,7 @@ class WeakArray
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
-    constexpr void resize(const size_type p_Size, Args &&...args) const noexcept
+    constexpr void resize(const size_type p_Size, Args &&...args) noexcept
     {
         TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT] Size is bigger than capacity");
 
@@ -188,48 +200,56 @@ class WeakArray
         m_Size = p_Size;
     }
 
-    constexpr T &front() const noexcept
+    constexpr reference front() const noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
         return *begin();
     }
-    constexpr T &back() const noexcept
+    constexpr reference back() const noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
         return *(begin() + m_Size - 1);
     }
 
-    constexpr T &operator[](const size_type p_Index) const noexcept
+    constexpr reference operator[](const size_type p_Index) const noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
     }
-    constexpr T &at(const size_type p_Index) const noexcept
+    constexpr reference at(const size_type p_Index) const noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
     }
 
-    constexpr void clear() const noexcept
+    constexpr void clear() noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
             Memory::DestructRange(begin(), end());
         m_Size = 0;
     }
 
-    constexpr T *data() const noexcept
+    constexpr pointer data() const noexcept
     {
         return m_Data;
     }
 
-    constexpr T *begin() const noexcept
+    constexpr pointer begin() const noexcept
     {
         return m_Data;
     }
-
-    constexpr T *end() const noexcept
+    constexpr pointer end() const noexcept
     {
         return m_Data + m_Size;
+    }
+
+    constexpr reverse_iterator rbegin() const noexcept
+    {
+        return reverse_iterator(end());
+    }
+    constexpr reverse_iterator rend() const noexcept
+    {
+        return reverse_iterator(begin());
     }
 
     constexpr size_type size() const noexcept
@@ -255,8 +275,8 @@ class WeakArray
     }
 
   private:
-    T *m_Data;
-    usize m_Size;
+    pointer m_Data;
+    size_type m_Size;
 };
 
 /**
@@ -268,22 +288,28 @@ class WeakArray
  */
 template <typename T> class WeakArray<T, Limits<usize>::max()>
 {
+    TKIT_NON_COPYABLE(WeakArray);
+
   public:
+    using Traits = std::allocator_traits<Memory::DefaultAllocator<T>>;
+
     using element_type = T;
     using value_type = NoCVRef<T>;
+    using size_type = typename Traits::size_type;
+    using pointer = typename Traits::pointer;
+    using reference = value_type &;
+    using iterator = pointer;
+    using reverse_iterator = std::reverse_iterator<iterator>;
 
     constexpr WeakArray() noexcept : m_Data(nullptr), m_Size(0)
     {
     }
-    constexpr WeakArray(T *p_Data, const usize p_Capacity) noexcept : m_Data(p_Data), m_Size(0), m_Capacity(p_Capacity)
-    {
-    }
-    constexpr WeakArray(T *p_Data, const usize p_Size, const usize p_Capacity) noexcept
+    constexpr WeakArray(pointer p_Data, const size_type p_Capacity, const size_type p_Size = 0) noexcept
         : m_Data(p_Data), m_Size(p_Size), m_Capacity(p_Capacity)
     {
     }
 
-    template <usize N>
+    template <size_type N>
     explicit(false) WeakArray(const StaticArray<T, N> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(p_Array.size())
     {
@@ -317,7 +343,7 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
      */
     template <typename U>
         requires(std::convertible_to<U, T>)
-    constexpr void push_back(U &&p_Value) const noexcept
+    constexpr void push_back(U &&p_Value) noexcept
     {
         TKIT_ASSERT(!full(), "[TOOLKIT] Container is already full");
         Memory::Construct(begin() + m_Size++, std::forward<U>(p_Value));
@@ -327,7 +353,7 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
      * @brief Remove the last element from the array. The element is destroyed.
      *
      */
-    constexpr void pop_back() const noexcept
+    constexpr void pop_back() noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is already empty");
         --m_Size;
@@ -343,7 +369,7 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
      */
     template <typename U>
         requires(std::is_convertible_v<NoCVRef<T>, NoCVRef<U>>)
-    constexpr void insert(const iterator p_Pos, U &&p_Value) const noexcept
+    constexpr void insert(const iterator p_Pos, U &&p_Value) noexcept
     {
         TKIT_ASSERT(!full(), "[TOOLKIT] Container is already full");
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
@@ -358,7 +384,7 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
      * @param p_Begin The beginning of the range to insert.
      * @param p_End The end of the range to insert.
      */
-    template <std::input_iterator It> constexpr void insert(const iterator p_Pos, It p_Begin, It p_End) const noexcept
+    template <std::input_iterator It> constexpr void insert(const iterator p_Pos, It p_Begin, It p_End) noexcept
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
         TKIT_ASSERT(std::distance(p_Begin, p_End) + m_Size <= m_Capacity, "[TOOLKIT] New size exceeds capacity");
@@ -372,7 +398,7 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
      * @param p_Pos The position to insert the elements at.
      * @param p_Elements The initializer list of elements to insert.
      */
-    constexpr void insert(const iterator p_Pos, const std::initializer_list<T> p_Elements) const noexcept
+    constexpr void insert(const iterator p_Pos, const std::initializer_list<T> p_Elements) noexcept
     {
         insert(p_Pos, p_Elements.begin(), p_Elements.end());
     }
@@ -382,7 +408,7 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
      *
      * @param p_Pos The position to erase the element at.
      */
-    constexpr void erase(const iterator p_Pos) const noexcept
+    constexpr void erase(const iterator p_Pos) noexcept
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT] Iterator is out of bounds");
         Container<Traits>::Erase(end(), p_Pos);
@@ -395,7 +421,7 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
      * @param p_Begin The beginning of the range to erase.
      * @param p_End The end of the range to erase.
      */
-    constexpr void erase(const iterator p_Begin, const iterator p_End) const noexcept
+    constexpr void erase(const iterator p_Begin, const iterator p_End) noexcept
     {
         TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT] Begin iterator is out of bounds");
         TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT] End iterator is out of bounds");
@@ -412,7 +438,7 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
-    constexpr T &emplace_back(Args &&...p_Args) const noexcept
+    constexpr reference emplace_back(Args &&...p_Args) noexcept
     {
         TKIT_ASSERT(!full(), "[TOOLKIT] Container is already full");
         return *Memory::Construct(begin() + m_Size++, std::forward<Args>(p_Args)...);
@@ -428,7 +454,7 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
-    constexpr void resize(const size_type p_Size, Args &&...args) const noexcept
+    constexpr void resize(const size_type p_Size, Args &&...args) noexcept
     {
         TKIT_ASSERT(p_Size <= m_Capacity, "[TOOLKIT] Size is bigger than capacity");
 
@@ -443,48 +469,56 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
         m_Size = p_Size;
     }
 
-    constexpr T &front() const noexcept
+    constexpr reference front() const noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
         return *begin();
     }
-    constexpr T &back() const noexcept
+    constexpr reference back() const noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
         return *(begin() + m_Size - 1);
     }
 
-    constexpr T &operator[](const size_type p_Index) const noexcept
+    constexpr reference operator[](const size_type p_Index) const noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
     }
-    constexpr T &at(const size_type p_Index) const noexcept
+    constexpr reference at(const size_type p_Index) const noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
     }
 
-    constexpr void clear() const noexcept
+    constexpr void clear() noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
             Memory::DestructRange(begin(), end());
         m_Size = 0;
     }
 
-    constexpr T *data() const noexcept
+    constexpr pointer data() const noexcept
     {
         return m_Data;
     }
 
-    constexpr T *begin() const noexcept
+    constexpr pointer begin() const noexcept
     {
         return m_Data;
     }
-
-    constexpr T *end() const noexcept
+    constexpr pointer end() const noexcept
     {
         return m_Data + m_Size;
+    }
+
+    constexpr reverse_iterator rbegin() const noexcept
+    {
+        return reverse_iterator(end());
+    }
+    constexpr reverse_iterator rend() const noexcept
+    {
+        return reverse_iterator(begin());
     }
 
     constexpr size_type size() const noexcept
@@ -510,8 +544,8 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
     }
 
   private:
-    T *m_Data;
-    usize m_Size;
-    usize m_Capacity;
+    pointer m_Data;
+    size_type m_Size;
+    size_type m_Capacity;
 };
 } // namespace TKit

@@ -32,6 +32,8 @@ class StaticArray
     using difference_type = typename Traits::difference_type;
     using pointer = typename Traits::pointer;
     using const_pointer = typename Traits::const_pointer;
+    using reference = value_type &;
+    using const_reference = const value_type &;
     using iterator = pointer;
     using const_iterator = const_pointer;
     using reverse_iterator = std::reverse_iterator<iterator>;
@@ -288,7 +290,7 @@ class StaticArray
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
-    constexpr T &emplace_back(Args &&...p_Args) noexcept
+    constexpr reference emplace_back(Args &&...p_Args) noexcept
     {
         TKIT_ASSERT(!full(), "[TOOLKIT] Container is already full");
         return *Memory::Construct(begin() + m_Size++, std::forward<Args>(p_Args)...);
@@ -319,45 +321,45 @@ class StaticArray
         m_Size = p_Size;
     }
 
-    constexpr const T &front() const noexcept
+    constexpr const_reference front() const noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
         return *begin();
     }
 
-    constexpr T &front() noexcept
+    constexpr reference front() noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
         return *begin();
     }
 
-    constexpr const T &back() const noexcept
+    constexpr const_reference back() const noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
         return *(begin() + m_Size - 1);
     }
 
-    constexpr T &back() noexcept
+    constexpr reference back() noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
         return *(begin() + m_Size - 1);
     }
-    constexpr const T &operator[](const size_type p_Index) const noexcept
+    constexpr const_reference operator[](const size_type p_Index) const noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
     }
-    constexpr T &operator[](const size_type p_Index) noexcept
+    constexpr reference operator[](const size_type p_Index) noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
     }
-    constexpr const T &at(const size_type p_Index) const noexcept
+    constexpr const_reference at(const size_type p_Index) const noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
     }
-    constexpr T &at(const size_type p_Index) noexcept
+    constexpr reference at(const size_type p_Index) noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
