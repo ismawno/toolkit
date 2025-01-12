@@ -24,7 +24,8 @@ void *AllocateAligned(const size_t p_Size, const size_t p_Alignment) noexcept
 #ifdef TKIT_OS_WINDOWS
     ptr = _aligned_malloc(p_Size, p_Alignment);
 #else
-    posix_memalign(&ptr, p_Alignment, p_Size);
+    int result = posix_memalign(&ptr, p_Alignment, p_Size);
+    TKIT_UNUSED(result); // Sould do something with this at some point
 #endif
     TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
     return ptr;

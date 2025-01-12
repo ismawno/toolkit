@@ -20,10 +20,10 @@ namespace TKit
  * although it comes with some overhead.
  *
  * @tparam T The type of the elements in the array.
- * @tparam N The capacity of the array.
+ * @tparam Capacity The capacity of the array.
  */
-template <typename T, usize N, typename Traits = std::allocator_traits<Memory::DefaultAllocator<T>>>
-    requires(N > 0)
+template <typename T, usize Capacity, typename Traits = std::allocator_traits<Memory::DefaultAllocator<T>>>
+    requires(Capacity > 0)
 class StaticArray
 {
   public:
@@ -37,56 +37,59 @@ class StaticArray
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-    StaticArray() noexcept = default;
+    constexpr StaticArray() noexcept = default;
 
-    template <typename... Args> StaticArray(const size_type p_Size, Args &&...p_Args) noexcept : m_Size(p_Size)
+    template <typename... Args>
+    constexpr StaticArray(const size_type p_Size, Args &&...p_Args) noexcept : m_Size(p_Size)
     {
-        TKIT_ASSERT(p_Size <= N, "[TOOLKIT] Size is bigger than capacity");
+        TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT] Size is bigger than capacity");
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
             Memory::ConstructRange(begin(), end(), std::forward<Args>(p_Args)...);
     }
 
-    template <std::input_iterator It> StaticArray(const It p_Begin, const It p_End) noexcept
+    template <std::input_iterator It> constexpr StaticArray(const It p_Begin, const It p_End) noexcept
     {
         m_Size = static_cast<size_type>(std::distance(p_Begin, p_End));
-        TKIT_ASSERT(m_Size <= N, "[TOOLKIT] Size is bigger than capacity");
+        TKIT_ASSERT(m_Size <= Capacity, "[TOOLKIT] Size is bigger than capacity");
         Memory::ConstructRangeCopy(begin(), p_Begin, p_End);
     }
 
-    // This constructor WONT include the case M == N (ie, copy constructor)
+    // This constructor WONT include the case M == Capacity (ie, copy constructor)
     template <size_type M>
-    explicit(false) StaticArray(const StaticArray<T, M> &p_Other) noexcept : m_Size(p_Other.size())
+    explicit(false) constexpr StaticArray(const StaticArray<T, M> &p_Other) noexcept : m_Size(p_Other.size())
     {
-        if constexpr (M > N)
+        if constexpr (M > Capacity)
         {
-            TKIT_ASSERT(p_Other.size() <= N, "[TOOLKIT] Size is bigger than capacity");
+            TKIT_ASSERT(p_Other.size() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
         }
         Memory::ConstructRangeCopy(begin(), p_Other.begin(), p_Other.end());
     }
 
-    // This constructor WONT include the case M == N (ie, move constructor)
-    template <size_type M> explicit(false) StaticArray(StaticArray<T, M> &&p_Other) noexcept : m_Size(p_Other.size())
+    // This constructor WONT include the case M == Capacity (ie, move constructor)
+    template <size_type M>
+    explicit(false) constexpr StaticArray(StaticArray<T, M> &&p_Other) noexcept : m_Size(p_Other.size())
     {
-        if constexpr (M > N)
+        if constexpr (M > Capacity)
         {
-            TKIT_ASSERT(p_Other.size() <= N, "[TOOLKIT] Size is bigger than capacity");
+            TKIT_ASSERT(p_Other.size() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
         }
         Memory::ConstructRangeMove(begin(), p_Other.begin(), p_Other.end());
     }
 
-    StaticArray(const StaticArray<T, N> &p_Other) noexcept : m_Size(p_Other.size())
+    constexpr StaticArray(const StaticArray<T, Capacity> &p_Other) noexcept : m_Size(p_Other.size())
     {
         Memory::ConstructRangeCopy(begin(), p_Other.begin(), p_Other.end());
     }
 
-    StaticArray(StaticArray<T, N> &&p_Other) noexcept : m_Size(p_Other.size())
+    constexpr StaticArray(StaticArray<T, Capacity> &&p_Other) noexcept : m_Size(p_Other.size())
     {
         Memory::ConstructRangeMove(begin(), p_Other.begin(), p_Other.end());
     }
 
-    StaticArray(const std::initializer_list<T> p_List) noexcept : m_Size(static_cast<size_type>(p_List.size()))
+    constexpr StaticArray(const std::initializer_list<T> p_List) noexcept
+        : m_Size(static_cast<size_type>(p_List.size()))
     {
-        TKIT_ASSERT(p_List.size() <= N, "[TOOLKIT] Size is bigger than capacity");
+        TKIT_ASSERT(p_List.size() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
         Memory::ConstructRangeCopy(begin(), p_List.begin(), p_List.end());
     }
 
@@ -95,17 +98,17 @@ class StaticArray
         clear();
     }
 
-    // Same goes for assignment. It wont include `M == N`, and use the default assignment operator
-    template <size_type M> StaticArray &operator=(const StaticArray<T, M> &p_Other) noexcept
+    // Same goes for assignment. It wont include `M == Capacity`, and use the default assignment operator
+    template <size_type M> constexpr StaticArray &operator=(const StaticArray<T, M> &p_Other) noexcept
     {
-        if constexpr (M == N)
+        if constexpr (M == Capacity)
         {
             if (this == &p_Other)
                 return *this;
         }
-        if constexpr (M > N)
+        if constexpr (M > Capacity)
         {
-            TKIT_ASSERT(p_Other.size() <= N, "[TOOLKIT] Size is bigger than capacity");
+            TKIT_ASSERT(p_Other.size() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
         }
         const usize otherSize = p_Other.size();
         const usize minSize = m_Size < otherSize ? m_Size : otherSize;
@@ -121,17 +124,17 @@ class StaticArray
         return *this;
     }
 
-    // Same goes for assignment. It wont include `M == N`, and use the default assignment operator
-    template <size_type M> StaticArray &operator=(StaticArray<T, M> &&p_Other) noexcept
+    // Same goes for assignment. It wont include `M == Capacity`, and use the default assignment operator
+    template <size_type M> constexpr StaticArray &operator=(StaticArray<T, M> &&p_Other) noexcept
     {
-        if constexpr (M == N)
+        if constexpr (M == Capacity)
         {
             if (this == &p_Other)
                 return *this;
         }
-        if constexpr (M > N)
+        if constexpr (M > Capacity)
         {
-            TKIT_ASSERT(p_Other.size() <= N, "[TOOLKIT] Size is bigger than capacity");
+            TKIT_ASSERT(p_Other.size() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
         }
         const usize otherSize = p_Other.size();
         const usize minSize = m_Size < otherSize ? m_Size : otherSize;
@@ -147,7 +150,7 @@ class StaticArray
         return *this;
     }
 
-    StaticArray &operator=(const StaticArray<T, N> &p_Other) noexcept
+    constexpr StaticArray &operator=(const StaticArray<T, Capacity> &p_Other) noexcept
     {
         if (this == &p_Other)
             return *this;
@@ -165,7 +168,7 @@ class StaticArray
         return *this;
     }
 
-    StaticArray &operator=(StaticArray<T, N> &&p_Other) noexcept
+    constexpr StaticArray &operator=(StaticArray<T, Capacity> &&p_Other) noexcept
     {
         if (this == &p_Other)
             return *this;
@@ -190,7 +193,7 @@ class StaticArray
      */
     template <typename U>
         requires(std::convertible_to<U, T>)
-    void push_back(U &&p_Value) noexcept
+    constexpr void push_back(U &&p_Value) noexcept
     {
         TKIT_ASSERT(!full(), "[TOOLKIT] Container is already full");
         Memory::Construct(begin() + m_Size++, std::forward<U>(p_Value));
@@ -200,7 +203,7 @@ class StaticArray
      * @brief Remove the last element from the array. The element is destroyed.
      *
      */
-    void pop_back() noexcept
+    constexpr void pop_back() noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is already empty");
         --m_Size;
@@ -216,7 +219,7 @@ class StaticArray
      */
     template <typename U>
         requires(std::is_convertible_v<NoCVRef<T>, NoCVRef<U>>)
-    void insert(const iterator p_Pos, U &&p_Value) noexcept
+    constexpr void insert(const iterator p_Pos, U &&p_Value) noexcept
     {
         TKIT_ASSERT(!full(), "[TOOLKIT] Container is already full");
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
@@ -231,10 +234,10 @@ class StaticArray
      * @param p_Begin The beginning of the range to insert.
      * @param p_End The end of the range to insert.
      */
-    template <std::input_iterator It> void insert(const iterator p_Pos, It p_Begin, It p_End) noexcept
+    template <std::input_iterator It> constexpr void insert(const iterator p_Pos, It p_Begin, It p_End) noexcept
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
-        TKIT_ASSERT(std::distance(p_Begin, p_End) + m_Size <= N, "[TOOLKIT] New size exceeds capacity");
+        TKIT_ASSERT(std::distance(p_Begin, p_End) + m_Size <= Capacity, "[TOOLKIT] New size exceeds capacity");
 
         m_Size += Container<Traits>::Insert(end(), p_Pos, p_Begin, p_End);
     }
@@ -245,7 +248,7 @@ class StaticArray
      * @param p_Pos The position to insert the elements at.
      * @param p_Elements The initializer list of elements to insert.
      */
-    void insert(const iterator p_Pos, const std::initializer_list<T> p_Elements) noexcept
+    constexpr void insert(const iterator p_Pos, const std::initializer_list<T> p_Elements) noexcept
     {
         insert(p_Pos, p_Elements.begin(), p_Elements.end());
     }
@@ -255,7 +258,7 @@ class StaticArray
      *
      * @param p_Pos The position to erase the element at.
      */
-    void erase(const iterator p_Pos) noexcept
+    constexpr void erase(const iterator p_Pos) noexcept
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT] Iterator is out of bounds");
         Container<Traits>::Erase(end(), p_Pos);
@@ -268,7 +271,7 @@ class StaticArray
      * @param p_Begin The beginning of the range to erase.
      * @param p_End The end of the range to erase.
      */
-    void erase(const iterator p_Begin, const iterator p_End) noexcept
+    constexpr void erase(const iterator p_Begin, const iterator p_End) noexcept
     {
         TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT] Begin iterator is out of bounds");
         TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT] End iterator is out of bounds");
@@ -285,7 +288,7 @@ class StaticArray
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
-    T &emplace_back(Args &&...p_Args) noexcept
+    constexpr T &emplace_back(Args &&...p_Args) noexcept
     {
         TKIT_ASSERT(!full(), "[TOOLKIT] Container is already full");
         return *Memory::Construct(begin() + m_Size++, std::forward<Args>(p_Args)...);
@@ -295,7 +298,7 @@ class StaticArray
      * @brief Get the first element in the array.
      *
      */
-    const T &front() const noexcept
+    constexpr const T &front() const noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
         return *begin();
@@ -305,7 +308,7 @@ class StaticArray
      * @brief Get the first element in the array.
      *
      */
-    T &front() noexcept
+    constexpr T &front() noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
         return *begin();
@@ -321,9 +324,9 @@ class StaticArray
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
-    void resize(const size_type p_Size, Args &&...args) noexcept
+    constexpr void resize(const size_type p_Size, Args &&...args) noexcept
     {
-        TKIT_ASSERT(p_Size <= N, "[TOOLKIT] Size is bigger than capacity");
+        TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT] Size is bigger than capacity");
 
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (p_Size < m_Size)
@@ -340,7 +343,7 @@ class StaticArray
      * @brief Get the last element in the array.
      *
      */
-    const T &back() const noexcept
+    constexpr const T &back() const noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
         return *(begin() + m_Size - 1);
@@ -350,7 +353,7 @@ class StaticArray
      * @brief Get the last element in the array.
      *
      */
-    T &back() noexcept
+    constexpr T &back() noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
         return *(begin() + m_Size - 1);
@@ -362,7 +365,7 @@ class StaticArray
      * @param p_Index The index of the element to access.
      * @return A reference to the element.
      */
-    const T &operator[](const size_type p_Index) const noexcept
+    constexpr const T &operator[](const size_type p_Index) const noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
@@ -374,7 +377,7 @@ class StaticArray
      * @param p_Index The index of the element to access.
      * @return A reference to the element.
      */
-    T &operator[](const size_type p_Index) noexcept
+    constexpr T &operator[](const size_type p_Index) noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
@@ -386,7 +389,7 @@ class StaticArray
      * @param p_Index The index of the element to access.
      * @return A reference to the element.
      */
-    const T &at(const size_type p_Index) const noexcept
+    constexpr const T &at(const size_type p_Index) const noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
@@ -398,7 +401,7 @@ class StaticArray
      * @param p_Index The index of the element to access.
      * @return A reference to the element.
      */
-    T &at(const size_type p_Index) noexcept
+    constexpr T &at(const size_type p_Index) noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
@@ -408,7 +411,7 @@ class StaticArray
      * @brief Clear the array. All elements are destroyed.
      *
      */
-    void clear() noexcept
+    constexpr void clear() noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
             Memory::DestructRange(begin(), end());
@@ -419,7 +422,7 @@ class StaticArray
      * @brief Get a pointer to the data buffer.
      *
      */
-    const_pointer data() const noexcept
+    constexpr const_pointer data() const noexcept
     {
         return reinterpret_cast<const_pointer>(&m_Data[0]);
     }
@@ -428,7 +431,7 @@ class StaticArray
      * @brief Get a pointer to the data buffer.
      *
      */
-    pointer data() noexcept
+    constexpr pointer data() noexcept
     {
         return reinterpret_cast<pointer>(&m_Data[0]);
     }
@@ -437,7 +440,7 @@ class StaticArray
      * @brief Get an iterator to the beginning of the array.
      *
      */
-    iterator begin() noexcept
+    constexpr iterator begin() noexcept
     {
         return data();
     }
@@ -446,7 +449,7 @@ class StaticArray
      * @brief Get an iterator to the end of the array.
      *
      */
-    iterator end() noexcept
+    constexpr iterator end() noexcept
     {
         return begin() + m_Size;
     }
@@ -455,7 +458,7 @@ class StaticArray
      * @brief Get a const iterator to the beginning of the array.
      *
      */
-    const_iterator begin() const noexcept
+    constexpr const_iterator begin() const noexcept
     {
         return data();
     }
@@ -464,7 +467,7 @@ class StaticArray
      * @brief Get a const iterator to the end of the array.
      *
      */
-    const_iterator end() const noexcept
+    constexpr const_iterator end() const noexcept
     {
         return begin() + m_Size;
     }
@@ -473,7 +476,7 @@ class StaticArray
      * @brief Get a const iterator to the beginning of the array.
      *
      */
-    const_iterator cbegin() const noexcept
+    constexpr const_iterator cbegin() const noexcept
     {
         return data();
     }
@@ -482,7 +485,7 @@ class StaticArray
      * @brief Get a const iterator to the end of the array.
      *
      */
-    const_iterator cend() const noexcept
+    constexpr const_iterator cend() const noexcept
     {
         return begin() + m_Size;
     }
@@ -491,7 +494,7 @@ class StaticArray
      * @brief Get a reverse iterator to the beginning of the array.
      *
      */
-    reverse_iterator rbegin() noexcept
+    constexpr reverse_iterator rbegin() noexcept
     {
         return reverse_iterator(end());
     }
@@ -500,7 +503,7 @@ class StaticArray
      * @brief Get a reverse iterator to the end of the array.
      *
      */
-    reverse_iterator rend() noexcept
+    constexpr reverse_iterator rend() noexcept
     {
         return reverse_iterator(begin());
     }
@@ -509,7 +512,7 @@ class StaticArray
      * @brief Get a const reverse iterator to the beginning of the array.
      *
      */
-    const_reverse_iterator rbegin() const noexcept
+    constexpr const_reverse_iterator rbegin() const noexcept
     {
         return const_reverse_iterator(end());
     }
@@ -518,7 +521,7 @@ class StaticArray
      * @brief Get a const reverse iterator to the end of the array.
      *
      */
-    const_reverse_iterator rend() const noexcept
+    constexpr const_reverse_iterator rend() const noexcept
     {
         return const_reverse_iterator(begin());
     }
@@ -527,7 +530,7 @@ class StaticArray
      * @brief Get a const reverse iterator to the beginning of the array.
      *
      */
-    const_reverse_iterator crbegin() const noexcept
+    constexpr const_reverse_iterator crbegin() const noexcept
     {
         return const_reverse_iterator(cend());
     }
@@ -536,7 +539,7 @@ class StaticArray
      * @brief Get a const reverse iterator to the end of the array.
      *
      */
-    const_reverse_iterator crend() const noexcept
+    constexpr const_reverse_iterator crend() const noexcept
     {
         return const_reverse_iterator(cbegin());
     }
@@ -545,7 +548,7 @@ class StaticArray
      * @brief Get the size of the array.
      *
      */
-    size_type size() const noexcept
+    constexpr size_type size() const noexcept
     {
         return m_Size;
     }
@@ -556,14 +559,14 @@ class StaticArray
      */
     constexpr size_type capacity() const noexcept
     {
-        return N;
+        return Capacity;
     }
 
     /**
      * @brief Check if the array is empty.
      *
      */
-    bool empty() const noexcept
+    constexpr bool empty() const noexcept
     {
         return m_Size == 0;
     }
@@ -572,25 +575,25 @@ class StaticArray
      * @brief Check if the array is full.
      *
      */
-    bool full() const noexcept
+    constexpr bool full() const noexcept
     {
         return m_Size == capacity();
     }
 
-    explicit(false) operator std::span<T, N>() noexcept
+    explicit(false) constexpr operator std::span<T, Capacity>() noexcept
     {
-        return std::span<T, N>(data(), static_cast<size_t>(size()));
+        return std::span<T, Capacity>(data(), static_cast<size_t>(size()));
     }
-    explicit(false) operator std::span<const T, N>() const noexcept
+    explicit(false) constexpr operator std::span<const T, Capacity>() const noexcept
     {
-        return std::span<const T, N>(data(), static_cast<size_t>(size()));
+        return std::span<const T, Capacity>(data(), static_cast<size_t>(size()));
     }
 
-    explicit(false) operator std::span<T>() noexcept
+    explicit(false) constexpr operator std::span<T>() noexcept
     {
         return std::span<T>(data(), static_cast<size_t>(size()));
     }
-    explicit(false) operator std::span<const T>() const noexcept
+    explicit(false) constexpr operator std::span<const T>() const noexcept
     {
         return std::span<const T>(data(), static_cast<size_t>(size()));
     }
@@ -604,7 +607,7 @@ class StaticArray
     static_assert(sizeof(Element) == sizeof(T), "Element size is not equal to T size");
     static_assert(alignof(Element) == alignof(T), "Element alignment is not equal to T alignment");
 
-    std::array<Element, N> m_Data{};
+    std::array<Element, Capacity> m_Data{};
     size_type m_Size = 0;
 };
 

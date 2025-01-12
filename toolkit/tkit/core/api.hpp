@@ -93,3 +93,5 @@
 #ifndef TKIT_CACHE_LINE_SIZE
 #    define TKIT_CACHE_LINE_SIZE 64
 #endif
+
+#define TKIT_UNUSED(x) (void)(x)
