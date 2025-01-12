@@ -7,45 +7,30 @@ namespace TKit::Memory
 {
 void *Allocate(const size_t p_Size) noexcept
 {
-    void *ptr = ::operator new(p_Size);
-    TKIT_ASSERT(ptr, "[TOOLKIT] Failed to allocate memory with size {}", p_Size);
+    void *ptr = std::malloc(p_Size);
+    TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
     return ptr;
 }
 
 void Deallocate(void *p_Ptr) noexcept
 {
-    ::operator delete(p_Ptr);
+    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
+    std::free(p_Ptr);
 }
 
-void *AllocateAligned(const size_t p_Size, const std::align_val_t p_Alignment) noexcept
-{
-    void *ptr = ::operator new(p_Size, p_Alignment);
-    TKIT_ASSERT(ptr, "[TOOLKIT] Failed to allocate memory with size {} and alignment {}", p_Size,
-                static_cast<size_t>(p_Alignment));
-    return ptr;
-}
-
-void DeallocateAligned(void *p_Ptr, const std::align_val_t p_Alignment) noexcept
-{
-    ::operator delete(p_Ptr, p_Alignment);
-}
-
-void *AllocateAlignedPlatformSpecific(const size_t p_Size, const size_t p_Alignment) noexcept
+void *AllocateAligned(const size_t p_Size, const size_t p_Alignment) noexcept
 {
     void *ptr = nullptr;
 #ifdef TKIT_OS_WINDOWS
     ptr = _aligned_malloc(p_Size, p_Alignment);
-    TKIT_ASSERT(ptr, "[TOOLKIT] Failed to allocate memory with size {} and alignment {}", p_Size, p_Alignment);
 #else
-    TKIT_ASSERT_RETURNS(posix_memalign(&ptr, p_Alignment, p_Size), 0,
-                        "[TOOLKIT] Failed to allocate memory with size {} and alignment {}", p_Size, p_Alignment);
-
+    posix_memalign(&ptr, p_Alignment, p_Size);
 #endif
     TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
     return ptr;
 }
 
-void DeallocateAlignedPlatformSpecific(void *p_Ptr) noexcept
+void DeallocateAligned(void *p_Ptr) noexcept
 {
     TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
 #ifdef TKIT_OS_WINDOWS
@@ -59,93 +44,77 @@ void DeallocateAlignedPlatformSpecific(void *p_Ptr) noexcept
 #ifndef TKIT_DISABLE_MEMORY_OVERRIDES
 void *operator new(const size_t p_Size)
 {
-    void *ptr = std::malloc(p_Size);
-    TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
-    return ptr;
+    return TKit::Memory::Allocate(p_Size);
 }
 void *operator new[](const size_t p_Size)
 {
-    void *ptr = std::malloc(p_Size);
-    TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
-    return ptr;
+    return TKit::Memory::Allocate(p_Size);
 }
 void *operator new(const size_t p_Size, const std::align_val_t p_Alignment)
 {
-    return TKit::Memory::AllocateAlignedPlatformSpecific(p_Size, static_cast<size_t>(p_Alignment));
+    return TKit::Memory::AllocateAligned(p_Size, static_cast<size_t>(p_Alignment));
 }
 void *operator new[](const size_t p_Size, const std::align_val_t p_Alignment)
 {
-    return TKit::Memory::AllocateAlignedPlatformSpecific(p_Size, static_cast<size_t>(p_Alignment));
+    return TKit::Memory::AllocateAligned(p_Size, static_cast<size_t>(p_Alignment));
 }
 void *operator new(const size_t p_Size, const std::nothrow_t &) noexcept
 {
-    void *ptr = std::malloc(p_Size);
-    TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
-    return ptr;
+    return TKit::Memory::Allocate(p_Size);
 }
 void *operator new[](const size_t p_Size, const std::nothrow_t &) noexcept
 {
-    void *ptr = std::malloc(p_Size);
-    TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
-    return ptr;
+    return TKit::Memory::Allocate(p_Size);
 }
 
 void operator delete(void *p_Ptr) noexcept
 {
-    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
-    std::free(p_Ptr);
+    TKit::Memory::Deallocate(p_Ptr);
 }
 void operator delete[](void *p_Ptr) noexcept
 {
-    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
-    std::free(p_Ptr);
+    TKit::Memory::Deallocate(p_Ptr);
 }
 void operator delete(void *p_Ptr, const std::align_val_t) noexcept
 {
-    TKit::Memory::DeallocateAlignedPlatformSpecific(p_Ptr);
+    TKit::Memory::DeallocateAligned(p_Ptr);
 }
 void operator delete[](void *p_Ptr, const std::align_val_t) noexcept
 {
-    TKit::Memory::DeallocateAlignedPlatformSpecific(p_Ptr);
+    TKit::Memory::DeallocateAligned(p_Ptr);
 }
 void operator delete(void *p_Ptr, const std::nothrow_t &) noexcept
 {
-    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
-    std::free(p_Ptr);
+    TKit::Memory::Deallocate(p_Ptr);
 }
 void operator delete[](void *p_Ptr, const std::nothrow_t &) noexcept
 {
-    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
-    std::free(p_Ptr);
+    TKit::Memory::Deallocate(p_Ptr);
 }
 
 void operator delete(void *p_Ptr, const size_t) noexcept
 {
-    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
-    std::free(p_Ptr);
+    TKit::Memory::Deallocate(p_Ptr);
 }
 void operator delete[](void *p_Ptr, const size_t) noexcept
 {
-    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
-    std::free(p_Ptr);
+    TKit::Memory::Deallocate(p_Ptr);
 }
 void operator delete(void *p_Ptr, const size_t, const std::align_val_t) noexcept
 {
-    TKit::Memory::DeallocateAlignedPlatformSpecific(p_Ptr);
+    TKit::Memory::DeallocateAligned(p_Ptr);
 }
 void operator delete[](void *p_Ptr, const size_t, const std::align_val_t) noexcept
 {
-    TKit::Memory::DeallocateAlignedPlatformSpecific(p_Ptr);
+    TKit::Memory::DeallocateAligned(p_Ptr);
 }
 void operator delete(void *p_Ptr, const size_t, const std::nothrow_t &) noexcept
 {
-    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
-    std::free(p_Ptr);
+    TKit::Memory::Deallocate(p_Ptr);
 }
 void operator delete[](void *p_Ptr, const size_t, const std::nothrow_t &) noexcept
 {
-    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
-    std::free(p_Ptr);
+    TKit::Memory::Deallocate(p_Ptr);
 }
 
 #endif

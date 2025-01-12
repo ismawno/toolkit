@@ -7,8 +7,7 @@ namespace TKit
 StackAllocator::StackAllocator(const usize p_Size, const usize p_Alignment) noexcept
     : m_Size(p_Size), m_Remaining(p_Size)
 {
-    m_Buffer =
-        static_cast<std::byte *>(Memory::AllocateAlignedPlatformSpecific(static_cast<size_t>(p_Size), p_Alignment));
+    m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(static_cast<size_t>(p_Size), p_Alignment));
     m_Entries.reserve(p_Size / TKIT_SIZE_OF(Entry));
 }
 
@@ -134,7 +133,7 @@ void StackAllocator::deallocateBuffer() noexcept
         "[TOOLKIT] Deallocating a stack allocator with active allocations. Consider calling Pop() until the "
         "allocator is empty. If the elements are not trivially destructible, you will have to call "
         "Destroy() for each element (this deallocation will not call the destructor)");
-    Memory::DeallocateAlignedPlatformSpecific(m_Buffer);
+    Memory::DeallocateAligned(m_Buffer);
     m_Buffer = nullptr;
     m_Size = 0;
     m_Remaining = 0;

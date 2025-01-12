@@ -31,47 +31,25 @@ TKIT_API void Deallocate(void *p_Ptr) noexcept;
 /**
  * @brief Allocate a chunk of memory of a given size with a given alignment.
  *
- * Uses default `::operator new()`. It is here as a placeholder for future custom global
+ * Uses the default platform-specific aligned allocation. It is here as a placeholder for future custom global
  * allocators.
  *
  * @param p_Size The size of the memory to allocate.
  * @param p_Alignment The alignment of the memory to allocate.
  * @return A pointer to the allocated memory.
  */
-TKIT_API void *AllocateAligned(size_t p_Size, std::align_val_t p_Alignment) noexcept;
+TKIT_API void *AllocateAligned(size_t p_Size, size_t p_Alignment) noexcept;
 
 /**
  * @brief Deallocate a chunk of memory with a given alignment.
  *
- * Uses default `::operator delete()`. It is here as a placeholder for future custom global
+ * Uses the default platform-specific aligned deallocation. It is here as a placeholder for future custom global
  * allocators.
  *
  * @param p_Ptr A pointer to the memory to deallocate.
  * @param p_Alignment The alignment of the memory to deallocate.
  */
-TKIT_API void DeallocateAligned(void *p_Ptr, std::align_val_t p_Alignment) noexcept;
-
-/**
- * @brief Allocate a chunk of memory of a given size with a given alignment.
- *
- * Uses the default platform-specific aligned allocation. It is here as a placeholder for future custom global
- * allocators.
- *
- * @param p_Size The size of the memory to allocate.
- * @param p_Alignment The alignment of the memory to allocate.
- * @return A pointer to the allocated memory.
- */
-TKIT_API void *AllocateAlignedPlatformSpecific(size_t p_Size, size_t p_Alignment) noexcept;
-
-/**
- * @brief Deallocate a chunk of memory. Uses default platform-specific aligned deallocation.
- *
- * Uses the default platform-specific aligned allocation. It is here as a placeholder for future custom global
- * allocators.
- *
- * @param p_Ptr A pointer to the memory to deallocate.
- */
-TKIT_API void DeallocateAlignedPlatformSpecific(void *p_Ptr) noexcept;
+TKIT_API void DeallocateAligned(void *p_Ptr) noexcept;
 
 /**
  * @brief A custom allocator that uses a custom size_type (usually u32) for indexing.

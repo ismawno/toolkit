@@ -276,7 +276,7 @@ template <typename T> class TKIT_API BlockAllocator
                             "[TOOLKIT] The current allocator has active allocations. Resetting the allocator will "
                             "prematurely deallocate all memory, and no destructor will be called");
         for (std::byte *block : m_Blocks)
-            Memory::DeallocateAlignedPlatformSpecific(block);
+            Memory::DeallocateAligned(block);
         m_Allocations = 0;
         m_FreeList = nullptr;
         m_Blocks.clear();
@@ -341,8 +341,7 @@ template <typename T> class TKIT_API BlockAllocator
         // With AllocateAligned, I dont need to worry about the alignment of the block itself, or subsequent individual
         // elements. They are of the same type, so adress + n * sizeof(T) will always be aligned if the start adress is
         // aligned (guaranteed by AllocateAligned)
-        std::byte *data =
-            static_cast<std::byte *>(Memory::AllocateAlignedPlatformSpecific(p_BlockSize, GetChunkAlignment()));
+        std::byte *data = static_cast<std::byte *>(Memory::AllocateAligned(p_BlockSize, GetChunkAlignment()));
 
         const usize chunksPerBlock = p_BlockSize / chunkSize;
         for (usize i = 0; i < chunksPerBlock - 1; ++i)

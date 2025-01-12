@@ -419,7 +419,7 @@ class StaticArray
      * @brief Get a pointer to the data buffer.
      *
      */
-    const T *data() const noexcept
+    const_pointer data() const noexcept
     {
         return reinterpret_cast<const_pointer>(&m_Data[0]);
     }
@@ -428,7 +428,7 @@ class StaticArray
      * @brief Get a pointer to the data buffer.
      *
      */
-    T *data() noexcept
+    pointer data() noexcept
     {
         return reinterpret_cast<pointer>(&m_Data[0]);
     }
