@@ -579,20 +579,20 @@ class StaticArray
 
     explicit(false) operator std::span<T, N>() noexcept
     {
-        return std::span<T, N>(data(), size());
+        return std::span<T, N>(data(), static_cast<size_t>(size()));
     }
     explicit(false) operator std::span<const T, N>() const noexcept
     {
-        return std::span<const T, N>(data(), size());
+        return std::span<const T, N>(data(), static_cast<size_t>(size()));
     }
 
     explicit(false) operator std::span<T>() noexcept
     {
-        return std::span<T>(data(), size());
+        return std::span<T>(data(), static_cast<size_t>(size()));
     }
     explicit(false) operator std::span<const T>() const noexcept
     {
-        return std::span<const T>(data(), size());
+        return std::span<const T>(data(), static_cast<size_t>(size()));
     }
 
   private:
