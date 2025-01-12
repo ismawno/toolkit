@@ -295,26 +295,6 @@ class StaticArray
     }
 
     /**
-     * @brief Get the first element in the array.
-     *
-     */
-    constexpr const T &front() const noexcept
-    {
-        TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
-        return *begin();
-    }
-
-    /**
-     * @brief Get the first element in the array.
-     *
-     */
-    constexpr T &front() noexcept
-    {
-        TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
-        return *begin();
-    }
-
-    /**
      * @brief Resize the array. If the new size is smaller than the current size, the elements are destroyed. If the new
      * size is bigger than the current size, the elements are constructed in place.
      *
@@ -339,78 +319,50 @@ class StaticArray
         m_Size = p_Size;
     }
 
-    /**
-     * @brief Get the last element in the array.
-     *
-     */
+    constexpr const T &front() const noexcept
+    {
+        TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
+        return *begin();
+    }
+
+    constexpr T &front() noexcept
+    {
+        TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
+        return *begin();
+    }
+
     constexpr const T &back() const noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
         return *(begin() + m_Size - 1);
     }
 
-    /**
-     * @brief Get the last element in the array.
-     *
-     */
     constexpr T &back() noexcept
     {
         TKIT_ASSERT(!empty(), "[TOOLKIT] Container is empty");
         return *(begin() + m_Size - 1);
     }
-
-    /**
-     * @brief Access an element in the array.
-     *
-     * @param p_Index The index of the element to access.
-     * @return A reference to the element.
-     */
     constexpr const T &operator[](const size_type p_Index) const noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
     }
-
-    /**
-     * @brief Access an element in the array.
-     *
-     * @param p_Index The index of the element to access.
-     * @return A reference to the element.
-     */
     constexpr T &operator[](const size_type p_Index) noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
     }
-
-    /**
-     * @brief Access an element in the array.
-     *
-     * @param p_Index The index of the element to access.
-     * @return A reference to the element.
-     */
     constexpr const T &at(const size_type p_Index) const noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
     }
-
-    /**
-     * @brief Access an element in the array.
-     *
-     * @param p_Index The index of the element to access.
-     * @return A reference to the element.
-     */
     constexpr T &at(const size_type p_Index) noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
     }
 
-    /**
-     * @brief Clear the array. All elements are destroyed.
-     *
-     */
     constexpr void clear() noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
@@ -418,175 +370,94 @@ class StaticArray
         m_Size = 0;
     }
 
-    /**
-     * @brief Get a pointer to the data buffer.
-     *
-     */
     constexpr const_pointer data() const noexcept
     {
         return reinterpret_cast<const_pointer>(&m_Data[0]);
     }
 
-    /**
-     * @brief Get a pointer to the data buffer.
-     *
-     */
     constexpr pointer data() noexcept
     {
         return reinterpret_cast<pointer>(&m_Data[0]);
     }
 
-    /**
-     * @brief Get an iterator to the beginning of the array.
-     *
-     */
     constexpr iterator begin() noexcept
     {
         return data();
     }
 
-    /**
-     * @brief Get an iterator to the end of the array.
-     *
-     */
     constexpr iterator end() noexcept
     {
         return begin() + m_Size;
     }
 
-    /**
-     * @brief Get a const iterator to the beginning of the array.
-     *
-     */
     constexpr const_iterator begin() const noexcept
     {
         return data();
     }
 
-    /**
-     * @brief Get a const iterator to the end of the array.
-     *
-     */
     constexpr const_iterator end() const noexcept
     {
         return begin() + m_Size;
     }
 
-    /**
-     * @brief Get a const iterator to the beginning of the array.
-     *
-     */
     constexpr const_iterator cbegin() const noexcept
     {
         return data();
     }
 
-    /**
-     * @brief Get a const iterator to the end of the array.
-     *
-     */
     constexpr const_iterator cend() const noexcept
     {
         return begin() + m_Size;
     }
 
-    /**
-     * @brief Get a reverse iterator to the beginning of the array.
-     *
-     */
     constexpr reverse_iterator rbegin() noexcept
     {
         return reverse_iterator(end());
     }
 
-    /**
-     * @brief Get a reverse iterator to the end of the array.
-     *
-     */
     constexpr reverse_iterator rend() noexcept
     {
         return reverse_iterator(begin());
     }
 
-    /**
-     * @brief Get a const reverse iterator to the beginning of the array.
-     *
-     */
     constexpr const_reverse_iterator rbegin() const noexcept
     {
         return const_reverse_iterator(end());
     }
 
-    /**
-     * @brief Get a const reverse iterator to the end of the array.
-     *
-     */
     constexpr const_reverse_iterator rend() const noexcept
     {
         return const_reverse_iterator(begin());
     }
 
-    /**
-     * @brief Get a const reverse iterator to the beginning of the array.
-     *
-     */
     constexpr const_reverse_iterator crbegin() const noexcept
     {
         return const_reverse_iterator(cend());
     }
 
-    /**
-     * @brief Get a const reverse iterator to the end of the array.
-     *
-     */
     constexpr const_reverse_iterator crend() const noexcept
     {
         return const_reverse_iterator(cbegin());
     }
 
-    /**
-     * @brief Get the size of the array.
-     *
-     */
     constexpr size_type size() const noexcept
     {
         return m_Size;
     }
 
-    /**
-     * @brief Get the capacity of the underlying buffer.
-     *
-     */
     constexpr size_type capacity() const noexcept
     {
         return Capacity;
     }
 
-    /**
-     * @brief Check if the array is empty.
-     *
-     */
     constexpr bool empty() const noexcept
     {
         return m_Size == 0;
     }
 
-    /**
-     * @brief Check if the array is full.
-     *
-     */
     constexpr bool full() const noexcept
     {
         return m_Size == capacity();
-    }
-
-    explicit(false) constexpr operator std::span<T, Capacity>() noexcept
-    {
-        return std::span<T, Capacity>(data(), static_cast<size_t>(size()));
-    }
-    explicit(false) constexpr operator std::span<const T, Capacity>() const noexcept
-    {
-        return std::span<const T, Capacity>(data(), static_cast<size_t>(size()));
     }
 
     explicit(false) constexpr operator std::span<T>() noexcept

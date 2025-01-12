@@ -65,7 +65,7 @@ class TKIT_API StackAllocator
      * @param p_Alignment The alignment of the block.
      * @return A pointer to the allocated block.
      */
-    void *Push(usize p_Size, usize p_Alignment = 1) noexcept;
+    void *Push(usize p_Size, usize p_Alignment = alignof(std::max_align_t)) noexcept;
 
     /**
      * @brief Allocate a new block of memory into the stack allocator (Same as `Push()`).
