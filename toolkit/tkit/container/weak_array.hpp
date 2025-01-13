@@ -54,17 +54,21 @@ class WeakArray
 
     template <typename U>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) WeakArray(const WeakArray<U, Capacity> &p_Array) noexcept
-        : m_Data(p_Array.data()), m_Size(p_Array.size())
+    constexpr WeakArray(WeakArray<U, Capacity> &&p_Other) noexcept : m_Data(p_Other.data()), m_Size(p_Other.size())
     {
+        p_Other.m_Data = nullptr;
+        p_Other.m_Size = 0;
     }
 
     template <typename U>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr WeakArray &operator=(const WeakArray<U, Capacity> &&p_Other) noexcept
+    constexpr WeakArray &operator=(WeakArray<U, Capacity> &&p_Other) noexcept
     {
         m_Data = p_Other.data();
         m_Size = p_Other.size();
+
+        p_Other.m_Data = nullptr;
+        p_Other.m_Size = 0;
         return *this;
     }
 
@@ -324,7 +328,7 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
 
     using Traits = std::allocator_traits<Memory::DefaultAllocator<T>>;
 
-    constexpr WeakArray() noexcept : m_Data(nullptr), m_Size(0)
+    constexpr WeakArray() noexcept : m_Data(nullptr), m_Size(0), m_Capacity(0)
     {
     }
     constexpr WeakArray(pointer p_Data, const size_type p_Capacity, const size_type p_Size = 0) noexcept
@@ -335,42 +339,52 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
     template <typename U, size_type Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
     constexpr explicit(false) WeakArray(const std::array<U, Capacity> &p_Array) noexcept
-        : m_Data(p_Array.data()), m_Size(0)
+        : m_Data(p_Array.data()), m_Size(0), m_Capacity(Capacity)
     {
     }
 
     template <typename U, size_type Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
     constexpr explicit(false) WeakArray(const StaticArray<U, Capacity> &p_Array) noexcept
-        : m_Data(p_Array.data()), m_Size(p_Array.size())
+        : m_Data(p_Array.data()), m_Size(0), m_Capacity(Capacity)
     {
     }
 
     template <typename U>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
     constexpr explicit(false) WeakArray(const DynamicArray<U> &p_Array) noexcept
-        : m_Data(p_Array.data()), m_Size(p_Array.size())
+        : m_Data(p_Array.data()), m_Size(0), m_Capacity(p_Array.size())
     {
     }
 
     template <typename U, size_type Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) WeakArray(const WeakArray<U, Capacity> &p_Array) noexcept
+    constexpr explicit(false) WeakArray(WeakArray<U, Capacity> &&p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(p_Array.size()), m_Capacity(p_Array.capacity())
     {
+        p_Other.m_Data = nullptr;
+        p_Other.m_Size = 0;
+        if constexpr (Capacity == Limits<usize>::max())
+            p_Other.m_Capacity = 0;
     }
 
-    template <typename U>
+    template <typename U, size_type Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr WeakArray &operator=(const WeakArray<U> &&p_Other) noexcept
+    constexpr WeakArray &operator=(WeakArray<U, Capacity> &&p_Other) noexcept
     {
         m_Data = p_Other.data();
         m_Size = p_Other.size();
         m_Capacity = p_Other.capacity();
+
+        p_Other.m_Data = nullptr;
+        p_Other.m_Size = 0;
+        if constexpr (Capacity == Limits<usize>::max())
+            p_Other.m_Capacity = 0;
         return *this;
     }
 
-    constexpr WeakArray(WeakArray &&p_Other) noexcept : m_Data(p_Other.m_Data), m_Size(p_Other.m_Size)
+    constexpr WeakArray(WeakArray &&p_Other) noexcept
+        : m_Data(p_Other.m_Data), m_Size(p_Other.m_Size), m_Capacity(p_Other.m_Capacity)
     {
         p_Other.m_Data = nullptr;
         p_Other.m_Size = 0;
