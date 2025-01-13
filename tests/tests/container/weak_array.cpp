@@ -26,6 +26,23 @@ void RunStaticArrayOperatorTests(const std::array<T, 5> &p_Args)
         array.push_back(p_Args[i]);
 
     REQUIRE(array.size() == 5);
+
+    SECTION("Move semantics")
+    {
+        WeakArray<T, Capacity> other = std::move(array);
+        REQUIRE(array.size() == 0);
+        REQUIRE(other.size() == 5);
+        if constexpr (Capacity == Limits<usize>::max())
+            REQUIRE(array.capacity() == 0);
+        REQUIRE(!array);
+
+        array = std::move(other);
+        REQUIRE(array.size() == 5);
+        REQUIRE(other.size() == 0);
+        if constexpr (Capacity == Limits<usize>::max())
+            REQUIRE(other.capacity() == 0);
+        REQUIRE(!other);
+    }
     SECTION("Push back")
     {
         for (usize i = 0; i < 5; i++)

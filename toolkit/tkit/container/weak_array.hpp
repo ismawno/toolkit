@@ -41,7 +41,7 @@ class WeakArray
     }
 
     template <typename U>
-        requires std::convertible_to<U *, T *>
+        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
     constexpr explicit(false) WeakArray(const std::array<U, Capacity> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(0)
     {
@@ -50,6 +50,22 @@ class WeakArray
     ~WeakArray() noexcept
     {
         clear();
+    }
+
+    template <typename U>
+        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
+    constexpr explicit(false) WeakArray(const WeakArray<U, Capacity> &p_Array) noexcept
+        : m_Data(p_Array.data()), m_Size(p_Array.size())
+    {
+    }
+
+    template <typename U>
+        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
+    constexpr WeakArray &operator=(const WeakArray<U, Capacity> &&p_Other) noexcept
+    {
+        m_Data = p_Other.data();
+        m_Size = p_Other.size();
+        return *this;
     }
 
     constexpr WeakArray(WeakArray &&p_Other) noexcept : m_Data(p_Other.m_Data), m_Size(p_Other.m_Size)
@@ -276,6 +292,10 @@ class WeakArray
     {
         return std::span<T>(data(), static_cast<size_t>(size()));
     }
+    operator bool() const noexcept
+    {
+        return m_Data != nullptr;
+    }
 
   private:
     pointer m_Data;
@@ -294,15 +314,15 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
     TKIT_NON_COPYABLE(WeakArray)
 
   public:
-    using Traits = std::allocator_traits<Memory::DefaultAllocator<T>>;
-
     using element_type = T;
     using value_type = NoCVRef<T>;
-    using size_type = typename Traits::size_type;
-    using pointer = typename Traits::pointer;
-    using reference = value_type &;
+    using size_type = usize;
+    using pointer = T *;
+    using reference = T &;
     using iterator = pointer;
     using reverse_iterator = std::reverse_iterator<iterator>;
+
+    using Traits = std::allocator_traits<Memory::DefaultAllocator<T>>;
 
     constexpr WeakArray() noexcept : m_Data(nullptr), m_Size(0)
     {
@@ -313,22 +333,40 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
     }
 
     template <typename U, size_type Capacity>
-        requires std::convertible_to<U *, T *>
+        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
     explicit(false) WeakArray(const StaticArray<U, Capacity> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(p_Array.size())
     {
     }
 
     template <typename U>
-        requires std::convertible_to<U *, T *>
+        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
     explicit(false) WeakArray(const DynamicArray<U> &p_Array) noexcept : m_Data(p_Array.data()), m_Size(p_Array.size())
     {
+    }
+
+    template <typename U>
+        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
+    constexpr explicit(false) WeakArray(const WeakArray<U> &p_Array) noexcept
+        : m_Data(p_Array.data()), m_Size(p_Array.size()), m_Capacity(p_Array.capacity())
+    {
+    }
+
+    template <typename U>
+        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
+    constexpr WeakArray &operator=(const WeakArray<U> &&p_Other) noexcept
+    {
+        m_Data = p_Other.data();
+        m_Size = p_Other.size();
+        m_Capacity = p_Other.capacity();
+        return *this;
     }
 
     constexpr WeakArray(WeakArray &&p_Other) noexcept : m_Data(p_Other.m_Data), m_Size(p_Other.m_Size)
     {
         p_Other.m_Data = nullptr;
         p_Other.m_Size = 0;
+        p_Other.m_Capacity = 0;
     }
     constexpr WeakArray &operator=(WeakArray &&p_Other) noexcept
     {
@@ -336,9 +374,11 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
         {
             m_Data = p_Other.m_Data;
             m_Size = p_Other.m_Size;
+            m_Capacity = p_Other.m_Capacity;
 
             p_Other.m_Data = nullptr;
             p_Other.m_Size = 0;
+            p_Other.m_Capacity = 0;
         }
         return *this;
     }
@@ -548,6 +588,11 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
     explicit(false) constexpr operator std::span<T>() const noexcept
     {
         return std::span<T>(data(), static_cast<size_t>(size()));
+    }
+
+    operator bool() const noexcept
+    {
+        return m_Data != nullptr;
     }
 
   private:
