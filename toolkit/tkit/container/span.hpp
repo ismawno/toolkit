@@ -34,7 +34,10 @@ class Span
     constexpr explicit(false) Span(pointer p_Data) noexcept : m_Data(p_Data)
     {
     }
-    constexpr explicit(false) Span(const std::array<T, Extent> &p_Array) noexcept : m_Data(p_Array.data())
+
+    template <typename U>
+        requires(std::convertible_to<U *, T *>)
+    constexpr explicit(false) Span(const std::array<U, Extent> &p_Array) noexcept : m_Data(p_Array.data())
     {
     }
 
@@ -132,17 +135,22 @@ template <typename T> class Span<T, Limits<usize>::max()>
     {
     }
 
-    template <size_type Capacity>
-    explicit(false) Span(const StaticArray<T, Capacity> &p_Array) noexcept
+    template <typename U, size_type Capacity>
+        requires std::convertible_to<U *, T *>
+    explicit(false) Span(const StaticArray<U, Capacity> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(p_Array.size())
     {
     }
-    template <size_type Capacity>
-    explicit(false) Span(const WeakArray<T, Capacity> &p_Array) noexcept
+    template <typename U, size_type Capacity>
+        requires std::convertible_to<U *, T *>
+    explicit(false) Span(const WeakArray<U, Capacity> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(p_Array.size())
     {
     }
-    explicit(false) Span(const DynamicArray<T> &p_Array) noexcept : m_Data(p_Array.data()), m_Size(p_Array.size())
+
+    template <typename U>
+        requires std::convertible_to<U *, T *>
+    explicit(false) Span(const DynamicArray<U> &p_Array) noexcept : m_Data(p_Array.data()), m_Size(p_Array.size())
     {
     }
 

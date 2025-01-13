@@ -39,7 +39,10 @@ class WeakArray
     constexpr WeakArray(pointer p_Data, const size_type p_Size) noexcept : m_Data(p_Data), m_Size(p_Size)
     {
     }
-    constexpr explicit(false) WeakArray(const std::array<T, Capacity> &p_Array) noexcept
+
+    template <typename U>
+        requires std::convertible_to<U *, T *>
+    constexpr explicit(false) WeakArray(const std::array<U, Capacity> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(0)
     {
     }
@@ -309,12 +312,16 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
     {
     }
 
-    template <size_type N>
-    explicit(false) WeakArray(const StaticArray<T, N> &p_Array) noexcept
+    template <typename U, size_type Capacity>
+        requires std::convertible_to<U *, T *>
+    explicit(false) WeakArray(const StaticArray<U, Capacity> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(p_Array.size())
     {
     }
-    explicit(false) WeakArray(const DynamicArray<T> &p_Array) noexcept : m_Data(p_Array.data()), m_Size(p_Array.size())
+
+    template <typename U>
+        requires std::convertible_to<U *, T *>
+    explicit(false) WeakArray(const DynamicArray<U> &p_Array) noexcept : m_Data(p_Array.data()), m_Size(p_Array.size())
     {
     }
 
