@@ -147,7 +147,8 @@ template <typename T> class Span<T, Limits<usize>::max()>
 
     template <typename U, size_type Extent>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(const std::array<U, Extent> &p_Array) noexcept : m_Data(p_Array.data())
+    constexpr explicit(false) Span(const std::array<U, Extent> &p_Array) noexcept
+        : m_Data(p_Array.data()), m_Size(Extent)
     {
     }
 
