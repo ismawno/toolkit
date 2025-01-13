@@ -334,20 +334,28 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
 
     template <typename U, size_type Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    explicit(false) WeakArray(const StaticArray<U, Capacity> &p_Array) noexcept
+    constexpr explicit(false) WeakArray(const std::array<U, Capacity> &p_Array) noexcept
+        : m_Data(p_Array.data()), m_Size(0)
+    {
+    }
+
+    template <typename U, size_type Capacity>
+        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
+    constexpr explicit(false) WeakArray(const StaticArray<U, Capacity> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(p_Array.size())
     {
     }
 
     template <typename U>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    explicit(false) WeakArray(const DynamicArray<U> &p_Array) noexcept : m_Data(p_Array.data()), m_Size(p_Array.size())
+    constexpr explicit(false) WeakArray(const DynamicArray<U> &p_Array) noexcept
+        : m_Data(p_Array.data()), m_Size(p_Array.size())
     {
     }
 
-    template <typename U>
+    template <typename U, size_type Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) WeakArray(const WeakArray<U> &p_Array) noexcept
+    constexpr explicit(false) WeakArray(const WeakArray<U, Capacity> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(p_Array.size()), m_Capacity(p_Array.capacity())
     {
     }

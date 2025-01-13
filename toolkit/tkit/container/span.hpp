@@ -145,6 +145,12 @@ template <typename T> class Span<T, Limits<usize>::max()>
     {
     }
 
+    template <typename U, size_type Extent>
+        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
+    constexpr explicit(false) Span(const std::array<U, Extent> &p_Array) noexcept : m_Data(p_Array.data())
+    {
+    }
+
     template <typename U, size_type Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
     constexpr explicit(false) Span(const StaticArray<U, Capacity> &p_Array) noexcept
@@ -165,9 +171,10 @@ template <typename T> class Span<T, Limits<usize>::max()>
     {
     }
 
-    template <typename U>
+    template <typename U, size_type Extent>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(const Span<U> &p_Other) noexcept : m_Data(p_Other.data()), m_Size(p_Other.size())
+    constexpr explicit(false) Span(const Span<U, Extent> &p_Other) noexcept
+        : m_Data(p_Other.data()), m_Size(p_Other.size())
     {
     }
 
