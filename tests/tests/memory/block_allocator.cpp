@@ -1,9 +1,9 @@
 #include "tkit/memory/block_allocator.hpp"
 #include "tkit/multiprocessing/thread_pool.hpp"
 #include "tkit/multiprocessing/for_each.hpp"
+#include "tkit/container/array.hpp"
 #include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
-#include <array>
 
 namespace TKit
 {
@@ -66,7 +66,7 @@ template <typename T> static void RunRawAllocationTest()
     DYNAMIC_SECTION("Assert contiguous (raw call)" << (int)typeid(T).hash_code())
     {
         constexpr u32 amount = 10;
-        std::array<T *, amount> data;
+        Array<T *, amount> data;
         const usize chunkSize = allocator.GetChunkSize();
         for (u32 i = 0; i < amount; ++i)
         {
@@ -135,7 +135,7 @@ template <typename T> static void RunNewDeleteTest()
     DYNAMIC_SECTION("Assert contiguous (new/delete)" << (int)typeid(T).hash_code())
     {
         constexpr u32 amount = 10;
-        std::array<T *, amount> data;
+        Array<T *, amount> data;
         constexpr usize chunkSize = BlockAllocator<T>::GetChunkSize();
         for (u32 i = 0; i < amount; ++i)
         {
@@ -173,8 +173,8 @@ template <typename T> static void RunMultithreadedAllocationsTest()
     constexpr usize amount = 1000;
     constexpr usize threadCount = 8;
     ThreadPool<std::mutex> pool(threadCount);
-    std::array<PaddedData, amount> data;
-    std::array<Ref<Task<bool>>, threadCount> tasks;
+    Array<PaddedData, amount> data;
+    Array<Ref<Task<bool>>, threadCount> tasks;
 
     ForEach(pool, data.begin(), data.end(), tasks.begin(), threadCount,
             [](auto p_It1, auto p_It2, const usize p_ThreadIndex) {

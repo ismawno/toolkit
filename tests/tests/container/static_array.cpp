@@ -24,7 +24,7 @@ template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args.
 
     SECTION("Iterator constructor")
     {
-        std::array<T, 5> values = {p_Args...};
+        Array<T, 5> values = {p_Args...};
         StaticArray<T, 10> array(values.begin(), values.end());
         REQUIRE(array.size() == 5);
         REQUIRE(array.capacity() == 10);
@@ -141,7 +141,7 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
         SECTION("Build in reverse")
         {
             array.clear();
-            std::array<T, 5> values = {p_Args...};
+            Array<T, 5> values = {p_Args...};
             for (const T &value : values)
                 array.insert(array.begin(), value);
 
@@ -186,7 +186,7 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
 
     SECTION("Resize")
     {
-        std::array<T, 5> values = {p_Args...};
+        Array<T, 5> values = {p_Args...};
         SECTION("Clear from resize")
         {
             array.resize(0);
@@ -213,7 +213,7 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
 
     SECTION("Emplace back")
     {
-        std::array<T, 5> values = {p_Args...};
+        Array<T, 5> values = {p_Args...};
         array.clear();
         for (usize i = 0; i < 5; ++i)
             array.emplace_back(values[i]);

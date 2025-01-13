@@ -1,8 +1,8 @@
 #include "tkit/multiprocessing/thread_pool.hpp"
 #include "tkit/multiprocessing/for_each.hpp"
 #include "tkit/multiprocessing/spin_lock.hpp"
+#include "tkit/container/array.hpp"
 #include <catch2/catch_test_macros.hpp>
-#include <array>
 
 namespace TKit
 {
@@ -31,7 +31,7 @@ template <Mutex MTX> void RunThreadPoolTest()
 
     SECTION("Parallel for")
     {
-        std::array<Number, amount> numbers;
+        Array<Number, amount> numbers;
         u32 realSum = 0;
         for (u32 i = 0; i < amount; i++)
         {
@@ -39,7 +39,7 @@ template <Mutex MTX> void RunThreadPoolTest()
             realSum += i;
         }
 
-        std::array<Ref<Task<u32>>, threadCount> tasks;
+        Array<Ref<Task<u32>>, threadCount> tasks;
         ForEach(pool, numbers.begin(), numbers.end(), tasks.begin(), threadCount,
                 [](auto p_It1, auto p_It2, const usize) {
                     u32 sum = 0;
@@ -55,7 +55,7 @@ template <Mutex MTX> void RunThreadPoolTest()
 
     SECTION("Parallel for (void return)")
     {
-        std::array<Number, amount> numbers;
+        Array<Number, amount> numbers;
         u32 realSum = 0;
         for (u32 i = 0; i < amount; i++)
         {
@@ -77,7 +77,7 @@ template <Mutex MTX> void RunThreadPoolTest()
 
     SECTION("Parallel for with main thread")
     {
-        std::array<Number, amount> numbers;
+        Array<Number, amount> numbers;
         u32 realSum = 0;
         for (u32 i = 0; i < amount; i++)
         {
@@ -85,7 +85,7 @@ template <Mutex MTX> void RunThreadPoolTest()
             realSum += i;
         }
 
-        std::array<Ref<Task<u32>>, threadCount - 1> tasks;
+        Array<Ref<Task<u32>>, threadCount - 1> tasks;
         u32 finalSum;
         ForEachMainThreadLead(pool, numbers.begin(), numbers.end(), tasks.begin(), &finalSum, threadCount,
                               [](auto p_It1, auto p_It2, const usize) {
@@ -101,7 +101,7 @@ template <Mutex MTX> void RunThreadPoolTest()
 
     SECTION("Parallel for with main thread (void return)")
     {
-        std::array<Number, amount> numbers;
+        Array<Number, amount> numbers;
         u32 realSum = 0;
         for (u32 i = 0; i < amount; i++)
         {

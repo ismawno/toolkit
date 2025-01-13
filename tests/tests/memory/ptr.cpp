@@ -1,6 +1,6 @@
 #include "tkit/memory/ptr.hpp"
+#include "tkit/container/array.hpp"
 #include <catch2/catch_test_macros.hpp>
-#include <array>
 #include <thread>
 
 namespace TKit
@@ -198,8 +198,8 @@ TEST_CASE("Reference counting with inheritance", "[memory][ptr]")
 
 TEST_CASE("Reference counting from multiple threads", "[memory][ptr]")
 {
-    const auto createRefs = [](const std::array<Ref<TestRefCounted>, 100> &p_Refs) {
-        std::array<Ref<TestRefCounted>, 100> refs;
+    const auto createRefs = [](const Array<Ref<TestRefCounted>, 100> &p_Refs) {
+        Array<Ref<TestRefCounted>, 100> refs;
         for (i32 i = 0; i < 100; ++i)
         {
             if (i % 2 == 0)
@@ -209,11 +209,11 @@ TEST_CASE("Reference counting from multiple threads", "[memory][ptr]")
         }
     };
     {
-        std::array<Ref<TestRefCounted>, 100> refs;
+        Array<Ref<TestRefCounted>, 100> refs;
         for (i32 i = 0; i < 100; ++i)
             refs[i] = new TestRefCounted;
 
-        std::array<std::thread, 8> threads;
+        Array<std::thread, 8> threads;
         for (std::thread &thread : threads)
             thread = std::thread(createRefs, refs);
         for (std::thread &thread : threads)

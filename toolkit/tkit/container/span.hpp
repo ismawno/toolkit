@@ -37,7 +37,7 @@ class Span
 
     template <typename U>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(const std::array<U, Extent> &p_Array) noexcept : m_Data(p_Array.data())
+    constexpr explicit(false) Span(const Array<U, Extent> &p_Array) noexcept : m_Data(p_Array.data())
     {
     }
     template <typename U>
@@ -99,15 +99,6 @@ class Span
         return reverse_iterator(begin());
     }
 
-    explicit(false) constexpr operator std::span<T, Extent>() noexcept
-    {
-        return std::span<T, Extent>(data(), static_cast<size_t>(size()));
-    }
-    explicit(false) constexpr operator std::span<const T, Extent>() const noexcept
-    {
-        return std::span<const T, Extent>(data(), static_cast<size_t>(size()));
-    }
-
     operator bool() const noexcept
     {
         return m_Data != nullptr;
@@ -147,8 +138,7 @@ template <typename T> class Span<T, Limits<usize>::max()>
 
     template <typename U, size_type Extent>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(const std::array<U, Extent> &p_Array) noexcept
-        : m_Data(p_Array.data()), m_Size(Extent)
+    constexpr explicit(false) Span(const Array<U, Extent> &p_Array) noexcept : m_Data(p_Array.data()), m_Size(Extent)
     {
     }
 
@@ -235,15 +225,6 @@ template <typename T> class Span<T, Limits<usize>::max()>
     constexpr bool empty() const noexcept
     {
         return m_Size == 0;
-    }
-
-    explicit(false) constexpr operator std::span<T>() noexcept
-    {
-        return std::span<T>(data(), static_cast<size_t>(size()));
-    }
-    explicit(false) constexpr operator std::span<const T>() const noexcept
-    {
-        return std::span<const T>(data(), static_cast<size_t>(size()));
     }
 
     operator bool() const noexcept

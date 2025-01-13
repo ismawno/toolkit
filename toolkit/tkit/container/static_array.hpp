@@ -1,22 +1,21 @@
 #pragma once
 
 #include "tkit/container/container.hpp"
+#include "tkit/container/array.hpp"
 #include "tkit/core/concepts.hpp"
 #include "tkit/core/logging.hpp"
-#include <span>
-#include <array>
 
 namespace TKit
 {
 
-// An STL-like array with a fixed size. It can be used as a replacement for std::array in
+// An STL-like array with a fixed size. It can be used as a replacement for Array in
 // the sense that it offers a bit more control and functionality, but it is not meant to be a drop-in replacement, as
 // the extra functionality comes with some overhead.
 
 /**
  * @brief An STL-like array with a fixed size buffer.
  *
- * It is meant to be used as a drop-in replacement for `std::array` when you need a bit more control and functionality,
+ * It is meant to be used as a drop-in replacement for `Array` when you need a bit more control and functionality,
  * although it comes with some overhead.
  *
  * @tparam T The type of the elements in the array.
@@ -462,15 +461,6 @@ class StaticArray
         return m_Size == capacity();
     }
 
-    explicit(false) constexpr operator std::span<T>() noexcept
-    {
-        return std::span<T>(data(), static_cast<size_t>(size()));
-    }
-    explicit(false) constexpr operator std::span<const T>() const noexcept
-    {
-        return std::span<const T>(data(), static_cast<size_t>(size()));
-    }
-
   private:
     struct alignas(T) Element
     {
@@ -480,7 +470,7 @@ class StaticArray
     static_assert(sizeof(Element) == sizeof(T), "Element size is not equal to T size");
     static_assert(alignof(Element) == alignof(T), "Element alignment is not equal to T alignment");
 
-    std::array<Element, Capacity> m_Data{};
+    Array<Element, Capacity> m_Data{};
     size_type m_Size = 0;
 };
 

@@ -18,8 +18,7 @@ template <typename T, usize Capacity> WeakArray<T, Capacity> CreateArray()
         return WeakArray<T, Capacity>(g_Arena.Push<T>(Capacity));
 }
 
-template <typename T, usize Capacity = Limits<usize>::max()>
-void RunStaticArrayOperatorTests(const std::array<T, 5> &p_Args)
+template <typename T, usize Capacity = Limits<usize>::max()> void RunStaticArrayOperatorTests(const Array<T, 5> &p_Args)
 {
     WeakArray<T, Capacity> array = CreateArray<T, Capacity>();
     for (usize i = 0; i < 5; i++)
@@ -86,7 +85,7 @@ void RunStaticArrayOperatorTests(const std::array<T, 5> &p_Args)
         SECTION("Build in reverse")
         {
             array.clear();
-            std::array<T, 5> values = p_Args;
+            Array<T, 5> values = p_Args;
             for (const T &value : values)
                 array.insert(array.begin(), value);
 
@@ -127,7 +126,7 @@ void RunStaticArrayOperatorTests(const std::array<T, 5> &p_Args)
 
     SECTION("Resize")
     {
-        std::array<T, 5> values = p_Args;
+        Array<T, 5> values = p_Args;
         SECTION("Clear from resize")
         {
             array.resize(0);
@@ -154,7 +153,7 @@ void RunStaticArrayOperatorTests(const std::array<T, 5> &p_Args)
 
     SECTION("Emplace back")
     {
-        std::array<T, 5> values = p_Args;
+        Array<T, 5> values = p_Args;
         array.clear();
         for (usize i = 0; i < 5; ++i)
             array.emplace_back(values[i]);

@@ -11,7 +11,6 @@
 #include <iostream>
 #include <type_traits>
 #include <utility>
-#include <array>
 #include <unordered_map>
 #include <unordered_set>
 #include <tuple>
