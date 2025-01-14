@@ -5,7 +5,7 @@
 
 namespace TKit
 {
-TEST_CASE("Raw storage", "[core][container][Storage]")
+TEST_CASE("Raw storage", "[core][container][raw_storage]")
 {
     SECTION("Trivial type")
     {
@@ -51,7 +51,7 @@ TEST_CASE("Raw storage", "[core][container][Storage]")
     }
 }
 
-TEST_CASE("Storage", "[core][container][Storage]")
+TEST_CASE("Storage", "[core][container][storage]")
 {
     SECTION("Trivial type")
     {

@@ -14,9 +14,9 @@ namespace TKit
  * @tparam Capacity The capacity of the array.
  */
 template <typename T, usize Capacity = Limits<usize>::max()> // Consider adding allocator traits
-    requires(Capacity > 0)
 class WeakArray
 {
+    static_assert(Capacity > 0, "[TOOLKIT] Capacity must be greater than 0");
     TKIT_NON_COPYABLE(WeakArray)
 
   public:
@@ -40,9 +40,12 @@ class WeakArray
     {
     }
 
-    template <typename U>
-        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) WeakArray(const Array<U, Capacity> &p_Array) noexcept : m_Data(p_Array.data()), m_Size(0)
+    constexpr explicit(false) WeakArray(const Array<value_type, Capacity> &p_Array) noexcept
+        : m_Data(p_Array.data()), m_Size(0)
+    {
+    }
+    constexpr explicit(false) WeakArray(Array<value_type, Capacity> &p_Array) noexcept
+        : m_Data(p_Array.data()), m_Size(0)
     {
     }
 
@@ -299,6 +302,8 @@ class WeakArray
   private:
     pointer m_Data;
     size_type m_Size;
+
+    template <typename U, usize OtherCapacity> friend class WeakArray;
 };
 
 /**
@@ -331,23 +336,33 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
     {
     }
 
-    template <typename U, size_type Capacity>
-        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) WeakArray(const Array<U, Capacity> &p_Array) noexcept
+    template <size_type Capacity>
+    constexpr explicit(false) WeakArray(const Array<value_type, Capacity> &p_Array) noexcept
+        : m_Data(p_Array.data()), m_Size(0), m_Capacity(Capacity)
+    {
+    }
+    template <size_type Capacity>
+    constexpr explicit(false) WeakArray(Array<value_type, Capacity> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(0), m_Capacity(Capacity)
     {
     }
 
-    template <typename U, size_type Capacity>
-        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) WeakArray(const StaticArray<U, Capacity> &p_Array) noexcept
+    template <size_type Capacity>
+    constexpr explicit(false) WeakArray(const StaticArray<value_type, Capacity> &p_Array) noexcept
+        : m_Data(p_Array.data()), m_Size(0), m_Capacity(Capacity)
+    {
+    }
+    template <size_type Capacity>
+    constexpr explicit(false) WeakArray(StaticArray<value_type, Capacity> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(0), m_Capacity(Capacity)
     {
     }
 
-    template <typename U>
-        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) WeakArray(const DynamicArray<U> &p_Array) noexcept
+    constexpr explicit(false) WeakArray(const DynamicArray<value_type> &p_Array) noexcept
+        : m_Data(p_Array.data()), m_Size(0), m_Capacity(p_Array.size())
+    {
+    }
+    constexpr explicit(false) WeakArray(DynamicArray<value_type> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(0), m_Capacity(p_Array.size())
     {
     }
@@ -611,5 +626,7 @@ template <typename T> class WeakArray<T, Limits<usize>::max()>
     pointer m_Data;
     size_type m_Size;
     size_type m_Capacity;
+
+    template <typename U, usize Capacity> friend class WeakArray;
 };
 } // namespace TKit

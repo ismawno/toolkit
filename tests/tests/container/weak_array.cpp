@@ -42,6 +42,15 @@ template <typename T, usize Capacity = Limits<usize>::max()> void RunStaticArray
             REQUIRE(other.capacity() == 0);
         REQUIRE(!other);
     }
+    SECTION("Const elements")
+    {
+        const WeakArray<T, Capacity> constArray1 = CreateArray<T, Capacity>();
+        REQUIRE(constArray1);
+        const WeakArray<const T, Capacity> constArray2 = CreateArray<T, Capacity>();
+        REQUIRE(constArray2);
+        WeakArray<const T, Capacity> constArray3 = CreateArray<T, Capacity>();
+        REQUIRE(constArray3);
+    }
     SECTION("Push back")
     {
         for (usize i = 0; i < 5; i++)
@@ -169,51 +178,51 @@ template <typename T, usize Capacity = Limits<usize>::max()> void RunStaticArray
     }
 }
 
-TEST_CASE("WeakArray (i32) Dynamic capacity", "[core][container][WeakArray]")
+TEST_CASE("WeakArray (i32) Dynamic capacity", "[core][container][weak_array]")
 {
     RunStaticArrayOperatorTests<i32>({1, 2, 3, 4, 5});
     g_Arena.Reset();
 }
-TEST_CASE("WeakArray (i32) Static capacity", "[core][container][WeakArray]")
+TEST_CASE("WeakArray (i32) Static capacity", "[core][container][weak_array]")
 {
     RunStaticArrayOperatorTests<i32, 10>({1, 2, 3, 4, 5});
     g_Arena.Reset();
 }
 
-TEST_CASE("WeakArray (f32) Dynamic capacity", "[core][container][WeakArray]")
+TEST_CASE("WeakArray (f32) Dynamic capacity", "[core][container][weak_array]")
 {
     RunStaticArrayOperatorTests<f32>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f});
     g_Arena.Reset();
 }
-TEST_CASE("WeakArray (f32) Static capacity", "[core][container][WeakArray]")
+TEST_CASE("WeakArray (f32) Static capacity", "[core][container][weak_array]")
 {
     RunStaticArrayOperatorTests<f32, 10>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f});
     g_Arena.Reset();
 }
 
-TEST_CASE("WeakArray (f64) Dynamic capacity", "[core][container][WeakArray]")
+TEST_CASE("WeakArray (f64) Dynamic capacity", "[core][container][weak_array]")
 {
     RunStaticArrayOperatorTests<f64>({1.0, 2.0, 3.0, 4.0, 5.0});
     g_Arena.Reset();
 }
-TEST_CASE("WeakArray (f64) Static capacity", "[core][container][WeakArray]")
+TEST_CASE("WeakArray (f64) Static capacity", "[core][container][weak_array]")
 {
     RunStaticArrayOperatorTests<f64, 10>({1.0, 2.0, 3.0, 4.0, 5.0});
     g_Arena.Reset();
 }
 
-TEST_CASE("WeakArray (std::string) Dynamic capacity", "[core][container][WeakArray]")
+TEST_CASE("WeakArray (std::string) Dynamic capacity", "[core][container][weak_array]")
 {
     RunStaticArrayOperatorTests<std::string>({"10", "20", "30", "40", "50"});
     g_Arena.Reset();
 }
-TEST_CASE("WeakArray (std::string) Static capacity", "[core][container][WeakArray]")
+TEST_CASE("WeakArray (std::string) Static capacity", "[core][container][weak_array]")
 {
     RunStaticArrayOperatorTests<std::string, 10>({"10", "20", "30", "40", "50"});
     g_Arena.Reset();
 }
 
-TEST_CASE("WeakArray cleanup check", "[core][container][WeakArray]")
+TEST_CASE("WeakArray cleanup check", "[core][container][weak_array]")
 {
     WeakArray<NonTrivialData, 10> array = CreateArray<NonTrivialData, 10>();
     for (usize i = 0; i < 5; i++)

@@ -35,11 +35,13 @@ class Span
     {
     }
 
-    template <typename U>
-        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(const Array<U, Extent> &p_Array) noexcept : m_Data(p_Array.data())
+    constexpr explicit(false) Span(const Array<value_type, Extent> &p_Array) noexcept : m_Data(p_Array.data())
     {
     }
+    constexpr explicit(false) Span(Array<value_type, Extent> &p_Array) noexcept : m_Data(p_Array.data())
+    {
+    }
+
     template <typename U>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
     constexpr explicit(false) Span(const Span<U, Extent> &p_Other) noexcept : m_Data(p_Other.data())
@@ -136,28 +138,45 @@ template <typename T> class Span<T, Limits<usize>::max()>
     {
     }
 
-    template <typename U, size_type Extent>
-        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(const Array<U, Extent> &p_Array) noexcept : m_Data(p_Array.data()), m_Size(Extent)
+    template <size_type Extent>
+    constexpr explicit(false) Span(const Array<value_type, Extent> &p_Array) noexcept
+        : m_Data(p_Array.data()), m_Size(Extent)
+    {
+    }
+    template <size_type Extent>
+    constexpr explicit(false) Span(Array<value_type, Extent> &p_Array) noexcept : m_Data(p_Array.data()), m_Size(Extent)
     {
     }
 
-    template <typename U, size_type Capacity>
-        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(const StaticArray<U, Capacity> &p_Array) noexcept
+    template <size_type Capacity>
+    constexpr explicit(false) Span(const StaticArray<value_type, Capacity> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(p_Array.size())
     {
     }
+    template <size_type Capacity>
+    constexpr explicit(false) Span(StaticArray<value_type, Capacity> &p_Array) noexcept
+        : m_Data(p_Array.data()), m_Size(p_Array.size())
+    {
+    }
+
     template <typename U, size_type Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
     constexpr explicit(false) Span(const WeakArray<U, Capacity> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(p_Array.size())
     {
     }
-
-    template <typename U>
+    template <typename U, size_type Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(const DynamicArray<U> &p_Array) noexcept
+    constexpr explicit(false) Span(WeakArray<U, Capacity> &p_Array) noexcept
+        : m_Data(p_Array.data()), m_Size(p_Array.size())
+    {
+    }
+
+    constexpr explicit(false) Span(const DynamicArray<value_type> &p_Array) noexcept
+        : m_Data(p_Array.data()), m_Size(p_Array.size())
+    {
+    }
+    constexpr explicit(false) Span(DynamicArray<value_type> &p_Array) noexcept
         : m_Data(p_Array.data()), m_Size(p_Array.size())
     {
     }

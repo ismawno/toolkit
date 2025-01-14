@@ -229,31 +229,31 @@ template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args...
     }
 }
 
-TEST_CASE("StaticArray (i32)", "[core][container][StaticArray]")
+TEST_CASE("StaticArray (i32)", "[core][container][static_array]")
 {
     RunStaticArrayConstructorTest<i32>(1, 2, 3, 4, 5);
     RunStaticArrayOperatorTests<i32>(1, 2, 3, 4, 5);
 }
 
-TEST_CASE("StaticArray (f32)", "[core][container][StaticArray]")
+TEST_CASE("StaticArray (f32)", "[core][container][static_array]")
 {
     RunStaticArrayConstructorTest<f32>(1.0f, 2.0f, 3.0f, 4.0f, 5.0f);
     RunStaticArrayOperatorTests<f32>(1.0f, 2.0f, 3.0f, 4.0f, 5.0f);
 }
 
-TEST_CASE("StaticArray (f64)", "[core][container][StaticArray]")
+TEST_CASE("StaticArray (f64)", "[core][container][static_array]")
 {
     RunStaticArrayConstructorTest<f64>(1.0, 2.0, 3.0, 4.0, 5.0);
     RunStaticArrayOperatorTests<f64>(1.0, 2.0, 3.0, 4.0, 5.0);
 }
 
-TEST_CASE("StaticArray (std::string)", "[core][container][StaticArray]")
+TEST_CASE("StaticArray (std::string)", "[core][container][static_array]")
 {
     RunStaticArrayConstructorTest<std::string>("10", "20", "30", "40", "50");
     RunStaticArrayOperatorTests<std::string>("10", "20", "30", "40", "50");
 }
 
-TEST_CASE("StaticArray cleanup check", "[core][container][StaticArray]")
+TEST_CASE("StaticArray cleanup check", "[core][container][static_array]")
 {
     StaticArray<NonTrivialData, 10> array{5};
     REQUIRE(NonTrivialData::Instances == 5);

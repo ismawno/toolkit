@@ -5,6 +5,16 @@
 
 namespace TKit
 {
+/**
+ * @brief A plain C array wrapper.
+ *
+ * Can be used as a drop-in replacement for std::array. It is here to provide a bit more control and use of the
+ * DefaultAllocator traits.
+ *
+ * @tparam T
+ * @tparam Size
+ * @tparam Traits
+ */
 template <typename T, usize Size, typename Traits = std::allocator_traits<Memory::DefaultAllocator<T>>> class Array
 {
   public:
@@ -27,6 +37,12 @@ template <typename T, usize Size, typename Traits = std::allocator_traits<Memory
         TKIT_ASSERT(p_Elements.size() <= Size, "[TOOLKIT] Size is bigger than capacity");
         Memory::ConstructRangeCopy(begin(), p_Elements.begin(), p_Elements.end());
     }
+
+    constexpr Array(const Array &p_Other) noexcept = default;
+    constexpr Array(Array &&p_Other) noexcept = default;
+
+    constexpr Array &operator=(const Array &p_Other) noexcept = default;
+    constexpr Array &operator=(Array &&p_Other) noexcept = default;
 
     constexpr const_reference operator[](const size_type p_Index) const noexcept
     {
