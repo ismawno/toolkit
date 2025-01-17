@@ -52,10 +52,10 @@ TKIT_API void *AllocateAligned(size_t p_Size, size_t p_Alignment) noexcept;
 TKIT_API void DeallocateAligned(void *p_Ptr) noexcept;
 
 /**
- * @brief A custom allocator that uses a custom size_type (usually u32) for indexing.
+ * @brief A custom allocator that uses a custom size_type (usually `u32`) for indexing.
  *
  * This allocator is intended for environments or applications where the maximum container size never exceeds 2^32,
- * making 32-bit indices (u32) sufficient. By using a smaller index type, it can offer performance benefits in tight
+ * making 32-bit indices (`u32`) sufficient. By using a smaller index type, it can offer performance benefits in tight
  * loops and reduce cache pressure, particularly when managing a large number of small containers or indices.
  *
  * @tparam T The type of object to allocate.

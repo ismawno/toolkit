@@ -98,7 +98,7 @@ class TKIT_API StackAllocator
      *
      * @note This method, if used correctly, should behave exactly like `Pop()`. The pointer is kept there for
      * consistency and for debugging purposes when asserts are enabled. If disabled, this method is just a wrapper
-     * around Pop().
+     * around `Pop()`.
      *
      * @param p_Ptr The pointer to the block to deallocate.
      */

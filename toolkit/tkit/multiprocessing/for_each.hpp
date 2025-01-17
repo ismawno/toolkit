@@ -25,7 +25,7 @@ concept OutputIterOrIndex = std::integral<T> || std::output_iterator<T, U>;
  * @param p_Partitions The number of partitions to create.
  * @param p_Callable The callable object to execute. It must be a function object that takes two iterators as arguments
  * (and the mandatory thread index argument at the end as well). It will be called for each element in the range
- * [p_First, p_Last). The function is called as: `p_Callable(YouArgs..., p_Start, p_End, p_ThreadIndex)`
+ * [`p_First`, `p_Last`). The function is called as: `p_Callable(YouArgs..., p_Start, p_End, p_ThreadIndex)`
  * @param p_Args Extra arguments to pass to the callable object. These arguments go before the iterators and thread
  * index.
  */
@@ -64,7 +64,7 @@ void ForEach(TManager &p_Manager, It1 p_First, It1 p_Last, It2 p_Dest, const usi
  * @param p_Partitions The number of partitions to create.
  * @param p_Callable The callable object to execute. It must be a function object that takes two iterators as arguments
  * (and the mandatory thread index argument at the end as well). It will be called for each element in the range
- * [p_First, p_Last). The function is called as: `p_Callable(YouArgs..., p_Start, p_End, p_ThreadIndex)`
+ * [`p_First`, `p_Last`). The function is called as: `p_Callable(YouArgs..., p_Start, p_End, p_ThreadIndex)`
  * @param p_Args Extra arguments to pass to the callable object. These arguments go before the iterators and thread
  * index.
  */
@@ -103,7 +103,7 @@ void ForEach(TManager &p_Manager, It p_First, It p_Last, const usize p_Partition
  * @param p_Partitions The number of partitions to create.
  * @param p_Callable The callable object to execute. It must be a function object that takes two iterators as arguments
  * (and the mandatory thread index argument at the end as well). It will be called for each element in the range
- * [p_First, p_Last). The function is called as: `p_Callable(YouArgs..., p_Start, p_End, p_ThreadIndex)`
+ * [`p_First`, `p_Last`). The function is called as: `p_Callable(YouArgs..., p_Start, p_End, p_ThreadIndex)`
  * @param p_Args Extra arguments to pass to the callable object. These arguments go before the iterators and thread
  * index.
  */
@@ -147,7 +147,7 @@ void ForEachMainThreadLead(TManager &p_Manager, It1 p_First, It1 p_Last, It2 p_D
  * @param p_Partitions The number of partitions to create.
  * @param p_Callable The callable object to execute. It must be a function object that takes two iterators as arguments
  * (and the mandatory thread index argument at the end as well). It will be called for each element in the range
- * [p_First, p_Last). The function is called as: `p_Callable(YouArgs..., p_Start, p_End, p_ThreadIndex)`
+ * [`p_First`, `p_Last`). The function is called as: `p_Callable(YouArgs..., p_Start, p_End, p_ThreadIndex)`
  * @param p_Args Extra arguments to pass to the callable object. These arguments go before the iterators and thread
  * index.
  */
