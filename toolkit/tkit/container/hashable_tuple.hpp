@@ -2,8 +2,7 @@
 
 #include "tkit/core/api.hpp"
 #include "tkit/core/alias.hpp"
-#include "tkit/core/concepts.hpp"
-#include <functional>
+#include "tkit/core/hash.hpp"
 
 namespace TKit
 {
@@ -19,7 +18,6 @@ namespace TKit
  * Useful when you need to hash multiple elements at the same time. The elements must be hashable, meaning they must
  * have a `std::hash` specialization.
  *
- * @tparam H
  */
 template <Hashable... H> struct HashableTuple
 {
@@ -81,10 +79,10 @@ template <Hashable... H> struct HashableTuple
      * @brief Compute the hash of the tuple.
      *
      */
-    constexpr usize operator()() const noexcept
+    constexpr size_t operator()() const noexcept
     {
-        usize seed = 0x517cc1b7;
-        std::apply([&seed](const auto &...elements) { (hashSeed(seed, elements), ...); }, Elements);
+        size_t seed = TKIT_HASH_SEED;
+        std::apply([&seed](const auto &...elements) { HashCombine(seed, elements...); }, Elements);
         return seed;
     }
 
@@ -94,12 +92,5 @@ template <Hashable... H> struct HashableTuple
     }
 
     Tuple Elements;
-
-  private:
-    template <Hashable T> static constexpr void hashSeed(usize &p_Seed, const T &p_Hashable) noexcept
-    {
-        const std::hash<T> hasher;
-        p_Seed ^= hasher(p_Hashable) + 0x9e3779b9 + (p_Seed << 6) + (p_Seed >> 2);
-    }
 };
 } // namespace TKit

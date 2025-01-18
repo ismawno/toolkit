@@ -7,10 +7,12 @@
 
 namespace TKit
 {
+template <typename T> using NoCVRef = std::remove_cvref_t<T>;
+
 template <typename T>
 concept Hashable = requires(T a) {
     {
-        std::hash<T>()(a)
+        std::hash<NoCVRef<T>>()(a)
     } -> std::convertible_to<usize>;
 };
 
@@ -33,5 +35,4 @@ concept Mutex = requires(T a) {
     } -> std::same_as<void>;
 };
 
-template <typename T> using NoCVRef = std::remove_cvref_t<T>;
 } // namespace TKit
