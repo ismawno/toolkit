@@ -2,7 +2,7 @@
 
 #include "tkit/core/api.hpp"
 #include "tkit/core/alias.hpp"
-#include "tkit/core/hash.hpp"
+#include "tkit/utilities/hash.hpp"
 
 namespace TKit
 {
