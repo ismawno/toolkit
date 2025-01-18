@@ -227,7 +227,7 @@ template <typename T> class Ref
      * This is a factory method that creates a new `Ref<T>` object.
      *
      * @param p_Args The arguments to pass to the constructor of `T`.
-     * @return Ref A new `Ref<T>` object.
+     * @return A new `Ref<T>` object.
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
@@ -345,7 +345,7 @@ template <typename T> class Scope
     /**
      * @brief Transfer the ownership of the pointer to a Ref object, which will manage the lifetime of the pointer.
      *
-     * @return Ref<T> A new `Ref<T>` object.
+     * @return A new `Ref<T>` object.
      */
     Ref<T> AsRef() noexcept
     {
@@ -386,7 +386,7 @@ template <typename T> class Scope
      * This is a factory method that creates a new Scope object.
      *
      * @param p_Args The arguments to pass to the constructor of `T`.
-     * @return Scope A new Scope object.
+     * @return A new `Scope<T>` object.
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
