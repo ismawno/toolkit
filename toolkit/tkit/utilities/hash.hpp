@@ -18,6 +18,11 @@ template <Hashable H> constexpr void hashCombine(size_t &p_Seed, H &&p_Hashable)
 }
 } // namespace
 
+template <Hashable H> constexpr size_t Hash(H &&p_Hashable) noexcept
+{
+    return std::hash<NoCVRef<H>>()(std::forward<H>(p_Hashable));
+}
+
 template <Hashable... H> constexpr size_t Hash(H &&...p_Hashables) noexcept
 {
     size_t seed = TKIT_HASH_SEED;

@@ -21,10 +21,10 @@ set(SOURCES
     tests/container/static_array.cpp
     tests/container/weak_array.cpp
     tests/container/span.cpp
-    tests/container/hashable_tuple.cpp
     tests/container/storage.cpp
     tests/multiprocessing/thread_pool.cpp
     tests/utilities/result.cpp
+    tests/utilities/hash.cpp
 )
 
 add_executable(toolkit-tests ${SOURCES})
