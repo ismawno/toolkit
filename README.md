@@ -13,7 +13,7 @@ The features of this library are divided into the following six categories. Spec
 
 - [kit/core](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/core): General-purpose utilities, such as aliases, C++20 concepts, literals, and a simple logging system with macros.
 
-- [kit/container](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/container): Handy data structures, such as a multi-hash tuple, a resizable array with an internal buffer of fixed capacity, and a storage class that allows deferring the construction of objects (a nice alternative to a unique pointer in some cases).
+- [kit/container](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/container): Handy data structures, such as a resizable array with an internal buffer of fixed capacity, a weak, non owning array, and a storage class that allows deferring the construction of objects (a nice alternative to a unique pointer in some cases).
 
 - [kit/memory](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/memory): Two different memory allocators, general allocation functions, `new`/`delete` overloads to track global memory usage, and a custom reference counting system.
 
