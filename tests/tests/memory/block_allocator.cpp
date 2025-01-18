@@ -14,7 +14,7 @@ template <typename T> static void RunRawAllocationTest()
     REQUIRE(allocator.IsEmpty());
     REQUIRE(allocator.GetBlockCount() == 0);
 
-    DYNAMIC_SECTION("Allocate and deallocate (raw call)" << (int)typeid(T).hash_code())
+    SECTION("Allocate and deallocate (raw call)")
     {
         T *data = allocator.AllocateSerial();
         REQUIRE(data != nullptr);
@@ -23,7 +23,7 @@ template <typename T> static void RunRawAllocationTest()
         REQUIRE(allocator.IsEmpty());
     }
 
-    DYNAMIC_SECTION("Create and destroy (raw call)" << (int)typeid(T).hash_code())
+    SECTION("Create and destroy (raw call)")
     {
         T *data = allocator.CreateSerial();
         REQUIRE(data != nullptr);
@@ -32,7 +32,7 @@ template <typename T> static void RunRawAllocationTest()
         REQUIRE(allocator.IsEmpty());
     }
 
-    DYNAMIC_SECTION("Allocate and deallocate multiple (raw call)" << (int)typeid(T).hash_code())
+    SECTION("Allocate and deallocate multiple (raw call)")
     {
         constexpr u32 amount = 1000;
         for (u32 j = 0; j < 2; ++j)
@@ -63,7 +63,7 @@ template <typename T> static void RunRawAllocationTest()
         REQUIRE(allocator.IsEmpty());
     }
 
-    DYNAMIC_SECTION("Assert contiguous (raw call)" << (int)typeid(T).hash_code())
+    SECTION("Assert contiguous (raw call)")
     {
         constexpr u32 amount = 10;
         Array<T *, amount> data;
@@ -92,7 +92,7 @@ template <typename T> static void RunNewDeleteTest()
     REQUIRE(allocator.IsEmpty());
     allocator.Reset();
 
-    DYNAMIC_SECTION("Allocate and deallocate (new/delete)" << (int)typeid(T).hash_code())
+    SECTION("Allocate and deallocate (new/delete)")
     {
         T *data = new T;
         REQUIRE(data != nullptr);
@@ -101,7 +101,7 @@ template <typename T> static void RunNewDeleteTest()
         REQUIRE(allocator.IsEmpty());
     }
 
-    DYNAMIC_SECTION("Allocate and deallocate multiple (new/delete)" << (int)typeid(T).hash_code())
+    SECTION("Allocate and deallocate multiple (new/delete)")
     {
         constexpr u32 amount = 1000;
         for (u32 j = 0; j < 2; ++j)
@@ -132,7 +132,7 @@ template <typename T> static void RunNewDeleteTest()
         REQUIRE(allocator.IsEmpty());
     }
 
-    DYNAMIC_SECTION("Assert contiguous (new/delete)" << (int)typeid(T).hash_code())
+    SECTION("Assert contiguous (new/delete)")
     {
         constexpr u32 amount = 10;
         Array<T *, amount> data;
@@ -206,7 +206,7 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
     REQUIRE(allocator.IsEmpty());
     allocator.Reset();
 
-    DYNAMIC_SECTION("Virtual deallocations" << (int)typeid(Derived).hash_code())
+    SECTION("Virtual deallocations")
     {
         constexpr usize amount = 1000;
         for (usize j = 0; j < 2; ++j)
