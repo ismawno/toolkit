@@ -68,6 +68,5 @@ class TKIT_API ITaskManager
 
   private:
     usize m_ThreadCount;
-    friend class ITask;
 };
 } // namespace TKit

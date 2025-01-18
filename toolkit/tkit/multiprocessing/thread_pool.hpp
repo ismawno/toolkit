@@ -9,7 +9,7 @@
 namespace TKit
 {
 // TODO: Implement a lock-free queue
-// TODO: Consider adding dependencies
+// TODO: Consider adding task dependencies
 
 /**
  * @brief A thread pool that manages tasks and executes them in parallel.

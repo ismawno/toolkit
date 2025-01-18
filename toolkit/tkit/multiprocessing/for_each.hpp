@@ -31,8 +31,8 @@ concept OutputIterOrIndex = std::integral<T> || std::output_iterator<T, U>;
  */
 template <std::derived_from<ITaskManager> TManager, RandomIterOrIndex It1, OutputIterOrIndex<Ref<ITask>> It2,
           typename Callable, typename... Args>
-void ForEach(TManager &p_Manager, It1 p_First, It1 p_Last, It2 p_Dest, const usize p_Partitions, Callable &&p_Callable,
-             Args &&...p_Args)
+void ForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last, It2 p_Dest, const usize p_Partitions,
+             Callable &&p_Callable, Args &&...p_Args)
 {
     const usize size = static_cast<usize>(std::distance(p_First, p_Last));
     usize start = 0;
@@ -69,7 +69,7 @@ void ForEach(TManager &p_Manager, It1 p_First, It1 p_Last, It2 p_Dest, const usi
  * index.
  */
 template <std::derived_from<ITaskManager> TManager, RandomIterOrIndex It, typename Callable, typename... Args>
-void ForEach(TManager &p_Manager, It p_First, It p_Last, const usize p_Partitions, Callable &&p_Callable,
+void ForEach(TManager &p_Manager, const It p_First, const It p_Last, const usize p_Partitions, Callable &&p_Callable,
              Args &&...p_Args)
 {
     const usize size = static_cast<usize>(std::distance(p_First, p_Last));
@@ -109,7 +109,7 @@ void ForEach(TManager &p_Manager, It p_First, It p_Last, const usize p_Partition
  */
 template <std::derived_from<ITaskManager> TManager, RandomIterOrIndex It1, OutputIterOrIndex<Ref<ITask>> It2,
           typename Ret, typename Callable, typename... Args>
-void ForEachMainThreadLead(TManager &p_Manager, It1 p_First, It1 p_Last, It2 p_Dest, Ret *p_OutRet,
+void ForEachMainThreadLead(TManager &p_Manager, const It1 p_First, const It1 p_Last, It2 p_Dest, Ret *p_OutRet,
                            const usize p_Partitions, Callable &&p_Callable, Args &&...p_Args)
 {
     const usize size = static_cast<usize>(std::distance(p_First, p_Last));
@@ -152,8 +152,8 @@ void ForEachMainThreadLead(TManager &p_Manager, It1 p_First, It1 p_Last, It2 p_D
  * index.
  */
 template <std::derived_from<ITaskManager> TManager, RandomIterOrIndex It, typename Callable, typename... Args>
-void ForEachMainThreadLead(TManager &p_Manager, It p_First, It p_Last, const usize p_Partitions, Callable &&p_Callable,
-                           Args &&...p_Args)
+void ForEachMainThreadLead(TManager &p_Manager, const It p_First, const It p_Last, const usize p_Partitions,
+                           Callable &&p_Callable, Args &&...p_Args)
 {
     const usize size = static_cast<usize>(std::distance(p_First, p_Last));
     usize start = size / p_Partitions;
