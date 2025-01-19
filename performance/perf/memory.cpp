@@ -2,6 +2,7 @@
 #include "tkit/profiling/clock.hpp"
 #include "tkit/memory/block_allocator.hpp"
 #include "tkit/memory/stack_allocator.hpp"
+#include "tkit/memory/arena_allocator.hpp"
 #include <fstream>
 #include <thread>
 
@@ -214,6 +215,27 @@ void RecordStackAllocator(const AllocationSettings &p_Settings) noexcept
         const Timespan deallocTime = clock.GetElapsed();
 
         file << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds() << '\n';
+    }
+}
+
+void RecordArenaAllocator(const AllocationSettings &p_Settings) noexcept
+{
+    const char *path = "/performance/results/arena_allocator.csv";
+    std::ofstream file(g_Root + path);
+    DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
+    file << "passes,arena_alloc (ns)\n";
+
+    ArenaAllocator allocator{p_Settings.MaxPasses * TKIT_SIZE_OF(ExampleData)};
+    for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
+    {
+        Clock clock;
+        for (usize i = 0; i < passes; ++i)
+            allocated[i] = allocator.Create<ExampleData>();
+        const Timespan allocTime = clock.GetElapsed();
+
+        allocator.Reset();
+
+        file << passes << ',' << allocTime.AsNanoseconds() << '\n';
     }
 }
 } // namespace TKit

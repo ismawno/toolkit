@@ -13,4 +13,5 @@ void RecordBlockAllocatorSerialST(const AllocationSettings &p_Settings) noexcept
 void RecordBlockAllocatorMT(const AllocationSettings &p_Settings, usize p_MaxThreads) noexcept;
 
 void RecordStackAllocator(const AllocationSettings &p_Settings) noexcept;
+void RecordArenaAllocator(const AllocationSettings &p_Settings) noexcept;
 } // namespace TKit

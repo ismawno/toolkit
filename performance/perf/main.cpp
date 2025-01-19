@@ -33,6 +33,9 @@ int main()
     TKIT_LOG_INFO("[TOOLKIT] Running stack allocator...");
     RecordStackAllocator(settings.Allocation);
 
+    TKIT_LOG_INFO("[TOOLKIT] Running arena allocator...");
+    RecordArenaAllocator(settings.Allocation);
+
     TKIT_LOG_INFO("[TOOLKIT] Running dynamic array...");
     RecordDynamicArray(settings.Container);
 
