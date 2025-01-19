@@ -4,6 +4,10 @@
 #include "tkit/core/non_copyable.hpp"
 #include "tkit/container/static_array.hpp"
 
+#ifndef TKIT_STACK_ALLOCATOR_MAX_ENTRIES
+#    define TKIT_STACK_ALLOCATOR_MAX_ENTRIES 128
+#endif
+
 namespace TKit
 {
 /**
@@ -192,7 +196,7 @@ class TKIT_API StackAllocator
   private:
     void deallocateBuffer() noexcept;
 
-    StaticArray128<Entry> m_Entries{};
+    StaticArray<Entry, TKIT_STACK_ALLOCATOR_MAX_ENTRIES> m_Entries{};
     std::byte *m_Buffer = nullptr;
     usize m_Size = 0;
     usize m_Remaining = 0;

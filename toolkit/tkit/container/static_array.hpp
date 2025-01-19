@@ -8,10 +8,6 @@
 namespace TKit
 {
 
-// An STL-like array with a fixed size. It can be used as a replacement for Array in
-// the sense that it offers a bit more control and functionality, but it is not meant to be a drop-in replacement, as
-// the extra functionality comes with some overhead.
-
 /**
  * @brief An STL-like array with a fixed size buffer.
  *

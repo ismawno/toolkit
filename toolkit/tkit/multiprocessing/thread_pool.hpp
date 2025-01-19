@@ -6,6 +6,14 @@
 #include "tkit/container/static_array.hpp"
 #include <thread>
 
+#ifndef TKIT_THREAD_POOL_MAX_THREADS
+#    define TKIT_THREAD_POOL_MAX_THREADS 16
+#endif
+
+#ifndef TKIT_THREAD_POOL_MAX_TASKS
+#    define TKIT_THREAD_POOL_MAX_TASKS 32
+#endif
+
 namespace TKit
 {
 // TODO: Implement a lock-free queue
@@ -40,8 +48,8 @@ class ThreadPool final : public ITaskManager
     void AwaitPendingTasks() const noexcept;
 
   private:
-    StaticArray16<std::thread> m_Threads;
-    StaticArray32<Ref<ITask>> m_Queue;
+    StaticArray<std::thread, TKIT_THREAD_POOL_MAX_THREADS> m_Threads;
+    StaticArray<Ref<ITask>, TKIT_THREAD_POOL_MAX_TASKS> m_Queue;
 
     std::atomic_flag m_TaskReady = ATOMIC_FLAG_INIT;
     std::atomic_flag m_Shutdown = ATOMIC_FLAG_INIT;
