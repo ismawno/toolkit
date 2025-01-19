@@ -18,7 +18,7 @@ template <typename T> void RunBasicConstructDestructOperations()
     REQUIRE(allocator.GetAllocated() == 10 * sizeof(T));
     allocator.Destroy(ptr);
 
-    allocator.Create<u32>();
+    u32 *number1 = allocator.Create<u32>();
     REQUIRE(allocator.GetAllocated() == sizeof(u32));
     ptr = allocator.Create<T>();
     REQUIRE(allocator.Top<T>() == ptr);
@@ -28,9 +28,9 @@ template <typename T> void RunBasicConstructDestructOperations()
 
     REQUIRE(reinterpret_cast<const uptr>(ptr) % alignof(T) == 0);
     allocator.Destroy(ptr);
-    allocator.Pop();
+    allocator.Destroy(number1);
 
-    allocator.Create<u8>();
+    u8 *number2 = allocator.Create<u8>();
     ptr = allocator.Create<T>();
     REQUIRE(allocator.Top<T>() == ptr);
 
@@ -39,7 +39,7 @@ template <typename T> void RunBasicConstructDestructOperations()
 
     REQUIRE(reinterpret_cast<const uptr>(ptr) % alignof(T) == 0);
     allocator.Destroy(ptr);
-    allocator.Pop();
+    allocator.Destroy(number2);
 
     T *ptr1 = allocator.Create<T>();
     T *ptr2 = allocator.Create<T>();
@@ -71,25 +71,25 @@ TEST_CASE("Stack allocator basic operations", "[memory][stack_allocator][basic]"
     REQUIRE(allocator.GetAllocated() == 0);
     REQUIRE(allocator.IsEmpty());
 
-    allocator.Push(1_kb);
+    const void *ptr = allocator.Allocate(1_kb);
     REQUIRE(allocator.GetAllocated() == 1_kb);
     REQUIRE(allocator.IsFull());
-    allocator.Pop();
+    allocator.Deallocate(ptr);
     REQUIRE(allocator.GetAllocated() == 0);
     REQUIRE(allocator.IsEmpty());
 
     SECTION("Push and pop")
     {
-        allocator.Push(128_b);
+        const void *ptr1 = allocator.Allocate(128_b);
         REQUIRE(allocator.GetAllocated() == 128_b);
 
-        allocator.Push(256_b);
+        const void *ptr2 = allocator.Allocate(256_b);
         REQUIRE(allocator.GetAllocated() == 384_b);
 
-        allocator.Pop();
+        allocator.Deallocate(ptr2);
         REQUIRE(allocator.GetAllocated() == 128_b);
 
-        allocator.Pop();
+        allocator.Deallocate(ptr1);
         REQUIRE(allocator.GetAllocated() == 0);
     }
 
@@ -125,10 +125,12 @@ TEST_CASE("Stack allocator complex data operations", "[memory][stack_allocator][
 
     SECTION("Fill allocator")
     {
-        while (allocator.Create<AlignedData>())
-            ;
+        TKit::Array<const void *, 256> pointers;
+        u32 index = 0;
+        while (void *ptr = allocator.Create<AlignedData>())
+            pointers[index++] = ptr;
         while (!allocator.IsEmpty())
-            allocator.Pop();
+            allocator.Deallocate(pointers[--index]);
     }
 }
 } // namespace TKit

@@ -13,9 +13,9 @@ ArenaAllocator g_Arena(1_mb);
 template <typename T, usize Capacity> WeakArray<T, Capacity> CreateArray()
 {
     if constexpr (Capacity == Limits<usize>::max())
-        return WeakArray<T, Capacity>(g_Arena.Push<T>(10), 10);
+        return WeakArray<T, Capacity>(g_Arena.Allocate<T>(10), 10);
     else
-        return WeakArray<T, Capacity>(g_Arena.Push<T>(Capacity));
+        return WeakArray<T, Capacity>(g_Arena.Allocate<T>(Capacity));
 }
 
 template <typename T, usize Capacity = Limits<usize>::max()> void RunStaticArrayOperatorTests(const Array<T, 5> &p_Args)

@@ -13,9 +13,9 @@ namespace TKit
  * memory.
  *
  * This allocator can both allocate and initialize objects in place in that same memory. Use the
- * `Allocate()`/`Deallocate()`/`Push()`/`Pop()` for the former and Create/Destroy for the latter. Never mix them, as it
- * will lead to undefined behavior. (`Allocate()`/`Deallocate()` are equivalent to `Push()`/`Pop()`, so you can use them
- * interchangeably, but for every Create, there must be a `Destroy()`)
+ * `Allocate()`/`Deallocate()` for the former and `Create()`/`Destroy()` for the latter. Never mix them, as it
+ * will lead to undefined behavior. For every `Allocate()` there must be a `Deallocate()` and for every `Create()`
+ * there must be a `Destroy()`.
  *
  * @note Thread safety considerations: This allocator requires precise ordering of allocations and deallocations.
  * A multithreaded environment has the exact opposite property, so this allocator is not thread safe.
@@ -27,9 +27,6 @@ class TKIT_API StackAllocator
   public:
     struct Entry
     {
-        // If asserts are enabled, I store the alignment offset so that I can assert the order of
-        // allocations/deallocations is respected
-
         Entry(std::byte *p_Ptr, const usize p_Size, const usize p_AlignmentOffset)
             : Ptr(p_Ptr), Size(p_Size), AlignmentOffset(p_AlignmentOffset)
         {
@@ -50,55 +47,31 @@ class TKIT_API StackAllocator
     StackAllocator(StackAllocator &&p_Other) noexcept;
     StackAllocator &operator=(StackAllocator &&p_Other) noexcept;
 
-    // Push and Allocate do exactly the same, I just wanted to keep both APIs
-    // Pop and Deallocate are *almost* the same. Deallocate requires the actual pointer to be passed. It is used mainly
-    // for debugging purposes when asserts are enabled, to ensure proper deallocation order. Pop just mindlessly pops,
-    // no asserts, no nothing
-
-    // Alignment is set to 1, because in place allocations *should* allow any kind of alignment, including ones under 8
-    // (not like malloc or posix_memalign). All of this in 64 bit systems
-
     /**
-     * @brief Allocate a new block of memory into the stack allocator (Same as `Allocate()`).
+     * @brief Allocate a new block of memory into the stack allocator.
      *
      * @param p_Size The size of the block to allocate.
      * @param p_Alignment The alignment of the block.
      * @return A pointer to the allocated block.
      */
-    void *Push(usize p_Size, usize p_Alignment = alignof(std::max_align_t)) noexcept;
-
+    void *Allocate(usize p_Size, usize p_Alignment = alignof(std::max_align_t)) noexcept;
     /**
-     * @brief Allocate a new block of memory into the stack allocator (Same as `Push()`).
+     * @brief Allocate a new block of memory into the stack allocator.
      *
      * @param p_N The number of elements of type `T` to allocate.
      * @return A pointer to the allocated block.
      */
-    template <typename T> T *Push(const usize p_N) noexcept
+    template <typename T> T *Allocate(const usize p_N) noexcept
     {
-        return static_cast<T *>(Push(p_N * TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
+        return static_cast<T *>(Allocate(p_N * TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
     }
-
-    /**
-     * @brief Pop the last block of memory from the stack allocator.
-     *
-     */
-    void Pop() noexcept;
-
-    /**
-     * @brief Allocate a new block of memory in the stack allocator (Same as `Push()`).
-     *
-     * @param p_Size The size of the block to allocate.
-     * @param p_Alignment The alignment of the block.
-     * @return A pointer to the allocated block.
-     */
-    void *Allocate(usize p_Size, usize p_Alignment = 1) noexcept;
 
     /**
      * @brief Deallocate a block of memory from the stack allocator.
      *
-     * @note This method, if used correctly, should behave exactly like `Pop()`. The pointer is kept there for
-     * consistency and for debugging purposes when asserts are enabled. If disabled, this method is just a wrapper
-     * around `Pop()`.
+     * @note The pointer parameter is not strictly necessary and is kept there for
+     * consistency and for debugging purposes when asserts are enabled. If disabled, this method will ignore
+     * the parameter and deallocate the last block of memory.
      *
      * @param p_Ptr The pointer to the block to deallocate.
      */

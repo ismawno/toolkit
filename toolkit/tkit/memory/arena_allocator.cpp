@@ -41,7 +41,7 @@ ArenaAllocator &ArenaAllocator::operator=(ArenaAllocator &&p_Other) noexcept
     return *this;
 }
 
-void *ArenaAllocator::Push(const usize p_Size, const usize p_Alignment) noexcept
+void *ArenaAllocator::Allocate(const usize p_Size, const usize p_Alignment) noexcept
 {
     void *ptr = m_Buffer + (m_Size - m_Remaining);
     size_t remaining = static_cast<size_t>(m_Remaining);

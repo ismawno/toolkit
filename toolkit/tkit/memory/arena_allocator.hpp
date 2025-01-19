@@ -43,17 +43,17 @@ class TKIT_API ArenaAllocator
      * @param p_Alignment The alignment of the block.
      * @return A pointer to the allocated block.
      */
-    void *Push(usize p_Size, usize p_Alignment = alignof(std::max_align_t)) noexcept;
+    void *Allocate(usize p_Size, usize p_Alignment = alignof(std::max_align_t)) noexcept;
 
     /**
-     * @brief Allocate a new block of memory into the arena allocator (Same as `Push()`).
+     * @brief Allocate a new block of memory into the arena allocator.
      *
      * @param p_N The number of elements of type `T` to allocate.
      * @return A pointer to the allocated block.
      */
-    template <typename T> T *Push(const usize p_N) noexcept
+    template <typename T> T *Allocate(const usize p_N) noexcept
     {
-        return static_cast<T *>(Push(p_N * TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
+        return static_cast<T *>(Allocate(p_N * TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
     }
 
     /**
@@ -75,7 +75,7 @@ class TKIT_API ArenaAllocator
         requires std::constructible_from<T, Args...>
     T *Create(Args &&...p_Args) noexcept
     {
-        T *ptr = static_cast<T *>(Push(TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
+        T *ptr = static_cast<T *>(Allocate(TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
         if (!ptr)
             return nullptr;
         return Memory::Construct(ptr, std::forward<Args>(p_Args)...);
@@ -95,7 +95,7 @@ class TKIT_API ArenaAllocator
         requires std::constructible_from<T, Args...>
     T *NCreate(const usize p_N, Args &&...p_Args) noexcept
     {
-        T *ptr = static_cast<T *>(Push(p_N * TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
+        T *ptr = static_cast<T *>(Allocate(p_N * TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
         if (!ptr)
             return nullptr;
         Memory::ConstructRange(ptr, ptr + p_N, std::forward<Args>(p_Args)...);

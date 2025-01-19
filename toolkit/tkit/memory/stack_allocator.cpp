@@ -49,7 +49,7 @@ StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other) noexcept
     return *this;
 }
 
-void *StackAllocator::Push(const usize p_Size, const usize p_Alignment) noexcept
+void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment) noexcept
 {
     void *ptr = m_Entries.empty() ? m_Buffer : m_Entries.back().Ptr + m_Entries.back().Size;
     size_t remaining = static_cast<size_t>(m_Remaining);
@@ -72,24 +72,13 @@ void *StackAllocator::Push(const usize p_Size, const usize p_Alignment) noexcept
     return alignedPtr;
 }
 
-void StackAllocator::Pop() noexcept
-{
-    TKIT_ASSERT(!m_Entries.empty(), "[TOOLKIT] Popping from an empty allocator");
-    m_Remaining += m_Entries.back().Size + m_Entries.back().AlignmentOffset;
-    m_Entries.pop_back();
-}
-
-void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment) noexcept
-{
-    return Push(p_Size, p_Alignment);
-}
-
 void StackAllocator::Deallocate([[maybe_unused]] const void *p_Ptr) noexcept
 {
     TKIT_ASSERT(!m_Entries.empty(), "[TOOLKIT] Unable to deallocate because the stack allocator is empty");
     TKIT_ASSERT(m_Entries.back().Ptr == p_Ptr,
                 "[TOOLKIT] Elements must be deallocated in the reverse order they were allocated");
-    Pop();
+    m_Remaining += m_Entries.back().Size + m_Entries.back().AlignmentOffset;
+    m_Entries.pop_back();
 }
 
 const StackAllocator::Entry &StackAllocator::Top() const noexcept
