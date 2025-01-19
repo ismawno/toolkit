@@ -12,13 +12,12 @@ struct Number
     std::byte Padding[TKIT_CACHE_LINE_SIZE - sizeof(u32)];
 };
 
-template <typename MTX>
 void RecordThreadPoolSum(const ThreadPoolSumSettings &p_Settings, const usize p_Maxthreads) noexcept
 {
     std::ofstream file(g_Root + "/performance/results/thread_pool_sum.csv");
     file << "threads,sum (ns),result\n";
 
-    ThreadPool<MTX> threadPool(p_Maxthreads);
+    ThreadPool threadPool(p_Maxthreads);
     DynamicArray<Ref<Task<u32>>> tasks(p_Maxthreads);
     DynamicArray<u32> values(p_Settings.SumCount);
 
@@ -88,7 +87,4 @@ void RecordParallelSum(const ThreadPoolSumSettings &p_Settings, const usize p_Ma
         nthreads *= 2;
     }
 }
-
-template void RecordThreadPoolSum<std::mutex>(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads);
-template void RecordThreadPoolSum<SpinLock>(const ThreadPoolSumSettings &p_Settings, usize p_Maxthreads);
 } // namespace TKit

@@ -3,7 +3,7 @@
 #include "tkit/core/concepts.hpp"
 #include "tkit/multiprocessing/task_manager.hpp"
 #include "tkit/profiling/macros.hpp"
-#include "tkit/container/alias.hpp"
+#include "tkit/container/static_array.hpp"
 #include <thread>
 
 namespace TKit
@@ -24,9 +24,8 @@ namespace TKit
  * the task execution. Please, bear in mind that the thread index is 1-based, as it treats 0 as the main thread in case
  * you want to partition your tasks in such a way that the main thread does some work. If you do not, simply subtract 1
  *
- * @tparam MTX The type of mutex to use for synchronization. It must implement the Mutex concept.
  */
-template <Mutex MTX> class ThreadPool final : public ITaskManager
+class ThreadPool final : public ITaskManager
 {
   public:
     explicit ThreadPool(usize p_ThreadCount);
@@ -41,8 +40,8 @@ template <Mutex MTX> class ThreadPool final : public ITaskManager
     void AwaitPendingTasks() const noexcept;
 
   private:
-    DynamicArray<std::thread> m_Threads;
-    Deque<Ref<ITask>> m_Queue;
+    StaticArray16<std::thread> m_Threads;
+    StaticArray32<Ref<ITask>> m_Queue;
 
     std::atomic_flag m_TaskReady = ATOMIC_FLAG_INIT;
     std::atomic_flag m_Shutdown = ATOMIC_FLAG_INIT;
@@ -50,6 +49,6 @@ template <Mutex MTX> class ThreadPool final : public ITaskManager
     std::atomic<u32> m_TerminatedCount = 0;
     std::atomic<u32> m_PendingCount = 0;
 
-    mutable TKIT_PROFILE_DECLARE_MUTEX(MTX, m_Mutex);
+    mutable TKIT_PROFILE_DECLARE_MUTEX(std::mutex, m_Mutex);
 };
 } // namespace TKit

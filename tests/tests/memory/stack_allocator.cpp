@@ -125,7 +125,7 @@ TEST_CASE("Stack allocator complex data operations", "[memory][stack_allocator][
 
     SECTION("Fill allocator")
     {
-        TKit::Array<const void *, 256> pointers;
+        Array256<const void *> pointers;
         u32 index = 0;
         while (void *ptr = allocator.Create<AlignedData>())
             pointers[index++] = ptr;

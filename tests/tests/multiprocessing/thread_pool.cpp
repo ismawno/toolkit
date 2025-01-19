@@ -6,11 +6,11 @@
 
 namespace TKit
 {
-template <Mutex MTX> void RunThreadPoolTest()
+void RunThreadPoolTest()
 {
     constexpr u32 threadCount = 4;
     constexpr u32 amount = 1000;
-    ThreadPool<MTX> pool(threadCount);
+    ThreadPool pool(threadCount);
 
     SECTION("CreateAndSubmit")
     {
@@ -123,13 +123,8 @@ template <Mutex MTX> void RunThreadPoolTest()
     }
 }
 
-TEST_CASE("ThreadPool (std::mutex)", "[multiprocessing]")
+TEST_CASE("ThreadPool", "[multiprocessing]")
 {
-    RunThreadPoolTest<std::mutex>();
-}
-
-TEST_CASE("ThreadPool (SpinLock)", "[multiprocessing]")
-{
-    RunThreadPoolTest<SpinLock>();
+    RunThreadPoolTest();
 }
 } // namespace TKit

@@ -12,7 +12,7 @@ int main()
 
     Clock clock;
     TKIT_LOG_INFO("[TOOLKIT] Running thread pool sum...");
-    RecordThreadPoolSum<std::mutex>(settings.ThreadPoolSum, settings.MaxThreads);
+    RecordThreadPoolSum(settings.ThreadPoolSum, settings.MaxThreads);
 
     TKIT_LOG_INFO("[TOOLKIT] Running parallel sum...");
     RecordParallelSum(settings.ThreadPoolSum, settings.MaxThreads);

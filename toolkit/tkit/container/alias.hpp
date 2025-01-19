@@ -44,7 +44,7 @@ template <> struct OpAlias<std::string>
 // These are nice to have in case I want to change the container/allocator type easily or to use the transparent
 // operations
 template <typename T, typename Allocator = Memory::DefaultAllocator<T>> using DynamicArray = std::vector<T, Allocator>;
-template <typename T, typename Allocator = Memory::DefaultAllocator<T>> using Deque = std::deque<T, Allocator>;
+template <typename T, typename Allocator = Memory::DefaultAllocator<T>> using DynamicDeque = std::deque<T, Allocator>;
 
 template <typename Key, typename Value, typename Hash = typename HashAlias<Key>::Type,
           typename OpEqual = typename OpAlias<Key>::Type,

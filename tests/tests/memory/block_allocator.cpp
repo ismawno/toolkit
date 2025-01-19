@@ -172,7 +172,7 @@ template <typename T> static void RunMultithreadedAllocationsTest()
     };
     constexpr usize amount = 1000;
     constexpr usize threadCount = 8;
-    ThreadPool<std::mutex> pool(threadCount);
+    ThreadPool pool(threadCount);
     Array<PaddedData, amount> data;
     Array<Ref<Task<bool>>, threadCount> tasks;
 
