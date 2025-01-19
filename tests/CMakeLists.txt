@@ -46,7 +46,7 @@ message(STATUS "TOOLKIT TESTS: Silent asserts: ON")
 message(STATUS "TOOLKIT TESTS: Enable exceptions: ON")
 
 # These MUST be on for toolkit-tests to work properly
-target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_WARNING_LOGS TKIT_ENABLE_INFO_LOGS TKIT_ENABLE_ASSERTS TKIT_ENABLE_BLOCK_ALLOCATOR)
+target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_WARNING_LOGS TKIT_ENABLE_INFO_LOGS TKIT_ENABLE_ASSERTS)
 
 include(CTest)
 include(Catch)

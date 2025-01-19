@@ -102,19 +102,3 @@ endif()
 if(TOOLKIT_ENABLE_ASSERTS)
     target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ASSERTS)
 endif()
-
-if (TOOLKIT_ENABLE_LOG_COLORS)
-    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_LOG_COLORS)
-endif()
-
-if (TOOLKIT_SILENT_ASSERTS)
-    target_compile_definitions(toolkit PUBLIC TKIT_SILENT_ASSERTS)
-endif()
-
-if (TOOLKIT_WEAK_ASSERTS)
-    target_compile_definitions(toolkit PUBLIC TKIT_WEAK_ASSERTS)
-endif()
-
-if (TOOLKIT_ENABLE_BLOCK_ALLOCATOR)
-    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_BLOCK_ALLOCATOR)
-endif()

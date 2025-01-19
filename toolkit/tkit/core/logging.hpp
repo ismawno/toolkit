@@ -17,26 +17,32 @@
 #    define TKIT_FORMAT(...) std::format(__VA_ARGS__)
 #endif
 
-// sonarlint yells at me bc of this but idgaf
-#ifdef TKIT_ENABLE_LOG_COLORS
-#    define TKIT_LOG_COLOR_RESET "\033[0m"
-#    define TKIT_LOG_COLOR_RED "\033[31m"
-#    define TKIT_LOG_COLOR_GREEN "\033[32m"
-#    define TKIT_LOG_COLOR_YELLOW "\033[33m"
-#    define TKIT_LOG_COLOR_BLUE "\033[34m"
-#else
-#    define TKIT_LOG_COLOR_RESET ""
-#    define TKIT_LOG_COLOR_RED ""
-#    define TKIT_LOG_COLOR_GREEN ""
-#    define TKIT_LOG_COLOR_YELLOW ""
-#    define TKIT_LOG_COLOR_BLUE ""
+#define TKIT_LOG_COLOR_RESET "\033[0m"
+#define TKIT_LOG_COLOR_RED "\033[31m"
+#define TKIT_LOG_COLOR_GREEN "\033[32m"
+#define TKIT_LOG_COLOR_YELLOW "\033[33m"
+#define TKIT_LOG_COLOR_BLUE "\033[34m"
+
+#ifdef TKIT_COMPILER_CLANG
+#    define TKIT_DEBUG_BREAK() __builtin_debugtrap();
+#elif defined(TKIT_COMPILER_GCC)
+#    define TKIT_DEBUG_BREAK() __builtin_trap();
+#elif defined(TKIT_COMPILER_MSVC)
+#    define TKIT_DEBUG_BREAK() __debugbreak();
+#elif defined(SIGTRAP)
+#    define TKIT_DEBUG_BREAK() raise(SIGTRAP);
+#elif defined(SIGABRT)
+#    define TKIT_DEBUG_BREAK() raise(SIGABRT);
 #endif
+
+#define TKIT_DEBUG_BREAK_IF(p_Condition)                                                                               \
+    if (p_Condition)                                                                                                   \
+    TKIT_DEBUG_BREAK()
 
 namespace TKit
 {
 #ifndef TKIT_NO_LOGS
 // These are not meant to be used directly, use the macros below instead
-TKIT_API void debugBreak() noexcept;
 TKIT_API void logMessage(const char *p_Level, std::string_view p_File, const i32 p_Line, const char *p_Color,
                          const bool p_Crash, std::string_view p_Message) noexcept;
 #endif
@@ -66,27 +72,12 @@ TKIT_API void logMessage(const char *p_Level, std::string_view p_File, const i32
 
 #ifdef TKIT_ENABLE_ASSERTS
 
-#    ifndef TKIT_WEAK_ASSERTS
-#        define TKIT_DEBUG_BREAK_IF(p_Condition)                                                                       \
-            if (p_Condition)                                                                                           \
-            TKit::debugBreak()
+#    define TKIT_ERROR(...)                                                                                            \
+        TKit::logMessage("ERROR", __FILE__, __LINE__, TKIT_LOG_COLOR_RED, true, TKIT_FORMAT(__VA_ARGS__))
+#    define TKIT_ASSERT(p_Condition, ...)                                                                              \
+        if (!(p_Condition))                                                                                            \
+        TKit::logMessage("ERROR", __FILE__, __LINE__, TKIT_LOG_COLOR_RED, true, TKIT_FORMAT(__VA_ARGS__))
 
-#        define TKIT_DEBUG_BREAK() TKit::debugBreak()
-#    else
-#        define TKIT_DEBUG_BREAK_IF(p_Condition)
-#        define TKIT_DEBUG_BREAK()
-#    endif
-
-#    ifndef TKIT_SILENT_ASSERTS
-#        define TKIT_ERROR(...)                                                                                        \
-            TKit::logMessage("ERROR", __FILE__, __LINE__, TKIT_LOG_COLOR_RED, true, TKIT_FORMAT(__VA_ARGS__))
-#        define TKIT_ASSERT(p_Condition, ...)                                                                          \
-            if (!(p_Condition))                                                                                        \
-            TKit::logMessage("ERROR", __FILE__, __LINE__, TKIT_LOG_COLOR_RED, true, TKIT_FORMAT(__VA_ARGS__))
-#    else
-#        define TKIT_ERROR(...) TKIT_DEBUG_BREAK()
-#        define TKIT_ASSERT(p_Condition, ...) TKIT_DEBUG_BREAK_IF(!(p_Condition))
-#    endif
 #    define TKIT_ASSERT_RETURNS(expression, expected, ...) TKIT_ASSERT((expression) == (expected), __VA_ARGS__)
 #else
 #    define TKIT_ERROR(...)

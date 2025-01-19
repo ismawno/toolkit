@@ -14,21 +14,6 @@
 
 namespace TKit
 {
-void debugBreak() noexcept
-{
-#    ifdef TKIT_COMPILER_CLANG
-    __builtin_debugtrap();
-#    elif defined(TKIT_COMPILER_GCC)
-    __builtin_trap();
-#    elif defined(TKIT_COMPILER_MSVC)
-    __debugbreak();
-#    elif defined(SIGTRAP)
-    raise(SIGTRAP);
-#    elif defined(SIGABRT)
-    raise(SIGABRT);
-#    endif
-}
-
 TKIT_WARNING_IGNORE_PUSH
 TKIT_GCC_WARNING_IGNORE("-Wunused-parameter")
 TKIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
