@@ -1,6 +1,6 @@
-#include "tkit/core/logging.hpp"
 #ifndef TKIT_NO_LOGS
 #    include "tkit/core/pch.hpp"
+#    include "tkit/core/logging.hpp"
 #    include <chrono>
 #    include <string>
 #    include <iostream>
