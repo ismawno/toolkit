@@ -75,7 +75,7 @@ void *StackAllocator::Push(const usize p_Size, const usize p_Alignment) noexcept
 
 void StackAllocator::Pop() noexcept
 {
-    TKIT_LOG_WARNING_IF(m_Entries.empty(), "[TOOLKIT] Popping from an empty allocator");
+    TKIT_ASSERT(!m_Entries.empty(), "[TOOLKIT] Popping from an empty allocator");
     m_Remaining += m_Entries.back().Size + m_Entries.back().AlignmentOffset;
     m_Entries.pop_back();
 }
