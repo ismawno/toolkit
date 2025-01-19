@@ -2,7 +2,7 @@
 
 #include "tkit/core/logging.hpp"
 #include "tkit/core/non_copyable.hpp"
-#include "tkit/container/alias.hpp"
+#include "tkit/container/static_array.hpp"
 
 namespace TKit
 {
@@ -219,10 +219,10 @@ class TKIT_API StackAllocator
   private:
     void deallocateBuffer() noexcept;
 
+    StaticArray128<Entry> m_Entries{};
     std::byte *m_Buffer = nullptr;
     usize m_Size = 0;
     usize m_Remaining = 0;
-    DynamicArray<Entry> m_Entries;
     bool m_Provided;
 };
 } // namespace TKit
