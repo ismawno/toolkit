@@ -1,4 +1,4 @@
-#ifndef TKIT_NO_LOGS
+#ifndef __TKIT_NO_LOGS
 #    include "tkit/core/pch.hpp"
 #    include "tkit/core/logging.hpp"
 #    include <chrono>
@@ -12,12 +12,12 @@
 #        include <fmt/chrono.h>
 #    endif
 
-namespace TKit
+namespace TKit::Detail
 {
 TKIT_WARNING_IGNORE_PUSH
 TKIT_GCC_WARNING_IGNORE("-Wunused-parameter")
 TKIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
-void logMessage(const char *p_Level, const std::string_view p_File, const i32 p_Line, const char *p_Color,
+void LogMessage(const char *p_Level, const std::string_view p_File, const i32 p_Line, const char *p_Color,
                 [[maybe_unused]] const bool p_Crash, const std::string_view p_Message) noexcept
 {
     if (p_Line != Limits<i32>::max())
@@ -36,6 +36,6 @@ void logMessage(const char *p_Level, const std::string_view p_File, const i32 p_
     TKIT_DEBUG_BREAK_IF(p_Crash);
 }
 TKIT_WARNING_IGNORE_POP
-} // namespace TKit
+} // namespace TKit::Detail
 
 #endif

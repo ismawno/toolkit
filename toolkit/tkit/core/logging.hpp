@@ -4,7 +4,7 @@
 #include "tkit/core/alias.hpp"
 
 #if !defined(TKIT_ENABLE_INFO_LOGS) && !defined(TKIT_ENABLE_WARNING_LOGS) && !defined(TKIT_ENABLE_ASSERTS)
-#    define TKIT_NO_LOGS
+#    define __TKIT_NO_LOGS
 #endif
 
 // We dont use enough formatting features to justify the overhead of fmtlib, but linux doesnt have std::format, so I
@@ -39,21 +39,23 @@
     if (p_Condition)                                                                                                   \
     TKIT_DEBUG_BREAK()
 
-namespace TKit
+namespace TKit::Detail
 {
-#ifndef TKIT_NO_LOGS
+#ifndef __TKIT_NO_LOGS
 // These are not meant to be used directly, use the macros below instead
-TKIT_API void logMessage(const char *p_Level, std::string_view p_File, const i32 p_Line, const char *p_Color,
+TKIT_API void LogMessage(const char *p_Level, std::string_view p_File, const i32 p_Line, const char *p_Color,
                          const bool p_Crash, std::string_view p_Message) noexcept;
 #endif
-} // namespace TKit
+} // namespace TKit::Detail
 
 #ifdef TKIT_ENABLE_INFO_LOGS
 #    define TKIT_LOG_INFO(...)                                                                                         \
-        TKit::logMessage("INFO", __FILE__, Limits<i32>::max(), TKIT_LOG_COLOR_GREEN, false, TKIT_FORMAT(__VA_ARGS__))
+        TKit::Detail::LogMessage("INFO", __FILE__, Limits<i32>::max(), TKIT_LOG_COLOR_GREEN, false,                    \
+                                 TKIT_FORMAT(__VA_ARGS__))
 #    define TKIT_LOG_INFO_IF(p_Condition, ...)                                                                         \
         if (p_Condition)                                                                                               \
-        TKit::logMessage("INFO", __FILE__, Limits<i32>::max(), TKIT_LOG_COLOR_GREEN, false, TKIT_FORMAT(__VA_ARGS__))
+        TKit::Detail::LogMessage("INFO", __FILE__, Limits<i32>::max(), TKIT_LOG_COLOR_GREEN, false,                    \
+                                 TKIT_FORMAT(__VA_ARGS__))
 #else
 #    define TKIT_LOG_INFO(...)
 #    define TKIT_LOG_INFO_IF(...)
@@ -61,10 +63,10 @@ TKIT_API void logMessage(const char *p_Level, std::string_view p_File, const i32
 
 #ifdef TKIT_ENABLE_WARNING_LOGS
 #    define TKIT_LOG_WARNING(...)                                                                                      \
-        TKit::logMessage("WARNING", __FILE__, __LINE__, TKIT_LOG_COLOR_YELLOW, false, TKIT_FORMAT(__VA_ARGS__))
+        TKit::Detail::LogMessage("WARNING", __FILE__, __LINE__, TKIT_LOG_COLOR_YELLOW, false, TKIT_FORMAT(__VA_ARGS__))
 #    define TKIT_LOG_WARNING_IF(p_Condition, ...)                                                                      \
         if (p_Condition)                                                                                               \
-        TKit::logMessage("WARNING", __FILE__, __LINE__, TKIT_LOG_COLOR_YELLOW, false, TKIT_FORMAT(__VA_ARGS__))
+        TKit::Detail::LogMessage("WARNING", __FILE__, __LINE__, TKIT_LOG_COLOR_YELLOW, false, TKIT_FORMAT(__VA_ARGS__))
 #else
 #    define TKIT_LOG_WARNING(...)
 #    define TKIT_LOG_WARNING_IF(...)
@@ -73,10 +75,10 @@ TKIT_API void logMessage(const char *p_Level, std::string_view p_File, const i32
 #ifdef TKIT_ENABLE_ASSERTS
 
 #    define TKIT_ERROR(...)                                                                                            \
-        TKit::logMessage("ERROR", __FILE__, __LINE__, TKIT_LOG_COLOR_RED, true, TKIT_FORMAT(__VA_ARGS__))
+        TKit::Detail::LogMessage("ERROR", __FILE__, __LINE__, TKIT_LOG_COLOR_RED, true, TKIT_FORMAT(__VA_ARGS__))
 #    define TKIT_ASSERT(p_Condition, ...)                                                                              \
         if (!(p_Condition))                                                                                            \
-        TKit::logMessage("ERROR", __FILE__, __LINE__, TKIT_LOG_COLOR_RED, true, TKIT_FORMAT(__VA_ARGS__))
+        TKit::Detail::LogMessage("ERROR", __FILE__, __LINE__, TKIT_LOG_COLOR_RED, true, TKIT_FORMAT(__VA_ARGS__))
 
 #    define TKIT_ASSERT_RETURNS(expression, expected, ...) TKIT_ASSERT((expression) == (expected), __VA_ARGS__)
 #else

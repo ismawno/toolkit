@@ -4,7 +4,7 @@
 #include "tkit/memory/memory.hpp"
 #include "tkit/core/logging.hpp"
 
-namespace TKit
+namespace TKit::Detail
 {
 template <typename Traits> struct Container
 {
@@ -130,4 +130,4 @@ template <typename Traits> struct Container
     }
 };
 
-} // namespace TKit
+} // namespace TKit::Detail

@@ -220,7 +220,7 @@ class StaticArray
     {
         TKIT_ASSERT(!full(), "[TOOLKIT] Container is already full");
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
-        Container<Traits>::Insert(end(), p_Pos, std::forward<U>(p_Value));
+        Detail::Container<Traits>::Insert(end(), p_Pos, std::forward<U>(p_Value));
         ++m_Size;
     }
 
@@ -236,7 +236,7 @@ class StaticArray
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
         TKIT_ASSERT(std::distance(p_Begin, p_End) + m_Size <= Capacity, "[TOOLKIT] New size exceeds capacity");
 
-        m_Size += Container<Traits>::Insert(end(), p_Pos, p_Begin, p_End);
+        m_Size += Detail::Container<Traits>::Insert(end(), p_Pos, p_Begin, p_End);
     }
 
     /**
@@ -258,7 +258,7 @@ class StaticArray
     constexpr void erase(const iterator p_Pos) noexcept
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT] Iterator is out of bounds");
-        Container<Traits>::Erase(end(), p_Pos);
+        Detail::Container<Traits>::Erase(end(), p_Pos);
         --m_Size;
     }
 
@@ -274,7 +274,7 @@ class StaticArray
         TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT] End iterator is out of bounds");
         TKIT_ASSERT(m_Size >= std::distance(p_Begin, p_End), "[TOOLKIT] New size is negative");
 
-        m_Size -= Container<Traits>::Erase(end(), p_Begin, p_End);
+        m_Size -= Detail::Container<Traits>::Erase(end(), p_Begin, p_End);
     }
 
     /**
