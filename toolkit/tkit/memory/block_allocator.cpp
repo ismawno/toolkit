@@ -86,9 +86,18 @@ void BlockAllocator::Reset() noexcept
     setupMemoryLayout();
 }
 
-bool BlockAllocator::IsEmpty() noexcept
+bool BlockAllocator::Belongs(const void *p_Ptr) const noexcept
+{
+    const std::byte *ptr = static_cast<const std::byte *>(p_Ptr);
+    return ptr >= m_Buffer && ptr < m_Buffer + m_BufferSize;
+}
+bool BlockAllocator::IsEmpty() const noexcept
 {
     return m_Allocations == 0;
+}
+bool BlockAllocator::IsFull() const noexcept
+{
+    return m_Allocations == GetAllocationCapacityCount();
 }
 
 usize BlockAllocator::GetBufferSize() const noexcept
@@ -100,7 +109,7 @@ usize BlockAllocator::GetAllocationSize() const noexcept
     return m_AllocationSize;
 }
 
-usize BlockAllocator::GetAllocatedCount() const noexcept
+usize BlockAllocator::GetAllocationCount() const noexcept
 {
     return m_Allocations;
 }

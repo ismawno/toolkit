@@ -118,12 +118,24 @@ class BlockAllocator
 
     void Reset() noexcept;
 
-    bool IsEmpty() noexcept;
+    /**
+     * @brief Check if a pointer belongs to the block allocator.
+     *
+     * @note This is a simple check to see if the provided pointer lies within the boundaries of the buffer. It will not
+     * be able to determine if the pointer is currently allocated or free.
+     *
+     * @param p_Ptr The pointer to check.
+     * @return Whether the pointer belongs to the block allocator.
+     */
+    bool Belongs(const void *p_Ptr) const noexcept;
+
+    bool IsEmpty() const noexcept;
+    bool IsFull() const noexcept;
 
     usize GetBufferSize() const noexcept;
     usize GetAllocationSize() const noexcept;
 
-    usize GetAllocatedCount() const noexcept;
+    usize GetAllocationCount() const noexcept;
     usize GetRemainingCount() const noexcept;
     usize GetAllocationCapacityCount() const noexcept;
 

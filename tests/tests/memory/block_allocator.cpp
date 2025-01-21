@@ -9,26 +9,25 @@ namespace TKit
 {
 template <typename T> static void RunRawAllocationTest()
 {
-    REQUIRE(sizeof(T) % alignof(T) == 0);
-    BlockAllocator<T> allocator(10);
+    BlockAllocator allocator = BlockAllocator::Create<T>(10);
     REQUIRE(allocator.IsEmpty());
     REQUIRE(allocator.GetBlockCount() == 0);
 
     SECTION("Allocate and deallocate (raw call)")
     {
-        T *data = allocator.AllocateSerial();
+        T *data = allocator.Allocate();
         REQUIRE(data != nullptr);
-        REQUIRE(allocator.Owns(data));
-        allocator.DeallocateSerial(data);
+        REQUIRE(allocator.Belongs(data));
+        allocator.Deallocate(data);
         REQUIRE(allocator.IsEmpty());
     }
 
     SECTION("Create and destroy (raw call)")
     {
-        T *data = allocator.CreateSerial();
+        T *data = allocator.Create();
         REQUIRE(data != nullptr);
-        REQUIRE(allocator.Owns(data));
-        allocator.DestroySerial(data);
+        REQUIRE(allocator.Belongs(data));
+        allocator.Destroy(data);
         REQUIRE(allocator.IsEmpty());
     }
 
@@ -40,23 +39,23 @@ template <typename T> static void RunRawAllocationTest()
             HashSet<T *> allocated;
             for (u32 i = 0; i < amount; ++i)
             {
-                T *ptr = allocator.AllocateSerial();
+                T *ptr = allocator.Allocate();
                 REQUIRE(ptr != nullptr);
                 REQUIRE(allocated.insert(ptr).second);
-                REQUIRE(allocator.Owns(ptr));
+                REQUIRE(allocator.Belongs(ptr));
             }
-            REQUIRE(allocator.GetAllocations() == amount);
+            REQUIRE(allocator.GetAllocationCount() == amount);
 
             for (T *ptr : allocated)
-                allocator.DeallocateSerial(ptr);
+                allocator.Deallocate(ptr);
 
             // Reuse the same chunk over and over again
             for (u32 i = 0; i < amount; ++i)
             {
-                T *ptr = allocator.AllocateSerial();
+                T *ptr = allocator.Allocate();
                 REQUIRE(ptr != nullptr);
-                REQUIRE(allocator.Owns(ptr));
-                allocator.DeallocateSerial(ptr);
+                REQUIRE(allocator.Belongs(ptr));
+                allocator.Deallocate(ptr);
             }
             REQUIRE(allocator.GetBlockCount() == amount / 10);
         }
@@ -70,9 +69,9 @@ template <typename T> static void RunRawAllocationTest()
         const usize chunkSize = allocator.GetChunkSize();
         for (u32 i = 0; i < amount; ++i)
         {
-            data[i] = allocator.AllocateSerial();
+            data[i] = allocator.Allocate();
             REQUIRE(data[i] != nullptr);
-            REQUIRE(allocator.Owns(data[i]));
+            REQUIRE(allocator.Belongs(data[i]));
             if (i != 0)
             {
                 std::byte *b1 = reinterpret_cast<std::byte *>(data[i - 1]);
@@ -81,14 +80,14 @@ template <typename T> static void RunRawAllocationTest()
             }
         }
         for (u32 i = 0; i < amount; ++i)
-            allocator.DeallocateSerial(data[i]);
+            allocator.Deallocate(data[i]);
         REQUIRE(allocator.IsEmpty());
     }
 }
 
 template <typename T> static void RunNewDeleteTest()
 {
-    BlockAllocator<T> &allocator = GetGlobalBlockAllocatorInstance<T, 10>();
+    BlockAllocator &allocator = Detail::GetBlockAllocatorInstance<T, 10>();
     REQUIRE(allocator.IsEmpty());
     allocator.Reset();
 
@@ -96,7 +95,7 @@ template <typename T> static void RunNewDeleteTest()
     {
         T *data = new T;
         REQUIRE(data != nullptr);
-        REQUIRE(allocator.Owns(data));
+        REQUIRE(allocator.Belongs(data));
         delete data;
         REQUIRE(allocator.IsEmpty());
     }
@@ -112,9 +111,9 @@ template <typename T> static void RunNewDeleteTest()
                 T *ptr = new T;
                 REQUIRE(ptr != nullptr);
                 REQUIRE(allocated.insert(ptr).second);
-                REQUIRE(allocator.Owns(ptr));
+                REQUIRE(allocator.Belongs(ptr));
             }
-            REQUIRE(allocator.GetAllocations() == amount);
+            REQUIRE(allocator.GetAllocationCount() == amount);
             for (T *ptr : allocated)
                 delete ptr;
 
@@ -123,7 +122,7 @@ template <typename T> static void RunNewDeleteTest()
             {
                 T *ptr = new T;
                 REQUIRE(ptr != nullptr);
-                REQUIRE(allocator.Owns(ptr));
+                REQUIRE(allocator.Belongs(ptr));
                 delete ptr;
             }
 
@@ -141,7 +140,7 @@ template <typename T> static void RunNewDeleteTest()
         {
             data[i] = new T;
             REQUIRE(data[i] != nullptr);
-            REQUIRE(allocator.Owns(data[i]));
+            REQUIRE(allocator.Belongs(data[i]));
             if (i != 0)
             {
                 std::byte *b1 = reinterpret_cast<std::byte *>(data[i - 1]);
@@ -155,54 +154,9 @@ template <typename T> static void RunNewDeleteTest()
     }
 }
 
-template <typename T> static void RunMultithreadedAllocationsTest()
-{
-    struct Data
-    {
-        TKIT_BLOCK_ALLOCATED_CONCURRENT(Data, 125);
-        T Custom;
-        u32 Value1 = 0;
-        u32 Value2 = 0;
-        u64 Result = 0;
-    };
-    struct PaddedData
-    {
-        Data *Ptr;
-        std::byte Padding[TKIT_CACHE_LINE_SIZE - sizeof(T *)];
-    };
-    constexpr usize amount = 1000;
-    constexpr usize threadCount = 8;
-    ThreadPool pool(threadCount);
-    Array<PaddedData, amount> data;
-    Array<Ref<Task<bool>>, threadCount> tasks;
-
-    ForEach(pool, data.begin(), data.end(), tasks.begin(), threadCount,
-            [](auto p_It1, auto p_It2, const usize p_ThreadIndex) {
-                bool valid = true;
-                for (auto it = p_It1; it != p_It2; ++it)
-                {
-                    it->Ptr = new Data;
-                    it->Ptr->Value1 = static_cast<u32>(p_ThreadIndex);
-                    it->Ptr->Value2 = static_cast<u32>(p_ThreadIndex) * 10;
-                    it->Ptr->Result = it->Ptr->Value1 + it->Ptr->Value2;
-                }
-
-                for (auto it = p_It1; it != p_It2; ++it)
-                {
-                    valid = valid && (it->Ptr->Value1 == p_ThreadIndex);
-                    valid = valid && (it->Ptr->Value2 == p_ThreadIndex * 10);
-                    valid = valid && (it->Ptr->Result == it->Ptr->Value1 + it->Ptr->Value2);
-                    delete it->Ptr;
-                }
-                return valid;
-            });
-    for (auto &task : tasks)
-        REQUIRE(task->WaitForResult());
-}
-
 template <typename Base, typename Derived> void RunVirtualAllocatorTests()
 {
-    BlockAllocator<Derived> &allocator = GetGlobalBlockAllocatorInstance<Derived, 10>();
+    BlockAllocator &allocator = GetGlobalBlockAllocatorInstance<Derived, 10>();
     REQUIRE(allocator.IsEmpty());
     allocator.Reset();
 
@@ -228,9 +182,9 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
 
                 REQUIRE(vd != nullptr);
                 REQUIRE(allocated.insert(vd).second);
-                REQUIRE(allocator.Owns(vd));
+                REQUIRE(allocator.Belongs(vd));
             }
-            REQUIRE(allocator.GetAllocations() == amount);
+            REQUIRE(allocator.GetAllocationCount() == amount);
             for (Base *vb : allocated)
             {
                 REQUIRE(vb->x == 10);
@@ -245,7 +199,7 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
             {
                 Derived *vd = new Derived;
                 REQUIRE(vd != nullptr);
-                REQUIRE(allocator.Owns(vd));
+                REQUIRE(allocator.Belongs(vd));
                 delete vd;
             }
             REQUIRE(allocator.IsEmpty());
@@ -257,7 +211,6 @@ TEST_CASE("Block allocator deals with small data", "[block_allocator][small]")
 {
     RunRawAllocationTest<SmallData>();
     RunNewDeleteTest<SmallData>();
-    RunMultithreadedAllocationsTest<SmallData>();
 }
 TEST_CASE("Block allocator deals with big data", "[block_allocator][big]")
 {

@@ -8,6 +8,7 @@ set(SOURCES
     tkit/core/logging.cpp
     tkit/core/pch.cpp
     tkit/memory/memory.cpp
+    tkit/memory/block_allocator.cpp
     tkit/memory/stack_allocator.cpp
     tkit/memory/arena_allocator.cpp
     tkit/profiling/clock.cpp

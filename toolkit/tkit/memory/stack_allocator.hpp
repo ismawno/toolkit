@@ -158,24 +158,6 @@ class TKIT_API StackAllocator
     }
 
     /**
-     * @brief Get the size of the stack allocator.
-     *
-     */
-    usize GetSize() const noexcept;
-
-    /**
-     * @brief Get the total amount of memory allocated in the stack allocator.
-     *
-     */
-    usize GetAllocated() const noexcept;
-
-    /**
-     * @brief Get the total amount of memory remaining in the stack allocator.
-     *
-     */
-    usize GetRemaining() const noexcept;
-
-    /**
      * @brief Check if a pointer belongs to the stack allocator.
      *
      * @param p_Ptr The pointer to check.
@@ -183,17 +165,12 @@ class TKIT_API StackAllocator
      */
     bool Belongs(const void *p_Ptr) const noexcept;
 
-    /**
-     * @brief Check if the stack allocator is empty.
-     *
-     */
     bool IsEmpty() const noexcept;
-
-    /**
-     * @brief Check if the stack allocator is full.
-     *
-     */
     bool IsFull() const noexcept;
+
+    usize GetSize() const noexcept;
+    usize GetAllocated() const noexcept;
+    usize GetRemaining() const noexcept;
 
   private:
     void deallocateBuffer() noexcept;
