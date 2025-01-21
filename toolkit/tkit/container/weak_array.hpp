@@ -49,11 +49,6 @@ class WeakArray
     {
     }
 
-    ~WeakArray() noexcept
-    {
-        clear();
-    }
-
     template <typename U>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
     constexpr WeakArray(WeakArray<U, Capacity> &&p_Other) noexcept : m_Data(p_Other.data()), m_Size(p_Other.size())

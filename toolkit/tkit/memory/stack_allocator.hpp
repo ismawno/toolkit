@@ -40,12 +40,15 @@ class TKIT_API StackAllocator
         usize AlignmentOffset;
     };
 
-    // The alignment parameter specifies the starting alignment of the whole block so that your first allocation will
-    // not be padded in case you need specific alignment requirements for it, but it does not restrict the alignment of
-    // the individual allocations at all. You can still specify alignments of, say, 64 if you want when allocating
+    // The alignment parameter specifies the starting alignment of the whole memory buffer so that your first allocation
+    // will not be padded in case you need specific alignment requirements for it, but it does not restrict the
+    // alignment of the individual allocations at all. You can still specify alignments of, say, 64 if you want when
+    // allocating
 
-    StackAllocator(void *p_Buffer, usize p_Size) noexcept;
     explicit StackAllocator(usize p_Size, usize p_Alignment = TKIT_ALIGN_OF(std::max_align_t)) noexcept;
+
+    // This constructor is NOT owning the buffer, so it will not deallocate it. Up to the user to manage the memory
+    StackAllocator(void *p_Buffer, usize p_Size) noexcept;
     ~StackAllocator() noexcept;
 
     StackAllocator(StackAllocator &&p_Other) noexcept;
@@ -85,7 +88,6 @@ class TKIT_API StackAllocator
      * @brief Allocate a new block of memory in the stack allocator and create a new object of type `T` out of it.
      *
      * @tparam T The type of the block.
-     * @param p_N The number of elements of type `T` to allocate.
      * @return A pointer to the allocated block.
      */
     template <typename T, typename... Args>
@@ -197,7 +199,7 @@ class TKIT_API StackAllocator
     void deallocateBuffer() noexcept;
 
     StaticArray<Entry, TKIT_STACK_ALLOCATOR_MAX_ENTRIES> m_Entries{};
-    std::byte *m_Buffer = nullptr;
+    std::byte *m_Buffer;
     usize m_Size = 0;
     usize m_Remaining = 0;
     bool m_Provided;

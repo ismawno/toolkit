@@ -18,7 +18,8 @@ ArenaAllocator::~ArenaAllocator() noexcept
 }
 
 ArenaAllocator::ArenaAllocator(ArenaAllocator &&p_Other) noexcept
-    : m_Buffer(p_Other.m_Buffer), m_Size(p_Other.m_Size), m_Remaining(p_Other.m_Remaining)
+    : m_Buffer(p_Other.m_Buffer), m_Size(p_Other.m_Size), m_Remaining(p_Other.m_Remaining),
+      m_Provided(p_Other.m_Provided)
 {
     p_Other.m_Buffer = nullptr;
     p_Other.m_Size = 0;
@@ -33,6 +34,7 @@ ArenaAllocator &ArenaAllocator::operator=(ArenaAllocator &&p_Other) noexcept
         m_Buffer = p_Other.m_Buffer;
         m_Size = p_Other.m_Size;
         m_Remaining = p_Other.m_Remaining;
+        m_Provided = p_Other.m_Provided;
 
         p_Other.m_Buffer = nullptr;
         p_Other.m_Size = 0;
@@ -101,9 +103,9 @@ void ArenaAllocator::deallocateBuffer() noexcept
         return;
     TKIT_LOG_WARNING_IF(
         m_Remaining != m_Size,
-        "[TOOLKIT] Deallocating a Arena allocator with active allocations. Consider calling Pop() until the "
-        "allocator is empty. If the elements are not trivially destructible, you will have to call "
-        "Destroy() for each element (this deallocation will not call the destructor)");
+        "[TOOLKIT] Deallocating an arena allocator with active allocations. If the elements are not "
+        "trivially destructible, you will have to call "
+        "Destroy() for each element to avoid undefined behaviour (this deallocation will not call the destructor)");
     Memory::DeallocateAligned(m_Buffer);
     m_Buffer = nullptr;
     m_Size = 0;

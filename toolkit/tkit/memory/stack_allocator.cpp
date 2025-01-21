@@ -22,7 +22,7 @@ StackAllocator::~StackAllocator() noexcept
 
 StackAllocator::StackAllocator(StackAllocator &&p_Other) noexcept
     : m_Entries(std::move(p_Other.m_Entries)), m_Buffer(p_Other.m_Buffer), m_Size(p_Other.m_Size),
-      m_Remaining(p_Other.m_Remaining)
+      m_Remaining(p_Other.m_Remaining), m_Provided(p_Other.m_Provided)
 
 {
     p_Other.m_Buffer = nullptr;
@@ -40,6 +40,7 @@ StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other) noexcept
         m_Size = p_Other.m_Size;
         m_Remaining = p_Other.m_Remaining;
         m_Entries = std::move(p_Other.m_Entries);
+        m_Provided = p_Other.m_Provided;
 
         p_Other.m_Buffer = nullptr;
         p_Other.m_Size = 0;
@@ -124,9 +125,9 @@ void StackAllocator::deallocateBuffer() noexcept
         return;
     TKIT_LOG_WARNING_IF(
         !m_Entries.empty(),
-        "[TOOLKIT] Deallocating a stack allocator with active allocations. Consider calling Pop() until the "
-        "allocator is empty. If the elements are not trivially destructible, you will have to call "
-        "Destroy() for each element (this deallocation will not call the destructor)");
+        "[TOOLKIT] Deallocating a stack allocator with active allocations. If the elements are not "
+        "trivially destructible, you will have to call "
+        "Destroy() for each element to avoid undefined behaviour (this deallocation will not call the destructor)");
     Memory::DeallocateAligned(m_Buffer);
     m_Buffer = nullptr;
     m_Size = 0;
