@@ -18,9 +18,10 @@ void Deallocate(void *p_Ptr) noexcept
     std::free(p_Ptr);
 }
 
-void *AllocateAligned(const size_t p_Size, const size_t p_Alignment) noexcept
+void *AllocateAligned(const size_t p_Size, size_t p_Alignment) noexcept
 {
     void *ptr = nullptr;
+    p_Alignment = (p_Alignment + sizeof(void *) - 1) & ~(sizeof(void *) - 1);
 #ifdef TKIT_OS_WINDOWS
     ptr = _aligned_malloc(p_Size, p_Alignment);
 #else

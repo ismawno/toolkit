@@ -48,12 +48,12 @@ class TKIT_API ArenaAllocator
     void *Allocate(usize p_Size, usize p_Alignment = alignof(std::max_align_t)) noexcept;
 
     /**
-     * @brief Allocate a new block of memory into the arena allocator.
+     * @brief Allocate a new block of memory into the arena allocator and casts the result to `T`.
      *
      * @param p_N The number of elements of type `T` to allocate.
      * @return A pointer to the allocated block.
      */
-    template <typename T> T *Allocate(const usize p_N) noexcept
+    template <typename T> T *Allocate(const usize p_N = 1) noexcept
     {
         return static_cast<T *>(Allocate(p_N * TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
     }

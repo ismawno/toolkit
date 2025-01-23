@@ -9,13 +9,12 @@ namespace TKit
 {
 template <typename T> static void RunRawAllocationTest()
 {
-    BlockAllocator allocator = BlockAllocator::Create<T>(10);
+    BlockAllocator allocator = BlockAllocator::CreateFromType<T>(2000);
     REQUIRE(allocator.IsEmpty());
-    REQUIRE(allocator.GetBlockCount() == 0);
 
     SECTION("Allocate and deallocate (raw call)")
     {
-        T *data = allocator.Allocate();
+        T *data = allocator.Allocate<T>();
         REQUIRE(data != nullptr);
         REQUIRE(allocator.Belongs(data));
         allocator.Deallocate(data);
@@ -24,7 +23,7 @@ template <typename T> static void RunRawAllocationTest()
 
     SECTION("Create and destroy (raw call)")
     {
-        T *data = allocator.Create();
+        T *data = allocator.Create<T>();
         REQUIRE(data != nullptr);
         REQUIRE(allocator.Belongs(data));
         allocator.Destroy(data);
@@ -39,7 +38,7 @@ template <typename T> static void RunRawAllocationTest()
             HashSet<T *> allocated;
             for (u32 i = 0; i < amount; ++i)
             {
-                T *ptr = allocator.Allocate();
+                T *ptr = allocator.Allocate<T>();
                 REQUIRE(ptr != nullptr);
                 REQUIRE(allocated.insert(ptr).second);
                 REQUIRE(allocator.Belongs(ptr));
@@ -49,15 +48,14 @@ template <typename T> static void RunRawAllocationTest()
             for (T *ptr : allocated)
                 allocator.Deallocate(ptr);
 
-            // Reuse the same chunk over and over again
+            // Reuse the same allocation over and over again
             for (u32 i = 0; i < amount; ++i)
             {
-                T *ptr = allocator.Allocate();
+                T *ptr = allocator.Allocate<T>();
                 REQUIRE(ptr != nullptr);
                 REQUIRE(allocator.Belongs(ptr));
                 allocator.Deallocate(ptr);
             }
-            REQUIRE(allocator.GetBlockCount() == amount / 10);
         }
         REQUIRE(allocator.IsEmpty());
     }
@@ -66,17 +64,17 @@ template <typename T> static void RunRawAllocationTest()
     {
         constexpr u32 amount = 10;
         Array<T *, amount> data;
-        const usize chunkSize = allocator.GetChunkSize();
+        const usize allocationSize = allocator.GetAllocationSize();
         for (u32 i = 0; i < amount; ++i)
         {
-            data[i] = allocator.Allocate();
+            data[i] = allocator.Allocate<T>();
             REQUIRE(data[i] != nullptr);
             REQUIRE(allocator.Belongs(data[i]));
             if (i != 0)
             {
                 std::byte *b1 = reinterpret_cast<std::byte *>(data[i - 1]);
                 std::byte *b2 = reinterpret_cast<std::byte *>(data[i]);
-                REQUIRE(b2 == b1 + chunkSize);
+                REQUIRE(b2 == b1 + allocationSize);
             }
         }
         for (u32 i = 0; i < amount; ++i)
@@ -87,7 +85,7 @@ template <typename T> static void RunRawAllocationTest()
 
 template <typename T> static void RunNewDeleteTest()
 {
-    BlockAllocator &allocator = Detail::GetBlockAllocatorInstance<T, 10>();
+    BlockAllocator &allocator = Detail::GetBlockAllocatorInstance<T, 2000>();
     REQUIRE(allocator.IsEmpty());
     allocator.Reset();
 
@@ -117,7 +115,7 @@ template <typename T> static void RunNewDeleteTest()
             for (T *ptr : allocated)
                 delete ptr;
 
-            // Reuse the same chunk over and over again
+            // Reuse the same allocation over and over again
             for (u32 i = 0; i < amount; ++i)
             {
                 T *ptr = new T;
@@ -125,8 +123,6 @@ template <typename T> static void RunNewDeleteTest()
                 REQUIRE(allocator.Belongs(ptr));
                 delete ptr;
             }
-
-            REQUIRE(allocator.GetBlockCount() == amount / 10);
         }
         REQUIRE(allocator.IsEmpty());
     }
@@ -135,7 +131,7 @@ template <typename T> static void RunNewDeleteTest()
     {
         constexpr u32 amount = 10;
         Array<T *, amount> data;
-        constexpr usize chunkSize = BlockAllocator<T>::GetChunkSize();
+        const usize allocationSize = allocator.GetAllocationSize();
         for (u32 i = 0; i < amount; ++i)
         {
             data[i] = new T;
@@ -145,7 +141,7 @@ template <typename T> static void RunNewDeleteTest()
             {
                 std::byte *b1 = reinterpret_cast<std::byte *>(data[i - 1]);
                 std::byte *b2 = reinterpret_cast<std::byte *>(data[i]);
-                REQUIRE(b2 == b1 + chunkSize);
+                REQUIRE(b2 == b1 + allocationSize);
             }
         }
         for (u32 i = 0; i < amount; ++i)
@@ -156,7 +152,7 @@ template <typename T> static void RunNewDeleteTest()
 
 template <typename Base, typename Derived> void RunVirtualAllocatorTests()
 {
-    BlockAllocator &allocator = GetGlobalBlockAllocatorInstance<Derived, 10>();
+    BlockAllocator &allocator = Detail::GetBlockAllocatorInstance<Derived, 2000>();
     REQUIRE(allocator.IsEmpty());
     allocator.Reset();
 
@@ -194,7 +190,7 @@ template <typename Base, typename Derived> void RunVirtualAllocatorTests()
                 delete vb;
             }
 
-            // Reuse the same chunk over and over again
+            // Reuse the same allocation over and over again
             for (usize i = 0; i < amount; ++i)
             {
                 Derived *vd = new Derived;

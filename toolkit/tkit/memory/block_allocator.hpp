@@ -56,9 +56,10 @@ class BlockAllocator
      * @param p_N The capacity of the allocator, measured in how many objects of type `T` will be able to allocate.
      * @return A `BlockAllocator` instance.
      */
-    template <typename T> BlockAllocator Create(const usize p_N) noexcept
+    template <typename T> static BlockAllocator CreateFromType(const usize p_N) noexcept
     {
-        return BlockAllocator{p_N * sizeof(T), sizeof(T), alignof(T)};
+        const usize size = sizeof(T) > sizeof(Allocation) ? sizeof(T) : sizeof(Allocation);
+        return BlockAllocator{p_N * size, size, alignof(T)};
     }
 
     /**
@@ -100,7 +101,7 @@ class BlockAllocator
     template <typename T, typename... Args> T *Create(Args &&...p_Args) noexcept
     {
         T *ptr = Allocate<T>();
-        Memory::Construct(ptr, std::forward<Args>(p_Args)...);
+        return Memory::Construct(ptr, std::forward<Args>(p_Args)...);
     }
 
     /**
@@ -160,7 +161,7 @@ namespace Detail
 {
 template <typename T, usize N> BlockAllocator &GetBlockAllocatorInstance() noexcept
 {
-    static BlockAllocator alloc = BlockAllocator::Create<T>(N);
+    static BlockAllocator alloc = BlockAllocator::CreateFromType<T>(N);
     return alloc;
 }
 

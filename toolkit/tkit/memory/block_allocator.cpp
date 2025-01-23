@@ -5,8 +5,10 @@
 namespace TKit
 {
 BlockAllocator::BlockAllocator(const usize p_BufferSize, const usize p_AllocationSize, const usize p_Alignment) noexcept
-    : m_AllocationSize(p_AllocationSize), m_Provided(false)
+    : m_BufferSize(p_BufferSize), m_AllocationSize(p_AllocationSize), m_Provided(false)
 {
+    TKIT_ASSERT(p_AllocationSize >= sizeof(Allocation), "The allocation size must be at least {} bytes",
+                sizeof(Allocation));
     TKIT_ASSERT(p_BufferSize % p_Alignment == 0,
                 "The buffer size must be a multiple of the alignment to ensure every block of memory is aligned to it");
     TKIT_ASSERT(p_BufferSize % p_AllocationSize == 0,
@@ -20,7 +22,8 @@ BlockAllocator::BlockAllocator(const usize p_BufferSize, const usize p_Allocatio
 }
 
 BlockAllocator::BlockAllocator(void *p_Buffer, const usize p_BufferSize, const usize p_AllocationSize) noexcept
-    : m_AllocationSize(p_AllocationSize), m_Provided(true)
+    : m_Buffer(static_cast<std::byte *>(p_Buffer)), m_BufferSize(p_BufferSize), m_AllocationSize(p_AllocationSize),
+      m_Provided(true)
 {
     TKIT_ASSERT(p_BufferSize % p_AllocationSize == 0,
                 "The buffer size must be a multiple of the allocation size to guarantee a tight fit");
@@ -128,7 +131,7 @@ void BlockAllocator::setupMemoryLayout() noexcept
     m_FreeList = reinterpret_cast<Allocation *>(m_Buffer);
 
     Allocation *next = nullptr;
-    for (usize i = count - 1; i >= 0 && i < count; ++i)
+    for (usize i = count - 1; i >= 0 && i < count; --i)
     {
         Allocation *alloc = reinterpret_cast<Allocation *>(m_Buffer + i * m_AllocationSize);
         alloc->Next = next;

@@ -7,13 +7,13 @@ namespace TKit
 {
 struct SmallData
 {
-    TKIT_BLOCK_ALLOCATED_CONCURRENT(SmallData, 10);
+    TKIT_BLOCK_ALLOCATED_CONCURRENT(SmallData, 2000)
     i32 x;
 };
 
 struct BigData
 {
-    TKIT_BLOCK_ALLOCATED_CONCURRENT(BigData, 10);
+    TKIT_BLOCK_ALLOCATED_CONCURRENT(BigData, 2000)
     f64 x;
     f64 y;
     f64 z;
@@ -25,7 +25,7 @@ TKIT_MSVC_WARNING_IGNORE(4324)
 
 struct AlignedData
 {
-    TKIT_BLOCK_ALLOCATED_CONCURRENT(AlignedData, 10);
+    TKIT_BLOCK_ALLOCATED_CONCURRENT(AlignedData, 2000)
     alignas(16) f64 x, y, z;
     alignas(32) f64 a, b, c;
 };
@@ -33,7 +33,7 @@ TKIT_WARNING_IGNORE_POP
 
 struct NonTrivialData
 {
-    TKIT_BLOCK_ALLOCATED_CONCURRENT(NonTrivialData, 10);
+    TKIT_BLOCK_ALLOCATED_CONCURRENT(NonTrivialData, 2000)
     i32 *x = nullptr;
     NonTrivialData() : x(new i32[25])
     {
@@ -91,7 +91,7 @@ struct NonTrivialData
 
 struct VirtualBase
 {
-    TKIT_BLOCK_ALLOCATED_CONCURRENT(VirtualBase, 10);
+    TKIT_BLOCK_ALLOCATED_CONCURRENT(VirtualBase, 2000)
     VirtualBase()
     {
         ++BaseInstances;
@@ -119,7 +119,7 @@ struct VirtualBase
 
 struct VirtualDerived : VirtualBase
 {
-    TKIT_BLOCK_ALLOCATED_CONCURRENT(VirtualDerived, 10);
+    TKIT_BLOCK_ALLOCATED_CONCURRENT(VirtualDerived, 2000)
     VirtualDerived()
     {
         ++DerivedInstances;
