@@ -17,18 +17,11 @@ int main()
     TKIT_LOG_INFO("[TOOLKIT] Running parallel sum...");
     RecordParallelSum(settings.ThreadPoolSum, settings.MaxThreads);
 
-    TKIT_LOG_INFO("[TOOLKIT] Running malloc/free ST...");
-    RecordMallocFreeST(settings.Allocation);
+    TKIT_LOG_INFO("[TOOLKIT] Running malloc/free...");
+    RecordMallocFree(settings.Allocation);
 
-    TKIT_LOG_INFO("[TOOLKIT] Running block allocator ST...");
-    RecordBlockAllocatorConcurrentST(settings.Allocation);
-    RecordBlockAllocatorSerialST(settings.Allocation);
-
-    TKIT_LOG_INFO("[TOOLKIT] Running malloc/free MT...");
-    RecordMallocFreeMT(settings.Allocation, settings.MaxThreads);
-
-    TKIT_LOG_INFO("[TOOLKIT] Running block allocator MT...");
-    RecordBlockAllocatorMT(settings.Allocation, settings.MaxThreads);
+    TKIT_LOG_INFO("[TOOLKIT] Running block allocator...");
+    RecordBlockAllocator(settings.Allocation);
 
     TKIT_LOG_INFO("[TOOLKIT] Running stack allocator...");
     RecordStackAllocator(settings.Allocation);

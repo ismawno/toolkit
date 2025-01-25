@@ -7,17 +7,13 @@ import dash
 
 def read_and_classify_benchmark_data() -> dict[str, dict[str, pd.DataFrame]]:
     path = Path("performance/results")
-    dfs = {"single-thread": {}, "multi-thread": {}, "thread-scale": {}}
+    dfs = {"single-thread": {}, "thread-scale": {}}
     for csv in path.glob("*.csv"):
         df = pd.read_csv(csv)
         if "passes" in df.columns and "threads" not in df.columns:
             dfs["single-thread"][csv.stem] = df
         elif "threads" in df.columns and "passes" not in df.columns:
             dfs["thread-scale"][csv.stem] = df
-        else:
-            for thread in df["threads"].unique():
-                df_thread = df[df["threads"] == thread].drop(columns="threads")
-                dfs["multi-thread"][f"{csv.stem}_threads_{thread}"] = df_thread
     return dfs
 
 
@@ -192,28 +188,6 @@ def update_plain_graph(
         axis_type,
         benchmark_type="single-thread",
         title="Single thread benchmarks",
-    )
-
-
-@app.callback(
-    dash.dependencies.Output("multi-thread-graph", "figure"),
-    [
-        dash.dependencies.Input("multi-thread-checklist", "value"),
-        dash.dependencies.Input("multi-thread-plot-mode", "value"),
-        dash.dependencies.Input("multi-thread-time-unit", "value"),
-        dash.dependencies.Input("multi-thread-axis-type", "value"),
-    ],
-)
-def update_per_thread_graph(
-    names: list[str], plot_mode: str, time_unit: str, axis_type: list[str], /
-) -> go.Figure:
-    return update_graph(
-        names,
-        plot_mode,
-        time_unit,
-        axis_type,
-        benchmark_type="multi-thread",
-        title="Multi thread benchmarks",
     )
 
 

@@ -18,12 +18,12 @@ struct ExampleData
     }
 };
 
-void RecordMallocFreeST(const AllocationSettings &p_Settings) noexcept
+void RecordMallocFree(const AllocationSettings &p_Settings) noexcept
 {
-    std::ofstream file(g_Root + "/performance/results/malloc_free_st.csv");
+    std::ofstream file(g_Root + "/performance/results/malloc_free.csv");
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
 
-    file << "passes,malloc_st (ns),free_st (ns)\n";
+    file << "passes,malloc (ns),free (ns)\n";
     for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
     {
         Clock clock;
@@ -39,159 +39,25 @@ void RecordMallocFreeST(const AllocationSettings &p_Settings) noexcept
     }
 }
 
-void RecordMallocFreeMT(const AllocationSettings &p_Settings, const usize p_MaxThreads) noexcept
+void RecordBlockAllocator(const AllocationSettings &p_Settings) noexcept
 {
-    std::ofstream file(g_Root + "/performance/results/malloc_free_mt.csv");
+    std::ofstream file(g_Root + "/performance/results/block_allocator.csv");
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
-    DynamicArray<std::thread> threads{p_MaxThreads};
+    file << "passes,block_alloc (ns),block_dealloc (ns)\n";
 
-    const auto allocate = [&allocated](const usize p_Start, const usize p_End) {
-        for (usize i = p_Start; i < p_End; ++i)
-            allocated[i] = new ExampleData;
-    };
-    const auto deallocate = [&allocated](const usize p_Start, const usize p_End) {
-        for (usize i = p_Start; i < p_End; ++i)
-            delete allocated[i];
-    };
-
-    file << "threads,passes,malloc_mt (ns),free_mt (ns)\n";
-
-    usize nthreads = 1;
-    while (nthreads <= p_MaxThreads)
-    {
-        for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
-        {
-            for (usize th = 0; th < nthreads; ++th)
-            {
-                const usize start = th * passes / nthreads;
-                const usize end = (th + 1) * passes / nthreads;
-                threads[th] = std::thread(allocate, start, end);
-            }
-
-            // Including thread creation in measurement seems a bit unfair
-            Clock clock;
-            for (usize th = 0; th < nthreads; ++th)
-                threads[th].join();
-            const Timespan allocTime = clock.GetElapsed();
-
-            for (usize th = 0; th < nthreads; ++th)
-            {
-                const usize start = th * passes / nthreads;
-                const usize end = (th + 1) * passes / nthreads;
-                threads[th] = std::thread(deallocate, start, end);
-            }
-
-            clock.Restart();
-            for (usize th = 0; th < nthreads; ++th)
-                threads[th].join();
-            const Timespan deallocTime = clock.GetElapsed();
-
-            file << nthreads << ',' << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds()
-                 << '\n';
-        }
-        nthreads *= 2;
-    }
-}
-
-void RecordBlockAllocatorConcurrentST(const AllocationSettings &p_Settings) noexcept
-{
-    std::ofstream file(g_Root + "/performance/results/block_allocator_concurrent_st.csv");
-    DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
-    file << "passes,block_alloc_st (ns),block_dealloc_st (ns)\n";
-
-    BlockAllocator<ExampleData> allocator{p_Settings.MaxPasses};
-    allocator.ReserveConcurrent();
-
+    BlockAllocator allocator = BlockAllocator::CreateFromType<ExampleData>(p_Settings.MaxPasses);
     for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
     {
         Clock clock;
         for (usize i = 0; i < passes; ++i)
-            allocated[i] = allocator.CreateConcurrent();
+            allocated[i] = allocator.Create<ExampleData>();
         const Timespan allocTime = clock.Restart();
 
         for (usize i = 0; i < passes; ++i)
-            allocator.DestroyConcurrent(allocated[i]);
+            allocator.Destroy(allocated[i]);
         const Timespan deallocTime = clock.GetElapsed();
 
         file << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds() << '\n';
-    }
-}
-
-void RecordBlockAllocatorSerialST(const AllocationSettings &p_Settings) noexcept
-{
-    std::ofstream file(g_Root + "/performance/results/block_allocator_serial_st.csv");
-    DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
-    file << "passes,block_alloc_st (ns),block_dealloc_st (ns)\n";
-
-    BlockAllocator<ExampleData> allocator{p_Settings.MaxPasses};
-    allocator.ReserveSerial();
-    for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
-    {
-        Clock clock;
-        for (usize i = 0; i < passes; ++i)
-            allocated[i] = allocator.CreateSerial();
-        const Timespan allocTime = clock.Restart();
-
-        for (usize i = 0; i < passes; ++i)
-            allocator.DestroySerial(allocated[i]);
-        const Timespan deallocTime = clock.GetElapsed();
-
-        file << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds() << '\n';
-    }
-}
-
-void RecordBlockAllocatorMT(const AllocationSettings &p_Settings, const usize p_MaxThreads) noexcept
-{
-    std::ofstream file(g_Root + "/performance/results/block_allocator_mt.csv");
-    DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
-    DynamicArray<std::thread> threads{p_MaxThreads};
-
-    BlockAllocator<ExampleData> allocator{p_Settings.MaxPasses};
-    allocator.ReserveSerial();
-    const auto allocate = [&allocated, &allocator](const usize p_Start, const usize p_End) {
-        for (usize i = p_Start; i < p_End; ++i)
-            allocated[i] = allocator.CreateConcurrent();
-    };
-    const auto deallocate = [&allocated, &allocator](const usize p_Start, const usize p_End) {
-        for (usize i = p_Start; i < p_End; ++i)
-            allocator.DestroyConcurrent(allocated[i]);
-    };
-
-    file << "threads,passes,block_alloc_mt (ns),block_dealloc_mt (ns)\n";
-
-    usize nthreads = 1;
-    while (nthreads <= p_MaxThreads)
-    {
-        for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
-        {
-            for (usize th = 0; th < nthreads; ++th)
-            {
-                const usize start = th * passes / nthreads;
-                const usize end = (th + 1) * passes / nthreads;
-                threads[th] = std::thread(allocate, start, end);
-            }
-
-            Clock clock;
-            for (usize th = 0; th < nthreads; ++th)
-                threads[th].join();
-            const Timespan allocTime = clock.Restart();
-
-            for (usize th = 0; th < nthreads; ++th)
-            {
-                const usize start = th * passes / nthreads;
-                const usize end = (th + 1) * passes / nthreads;
-                threads[th] = std::thread(deallocate, start, end);
-            }
-
-            clock.Restart();
-            for (usize th = 0; th < nthreads; ++th)
-                threads[th].join();
-            const Timespan deallocTime = clock.GetElapsed();
-
-            file << nthreads << ',' << passes << ',' << allocTime.AsNanoseconds() << ',' << deallocTime.AsNanoseconds()
-                 << '\n';
-        }
-        nthreads *= 2;
     }
 }
 
