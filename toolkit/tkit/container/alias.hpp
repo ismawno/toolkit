@@ -4,6 +4,8 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
+#include <map>
+#include <set>
 #include <deque>
 #include <string_view>
 #include <string>
@@ -58,4 +60,12 @@ template <typename Value, typename Hash = typename Detail::HashAlias<Value>::Typ
           typename OpEqual = typename Detail::OpAlias<Value>::Type,
           typename Allocator = Memory::DefaultAllocator<Value>>
 using HashSet = std::unordered_set<Value, Hash, OpEqual>;
+
+template <typename Key, typename Value, typename Compare = std::less<Key>,
+          typename Allocator = Memory::DefaultAllocator<std::pair<const Key, Value>>>
+using TreeMap = std::map<Key, Value, Compare, Allocator>;
+
+template <typename Value, typename Compare = std::less<Value>, typename Allocator = Memory::DefaultAllocator<Value>>
+using TreeSet = std::set<Value, Compare, Allocator>;
+
 } // namespace TKit
