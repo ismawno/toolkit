@@ -51,10 +51,17 @@ namespace TKit::Detail
 TKIT_API void LogMessage(const char *p_Level, std::string_view p_File, const i32 p_Line, const char *p_Color,
                          const bool p_Crash, std::string_view p_Message) noexcept;
 
+#    ifdef TKIT_OS_LINUX
+template <typename... Args> auto Format(const fmt::format_string<Args...> &p_Format, Args &&...p_Args) noexcept
+{
+    return TKIT_FORMAT(p_Format, std::forward<Args>(p_Args)...);
+}
+#    else
 template <typename... Args> auto Format(const std::format_string<Args...> &p_Format, Args &&...p_Args) noexcept
 {
     return TKIT_FORMAT(p_Format, std::forward<Args>(p_Args)...);
 }
+#    endif
 
 constexpr const char *Format() noexcept
 {

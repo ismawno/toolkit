@@ -5,6 +5,7 @@
 #include "tkit/profiling/macros.hpp"
 #include "tkit/container/alias.hpp"
 #include "tkit/core/logging.hpp"
+#include <mutex>
 
 namespace TKit
 {
