@@ -131,7 +131,7 @@ void BlockAllocator::setupMemoryLayout() noexcept
     m_FreeList = reinterpret_cast<Allocation *>(m_Buffer);
 
     Allocation *next = nullptr;
-    for (usize i = count - 1; i >= 0 && i < count; --i)
+    for (usize i = count - 1; i < count; --i)
     {
         Allocation *alloc = reinterpret_cast<Allocation *>(m_Buffer + i * m_AllocationSize);
         alloc->Next = next;
