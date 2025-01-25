@@ -50,7 +50,7 @@ template <typename T> class RefCounted
         return *this;
     }
 
-    TKIT_WARNING_IGNORE_PUSH
+    TKIT_COMPILER_WARNING_IGNORE_PUSH()
     TKIT_CLANG_WARNING_IGNORE("-Wexceptions")
     TKIT_GCC_WARNING_IGNORE("-Wterminate")
     TKIT_MSVC_WARNING_IGNORE(4297)
@@ -59,7 +59,7 @@ template <typename T> class RefCounted
         TKIT_ASSERT(m_RefCount.load(std::memory_order_relaxed) == 0,
                     "[TOOLKIT] RefCounted object deleted with non-zero refcount");
     }
-    TKIT_WARNING_IGNORE_POP
+    TKIT_COMPILER_WARNING_IGNORE_POP()
 
     u32 RefCount() const noexcept
     {

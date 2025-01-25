@@ -127,10 +127,14 @@ TEST_CASE("Stack allocator complex data operations", "[memory][stack_allocator][
     {
         Array256<const void *> pointers;
         u32 index = 0;
+        TKIT_IGNORE_WARNING_LOGS_PUSH();
+
         while (void *ptr = allocator.Create<AlignedData>())
             pointers[index++] = ptr;
         while (!allocator.IsEmpty())
             allocator.Deallocate(pointers[--index]);
+
+        TKIT_IGNORE_WARNING_LOGS_POP();
     }
 }
 } // namespace TKit

@@ -2,12 +2,12 @@
 #include <filesystem>
 #include <fstream>
 
-TKIT_WARNING_IGNORE_PUSH
+TKIT_COMPILER_WARNING_IGNORE_PUSH()
 TKIT_GCC_WARNING_IGNORE("-Wunused-parameter")
 TKIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
 TKIT_MSVC_WARNING_IGNORE(4100)
 #include <yaml-cpp/yaml.h>
-TKIT_WARNING_IGNORE_POP
+TKIT_COMPILER_WARNING_IGNORE_POP()
 
 namespace TKit
 {

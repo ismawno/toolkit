@@ -20,7 +20,7 @@ struct BigData
     std::string str[3];
 };
 
-TKIT_WARNING_IGNORE_PUSH
+TKIT_COMPILER_WARNING_IGNORE_PUSH()
 TKIT_MSVC_WARNING_IGNORE(4324)
 
 struct AlignedData
@@ -29,7 +29,7 @@ struct AlignedData
     alignas(16) f64 x, y, z;
     alignas(32) f64 a, b, c;
 };
-TKIT_WARNING_IGNORE_POP
+TKIT_COMPILER_WARNING_IGNORE_POP()
 
 struct NonTrivialData
 {
@@ -67,11 +67,11 @@ struct NonTrivialData
     {
         if (this != &other)
         {
-            TKIT_WARNING_IGNORE_PUSH
+            TKIT_COMPILER_WARNING_IGNORE_PUSH()
             TKIT_GCC_WARNING_IGNORE("-Wmaybe-uninitialized")
             if (x)
                 delete[] x;
-            TKIT_WARNING_IGNORE_POP
+            TKIT_COMPILER_WARNING_IGNORE_POP()
             x = other.x;
             other.x = nullptr;
         }

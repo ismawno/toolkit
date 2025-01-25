@@ -14,12 +14,11 @@
 
 namespace TKit::Detail
 {
-TKIT_WARNING_IGNORE_PUSH
-TKIT_GCC_WARNING_IGNORE("-Wunused-parameter")
-TKIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
 void LogMessage(const char *p_Level, const std::string_view p_File, const i32 p_Line, const char *p_Color,
-                [[maybe_unused]] const bool p_Crash, const std::string_view p_Message) noexcept
+                const bool p_Crash, std::string_view p_Message) noexcept
 {
+    if (p_Message.empty() && p_Crash)
+        p_Message = "Assertion failed";
     if (p_Line != Limits<i32>::max())
     {
         const std::string log =
@@ -35,7 +34,6 @@ void LogMessage(const char *p_Level, const std::string_view p_File, const i32 p_
     }
     TKIT_DEBUG_BREAK_IF(p_Crash);
 }
-TKIT_WARNING_IGNORE_POP
 } // namespace TKit::Detail
 
 #endif

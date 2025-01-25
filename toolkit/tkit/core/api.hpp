@@ -60,29 +60,32 @@
 #endif
 
 #ifdef TKIT_COMPILER_CLANG
-#    define TKIT_PRAGMA(x) _Pragma(#x)
-#    define TKIT_WARNING_IGNORE_PUSH TKIT_PRAGMA(clang diagnostic push)
-#    define TKIT_WARNING_IGNORE_POP TKIT_PRAGMA(clang diagnostic pop)
-#    define TKIT_CLANG_WARNING_IGNORE(wrng) TKIT_PRAGMA(clang diagnostic ignored wrng)
+#    define TKIT_PRAGMA(p_Arg) _Pragma(#p_Arg)
+#    define TKIT_COMPILER_WARNING_IGNORE_PUSH() TKIT_PRAGMA(clang diagnostic push)
+#    define TKIT_COMPILER_WARNING_IGNORE_POP() TKIT_PRAGMA(clang diagnostic pop)
+#    define TKIT_CLANG_WARNING_IGNORE(p_Warning) TKIT_PRAGMA(clang diagnostic ignored p_Warning)
 #else
-#    define TKIT_CLANG_WARNING_IGNORE(wrng)
+#    define TKIT_CLANG_WARNING_IGNORE(p_Warning)
 #endif
 #ifdef TKIT_COMPILER_GCC
 #    define TKIT_PRAGMA(x) _Pragma(#x)
-#    define TKIT_WARNING_IGNORE_PUSH TKIT_PRAGMA(GCC diagnostic push)
-#    define TKIT_WARNING_IGNORE_POP TKIT_PRAGMA(GCC diagnostic pop)
-#    define TKIT_GCC_WARNING_IGNORE(wrng) TKIT_PRAGMA(GCC diagnostic ignored wrng)
+#    define TKIT_COMPILER_WARNING_IGNORE_PUSH() TKIT_PRAGMA(GCC diagnostic push)
+#    define TKIT_COMPILER_WARNING_IGNORE_POP() TKIT_PRAGMA(GCC diagnostic pop)
+#    define TKIT_GCC_WARNING_IGNORE(p_Warning) TKIT_PRAGMA(GCC diagnostic ignored p_Warning)
 #else
-#    define TKIT_GCC_WARNING_IGNORE(wrng)
+#    define TKIT_GCC_WARNING_IGNORE(p_Warning)
 #endif
 #ifdef TKIT_COMPILER_MSVC
 #    define TKIT_PRAGMA(x) __pragma(x)
-#    define TKIT_WARNING_IGNORE_PUSH TKIT_PRAGMA(warning(push))
-#    define TKIT_WARNING_IGNORE_POP TKIT_PRAGMA(warning(pop))
-#    define TKIT_MSVC_WARNING_IGNORE(wrng) TKIT_PRAGMA(warning(disable : wrng))
+#    define TKIT_COMPILER_WARNING_IGNORE_PUSH() TKIT_PRAGMA(warning(push))
+#    define TKIT_COMPILER_WARNING_IGNORE_POP() TKIT_PRAGMA(warning(pop))
+#    define TKIT_MSVC_WARNING_IGNORE(p_Warning) TKIT_PRAGMA(warning(disable : p_Warning))
 #else
-#    define TKIT_MSVC_WARNING_IGNORE(wrng)
+#    define TKIT_MSVC_WARNING_IGNORE(p_Warning)
 #endif
+
+#define TKIT_PUSH_MACRO(p_Macro) TKIT_PRAGMA(push_macro(#p_Macro))
+#define TKIT_POP_MACRO(p_Macro) TKIT_PRAGMA(pop_macro(#p_Macro))
 
 #if defined(TKIT_OS_WINDOWS) || defined(TKIT_OS_APPLE)
 #    define TKIT_CONSTEVAL consteval
@@ -95,3 +98,17 @@
 #endif
 
 #define TKIT_UNUSED(x) (void)(x)
+
+#define __TKIT_ARG_SEQ(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, \
+                       _22, _23, _24, _25, _26, _27, _28, _29, _30, _31, _32, _33, _34, _35, _36, _37, _38, _39, _40,  \
+                       _41, _42, _43, _44, _45, _46, _47, _48, _49, _50, _51, _52, _53, _54, _55, _56, _57, _58, _59,  \
+                       _60, _61, _62, _63, N, ...)                                                                     \
+    N
+#define __TKIT_NSEQ()                                                                                                  \
+    63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36,    \
+        35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8,  \
+        7, 6, 5, 4, 3, 2, 1, 0
+
+#define __TKIT_NARG(...) __TKIT_ARG_SEQ(__VA_ARGS__)
+
+#define TKIT_NARG(...) __TKIT_NARG(__VA_ARGS__, __TKIT_NSEQ())
