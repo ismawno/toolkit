@@ -11,9 +11,9 @@ namespace TKit
  * Can be used as a drop-in replacement for `std::array`. It is here to provide a bit more control and use of the
  * `DefaultAllocator` traits.
  *
- * @tparam T
- * @tparam Size
- * @tparam Traits
+ * @tparam T The type of the elements.
+ * @tparam Size The number of elements in the array.
+ * @tparam Traits The allocator traits to use. By default, it uses the `DefaultAllocator` traits.
  */
 template <typename T, usize Size, typename Traits = std::allocator_traits<Memory::DefaultAllocator<T>>> class Array
 {
