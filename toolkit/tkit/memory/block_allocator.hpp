@@ -166,9 +166,9 @@ template <typename T, usize N> BlockAllocator &GetBlockAllocatorInstance() noexc
     return alloc;
 }
 
-template <typename T, usize N> std::mutex &GetBlockAllocatorMutex() noexcept
+template <typename T, usize N> auto &GetBlockAllocatorMutex() noexcept
 {
-    static std::mutex mtx;
+    static TKIT_PROFILE_DECLARE_MUTEX(std::mutex, mtx);
     return mtx;
 }
 } // namespace Detail
@@ -180,24 +180,32 @@ template <typename T, usize N> std::mutex &GetBlockAllocatorMutex() noexcept
     {                                                                                                                  \
         TKIT_ASSERT(p_Size == TKIT_SIZE_OF(p_ClassName),                                                               \
                     "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
-        std::scoped_lock lock{TKit::Detail::GetBlockAllocatorMutex<p_ClassName, p_N>()};                               \
+        auto &mtx = TKit::Detail::GetBlockAllocatorMutex<p_ClassName, p_N>();                                          \
+        std::scoped_lock lock{mtx};                                                                                    \
+        TKIT_PROFILE_MARK_LOCK(mtx);                                                                                   \
         return TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Allocate();                                 \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr)                                                                           \
     {                                                                                                                  \
-        std::scoped_lock lock{TKit::Detail::GetBlockAllocatorMutex<p_ClassName, p_N>()};                               \
+        auto &mtx = TKit::Detail::GetBlockAllocatorMutex<p_ClassName, p_N>();                                          \
+        std::scoped_lock lock{mtx};                                                                                    \
+        TKIT_PROFILE_MARK_LOCK(mtx);                                                                                   \
         TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Deallocate(static_cast<p_ClassName *>(p_Ptr));     \
     }                                                                                                                  \
     static void *operator new([[maybe_unused]] size_t p_Size, const std::nothrow_t &)                                  \
     {                                                                                                                  \
         TKIT_ASSERT(p_Size == TKIT_SIZE_OF(p_ClassName),                                                               \
                     "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
-        std::scoped_lock lock{TKit::Detail::GetBlockAllocatorMutex<p_ClassName, p_N>()};                               \
+        auto &mtx = TKit::Detail::GetBlockAllocatorMutex<p_ClassName, p_N>();                                          \
+        std::scoped_lock lock{mtx};                                                                                    \
+        TKIT_PROFILE_MARK_LOCK(mtx);                                                                                   \
         return TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Allocate();                                 \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr, const std::nothrow_t &)                                                   \
     {                                                                                                                  \
-        std::scoped_lock lock{TKit::Detail::GetBlockAllocatorMutex<p_ClassName, p_N>()};                               \
+        auto &mtx = TKit::Detail::GetBlockAllocatorMutex<p_ClassName, p_N>();                                          \
+        std::scoped_lock lock{mtx};                                                                                    \
+        TKIT_PROFILE_MARK_LOCK(mtx);                                                                                   \
         TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Deallocate(static_cast<p_ClassName *>(p_Ptr));     \
     }
 
