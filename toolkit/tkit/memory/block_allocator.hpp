@@ -160,6 +160,8 @@ class BlockAllocator
 
 namespace Detail
 {
+// This may cause problems for static objects allocated with this allocator !!! As the order of destruction is not
+// guaranteed, the allocator may be destroyed before the objects allocated with it
 template <typename T, usize N> BlockAllocator &GetBlockAllocatorInstance() noexcept
 {
     static BlockAllocator alloc = BlockAllocator::CreateFromType<T>(N);
