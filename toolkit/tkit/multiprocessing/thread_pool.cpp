@@ -27,7 +27,7 @@ ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
             }
 
             (*task)(p_ThreadIndex);
-            m_PendingCount.fetch_sub(1, std::memory_order_relaxed);
+            m_PendingCount.fetch_sub(1, std::memory_order_release);
         }
         m_TerminatedCount.fetch_add(1, std::memory_order_relaxed);
     };
@@ -38,7 +38,7 @@ ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
 void ThreadPool::AwaitPendingTasks() const noexcept
 {
     // TODO: Consider using _mm_pause() instead of std::this_thread::yield()
-    while (m_PendingCount.load(std::memory_order_relaxed) != 0)
+    while (m_PendingCount.load(std::memory_order_acquire) != 0)
         std::this_thread::yield();
 }
 
