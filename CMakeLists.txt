@@ -156,7 +156,7 @@ function(configure_compile_link_options target)
         endif()
     endif()
 
-    if (TOOLKIT_SANITIZERS STREQUAL "none" OR ARG_FORBID_SANITIZERS)
+    if (NOT DEFINED TOOLKIT_SANITIZERS OR TOOLKIT_SANITIZERS STREQUAL "none" OR ARG_FORBID_SANITIZERS)
         return()
     endif()
 
