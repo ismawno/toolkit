@@ -35,6 +35,8 @@ I have tried to keep dependencies to a minimum, many of them being platform-spec
 
 ## Building
 
-The building process is (fortunately) very straightforward. Create a `build` folder, `cd` into it, and run `cmake ..`. All available Toolkit options will be printed out, and they are self-explanatory. If an inconsistent combination of these options is entered, a warning or error message should appear (or so I hope).
+The building process is (fortunately) very straightforward. Because of how much I hate how CMake cache works (I just don't even know what configuration I am building half of the time as soon as I am 3 or 4 `cmake` commands in), I have left some python building scripts in the [setup](https://github.com/ismawno/toolkit/tree/main/setup) folder. Specifically, the [build.py](https://github.com/ismawno/toolkit/blob/main/setup/build.py) file, when executed from root, will handle the entire CMake execution process for you. You can enter `python setup/build.py -h` to see the available options.
+
+If you prefer using CMake directly, that's perfectly fine as well. Create a `build` folder, `cd` into it, and run `cmake ..`. All available Toolkit options will be printed out, and they are self-explanatory. If an inconsistent combination of these options is entered, a warning or error message should appear (or so I hope).
 
 Then compile the project with your editor/IDE of choice, and run the tests to make sure everything works as expected. If that is the case, you are done!

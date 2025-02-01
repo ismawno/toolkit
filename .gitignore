@@ -1,7 +1,6 @@
 # Toolkit
 .vscode/
 *build*/
-build*.ini
 performance/results
 performance/reports
 performance/perf-settings.yaml
