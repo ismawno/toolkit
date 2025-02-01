@@ -162,12 +162,17 @@ template <typename It> void DestructRange(const It p_Begin, const It p_End) noex
 
 #ifndef TKIT_DISABLE_MEMORY_OVERRIDES
 
+TKIT_COMPILER_WARNING_IGNORE_PUSH()
+TKIT_MSVC_WARNING_IGNORE(28251)
+
 TKIT_API void *operator new(size_t p_Size);
 TKIT_API void *operator new[](size_t p_Size);
 TKIT_API void *operator new(size_t p_Size, std::align_val_t p_Alignment);
 TKIT_API void *operator new[](size_t p_Size, std::align_val_t p_Alignment);
 TKIT_API void *operator new(size_t p_Size, const std::nothrow_t &) noexcept;
 TKIT_API void *operator new[](size_t p_Size, const std::nothrow_t &) noexcept;
+
+TKIT_COMPILER_WARNING_IGNORE_POP()
 
 TKIT_API void operator delete(void *p_Ptr) noexcept;
 TKIT_API void operator delete[](void *p_Ptr) noexcept;
