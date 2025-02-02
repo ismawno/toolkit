@@ -86,14 +86,13 @@ void RunThreadPoolTest()
         }
 
         Array<Ref<Task<u32>>, threadCount - 1> tasks;
-        u32 finalSum;
-        ForEachMainThreadLead(pool, numbers.begin(), numbers.end(), tasks.begin(), &finalSum, threadCount,
-                              [](auto p_It1, auto p_It2, const usize) {
-                                  u32 sum = 0;
-                                  for (auto it = p_It1; it != p_It2; ++it)
-                                      sum += it->Value;
-                                  return sum;
-                              });
+        u32 finalSum = ForEachMainThreadLead(pool, numbers.begin(), numbers.end(), tasks.begin(), threadCount,
+                                             [](auto p_It1, auto p_It2, const usize) {
+                                                 u32 sum = 0;
+                                                 for (auto it = p_It1; it != p_It2; ++it)
+                                                     sum += it->Value;
+                                                 return sum;
+                                             });
         for (auto &task : tasks)
             finalSum += task->WaitForResult();
         REQUIRE(finalSum == realSum);

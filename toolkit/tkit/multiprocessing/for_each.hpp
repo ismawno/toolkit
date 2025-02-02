@@ -66,8 +66,7 @@ void ForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last, It2 p_Des
  *
  * It is most useful when used as a way to parallelize a loop, where each iteration is independent of the others.
  * The main difference with the other overload is that this one does not store the tasks in an output iterator. This is
- * useful when the tasks do not return a value. The user still needs to await for the tasks to finish before going on by
- * calling `AwaitPendingTasks()` on the task manager.
+ * useful when the tasks do not return a value. The user still needs to await for the tasks to finish before going on.
  *
  * @param p_Manager The task manager to use, which must be derived from `ITaskManager`.
  * @param p_First The first iterator or index of the range.
@@ -89,9 +88,8 @@ void ForEach(TManager &p_Manager, const It p_First, const It p_Last, const usize
     {
         const usize end = (i + 1) * size / p_Partitions;
         TKIT_ASSERT(end <= size, "[TOOLKIT] Partition exceeds container size");
-        if (end > start)
-            p_Manager.CreateAndSubmit(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...,
-                                      p_First + start, p_First + end);
+        p_Manager.CreateAndSubmit(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)..., p_First + start,
+                                  p_First + end);
         start = end;
     }
 }
@@ -119,9 +117,10 @@ void ForEach(TManager &p_Manager, const It p_First, const It p_Last, const usize
  * index.
  */
 template <std::derived_from<ITaskManager> TManager, RandomIterOrIndex It1, OutputIterOrIndex<Ref<ITask>> It2,
-          typename Ret, typename Callable, typename... Args>
-void ForEachMainThreadLead(TManager &p_Manager, const It1 p_First, const It1 p_Last, It2 p_Dest, Ret *p_OutRet,
+          typename Callable, typename... Args>
+auto ForEachMainThreadLead(TManager &p_Manager, const It1 p_First, const It1 p_Last, It2 p_Dest,
                            const usize p_Partitions, Callable &&p_Callable, Args &&...p_Args)
+    -> std::invoke_result_t<Callable, Args..., It1, It1, usize>
 {
     const usize size = Detail::Distance(p_First, p_Last);
     usize start = size / p_Partitions;
@@ -138,8 +137,7 @@ void ForEachMainThreadLead(TManager &p_Manager, const It1 p_First, const It1 p_L
         start = end;
     }
     const usize end = size / p_Partitions;
-    if (end != 0)
-        *p_OutRet = p_Callable(std::forward<Args>(p_Args)..., p_First, p_First + end, 0);
+    return p_Callable(std::forward<Args>(p_Args)..., p_First, p_First + end, 0);
 }
 
 /**
@@ -147,8 +145,7 @@ void ForEachMainThreadLead(TManager &p_Manager, const It1 p_First, const It1 p_L
  *
  * It is most useful when used as a way to parallelize a loop, where each iteration is independent of the others.
  * The main difference with the other overload is that this one does not store the tasks in an output iterator. This is
- * useful when the tasks do not return a value. The user still needs to await for the tasks to finish before going on by
- * calling `AwaitPendingTasks()` on the task manager.
+ * useful when the tasks do not return a value. The user still needs to await for the tasks to finish before going on.
  *
  * This version of the function will let the main thread execute the first task of each partition.
  *
@@ -172,13 +169,11 @@ void ForEachMainThreadLead(TManager &p_Manager, const It p_First, const It p_Las
     {
         const usize end = (i + 1) * size / p_Partitions;
         TKIT_ASSERT(end <= size, "[TOOLKIT] Partition exceeds container size");
-        if (end > start)
-            p_Manager.CreateAndSubmit(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...,
-                                      p_First + start, p_First + end);
+        p_Manager.CreateAndSubmit(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)..., p_First + start,
+                                  p_First + end);
         start = end;
     }
     const usize end = size / p_Partitions;
-    if (end != 0)
-        p_Callable(std::forward<Args>(p_Args)..., p_First, p_First + end, 0);
+    p_Callable(std::forward<Args>(p_Args)..., p_First, p_First + end, 0);
 }
 } // namespace TKit
