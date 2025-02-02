@@ -51,12 +51,10 @@ void ForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last, It2 p_Des
     {
         const usize end = (i + 1) * size / p_Partitions;
         TKIT_ASSERT(end <= size, "[TOOLKIT] Partition exceeds container size");
-        if (end > start)
-        {
-            *p_Dest = p_Manager.CreateAndSubmit(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...,
-                                                p_First + start, p_First + end);
-            ++p_Dest;
-        }
+        *p_Dest = p_Manager.CreateAndSubmit(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...,
+                                            p_First + start, p_First + end);
+        ++p_Dest;
+
         start = end;
     }
 }
@@ -128,12 +126,9 @@ auto ForEachMainThreadLead(TManager &p_Manager, const It1 p_First, const It1 p_L
     {
         const usize end = (i + 1) * size / p_Partitions;
         TKIT_ASSERT(end <= size, "[TOOLKIT] Partition exceeds container size");
-        if (end > start)
-        {
-            *p_Dest = p_Manager.CreateAndSubmit(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...,
-                                                p_First + start, p_First + end);
-            ++p_Dest;
-        }
+        *p_Dest = p_Manager.CreateAndSubmit(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...,
+                                            p_First + start, p_First + end);
+        ++p_Dest;
         start = end;
     }
     const usize end = size / p_Partitions;
