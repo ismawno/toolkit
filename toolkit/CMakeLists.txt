@@ -33,6 +33,16 @@ if (UNIX AND NOT APPLE)
     target_link_libraries(toolkit PUBLIC fmt::fmt)
 endif()
 
+function(configure_tracy target)
+    if (MSVC)
+        configure_compile_link_options(${target} FLAGS /wd4996 CONFIG Dist FORBID_SANITIZERS)
+    elseif(APPLE)
+        configure_compile_link_options(${target} FLAGS -Wno-format -Wno-deprecated-declarations -Wno-deprecated-anon-enum-enum-conversion CONFIG Dist FORBID_SANITIZERS)
+    else()
+        configure_compile_link_options(${target} FLAGS -Wno-format -Wno-deprecated-declarations -Wno-deprecated-enum-enum-conversion CONFIG Dist FORBID_SANITIZERS)
+    endif()
+endfunction()
+
 if (TOOLKIT_ENABLE_PROFILING)
     FetchContent_Declare(
         tracy
@@ -44,20 +54,23 @@ if (TOOLKIT_ENABLE_PROFILING)
     target_compile_definitions(toolkit PUBLIC TRACY_ENABLE)
     target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_PROFILING)
     
-    # Because of this check, the profiler binary will always persist and will keep the first cmake options that were set.
+    # Because of this check, the profiler binaries will always persist and will keep the first cmake options that were set.
     # Recompile with other options by removing the profiler directory inside your build directory
-    if (NOT EXISTS ${CMAKE_BINARY_DIR}/profiler AND TOOLKIT_BUILD_PROFILER)
-        add_subdirectory(${tracy_SOURCE_DIR}/profiler ${CMAKE_BINARY_DIR}/profiler)
-        if (MSVC)
-            configure_compile_link_options(tracy-profiler FLAGS /wd4996 CONFIG Dist FORBID_SANITIZERS)
-            configure_compile_link_options(TracyServer FLAGS /wd4996 CONFIG Dist FORBID_SANITIZERS)
-        elseif(APPLE)
-            configure_compile_link_options(tracy-profiler FLAGS -Wno-deprecated-declarations -Wno-deprecated-anon-enum-enum-conversion CONFIG Dist FORBID_SANITIZERS)
-            configure_compile_link_options(TracyServer FLAGS -Wno-deprecated-declarations -Wno-deprecated-anon-enum-enum-conversion CONFIG Dist FORBID_SANITIZERS)
-        else()
-            configure_compile_link_options(tracy-profiler FLAGS -Wno-deprecated-declarations -Wno-deprecated-enum-enum-conversion CONFIG Dist FORBID_SANITIZERS)
-            configure_compile_link_options(TracyServer FLAGS -Wno-deprecated-declarations -Wno-deprecated-enum-enum-conversion CONFIG Dist FORBID_SANITIZERS)
-        endif()
+
+    if (NOT EXISTS ${CMAKE_BINARY_DIR}/profiler/gui AND TOOLKIT_BUILD_PROFILER STREQUAL "gui")
+        add_subdirectory(${tracy_SOURCE_DIR}/profiler ${CMAKE_BINARY_DIR}/profiler/gui)
+        configure_tracy(tracy-profiler)
+        configure_tracy(TracyServer)
+    endif()
+    if (NOT EXISTS ${CMAKE_BINARY_DIR}/profiler/cli AND TOOLKIT_BUILD_PROFILER STREQUAL "cli")
+        add_subdirectory(${tracy_SOURCE_DIR}/capture ${CMAKE_BINARY_DIR}/profiler/cli)
+        configure_tracy(tracy-capture)
+        configure_tracy(TracyServer)
+    endif()
+    if (NOT EXISTS ${CMAKE_BINARY_DIR}/profiler/csv AND TOOLKIT_BUILD_PROFILER STREQUAL "csv")
+        add_subdirectory(${tracy_SOURCE_DIR}/csvexport ${CMAKE_BINARY_DIR}/profiler/csv)
+        configure_tracy(tracy-csvexport)
+        configure_tracy(TracyServer)
     endif()
 
     if (MSVC)

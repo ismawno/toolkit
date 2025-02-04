@@ -41,7 +41,9 @@ define_option(TOOLKIT_BUILD_TESTS OFF)
 define_option(TOOLKIT_BUILD_PERFORMANCE OFF)
 define_option(TOOLKIT_ENABLE_PROFILING OFF)
 define_option(TOOLKIT_ENABLE_VULKAN_PROFILING OFF)
-define_option(TOOLKIT_BUILD_PROFILER OFF)
+# none, gui, cli or csv
+define_option(TOOLKIT_BUILD_PROFILER "none")
+# none, address, leak, thread, undefined
 define_option(TOOLKIT_SANITIZERS "none")
 
 if (TOOLKIT_ENABLE_VULKAN_PROFILING AND NOT TOOLKIT_ENABLE_PROFILING)
@@ -54,6 +56,10 @@ endif()
 
 if (TOOLKIT_BUILD_PERFORMANCE AND (TOOLKIT_ENABLE_WARNING_LOGS OR TOOLKIT_ENABLE_ASSERTS))
     message(WARNING "Building benchamrks with asserts/logs enabled! Results may not be representative")
+endif()
+
+if (NOT TOOLKIT_ENABLE_PROFILING AND NOT TOOLKIT_BUILD_PROFILER STREQUAL "none")
+    message(WARNING "To build the profiler, profiling must be enabled")
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -77,9 +83,9 @@ message(STATUS "TOOLKIT: Build performance tests: ${TOOLKIT_BUILD_PERFORMANCE}")
 message(STATUS "TOOLKIT: Enable info logs: ${TOOLKIT_ENABLE_INFO_LOGS}")
 message(STATUS "TOOLKIT: Enable warning logs: ${TOOLKIT_ENABLE_WARNING_LOGS}")
 message(STATUS "TOOLKIT: Enable asserts: ${TOOLKIT_ENABLE_ASSERTS}")
-message(STATUS "TOOLKIT: Sanitizer: ${TOOLKIT_SANITIZERS}")
+message(STATUS "TOOLKIT: Sanitizer: ${TOOLKIT_SANITIZERS} (can be none, address, leak, thread, undefined)")
 message(STATUS "TOOLKIT: Profiling: ${TOOLKIT_ENABLE_PROFILING}")
-message(STATUS "TOOLKIT: Build tracy profiler: ${TOOLKIT_BUILD_PROFILER}")
+message(STATUS "TOOLKIT: Build profiler: ${TOOLKIT_BUILD_PROFILER} (can be none, gui, cli or csv)")
 message(STATUS "TOOLKIT: Vulkan profiling: ${TOOLKIT_ENABLE_VULKAN_PROFILING}")
 
 set(TOOLKIT_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR})
