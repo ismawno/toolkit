@@ -1,7 +1,7 @@
 #include "tkit/container/weak_array.hpp"
 #include "tkit/memory/arena_allocator.hpp"
-#include "tkit/core/alias.hpp"
-#include "tkit/core/literals.hpp"
+#include "tkit/utils/alias.hpp"
+#include "tkit/utils/literals.hpp"
 #include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 

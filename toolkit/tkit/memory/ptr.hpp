@@ -1,9 +1,9 @@
 #pragma once
 
-#include "tkit/core/logging.hpp"
-#include "tkit/core/concepts.hpp"
+#include "tkit/utils/logging.hpp"
+#include "tkit/utils/concepts.hpp"
 #include "tkit/memory/block_allocator.hpp"
-#include "tkit/core/non_copyable.hpp"
+#include "tkit/utils/non_copyable.hpp"
 #include <memory>
 #include <atomic>
 

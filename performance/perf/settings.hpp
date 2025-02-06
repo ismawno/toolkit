@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tkit/core/alias.hpp"
+#include "tkit/utils/alias.hpp"
 #include <string>
 
 namespace TKit

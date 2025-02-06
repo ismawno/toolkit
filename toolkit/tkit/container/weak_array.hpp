@@ -1,7 +1,7 @@
 #pragma once
 
 #include "tkit/container/static_array.hpp"
-#include "tkit/core/non_copyable.hpp"
+#include "tkit/utils/non_copyable.hpp"
 
 namespace TKit
 {

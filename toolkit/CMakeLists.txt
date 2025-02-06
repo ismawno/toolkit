@@ -5,7 +5,7 @@ set(NAME toolkit)
 
 # Source files for the library
 set(SOURCES
-    tkit/core/logging.cpp
+    tkit/utils/logging.cpp
     tkit/core/pch.cpp
     tkit/memory/memory.cpp
     tkit/memory/block_allocator.cpp

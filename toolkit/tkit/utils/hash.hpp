@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tkit/core/concepts.hpp"
+#include "tkit/utils/concepts.hpp"
 #include <functional>
 
 #ifndef TKIT_HASH_SEED

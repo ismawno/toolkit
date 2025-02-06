@@ -1,7 +1,7 @@
 #pragma once
 
-#include "tkit/core/api.hpp"
-#include "tkit/core/alias.hpp"
+#include "tkit/preprocessor/system.hpp"
+#include "tkit/utils/alias.hpp"
 
 #if !defined(TKIT_ENABLE_INFO_LOGS) && !defined(TKIT_ENABLE_WARNING_LOGS) && !defined(TKIT_ENABLE_ASSERTS)
 #    define __TKIT_NO_LOGS

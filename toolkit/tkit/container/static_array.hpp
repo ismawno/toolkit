@@ -2,8 +2,8 @@
 
 #include "tkit/container/container.hpp"
 #include "tkit/container/array.hpp"
-#include "tkit/core/concepts.hpp"
-#include "tkit/core/logging.hpp"
+#include "tkit/utils/concepts.hpp"
+#include "tkit/utils/logging.hpp"
 
 namespace TKit
 {

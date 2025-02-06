@@ -2,7 +2,7 @@
 
 #include "tkit/container/alias.hpp"
 #include "tkit/memory/memory.hpp"
-#include "tkit/core/logging.hpp"
+#include "tkit/utils/logging.hpp"
 
 namespace TKit::Detail
 {

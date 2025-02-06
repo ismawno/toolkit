@@ -1,5 +1,5 @@
 #include "tkit/container/storage.hpp"
-#include "tkit/core/alias.hpp"
+#include "tkit/utils/alias.hpp"
 #include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 

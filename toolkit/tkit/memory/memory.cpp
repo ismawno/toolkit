@@ -1,6 +1,6 @@
 #include "tkit/core/pch.hpp"
 #include "tkit/memory/memory.hpp"
-#include "tkit/core/logging.hpp"
+#include "tkit/utils/logging.hpp"
 #include "tkit/profiling/macros.hpp"
 
 namespace TKit::Memory

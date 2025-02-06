@@ -1,7 +1,7 @@
 #pragma once
 
-#include "tkit/core/api.hpp"
-#include "tkit/core/concepts.hpp"
+#include "tkit/preprocessor/system.hpp"
+#include "tkit/utils/concepts.hpp"
 #include <chrono>
 
 namespace TKit

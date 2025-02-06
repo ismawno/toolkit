@@ -1,5 +1,5 @@
-#include "tkit/core/alias.hpp"
-#include "tkit/utilities/result.hpp"
+#include "tkit/utils/alias.hpp"
+#include "tkit/utils/result.hpp"
 #include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <string>

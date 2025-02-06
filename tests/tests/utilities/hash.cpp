@@ -1,4 +1,4 @@
-#include "tkit/utilities/hash.hpp"
+#include "tkit/utils/hash.hpp"
 #include "tkit/container/static_array.hpp"
 #include <catch2/catch_test_macros.hpp>
 

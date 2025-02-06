@@ -1,7 +1,7 @@
 #pragma once
 
-#include "tkit/core/api.hpp"
-#include "tkit/core/alias.hpp"
+#include "tkit/preprocessor/system.hpp"
+#include "tkit/utils/alias.hpp"
 #include <functional>
 
 namespace TKit::Memory

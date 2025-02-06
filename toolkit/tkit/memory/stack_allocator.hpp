@@ -1,7 +1,7 @@
 #pragma once
 
-#include "tkit/core/logging.hpp"
-#include "tkit/core/non_copyable.hpp"
+#include "tkit/utils/logging.hpp"
+#include "tkit/utils/non_copyable.hpp"
 #include "tkit/container/static_array.hpp"
 
 #ifndef TKIT_STACK_ALLOCATOR_MAX_ENTRIES
