@@ -1,7 +1,7 @@
 #pragma once
 
 #include "tkit/utils/alias.hpp"
-#include "tkit/utilities/dimension.hpp"
+#include "tkit/utils/dimension.hpp"
 
 // TODO: Introduce intrinsics for SIMD operations
 // This file is a way for me to unify my glm includes in all my projects. (Only in case I need it. You may ignore this

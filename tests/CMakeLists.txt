@@ -23,8 +23,8 @@ set(SOURCES
     tests/container/span.cpp
     tests/container/storage.cpp
     tests/multiprocessing/thread_pool.cpp
-    tests/utilities/result.cpp
-    tests/utilities/hash.cpp
+    tests/utils/result.cpp
+    tests/utils/hash.cpp
 )
 
 add_executable(toolkit-tests ${SOURCES})
