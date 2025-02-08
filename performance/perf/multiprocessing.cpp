@@ -12,20 +12,20 @@ struct Number
     std::byte Padding[TKIT_CACHE_LINE_SIZE - sizeof(u32)];
 };
 
-void RecordThreadPoolSum(const ThreadPoolSumSettings &p_Settings, const usize p_Maxthreads) noexcept
+void RecordThreadPoolSum(const ThreadPoolSumSettings &p_Settings) noexcept
 {
     std::ofstream file(g_Root + "/performance/results/thread_pool_sum.csv");
     file << "threads,sum (ns),result\n";
 
-    ThreadPool threadPool(p_Maxthreads);
-    DynamicArray<Ref<Task<u32>>> tasks(p_Maxthreads);
+    ThreadPool threadPool(p_Settings.MaxThreads);
+    DynamicArray<Ref<Task<u32>>> tasks(p_Settings.MaxThreads);
     DynamicArray<u32> values(p_Settings.SumCount);
 
     for (u32 i = 0; i < p_Settings.SumCount; i++)
         values[i] = i;
 
     usize nthreads = 1;
-    while (nthreads <= p_Maxthreads)
+    while (nthreads <= p_Settings.MaxThreads)
     {
         ForEach(threadPool, values.begin(), values.end(), tasks.begin(), nthreads,
                 [](auto p_It1, auto p_It2, const usize) {
@@ -46,21 +46,21 @@ void RecordThreadPoolSum(const ThreadPoolSumSettings &p_Settings, const usize p_
     }
 }
 
-void RecordParallelSum(const ThreadPoolSumSettings &p_Settings, const usize p_Maxthreads) noexcept
+void RecordParallelSum(const ThreadPoolSumSettings &p_Settings) noexcept
 {
     std::ofstream file(g_Root + "/performance/results/parallel_sum.csv");
     file << "threads,sum (ns),result\n";
 
-    DynamicArray<std::thread> threads(p_Maxthreads);
-    DynamicArray<u32> sums(p_Maxthreads);
-    DynamicArray<Ref<Task<u32>>> tasks(p_Maxthreads);
+    DynamicArray<std::thread> threads(p_Settings.MaxThreads);
+    DynamicArray<u32> sums(p_Settings.MaxThreads);
+    DynamicArray<Ref<Task<u32>>> tasks(p_Settings.MaxThreads);
     DynamicArray<u32> values(p_Settings.SumCount);
 
     for (u32 i = 0; i < p_Settings.SumCount; i++)
         values[i] = i;
 
     usize nthreads = 1;
-    while (nthreads <= p_Maxthreads)
+    while (nthreads <= p_Settings.MaxThreads)
     {
 
         for (usize i = 0; i < nthreads; i++)

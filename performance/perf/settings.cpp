@@ -18,20 +18,21 @@ Settings ReadOrWriteSettingsFile()
     {
         YAML::Emitter emitter;
         YAML::Node node;
-        node["MT"]["MaxThreads"] = settings.MaxThreads;
 
         YAML::Node memory = node["Memory"];
-        memory["MinPasses"] = settings.Allocation.MinPasses;
-        memory["MaxPasses"] = settings.Allocation.MaxPasses;
-        memory["PassIncrement"] = settings.Allocation.PassIncrement;
+        ForEachField<AllocationSettings>([&memory, &settings](const char *p_Name, const auto p_Field) {
+            memory[p_Name] = settings.Allocation.*p_Field;
+        });
 
         YAML::Node threadPoolSum = node["ThreadPoolSum"];
-        threadPoolSum["SumCount"] = settings.ThreadPoolSum.SumCount;
+        ForEachField<ThreadPoolSumSettings>([&threadPoolSum, &settings](const char *p_Name, const auto p_Field) {
+            threadPoolSum[p_Name] = settings.ThreadPoolSum.*p_Field;
+        });
 
         YAML::Node container = node["Container"];
-        container["MinPasses"] = settings.Container.MinPasses;
-        container["MaxPasses"] = settings.Container.MaxPasses;
-        container["PassIncrement"] = settings.Container.PassIncrement;
+        ForEachField<ContainerSettings>([&container, &settings](const char *p_Name, const auto p_Field) {
+            container[p_Name] = settings.Container.*p_Field;
+        });
 
         emitter << node;
         std::ofstream file(g_Root + "/performance/perf-settings.yaml");
@@ -40,20 +41,24 @@ Settings ReadOrWriteSettingsFile()
     else
     {
         const YAML::Node node = YAML::LoadFile(g_Root + "/performance/perf-settings.yaml");
-        settings.MaxThreads = node["MT"]["MaxThreads"].as<usize>();
 
         const YAML::Node memory = node["Memory"];
-        settings.Allocation.MinPasses = memory["MinPasses"].as<usize>();
-        settings.Allocation.MaxPasses = memory["MaxPasses"].as<usize>();
-        settings.Allocation.PassIncrement = memory["PassIncrement"].as<usize>();
+        ForEachField<AllocationSettings>([&memory, &settings](const char *p_Name, auto p_Field) {
+            using FT = FieldType<decltype(p_Field)>;
+            settings.Allocation.*p_Field = memory[p_Name].as<FT>();
+        });
 
         const YAML::Node threadPoolSum = node["ThreadPoolSum"];
-        settings.ThreadPoolSum.SumCount = threadPoolSum["SumCount"].as<usize>();
+        ForEachField<ThreadPoolSumSettings>([&threadPoolSum, &settings](const char *p_Name, auto p_Field) {
+            using FT = FieldType<decltype(p_Field)>;
+            settings.ThreadPoolSum.*p_Field = threadPoolSum[p_Name].as<FT>();
+        });
 
         const YAML::Node container = node["Container"];
-        settings.Container.MinPasses = container["MinPasses"].as<usize>();
-        settings.Container.MaxPasses = container["MaxPasses"].as<usize>();
-        settings.Container.PassIncrement = container["PassIncrement"].as<usize>();
+        ForEachField<ContainerSettings>([&container, &settings](const char *p_Name, auto p_Field) {
+            using FT = FieldType<decltype(p_Field)>;
+            settings.Container.*p_Field = container[p_Name].as<FT>();
+        });
     }
     std::filesystem::create_directories(g_Root + "/performance/results");
     return settings;

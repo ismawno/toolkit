@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tkit/utils/alias.hpp"
+#include "tkit/preprocessor/reflection.hpp"
 #include <string>
 
 namespace TKit
@@ -12,18 +13,22 @@ struct AllocationSettings
     usize MinPasses = 100;
     usize MaxPasses = 10000;
     usize PassIncrement = 100;
+
+    TKIT_ENUMERATE_FIELDS(AllocationSettings, MinPasses, MaxPasses, PassIncrement)
 };
 
 using ContainerSettings = AllocationSettings;
 
 struct ThreadPoolSumSettings
 {
-    usize SumCount = 1000000000;
+    usize MaxThreads = 8;
+    usize SumCount = 1000000;
+
+    TKIT_ENUMERATE_FIELDS(ThreadPoolSumSettings, MaxThreads, SumCount)
 };
 
 struct Settings
 {
-    usize MaxThreads = 8;
     AllocationSettings Allocation{};
     ThreadPoolSumSettings ThreadPoolSum{};
     ContainerSettings Container{};

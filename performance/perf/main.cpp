@@ -12,10 +12,10 @@ int main()
 
     Clock clock;
     TKIT_LOG_INFO("[TOOLKIT] Running thread pool sum...");
-    RecordThreadPoolSum(settings.ThreadPoolSum, settings.MaxThreads);
+    RecordThreadPoolSum(settings.ThreadPoolSum);
 
     TKIT_LOG_INFO("[TOOLKIT] Running parallel sum...");
-    RecordParallelSum(settings.ThreadPoolSum, settings.MaxThreads);
+    RecordParallelSum(settings.ThreadPoolSum);
 
     TKIT_LOG_INFO("[TOOLKIT] Running malloc/free...");
     RecordMallocFree(settings.Allocation);
