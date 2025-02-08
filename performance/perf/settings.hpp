@@ -14,7 +14,7 @@ struct AllocationSettings
     usize MaxPasses = 10000;
     usize PassIncrement = 100;
 
-    TKIT_ENUMERATE_FIELDS(AllocationSettings, MinPasses, MaxPasses, PassIncrement)
+    TKIT_ENUMERATE_FIELDS(AllocationSettings, Integers, MinPasses, MaxPasses, PassIncrement)
 };
 
 using ContainerSettings = AllocationSettings;
@@ -24,7 +24,7 @@ struct ThreadPoolSumSettings
     usize MaxThreads = 8;
     usize SumCount = 1000000;
 
-    TKIT_ENUMERATE_FIELDS(ThreadPoolSumSettings, MaxThreads, SumCount)
+    TKIT_ENUMERATE_FIELDS(ThreadPoolSumSettings, Integers, MaxThreads, SumCount)
 };
 
 struct Settings

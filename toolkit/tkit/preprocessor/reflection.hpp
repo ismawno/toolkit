@@ -136,32 +136,14 @@
 #define __TKIT_ENUMERATE_FIELDS(p_ClassName, ...)                                                                      \
     __TKIT_ENUMERATE_FIELDS_DISPATCH(TKIT_NARG(__VA_ARGS__), p_ClassName, __VA_ARGS__)
 
-#ifndef TKIT_FIELD_METHOD_NAME
-#    define TKIT_FIELD_METHOD_NAME GetFields
-#endif
-
-#define TKIT_ENUMERATE_FIELDS(p_ClassName, ...)                                                                        \
-    static auto TKIT_IDENTITY(TKIT_FIELD_METHOD_NAME)()                                                                \
+#define TKIT_ENUMERATE_FIELDS(p_ClassName, p_MethodSuffix, ...)                                                        \
+    static constexpr auto GetFields##p_MethodSuffix()                                                                  \
     {                                                                                                                  \
         return std::make_tuple(__TKIT_ENUMERATE_FIELDS(p_ClassName, __VA_ARGS__));                                     \
+    }                                                                                                                  \
+    template <typename F> void ForEachField##p_MethodSuffix(F &&p_Fun)                                                 \
+    {                                                                                                                  \
+        constexpr auto fields = GetFields##p_MethodSuffix();                                                           \
+        std::apply([this, &p_Fun](const auto &...p_Field) { (p_Fun(p_Field.first, (*this).*p_Field.second), ...); },   \
+                   fields);                                                                                            \
     }
-
-namespace TKit
-{
-template <typename Pointer> struct FieldTraits;
-
-template <typename Class, typename Field> struct FieldTraits<Field Class::*>
-{
-    using ClassType = Class;
-    using FieldType = Field;
-};
-
-template <typename Pointer> using ClassType = typename FieldTraits<Pointer>::ClassType;
-template <typename Pointer> using FieldType = typename FieldTraits<Pointer>::FieldType;
-
-template <typename T, typename F> void ForEachField(F &&p_Fun)
-{
-    const auto fields = T::TKIT_IDENTITY(TKIT_FIELD_METHOD_NAME)();
-    std::apply([&p_Fun](const auto &...p_Field) { (p_Fun(p_Field.first, p_Field.second), ...); }, fields);
-}
-} // namespace TKit
