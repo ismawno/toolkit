@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef TKIT_ENABLE_VULKAN_INSTRUMENTATION
-#    include "tracy/TracyVulkan.hpp"
+#    include <tracy/TracyVulkan.hpp>
 
 namespace TKit
 {
