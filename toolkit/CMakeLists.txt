@@ -3,21 +3,42 @@ project(toolkit)
 
 set(NAME toolkit)
 
-# Source files for the library
 set(SOURCES
-    tkit/utils/logging.cpp
     tkit/core/pch.cpp
     tkit/memory/memory.cpp
-    tkit/memory/block_allocator.cpp
-    tkit/memory/stack_allocator.cpp
-    tkit/memory/arena_allocator.cpp
-    tkit/profiling/clock.cpp
-    tkit/profiling/timespan.cpp
-    tkit/multiprocessing/task.cpp
-    tkit/multiprocessing/task_manager.cpp
-    tkit/multiprocessing/thread_pool.cpp
-    tkit/multiprocessing/spin_lock.cpp
 )
+
+if (TOOLKIT_BUILD_TESTS OR TOOLKIT_ENABLE_INFO_LOGS OR TOOLKIT_ENABLE_WARNING_LOGS OR TOOLKIT_ENABLE_ASSERTS)
+    list(APPEND SOURCES tkit/utils/logging.cpp)
+endif()
+
+if (TOOLKIT_BUILD_TESTS OR TOOLKIT_ENABLE_ARENA_ALLOCATOR)
+    list(APPEND SOURCES tkit/memory/arena_allocator.cpp)
+endif()
+
+if (TOOLKIT_BUILD_TESTS OR TOOLKIT_ENABLE_BLOCK_ALLOCATOR)
+    list(APPEND SOURCES tkit/memory/block_allocator.cpp)
+endif()
+
+if (TOOLKIT_BUILD_TESTS OR TOOLKIT_ENABLE_STACK_ALLOCATOR)
+    list(APPEND SOURCES tkit/memory/stack_allocator.cpp)
+endif()
+
+if (TOOLKIT_BUILD_TESTS OR TOOLKIT_ENABLE_MULTIPROCESSING)
+    list(APPEND SOURCES
+        tkit/multiprocessing/task.cpp
+        tkit/multiprocessing/task_manager.cpp
+        tkit/multiprocessing/thread_pool.cpp
+    )
+endif()
+
+if (TOOLKIT_BUILD_TESTS OR TOOLKIT_ENABLE_PROFILING)
+    list(APPEND SOURCES
+        tkit/profiling/clock.cpp
+        tkit/profiling/timespan.cpp
+    )
+endif()
+
 
 # Create the library
 add_library(toolkit STATIC ${SOURCES})
@@ -43,7 +64,7 @@ function(configure_tracy target)
     endif()
 endfunction()
 
-if (TOOLKIT_ENABLE_PROFILING)
+if (TOOLKIT_ENABLE_INSTRUMENTATION)
     FetchContent_Declare(
         tracy
         GIT_REPOSITORY https://github.com/wolfpld/tracy.git
@@ -52,7 +73,7 @@ if (TOOLKIT_ENABLE_PROFILING)
     FetchContent_MakeAvailable(tracy)
     target_link_libraries(toolkit PUBLIC TracyClient)
     target_compile_definitions(toolkit PUBLIC TRACY_ENABLE)
-    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_PROFILING)
+    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_INSTRUMENTATION)
     
     # Because of this check, the profiler binaries will always persist and will keep the first cmake options that were set.
     # Recompile with other options by removing the profiler directory inside your build directory
@@ -80,8 +101,8 @@ if (TOOLKIT_ENABLE_PROFILING)
         target_compile_options(TracyClient PRIVATE -Wno-deprecated-anon-enum-enum-conversion)
     endif()
 
-    if (TOOLKIT_ENABLE_VULKAN_PROFILING)
-        target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_VULKAN_PROFILING)
+    if (TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION)
+        target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_VULKAN_INSTRUMENTATION)
     endif()
 
 endif()
@@ -115,4 +136,8 @@ endif()
 
 if(TOOLKIT_ENABLE_ASSERTS)
     target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ASSERTS)
+endif()
+
+if (TOOLKIT_ENABLE_SERIALIZATION)
+    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_SERIALIZATION)
 endif()

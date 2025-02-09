@@ -1,16 +1,15 @@
-#ifndef __TKIT_NO_LOGS
-#    include "tkit/core/pch.hpp"
-#    include "tkit/utils/logging.hpp"
-#    include <chrono>
-#    include <string>
-#    include <iostream>
+#include "tkit/core/pch.hpp"
+#include "tkit/utils/logging.hpp"
+#include <chrono>
+#include <string>
+#include <iostream>
 
-#    ifdef TKIT_COMPILER_MSVC
-#        include <intrin.h>
-#    endif
-#    ifdef TKIT_OS_LINUX
-#        include <fmt/chrono.h>
-#    endif
+#ifdef TKIT_COMPILER_MSVC
+#    include <intrin.h>
+#endif
+#ifdef TKIT_OS_LINUX
+#    include <fmt/chrono.h>
+#endif
 
 namespace TKit::Detail
 {
@@ -35,5 +34,3 @@ void LogMessage(const char *p_Level, const std::string_view p_File, const i32 p_
     TKIT_DEBUG_BREAK_IF(p_Crash);
 }
 } // namespace TKit::Detail
-
-#endif

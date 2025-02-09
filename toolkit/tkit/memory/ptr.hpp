@@ -2,7 +2,6 @@
 
 #include "tkit/utils/logging.hpp"
 #include "tkit/utils/concepts.hpp"
-#include "tkit/memory/block_allocator.hpp"
 #include "tkit/utils/non_copyable.hpp"
 #include <memory>
 #include <atomic>
@@ -103,7 +102,6 @@ template <typename T> class RefCounted
  */
 template <typename T> class Ref
 {
-    TKIT_BLOCK_ALLOCATED_CONCURRENT(Ref<T>, 32)
   public:
     Ref() noexcept = default;
 

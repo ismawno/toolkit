@@ -1,6 +1,5 @@
 #pragma once
 
-#include "tkit/memory/block_allocator.hpp"
 #include "tkit/memory/ptr.hpp"
 #include <functional>
 #include <future>
@@ -23,7 +22,6 @@ namespace TKit
  */
 class TKIT_API ITask : public RefCounted<ITask>
 {
-    // This is commented out because it is wasteful to instance a block allocator for ITask that will never be used.
     // Having the overloads does grant us some asserts in case something goes terribly wrong or user forgets to use
     // their/our overriden new/delete, but it is not worth the cost.
     TKIT_NON_COPYABLE(ITask)

@@ -7,10 +7,11 @@ def parse_arguments() -> Namespace:
     desc = """
     This is a CMake scanner whose sole purpose is to avoid the evil thing that is CMake's cache.
     When running a CMake script, I would like to know what the script is doing, and what it is going to do.
-    This script will scan the CMakeLists.txt file and detect configuration options, so that it can
-    parse them and specify them explicitly to nullify the effects of the cache, so that I have no surprises.
+    This script will scan recursively all 'CMakeLists.txt' files it finds under the provided path and will detect
+    configuration options (with the help of a little hint), so that it can create a 'build.ini' file to better define
+    arguments and specify them explicitly to nullify the effects of the cache, so that I have no surprises.
     
-    This script will create a build.ini file in the same directory this file lives, to be used by build.py to do
+    This script will create a 'build.ini' file in the same directory this file lives, to be used by 'build.py' to do
     the actual building.
     """
 
@@ -39,12 +40,12 @@ def parse_arguments() -> Namespace:
         action="append",
         # Make sure largest preffixes are first
         default=[
-            "CMAKE_",
             "TOOLKIT_ENABLE_",
             "VULKIT_ENABLE_",
             "ONYX_ENABLE_",
             "TOOLKIT_",
             "VULKIT_",
+            "CMAKE_",
             "ONYX_",
         ],
         help="The preffixes to strip.",
@@ -145,12 +146,37 @@ def main() -> None:
         )
         print("Resolved!")
 
-    cfg = ConfigParser()
+    path = Path(__file__).parent
+    cfg = ConfigParser(allow_no_value=True)
+    cfg.read(path / "build.ini")
+
+    sections = {sc: dict(cfg[sc]) for sc in cfg.sections() if sc != "default-values"}
+    cfg.clear()
+
     cfg.add_section("default-values")
+    cfg.set(
+        "default-values",
+        ";This section format goes as follows: <lowercase-cmake-option> = <lowercase-custom-formatted-option>: <default-value>",
+    )
     for ogvarname, (varname, val) in contents.items():
         cfg["default-values"][ogvarname] = f"{varname}: {val}"
 
-    path = Path(__file__).parent
+    cfg.set(
+        "default-values",
+        ";You can override default values by creating new sections as follows:",
+    )
+    cfg.set(
+        "default-values", ";[<lowercase-cmake-option>.<value-that-triggers-override>]"
+    )
+    cfg.set(
+        "default-values", ";<lowercase-custom-formatted-option> = <new-default-value>"
+    )
+
+    for section, contents in sections.items():
+        cfg.add_section(section)
+        for option, value in contents.items():
+            cfg[section][option] = value
+
     with open(path / "build.ini", "w") as f:
         cfg.write(f)
 

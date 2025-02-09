@@ -1,6 +1,6 @@
 #pragma once
 
-#ifdef TKIT_ENABLE_PROFILING
+#ifdef TKIT_ENABLE_INSTRUMENTATION
 
 // The main reason of this wrap around the tracy library is, in case I switch to another profiling library, I can keep
 // the same interface and just change the implementation of the macros.

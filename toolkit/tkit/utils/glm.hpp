@@ -1,11 +1,8 @@
 #pragma once
 
-#include "tkit/utils/alias.hpp"
-#include "tkit/utils/dimension.hpp"
-
 // TODO: Introduce intrinsics for SIMD operations
-// This file is a way for me to unify my glm includes in all my projects. (Only in case I need it. You may ignore this
-// file)
+// This file is a way for me to unify my glm includes/defines in all my projects. (Only in case I need it. You may
+// ignore this file)
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE

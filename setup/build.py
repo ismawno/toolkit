@@ -14,7 +14,7 @@ def try_convert_bool(val: str) -> bool | str:
     return val
 
 
-def parse_build_ini() -> dict[str, tuple[str, str | bool]]:
+def load_build_ini() -> ConfigParser:
     cfg = ConfigParser()
 
     root = Path(__file__).parent
@@ -25,8 +25,12 @@ def parse_build_ini() -> dict[str, tuple[str, str | bool]]:
     with open(path) as f:
         cfg.read_file(f)
 
+    return cfg
+
+
+def parse_section(cfg: ConfigParser, section: str) -> dict[str, tuple[str, str | bool]]:
     parsed = {}
-    for ogvarname, kv in cfg["default-values"].items():
+    for ogvarname, kv in cfg[section].items():
         varname, val = kv.split(": ")
         if varname in parsed:
             raise ValueError(
@@ -42,10 +46,10 @@ def parse_arguments(
     arguments: dict[str, tuple[str, str | bool]]
 ) -> tuple[Namespace, dict[str, str | bool]]:
     desc = """
-    This script takes in a .ini configuration file created from cmake_scanner.py and
+    This script takes in a 'build.ini' configuration file created from 'cmake_scanner.py' and
     runs CMake with the options specified in the configuration file, avoiding cache shit.
 
-    This file must be in the same directory as build.ini file from where create the building arguments.
+    This file must be in the same directory as the 'build.ini' file to work.
     """
 
     parser = ArgumentParser(description=desc)
@@ -62,12 +66,6 @@ def parse_arguments(
         default=Path("."),
         type=Path,
         help="The location where the source files are found (where the root CMakeLists.txt is).",
-    )
-    parser.add_argument(
-        "--disable-toolkit-conditional-logs",
-        action="store_true",
-        default=False,
-        help="Disable conditional logs for the toolkit package if exists. By default, toolkit logging will only be enabled on Dist builds. Disabling this option removes this behavior. Logging can still be enabled by entering the argument in the command line no matter what.",
     )
 
     arg_map = {}
@@ -99,14 +97,47 @@ def parse_arguments(
 
 
 def main() -> None:
-    arguments = parse_build_ini()
+    cfg = load_build_ini()
+    arguments = parse_section(cfg, "default-values")
     args, arg_map = parse_arguments(arguments)
 
     build_path: Path = args.build.resolve()
     source_path: Path = args.source.resolve()
 
-    cnd_logs = not args.disable_toolkit_conditional_logs
     arg_dict = vars(args)
+    for k, v in arg_dict.items():
+        if k not in arg_map:
+            continue
+
+        ogvarname, default = arg_map[k]
+        if not isinstance(v, bool):
+            value = v
+        else:
+            nv = arg_dict[f"no_{k}"]
+            if v and nv:
+                raise ValueError(
+                    f"Cannot set both '{k}' and 'no_{k}' to True. Please choose one"
+                )
+            if v:
+                value = "True"
+            elif nv:
+                value = "False"
+            else:
+                value = "True" if default else "False"
+
+        ogsection = f"{ogvarname.replace('_', '-').lower()}.{value}"
+        if ogsection not in cfg:
+            continue
+
+        overrides = cfg[ogsection]
+        for varname, new_default in overrides.items():
+            varname = varname.replace("-", "_")
+            if varname not in arg_map:
+                raise ValueError(
+                    f"Default value override '{varname}' was not found in the 'default-values' section"
+                )
+            new_value = (arg_map[varname][0], try_convert_bool(new_default))
+            arg_map[varname] = new_value
 
     cmake_args = {}
     for k, v in arg_dict.items():
@@ -119,20 +150,11 @@ def main() -> None:
             continue
 
         nv = arg_dict[f"no_{k}"]
-        if v and nv:
-            raise ValueError(
-                f"Cannot set both '{k}' and 'no_{k}' to True. Please choose one"
-            )
+
         if v:
             cmake_args[f"-D{ogvarname.upper()}"] = "ON"
         elif nv:
             cmake_args[f"-D{ogvarname.upper()}"] = "OFF"
-        elif cnd_logs and (
-            "log" in ogvarname.lower() or "enable_asserts" in ogvarname.lower()
-        ):
-            btype = arguments["cmake_build_type"][0]
-            btype = arg_dict[btype.replace("-", "_")]
-            cmake_args[f"-D{ogvarname.upper()}"] = "ON" if btype != "Dist" else "OFF"
         else:
             cmake_args[f"-D{ogvarname.upper()}"] = "ON" if default else "OFF"
 
