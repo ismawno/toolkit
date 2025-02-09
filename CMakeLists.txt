@@ -3,7 +3,6 @@ project(toolkit-root)
 
 set(NAME toolkit-root)
 
-# Set the C++ standard to C++20
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -73,7 +72,6 @@ if (NOT TOOLKIT_ENABLE_INSTRUMENTATION AND NOT TOOLKIT_BUILD_PROFILER STREQUAL "
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-# Some warnings for debug builds
     if (NOT TOOLKIT_ENABLE_INFO_LOGS)
         message(WARNING "TOOLKIT: Info logs are disabled in a debug build. This is not recommended")
     endif()
@@ -85,8 +83,8 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     endif()
 endif()
 
-if (TOOLKIT_BUILD_TESTS)
-    message(WARNING "TOOLKIT: The tests are being built. All features will be enabled")
+if (TOOLKIT_BUILD_TESTS OR TOOLKIT_BUILD_PERFORMANCE)
+    message(WARNING "TOOLKIT: Tests are being built. All features will be enabled even if logs say otherwise")
 endif()
 
 message(STATUS "TOOLKIT: Build type: ${CMAKE_BUILD_TYPE}")
@@ -106,16 +104,8 @@ message(STATUS "TOOLKIT: Instrumentation: ${TOOLKIT_ENABLE_INSTRUMENTATION}")
 message(STATUS "TOOLKIT: Vulkan instrumentation: ${TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION}")
 message(STATUS "TOOLKIT: Build profiler: ${TOOLKIT_BUILD_PROFILER} (can be none, gui, cli or csv)")
 
+message(STATUS "TOOLKIT: The toolkit root path is set to ${CMAKE_CURRENT_SOURCE_DIR}")
 set(TOOLKIT_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR})
-
-# Define linker flags for custom configurations. CMake crashes in windows if this is missing
-set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG}")
-set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE}")
-set(CMAKE_EXE_LINKER_FLAGS_DIST "${CMAKE_EXE_LINKER_FLAGS_DIST}")
-
-set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG}")
-set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE}")
-set(CMAKE_SHARED_LINKER_FLAGS_DIST "${CMAKE_SHARED_LINKER_FLAGS_DIST}")
 
 function(configure_compile_link_options target)
     set(options FORBID_SANITIZERS)

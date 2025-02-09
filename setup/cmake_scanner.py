@@ -162,7 +162,8 @@ def main() -> None:
         ogvarname = ogvarname.lower()
         cfg["default-values"][ogvarname] = (
             f"{varname}: {val}"
-            if ogvarname not in sections["default-values"]
+            if "default-values" not in sections
+            or ogvarname not in sections["default-values"]
             else sections["default-values"][ogvarname]
         )
 

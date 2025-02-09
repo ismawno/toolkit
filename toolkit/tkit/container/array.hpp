@@ -8,7 +8,7 @@ namespace TKit
 /**
  * @brief A plain C array wrapper.
  *
- * Can be used as a drop-in replacement for `std::array`. It is here to provide a bit more control and use of the
+ * Can be used as a drop-in replacement for `std::array`. It is here to provide a bit more control and use the
  * `DefaultAllocator` traits.
  *
  * @tparam T The type of the elements.

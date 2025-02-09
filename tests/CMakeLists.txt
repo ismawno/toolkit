@@ -38,16 +38,6 @@ else()
     configure_compile_link_options(toolkit-tests FLAGS -Wall -Wextra -Wpedantic -Werror)
 endif()
 
-message(STATUS "TOOLKIT TESTS: The following options are overriden by tests:")
-message(STATUS "TOOLKIT TESTS: Enable asserts: ON")
-message(STATUS "TOOLKIT TESTS: Enable warning logs: ON")
-message(STATUS "TOOLKIT TESTS: Enable info logs: ON")
-message(STATUS "TOOLKIT TESTS: Silent asserts: ON")
-message(STATUS "TOOLKIT TESTS: Enable exceptions: ON")
-
-# These MUST be on for toolkit-tests to work properly
-target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_WARNING_LOGS TKIT_ENABLE_INFO_LOGS TKIT_ENABLE_ASSERTS)
-
 include(CTest)
 include(Catch)
 Catch_discover_tests(toolkit-tests)
