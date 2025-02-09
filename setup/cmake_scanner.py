@@ -150,7 +150,7 @@ def main() -> None:
     cfg = ConfigParser(allow_no_value=True)
     cfg.read(path / "build.ini")
 
-    sections = {sc: dict(cfg[sc]) for sc in cfg.sections() if sc != "default-values"}
+    sections = {sc: dict(cfg[sc]) for sc in cfg.sections()}
     cfg.clear()
 
     cfg.add_section("default-values")
@@ -159,7 +159,12 @@ def main() -> None:
         ";This section format goes as follows: <lowercase-cmake-option> = <lowercase-custom-formatted-option>: <default-value>",
     )
     for ogvarname, (varname, val) in contents.items():
-        cfg["default-values"][ogvarname] = f"{varname}: {val}"
+        ogvarname = ogvarname.lower()
+        cfg["default-values"][ogvarname] = (
+            f"{varname}: {val}"
+            if ogvarname not in sections["default-values"]
+            else sections["default-values"][ogvarname]
+        )
 
     cfg.set(
         "default-values",
@@ -173,6 +178,8 @@ def main() -> None:
     )
 
     for section, contents in sections.items():
+        if section == "default-values":
+            continue
         cfg.add_section(section)
         for option, value in contents.items():
             cfg[section][option] = value
