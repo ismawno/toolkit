@@ -53,7 +53,7 @@ define_option(TOOLKIT_BUILD_PERFORMANCE OFF)
 define_option(TOOLKIT_BUILD_PROFILER "none")
 # none, address, leak, thread, undefined
 define_option(TOOLKIT_SANITIZERS "none")
-define_option(TOOLKIT_ENABLE_SERIALIZATION OFF)
+define_option(TOOLKIT_ENABLE_YAML_SERIALIZATION OFF)
 
 if (TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION AND NOT TOOLKIT_ENABLE_INSTRUMENTATION)
     message(WARNING "TOOLKIT: Vulkan instrumentation is enabled but general instrumentation is not. This option will have no effect")
@@ -98,7 +98,7 @@ message(STATUS "TOOLKIT: Enable block allocator: ${TOOLKIT_ENABLE_BLOCK_ALLOCATO
 message(STATUS "TOOLKIT: Enable stack allocator: ${TOOLKIT_ENABLE_STACK_ALLOCATOR}")
 message(STATUS "TOOLKIT: Enable multiprocessing: ${TOOLKIT_ENABLE_MULTIPROCESSING}")
 message(STATUS "TOOLKIT: Enable profiling: ${TOOLKIT_ENABLE_PROFILING} (This only enables features located under the 'profiling' directory. To enable the instrumentation profiling macros, set TOOLKIT_ENABLE_INSTRUMENTATION to ON)")
-message(STATUS "TOOLKIT: Enable serialization: ${TOOLKIT_ENABLE_SERIALIZATION}")
+message(STATUS "TOOLKIT: Enable yaml serialization: ${TOOLKIT_ENABLE_YAML_SERIALIZATION}")
 message(STATUS "TOOLKIT: Sanitizer: ${TOOLKIT_SANITIZERS} (can be none, address, leak, thread, undefined)")
 message(STATUS "TOOLKIT: Instrumentation: ${TOOLKIT_ENABLE_INSTRUMENTATION}")
 message(STATUS "TOOLKIT: Vulkan instrumentation: ${TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION}")

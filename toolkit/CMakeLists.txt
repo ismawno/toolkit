@@ -44,11 +44,32 @@ if (TOOLKIT_ALL_FEATURES OR TOOLKIT_ENABLE_PROFILING)
     )
 endif()
 
+include(FetchContent)
+if (TOOLKIT_ALL_FEATURES OR TOOLKIT_ENABLE_YAML_SERIALIZATION)
+
+    set(YAML_CPP_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(YAML_CPP_BUILD_TOOLS OFF CACHE BOOL "" FORCE)
+    set(YAML_CPP_BUILD_CONTRIB OFF CACHE BOOL "" FORCE)
+    FetchContent_Declare(
+        yaml-cpp
+        GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
+        GIT_TAG        0.8.0
+    )
+
+    FetchContent_MakeAvailable(yaml-cpp)
+    list(APPEND SOURCES
+        tkit/serialization/yaml.cpp
+    )
+endif()
+
 
 # Create the library
 add_library(toolkit STATIC ${SOURCES})
 
-include(FetchContent)
+if (TOOLKIT_ALL_FEATURES OR TOOLKIT_ENABLE_YAML_SERIALIZATION)
+    target_link_libraries(toolkit PUBLIC yaml-cpp)
+endif()
+
 if (UNIX AND NOT APPLE)
     FetchContent_Declare(
         fmt
@@ -143,6 +164,6 @@ if(TOOLKIT_ENABLE_ASSERTS)
     target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ASSERTS)
 endif()
 
-if (TOOLKIT_ENABLE_SERIALIZATION)
-    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_SERIALIZATION)
+if (TOOLKIT_ENABLE_YAML_SERIALIZATION)
+    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_YAML_SERIALIZATION)
 endif()

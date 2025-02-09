@@ -144,6 +144,9 @@
     template <typename F> void ForEachField##p_MethodSuffix(F &&p_Fun)                                                 \
     {                                                                                                                  \
         constexpr auto fields = GetFields##p_MethodSuffix();                                                           \
-        std::apply([this, &p_Fun](const auto &...p_Field) { (p_Fun(p_Field.first, (*this).*p_Field.second), ...); },   \
-                   fields);                                                                                            \
+        std::apply(                                                                                                    \
+            [this, &p_Fun](const auto &...p_Field) {                                                                   \
+                (std::forward<F>(p_Fun)(p_Field.first, (*this).*p_Field.second), ...);                                 \
+            },                                                                                                         \
+            fields);                                                                                                   \
     }
