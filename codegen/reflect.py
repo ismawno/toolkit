@@ -228,10 +228,10 @@ def main() -> None:
     cpp = CPPFile(args.output.name)
     cpp(f'#include "{ffile.resolve()}"')
     cpp('#include "tkit/container/array.hpp"')
+    cpp('#include "tkit/reflection/reflect.hpp"')
     cpp(f"#include <tuple>")
 
     with cpp.scope("namespace TKit", indent=False):
-        cpp("template <typename T> class Reflect;")
         for cls in classes:
             for namespace in cls.namespaces:
                 if namespace != "TKit":
@@ -239,6 +239,7 @@ def main() -> None:
 
             with cpp.scope(f"template <> class Reflect<{cls.name}>", semicolon=True):
                 cpp("public:")
+                cpp("static constexpr bool Implemented = true;")
                 with cpp.scope("template <typename T> struct Field", semicolon=True):
                     cpp("using Type = T;")
                     cpp("const char *Name;")
