@@ -32,16 +32,15 @@ Settings ReadOrWriteSettingsFile()
 
         const Yaml::Node memory = node["Memory"];
         settings.Allocation.ForEachFieldIntegers(
-            [&memory](const char *p_Name, usize &p_Field) { p_Field = Yaml::Parse<usize>(memory[p_Name]); });
+            [&memory](const char *p_Name, usize &p_Field) { p_Field = memory[p_Name].as<usize>(); });
 
         const Yaml::Node threadPoolSum = node["ThreadPoolSum"];
-        settings.ThreadPoolSum.ForEachFieldIntegers([&threadPoolSum](const char *p_Name, usize &p_Field) {
-            p_Field = Yaml::Parse<usize>(threadPoolSum[p_Name]);
-        });
+        settings.ThreadPoolSum.ForEachFieldIntegers(
+            [&threadPoolSum](const char *p_Name, usize &p_Field) { p_Field = threadPoolSum[p_Name].as<usize>(); });
 
         const Yaml::Node container = node["Container"];
         settings.Container.ForEachFieldIntegers(
-            [&container](const char *p_Name, usize &p_Field) { p_Field = Yaml::Parse<usize>(container[p_Name]); });
+            [&container](const char *p_Name, usize &p_Field) { p_Field = container[p_Name].as<usize>(); });
     }
     std::filesystem::create_directories(g_Root + "/performance/results");
     return settings;
