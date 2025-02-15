@@ -1,6 +1,5 @@
 #pragma once
 
-#include "tkit/preprocessor/system.hpp"
 #include "tkit/utils/alias.hpp"
 #include <functional>
 #include <concepts>
@@ -8,6 +7,16 @@
 namespace TKit
 {
 template <typename T> using NoCVRef = std::remove_cvref_t<T>;
+
+template <typename T>
+concept Iterable = requires(T a) {
+    {
+        a.begin()
+    } -> std::input_iterator;
+    {
+        a.end()
+    } -> std::input_iterator;
+};
 
 template <typename T>
 concept Hashable = requires(T a) {
@@ -24,15 +33,5 @@ concept Integer = std::is_integral_v<T>;
 
 template <typename T>
 concept Float = std::is_floating_point_v<T>;
-
-template <typename T>
-concept Mutex = requires(T a) {
-    {
-        a.lock()
-    } -> std::same_as<void>;
-    {
-        a.unlock()
-    } -> std::same_as<void>;
-};
 
 } // namespace TKit
