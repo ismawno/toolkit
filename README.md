@@ -11,15 +11,15 @@ The main features of the library revolve around additional data structures, memo
 
 The features of this library are divided into the following six categories. Specific documentation for each of them can be found in the source code. The documentation can also be built with Doxygen.
 
-- [kit/core](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/utils): General-purpose utilities, such as aliases, C++20 concepts, literals, and a simple logging system with macros.
+- [tkit/utils](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/utils): General-purpose utilities, such as aliases, C++20 concepts, literals, and a simple logging system with macros.
 
-- [kit/container](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/container): Handy data structures, such as a resizable array with an internal buffer of fixed capacity, a weak, non owning array, and a storage class that allows deferring the construction of objects (a nice alternative to a unique pointer in some cases).
+- [tkit/container](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/container): Handy data structures, such as a resizable array with an internal buffer of fixed capacity, a weak, non owning array, and a storage class that allows deferring the construction of objects (a nice alternative to a unique pointer in some cases).
 
-- [kit/memory](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/memory): Two different memory allocators, general allocation functions, `new`/`delete` overloads to track global memory usage, and a custom reference counting system.
+- [tkit/memory](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/memory): Two different memory allocators, general allocation functions, `new`/`delete` overloads to track global memory usage, and a custom reference counting system.
 
-- [kit/multiprocessing](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/multiprocessing): A task manager interface that works with the task class, representing small units of work, along with a specific implementation of a thread pool that complies with this interface. A small `for_each` helper function is also provided, which uses the task manager interface to divide chunks of a `for` loop into different tasks.
+- [tkit/multiprocessing](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/multiprocessing): A task manager interface that works with the task class, representing small units of work, along with a specific implementation of a thread pool that complies with this interface. A small `for_each` helper function is also provided, which uses the task manager interface to divide chunks of a `for` loop into different tasks.
 
-- [kit/profiling](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/profiling): A wrapper around the Tracy profiler macros to instrument and profile an application, along with some very simple classes to manage timespans.
+- [tkit/profiling](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/profiling): A wrapper around the Tracy profiler macros to instrument and profile an application, along with some very simple classes to manage timespans.
 
 All of the required build setup is done through CMake, where I have also added some functions to help with compiler and linker flags setup that I find very useful, especially when controlling such flags for third-party libraries (which may not be very "best practicey" but makes my life easier).
 
@@ -37,7 +37,11 @@ I have tried to keep dependencies to a minimum, many of them being platform-spec
 
 ## Building
 
-The building process is (fortunately) very straightforward. Because of how much I hate how CMake cache works (I just don't even know what configuration I am building half of the time as soon as I am 3 or 4 `cmake` commands in), I have left some python building scripts in the [setup](https://github.com/ismawno/toolkit/tree/main/setup) folder. Specifically, the [build.py](https://github.com/ismawno/toolkit/blob/main/setup/build.py) file, when executed from root, will handle the entire CMake execution process for you. You can enter `python setup/build.py -h` to see the available options.
+The building process is (fortunately) very straightforward. Because of how much I hate how the CMake cache works, I have left some python building scripts in the [setup](https://github.com/ismawno/toolkit/tree/main/setup) folder.
+
+The reason behind this is that CMake sometimes stores some variables in cache that you may not want to persist. This results in some default values for variables being only relevant if the variable itself is not already stored in cache. The problem with this is that I feel it is very easy to lose track of what configuration is being built unless I type in all my CMake flags explicitly every time I build the project, and that is just unbearable. Hence, these python scripts provide flags with reliable defaults stored in a `build.ini` file that are always applied unless explicitly changed with a command line argument.
+
+Specifically, the [build.py](https://github.com/ismawno/toolkit/blob/main/setup/build.py) file, when executed from root, will handle the entire CMake execution process for you. You can enter `python setup/build.py -h` to see the available options.
 
 If you prefer using CMake directly, that's perfectly fine as well. Create a `build` folder, `cd` into it, and run `cmake ..`. All available Toolkit options will be printed out, and they are self-explanatory. If an inconsistent combination of these options is entered, a warning or error message should appear (or so I hope).
 
