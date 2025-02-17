@@ -107,7 +107,24 @@ message(STATUS "TOOLKIT: Build profiler: ${TOOLKIT_BUILD_PROFILER} (can be none,
 message(STATUS "TOOLKIT: The toolkit root path is set to ${CMAKE_CURRENT_SOURCE_DIR}")
 set(TOOLKIT_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
-function(configure_compile_link_options target)
+function(tkit_register_for_reflection target)
+    set(multi_value_args SOURCES)
+    
+    cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "${multi_value_args}")
+    if (NOT DEFINED ARG_SOURCES)
+        message(ERROR "TOOLKIT: Sources may not be empty")
+    endif()
+
+    foreach(src ${ARG_SOURCES})
+        string(REPLACE / _ src_underscore ${src})
+        string(REPLACE .cpp .hpp src_hpp ${src})
+        add_custom_command(OUTPUT "${TOOLKIT_ROOT_PATH}/toolkit/tkit/reflection/${src_hpp}" COMMAND python ${TOOLKIT_ROOT_PATH}/codegen/reflect.py -v -f ${CMAKE_CURRENT_SOURCE_DIR}/${src} -o ${TOOLKIT_ROOT_PATH}/toolkit/tkit/reflection/${src_hpp} -v DEPENDS ${src} VERBATIM)
+        add_custom_target(${src_underscore} DEPENDS ${TOOLKIT_ROOT_PATH}/toolkit/tkit/reflection/${src_hpp})
+        add_dependencies(${target} ${src_underscore})
+    endforeach()
+endfunction()
+
+function(tkit_configure_compile_link_options target)
     set(options FORBID_SANITIZERS)
     set(multi_value_args FLAGS)
     set(one_value_args CONFIG VISIBILITY)

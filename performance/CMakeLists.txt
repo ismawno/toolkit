@@ -19,4 +19,4 @@ add_executable(toolkit-performance ${SOURCES})
 target_link_libraries(toolkit-performance PRIVATE toolkit)
 target_include_directories(toolkit-performance PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-configure_compile_link_options(toolkit-performance)
+tkit_configure_compile_link_options(toolkit-performance)

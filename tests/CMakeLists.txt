@@ -33,9 +33,9 @@ target_link_libraries(toolkit-tests PRIVATE Catch2::Catch2WithMain toolkit)
 target_include_directories(toolkit-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if (MSVC)
-    configure_compile_link_options(toolkit-tests FLAGS /W4 /WX)
+    tkit_configure_compile_link_options(toolkit-tests FLAGS /W4 /WX)
 else()
-    configure_compile_link_options(toolkit-tests FLAGS -Wall -Wextra -Wpedantic -Werror)
+    tkit_configure_compile_link_options(toolkit-tests FLAGS -Wall -Wextra -Wpedantic -Werror)
 endif()
 
 include(CTest)

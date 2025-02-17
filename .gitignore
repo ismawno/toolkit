@@ -4,6 +4,7 @@
 performance/results
 performance/reports
 performance/perf-settings.yaml
+toolkit/tkit/reflection/
 .venv/
 .DS_Store
 docs/html/
