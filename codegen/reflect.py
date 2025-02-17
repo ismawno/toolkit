@@ -29,21 +29,21 @@ def parse_arguments() -> Namespace:
         "--output",
         type=Path,
         default=Path("reflect.cpp"),
-        help="The output file to write the reflection code to.",
+        help="The output file to write the reflection code to. Default is 'reflect.cpp'.",
     )
     parser.add_argument(
         "-c",
         "--class-name",
         type=str,
         default="Reflect",
-        help="The name of the template specialization class.",
+        help="The name of the template specialization class. Default is 'Reflect'.",
     )
     parser.add_argument(
         "-m",
         "--macro",
         type=str,
         default="TKIT_REFLECT",
-        help="The macro to look for in the c++ file.",
+        help="The macro to look for in the c++ file. Default is 'TKIT_REFLECT'.",
     )
     parser.add_argument(
         "-v",
@@ -53,10 +53,10 @@ def parse_arguments() -> Namespace:
         help="Print more information.",
     )
     parser.add_argument(
-        "--include-non-public",
+        "--exclude-non-public",
         action="store_true",
         default=False,
-        help="Include private and protected data members when reflecting.",
+        help="Exclude private and protected data members when reflecting.",
     )
 
     return parser.parse_args()
@@ -203,9 +203,9 @@ def main() -> None:
         if args.verbose:
             print(*pargs, **kwargs)
 
-    if output.exists() and output.stat().st_mtime > ffile.stat().st_mtime:
-        log(f"Output file '{output}' is newer than input file '{ffile}'. Exiting...")
-        return
+    # if output.exists() and output.stat().st_mtime > ffile.stat().st_mtime:
+    #     log(f"Output file '{output}' is newer than input file '{ffile}'. Exiting...")
+    #     return
 
     path = output.parent
 
@@ -261,7 +261,7 @@ def main() -> None:
                     return [
                         f'Field<{field.vtype}>{{"{field.name}", &{cls.name}::{field.name}}}'
                         for field in fields
-                        if args.include_non_public or field.privacy == "public"
+                        if not args.exclude_non_public or field.privacy == "public"
                     ]
 
                 def create_tuple_sequence(fields: list[str], /, **_) -> str:

@@ -38,13 +38,13 @@ def parse_arguments() -> Namespace:
         "--hint",
         default="define_option",
         type=str,
-        help="A hint to let the scanner now how to look for options",
+        help="A hint to let the scanner now how to look for options. Default is 'define_option'.",
     )
     parser.add_argument(
         "--cmake-name",
         default="CMakeLists.txt",
         type=str,
-        help="The name of the CMake file.",
+        help="The name of the CMake file. Default is 'CMakeLists.txt'.",
     )
     parser.add_argument(
         "--keep-preffixes",

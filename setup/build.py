@@ -61,14 +61,14 @@ def parse_arguments(
         "--build",
         default=Path("build"),
         type=Path,
-        help="The location where the project will be built.",
+        help="The location directory where the project will be built. Default is 'build'.",
     )
     parser.add_argument(
         "-s",
         "--source",
         default=Path("."),
         type=Path,
-        help="The location where the source files are found (where the root CMakeLists.txt is).",
+        help="The location directory where the source files are found (where the root CMakeLists.txt is). Default is the curent directory",
     )
     parser.add_argument(
         "-v",
