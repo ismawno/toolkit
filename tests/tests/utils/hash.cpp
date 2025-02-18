@@ -13,16 +13,13 @@ struct Example
 };
 } // namespace TKit
 
-namespace std
-{
-template <> struct hash<TKit::Example>
+template <> struct std::hash<TKit::Example>
 {
     size_t operator()(const TKit::Example &p_Example) const noexcept
     {
         return TKit::Hash(p_Example.elm0, p_Example.elm1, p_Example.elm2, p_Example.elm3);
     }
 };
-} // namespace std
 
 namespace TKit
 {
