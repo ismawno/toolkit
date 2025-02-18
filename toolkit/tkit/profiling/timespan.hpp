@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef TKIT_ENABLE_PROFILING
+#    error "To include this file, the corresponding feature must be enabled with TOOLKIT_ENABLE_PROFILING"
+#endif
+
 #include "tkit/preprocessor/system.hpp"
 #include "tkit/utils/concepts.hpp"
 #include <chrono>

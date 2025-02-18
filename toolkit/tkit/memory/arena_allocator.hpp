@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef TKIT_ENABLE_ARENA_ALLOCATOR
+#    error "To include this file, the corresponding feature must be enabled with TOOLKIT_ENABLE_ARENA_ALLOCATOR"
+#endif
+
 #include "tkit/utils/logging.hpp"
 #include "tkit/utils/non_copyable.hpp"
 #include "tkit/memory/memory.hpp"

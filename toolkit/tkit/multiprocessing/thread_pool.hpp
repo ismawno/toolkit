@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef TKIT_ENABLE_MULTIPROCESSING
+#    error "To include this file, the corresponding feature must be enabled with TOOLKIT_ENABLE_MULTIPROCESSING"
+#endif
+
 #include "tkit/utils/concepts.hpp"
 #include "tkit/multiprocessing/task_manager.hpp"
 #include "tkit/profiling/macros.hpp"
