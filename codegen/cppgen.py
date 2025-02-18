@@ -4,7 +4,7 @@ from pathlib import Path
 
 class CPPFile:
     def __init__(self, name: str, /):
-        self.__name = name if name.endswith(".cpp") else f"{name}.cpp"
+        self.__name = name
         self.__file = ""
         self.__scopes = 0
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "tkit/utils/alias.hpp"
-#include "tkit/preprocessor/reflection.hpp"
+#include "tkit/reflection/reflect.hpp"
 #include <string>
 
 namespace TKit
@@ -10,25 +10,24 @@ inline std::string g_Root = TKIT_ROOT_PATH;
 
 struct AllocationSettings
 {
+    TKIT_REFLECT(AllocationSettings)
     usize MinPasses = 100;
     usize MaxPasses = 10000;
     usize PassIncrement = 100;
-
-    TKIT_ENUMERATE_FIELDS(AllocationSettings, Integers, MinPasses, MaxPasses, PassIncrement)
 };
 
 using ContainerSettings = AllocationSettings;
 
 struct ThreadPoolSumSettings
 {
+    TKIT_REFLECT(ThreadPoolSumSettings)
     usize MaxThreads = 8;
     usize SumCount = 1000000;
-
-    TKIT_ENUMERATE_FIELDS(ThreadPoolSumSettings, Integers, MaxThreads, SumCount)
 };
 
 struct Settings
 {
+    TKIT_REFLECT(Settings)
     AllocationSettings Allocation{};
     ThreadPoolSumSettings ThreadPoolSum{};
     ContainerSettings Container{};

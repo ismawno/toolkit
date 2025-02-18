@@ -16,6 +16,8 @@ set(SOURCES
 )
 
 add_executable(toolkit-performance ${SOURCES})
+tkit_register_for_reflection(toolkit-performance SOURCES perf/settings.hpp)
+
 target_link_libraries(toolkit-performance PRIVATE toolkit)
 target_include_directories(toolkit-performance PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 

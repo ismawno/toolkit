@@ -44,7 +44,7 @@ template <typename T> struct Codec
         if constexpr (Reflect<T>::Implemented)
             Reflect<T>::ForEachField([&p_Node, &p_Instance](const auto &p_Field) {
                 using Field = decltype(p_Field);
-                using Type = typename Field::Type;
+                using Type = typename NoCVRef<Field>::Type;
                 p_Field.Set(p_Instance, p_Node.as<Type>());
             });
         else

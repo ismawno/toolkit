@@ -18,8 +18,8 @@ def parse_arguments() -> Namespace:
     parser = ArgumentParser(description=desc)
 
     parser.add_argument(
-        "-f",
-        "--file",
+        "-i",
+        "--input",
         type=Path,
         required=True,
         help="The c++ file to scan for the reflect macro.",
@@ -28,8 +28,8 @@ def parse_arguments() -> Namespace:
         "-o",
         "--output",
         type=Path,
-        default=Path("reflect.cpp"),
-        help="The output file to write the reflection code to. Default is 'reflect.cpp'.",
+        required=True,
+        help="The output file to write the reflection code to.",
     )
     parser.add_argument(
         "-c",
@@ -196,16 +196,16 @@ def parse_classes_in_file(
 def main() -> None:
     args = parse_arguments()
     output: Path = args.output
-    ffile: Path = args.file
+    ffile: Path = args.input
     macro: str = args.macro
 
     def log(*pargs, **kwargs) -> None:
         if args.verbose:
             print(*pargs, **kwargs)
 
-    # if output.exists() and output.stat().st_mtime > ffile.stat().st_mtime:
-    #     log(f"Output file '{output}' is newer than input file '{ffile}'. Exiting...")
-    #     return
+    if output.exists() and output.stat().st_mtime > ffile.stat().st_mtime:
+        log(f"Output file '{output}' is newer than input file '{ffile}'. Exiting...")
+        return
 
     path = output.parent
 
@@ -342,9 +342,6 @@ def main() -> None:
                     create_if_constexpr_per_type(
                         create_array_sequence, "Array<Field<T>, 0>{}"
                     )
-
-    with cpp.scope("int main()"):
-        cpp("return 0;")
 
     cpp.write(path)
 
