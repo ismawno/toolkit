@@ -1,5 +1,4 @@
 ![Tests Status](https://github.com/ismawno/toolkit/actions/workflows/tests.yml/badge.svg)
-![Build Status](https://github.com/ismawno/toolkit/actions/workflows/build.yml/badge.svg)
 
 # Toolkit
 
