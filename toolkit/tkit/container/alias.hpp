@@ -6,7 +6,6 @@
 #include <unordered_set>
 #include <map>
 #include <set>
-#include <deque>
 #include <string_view>
 #include <string>
 
@@ -49,7 +48,6 @@ template <> struct OpAlias<std::string>
 // These are nice to have in case I want to change the container/allocator type easily or to use the transparent
 // operations
 template <typename T, typename Allocator = Memory::DefaultAllocator<T>> using DynamicArray = std::vector<T, Allocator>;
-template <typename T, typename Allocator = Memory::DefaultAllocator<T>> using DynamicDeque = std::deque<T, Allocator>;
 
 template <typename Key, typename Value, typename Hash = typename Detail::HashAlias<Key>::Type,
           typename OpEqual = typename Detail::OpAlias<Key>::Type,

@@ -24,21 +24,18 @@ template <typename T> struct Codec
 {
     static Node Encode(const T &p_Instance) noexcept
     {
-        static_assert(Reflect<T>::Implemented || std::is_enum_v<T> || !Iterable<T>,
-                      "If type has not a dedicated 'Codec<T>' specialization and is not iterable, it must be reflected "
+        static_assert(Reflect<T>::Implemented || std::is_enum_v<T>,
+                      "If type has not a dedicated 'Codec<T>' specialization, it must be reflected "
                       "to auto-serialize");
         Node node;
         if constexpr (Reflect<T>::Implemented)
             Reflect<T>::ForEachField(
                 [&node, &p_Instance](const auto &p_Field) { node[p_Field.Name] = p_Field.Get(p_Instance); });
-        else if constexpr (std::is_enum_v<T>)
+        else
         {
             using Integer = std::underlying_type_t<T>;
             node = Node{static_cast<Integer>(p_Instance)};
         }
-        else
-            for (const auto &elem : p_Instance)
-                node.push_back(elem);
         return node;
     }
 
@@ -62,8 +59,26 @@ template <typename T> struct Codec
     }
 };
 
-Node LoadFromString(std::string_view p_String);
-Node LoadFromFile(std::string_view p_Path);
+template <typename T, typename FContainer>
+void SerializeFields(Node &p_Node, const T &p_Instance, const FContainer &p_Fields) noexcept
+{
+    static_assert(Reflect<T>::Implemented, "Type must be reflected to serialize fields");
+    Reflect<T>::ForEachField(
+        p_Fields, [&p_Node, &p_Instance](const auto &p_Field) { p_Node[p_Field.Name] = p_Field.Get(p_Instance); });
+}
+template <typename T, typename FContainer>
+void DeserializeFields(const Node &p_Node, T &p_Instance, const FContainer &p_Fields) noexcept
+{
+    static_assert(Reflect<T>::Implemented, "Type must be reflected to deserialize fields");
+    Reflect<T>::ForEachField(p_Fields, [&p_Node, &p_Instance](const auto &p_Field) {
+        using Field = decltype(p_Field);
+        using Type = typename NoCVRef<Field>::Type;
+        p_Field.Set(p_Instance, p_Node[p_Field.Name].template as<Type>());
+    });
+}
+
+Node LoadFromString(std::string_view p_String) noexcept;
+Node LoadFromFile(std::string_view p_Path) noexcept;
 
 } // namespace TKit::Yaml
 

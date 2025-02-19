@@ -58,7 +58,7 @@ if (TOOLKIT_ALL_FEATURES OR TOOLKIT_ENABLE_YAML_SERIALIZATION)
 
     FetchContent_MakeAvailable(yaml-cpp)
     list(APPEND SOURCES
-        tkit/serialization/yaml.cpp
+        tkit/serialization/yaml/codec.cpp
     )
 endif()
 

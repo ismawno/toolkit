@@ -1,6 +1,6 @@
 #include "perf/settings.hpp"
 #include "tkit/reflection/perf/settings.hpp"
-#include "tkit/serialization/yaml.hpp"
+#include "tkit/serialization/yaml/codec.hpp"
 #include <filesystem>
 #include <fstream>
 

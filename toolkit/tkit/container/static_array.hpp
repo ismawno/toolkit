@@ -7,7 +7,6 @@
 
 namespace TKit
 {
-
 /**
  * @brief An STL-like array with a fixed size buffer.
  *
