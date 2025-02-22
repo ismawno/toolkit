@@ -12,6 +12,7 @@ namespace TKit
 {
 template <typename T> class Reflect
 {
+  public:
     static constexpr bool Implemented = false;
 };
 }; // namespace TKit
