@@ -105,7 +105,7 @@ message(STATUS "TOOLKIT: Vulkan instrumentation: ${TOOLKIT_ENABLE_VULKAN_INSTRUM
 message(STATUS "TOOLKIT: Build profiler: ${TOOLKIT_BUILD_PROFILER} (can be none, gui, cli or csv)")
 
 message(STATUS "TOOLKIT: The toolkit root path is set to ${CMAKE_CURRENT_SOURCE_DIR}")
-set(TOOLKIT_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR})
+set(TOOLKIT_ROOT_PATH ${CMAKE_CURRENT_SOURCE_DIR} CACHE STRING "I hate cmake" FORCE)
 
 function(tkit_register_for_reflection target)
     set(multi_value_args SOURCES)
