@@ -57,6 +57,8 @@ if (TOOLKIT_ALL_FEATURES OR TOOLKIT_ENABLE_YAML_SERIALIZATION)
     )
 
     FetchContent_MakeAvailable(yaml-cpp)
+
+    tkit_configure_compile_link_options(yaml-cpp FORBID_SANITIZERS)
     list(APPEND SOURCES
         tkit/serialization/yaml/codec.cpp
     )
@@ -77,6 +79,8 @@ if (UNIX AND NOT APPLE)
         GIT_TAG 11.0.2
     )
     FetchContent_MakeAvailable(fmt)
+
+    tkit_configure_compile_link_options(fmt FORBID_SANITIZERS)
     target_link_libraries(toolkit PUBLIC fmt::fmt)
 endif()
 
