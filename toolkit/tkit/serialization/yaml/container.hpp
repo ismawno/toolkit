@@ -31,7 +31,7 @@ template <typename T, usize N, typename Traits> struct Codec<Array<T, N, Traits>
 
         using size_type = typename Traits::size_type;
         for (size_type i = 0; i < N; ++i)
-            p_Instance[i] = p_Node[i].as<T>();
+            p_Instance[i] = p_Node[i].template as<T>();
         return true;
     }
 };
@@ -52,7 +52,7 @@ template <typename T, usize N, typename Traits> struct Codec<StaticArray<T, N, T
             return false;
 
         for (const Node &element : p_Node)
-            p_Instance.push_back(element.as<T>());
+            p_Instance.push_back(element.template as<T>());
         return true;
     }
 };
