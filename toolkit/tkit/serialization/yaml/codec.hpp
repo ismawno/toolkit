@@ -61,6 +61,9 @@ template <typename T> struct Codec
     }
 };
 
+Node LoadFromString(std::string_view p_String) noexcept;
+Node LoadFromFile(std::string_view p_Path) noexcept;
+
 template <typename T> void Serialize(const std::string_view p_Path, const T &p_Instance) noexcept
 {
     const Node node{p_Instance};
@@ -124,9 +127,6 @@ T DeserializeFields(const std::string_view p_Path, const FContainer &p_Fields)
     const Node node = LoadFromFile(p_Path);
     return DecodeFields<T>(node, p_Fields);
 }
-
-Node LoadFromString(std::string_view p_String) noexcept;
-Node LoadFromFile(std::string_view p_Path) noexcept;
 
 } // namespace TKit::Yaml
 
