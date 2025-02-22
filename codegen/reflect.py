@@ -354,9 +354,10 @@ def main() -> None:
                 cpp("public:")
                 cpp("static constexpr bool Implemented = true;")
                 dtype = "u8" if len(cls.fields_per_group) < 256 else "u16"
-                with cpp.scope(f"enum class Group : {dtype}", semicolon=True):
-                    for i, group in enumerate(cls.fields_per_group):
-                        cpp(f"{group} = {i},")
+                if cls.fields_per_group:
+                    with cpp.scope(f"enum class Group : {dtype}", semicolon=True):
+                        for i, group in enumerate(cls.fields_per_group):
+                            cpp(f"{group} = {i},")
 
                 with cpp.scope("template <typename T> struct Field", semicolon=True):
                     cpp("using Type = T;")
