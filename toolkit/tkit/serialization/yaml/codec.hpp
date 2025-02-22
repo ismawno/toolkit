@@ -17,6 +17,8 @@ TKIT_MSVC_WARNING_IGNORE(4100)
 #include <yaml-cpp/yaml.h>
 TKIT_COMPILER_WARNING_IGNORE_POP()
 
+#include <fstream>
+
 namespace TKit::Yaml
 {
 using Node = YAML::Node;
@@ -59,22 +61,68 @@ template <typename T> struct Codec
     }
 };
 
-template <typename T, typename FContainer>
-void SerializeFields(Node &p_Node, const T &p_Instance, const FContainer &p_Fields) noexcept
+template <typename T> void Serialize(const std::string_view p_Path, const T &p_Instance) noexcept
 {
-    static_assert(Reflect<T>::Implemented, "Type must be reflected to serialize fields");
+    const Node node{p_Instance};
+    std::ofstream file(p_Path.data());
+    file << node;
+}
+template <typename T> T Deserialize(const std::string_view p_Path) noexcept
+{
+    const Node node = LoadFromFile(p_Path);
+    return node.as<T>();
+}
+
+template <typename T, typename FContainer>
+void EncodeFields(Node &p_Node, const T &p_Instance, const FContainer &p_Fields) noexcept
+{
+    static_assert(Reflect<T>::Implemented, "Type must be reflected to encode fields");
     Reflect<T>::ForEachField(
         p_Fields, [&p_Node, &p_Instance](const auto &p_Field) { p_Node[p_Field.Name] = p_Field.Get(p_Instance); });
 }
-template <typename T, typename FContainer>
-void DeserializeFields(const Node &p_Node, T &p_Instance, const FContainer &p_Fields) noexcept
+template <typename T, typename FContainer> Node EncodeFields(const T &p_Instance, const FContainer &p_Fields) noexcept
 {
-    static_assert(Reflect<T>::Implemented, "Type must be reflected to deserialize fields");
+    Node node;
+    EncodeFields(node, p_Instance, p_Fields);
+    return node;
+}
+
+template <typename T, typename FContainer>
+void DecodeFields(const Node &p_Node, T &p_Instance, const FContainer &p_Fields) noexcept
+{
+    static_assert(Reflect<T>::Implemented, "Type must be reflected to decode fields");
     Reflect<T>::ForEachField(p_Fields, [&p_Node, &p_Instance](const auto &p_Field) {
         using Field = decltype(p_Field);
         using Type = typename NoCVRef<Field>::Type;
         p_Field.Set(p_Instance, p_Node[p_Field.Name].template as<Type>());
     });
+}
+template <typename T, typename FContainer> T DecodeFields(const Node &p_Node, const FContainer &p_Fields) noexcept
+{
+    T instance{};
+    DecodeFields(p_Node, instance, p_Fields);
+    return instance;
+}
+
+template <typename T, typename FContainer>
+void SerializeFields(const std::string_view p_Path, const T &p_Instance, const FContainer &p_Fields) noexcept
+{
+    const Node node = EncodeFields(p_Instance, p_Fields);
+    std::ofstream file(p_Path.data());
+    file << node;
+}
+
+template <typename T, typename FContainer>
+void DeserializeFields(const std::string_view p_Path, T &p_Instance, const FContainer &p_Fields)
+{
+    const Node node = LoadFromFile(p_Path);
+    DecodeFields(node, p_Instance, p_Fields);
+}
+template <typename T, typename FContainer>
+T DeserializeFields(const std::string_view p_Path, const FContainer &p_Fields)
+{
+    const Node node = LoadFromFile(p_Path);
+    return DecodeFields<T>(node, p_Fields);
 }
 
 Node LoadFromString(std::string_view p_String) noexcept;
