@@ -3,6 +3,7 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from dataclasses import dataclass
 from collections.abc import Callable
+from time import perf_counter
 
 import re
 
@@ -102,13 +103,37 @@ class ClassInfo:
     fields: list[Field]
     fields_per_type: dict[str, list[Field]]
     fields_per_group: dict[str, list[Field]]
+    template_decl: str | None
 
 
 def parse_class(
-    macro: Macro, lines: list[str], clsname: str, namespaces: list[str], /
+    macro: Macro,
+    lines: list[str],
+    template_line: str | None,
+    clstype: str,
+    namespaces: list[str],
+    /,
 ) -> ClassInfo:
-    name = re.match(rf"{clsname} ([a-zA-Z0-9_]+)", lines[0]).group(1)
-    privacy = "private" if clsname == "class" else "public"
+    clsline = lines[0].replace("template ", "template")
+    name = re.match(rf".*{clstype} ([a-zA-Z0-9_<>, ]+)", clsline).group(1)
+    privacy = "private" if clstype == "class" else "public"
+
+    mtch = re.match(r".*template<(.*?)>", clsline)
+    template_decl = mtch.group(1) if mtch is not None else None
+
+    if template_decl is not None and template_line is not None:
+        raise ValueError("Found duplicate template line")
+
+    if template_decl is None and template_line is not None:
+        template_decl = (
+            re.match(r".*template<(.*?)>", template_line).group(1).replace(" ,", ",")
+        )
+
+    if template_decl is not None and "<" not in name:
+        template_vars = ", ".join(
+            [var.split(" ")[1] for var in template_decl.replace(", ", ",").split(",")]
+        )
+        name = f"{name}<{template_vars}>"
 
     groups = []
     fields = []
@@ -204,7 +229,14 @@ def parse_class(
     if groups:
         raise ValueError("Group macro was not closed properly")
 
-    return ClassInfo(name, namespaces, fields, fields_per_type, fields_per_group)
+    return ClassInfo(
+        name,
+        namespaces,
+        fields,
+        fields_per_type,
+        fields_per_group,
+        template_decl,
+    )
 
 
 def parse_classes_in_file(
@@ -244,11 +276,18 @@ def parse_classes_in_file(
         if found_end:
             continue
 
-        clsname = "class" if is_class else "struct"
+        template_line = (
+            lines[i - 1]
+            if i > 0
+            and "template" in lines[i - 1]
+            and "struct" not in lines[i - 1]
+            and "class" not in lines[i - 1]
+            else None
+        )
+        clstype = "class" if is_class else "struct"
+        clinfo = parse_class(macro, sublines, template_line, clstype, namespaces)
 
-        clinfo = parse_class(macro, sublines, clsname, namespaces)
-
-        log(f"Found '{clinfo.name}' {clsname}. Parsing...")
+        log(f"Found '{clinfo.name}' {clstype}. Parsing...")
         for field in clinfo.fields:
             log(f"  Successfully registered field member '{field.as_str(clinfo.name)}'")
         classes.append(clinfo)
@@ -257,6 +296,7 @@ def parse_classes_in_file(
 
 
 def main() -> None:
+    t1 = perf_counter()
     args = parse_arguments()
     output: Path = args.output
     ffile: Path = args.input
@@ -307,7 +347,10 @@ def main() -> None:
                 if namespace != "TKit":
                     cpp(f"using namespace {namespace};")
 
-            with cpp.scope(f"template <> class Reflect<{cls.name}>", semicolon=True):
+            with cpp.scope(
+                f"template <{cls.template_decl if cls.template_decl is not None else ""}> class Reflect<{cls.name}>",
+                semicolon=True,
+            ):
                 cpp("public:")
                 cpp("static constexpr bool Implemented = true;")
                 dtype = "u8" if len(cls.fields_per_group) < 256 else "u16"
@@ -475,6 +518,8 @@ def main() -> None:
                     crate_get_tuple_method(group=group)
 
     cpp.write(path)
+    elapsed = perf_counter() - t1
+    log(f"Reflection code generated in {elapsed:.2f} seconds.")
 
 
 if __name__ == "__main__":
