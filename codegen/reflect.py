@@ -426,17 +426,17 @@ def main() -> None:
                         cpp("ForEachField(fields, std::forward<F>(p_Fun));")
 
                 with cpp.scope(
-                    "template <typename T, typename F> static constexpr void ForEachField(T &&p_Fields, F &&p_Fun) noexcept"
+                    "template <typename T, typename F> static constexpr void ForEachField(const T &p_Fields, F &&p_Fun) noexcept"
                 ):
                     with cpp.scope("if constexpr (Iterable<T>)", curlies=False):
                         with cpp.scope(
-                            "for (const auto &field : std::forward<T>(p_Fields))",
+                            "for (const auto &field : p_Fields)",
                             curlies=False,
                         ):
                             cpp("std::forward<F>(p_Fun)(field);")
                     with cpp.scope("else", curlies=False):
                         cpp(
-                            "std::apply([&p_Fun](const auto &...p_Field) {(std::forward<F>(p_Fun)(p_Field), ...);}, std::forward<T>(p_Fields));"
+                            "std::apply([&p_Fun](const auto &...p_Field) {(std::forward<F>(p_Fun)(p_Field), ...);}, p_Fields);"
                         )
 
                 create_get_fields_method(cls.fields)
