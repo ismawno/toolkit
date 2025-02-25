@@ -362,6 +362,7 @@ def main() -> None:
                 with cpp.scope("template <typename T> struct Field", semicolon=True):
                     cpp("using Type = T;")
                     cpp("const char *Name;")
+                    cpp("const char *TypeString;")
                     cpp(f"T {cls.name}::* Pointer;")
 
                     with cpp.scope(f"T &Get({cls.name} &p_Instance) const noexcept"):
@@ -380,7 +381,7 @@ def main() -> None:
                     fields: list[Field], /, *, group: str | None = None
                 ) -> list[str]:
                     return [
-                        f'Field<{field.vtype}>{{"{field.name}", &{cls.name}::{field.name}}}'
+                        f'Field<{field.vtype}>{{"{field.name}", "{field.vtype}", &{cls.name}::{field.name}}}'
                         for field in fields
                         if (not args.exclude_non_public or field.privacy == "public")
                         and (group is None or group in field.groups)
