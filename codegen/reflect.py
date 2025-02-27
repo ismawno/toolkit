@@ -112,6 +112,7 @@ def parse_class(
     template_line: str | None,
     clstype: str,
     namespaces: list[str],
+    exclude_non_public: bool,
     /,
 ) -> ClassInfo:
     clsline = lines[0].replace("template ", "template")
@@ -189,6 +190,8 @@ def parse_class(
         check_privacy("private")
         check_privacy("public")
         check_privacy("protected")
+        if privacy != "public" and exclude_non_public:
+            continue
 
         if not line.endswith(";") or "noexcept" in line:
             continue
@@ -249,6 +252,7 @@ def parse_classes_in_file(
     lines: list[str],
     log: Callable[[str], None],
     macro: Macro,
+    exclude_non_public: bool,
     /,
 ) -> list[ClassInfo]:
 
@@ -291,7 +295,9 @@ def parse_classes_in_file(
             else None
         )
         clstype = "class" if is_class else "struct"
-        clinfo = parse_class(macro, sublines, template_line, clstype, namespaces)
+        clinfo = parse_class(
+            macro, sublines, template_line, clstype, namespaces, exclude_non_public
+        )
 
         log(f"Found '{clinfo.name}' {clstype}. Parsing...")
         for field in clinfo.fields:
@@ -323,7 +329,6 @@ def main() -> None:
     #     return
 
     path = output.parent
-
     with ffile.open("r") as f:
 
         def remove_comments(text: str, /) -> str:
@@ -338,7 +343,9 @@ def main() -> None:
         if macro.declare not in content:
             log(f"Macro '{macro.declare}' not found in file '{ffile}'. Exiting...")
             return
-        classes = parse_classes_in_file(content.splitlines(), log, macro)
+        classes = parse_classes_in_file(
+            content.splitlines(), log, macro, args.exclude_non_public
+        )
 
     cpp = CPPFile(args.output.name)
     cpp(f'#include "{ffile.resolve()}"')
@@ -389,8 +396,7 @@ def main() -> None:
                     return [
                         f'Field<{field.vtype}>{{"{field.name}", "{field.vtype.replace('"', r'\"')}", &{cls.name}::{field.name}}}'
                         for field in fields
-                        if (not args.exclude_non_public or field.privacy == "public")
-                        and (group is None or group in field.groups)
+                        if group is None or group in field.groups
                     ]
 
                 def create_tuple_sequence(fields: list[str], /, **_) -> str:
