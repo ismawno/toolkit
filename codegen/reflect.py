@@ -88,21 +88,26 @@ class Field:
     name: str
     visibility: str
     vtype: str
-    is_static: bool
     groups: set[str]
 
-    def as_str(self, parent: str, /) -> str:
-        sct = "static" if self.is_static else "non-static"
+    def as_str(self, parent: str, /, *, is_static: bool) -> str:
+        sct = "static" if is_static else "non-static"
         return f"{sct} {self.visibility} {self.vtype} {parent}::{self.name}"
+
+
+@dataclass(frozen=True)
+class FieldCollection:
+    all: list[Field]
+    per_type: dict[str, list[Field]]
+    per_group: dict[str, list[Field]]
 
 
 @dataclass(frozen=True)
 class ClassInfo:
     name: str
     namespaces: list[str]
-    fields: list[Field]
-    fields_per_type: dict[str, list[Field]]
-    fields_per_group: dict[str, list[Field]]
+    nstatic: FieldCollection
+    static: FieldCollection
     template_decl: str | None
 
 
@@ -157,9 +162,14 @@ def main() -> None:
             name = f"{name}<{template_vars}>"
 
         groups = []
-        fields = []
-        fields_per_type = {}
-        fields_per_group = {}
+
+        nstatic_fields = []
+        nstatic_fields_per_type = {}
+        nstatic_fields_per_group = {}
+
+        static_fields = []
+        static_fields_per_type = {}
+        static_fields_per_group = {}
 
         scope_counter = 0
         ignore = False
@@ -173,9 +183,9 @@ def main() -> None:
                 )
                 if group == "":
                     raise ValueError("Group name cannot be empty")
-                if group == "Group":
+                if group == "Static":
                     raise ValueError(
-                        "Group name cannot be 'Group'. It is a reserved name"
+                        "Group name cannot be 'Static'. It is a reserved name"
                     )
                 groups.append(group)
 
@@ -246,9 +256,16 @@ def main() -> None:
                 vname,
                 visibility,
                 vtype.replace(",", ", "),
-                is_static,
                 set(groups),
             )
+            fields = static_fields if is_static else nstatic_fields
+            fields_per_type = (
+                static_fields_per_type if is_static else nstatic_fields_per_type
+            )
+            fields_per_group = (
+                static_fields_per_group if is_static else nstatic_fields_per_group
+            )
+
             fields.append(field)
             fields_per_type.setdefault(field.vtype, []).append(field)
             for group in groups:
@@ -263,9 +280,12 @@ def main() -> None:
         return ClassInfo(
             name,
             namespaces,
-            fields,
-            fields_per_type,
-            fields_per_group,
+            FieldCollection(
+                nstatic_fields, nstatic_fields_per_type, nstatic_fields_per_group
+            ),
+            FieldCollection(
+                static_fields, static_fields_per_type, static_fields_per_group
+            ),
             template_decl,
         )
 
@@ -316,9 +336,13 @@ def main() -> None:
             clinfo = parse_class(sublines, template_line, clstype, namespaces)
 
             log(f"Found '{clinfo.name}' {clstype}. Parsing...")
-            for field in clinfo.fields:
+            for field in clinfo.nstatic.all:
                 log(
-                    f"  Successfully registered field member '{field.as_str(clinfo.name)}'"
+                    f"  Successfully registered field member '{field.as_str(clinfo.name, is_static=False)}'"
+                )
+            for field in clinfo.static.all:
+                log(
+                    f"  Successfully registered field member '{field.as_str(clinfo.name, is_static=True)}'"
                 )
             classes.append(clinfo)
 
@@ -364,173 +388,198 @@ def main() -> None:
             ):
                 cpp("public:")
                 cpp("static constexpr bool Implemented = true;")
-                dtype = "u8" if len(cls.fields_per_group) < 256 else "u16"
-                if cls.fields_per_group:
-                    with cpp.scope(f"enum class Group : {dtype}", semicolon=True):
-                        for i, group in enumerate(cls.fields_per_group):
-                            cpp(f"{group} = {i},")
                 with cpp.scope("enum class FieldVisibility : u8", semicolon=True):
                     cpp("Private = 0,")
                     cpp("Protected = 1,")
                     cpp("Public = 2")
 
-                with cpp.scope("template <typename T> struct Field", semicolon=True):
-                    cpp("using Type = T;")
-                    cpp("const char *Name;")
-                    cpp("const char *TypeString;")
-                    cpp(f"T {cls.name}::* Pointer;")
-                    cpp("FieldVisibility Visibility;")
-
-                    with cpp.scope(f"T &Get({cls.name} &p_Instance) const noexcept"):
-                        cpp("return p_Instance.*Pointer;")
-                    with cpp.scope(
-                        f"const T &Get(const {cls.name} &p_Instance) const noexcept"
-                    ):
-                        cpp("return p_Instance.*Pointer;")
-
-                    with cpp.scope(
-                        f"template <std::convertible_to<T> U> void Set({cls.name} &p_Instance, U &&p_Value) const noexcept"
-                    ):
-                        cpp("p_Instance.*Pointer = std::forward<U>(p_Value);")
-
-                def create_cpp_fields_sequence(
-                    fields: list[Field], /, *, group: str | None = None
-                ) -> list[str]:
-                    return [
-                        f'Field<{field.vtype}>{{"{field.name}", "{field.vtype.replace('"', r'\"')}", &{cls.name}::{field.name}, FieldVisibility::{field.visibility.capitalize()}}}'
-                        for field in fields
-                        if group is None or group in field.groups
-                    ]
-
-                def create_tuple_sequence(fields: list[str], /, **_) -> str:
-                    return f"std::make_tuple({', '.join(fields)})"
-
-                def create_array_sequence(
-                    fields: list[str], /, *, vtype: str | None = None
-                ) -> str:
-                    if vtype is None:
-                        vtype = "T"
-                    return (
-                        f"Array<Field<{vtype}>, {len(fields)}>{{{', '.join(fields)}}}"
-                    )
-
-                def create_get_fields_method(
-                    fields: list[str], /, *, group: str = ""
+                def generate_reflect_body(
+                    fcollection: FieldCollection, /, *, is_static: bool
                 ) -> None:
-                    fields_cpp = create_cpp_fields_sequence(fields)
-                    with cpp.scope(
-                        f"template <typename... Args> static constexpr auto Get{group}Fields() noexcept"
-                    ):
+                    static = "Static" if is_static else ""
+
+                    cpp("public:")
+                    dtype = "u8" if len(cls.nstatic.per_group) < 256 else "u16"
+                    if fcollection.per_group:
                         with cpp.scope(
-                            "if constexpr (sizeof...(Args) == 0)", curlies=False
+                            f"enum class {static}Group : {dtype}", semicolon=True
                         ):
-                            cpp(f"return {create_tuple_sequence(fields_cpp)};")
-                        with cpp.scope(
-                            "else if constexpr (sizeof...(Args) == 1)", curlies=False
-                        ):
-                            cpp(f"return get{group}Array<Args...>();")
-                        with cpp.scope("else", curlies=False):
-                            cpp(f"return std::tuple_cat(get{group}Tuple<Args>()...);")
+                            for i, group in enumerate(fcollection.per_group):
+                                cpp(f"{group} = {i},")
 
-                def create_for_each_method(*, group: str = "") -> None:
                     with cpp.scope(
-                        f"template <typename... Args, typename F> static constexpr void ForEach{group}Field(F &&p_Fun) noexcept"
+                        f"template <typename T> struct {static}Field", semicolon=True
                     ):
-                        cpp(f"const auto fields = Get{group}Fields<Args...>();")
-                        cpp("ForEachField(fields, std::forward<F>(p_Fun));")
+                        cpp("using Type = T;")
+                        cpp("const char *Name;")
+                        cpp("const char *TypeString;")
+                        if is_static:
+                            cpp("T *Pointer;")
+                        else:
+                            cpp(f"T {cls.name}::* Pointer;")
+                        cpp("FieldVisibility Visibility;")
 
-                with cpp.scope(
-                    "template <typename T, typename F> static constexpr void ForEachField(const T &p_Fields, F &&p_Fun) noexcept"
-                ):
-                    with cpp.scope("if constexpr (Iterable<T>)", curlies=False):
-                        with cpp.scope(
-                            "for (const auto &field : p_Fields)",
-                            curlies=False,
-                        ):
-                            cpp("std::forward<F>(p_Fun)(field);")
-                    with cpp.scope("else", curlies=False):
-                        cpp(
-                            "std::apply([&p_Fun](const auto &...p_Field) {(std::forward<F>(p_Fun)(p_Field), ...);}, p_Fields);"
-                        )
-
-                create_get_fields_method(cls.fields)
-                create_for_each_method()
-
-                if cls.fields_per_group:
-                    with cpp.scope(
-                        "template <Group G, typename... Args> static constexpr auto GetFieldsByGroup() noexcept"
-                    ):
-                        cnd = "if"
-                        for group in cls.fields_per_group:
+                        if not is_static:
                             with cpp.scope(
-                                f"{cnd} constexpr (G == Group::{group})", curlies=False
+                                f"T &Get({cls.name} &p_Instance) const noexcept"
                             ):
-                                cpp(f"return Get{group}Fields<Args...>();")
+                                cpp("return p_Instance.*Pointer;")
+                            with cpp.scope(
+                                f"const T &Get(const {cls.name} &p_Instance) const noexcept"
+                            ):
+                                cpp("return p_Instance.*Pointer;")
+
+                            with cpp.scope(
+                                f"template <std::convertible_to<T> U> void Set({cls.name} &p_Instance, U &&p_Value) const noexcept"
+                            ):
+                                cpp("p_Instance.*Pointer = std::forward<U>(p_Value);")
+
+                    def create_cpp_fields_sequence(
+                        fields: list[Field], /, *, group: str | None = None
+                    ) -> list[str]:
+                        return [
+                            f'{static}Field<{field.vtype}>{{"{field.name}", "{field.vtype.replace('"', r'\"')}", &{cls.name}::{field.name}, FieldVisibility::{field.visibility.capitalize()}}}'
+                            for field in fields
+                            if group is None or group in field.groups
+                        ]
+
+                    def create_tuple_sequence(fields: list[str], /, **_) -> str:
+                        return f"std::make_tuple({', '.join(fields)})"
+
+                    def create_array_sequence(
+                        fields: list[str], /, *, vtype: str | None = None
+                    ) -> str:
+                        if vtype is None:
+                            vtype = "T"
+                        return f"Array<Field<{vtype}>, {len(fields)}>{{{', '.join(fields)}}}"
+
+                    def create_get_fields_method(
+                        fields: list[str], /, *, group: str = ""
+                    ) -> None:
+                        fields_cpp = create_cpp_fields_sequence(fields)
+                        with cpp.scope(
+                            f"template <typename... Args> static constexpr auto Get{static}{group}Fields() noexcept"
+                        ):
+                            with cpp.scope(
+                                "if constexpr (sizeof...(Args) == 0)", curlies=False
+                            ):
+                                cpp(f"return {create_tuple_sequence(fields_cpp)};")
+                            with cpp.scope(
+                                "else if constexpr (sizeof...(Args) == 1)",
+                                curlies=False,
+                            ):
+                                cpp(f"return get{group}Array<Args...>();")
+                            with cpp.scope("else", curlies=False):
+                                cpp(
+                                    f"return std::tuple_cat(get{group}Tuple<Args>()...);"
+                                )
+
+                    def create_for_each_method(*, group: str = "") -> None:
+                        with cpp.scope(
+                            f"template <typename... Args, typename F> static constexpr void ForEach{static}{group}Field(F &&p_Fun) noexcept"
+                        ):
+                            cpp(f"const auto fields = Get{group}Fields<Args...>();")
+                            cpp("ForEachField(fields, std::forward<F>(p_Fun));")
+
+                    with cpp.scope(
+                        f"template <typename T, typename F> static constexpr void For{static}EachField(const T &p_Fields, F &&p_Fun) noexcept"
+                    ):
+                        with cpp.scope("if constexpr (Iterable<T>)", curlies=False):
+                            with cpp.scope(
+                                "for (const auto &field : p_Fields)",
+                                curlies=False,
+                            ):
+                                cpp("std::forward<F>(p_Fun)(field);")
+                        with cpp.scope("else", curlies=False):
+                            cpp(
+                                "std::apply([&p_Fun](const auto &...p_Field) {(std::forward<F>(p_Fun)(p_Field), ...);}, p_Fields);"
+                            )
+
+                    create_get_fields_method(fcollection.all)
+                    create_for_each_method()
+
+                    if fcollection.per_group:
+                        with cpp.scope(
+                            f"template <Group G, typename... Args> static constexpr auto Get{static}FieldsByGroup() noexcept"
+                        ):
+                            cnd = "if"
+                            for group in fcollection.per_group:
+                                with cpp.scope(
+                                    f"{cnd} constexpr (G == Group::{group})",
+                                    curlies=False,
+                                ):
+                                    cpp(f"return Get{group}Fields<Args...>();")
+                                cnd = "else if"
+
+                            with cpp.scope(
+                                "else if constexpr (sizeof...(Args) == 1)",
+                                curlies=False,
+                            ):
+                                cpp("return Array<Field<Args...>, 0>{};")
+                            with cpp.scope("else", curlies=False):
+                                cpp("return std::tuple{};")
+
+                        with cpp.scope(
+                            f"template <Group G, typename... Args, typename F> static constexpr void ForEach{static}FieldByGroup(F &&p_Fun) noexcept"
+                        ):
+                            cpp("const auto fields = GetFieldsByGroup<G, Args...>();")
+                            cpp("ForEachField(fields, std::forward<F>(p_Fun));")
+
+                    for group, fields in fcollection.per_group.items():
+                        create_get_fields_method(fields, group=group)
+                        create_for_each_method(group=group)
+
+                    def create_if_constexpr_per_type(
+                        seq_creator: Callable[[list[str]], str],
+                        null: str,
+                        /,
+                        *,
+                        group: str | None = None,
+                    ) -> None:
+                        cnd = "if"
+                        for vtype, fields in fcollection.per_type.items():
+                            fields_cpp = create_cpp_fields_sequence(fields, group=group)
+                            if not fields_cpp:
+                                continue
+                            with cpp.scope(
+                                f"{cnd} constexpr (std::is_same_v<T, {vtype}>)",
+                                curlies=False,
+                            ):
+                                cpp(f"return {seq_creator(fields_cpp, vtype=vtype)};")
                             cnd = "else if"
-
-                        with cpp.scope(
-                            "else if constexpr (sizeof...(Args) == 1)", curlies=False
-                        ):
-                            cpp("return Array<Field<Args...>, 0>{};")
-                        with cpp.scope("else", curlies=False):
-                            cpp("return std::tuple{};")
-
-                    with cpp.scope(
-                        "template <Group G, typename... Args, typename F> static constexpr void ForEachFieldByGroup(F &&p_Fun) noexcept"
-                    ):
-                        cpp("const auto fields = GetFieldsByGroup<G, Args...>();")
-                        cpp("ForEachField(fields, std::forward<F>(p_Fun));")
-
-                for group, fields in cls.fields_per_group.items():
-                    create_get_fields_method(fields, group=group)
-                    create_for_each_method(group=group)
-
-                def create_if_constexpr_per_type(
-                    seq_creator: Callable[[list[str]], str],
-                    null: str,
-                    /,
-                    *,
-                    group: str | None = None,
-                ) -> None:
-                    cnd = "if"
-                    for vtype, fields in cls.fields_per_type.items():
-                        fields_cpp = create_cpp_fields_sequence(fields, group=group)
-                        if not fields_cpp:
-                            continue
-                        with cpp.scope(
-                            f"{cnd} constexpr (std::is_same_v<T, {vtype}>)",
-                            curlies=False,
-                        ):
-                            cpp(f"return {seq_creator(fields_cpp, vtype=vtype)};")
-                        cnd = "else if"
-                    if cnd == "else if":
-                        with cpp.scope("else", curlies=False):
+                        if cnd == "else if":
+                            with cpp.scope("else", curlies=False):
+                                cpp(f"return {null};")
+                        else:
                             cpp(f"return {null};")
-                    else:
-                        cpp(f"return {null};")
 
-                def crate_get_tuple_method(*, group: str | None = None) -> None:
-                    with cpp.scope(
-                        f"template <typename T> static constexpr auto get{group if group is not None else ''}Tuple() noexcept"
-                    ):
-                        create_if_constexpr_per_type(
-                            create_tuple_sequence, "std::tuple{}", group=group
-                        )
+                    def crate_get_tuple_method(*, group: str | None = None) -> None:
+                        with cpp.scope(
+                            f"template <typename T> static constexpr auto get{static}{group if group is not None else ''}Tuple() noexcept"
+                        ):
+                            create_if_constexpr_per_type(
+                                create_tuple_sequence, "std::tuple{}", group=group
+                            )
 
-                def crate_get_array_method(*, group: str | None = None) -> None:
-                    with cpp.scope(
-                        f"template <typename T> static constexpr auto get{group if group is not None else ''}Array() noexcept"
-                    ):
-                        create_if_constexpr_per_type(
-                            create_array_sequence, "Array<Field<T>, 0>{}", group=group
-                        )
+                    def crate_get_array_method(*, group: str | None = None) -> None:
+                        with cpp.scope(
+                            f"template <typename T> static constexpr auto get{static}{group if group is not None else ''}Array() noexcept"
+                        ):
+                            create_if_constexpr_per_type(
+                                create_array_sequence,
+                                "Array<Field<T>, 0>{}",
+                                group=group,
+                            )
 
-                cpp("private:")
-                crate_get_array_method()
-                crate_get_tuple_method()
-                for group in cls.fields_per_group:
-                    crate_get_array_method(group=group)
-                    crate_get_tuple_method(group=group)
+                    cpp("private:")
+                    crate_get_array_method()
+                    crate_get_tuple_method()
+                    for group in fcollection.per_group:
+                        crate_get_array_method(group=group)
+                        crate_get_tuple_method(group=group)
+
+                generate_reflect_body(cls.nstatic, is_static=False)
+                generate_reflect_body(cls.static, is_static=True)
 
     cpp.write(path)
     elapsed = perf_counter() - t1
