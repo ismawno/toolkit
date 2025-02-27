@@ -451,7 +451,7 @@ def main() -> None:
                     ) -> str:
                         if vtype is None:
                             vtype = "T"
-                        return f"Array<Field<{vtype}>, {len(fields)}>{{{', '.join(fields)}}}"
+                        return f"Array<{static}Field<{vtype}>, {len(fields)}>{{{', '.join(fields)}}}"
 
                     def create_get_fields_method(
                         fields: list[str], /, *, group: str = ""
@@ -468,18 +468,22 @@ def main() -> None:
                                 "else if constexpr (sizeof...(Args) == 1)",
                                 curlies=False,
                             ):
-                                cpp(f"return get{group}Array<Args...>();")
+                                cpp(f"return get{static}{group}Array<Args...>();")
                             with cpp.scope("else", curlies=False):
                                 cpp(
-                                    f"return std::tuple_cat(get{group}Tuple<Args>()...);"
+                                    f"return std::tuple_cat(get{static}{group}Tuple<Args>()...);"
                                 )
 
                     def create_for_each_method(*, group: str = "") -> None:
                         with cpp.scope(
                             f"template <typename... Args, typename F> static constexpr void ForEach{static}{group}Field(F &&p_Fun) noexcept"
                         ):
-                            cpp(f"const auto fields = Get{group}Fields<Args...>();")
-                            cpp("ForEachField(fields, std::forward<F>(p_Fun));")
+                            cpp(
+                                f"const auto fields = Get{static}{group}Fields<Args...>();"
+                            )
+                            cpp(
+                                f"ForEach{static}Field(fields, std::forward<F>(p_Fun));"
+                            )
 
                     with cpp.scope(
                         f"template <typename T, typename F> static constexpr void For{static}EachField(const T &p_Fields, F &&p_Fun) noexcept"
@@ -505,25 +509,29 @@ def main() -> None:
                             cnd = "if"
                             for group in fcollection.per_group:
                                 with cpp.scope(
-                                    f"{cnd} constexpr (G == Group::{group})",
+                                    f"{cnd} constexpr (G == {static}Group::{group})",
                                     curlies=False,
                                 ):
-                                    cpp(f"return Get{group}Fields<Args...>();")
+                                    cpp(f"return Get{static}{group}Fields<Args...>();")
                                 cnd = "else if"
 
                             with cpp.scope(
                                 "else if constexpr (sizeof...(Args) == 1)",
                                 curlies=False,
                             ):
-                                cpp("return Array<Field<Args...>, 0>{};")
+                                cpp(f"return Array<{static}Field<Args...>, 0>{{}};")
                             with cpp.scope("else", curlies=False):
                                 cpp("return std::tuple{};")
 
                         with cpp.scope(
                             f"template <Group G, typename... Args, typename F> static constexpr void ForEach{static}FieldByGroup(F &&p_Fun) noexcept"
                         ):
-                            cpp("const auto fields = GetFieldsByGroup<G, Args...>();")
-                            cpp("ForEachField(fields, std::forward<F>(p_Fun));")
+                            cpp(
+                                f"const auto fields = Get{static}FieldsByGroup<G, Args...>();"
+                            )
+                            cpp(
+                                f"ForEach{static}Field(fields, std::forward<F>(p_Fun));"
+                            )
 
                     for group, fields in fcollection.per_group.items():
                         create_get_fields_method(fields, group=group)
@@ -567,7 +575,7 @@ def main() -> None:
                         ):
                             create_if_constexpr_per_type(
                                 create_array_sequence,
-                                "Array<Field<T>, 0>{}",
+                                f"Array<{static}Field<T>, 0>{{}}",
                                 group=group,
                             )
 
