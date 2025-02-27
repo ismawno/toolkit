@@ -86,14 +86,14 @@ class Macro:
 @dataclass(frozen=True)
 class Field:
     name: str
-    privacy: str
+    visibility: str
     vtype: str
     is_static: bool
     groups: set[str]
 
     def as_str(self, parent: str, /) -> str:
         sct = "static" if self.is_static else "non-static"
-        return f"{sct} {self.privacy} {self.vtype} {parent}::{self.name}"
+        return f"{sct} {self.visibility} {self.vtype} {parent}::{self.name}"
 
 
 @dataclass(frozen=True)
@@ -104,207 +104,6 @@ class ClassInfo:
     fields_per_type: dict[str, list[Field]]
     fields_per_group: dict[str, list[Field]]
     template_decl: str | None
-
-
-def parse_class(
-    macro: Macro,
-    lines: list[str],
-    template_line: str | None,
-    clstype: str,
-    namespaces: list[str],
-    exclude_non_public: bool,
-    /,
-) -> ClassInfo:
-    clsline = lines[0].replace("template ", "template")
-    name = re.match(rf".*{clstype} ([a-zA-Z0-9_<>, ]+)", clsline).group(1)
-    privacy = "private" if clstype == "class" else "public"
-
-    mtch = re.match(r".*template<(.*?)>", clsline)
-    template_decl = mtch.group(1) if mtch is not None else None
-
-    if template_decl is not None and template_line is not None:
-        raise ValueError("Found duplicate template line")
-
-    if template_decl is None and template_line is not None:
-        template_decl = (
-            re.match(r".*template<(.*?)>", template_line).group(1).replace(" ,", ",")
-        )
-
-    if template_decl is not None and "<" not in name:
-        template_vars = ", ".join(
-            [var.split(" ")[1] for var in template_decl.replace(", ", ",").split(",")]
-        )
-        name = f"{name}<{template_vars}>"
-
-    groups = []
-    fields = []
-    fields_per_type = {}
-    fields_per_group = {}
-
-    scope_counter = 0
-    ignore = False
-    for line in lines:
-        line = line.strip()
-        if macro.group_begin in line:
-            group = (
-                re.match(rf"{macro.group_begin}\((.*?)\)", line)
-                .group(1)
-                .replace('"', "")
-            )
-            if group == "":
-                raise ValueError("Group name cannot be empty")
-            if group == "Group":
-                raise ValueError("Group name cannot be 'Group'. It is a reserved name")
-            groups.append(group)
-
-        elif macro.group_end in line:
-            groups.pop()
-
-        if macro.ignore_end in line:
-            ignore = False
-        elif ignore or macro.ignore_begin in line:
-            ignore = True
-            continue
-
-        if line == "};":
-            break
-
-        if "{" in line:
-            scope_counter += 1
-
-        if "}" in line:
-            scope_counter -= 1
-
-        if scope_counter < 0:
-            raise ValueError(
-                f"Scope counter reached a negative value!: {scope_counter}"
-            )
-        if scope_counter != 1:
-            continue
-
-        def check_privacy(look_for: str, /) -> bool:
-            nonlocal privacy
-            if f"{look_for}:" in line:
-                privacy = look_for
-
-        check_privacy("private")
-        check_privacy("public")
-        check_privacy("protected")
-        if privacy != "public" and exclude_non_public:
-            continue
-
-        if not line.endswith(";") or "noexcept" in line:
-            continue
-
-        line = line.replace(";", "").strip().removeprefix("inline ")
-        if "=" not in line and "{" not in line and ("(" in line or ")" in line):
-            continue
-
-        is_static = line.startswith("static")
-        line = line.removeprefix("static ").removeprefix("inline ")
-
-        line = re.sub(r"=.*", "", line)
-        line = re.sub(r"{.*", "", line).strip().replace(", ", ",")
-
-        splits = line.split(" ")
-        ln = len(splits) - ("const" in line)
-        if ln < 2:
-            continue
-
-        # Wont work for members written like int*x. Must be int* x or int *x
-        vtype, vname = splits[:2]
-        if "*" in vname:
-            vtype = f"{vtype}*"
-            vname = vname.replace("*", "")
-        if "&" in vname:
-            vtype = f"{vtype}&"
-            vname = vname.replace("&", "")
-
-        field = Field(
-            vname,
-            privacy,
-            vtype.replace(",", ", "),
-            is_static,
-            set(groups),
-        )
-        fields.append(field)
-        fields_per_type.setdefault(field.vtype, []).append(field)
-        for group in groups:
-            fields_per_group.setdefault(group, []).append(field)
-
-    if ignore:
-        raise ValueError("Ignore macro was not closed properly")
-
-    if groups:
-        raise ValueError("Group macro was not closed properly")
-
-    return ClassInfo(
-        name,
-        namespaces,
-        fields,
-        fields_per_type,
-        fields_per_group,
-        template_decl,
-    )
-
-
-def parse_classes_in_file(
-    lines: list[str],
-    log: Callable[[str], None],
-    macro: Macro,
-    exclude_non_public: bool,
-    /,
-) -> list[ClassInfo]:
-
-    classes = []
-    namespaces = []
-    for i, line in enumerate(lines):
-        if line.endswith(";"):
-            continue
-
-        match = re.match(r"namespace ([a-zA-Z0-9_::]+)", line)
-        if match is not None:
-            namespace = match.group(1).split("::")
-            namespaces.extend(namespace)
-            continue
-
-        is_class = "class" in line
-        is_struct = not is_class and "struct" in line
-
-        if not is_class and not is_struct:
-            continue
-
-        sublines = lines[i:]
-        for subline in sublines:
-            found_macro = macro.declare in subline
-            found_end = subline.endswith("};")
-            if found_macro or found_end:
-                break
-        else:
-            continue
-
-        if found_end:
-            continue
-
-        template_line = (
-            lines[i - 1]
-            if i > 0
-            and "template" in lines[i - 1]
-            and "struct" not in lines[i - 1]
-            and "class" not in lines[i - 1]
-            else None
-        )
-        clstype = "class" if is_class else "struct"
-        clinfo = parse_class(
-            macro, sublines, template_line, clstype, namespaces, exclude_non_public
-        )
-
-        log(f"Found '{clinfo.name}' {clstype}. Parsing...")
-        for field in clinfo.fields:
-            log(f"  Successfully registered field member '{field.as_str(clinfo.name)}'")
-        classes.append(clinfo)
-
-    return classes
 
 
 def main() -> None:
@@ -323,6 +122,207 @@ def main() -> None:
     def log(*pargs, **kwargs) -> None:
         if args.verbose:
             print(*pargs, **kwargs)
+
+    def parse_class(
+        lines: list[str],
+        template_line: str | None,
+        clstype: str,
+        namespaces: list[str],
+        /,
+    ) -> ClassInfo:
+        clsline = lines[0].replace("template ", "template")
+        name = re.match(rf".*{clstype} ([a-zA-Z0-9_<>, ]+)", clsline).group(1)
+        visibility = "private" if clstype == "class" else "public"
+
+        mtch = re.match(r".*template<(.*?)>", clsline)
+        template_decl = mtch.group(1) if mtch is not None else None
+
+        if template_decl is not None and template_line is not None:
+            raise ValueError("Found duplicate template line")
+
+        if template_decl is None and template_line is not None:
+            template_decl = (
+                re.match(r".*template<(.*?)>", template_line)
+                .group(1)
+                .replace(" ,", ",")
+            )
+
+        if template_decl is not None and "<" not in name:
+            template_vars = ", ".join(
+                [
+                    var.split(" ")[1]
+                    for var in template_decl.replace(", ", ",").split(",")
+                ]
+            )
+            name = f"{name}<{template_vars}>"
+
+        groups = []
+        fields = []
+        fields_per_type = {}
+        fields_per_group = {}
+
+        scope_counter = 0
+        ignore = False
+        for line in lines:
+            line = line.strip()
+            if macro.group_begin in line:
+                group = (
+                    re.match(rf"{macro.group_begin}\((.*?)\)", line)
+                    .group(1)
+                    .replace('"', "")
+                )
+                if group == "":
+                    raise ValueError("Group name cannot be empty")
+                if group == "Group":
+                    raise ValueError(
+                        "Group name cannot be 'Group'. It is a reserved name"
+                    )
+                groups.append(group)
+
+            elif macro.group_end in line:
+                groups.pop()
+
+            if macro.ignore_end in line:
+                ignore = False
+            elif ignore or macro.ignore_begin in line:
+                ignore = True
+                continue
+
+            if line == "};":
+                break
+
+            if "{" in line:
+                scope_counter += 1
+
+            if "}" in line:
+                scope_counter -= 1
+
+            if scope_counter < 0:
+                raise ValueError(
+                    f"Scope counter reached a negative value!: {scope_counter}"
+                )
+            if scope_counter != 1:
+                continue
+
+            def check_privacy(look_for: str, /) -> bool:
+                nonlocal visibility
+                if f"{look_for}:" in line:
+                    visibility = look_for
+
+            check_privacy("private")
+            check_privacy("public")
+            check_privacy("protected")
+            if visibility != "public" and args.exclude_non_public:
+                continue
+
+            if not line.endswith(";") or "noexcept" in line:
+                continue
+
+            line = line.replace(";", "").strip().removeprefix("inline ")
+            if "=" not in line and "{" not in line and ("(" in line or ")" in line):
+                continue
+
+            is_static = line.startswith("static")
+            line = line.removeprefix("static ").removeprefix("inline ")
+
+            line = re.sub(r"=.*", "", line)
+            line = re.sub(r"{.*", "", line).strip().replace(", ", ",")
+
+            splits = line.split(" ")
+            ln = len(splits) - ("const" in line)
+            if ln < 2:
+                continue
+
+            # Wont work for members written like int*x. Must be int* x or int *x
+            vtype, vname = splits[:2]
+            if "*" in vname:
+                vtype = f"{vtype}*"
+                vname = vname.replace("*", "")
+            if "&" in vname:
+                vtype = f"{vtype}&"
+                vname = vname.replace("&", "")
+
+            field = Field(
+                vname,
+                visibility,
+                vtype.replace(",", ", "),
+                is_static,
+                set(groups),
+            )
+            fields.append(field)
+            fields_per_type.setdefault(field.vtype, []).append(field)
+            for group in groups:
+                fields_per_group.setdefault(group, []).append(field)
+
+        if ignore:
+            raise ValueError("Ignore macro was not closed properly")
+
+        if groups:
+            raise ValueError("Group macro was not closed properly")
+
+        return ClassInfo(
+            name,
+            namespaces,
+            fields,
+            fields_per_type,
+            fields_per_group,
+            template_decl,
+        )
+
+    def parse_classes_in_file(
+        lines: list[str],
+        /,
+    ) -> list[ClassInfo]:
+
+        classes = []
+        namespaces = []
+        for i, line in enumerate(lines):
+            if line.endswith(";"):
+                continue
+
+            match = re.match(r"namespace ([a-zA-Z0-9_::]+)", line)
+            if match is not None:
+                namespace = match.group(1).split("::")
+                namespaces.extend(namespace)
+                continue
+
+            is_class = "class" in line
+            is_struct = not is_class and "struct" in line
+
+            if not is_class and not is_struct:
+                continue
+
+            sublines = lines[i:]
+            for subline in sublines:
+                found_macro = macro.declare in subline
+                found_end = subline.endswith("};")
+                if found_macro or found_end:
+                    break
+            else:
+                continue
+
+            if found_end:
+                continue
+
+            template_line = (
+                lines[i - 1]
+                if i > 0
+                and "template" in lines[i - 1]
+                and "struct" not in lines[i - 1]
+                and "class" not in lines[i - 1]
+                else None
+            )
+            clstype = "class" if is_class else "struct"
+            clinfo = parse_class(sublines, template_line, clstype, namespaces)
+
+            log(f"Found '{clinfo.name}' {clstype}. Parsing...")
+            for field in clinfo.fields:
+                log(
+                    f"  Successfully registered field member '{field.as_str(clinfo.name)}'"
+                )
+            classes.append(clinfo)
+
+        return classes
 
     # if output.exists() and output.stat().st_mtime > ffile.stat().st_mtime:
     #     log(f"Output file '{output}' is newer than input file '{ffile}'. Exiting...")
@@ -343,9 +343,7 @@ def main() -> None:
         if macro.declare not in content:
             log(f"Macro '{macro.declare}' not found in file '{ffile}'. Exiting...")
             return
-        classes = parse_classes_in_file(
-            content.splitlines(), log, macro, args.exclude_non_public
-        )
+        classes = parse_classes_in_file(content.splitlines())
 
     cpp = CPPFile(args.output.name)
     cpp(f'#include "{ffile.resolve()}"')
@@ -371,12 +369,17 @@ def main() -> None:
                     with cpp.scope(f"enum class Group : {dtype}", semicolon=True):
                         for i, group in enumerate(cls.fields_per_group):
                             cpp(f"{group} = {i},")
+                with cpp.scope("enum class FieldVisibility : u8", semicolon=True):
+                    cpp("Private = 0,")
+                    cpp("Protected = 1,")
+                    cpp("Public = 2")
 
                 with cpp.scope("template <typename T> struct Field", semicolon=True):
                     cpp("using Type = T;")
                     cpp("const char *Name;")
                     cpp("const char *TypeString;")
                     cpp(f"T {cls.name}::* Pointer;")
+                    cpp("FieldVisibility Visibility;")
 
                     with cpp.scope(f"T &Get({cls.name} &p_Instance) const noexcept"):
                         cpp("return p_Instance.*Pointer;")
@@ -394,7 +397,7 @@ def main() -> None:
                     fields: list[Field], /, *, group: str | None = None
                 ) -> list[str]:
                     return [
-                        f'Field<{field.vtype}>{{"{field.name}", "{field.vtype.replace('"', r'\"')}", &{cls.name}::{field.name}}}'
+                        f'Field<{field.vtype}>{{"{field.name}", "{field.vtype.replace('"', r'\"')}", &{cls.name}::{field.name}, FieldVisibility::{field.visibility.capitalize()}}}'
                         for field in fields
                         if group is None or group in field.groups
                     ]
