@@ -409,8 +409,6 @@ def main() -> None:
                     fields: list[str], /, *, group: str = ""
                 ) -> None:
                     fields_cpp = create_cpp_fields_sequence(fields)
-                    if not fields_cpp:
-                        return
                     with cpp.scope(
                         f"template <typename... Args> static constexpr auto Get{group}Fields() noexcept"
                     ):
