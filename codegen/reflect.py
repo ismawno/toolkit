@@ -190,10 +190,11 @@ def parse_class(
         check_privacy("public")
         check_privacy("protected")
 
-        if not line.endswith(";"):
+        if not line.endswith(";") or "noexcept" in line:
             continue
+
         line = line.replace(";", "").strip().removeprefix("inline ")
-        if "=" not in line and "{" not in line and "(" in line:
+        if "=" not in line and "{" not in line and ("(" in line or ")" in line):
             continue
 
         is_static = line.startswith("static")
@@ -202,8 +203,13 @@ def parse_class(
         line = re.sub(r"=.*", "", line)
         line = re.sub(r"{.*", "", line).strip().replace(", ", ",")
 
+        splits = line.split(" ")
+        ln = len(splits) - ("const" in line)
+        if ln < 2:
+            continue
+
         # Wont work for members written like int*x. Must be int* x or int *x
-        vtype, vname = line.split(" ", 1)
+        vtype, vname = splits[:2]
         if "*" in vname:
             vtype = f"{vtype}*"
             vname = vname.replace("*", "")
