@@ -108,6 +108,7 @@ if (TOOLKIT_ENABLE_INSTRUMENTATION)
     # Because of this check, the profiler binaries will always persist and will keep the first cmake options that were set.
     # Recompile with other options by removing the profiler directory inside your build directory
 
+    set(NO_STATISTICS OFF CACHE BOOL "I hate cmake" FORCE)
     if (NOT EXISTS ${CMAKE_BINARY_DIR}/profiler/gui AND TOOLKIT_BUILD_PROFILER STREQUAL "gui")
         add_subdirectory(${tracy_SOURCE_DIR}/profiler ${CMAKE_BINARY_DIR}/profiler/gui)
         configure_tracy(tracy-profiler)
