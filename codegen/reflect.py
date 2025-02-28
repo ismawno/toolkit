@@ -9,12 +9,12 @@ import re
 
 
 def parse_arguments() -> Namespace:
-
     desc = """
-    This python script takes in a c++ file and scans it for classes/structs marked with a
-    special reflect macro (specified with the --macro option). If it finds any, it will generate
-    another c++ file containing a template specialization of the 'Reflect' class (can be specified as well),
-    which will contain all sorts of compile and runtime reflection information about the class/struct.
+    This python script takes in a C++ file and scans it for classes/structs marked with a
+    special reflect macro (specified with the '--macro' option). If it finds any, it will generate
+    another C++ file containing a template specialization of a special reflect class (specified
+    with the '--class-name' option) which will contain compile and run time reflection
+    information about the class/struct's fields.
     """
     parser = ArgumentParser(description=desc)
 
@@ -23,7 +23,7 @@ def parse_arguments() -> Namespace:
         "--input",
         type=Path,
         required=True,
-        help="The c++ file to scan for the reflect macro.",
+        help="The C++ file to scan for the reflect macro.",
     )
     parser.add_argument(
         "-o",
