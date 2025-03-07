@@ -7,6 +7,11 @@
 
 #    include "tracy/Tracy.hpp"
 
+namespace TKit
+{
+using ProfilingPlotFormat = tracy::PlotFormatType;
+} // namespace TKit
+
 #    define TKIT_PROFILE_MARK_FRAME() FrameMark
 #    define TKIT_PROFILE_MARK_FRAME_START(p_Name) FrameMarkStart(p_Name)
 #    define TKIT_PROFILE_MARK_FRAME_END(p_Name) FrameMarkEnd(p_Name)
@@ -39,6 +44,10 @@
 
 #    define TKIT_PROFILE_MARK_POOLED_ALLOCATION(p_Name, p_Ptr, p_Size) TracyAllocN(p_Ptr, p_Size, p_Name)
 #    define TKIT_PROFILE_MARK_POOLED_DEALLOCATION(p_Name, p_Ptr) TracyFreeN(p_Ptr, p_Name)
+
+#    define TKIT_PROFILE_PLOT(p_Name, p_Value) TracyPlot(p_Name, p_Value)
+#    define TKIT_PROFILE_PLOT_CONFIG(p_Name, p_Format, p_Step, p_Fill, p_Color)                                        \
+        TracyPlotConfig(p_Name, p_Format, p_Step, p_Fill, p_Color)
 
 #else
 
@@ -74,5 +83,8 @@
 
 #    define TKIT_PROFILE_MARK_POOLED_ALLOCATION(p_Name, p_Ptr, p_Size)
 #    define TKIT_PROFILE_MARK_POOLED_DEALLOCATION(p_Name, p_Ptr)
+
+#    define TKIT_PROFILE_PLOT(p_Name, p_Value)
+#    define TKIT_PROFILE_PLOT_CONFIG(p_Name, p_Format, p_Step, p_Fill, p_Color)
 
 #endif
