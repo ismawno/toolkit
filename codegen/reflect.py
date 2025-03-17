@@ -561,7 +561,7 @@ def main() -> None:
                         else:
                             cpp(f"return {null};")
 
-                    def crate_get_tuple_method(*, group: str | None = None) -> None:
+                    def create_get_tuple_method(*, group: str | None = None) -> None:
                         with cpp.scope(
                             f"template <typename T> static constexpr auto get{static}{group if group is not None else ''}Tuple() noexcept"
                         ):
@@ -569,7 +569,7 @@ def main() -> None:
                                 create_tuple_sequence, "std::tuple{}", group=group
                             )
 
-                    def crate_get_array_method(*, group: str | None = None) -> None:
+                    def create_get_array_method(*, group: str | None = None) -> None:
                         with cpp.scope(
                             f"template <typename T> static constexpr auto get{static}{group if group is not None else ''}Array() noexcept"
                         ):
@@ -580,11 +580,11 @@ def main() -> None:
                             )
 
                     cpp("private:")
-                    crate_get_array_method()
-                    crate_get_tuple_method()
+                    create_get_array_method()
+                    create_get_tuple_method()
                     for group in fcollection.per_group:
-                        crate_get_array_method(group=group)
-                        crate_get_tuple_method(group=group)
+                        create_get_array_method(group=group)
+                        create_get_tuple_method(group=group)
 
                 generate_reflect_body(cls.nstatic, is_static=False)
                 generate_reflect_body(cls.static, is_static=True)
