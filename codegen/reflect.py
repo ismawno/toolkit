@@ -340,7 +340,7 @@ def parse_classes_in_file(
         clstype = "class" if is_class else "struct"
         clinfo = parse_class(sublines, template_line, clstype, namespaces)
 
-        log(f"Found '{clinfo.name}' {clstype}. Parsing...")
+        log(Style.BOLD + f"Found '{clinfo.name}' {clstype}. Parsing..." + Style.RESET)
         for field in clinfo.nstatic.all:
             log(
                 f"  Successfully registered field member '{field.as_str(clinfo.name, is_static=False)}'"
