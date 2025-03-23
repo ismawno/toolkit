@@ -9,6 +9,32 @@ import sys
 import re
 
 
+class Style:
+    RESET = "\033[0m"
+    BOLD = "\033[1m"
+
+    FG_RED = "\033[31m"
+    FG_GREEN = "\033[32m"
+    FG_YELLOW = "\033[33m"
+    FG_BLUE = "\033[34m"
+    FG_CYAN = "\033[36m"
+
+    BG_YELLOW = "\033[43m"
+
+
+def exit_ok(msg: str, /) -> None:
+    print(reflect_label + Style.FG_GREEN + msg + Style.RESET)
+    sys.exit()
+
+
+def exit_error(msg: str, /) -> None:
+    print(
+        reflect_label + Style.FG_RED + Style.BOLD + f"Error: {msg}" + Style.RESET,
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+
 def parse_arguments() -> Namespace:
     desc = """
     This python script takes in a C++ file and scans it for classes/structs marked with a
@@ -112,22 +138,9 @@ class ClassInfo:
     template_decl: str | None
 
 
-t1 = perf_counter()
-args = parse_arguments()
-output: Path = args.output
-ffile: Path = args.input
-macro = Macro(
-    args.declare_macro,
-    f"{args.ignore_macro}_BEGIN",
-    f"{args.ignore_macro}_END",
-    f"{args.group_macro}_BEGIN",
-    f"{args.group_macro}_END",
-)
-
-
-def log(*pargs, **kwargs) -> None:
+def log(msg: str, /, *pargs, **kwargs) -> None:
     if args.verbose:
-        print(*pargs, **kwargs)
+        print(reflect_label + msg, *pargs, **kwargs)
 
 
 def parse_class(
@@ -145,7 +158,7 @@ def parse_class(
     template_decl = mtch.group(1) if mtch is not None else None
 
     if template_decl is not None and template_line is not None:
-        raise ValueError("Found duplicate template line")
+        exit_error("Found duplicate template line.")
 
     if template_decl is None and template_line is not None:
         template_decl = (
@@ -179,9 +192,9 @@ def parse_class(
                 .replace('"', "")
             )
             if group == "":
-                raise ValueError("Group name cannot be empty")
+                exit_error("Group name cannot be empty")
             if group == "Static":
-                raise ValueError("Group name cannot be 'Static'. It is a reserved name")
+                exit_error("Group name cannot be 'Static'. It is a reserved name")
             groups.append(group)
 
         elif macro.group_end in line:
@@ -203,9 +216,7 @@ def parse_class(
             scope_counter -= 1
 
         if scope_counter < 0:
-            raise ValueError(
-                f"Scope counter reached a negative value!: {scope_counter}"
-            )
+            exit_error(f"Scope counter reached a negative value!: {scope_counter}")
         if scope_counter != 1:
             continue
 
@@ -267,10 +278,10 @@ def parse_class(
             fields_per_group.setdefault(group, []).append(field)
 
     if ignore:
-        raise ValueError("Ignore macro was not closed properly")
+        exit_error("Ignore macro was not closed properly")
 
     if groups:
-        raise ValueError("Group macro was not closed properly")
+        exit_error("Group macro was not closed properly")
 
     return ClassInfo(
         name,
@@ -343,10 +354,18 @@ def parse_classes_in_file(
     return classes
 
 
-# if output.exists() and output.stat().st_mtime > ffile.stat().st_mtime:
-#     log(f"Output file '{output}' is newer than input file '{ffile}'. Exiting...")
-#     return
-
+t1 = perf_counter()
+reflect_label = Style.FG_BLUE + "[REFLECT]" + Style.RESET + " "
+args = parse_arguments()
+output: Path = args.output
+ffile: Path = args.input
+macro = Macro(
+    args.declare_macro,
+    f"{args.ignore_macro}_BEGIN",
+    f"{args.ignore_macro}_END",
+    f"{args.group_macro}_BEGIN",
+    f"{args.group_macro}_END",
+)
 path = output.parent
 with ffile.open("r") as f:
 
@@ -360,7 +379,11 @@ with ffile.open("r") as f:
         .replace(", class", ", typename")
     )
     if macro.declare not in content:
-        log(f"Macro '{macro.declare}' not found in file '{ffile}'. Exiting...")
+        log(
+            Style.FG_YELLOW
+            + f"Macro '{macro.declare}' not found in file '{ffile}'. Exiting..."
+            + Style.RESET
+        )
         sys.exit()
     classes = parse_classes_in_file(content.splitlines())
 
@@ -580,4 +603,5 @@ with cpp.scope("namespace TKit", indent=False):
 
 cpp.write(path)
 elapsed = perf_counter() - t1
-log(f"Reflection code generated in {elapsed:.2f} seconds.")
+
+exit_ok(f"Reflection code generated in {elapsed:.2f} seconds.")
