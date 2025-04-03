@@ -20,6 +20,7 @@ The features of this library are divided into the following six categories. Spec
 
 - [tkit/profiling](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/profiling): A wrapper around the Tracy profiler macros to instrument and profile an application, along with some very simple classes to manage timespans.
 
+Toolkit also features some small code generation scripts that can scan `.hpp` or `.cpp` files of your choosing, and generate reflection code for every marked `class` or `struct` they see. The script [reflect.py](https://github.com/ismawno/toolkit/blob/main/codegen/reflect.py) is a command line script that is in charge of this functionality. Use the `-h` or `--help` flag to learn more about its capabilities.
 All of the required build setup is done through CMake, where I have also added some functions to help with compiler and linker flags setup that I find very useful, especially when controlling such flags for third-party libraries (which may not be very "best practicey" but makes my life easier).
 
 ## Dependencies and Third-Party Libraries
