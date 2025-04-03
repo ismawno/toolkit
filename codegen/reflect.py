@@ -3,40 +3,13 @@ from argparse import ArgumentParser, Namespace
 from pathlib import Path
 from dataclasses import dataclass
 from collections.abc import Callable
-from time import perf_counter
 
 import sys
 import re
 
+sys.path.append(str(Path(__file__).parent.parent))
 
-# vtype.replace('"', r'\"'), change that.
-# line 404, avoid nested "
-# move this to convoy
-# reorganize convoy with folders
-class Style:
-    RESET = "\033[0m"
-    BOLD = "\033[1m"
-
-    FG_RED = "\033[31m"
-    FG_GREEN = "\033[32m"
-    FG_YELLOW = "\033[33m"
-    FG_BLUE = "\033[34m"
-    FG_CYAN = "\033[36m"
-
-    BG_YELLOW = "\033[43m"
-
-
-def exit_ok(msg: str, /) -> None:
-    print(reflect_label + Style.FG_GREEN + msg + Style.RESET)
-    sys.exit()
-
-
-def exit_error(msg: str, /) -> None:
-    print(
-        reflect_label + Style.FG_RED + Style.BOLD + f"Error: {msg}" + Style.RESET,
-        file=sys.stderr,
-    )
-    sys.exit(1)
+from convoy import Convoy
 
 
 def parse_arguments() -> Namespace:
@@ -142,11 +115,6 @@ class ClassInfo:
     template_decl: str | None
 
 
-def log(msg: str, /, *pargs, **kwargs) -> None:
-    if args.verbose:
-        print(reflect_label + msg, *pargs, **kwargs)
-
-
 def parse_class(
     lines: list[str],
     template_line: str | None,
@@ -162,7 +130,7 @@ def parse_class(
     template_decl = mtch.group(1) if mtch is not None else None
 
     if template_decl is not None and template_line is not None:
-        exit_error("Found duplicate template line.")
+        Convoy.exit_error("Found duplicate template line.")
 
     if template_decl is None and template_line is not None:
         template_decl = (
@@ -196,9 +164,11 @@ def parse_class(
                 .replace('"', "")
             )
             if group == "":
-                exit_error("Group name cannot be empty")
+                Convoy.exit_error("Group name cannot be empty.")
             if group == "Static":
-                exit_error("Group name cannot be 'Static'. It is a reserved name")
+                Convoy.exit_error(
+                    "Group name cannot be <bold>Static</bold>. It is a reserved name."
+                )
             groups.append(group)
 
         elif macro.group_end in line:
@@ -220,7 +190,9 @@ def parse_class(
             scope_counter -= 1
 
         if scope_counter < 0:
-            exit_error(f"Scope counter reached a negative value!: {scope_counter}")
+            Convoy.exit_error(
+                f"Scope counter reached a negative value: {scope_counter}."
+            )
         if scope_counter != 1:
             continue
 
@@ -282,10 +254,14 @@ def parse_class(
             fields_per_group.setdefault(group, []).append(field)
 
     if ignore:
-        exit_error("Ignore macro was not closed properly")
+        Convoy.exit_error(
+            f"Ignore macro was not closed properly with a <bold>{macro.ignore_end}</bold>."
+        )
 
     if groups:
-        exit_error("Group macro was not closed properly")
+        Convoy.exit_error(
+            f"Group macro was not closed properly with a <bold>{macro.group_end}</bold>."
+        )
 
     return ClassInfo(
         name,
@@ -344,25 +320,26 @@ def parse_classes_in_file(
         clstype = "class" if is_class else "struct"
         clinfo = parse_class(sublines, template_line, clstype, namespaces)
 
-        log(Style.BOLD + f"Found '{clinfo.name}' {clstype}. Parsing..." + Style.RESET)
+        Convoy.verbose(f"Found and parsed <bold>{clinfo.name}</bold> {clstype}.")
         for field in clinfo.nstatic.all:
-            log(
-                f"  Successfully registered field member '{field.as_str(clinfo.name, is_static=False)}'"
+            Convoy.verbose(
+                f"  -Registered field member <bold>{field.as_str(clinfo.name, is_static=False)}</bold>."
             )
         for field in clinfo.static.all:
-            log(
-                f"  Successfully registered field member '{field.as_str(clinfo.name, is_static=True)}'"
+            Convoy.verbose(
+                f"  -Registered field member <bold>{field.as_str(clinfo.name, is_static=True)}</bold>."
             )
         classes.append(clinfo)
 
     return classes
 
 
-t1 = perf_counter()
-reflect_label = Style.FG_BLUE + "[REFLECT]" + Style.RESET + " "
+Convoy.log_label = "REFLECT"
 args = parse_arguments()
-output: Path = args.output
-ffile: Path = args.input
+Convoy.is_verbose = args.verbose
+
+output: Path = args.output.resolve()
+ffile: Path = args.input.resolve()
 macro = Macro(
     args.declare_macro,
     f"{args.ignore_macro}_BEGIN",
@@ -370,6 +347,7 @@ macro = Macro(
     f"{args.group_macro}_BEGIN",
     f"{args.group_macro}_END",
 )
+
 path = output.parent
 with ffile.open("r") as f:
 
@@ -383,10 +361,8 @@ with ffile.open("r") as f:
         .replace(", class", ", typename")
     )
     if macro.declare not in content:
-        log(
-            Style.FG_YELLOW
-            + f"Macro '{macro.declare}' not found in file '{ffile}'. Exiting..."
-            + Style.RESET
+        Convoy.verbose(
+            f"<fyellow>Macro '{macro.declare}' not found in file '{ffile}'. Exiting..."
         )
         sys.exit()
     classes = parse_classes_in_file(content.splitlines())
@@ -405,7 +381,7 @@ with cpp.scope("namespace TKit", indent=False):
                 cpp(f"using namespace {namespace};")
 
         with cpp.scope(
-            f"template <{cls.template_decl if cls.template_decl is not None else ""}> class Reflect<{cls.name}>",
+            f"template <{cls.template_decl if cls.template_decl is not None else ''}> class Reflect<{cls.name}>",
             semicolon=True,
         ):
             cpp("public:")
@@ -459,8 +435,11 @@ with cpp.scope("namespace TKit", indent=False):
                 def create_cpp_fields_sequence(
                     fields: list[Field], /, *, group: str | None = None
                 ) -> list[str]:
+                    def replacer(vtype: str, /) -> str:
+                        return vtype.replace('"', r"\"")
+
                     return [
-                        f'{static}Field<{field.vtype}>{{"{field.name}", "{field.vtype.replace('"', r'\"')}", &{cls.name}::{field.name}, FieldVisibility::{field.visibility.capitalize()}}}'
+                        f'{static}Field<{field.vtype}>{{"{field.name}", "{replacer(field.vtype)}", &{cls.name}::{field.name}, FieldVisibility::{field.visibility.capitalize()}}}'
                         for field in fields
                         if group is None or group in field.groups
                     ]
@@ -606,6 +585,5 @@ with cpp.scope("namespace TKit", indent=False):
             generate_reflect_body(cls.static, is_static=True)
 
 cpp.write(path)
-elapsed = perf_counter() - t1
 
-exit_ok(f"Reflection code generated in {elapsed:.2f} seconds.")
+Convoy.exit_ok()
