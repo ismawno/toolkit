@@ -9,6 +9,10 @@ import sys
 import re
 
 
+# vtype.replace('"', r'\"'), change that.
+# line 404, avoid nested "
+# move this to convoy
+# reorganize convoy with folders
 class Style:
     RESET = "\033[0m"
     BOLD = "\033[1m"
