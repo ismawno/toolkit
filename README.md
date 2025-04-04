@@ -35,7 +35,7 @@ I have tried to keep dependencies to a minimum, many of them being platform-spec
 
 - [catch2](https://github.com/catchorg/Catch2.git): This library is used for testing. It will only be used if building the tests.
 
-**Note:** `CMake` is required to be manually installed in your system. 
+**Note:** `CMake` is required to be manually installed in your system.
 
 ## Building
 
