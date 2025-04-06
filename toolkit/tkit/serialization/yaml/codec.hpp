@@ -61,8 +61,8 @@ template <typename T> struct Codec
     }
 };
 
-Node LoadFromString(std::string_view p_String) noexcept;
-Node LoadFromFile(std::string_view p_Path) noexcept;
+TKIT_API Node LoadFromString(std::string_view p_String) noexcept;
+TKIT_API Node LoadFromFile(std::string_view p_Path) noexcept;
 
 template <typename T> void Serialize(const std::string_view p_Path, const T &p_Instance) noexcept
 {

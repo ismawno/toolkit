@@ -37,7 +37,7 @@ namespace TKit
  * you want to partition your tasks in such a way that the main thread does some work. If you do not, simply subtract 1
  *
  */
-class ThreadPool final : public ITaskManager
+class TKIT_API ThreadPool final : public ITaskManager
 {
   public:
     explicit ThreadPool(usize p_ThreadCount);
