@@ -187,9 +187,7 @@ class StaticArray
      *
      * @param p_Value The value to insert.
      */
-    template <typename U>
-        requires(std::convertible_to<U, T>)
-    constexpr void push_back(U &&p_Value) noexcept
+    template <typename U> constexpr void push_back(U &&p_Value) noexcept
     {
         TKIT_ASSERT(!full(), "[TOOLKIT] Container is already full");
         Memory::Construct(begin() + m_Size++, std::forward<U>(p_Value));
