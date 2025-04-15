@@ -103,7 +103,7 @@ class RawBuffer
     }
 
     /**
-     * @brief Writes data into the buffer.
+     * @brief Writes data into the buffer, up to the buffer size.
      *
      * Be mindful of the alignment requirements. `p_Data` should be compatible with the alignment of the buffer.
      *
@@ -114,7 +114,7 @@ class RawBuffer
         Memory::Copy(m_Data, p_Data, m_Size);
     }
     /**
-     * @brief Writes data into the buffer.
+     * @brief Writes data into the buffer, up to the specified size.
      *
      * Be mindful of the alignment requirements. `p_Data` should be compatible with the alignment of the buffer.
      *
@@ -127,7 +127,7 @@ class RawBuffer
         Memory::Copy(m_Data, p_Data, p_Size);
     }
     /**
-     * @brief Writes data into the buffer.
+     * @brief Writes data into the buffer, offsetted and up to the specified size.
      *
      * Be mindful of the alignment requirements. `p_Data` should be compatible with the alignment of the buffer.
      *
@@ -264,7 +264,7 @@ class Buffer
     }
 
     /**
-     * @brief Writes data into the buffer.
+     * @brief Writes data into the buffer, up to the buffer size.
      *
      * Be mindful of the alignment requirements. `p_Data` should be compatible with the alignment of the buffer.
      *
@@ -276,7 +276,7 @@ class Buffer
     }
 
     /**
-     * @brief Writes data into the buffer.
+     * @brief Writes data into the buffer, up to the specified size.
      *
      * Be mindful of the alignment requirements. `p_Data` should be compatible with the alignment of the buffer.
      *
@@ -289,7 +289,7 @@ class Buffer
     }
 
     /**
-     * @brief Writes data into the buffer.
+     * @brief Writes data into the buffer, offsetted and up to the specified size.
      *
      * Be mindful of the alignment requirements. `p_Data` should be compatible with the alignment of the buffer.
      *
