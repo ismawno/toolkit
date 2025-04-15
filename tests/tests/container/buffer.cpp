@@ -36,8 +36,16 @@ template <typename T> void RunBufferTest()
         REQUIRE(copy.GetInstanceSize() == ordinary.GetInstanceSize());
         REQUIRE(copy.GetInstanceAlignedSize() == ordinary.GetInstanceAlignedSize());
         if constexpr (!std::is_same_v<T, SomeRandomData>)
+        {
             for (usize i = 0; i < ordinary.GetInstanceCount(); ++i)
                 REQUIRE(copy[i] == ordinary[i]);
+            T val{19};
+            Buffer<T> buff{5};
+            buff[2] = 2 * val;
+            buff.WriteAt(1, &val);
+            REQUIRE(buff[2] == 2 * val);
+            REQUIRE(buff[1] == val);
+        }
     }
 }
 
