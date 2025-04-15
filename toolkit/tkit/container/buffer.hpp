@@ -123,6 +123,7 @@ class RawBuffer
      */
     constexpr void Write(const void *p_Data, const size_type p_Size) noexcept
     {
+        TKIT_ASSERT(p_Size <= m_Size, "[TOOLKIT] Size is out of bounds");
         Memory::Copy(m_Data, p_Data, p_Size);
     }
     /**
@@ -136,6 +137,7 @@ class RawBuffer
      */
     constexpr void Write(const void *p_Data, const size_type p_Size, const size_type p_Offset) noexcept
     {
+        TKIT_ASSERT(p_Offset + p_Size <= m_Size, "[TOOLKIT] Size + offset is out of bounds");
         std::byte *offset = static_cast<std::byte *>(m_Data) + p_Offset;
         Memory::Copy(offset, p_Data, p_Size);
     }
