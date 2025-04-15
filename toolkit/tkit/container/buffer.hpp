@@ -113,8 +113,9 @@ class RawBuffer
     {
         Memory::Copy(m_Data, p_Data, m_Size);
     }
+
     /**
-     * @brief Writes data into the buffer, up to the specified size.
+     * @brief Writes data into the buffer, up to the specified size, which must not exceed the buffer's.
      *
      * Be mindful of the alignment requirements. `p_Data` should be compatible with the alignment of the buffer.
      *
@@ -126,8 +127,9 @@ class RawBuffer
         TKIT_ASSERT(p_Size <= m_Size, "[TOOLKIT] Size is out of bounds");
         Memory::Copy(m_Data, p_Data, p_Size);
     }
+
     /**
-     * @brief Writes data into the buffer, offsetted and up to the specified size.
+     * @brief Writes data into the buffer, offsetted and up to the specified size, which must not exceed the buffer's.
      *
      * Be mindful of the alignment requirements. `p_Data` should be compatible with the alignment of the buffer.
      *
@@ -276,7 +278,7 @@ class Buffer
     }
 
     /**
-     * @brief Writes data into the buffer, up to the specified size.
+     * @brief Writes data into the buffer, up to the specified size, which must not exceed the buffer's.
      *
      * Be mindful of the alignment requirements. `p_Data` should be compatible with the alignment of the buffer.
      *
@@ -289,7 +291,7 @@ class Buffer
     }
 
     /**
-     * @brief Writes data into the buffer, offsetted and up to the specified size.
+     * @brief Writes data into the buffer, offsetted and up to the specified size, which must not exceed the buffer's.
      *
      * Be mindful of the alignment requirements. `p_Data` should be compatible with the alignment of the buffer.
      *
