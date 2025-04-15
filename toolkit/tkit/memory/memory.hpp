@@ -52,6 +52,17 @@ TKIT_API void *AllocateAligned(size_t p_Size, size_t p_Alignment) noexcept;
 TKIT_API void DeallocateAligned(void *p_Ptr) noexcept;
 
 /**
+ * @brief Copy a chunk of memory from one location to another.
+ *
+ * Uses the default `::memcpy()`. It is here as a placeholder for future custom global memory management.
+ *
+ * @param p_Dst A pointer to the destination memory.
+ * @param p_Src A pointer to the source memory.
+ * @param p_Size The size of the memory to copy.
+ */
+TKIT_API void Copy(void *p_Dst, const void *p_Src, size_t p_Size) noexcept;
+
+/**
  * @brief A custom allocator that uses a custom size_type (usually `u32`) for indexing.
  *
  * This allocator is intended for environments or applications where the maximum container size never exceeds 2^32,
@@ -107,15 +118,43 @@ template <typename T> class DefaultAllocator
     }
 };
 
+/**
+ * @brief Construct an object of type `T` in the given memory location.
+ *
+ * @note This function does not allocate memory. It only calls the constructor of the object.
+ *
+ * @param p_Ptr A pointer to the memory location where the object should be constructed.
+ * @param p_Args The arguments to pass to the constructor of `T`.
+ * @return A pointer to the constructed object.
+ */
 template <typename T, typename... Args> T *Construct(T *p_Ptr, Args &&...p_Args) noexcept
 {
     return ::new (p_Ptr) T(std::forward<Args>(p_Args)...);
 }
+
+/**
+ * @brief Destroy an object of type `T` in the given memory location.
+ *
+ * @note This function does not deallocate the memory. It only calls the destructor of the object.
+ *
+ * @param p_Ptr A pointer to the memory location where the object should be destroyed.
+ */
 template <typename T> void Destruct(T *p_Ptr) noexcept
 {
     p_Ptr->~T();
 }
 
+/**
+ * @brief Construct an object of type `T` in the memory location an iterator points to.
+ *
+ * Useful when dealing with iterators that could be pointers themselves.
+ *
+ * @note This function does not allocate memory. It only calls the constructor of the object.
+ *
+ * @param p_It An iterator pointing to the memory location where the object should be constructed.
+ * @param p_Args The arguments to pass to the constructor of `T`.
+ * @return A pointer to the constructed object.
+ */
 template <typename It, typename... Args> auto ConstructFromIterator(const It p_It, Args &&...p_Args) noexcept
 {
     if constexpr (std::is_pointer_v<It>)
@@ -123,6 +162,16 @@ template <typename It, typename... Args> auto ConstructFromIterator(const It p_I
     else
         return Construct(&*p_It, std::forward<Args>(p_Args)...);
 }
+
+/**
+ * @brief Destroy an object of type `T` in the memory location an iterator points to.
+ *
+ * Useful when dealing with iterators that could be pointers themselves.
+ *
+ * @note This function does not deallocate the memory. It only calls the destructor of the object.
+ *
+ * @param p_It An iterator pointing to the memory location where the object should be destroyed.
+ */
 template <typename It> void DestructFromIterator(const It p_It) noexcept
 {
     if constexpr (std::is_pointer_v<It>)
@@ -131,6 +180,15 @@ template <typename It> void DestructFromIterator(const It p_It) noexcept
         Destruct(&*p_It);
 }
 
+/**
+ * @brief Construct a range of objects of type `T` in the given memory location.
+ *
+ * @note This function does not allocate memory. It only calls the constructor of the object.
+ *
+ * @param p_Begin An iterator pointing to the beginning of the range where the objects should be constructed.
+ * @param p_End An iterator pointing to the end of the range where the objects should be constructed.
+ * @param p_Args The arguments to pass to the constructor of `T`.
+ */
 template <typename It, typename... Args>
 void ConstructRange(const It p_Begin, const It p_End, Args &&...p_Args) noexcept
 {
@@ -138,6 +196,15 @@ void ConstructRange(const It p_Begin, const It p_End, Args &&...p_Args) noexcept
         ConstructFromIterator(it, std::forward<Args>(p_Args)...);
 }
 
+/**
+ * @brief Construct a range of objects of type `T` in the given memory location by copying from another range.
+ *
+ * @note This function does not allocate memory. It only calls the constructor of the object.
+ *
+ * @param p_Dst An iterator pointing to the beginning of the destination range where the objects should be constructed.
+ * @param p_Begin An iterator pointing to the beginning of the source range where the objects should be copied from.
+ * @param p_End An iterator pointing to the end of the source range where the objects should be copied from.
+ */
 template <typename It1, typename It2, typename... Args>
 void ConstructRangeCopy(It1 p_Dst, const It2 p_Begin, const It2 p_End) noexcept
 {
@@ -145,6 +212,15 @@ void ConstructRangeCopy(It1 p_Dst, const It2 p_Begin, const It2 p_End) noexcept
         ConstructFromIterator(p_Dst, *it);
 }
 
+/**
+ * @brief Construct a range of objects of type `T` in the given memory location by moving from another range.
+ *
+ * @note This function does not allocate memory. It only calls the constructor of the object.
+ *
+ * @param p_Dst An iterator pointing to the beginning of the destination range where the objects should be constructed.
+ * @param p_Begin An iterator pointing to the beginning of the source range where the objects should be moved from.
+ * @param p_End An iterator pointing to the end of the source range where the objects should be moved from.
+ */
 template <typename It1, typename It2, typename... Args>
 void ConstructRangeMove(It1 p_Dst, const It2 p_Begin, const It2 p_End) noexcept
 {
@@ -152,6 +228,14 @@ void ConstructRangeMove(It1 p_Dst, const It2 p_Begin, const It2 p_End) noexcept
         ConstructFromIterator(p_Dst, std::move(*it));
 }
 
+/**
+ * @brief Destroy a range of objects of type `T` in the given memory location.
+ *
+ * @note This function does not deallocate the memory. It only calls the destructor of the object.
+ *
+ * @param p_Begin An iterator pointing to the beginning of the range where the objects should be destroyed.
+ * @param p_End An iterator pointing to the end of the range where the objects should be destroyed.
+ */
 template <typename It> void DestructRange(const It p_Begin, const It p_End) noexcept
 {
     for (auto it = p_Begin; it != p_End; ++it)

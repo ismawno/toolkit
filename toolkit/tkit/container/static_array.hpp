@@ -11,7 +11,7 @@ namespace TKit
  * @brief An STL-like array with a fixed size buffer.
  *
  * It is meant to be used as a drop-in replacement for `Array` when you need a bit more control and functionality,
- * although it comes with some overhead.
+ * although it comes with some overhead. I have used the STL's naming conventions for a better blending with the STL.
  *
  * @tparam T The type of the elements in the array.
  * @tparam Capacity The capacity of the array.

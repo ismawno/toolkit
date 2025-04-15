@@ -42,6 +42,12 @@ void DeallocateAligned(void *p_Ptr) noexcept
     std::free(p_Ptr);
 #endif
 }
+
+void Copy(void *p_Dst, const void *p_Src, size_t p_Size) noexcept
+{
+    std::memcpy(p_Dst, p_Src, p_Size);
+}
+
 } // namespace TKit::Memory
 
 #ifndef TKIT_DISABLE_MEMORY_OVERRIDES

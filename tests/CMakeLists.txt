@@ -22,6 +22,7 @@ set(SOURCES
     tests/container/weak_array.cpp
     tests/container/span.cpp
     tests/container/storage.cpp
+    tests/container/buffer.cpp
     tests/multiprocessing/thread_pool.cpp
     tests/utils/result.cpp
     tests/utils/hash.cpp

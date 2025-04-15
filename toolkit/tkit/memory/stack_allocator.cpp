@@ -13,6 +13,7 @@ StackAllocator::StackAllocator(const usize p_Size, const usize p_Alignment) noex
     : m_Size(p_Size), m_Remaining(p_Size), m_Provided(false)
 {
     m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(static_cast<size_t>(p_Size), p_Alignment));
+    TKIT_ASSERT(m_Buffer, "[TOOLKIT] Failed to allocate memory");
 }
 
 StackAllocator::~StackAllocator() noexcept
