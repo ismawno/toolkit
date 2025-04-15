@@ -185,6 +185,26 @@ class RawBuffer
         return offset;
     }
 
+    /**
+     * @brief Allocates more memory to accommodate a new instance count.
+     *
+     * This method will copy the existing data to the new memory location and deallocate the old one.
+     *
+     * @param p_InstanceCount The new instance count to allocate memory for.
+     */
+    constexpr void Grow(const size_type p_InstanceCount) noexcept
+    {
+        TKIT_ASSERT(p_InstanceCount > m_InstanceCount, "[TOOLKIT] Cannot shrink buffer");
+        const size_type newSize = p_InstanceCount * m_InstanceAlignedSize;
+        void *newData = Memory::AllocateAligned(newSize, m_InstanceAlignedSize);
+        TKIT_ASSERT(newData, "[TOOLKIT] Failed to allocate memory");
+        Memory::Copy(newData, m_Data, m_Size);
+        Memory::DeallocateAligned(m_Data);
+        m_Data = newData;
+        m_Size = newSize;
+        m_InstanceCount = p_InstanceCount;
+    }
+
     constexpr const void *GetData() const noexcept
     {
         return m_Data;
@@ -337,6 +357,18 @@ class Buffer
     constexpr pointer ReadAt(const size_type p_Index) noexcept
     {
         return reinterpret_cast<pointer>(m_Buffer.ReadAt(p_Index));
+    }
+
+    /**
+     * @brief Allocates more memory to accommodate a new instance count.
+     *
+     * This method will copy the existing data to the new memory location and deallocate the old one.
+     *
+     * @param p_InstanceCount The new instance count to allocate memory for.
+     */
+    constexpr void Grow(const size_type p_InstanceCount) noexcept
+    {
+        m_Buffer.Grow(p_InstanceCount);
     }
 
     constexpr const_reference operator[](const size_type p_Index) const noexcept
