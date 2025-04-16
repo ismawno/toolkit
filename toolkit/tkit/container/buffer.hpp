@@ -31,17 +31,23 @@ class RawBuffer
           m_InstanceAlignedSize(alignedSize(p_InstanceSize, p_InstanceAlignment)),
           m_Size(p_InstanceCount * m_InstanceAlignedSize)
     {
-        m_Data = Memory::AllocateAligned(m_Size, p_InstanceAlignment);
-        TKIT_ASSERT(m_Data, "[TOOLKIT] Failed to allocate memory");
+        if (m_Size > 0)
+        {
+            m_Data = Memory::AllocateAligned(m_Size, p_InstanceAlignment);
+            TKIT_ASSERT(m_Data, "[TOOLKIT] Failed to allocate memory");
+        }
     }
 
     constexpr RawBuffer(const RawBuffer &p_Other) noexcept
         : m_InstanceCount(p_Other.m_InstanceCount), m_InstanceSize(p_Other.m_InstanceSize),
           m_InstanceAlignedSize(p_Other.m_InstanceAlignedSize), m_Size(p_Other.m_Size)
     {
-        m_Data = Memory::AllocateAligned(m_Size, p_Other.m_InstanceAlignedSize);
-        TKIT_ASSERT(m_Data, "[TOOLKIT] Failed to allocate memory");
-        Memory::Copy(m_Data, p_Other.m_Data, m_Size);
+        if (m_Size > 0)
+        {
+            m_Data = Memory::AllocateAligned(m_Size, m_InstanceAlignedSize);
+            TKIT_ASSERT(m_Data, "[TOOLKIT] Failed to allocate memory");
+            Memory::Copy(m_Data, p_Other.m_Data, m_Size);
+        }
     }
 
     constexpr RawBuffer(RawBuffer &&p_Other) noexcept
@@ -68,7 +74,7 @@ class RawBuffer
         m_InstanceAlignedSize = p_Other.m_InstanceAlignedSize;
         m_Size = p_Other.m_Size;
 
-        if (p_Other.m_Data)
+        if (p_Other.m_Data && m_Size > 0)
         {
             m_Data = Memory::AllocateAligned(m_Size, m_InstanceAlignedSize);
             TKIT_ASSERT(m_Data, "[TOOLKIT] Failed to allocate memory");
@@ -195,11 +201,17 @@ class RawBuffer
     constexpr void Grow(const size_type p_InstanceCount) noexcept
     {
         TKIT_ASSERT(p_InstanceCount > m_InstanceCount, "[TOOLKIT] Cannot shrink buffer");
+        TKIT_ASSERT(m_InstanceSize > 0, "[TOOLKIT] Cannot grow buffer whose instances have zero elements");
+
         const size_type newSize = p_InstanceCount * m_InstanceAlignedSize;
         void *newData = Memory::AllocateAligned(newSize, m_InstanceAlignedSize);
         TKIT_ASSERT(newData, "[TOOLKIT] Failed to allocate memory");
-        Memory::Copy(newData, m_Data, m_Size);
-        Memory::DeallocateAligned(m_Data);
+
+        if (m_Data)
+        {
+            Memory::Copy(newData, m_Data, m_Size);
+            Memory::DeallocateAligned(m_Data);
+        }
         m_Data = newData;
         m_Size = newSize;
         m_InstanceCount = p_InstanceCount;
@@ -254,7 +266,7 @@ class RawBuffer
     }
 
   private:
-    static size_type alignedSize(const size_type p_Size, const size_type p_Alignment) noexcept
+    static constexpr size_type alignedSize(const size_type p_Size, const size_type p_Alignment) noexcept
     {
         return (p_Size + p_Alignment - 1) & ~(p_Alignment - 1);
     }
