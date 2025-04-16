@@ -290,8 +290,9 @@ class Buffer
     using reference = value_type &;
     using const_reference = const value_type &;
 
-    constexpr Buffer() noexcept = default;
-
+    constexpr Buffer() noexcept : m_Buffer(0, sizeof(T), alignof(T))
+    {
+    }
     constexpr Buffer(const size_type p_InstanceCount, const size_type p_InstanceAlignment = alignof(T)) noexcept
         : m_Buffer(p_InstanceCount, sizeof(T), p_InstanceAlignment)
     {
