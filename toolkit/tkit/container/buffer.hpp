@@ -223,10 +223,11 @@ class RawBuffer
      * @param p_Index The index of the instance.
      * @return The offset of the instance in bytes.
      */
-    constexpr size_type GetOffsetFromIndex(const size_type p_Index) const noexcept
+    constexpr size_type GetOffsetFromCount(const size_type p_InstanceCount) const noexcept
     {
-        TKIT_ASSERT(p_Index < m_InstanceCount, "[TOOLKIT] Index is out of bounds");
-        return p_Index * m_InstanceAlignedSize;
+        TKIT_ASSERT(p_InstanceCount <= m_InstanceCount,
+                    "[TOOLKIT] Count must be less than or equal to the instance count");
+        return p_InstanceCount * m_InstanceAlignedSize;
     }
 
     constexpr const void *GetData() const noexcept
@@ -411,9 +412,9 @@ class Buffer
      * @param p_Index The index of the instance.
      * @return The offset of the instance in bytes.
      */
-    constexpr size_type GetOffsetFromIndex(const size_type p_Index) const noexcept
+    constexpr size_type GetOffsetFromCount(const size_type p_Index) const noexcept
     {
-        return m_Buffer.GetOffsetFromIndex(p_Index);
+        return m_Buffer.GetOffsetFromCount(p_Index);
     }
 
     constexpr const_pointer GetData() const noexcept
