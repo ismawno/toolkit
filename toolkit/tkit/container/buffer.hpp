@@ -292,7 +292,7 @@ class RawBuffer
 };
 
 template <typename T, typename Traits = std::allocator_traits<Memory::DefaultAllocator<T>>>
-    requires(std::is_trivial_v<T>)
+    requires(std::is_trivially_copyable_v<T> && std::is_trivially_destructible_v<T>)
 class Buffer
 {
   public:
