@@ -27,7 +27,7 @@ class RawBuffer
 
     constexpr RawBuffer(const size_type p_InstanceCount, const size_type p_InstanceSize,
                         const size_type p_InstanceAlignment = 1) noexcept
-        : m_InstanceCount(p_InstanceCount), m_InstanceSize(p_InstanceSize),
+        : m_InstanceCount(p_InstanceCount), m_InstanceSize(p_InstanceSize), m_InstanceAlignment(p_InstanceAlignment),
           m_InstanceAlignedSize(alignedSize(p_InstanceSize, p_InstanceAlignment)),
           m_Size(p_InstanceCount * m_InstanceAlignedSize)
     {
@@ -40,7 +40,8 @@ class RawBuffer
 
     constexpr RawBuffer(const RawBuffer &p_Other) noexcept
         : m_InstanceCount(p_Other.m_InstanceCount), m_InstanceSize(p_Other.m_InstanceSize),
-          m_InstanceAlignedSize(p_Other.m_InstanceAlignedSize), m_Size(p_Other.m_Size)
+          m_InstanceAlignment(p_Other.m_InstanceAlignment), m_InstanceAlignedSize(p_Other.m_InstanceAlignedSize),
+          m_Size(p_Other.m_Size)
     {
         if (m_Size > 0)
         {
@@ -52,13 +53,15 @@ class RawBuffer
 
     constexpr RawBuffer(RawBuffer &&p_Other) noexcept
         : m_Data(p_Other.m_Data), m_InstanceCount(p_Other.m_InstanceCount), m_InstanceSize(p_Other.m_InstanceSize),
-          m_InstanceAlignedSize(p_Other.m_InstanceAlignedSize), m_Size(p_Other.m_Size)
+          m_InstanceAlignment(p_Other.m_InstanceAlignment), m_InstanceAlignedSize(p_Other.m_InstanceAlignedSize),
+          m_Size(p_Other.m_Size)
     {
         p_Other.m_Data = nullptr;
         p_Other.m_Size = 0;
         p_Other.m_InstanceCount = 0;
-        p_Other.m_InstanceAlignedSize = 0;
         p_Other.m_InstanceSize = 0;
+        p_Other.m_InstanceAlignment = 0;
+        p_Other.m_InstanceAlignedSize = 0;
     }
 
     constexpr RawBuffer &operator=(const RawBuffer &p_Other) noexcept
@@ -71,6 +74,7 @@ class RawBuffer
 
         m_InstanceCount = p_Other.m_InstanceCount;
         m_InstanceSize = p_Other.m_InstanceSize;
+        m_InstanceAlignment = p_Other.m_InstanceAlignment;
         m_InstanceAlignedSize = p_Other.m_InstanceAlignedSize;
         m_Size = p_Other.m_Size;
 
@@ -96,14 +100,16 @@ class RawBuffer
         m_Data = p_Other.m_Data;
         m_InstanceCount = p_Other.m_InstanceCount;
         m_InstanceSize = p_Other.m_InstanceSize;
+        m_InstanceAlignment = p_Other.m_InstanceAlignment;
         m_InstanceAlignedSize = p_Other.m_InstanceAlignedSize;
         m_Size = p_Other.m_Size;
 
         p_Other.m_Data = nullptr;
         p_Other.m_Size = 0;
         p_Other.m_InstanceCount = 0;
-        p_Other.m_InstanceAlignedSize = 0;
         p_Other.m_InstanceSize = 0;
+        p_Other.m_InstanceAlignment = 0;
+        p_Other.m_InstanceAlignedSize = 0;
 
         return *this;
     }
@@ -204,7 +210,7 @@ class RawBuffer
         TKIT_ASSERT(m_InstanceSize > 0, "[TOOLKIT] Cannot grow buffer whose instances have zero elements");
 
         const size_type newSize = p_InstanceCount * m_InstanceAlignedSize;
-        void *newData = Memory::AllocateAligned(newSize, m_InstanceAlignedSize);
+        void *newData = Memory::AllocateAligned(newSize, m_InstanceAlignment);
         TKIT_ASSERT(newData, "[TOOLKIT] Failed to allocate memory");
 
         if (m_Data)
@@ -268,6 +274,10 @@ class RawBuffer
     {
         return m_InstanceSize;
     }
+    constexpr size_type GetInstanceAlignment() const noexcept
+    {
+        return m_InstanceAlignment;
+    }
     constexpr size_type GetInstanceAlignedSize() const noexcept
     {
         return m_InstanceAlignedSize;
@@ -287,6 +297,7 @@ class RawBuffer
     void *m_Data = nullptr;
     size_type m_InstanceCount = 0;
     size_type m_InstanceSize = 0;
+    size_type m_InstanceAlignment = 0;
     size_type m_InstanceAlignedSize = 0;
     size_type m_Size = 0;
 };
@@ -454,6 +465,10 @@ class Buffer
     constexpr size_type GetInstanceSize() const noexcept
     {
         return m_Buffer.GetInstanceSize();
+    }
+    constexpr size_type GetInstanceAlignment() const noexcept
+    {
+        return m_Buffer.GetInstanceAlignment();
     }
     constexpr size_type GetInstanceAlignedSize() const noexcept
     {
