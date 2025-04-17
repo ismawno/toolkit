@@ -8,6 +8,7 @@ ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
     const auto worker = [this](const usize p_ThreadIndex) {
         for (;;)
         {
+            s_ThreadIndex = p_ThreadIndex;
             m_TaskReady.wait(false, std::memory_order_relaxed);
             if (m_Shutdown.test(std::memory_order_relaxed))
                 break;
@@ -35,13 +36,6 @@ ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
         m_Threads.emplace_back(worker, i + 1);
 }
 
-void ThreadPool::AwaitPendingTasks() const noexcept
-{
-    // TODO: Consider using _mm_pause() instead of std::this_thread::yield()
-    while (m_PendingCount.load(std::memory_order_acquire) != 0)
-        std::this_thread::yield();
-}
-
 ThreadPool::~ThreadPool() noexcept
 {
     // It is up to the user to make sure that all tasks are finished before destroying the thread pool
@@ -65,6 +59,18 @@ ThreadPool::~ThreadPool() noexcept
         m_Queue.pop_back();
         (*task)(0);
     }
+}
+
+void ThreadPool::AwaitPendingTasks() const noexcept
+{
+    // TODO: Consider using _mm_pause() instead of std::this_thread::yield()
+    while (m_PendingCount.load(std::memory_order_acquire) != 0)
+        std::this_thread::yield();
+}
+
+usize ThreadPool::GetThreadIndex() const noexcept
+{
+    return s_ThreadIndex;
 }
 
 void ThreadPool::SubmitTask(const Ref<ITask> &p_Task) noexcept

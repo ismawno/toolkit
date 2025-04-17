@@ -13,7 +13,6 @@ namespace TKit
  * @brief A task manager that is responsible for managing tasks and executing them. It is an abstract class that
  * must be implemented by the user to create a custom task system.
  *
- *
  */
 class TKIT_API ITaskManager
 {
@@ -69,6 +68,13 @@ class TKIT_API ITaskManager
      *
      */
     usize GetThreadCount() const noexcept;
+
+    /**
+     * @brief Ask for the thread index of the current thread.
+     *
+     * @return The index of the current thread.
+     */
+    virtual usize GetThreadIndex() const noexcept = 0;
 
   private:
     usize m_ThreadCount;
