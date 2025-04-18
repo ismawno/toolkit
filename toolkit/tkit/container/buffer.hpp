@@ -199,16 +199,15 @@ class RawBuffer
     }
 
     /**
-     * @brief Allocates more memory to accommodate a new instance count.
+     * @brief Resize the buffer to accomodate or shrink the number of instances.
      *
      * This method will copy the existing data to the new memory location and deallocate the old one.
      *
      * @param p_InstanceCount The new instance count to allocate memory for.
      */
-    constexpr void Grow(const size_type p_InstanceCount) noexcept
+    constexpr void Resize(const size_type p_InstanceCount) noexcept
     {
-        TKIT_ASSERT(p_InstanceCount > m_InstanceCount, "[TOOLKIT] Cannot shrink buffer");
-        TKIT_ASSERT(m_InstanceSize > 0, "[TOOLKIT] Cannot grow buffer whose instances have zero elements");
+        TKIT_ASSERT(m_InstanceSize > 0, "[TOOLKIT] Cannot grow buffer whose instances have zero size");
 
         const size_type newSize = p_InstanceCount * m_InstanceAlignedSize;
         void *newData = Memory::AllocateAligned(newSize, m_MinimumInstanceAlignment);
@@ -222,6 +221,11 @@ class RawBuffer
         m_Data = newData;
         m_Size = newSize;
         m_InstanceCount = p_InstanceCount;
+    }
+
+    constexpr void resize(const size_type p_InstanceCount) noexcept
+    {
+        Resize(p_InstanceCount);
     }
 
     /**
@@ -398,15 +402,20 @@ class Buffer
     }
 
     /**
-     * @brief Allocates more memory to accommodate a new instance count.
+     * @brief Resize the buffer to accomodate or shrink the number of instances.
      *
      * This method will copy the existing data to the new memory location and deallocate the old one.
      *
      * @param p_InstanceCount The new instance count to allocate memory for.
      */
-    constexpr void Grow(const size_type p_InstanceCount) noexcept
+    constexpr void Resize(const size_type p_InstanceCount) noexcept
     {
-        m_Buffer.Grow(p_InstanceCount);
+        m_Buffer.Resize(p_InstanceCount);
+    }
+
+    constexpr void resize(const size_type p_InstanceCount) noexcept
+    {
+        m_Buffer.Resize(p_InstanceCount);
     }
 
     constexpr const_reference operator[](const size_type p_Index) const noexcept
