@@ -47,6 +47,24 @@ template <typename T> void RunBufferTest()
             REQUIRE(buff[1] == val);
         }
     }
+
+    SECTION("Resize")
+    {
+        Buffer<T> buffer{};
+        REQUIRE(!buffer);
+
+        buffer.Resize(5);
+        REQUIRE(buffer.GetInstanceCount() == 5);
+        REQUIRE(buffer.GetSize() == 5 * sizeof(T));
+
+        buffer.Resize(1);
+        REQUIRE(buffer.GetInstanceCount() == 1);
+        REQUIRE(buffer.GetSize() == sizeof(T));
+
+        buffer.Resize(0);
+        REQUIRE(buffer.GetInstanceCount() == 0);
+        REQUIRE(!buffer);
+    }
 }
 
 TEST_CASE("Buffer (i32)", "[core][container][buffer]")

@@ -221,7 +221,7 @@ class RawBuffer
         if (m_Data)
         {
             if (newData)
-                Memory::Copy(newData, m_Data, newSize > m_Size ? newSize : m_Size);
+                Memory::Copy(newData, m_Data, newSize > m_Size ? m_Size : newSize);
             Memory::DeallocateAligned(m_Data);
         }
         m_Data = newData;
