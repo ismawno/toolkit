@@ -223,11 +223,6 @@ class RawBuffer
         m_InstanceCount = p_InstanceCount;
     }
 
-    constexpr void resize(const size_type p_InstanceCount) noexcept
-    {
-        Resize(p_InstanceCount);
-    }
-
     /**
      * @brief Returns the offset in bytes of the instance at the specified index.
      *
@@ -251,22 +246,6 @@ class RawBuffer
     }
 
     constexpr size_type GetSize() const noexcept
-    {
-        return m_Size;
-    }
-
-    /* compatible with STL */
-
-    constexpr const void *data() const noexcept
-    {
-        return m_Data;
-    }
-    constexpr void *data() noexcept
-    {
-        return m_Data;
-    }
-
-    constexpr size_type size() const noexcept
     {
         return m_Size;
     }
@@ -409,11 +388,6 @@ class Buffer
      * @param p_InstanceCount The new instance count to allocate memory for.
      */
     constexpr void Resize(const size_type p_InstanceCount) noexcept
-    {
-        m_Buffer.Resize(p_InstanceCount);
-    }
-
-    constexpr void resize(const size_type p_InstanceCount) noexcept
     {
         m_Buffer.Resize(p_InstanceCount);
     }
