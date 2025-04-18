@@ -210,12 +210,18 @@ class RawBuffer
         TKIT_ASSERT(m_InstanceSize > 0, "[TOOLKIT] Cannot grow buffer whose instances have zero size");
 
         const size_type newSize = p_InstanceCount * m_InstanceAlignedSize;
-        void *newData = Memory::AllocateAligned(newSize, m_MinimumInstanceAlignment);
-        TKIT_ASSERT(newData, "[TOOLKIT] Failed to allocate memory");
+        void *newData = nullptr;
+
+        if (newSize > 0)
+        {
+            newData = Memory::AllocateAligned(newSize, m_MinimumInstanceAlignment);
+            TKIT_ASSERT(newData, "[TOOLKIT] Failed to allocate memory");
+        }
 
         if (m_Data)
         {
-            Memory::Copy(newData, m_Data, m_Size);
+            if (newData)
+                Memory::Copy(newData, m_Data, newSize > m_Size ? newSize : m_Size);
             Memory::DeallocateAligned(m_Data);
         }
         m_Data = newData;
