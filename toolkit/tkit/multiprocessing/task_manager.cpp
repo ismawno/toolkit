@@ -11,4 +11,9 @@ usize ITaskManager::GetThreadCount() const noexcept
 {
     return m_ThreadCount;
 }
+
+usize ITaskManager::GetThreadIndex() const noexcept
+{
+    return 0;
+}
 } // namespace TKit

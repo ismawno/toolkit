@@ -1,7 +1,8 @@
 #pragma once
 
 #ifndef TKIT_ENABLE_MULTIPROCESSING
-#    error "To include this file, the corresponding feature must be enabled with TOOLKIT_ENABLE_MULTIPROCESSING"
+#    error                                                                                                             \
+        "To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_MULTIPROCESSING"
 #endif
 
 #include "tkit/memory/ptr.hpp"

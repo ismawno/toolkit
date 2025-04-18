@@ -1,7 +1,8 @@
 #pragma once
 
 #ifndef TKIT_ENABLE_MULTIPROCESSING
-#    error "To include this file, the corresponding feature must be enabled with TOOLKIT_ENABLE_MULTIPROCESSING"
+#    error                                                                                                             \
+        "To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_MULTIPROCESSING"
 #endif
 
 #include "tkit/multiprocessing/task.hpp"
@@ -74,7 +75,7 @@ class TKIT_API ITaskManager
      *
      * @return The index of the current thread.
      */
-    virtual usize GetThreadIndex() const noexcept = 0;
+    virtual usize GetThreadIndex() const noexcept;
 
   private:
     usize m_ThreadCount;
