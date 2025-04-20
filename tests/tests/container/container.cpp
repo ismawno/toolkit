@@ -503,7 +503,7 @@ TEST_CASE("ArrayTools<std::string>: Insert range of elements", "[ArrayTools][str
 
     // expected sequence: a, b, X, Y, Z, c, d, ...
     TKit::Array<std::string, 7> expected = {"a", "b", "X", "Y", "Z", "c", "d"};
-    for (size_t i = 0; i < expected.GetSize(); ++i)
+    for (usize i = 0; i < expected.GetSize(); ++i)
         REQUIRE(arr[i] == expected[i]);
 }
 
