@@ -20,6 +20,7 @@ COPY ./toolkit/ ./toolkit/
 COPY ./CMakeLists.txt ./
 COPY ./tests/ ./tests/
 COPY ./setup ./setup
+COPY ./convoy.py ./
 
 # Build your application
 # RUN mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release -DTOOLKIT_BUILD_TESTS=ON && make
