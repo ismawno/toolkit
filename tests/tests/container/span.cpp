@@ -1,7 +1,5 @@
 #include "tkit/container/span.hpp"
 #include <catch2/catch_test_macros.hpp>
-#include <array>
-#include <vector>
 #include <string>
 #include <algorithm>
 
@@ -56,8 +54,8 @@ TEST_CASE("Span dynamic extent: from Array, StaticArray, WeakArray, DynamicArray
     Array<u32, 3> arr = {2u, 4u, 6u};
     StaticArray<u32, 3> sarr{7u, 8u};
     DynamicArray<u32> darr{9u, 10u, 11u};
-    std::array<u32, 4> backing = {1u, 2u, 3u, 4u};
-    WeakArray<u32, 4> warr(backing.data(), 2);
+    Array<u32, 4> backing = {1u, 2u, 3u, 4u};
+    WeakArray<u32, 4> warr(backing.GetData(), 2);
 
     Span<u32> span1(arr);
     REQUIRE(span1.GetSize() == 3);
@@ -78,8 +76,8 @@ TEST_CASE("Span dynamic extent: from Array, StaticArray, WeakArray, DynamicArray
 
 TEST_CASE("Span dynamic extent: iteration and bool", "[Span]")
 {
-    std::vector<std::string> vec = {"a", "b", "c"};
-    Span<std::string> span(vec.data(), vec.size());
+    DynamicArray<std::string> vec = {"a", "b", "c"};
+    Span<std::string> span(vec.GetData(), vec.GetSize());
     REQUIRE(span);
     REQUIRE(!span.IsEmpty());
 

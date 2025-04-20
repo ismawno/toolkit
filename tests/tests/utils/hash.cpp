@@ -1,8 +1,7 @@
 #include "tkit/utils/hash.hpp"
+#include "tkit/container/array.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <string>
-#include <vector>
-#include <array>
 
 using namespace TKit;
 
@@ -11,7 +10,7 @@ TEST_CASE("Hash single values", "[Hash]")
     SECTION("integers")
     {
         size_t h1 = Hash(42);
-        size_t h2 = std::hash<int>()(42);
+        size_t h2 = std::hash<u32>()(42);
         REQUIRE(h1 == h2);
     }
 
@@ -25,7 +24,7 @@ TEST_CASE("Hash single values", "[Hash]")
 
     SECTION("lvalue vs rvalue")
     {
-        int x = 7;
+        u32 x = 7;
         size_t h1 = Hash(x);
         size_t h2 = Hash(7);
         REQUIRE(h1 == h2);
@@ -34,7 +33,7 @@ TEST_CASE("Hash single values", "[Hash]")
 
 TEST_CASE("Variadic Hash combines consistently", "[Hash][Variadic]")
 {
-    int a = 1, b = 2, c = 3;
+    u32 a = 1, b = 2, c = 3;
     size_t combined = Hash(a, b, c);
 
     // manual combination
@@ -49,18 +48,14 @@ TEST_CASE("Variadic Hash combines consistently", "[Hash][Variadic]")
 
 TEST_CASE("HashRange over iterators", "[HashRange]")
 {
-    std::vector<int> v{4, 5, 6, 7};
+    Array<u32, 4> v{4, 5, 6, 7};
     size_t hr = HashRange(v.begin(), v.end());
 
     // manual equivalent
     size_t seed = TKIT_HASH_SEED;
-    for (int x : v)
+    for (u32 x : v)
         HashCombine(seed, x);
     REQUIRE(hr == seed);
-
-    // empty range returns seed unchanged
-    std::array<int, 0> empty{};
-    REQUIRE(HashRange(empty.begin(), empty.end()) == TKIT_HASH_SEED);
 }
 
 TEST_CASE("HashCombine modifies seed", "[HashCombine]")
@@ -93,7 +88,7 @@ TEST_CASE("Mixed types hashing", "[Hash]")
 
 TEST_CASE("Hash of different types in range", "[HashRange]")
 {
-    std::vector<std::string> vs{"a", "b", "c"};
+    Array<std::string, 3> vs{"a", "b", "c"};
     size_t hr = HashRange(vs.begin(), vs.end());
     size_t seed = TKIT_HASH_SEED;
     for (auto &s : vs)

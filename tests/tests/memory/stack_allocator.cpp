@@ -1,8 +1,8 @@
 #include "tkit/memory/stack_allocator.hpp"
+#include "tkit/container/dynamic_array.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 #include <type_traits>
 
 using namespace TKit;
@@ -133,19 +133,19 @@ TEST_CASE("Allocate until full and LIFO deallocate", "[StackAllocator]")
     constexpr usize capacity = 128 / blockSize; // TKIT_STACK_ALLOCATOR_MAX_ENTRIES default ≥ capacity
     StackAllocator arena(capacity * blockSize);
 
-    std::vector<void *> ptrs;
+    DynamicArray<void *> ptrs;
     for (usize i = 0; i < capacity; ++i)
     {
         void *p = arena.Allocate(blockSize, 1);
         REQUIRE(p);
-        ptrs.push_back(p);
+        ptrs.Append(p);
     }
     REQUIRE(arena.IsFull());
     REQUIRE(arena.GetRemaining() == 0);
 
     // deallocate all in reverse
-    for (auto it = ptrs.rbegin(); it != ptrs.rend(); ++it)
-        arena.Deallocate(*it);
+    for (usize i = ptrs.GetSize(); i > 0; --i)
+        arena.Deallocate(ptrs[i - 1]);
     REQUIRE(arena.IsEmpty());
 }
 

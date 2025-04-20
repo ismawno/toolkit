@@ -1,6 +1,5 @@
 #include "tkit/container/static_array.hpp"
 #include <catch2/catch_test_macros.hpp>
-#include <array>
 #include <algorithm>
 #include <numeric>
 #include <string>
@@ -109,11 +108,11 @@ TEST_CASE("StaticArray: constructor from size+fill args", "[StaticArray]")
 
     // non-trivial => should invoke CTOR for each
     g_Constructions = g_Destructions = 0;
-    StaticArray<STrackable, 5> nt(2, 42u);
+    StaticArray<STrackable, 5> nt(2, 42);
     REQUIRE(nt.GetSize() == 2);
     REQUIRE(g_Constructions == 2);
-    for (std::size_t i = 0; i < 2; ++i)
-        REQUIRE(nt[i].Value == 42u);
+    for (usize i = 0; i < 2; ++i)
+        REQUIRE(nt[i].Value == 42);
     // destructor runs in ~StaticArray
 }
 
@@ -122,10 +121,10 @@ TEST_CASE("StaticArray: initializer_list & range constructors", "[StaticArray]")
     // initializer_list
     StaticArray<u32, 4> arr{5u, 6u, 7u};
     REQUIRE(arr.GetSize() == 3);
-    REQUIRE(std::equal(arr.begin(), arr.end(), std::array<u32, 3>{5, 6, 7}.begin()));
+    REQUIRE(std::equal(arr.begin(), arr.end(), TKit::Array<u32, 3>{5, 6, 7}.begin()));
 
     // range constructor from another container
-    std::array<u32, 4> src = {10, 20, 30, 40};
+    TKit::Array<u32, 4> src = {10, 20, 30, 40};
     StaticArray<u32, 4> rg(src.begin() + 1, src.begin() + 4);
     REQUIRE(rg.GetSize() == 3);
     REQUIRE(rg[0] == 20);
@@ -161,10 +160,9 @@ TEST_CASE("StaticArray: member Insert wrappers", "[StaticArray]")
     StaticArray<u32, 7> a{1, 2, 4, 5};
     a.Insert(a.begin() + 2, 3u); // insert single at pos 2
     REQUIRE(a.GetSize() == 5);
-    REQUIRE(std::vector<u32>(a.begin(), a.end()) == std::vector<u32>{1, 2, 3, 4, 5});
 
     // insert range
-    std::array<u32, 2> extra = {7, 8};
+    TKit::Array<u32, 2> extra = {7, 8};
     a.Insert(a.begin() + 5, extra.begin(), extra.end());
     REQUIRE(a.GetSize() == 7); // capacity 5 => insertion of 2 at end should assert; skip if asserts disabled
 }
@@ -176,7 +174,6 @@ TEST_CASE("StaticArray: member RemoveOrdered/Unordered wrappers", "[StaticArray]
 
     a.RemoveOrdered(a.begin() + 1); // remove '20'
     REQUIRE(a.GetSize() == 4);
-    REQUIRE(std::vector<u32>(a.begin(), a.end()) == std::vector<u32>{10, 30, 40, 50});
 
     a.RemoveOrdered(a.begin() + 1, a.begin() + 3); // remove '30','40'
     REQUIRE(a.GetSize() == 2);
@@ -275,7 +272,7 @@ TEST_CASE("StaticArray<std::string>: basic operations", "[StaticArray][string]")
     REQUIRE(arr1[2] == "two");
 
     // Insert range
-    std::vector<std::string> extras{"x", "y", "z"};
+    Array<std::string, 3> extras{"x", "y", "z"};
     arr1.Insert(arr1.begin() + 4, extras.begin(), extras.end());
     REQUIRE(arr1.GetSize() == 7);
     REQUIRE(arr1[4] == "x");

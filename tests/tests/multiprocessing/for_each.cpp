@@ -1,10 +1,9 @@
 #include "tkit/multiprocessing/for_each.hpp"
 #include "tkit/multiprocessing/thread_pool.hpp"
 #include "tkit/memory/ptr.hpp"
-#include "tkit/container/alias.hpp"
+#include "tkit/container/dynamic_array.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <atomic>
-#include <vector>
 #include <iterator>
 
 using namespace TKit;
@@ -34,17 +33,17 @@ TEST_CASE("ForEach with output iterator collects and executes all", "[ForEach][T
     const usize lastIndex = 25;
     const usize partitionCount = 5;
     std::atomic<usize> totalSum{0};
-    std::vector<Ref<ITask>> tasks;
-    tasks.reserve(partitionCount);
+    DynamicArray<Ref<ITask>> tasks;
+    tasks.Resize(partitionCount);
 
     // Partition [10,25) into 5 chunks; capture tasks and sum chunk sizes
-    ForEach(pool, firstIndex, lastIndex, std::back_inserter(tasks), partitionCount,
+    ForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount,
             [&](usize start, usize end, usize /*threadIndex*/) {
                 totalSum.fetch_add(end - start, std::memory_order_relaxed);
             });
 
     // we should have one task per partition
-    REQUIRE(tasks.size() == partitionCount);
+    REQUIRE(tasks.GetSize() == partitionCount);
 
     // wait for each task to finish
     for (auto &t : tasks)
@@ -61,8 +60,8 @@ TEST_CASE("ForEachMainThreadLead with output iterator partitions and returns mai
     const usize lastIndex = 100;
     const usize partitionCount = 4;
     std::atomic<usize> otherSum{0};
-    std::vector<Ref<ITask>> tasks;
-    tasks.reserve(partitionCount - 1);
+    DynamicArray<Ref<ITask>> tasks;
+    tasks.Resize(partitionCount - 1);
 
     // Callable returns usize length for main partition; others add to otherSum
     auto callable = [&](usize start, usize end, usize /*threadIndex*/) -> usize {
@@ -74,13 +73,12 @@ TEST_CASE("ForEachMainThreadLead with output iterator partitions and returns mai
         return end - start;
     };
 
-    usize mainLength =
-        ForEachMainThreadLead(pool, firstIndex, lastIndex, std::back_inserter(tasks), partitionCount, callable);
+    usize mainLength = ForEachMainThreadLead(pool, firstIndex, lastIndex, tasks.begin(), partitionCount, callable);
 
     // main partition [0,25) length = 25
     REQUIRE(mainLength == (lastIndex - firstIndex) / partitionCount);
     // should have enqueued partitionCount-1 tasks
-    REQUIRE(tasks.size() == partitionCount - 1);
+    REQUIRE(tasks.GetSize() == partitionCount - 1);
 
     // wait all other partitions
     for (auto &t : tasks)

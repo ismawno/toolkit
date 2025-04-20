@@ -309,6 +309,12 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
         m_Size = 0;
     }
 
+    constexpr void Reserve(const SizeType p_Capacity) noexcept
+    {
+        if (p_Capacity > m_Capacity)
+            modifyCapacity(p_Capacity);
+    }
+
     constexpr void Shrink() noexcept
     {
         if (m_Size == 0)

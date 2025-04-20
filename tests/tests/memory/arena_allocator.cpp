@@ -1,8 +1,8 @@
 #include "tkit/memory/arena_allocator.hpp"
+#include "tkit/container/dynamic_array.hpp"
 #include <catch2/catch_all.hpp>
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 #include <type_traits>
 
 using namespace TKit;
@@ -102,19 +102,19 @@ TEST_CASE("Allocate until full and Reset", "[ArenaAllocator]")
     ArenaAllocator arena(64);
 
     // consume all with 1-byte allocs, aligned to 1 byte
-    std::vector<void *> ptrs;
+    DynamicArray<void *> ptrs;
     while (true)
     {
         void *p = arena.Allocate(1, 1);
         if (!p)
             break;
-        ptrs.push_back(p);
+        ptrs.Append(p);
     }
 
     REQUIRE(arena.IsFull());
     REQUIRE(arena.GetRemaining() == 0);
     REQUIRE(arena.Allocate(1) == nullptr);
-    REQUIRE(arena.GetAllocated() == ptrs.size());
+    REQUIRE(arena.GetAllocated() == ptrs.GetSize());
 
     // Reset and allocate again
     arena.Reset();

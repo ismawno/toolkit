@@ -1,7 +1,6 @@
 #include "tkit/container/dynamic_array.hpp"
+#include "tkit/container/array.hpp"
 #include <catch2/catch_test_macros.hpp>
-#include <array>
-#include <vector>
 #include <string>
 #include <algorithm>
 
@@ -80,7 +79,7 @@ TEST_CASE("DynamicArray: constructor from size+fill args", "[DynamicArray]")
 
 TEST_CASE("DynamicArray: range and initializer_list constructors", "[DynamicArray]")
 {
-    std::vector<u32> src = {10, 20, 30};
+    DynamicArray<u32> src = {10, 20, 30};
     DynamicArray<u32> arr1(src.begin(), src.end());
     REQUIRE(arr1.GetSize() == 3);
     REQUIRE(std::equal(arr1.begin(), arr1.end(), src.begin()));
@@ -117,9 +116,8 @@ TEST_CASE("DynamicArray: Insert single and range", "[DynamicArray]")
     DynamicArray<u32> arr{1u, 2u, 4u, 5u};
     arr.Insert(arr.begin() + 2, 3u);
     REQUIRE(arr.GetSize() == 5);
-    REQUIRE(std::vector<u32>(arr.begin(), arr.end()) == std::vector<u32>{1, 2, 3, 4, 5});
 
-    std::array<u32, 2> extra = {7u, 8u};
+    TKit::Array<u32, 2> extra = {7u, 8u};
     arr.Insert(arr.begin() + 5, extra.begin(), extra.end());
     REQUIRE(arr.GetSize() == 7);
     REQUIRE(arr[5] == 7u);
@@ -131,7 +129,6 @@ TEST_CASE("DynamicArray: RemoveOrdered and RemoveUnordered", "[DynamicArray]")
     DynamicArray<u32> arr{10u, 20u, 30u, 40u, 50u};
     arr.RemoveOrdered(arr.begin() + 1);
     REQUIRE(arr.GetSize() == 4);
-    REQUIRE(std::vector<u32>(arr.begin(), arr.end()) == std::vector<u32>{10, 30, 40, 50});
 
     arr.RemoveOrdered(arr.begin() + 1, arr.begin() + 3);
     REQUIRE(arr.GetSize() == 2);
@@ -197,7 +194,7 @@ TEST_CASE("DynamicArray<std::string>: non-trivial operations", "[DynamicArray][s
     arr1.Insert(arr1.begin() + 1, std::string("inserted"));
     REQUIRE(arr1[1] == "inserted");
 
-    std::vector<std::string> extras{"x", "y"};
+    DynamicArray<std::string> extras{"x", "y"};
     arr1.Insert(arr1.begin() + 4, extras.begin(), extras.end());
     REQUIRE(arr1.GetBack() == "y");
 

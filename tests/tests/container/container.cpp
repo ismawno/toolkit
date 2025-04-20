@@ -1,6 +1,7 @@
 #include "tkit/container/container.hpp"
+#include "tkit/container/array.hpp"
+#include "tkit/container/dynamic_array.hpp"
 #include <catch2/catch_test_macros.hpp>
-#include <array>
 #include <algorithm>
 #include <cstring>
 #include <utility>
@@ -149,15 +150,15 @@ TEST_CASE("CopyAssignFromRange", "[CopyAssignFromRange]")
 
     SECTION("non-trivial copyable: src > dst")
     {
-        // use std::array with extra capacity
-        std::array<CopyOnly, 10> buf;
+        // use TKit::Array with extra capacity
+        TKit::Array<CopyOnly, 10> buf;
         // initialize first 3 slots
         for (u32 i = 0; i < 3; ++i)
             buf[i] = CopyOnly(i + 1);
         CopyOnly src[] = {100, 200, 300, 400, 500};
 
         // assign into 3‑slot region, but src is length 5 -> will construct 2 more
-        Tools<CopyOnly>::CopyAssignFromRange(buf.data(), buf.data() + 3, src, src + 5);
+        Tools<CopyOnly>::CopyAssignFromRange(buf.begin(), buf.begin() + 3, src, src + 5);
 
         // now buf[0..4] == src[0..4]
         for (u32 i = 0; i < 5; ++i)
@@ -188,14 +189,14 @@ TEST_CASE("MoveAssignFromRange", "[MoveAssignFromRange]")
 
     SECTION("move-only: src > dst")
     {
-        std::array<MoveOnly, 8> buf;
+        TKit::Array<MoveOnly, 8> buf;
         // default‑construct first 2 slots in raw storage
         TKit::Memory::Construct<MoveOnly>(&buf[0], 0);
         TKit::Memory::Construct<MoveOnly>(&buf[1], 0);
 
         MoveOnly src[] = {11, 22, 33, 44};
         // move‑assign into 2‑slot region -> will construct 2 more at buf[2],buf[3]
-        Tools<MoveOnly>::MoveAssignFromRange(buf.data(), buf.data() + 2, src, src + 4);
+        Tools<MoveOnly>::MoveAssignFromRange(buf.begin(), buf.begin() + 2, src, src + 4);
 
         REQUIRE(buf[0].Value == 11);
         REQUIRE(buf[1].Value == 22);
@@ -213,7 +214,7 @@ TEST_CASE("Insert single element", "[Insert]")
 {
     SECTION("trivial at beginning")
     {
-        std::array<u32, 5> arr = {1, 2, 3, 0, 0};
+        TKit::Array<u32, 5> arr = {1, 2, 3, 0, 0};
         u32 currSize = 3;
         Tools<u32>::Insert(arr.begin() + currSize, arr.begin(), 99);
         // now [99,1,2,3,...]
@@ -225,7 +226,7 @@ TEST_CASE("Insert single element", "[Insert]")
 
     SECTION("trivial at middle")
     {
-        std::array<u32, 5> arr = {1, 2, 3, 0, 0};
+        TKit::Array<u32, 5> arr = {1, 2, 3, 0, 0};
         u32 currSize = 3;
         auto pos = arr.begin() + 1;
         Tools<u32>::Insert(arr.begin() + currSize, pos, 42);
@@ -237,7 +238,7 @@ TEST_CASE("Insert single element", "[Insert]")
 
     SECTION("trivial at end")
     {
-        std::array<u32, 4> arr = {10, 20, 0, 0};
+        TKit::Array<u32, 4> arr = {10, 20, 0, 0};
         u32 currSize = 2;
         Tools<u32>::Insert(arr.begin() + currSize, arr.begin() + currSize, 30);
         REQUIRE(arr[2] == 30);
@@ -269,7 +270,7 @@ TEST_CASE("Insert range of elements", "[Insert][Range]")
 {
     SECTION("trivial: tail > count")
     {
-        std::array<u32, 8> arr = {1, 2, 3, 4, 0, 0, 0, 0};
+        TKit::Array<u32, 8> arr = {1, 2, 3, 4, 0, 0, 0, 0};
         u32 size = 4;
         u32 src[] = {10, 20};
         auto added = Tools<u32>::Insert(arr.begin() + size, arr.begin() + 1, src, src + 2);
@@ -285,7 +286,7 @@ TEST_CASE("Insert range of elements", "[Insert][Range]")
 
     SECTION("trivial: tail < count")
     {
-        std::array<u32, 8> arr = {1, 2, 3, 0, 0, 0, 0, 0};
+        TKit::Array<u32, 8> arr = {1, 2, 3, 0, 0, 0, 0, 0};
         u32 size = 3;
         u32 src[] = {5, 6, 7, 8, 9};
         auto added = Tools<u32>::Insert(arr.begin() + size, arr.begin() + 1, src, src + 5);
@@ -303,7 +304,7 @@ TEST_CASE("Insert range of elements", "[Insert][Range]")
 
     SECTION("trivial: tail == count")
     {
-        std::array<u32, 6> arr = {1, 2, 3, 0, 0, 0};
+        TKit::Array<u32, 6> arr = {1, 2, 3, 0, 0, 0};
         u32 size = 3;
         u32 src[] = {7, 8, 9};
         auto added = Tools<u32>::Insert(arr.begin() + size, arr.begin() + 3, src, src + 3);
@@ -315,12 +316,12 @@ TEST_CASE("Insert range of elements", "[Insert][Range]")
 
     SECTION("non-trivial copyable tail > count")
     {
-        std::array<CopyOnly, 8> arr;
+        TKit::Array<CopyOnly, 8> arr;
         // init first 4 slots
         for (u32 i = 0; i < 4; ++i)
             arr[i] = CopyOnly(i + 1);
         CopyOnly src[] = {100, 200};
-        auto added = Tools<CopyOnly>::Insert(arr.data() + 4, arr.data() + 1, src, src + 2);
+        auto added = Tools<CopyOnly>::Insert(arr.begin() + 4, arr.begin() + 1, src, src + 2);
         REQUIRE(added == 2);
         REQUIRE(arr[1].Value == 100);
         REQUIRE(arr[2].Value == 200);
@@ -330,12 +331,12 @@ TEST_CASE("Insert range of elements", "[Insert][Range]")
 
     SECTION("non-trivial copyable tail < count")
     {
-        std::array<CopyOnly, 8> arr;
+        TKit::Array<CopyOnly, 8> arr;
         // init first 3 slots
         for (u32 i = 0; i < 3; ++i)
             arr[i] = CopyOnly(i + 1);
         CopyOnly src[] = {100, 200, 300, 400, 500};
-        auto added = Tools<CopyOnly>::Insert(arr.data() + 3, arr.data() + 1, src, src + 5);
+        auto added = Tools<CopyOnly>::Insert(arr.begin() + 3, arr.begin() + 1, src, src + 5);
         REQUIRE(added == 5);
         REQUIRE(arr[0].Value == 1);
         REQUIRE(arr[1].Value == 100);
@@ -348,12 +349,12 @@ TEST_CASE("Insert range of elements", "[Insert][Range]")
     }
     SECTION("non-trivial copyable tail == count")
     {
-        std::array<CopyOnly, 6> arr;
+        TKit::Array<CopyOnly, 6> arr;
         // init first 3 slots
         for (u32 i = 0; i < 3; ++i)
             arr[i] = CopyOnly(i + 1);
         CopyOnly src[] = {100, 200, 300};
-        auto added = Tools<CopyOnly>::Insert(arr.data() + 3, arr.data() + 1, src, src + 3);
+        auto added = Tools<CopyOnly>::Insert(arr.begin() + 3, arr.begin() + 1, src, src + 3);
         REQUIRE(added == 3);
         REQUIRE(arr[0].Value == 1);
         REQUIRE(arr[1].Value == 100);
@@ -368,7 +369,7 @@ TEST_CASE("RemoveOrdered single element", "[RemoveOrdered]")
 {
     SECTION("trivial type")
     {
-        std::array<u32, 5> arr = {1, 2, 3, 4, 5};
+        TKit::Array<u32, 5> arr = {1, 2, 3, 4, 5};
         u32 size = 5;
         Tools<u32>::RemoveOrdered(arr.begin() + size, arr.begin() + 1);
         // arr => 1,3,4,5,...
@@ -380,7 +381,7 @@ TEST_CASE("RemoveOrdered single element", "[RemoveOrdered]")
 
     SECTION("non-trivial copyable")
     {
-        std::array<CopyOnly, 5> arr;
+        TKit::Array<CopyOnly, 5> arr;
         for (u32 i = 0; i < 5; ++i)
             arr[i] = CopyOnly(i + 1);
         Tools<CopyOnly>::RemoveOrdered(arr.begin() + 5, arr.begin() + 2);
@@ -394,7 +395,7 @@ TEST_CASE("RemoveOrdered range of elements", "[RemoveOrdered][Range]")
 {
     SECTION("trivial type")
     {
-        std::array<u32, 6> arr = {1, 2, 3, 4, 5, 6};
+        TKit::Array<u32, 6> arr = {1, 2, 3, 4, 5, 6};
         u32 size = 6;
         auto removed = Tools<u32>::RemoveOrdered(arr.begin() + size, arr.begin() + 1, arr.begin() + 4);
         REQUIRE(removed == 3);
@@ -406,7 +407,7 @@ TEST_CASE("RemoveOrdered range of elements", "[RemoveOrdered][Range]")
 
     SECTION("non-trivial copyable")
     {
-        std::array<CopyOnly, 6> arr;
+        TKit::Array<CopyOnly, 6> arr;
         for (u32 i = 0; i < 6; ++i)
             arr[i] = CopyOnly(i + 1);
         auto removed = Tools<CopyOnly>::RemoveOrdered(arr.begin() + 6, arr.begin() + 2, arr.begin() + 5);
@@ -420,7 +421,7 @@ TEST_CASE("RemoveUnordered", "[RemoveUnordered]")
 {
     SECTION("trivial type")
     {
-        std::array<u32, 4> arr = {10, 20, 30, 40};
+        TKit::Array<u32, 4> arr = {10, 20, 30, 40};
         u32 size = 4;
         Tools<u32>::RemoveUnordered(arr.begin() + size, arr.begin() + 1);
         // pos1 replaced by last element
@@ -429,7 +430,7 @@ TEST_CASE("RemoveUnordered", "[RemoveUnordered]")
 
     SECTION("non-trivial copyable")
     {
-        std::array<CopyOnly, 4> arr;
+        TKit::Array<CopyOnly, 4> arr;
         for (u32 i = 0; i < 4; ++i)
             arr[i] = CopyOnly(i + 1);
         Tools<CopyOnly>::RemoveUnordered(arr.begin() + 4, arr.begin() + 0);
@@ -440,8 +441,8 @@ TEST_CASE("RemoveUnordered", "[RemoveUnordered]")
 
 TEST_CASE("ArrayTools<std::string>: CopyConstructFromRange", "[ArrayTools][string]")
 {
-    std::vector<std::string> src{"hello", "world", "foo"};
-    std::array<std::string, 3> dst; // default‐constructed empty strings
+    TKit::Array<std::string, 3> src{"hello", "world", "foo"};
+    TKit::Array<std::string, 3> dst; // default‐constructed empty strings
     Tools<std::string>::CopyConstructFromRange(dst.begin(), src.begin(), src.end());
 
     REQUIRE(dst[0] == "hello");
@@ -453,8 +454,8 @@ TEST_CASE("ArrayTools<std::string>: CopyConstructFromRange", "[ArrayTools][strin
 
 TEST_CASE("ArrayTools<std::string>: MoveConstructFromRange", "[ArrayTools][string]")
 {
-    std::vector<std::string> src{"a", "b", "c"};
-    std::array<std::string, 3> dst;
+    TKit::Array<std::string, 3> src{"a", "b", "c"};
+    TKit::Array<std::string, 3> dst;
     // capture original src values for later comparison
     auto orig = src;
 
@@ -471,7 +472,7 @@ TEST_CASE("ArrayTools<std::string>: MoveConstructFromRange", "[ArrayTools][strin
 
 TEST_CASE("ArrayTools<std::string>: Insert single element", "[ArrayTools][string]")
 {
-    std::array<std::string, 5> arr = {"one", "two", "three", "", ""};
+    TKit::Array<std::string, 5> arr = {"one", "two", "three", "", ""};
     usize size = 3; // valid data at [0,1,2]
     auto begin = arr.begin();
     auto end = begin + size;
@@ -490,25 +491,25 @@ TEST_CASE("ArrayTools<std::string>: Insert single element", "[ArrayTools][string
 
 TEST_CASE("ArrayTools<std::string>: Insert range of elements", "[ArrayTools][string]")
 {
-    std::array<std::string, 8> arr = {"a", "b", "c", "d", "", "", "", ""};
+    TKit::Array<std::string, 8> arr = {"a", "b", "c", "d", "", "", "", ""};
     usize size = 4;
     auto begin = arr.begin();
     auto end = begin + size;
-    std::vector<std::string> src{"X", "Y", "Z"};
+    TKit::Array<std::string, 3> src{"X", "Y", "Z"};
 
     // insert 3 elements at pos 2
     auto count = Tools<std::string>::Insert(end, begin + 2, src.begin(), src.end());
     REQUIRE(count == 3);
 
     // expected sequence: a, b, X, Y, Z, c, d, ...
-    std::vector<std::string> expected = {"a", "b", "X", "Y", "Z", "c", "d"};
-    for (size_t i = 0; i < expected.size(); ++i)
+    TKit::Array<std::string, 7> expected = {"a", "b", "X", "Y", "Z", "c", "d"};
+    for (size_t i = 0; i < expected.GetSize(); ++i)
         REQUIRE(arr[i] == expected[i]);
 }
 
 TEST_CASE("ArrayTools<std::string>: RemoveOrdered single element", "[ArrayTools][string]")
 {
-    std::array<std::string, 5> arr = {"red", "green", "blue", "yellow", ""};
+    TKit::Array<std::string, 5> arr = {"red", "green", "blue", "yellow", ""};
     usize size = 4;
     auto begin = arr.begin();
     auto end = begin + size;
@@ -524,7 +525,7 @@ TEST_CASE("ArrayTools<std::string>: RemoveOrdered single element", "[ArrayTools]
 
 TEST_CASE("ArrayTools<std::string>: RemoveOrdered range of elements", "[ArrayTools][string]")
 {
-    std::array<std::string, 6> arr = {"p", "q", "r", "s", "t", ""};
+    TKit::Array<std::string, 6> arr = {"p", "q", "r", "s", "t", ""};
     usize size = 5;
     auto begin = arr.begin();
     auto end = begin + size;
@@ -540,7 +541,7 @@ TEST_CASE("ArrayTools<std::string>: RemoveOrdered range of elements", "[ArrayToo
 
 TEST_CASE("ArrayTools<std::string>: RemoveUnordered", "[ArrayTools][string]")
 {
-    std::array<std::string, 4> arr = {"alpha", "beta", "gamma", "delta"};
+    TKit::Array<std::string, 4> arr = {"alpha", "beta", "gamma", "delta"};
     usize size = 4;
     auto begin = arr.begin();
     auto end = begin + size;

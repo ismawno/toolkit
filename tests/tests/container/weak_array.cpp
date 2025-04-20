@@ -1,7 +1,5 @@
 #include "tkit/container/weak_array.hpp"
 #include <catch2/catch_test_macros.hpp>
-#include <array>
-#include <vector>
 #include <string>
 #include <algorithm>
 
@@ -113,7 +111,7 @@ TEST_CASE("WeakArray static: modify elements", "[WeakArray]")
     REQUIRE(arr.GetSize() == 3);
     REQUIRE(arr[1] == 9);
 
-    std::array<u32, 2> extra = {7, 8};
+    TKit::Array<u32, 2> extra = {7, 8};
     arr.Insert(arr.begin() + 3, extra.begin(), extra.end());
     REQUIRE(arr.GetSize() == 5);
     REQUIRE(arr[3] == 7);
@@ -132,8 +130,8 @@ TEST_CASE("WeakArray static: modify elements", "[WeakArray]")
 
 TEST_CASE("WeakArray static: Resize, Clear, iteration", "[WeakArray]")
 {
-    std::array<WTrackable, 4> backing;
-    WeakArray<WTrackable, 4> arr(backing.data(), 0);
+    TKit::Array<WTrackable, 4> backing;
+    WeakArray<WTrackable, 4> arr(backing.GetData(), 0);
     g_CtorCount = g_DtorCount = 0;
 
     arr.Resize(3, 42u);
@@ -239,7 +237,7 @@ TEST_CASE("WeakArray dynamic: modify & inspect", "[WeakArray]")
     arr.Insert(arr.begin() + 1, 7);
     REQUIRE(arr[1] == 7);
 
-    std::vector<u32> extra{8, 9, 10};
+    Array<u32, 3> extra{8, 9, 10};
     arr.Insert(arr.begin() + 2, extra.begin(), extra.end());
     REQUIRE(arr.GetSize() == 5);
     REQUIRE(arr.GetBack() == 10);
