@@ -37,7 +37,8 @@ template <typename Traits> struct ArrayTools
                                                  const It p_SrcEnd) noexcept
     {
         using T = decltype(*p_SrcBegin);
-        if constexpr (std::is_trivially_copyable_v<ValueType> && std::is_same_v<NoCVRef<T>, NoCVRef<ValueType>>)
+        if constexpr (std::is_trivially_copyable_v<ValueType> && std::is_trivially_move_constructible_v<ValueType> &&
+                      std::is_same_v<NoCVRef<T>, NoCVRef<ValueType>>)
             Memory::ForwardMove(p_DstBegin, p_SrcBegin, p_SrcEnd);
         else
             Memory::ConstructRangeMove(p_DstBegin, p_SrcBegin, p_SrcEnd);

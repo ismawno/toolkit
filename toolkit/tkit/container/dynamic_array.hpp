@@ -384,7 +384,9 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
 
         if (m_Data)
         {
-            Memory::ForwardCopy(newData, m_Data, m_Size * sizeof(ValueType));
+            Tools::MoveConstructFromRange(newData, begin(), end());
+            if constexpr (!std::is_trivially_destructible_v<T>)
+                Memory::DestructRange(begin(), end());
             Memory::DeallocateAligned(m_Data);
         }
         m_Data = newData;
