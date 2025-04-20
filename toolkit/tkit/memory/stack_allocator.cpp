@@ -29,7 +29,7 @@ StackAllocator::StackAllocator(StackAllocator &&p_Other) noexcept
     p_Other.m_Buffer = nullptr;
     p_Other.m_Size = 0;
     p_Other.m_Remaining = 0;
-    p_Other.m_Entries.clear();
+    p_Other.m_Entries.Clear();
 }
 
 StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other) noexcept
@@ -46,14 +46,14 @@ StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other) noexcept
         p_Other.m_Buffer = nullptr;
         p_Other.m_Size = 0;
         p_Other.m_Remaining = 0;
-        p_Other.m_Entries.clear();
+        p_Other.m_Entries.Clear();
     }
     return *this;
 }
 
 void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment) noexcept
 {
-    void *ptr = m_Entries.empty() ? m_Buffer : m_Entries.back().Ptr + m_Entries.back().Size;
+    void *ptr = m_Entries.IsEmpty() ? m_Buffer : m_Entries.GetBack().Ptr + m_Entries.GetBack().Size;
     size_t remaining = static_cast<size_t>(m_Remaining);
 
     std::byte *alignedPtr = static_cast<std::byte *>(std::align(p_Alignment, p_Size, ptr, remaining));
@@ -70,23 +70,23 @@ void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment) noex
     const usize offset = m_Remaining - static_cast<usize>(remaining);
     m_Remaining = static_cast<usize>(remaining) - p_Size;
 
-    m_Entries.emplace_back(alignedPtr, p_Size, offset);
+    m_Entries.Append(alignedPtr, p_Size, offset);
     return alignedPtr;
 }
 
 void StackAllocator::Deallocate([[maybe_unused]] const void *p_Ptr) noexcept
 {
-    TKIT_ASSERT(!m_Entries.empty(), "[TOOLKIT] Unable to deallocate because the stack allocator is empty");
-    TKIT_ASSERT(m_Entries.back().Ptr == p_Ptr,
+    TKIT_ASSERT(!m_Entries.IsEmpty(), "[TOOLKIT] Unable to deallocate because the stack allocator is IsEmpty");
+    TKIT_ASSERT(m_Entries.GetBack().Ptr == p_Ptr,
                 "[TOOLKIT] Elements must be deallocated in the reverse order they were allocated");
-    m_Remaining += m_Entries.back().Size + m_Entries.back().AlignmentOffset;
-    m_Entries.pop_back();
+    m_Remaining += m_Entries.GetBack().Size + m_Entries.GetBack().AlignmentOffset;
+    m_Entries.Pop();
 }
 
 const StackAllocator::Entry &StackAllocator::Top() const noexcept
 {
-    TKIT_ASSERT(!m_Entries.empty(), "[TOOLKIT] No elements in the stack allocator");
-    return m_Entries.back();
+    TKIT_ASSERT(!m_Entries.IsEmpty(), "[TOOLKIT] No elements in the stack allocator");
+    return m_Entries.GetBack();
 }
 
 usize StackAllocator::GetSize() const noexcept
@@ -104,10 +104,10 @@ usize StackAllocator::GetRemaining() const noexcept
 
 bool StackAllocator::Belongs(const void *p_Ptr) const noexcept
 {
-    if (m_Entries.empty())
+    if (m_Entries.IsEmpty())
         return false;
     const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
-    return ptr >= m_Buffer && ptr < m_Entries.back().Ptr + m_Entries.back().Size;
+    return ptr >= m_Buffer && ptr < m_Entries.GetBack().Ptr + m_Entries.GetBack().Size;
 }
 
 bool StackAllocator::IsEmpty() const noexcept
@@ -125,7 +125,7 @@ void StackAllocator::deallocateBuffer() noexcept
     if (!m_Buffer || m_Provided)
         return;
     TKIT_LOG_WARNING_IF(
-        !m_Entries.empty(),
+        !m_Entries.IsEmpty(),
         "[TOOLKIT] Deallocating a stack allocator with active allocations. If the elements are not "
         "trivially destructible, you will have to call "
         "Destroy() for each element to avoid undefined behaviour (this deallocation will not call the destructor)");
@@ -133,6 +133,6 @@ void StackAllocator::deallocateBuffer() noexcept
     m_Buffer = nullptr;
     m_Size = 0;
     m_Remaining = 0;
-    m_Entries.clear();
+    m_Entries.Clear();
 }
 } // namespace TKit

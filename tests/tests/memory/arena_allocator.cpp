@@ -1,60 +1,187 @@
 #include "tkit/memory/arena_allocator.hpp"
-#include "tkit/utils/literals.hpp"
-#include "tests/data_types.hpp"
-#include <catch2/catch_test_macros.hpp>
-#include <iostream>
+#include <catch2/catch_all.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+#include <type_traits>
 
-namespace TKit
+using namespace TKit;
+
+struct WarningShutter : Catch::EventListenerBase
 {
-using namespace Literals;
+    using EventListenerBase::EventListenerBase;
 
-TEST_CASE("Arena allocator basic operations", "[memory][arena_allocator][basic]")
+    void testCaseStarting(const Catch::TestCaseInfo &) override
+    {
+        TKIT_IGNORE_WARNING_LOGS_PUSH();
+    }
+
+    void testCaseEnded(const Catch::TestCaseStats &) override
+    {
+        TKIT_IGNORE_WARNING_LOGS_POP();
+    }
+};
+
+CATCH_REGISTER_LISTENER(WarningShutter)
+
+// A helper non-trivial type to test Create/NCreate
+struct NonTrivial
 {
-    ArenaAllocator allocator(1_kb);
-    REQUIRE(allocator.GetAllocated() == 0);
-    REQUIRE(allocator.GetRemaining() == 1_kb);
-    REQUIRE(allocator.IsEmpty());
-    REQUIRE(!allocator.IsFull());
+    static inline u32 ctorCount = 0;
+    static inline u32 dtorCount = 0;
+    u32 value;
 
-    SECTION("Allocate")
+    NonTrivial(u32 v) : value(v)
     {
-        REQUIRE(allocator.Allocate(128_b) != nullptr);
-        REQUIRE(allocator.GetAllocated() == 128_b);
-        REQUIRE(allocator.GetRemaining() == 1_kb - 128_b);
-        REQUIRE(!allocator.IsEmpty());
-        REQUIRE(!allocator.IsFull());
-
-        REQUIRE(allocator.Allocate(256_b) != nullptr);
-        REQUIRE(allocator.GetAllocated() == 384_b);
-        REQUIRE(allocator.GetRemaining() == 1_kb - 384_b);
-        REQUIRE(!allocator.IsEmpty());
-        REQUIRE(!allocator.IsFull());
-
-        allocator.Reset();
-        REQUIRE(allocator.GetAllocated() == 0);
-        REQUIRE(allocator.GetRemaining() == 1_kb);
-        REQUIRE(allocator.IsEmpty());
-        REQUIRE(!allocator.IsFull());
+        ++ctorCount;
+    }
+    ~NonTrivial()
+    {
+        ++dtorCount;
     }
 
-    SECTION("Reset")
-    {
-        allocator.Allocate(128_b);
-        allocator.Reset();
-        REQUIRE(allocator.GetAllocated() == 0);
-        REQUIRE(allocator.GetRemaining() == 1_kb);
-        REQUIRE(allocator.IsEmpty());
-        REQUIRE(!allocator.IsFull());
-    }
+    // non-copyable to force Create path
+    NonTrivial(const NonTrivial &) = delete;
+    NonTrivial &operator=(const NonTrivial &) = delete;
+};
 
-    SECTION("Belongs")
-    {
-        void *ptr = allocator.Allocate(128_b);
-        REQUIRE(allocator.Belongs(ptr));
-        REQUIRE(!allocator.Belongs(reinterpret_cast<void *>(0x12345678)));
+TEST_CASE("Constructor and initial state", "[ArenaAllocator]")
+{
+    constexpr usize size = 1024;
+    ArenaAllocator arena(size);
 
-        allocator.Reset();
-    }
+    REQUIRE(arena.IsEmpty());
+    REQUIRE(!arena.IsFull());
+    REQUIRE(arena.GetSize() == size);
+    REQUIRE(arena.GetAllocated() == 0);
+    REQUIRE(arena.GetRemaining() == size);
+    // nothing has been allocated → no pointer should belong
+    u32 dummy;
+    REQUIRE(!arena.Belongs(&dummy));
 }
 
-} // namespace TKit
+TEST_CASE("Allocate blocks and invariants", "[ArenaAllocator]")
+{
+    ArenaAllocator arena(256);
+    auto beforeRem = arena.GetRemaining();
+
+    // allocate 64 bytes
+    void *p = arena.Allocate(64);
+    REQUIRE(p);
+    REQUIRE(arena.Belongs(p));
+    // allocated + remaining == total
+    REQUIRE(arena.GetAllocated() + arena.GetRemaining() == arena.GetSize());
+    REQUIRE(arena.GetRemaining() < beforeRem);
+
+    // default Allocate<T>
+    auto pi = arena.Allocate<u32>(4);
+    REQUIRE(pi != nullptr);
+    // It's safe to write into it
+    for (u32 i = 0; i < 4; ++i)
+        pi[i] = i * 10;
+    for (u32 i = 0; i < 4; ++i)
+        REQUIRE(pi[i] == i * 10);
+    REQUIRE(arena.Belongs(pi));
+}
+
+TEST_CASE("Alignment behavior", "[ArenaAllocator]")
+{
+    constexpr usize size = 128;
+    ArenaAllocator arena(size);
+
+    // ask for 1 byte but 32-byte alignment
+    constexpr usize align = 32;
+    void *p = arena.Allocate(1, align);
+    REQUIRE(p);
+    REQUIRE(arena.Belongs(p));
+    REQUIRE(reinterpret_cast<uptr>(p) % align == 0);
+}
+
+TEST_CASE("Allocate until full and Reset", "[ArenaAllocator]")
+{
+    ArenaAllocator arena(64);
+
+    // consume all with 1-byte allocs, aligned to 1 byte
+    std::vector<void *> ptrs;
+    while (true)
+    {
+        void *p = arena.Allocate(1, 1);
+        if (!p)
+            break;
+        ptrs.push_back(p);
+    }
+
+    REQUIRE(arena.IsFull());
+    REQUIRE(arena.GetRemaining() == 0);
+    REQUIRE(arena.Allocate(1) == nullptr);
+    REQUIRE(arena.GetAllocated() == ptrs.size());
+
+    // Reset and allocate again
+    arena.Reset();
+    REQUIRE(arena.IsEmpty());
+    REQUIRE(arena.GetRemaining() == arena.GetSize());
+    void *p2 = arena.Allocate(8);
+    REQUIRE(p2 != nullptr);
+    REQUIRE(!arena.IsEmpty());
+}
+
+TEST_CASE("Move constructor and move assignment", "[ArenaAllocator]")
+{
+    ArenaAllocator a1(128);
+    a1.Allocate(16);
+    const auto rem1 = a1.GetRemaining();
+
+    // move-construct
+    ArenaAllocator a2(std::move(a1));
+    REQUIRE(a2.GetSize() == 128);
+    REQUIRE(a2.GetRemaining() == rem1);
+    // a1 has been zeroed-out
+    REQUIRE(a1.GetSize() == 0);
+    REQUIRE(a1.GetRemaining() == 0);
+
+    // move-assign
+    ArenaAllocator a3(64);
+    a3 = std::move(a2);
+    REQUIRE(a3.GetSize() == 128);
+    REQUIRE(a3.GetRemaining() == rem1);
+    REQUIRE(a2.GetSize() == 0);
+    REQUIRE(a2.GetRemaining() == 0);
+}
+
+TEST_CASE("Create<T> and NCreate<T>", "[ArenaAllocator]")
+{
+    ArenaAllocator arena(512);
+
+    // Create a single u32
+    u32 *pi = arena.Create<u32>(42);
+    REQUIRE(pi != nullptr);
+    REQUIRE(*pi == 42);
+
+    // Create an array of NonTrivial, track ctor/dtor
+    NonTrivial::ctorCount = 0;
+    NonTrivial::dtorCount = 0;
+    auto ptr = arena.NCreate<NonTrivial>(3, 7);
+    REQUIRE(ptr != nullptr);
+    REQUIRE(NonTrivial::ctorCount == 3);
+    for (u32 i = 0; i < 3; ++i)
+        REQUIRE(ptr[i].value == 7);
+
+    // manually destroy them since ArenaAllocator won't call dtors
+    for (u32 i = 0; i < 3; ++i)
+        ptr[i].~NonTrivial();
+    REQUIRE(NonTrivial::dtorCount == 3);
+}
+
+TEST_CASE("User-provided buffer constructor", "[ArenaAllocator]")
+{
+    constexpr usize size = 256;
+    alignas(std::max_align_t) std::byte buffer[size];
+    ArenaAllocator arena(buffer, size);
+
+    REQUIRE(arena.IsEmpty());
+    REQUIRE(arena.GetSize() == size);
+
+    void *p = arena.Allocate(32);
+    REQUIRE(p);
+    REQUIRE(arena.Belongs(p));
+}

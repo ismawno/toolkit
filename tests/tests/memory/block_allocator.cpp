@@ -1,242 +1,166 @@
 #include "tkit/memory/block_allocator.hpp"
-#include "tkit/multiprocessing/thread_pool.hpp"
-#include "tkit/multiprocessing/for_each.hpp"
-#include "tkit/container/array.hpp"
-#include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <cstddef>
+#include <cstdint>
+#include <vector>
 
-namespace TKit
-{
-template <typename T> static void RunRawAllocationTest()
-{
-    BlockAllocator allocator = BlockAllocator::CreateFromType<T>(2000);
-    REQUIRE(allocator.IsEmpty());
+using namespace TKit;
 
-    SECTION("Allocate and deallocate (raw call)")
+// A helper non-trivial type to test Create<T> and Destroy<T>
+struct NonTrivial
+{
+    static inline u32 ctorCount = 0;
+    static inline u32 dtorCount = 0;
+    u32 value;
+
+    NonTrivial(u32 v) : value(v)
     {
-        T *data = allocator.Allocate<T>();
-        REQUIRE(data != nullptr);
-        REQUIRE(allocator.Belongs(data));
-        allocator.Deallocate(data);
-        REQUIRE(allocator.IsEmpty());
+        ++ctorCount;
+    }
+    ~NonTrivial()
+    {
+        ++dtorCount;
     }
 
-    SECTION("Create and destroy (raw call)")
+    NonTrivial(const NonTrivial &) = delete;
+    NonTrivial &operator=(const NonTrivial &) = delete;
+};
+
+TEST_CASE("Constructor and initial state", "[BlockAllocator]")
+{
+    constexpr usize bufSize = 1024;
+    constexpr usize allocSize = 64;
+    BlockAllocator alloc(bufSize, allocSize);
+
+    REQUIRE(alloc.IsEmpty());
+    REQUIRE(!alloc.IsFull());
+    REQUIRE(alloc.GetBufferSize() == bufSize);
+    REQUIRE(alloc.GetAllocationSize() == allocSize);
+    REQUIRE(alloc.GetAllocationCount() == 0);
+    REQUIRE(alloc.GetRemainingCount() == bufSize / allocSize);
+    REQUIRE(alloc.GetAllocationCapacityCount() == bufSize / allocSize);
+
+    u32 dummy;
+    REQUIRE(!alloc.Belongs(&dummy));
+}
+
+TEST_CASE("CreateFromType factory", "[BlockAllocator]")
+{
+    constexpr usize count = 10;
+    auto alloc = BlockAllocator::CreateFromType<u32>(count);
+
+    REQUIRE(alloc.GetAllocationCapacityCount() == count);
+    REQUIRE(alloc.GetAllocationSize() >= sizeof(u32));
+    REQUIRE(alloc.Belongs(alloc.Allocate()));
+}
+
+TEST_CASE("Allocate and Deallocate blocks", "[BlockAllocator]")
+{
+    constexpr usize capacity = 4;
+    auto alloc = BlockAllocator::CreateFromType<u32>(capacity);
+
+    std::vector<void *> ptrs;
+    for (usize i = 0; i < capacity; ++i)
     {
-        T *data = allocator.Create<T>();
-        REQUIRE(data != nullptr);
-        REQUIRE(allocator.Belongs(data));
-        allocator.Destroy(data);
-        REQUIRE(allocator.IsEmpty());
+        void *p = alloc.Allocate();
+        REQUIRE(p);
+        REQUIRE(alloc.Belongs(p));
+        ptrs.push_back(p);
+        REQUIRE(alloc.GetAllocationCount() == i + 1);
+        REQUIRE(alloc.GetRemainingCount() == capacity - (i + 1));
     }
+    REQUIRE(alloc.IsFull());
 
-    SECTION("Allocate and deallocate multiple (raw call)")
+    // Deallocate in same order
+    for (usize i = 0; i < capacity; ++i)
     {
-        constexpr u32 amount = 1000;
-        for (u32 j = 0; j < 2; ++j)
-        {
-            HashSet<T *> allocated;
-            for (u32 i = 0; i < amount; ++i)
-            {
-                T *ptr = allocator.Allocate<T>();
-                REQUIRE(ptr != nullptr);
-                REQUIRE(allocated.insert(ptr).second);
-                REQUIRE(allocator.Belongs(ptr));
-            }
-            REQUIRE(allocator.GetAllocationCount() == amount);
-
-            for (T *ptr : allocated)
-                allocator.Deallocate(ptr);
-
-            // Reuse the same allocation over and over again
-            for (u32 i = 0; i < amount; ++i)
-            {
-                T *ptr = allocator.Allocate<T>();
-                REQUIRE(ptr != nullptr);
-                REQUIRE(allocator.Belongs(ptr));
-                allocator.Deallocate(ptr);
-            }
-        }
-        REQUIRE(allocator.IsEmpty());
+        alloc.Deallocate(ptrs[i]);
+        REQUIRE(alloc.GetAllocationCount() == capacity - (i + 1));
+        REQUIRE(alloc.GetRemainingCount() == i + 1);
     }
-
-    SECTION("Assert contiguous (raw call)")
-    {
-        constexpr u32 amount = 10;
-        Array<T *, amount> data;
-        const usize allocationSize = allocator.GetAllocationSize();
-        for (u32 i = 0; i < amount; ++i)
-        {
-            data[i] = allocator.Allocate<T>();
-            REQUIRE(data[i] != nullptr);
-            REQUIRE(allocator.Belongs(data[i]));
-            if (i != 0)
-            {
-                std::byte *b1 = reinterpret_cast<std::byte *>(data[i - 1]);
-                std::byte *b2 = reinterpret_cast<std::byte *>(data[i]);
-                REQUIRE(b2 == b1 + allocationSize);
-            }
-        }
-        for (u32 i = 0; i < amount; ++i)
-            allocator.Deallocate(data[i]);
-        REQUIRE(allocator.IsEmpty());
-    }
+    REQUIRE(alloc.IsEmpty());
 }
 
-template <typename T> static void RunNewDeleteTest()
+TEST_CASE("Reset after all deallocations", "[BlockAllocator]")
 {
-    BlockAllocator &allocator = Detail::GetBlockAllocatorInstance<T, 2000>();
-    REQUIRE(allocator.IsEmpty());
-    allocator.Reset();
+    constexpr usize capacity = 3;
+    auto alloc = BlockAllocator::CreateFromType<u32>(capacity);
 
-    SECTION("Allocate and deallocate (new/delete)")
-    {
-        T *data = new T;
-        REQUIRE(data != nullptr);
-        REQUIRE(allocator.Belongs(data));
-        delete data;
-        REQUIRE(allocator.IsEmpty());
-    }
+    // allocate and deallocate all
+    void *a = alloc.Allocate();
+    void *b = alloc.Allocate();
+    void *c = alloc.Allocate();
+    alloc.Deallocate(a);
+    alloc.Deallocate(b);
+    alloc.Deallocate(c);
 
-    SECTION("Allocate and deallocate multiple (new/delete)")
-    {
-        constexpr u32 amount = 1000;
-        for (u32 j = 0; j < 2; ++j)
-        {
-            HashSet<T *> allocated;
-            for (u32 i = 0; i < amount; ++i)
-            {
-                T *ptr = new T;
-                REQUIRE(ptr != nullptr);
-                REQUIRE(allocated.insert(ptr).second);
-                REQUIRE(allocator.Belongs(ptr));
-            }
-            REQUIRE(allocator.GetAllocationCount() == amount);
-            for (T *ptr : allocated)
-                delete ptr;
+    REQUIRE(alloc.IsEmpty());
+    alloc.Reset();
+    REQUIRE(alloc.GetRemainingCount() == capacity);
 
-            // Reuse the same allocation over and over again
-            for (u32 i = 0; i < amount; ++i)
-            {
-                T *ptr = new T;
-                REQUIRE(ptr != nullptr);
-                REQUIRE(allocator.Belongs(ptr));
-                delete ptr;
-            }
-        }
-        REQUIRE(allocator.IsEmpty());
-    }
-
-    SECTION("Assert contiguous (new/delete)")
-    {
-        constexpr u32 amount = 10;
-        Array<T *, amount> data;
-        const usize allocationSize = allocator.GetAllocationSize();
-        for (u32 i = 0; i < amount; ++i)
-        {
-            data[i] = new T;
-            REQUIRE(data[i] != nullptr);
-            REQUIRE(allocator.Belongs(data[i]));
-            if (i != 0)
-            {
-                std::byte *b1 = reinterpret_cast<std::byte *>(data[i - 1]);
-                std::byte *b2 = reinterpret_cast<std::byte *>(data[i]);
-                REQUIRE(b2 == b1 + allocationSize);
-            }
-        }
-        for (u32 i = 0; i < amount; ++i)
-            delete data[i];
-        REQUIRE(allocator.IsEmpty());
-    }
+    // can allocate again to full capacity
+    for (usize i = 0; i < capacity; ++i)
+        REQUIRE(alloc.Allocate());
+    REQUIRE(alloc.IsFull());
 }
 
-template <typename Base, typename Derived> void RunVirtualAllocatorTests()
+TEST_CASE("Move constructor and move assignment", "[BlockAllocator]")
 {
-    BlockAllocator &allocator = Detail::GetBlockAllocatorInstance<Derived, 2000>();
-    REQUIRE(allocator.IsEmpty());
-    allocator.Reset();
+    auto a1 = BlockAllocator::CreateFromType<u32>(5);
+    a1.Allocate();
+    const auto countBefore = a1.GetAllocationCount();
 
-    SECTION("Virtual deallocations")
-    {
-        constexpr usize amount = 1000;
-        for (usize j = 0; j < 2; ++j)
-        {
-            HashSet<Base *> allocated;
-            for (usize i = 0; i < amount; ++i)
-            {
-                Derived *vd = new Derived;
-                Base *vb = vd;
-                vb->SetValues();
+    // move-construct
+    BlockAllocator a2(std::move(a1));
+    REQUIRE(a2.GetAllocationCount() == countBefore);
+    REQUIRE(a1.GetBufferSize() == 0);
+    REQUIRE(a1.GetAllocationCount() == 0);
 
-                REQUIRE(vd->x == 10);
-                REQUIRE(vd->y == 20.0);
-                REQUIRE(vd->str[0] == "Hello");
-                REQUIRE(vd->str[1] == "World");
-                REQUIRE(vd->z == 30.0);
-                REQUIRE(vd->str2[0] == "Goodbye");
-                REQUIRE(vd->str2[1] == "Cruel World");
-
-                REQUIRE(vd != nullptr);
-                REQUIRE(allocated.insert(vd).second);
-                REQUIRE(allocator.Belongs(vd));
-            }
-            REQUIRE(allocator.GetAllocationCount() == amount);
-            for (Base *vb : allocated)
-            {
-                REQUIRE(vb->x == 10);
-                REQUIRE(vb->y == 20.0);
-                REQUIRE(vb->str[0] == "Hello");
-                REQUIRE(vb->str[1] == "World");
-                delete vb;
-            }
-
-            // Reuse the same allocation over and over again
-            for (usize i = 0; i < amount; ++i)
-            {
-                Derived *vd = new Derived;
-                REQUIRE(vd != nullptr);
-                REQUIRE(allocator.Belongs(vd));
-                delete vd;
-            }
-            REQUIRE(allocator.IsEmpty());
-        }
-    }
+    // move-assign
+    BlockAllocator a3 = BlockAllocator::CreateFromType<u32>(2);
+    a3 = std::move(a2);
+    REQUIRE(a3.GetAllocationCount() == countBefore);
+    REQUIRE(a2.GetBufferSize() == 0);
 }
 
-TEST_CASE("Block allocator deals with small data", "[block_allocator][small]")
+TEST_CASE("Create<T> and Destroy<T>", "[BlockAllocator]")
 {
-    RunRawAllocationTest<SmallData>();
-    RunNewDeleteTest<SmallData>();
-}
-TEST_CASE("Block allocator deals with big data", "[block_allocator][big]")
-{
-    RunRawAllocationTest<BigData>();
-    RunNewDeleteTest<BigData>();
-}
-TEST_CASE("Block allocator deals with aligned data", "[block_allocator][aligned]")
-{
-    RunRawAllocationTest<AlignedData>();
-    RunNewDeleteTest<AlignedData>();
-}
-TEST_CASE("Block allocator deals with non trivial data", "[block_allocator][nont trivial]")
-{
-    RunRawAllocationTest<NonTrivialData>();
-    RunNewDeleteTest<NonTrivialData>();
-    REQUIRE(NonTrivialData::Instances == 0);
-}
-TEST_CASE("Block allocator deals with derived data", "[block_allocator][derived]")
-{
-    RunRawAllocationTest<VirtualDerived>();
-    RunNewDeleteTest<VirtualDerived>();
+    auto alloc = BlockAllocator::CreateFromType<NonTrivial>(3);
 
-    REQUIRE(VirtualBase::BaseInstances == 0);
-    REQUIRE(VirtualDerived::DerivedInstances == 0);
-}
-TEST_CASE("Block allocator deals with virtual data", "[block_allocator][virtual]")
-{
-    RunVirtualAllocatorTests<VirtualBase, VirtualDerived>();
+    NonTrivial::ctorCount = 0;
+    NonTrivial::dtorCount = 0;
 
-    REQUIRE(VirtualBase::BaseInstances == 0);
-    REQUIRE(VirtualDerived::DerivedInstances == 0);
+    // Create three NonTrivial instances
+    NonTrivial *a = alloc.Create<NonTrivial>(7);
+    NonTrivial *b = alloc.Create<NonTrivial>(8);
+    NonTrivial *c = alloc.Create<NonTrivial>(9);
+    REQUIRE(NonTrivial::ctorCount == 3);
+    REQUIRE(a->value == 7);
+    REQUIRE(b->value == 8);
+    REQUIRE(c->value == 9);
+    REQUIRE(alloc.GetAllocationCount() == 3);
+
+    // Destroy them
+    alloc.Destroy(a);
+    alloc.Destroy(b);
+    alloc.Destroy(c);
+    REQUIRE(NonTrivial::dtorCount == 3);
+    REQUIRE(alloc.IsEmpty());
 }
-} // namespace TKit
+
+TEST_CASE("User-provided buffer constructor", "[BlockAllocator]")
+{
+    constexpr usize bufSize = 512;
+    constexpr usize allocSize = 32;
+    alignas(std::max_align_t) std::byte buffer[bufSize];
+    BlockAllocator alloc(buffer, bufSize, allocSize);
+
+    REQUIRE(alloc.IsEmpty());
+    REQUIRE(alloc.GetBufferSize() == bufSize);
+    REQUIRE(alloc.GetAllocationSize() == allocSize);
+    REQUIRE(alloc.GetRemainingCount() == bufSize / allocSize);
+
+    void *p = alloc.Allocate();
+    REQUIRE(p);
+    REQUIRE(alloc.Belongs(p));
+}

@@ -58,12 +58,79 @@ TKIT_API void DeallocateAligned(void *p_Ptr) noexcept;
  *
  * @param p_Dst A pointer to the destination memory.
  * @param p_Src A pointer to the source memory.
- * @param p_Size The size of the memory to copy.
+ * @param p_Size The size of the memory to copy, in bytes.
  */
-TKIT_API void Copy(void *p_Dst, const void *p_Src, size_t p_Size) noexcept;
+TKIT_API void *ForwardCopy(void *p_Dst, const void *p_Src, size_t p_Size) noexcept;
 
 /**
- * @brief A custom allocator that uses a custom size_type (usually `u32`) for indexing.
+ * @brief Copy a chunk of memory from one location to another in reverse order.
+ *
+ * Uses the default `::memmove()`. It is here as a placeholder for future custom global memory management.
+ *
+ * @param p_Dst A pointer to the destination memory.
+ * @param p_Src A pointer to the source memory.
+ * @param p_Size The size of the memory to copy, in bytes.
+ */
+TKIT_API void *BackwardCopy(void *p_Dst, const void *p_Src, size_t p_Size) noexcept;
+
+/**
+ * @brief Copy a range of elements from one iterator to another.
+ *
+ * Uses the default `std::copy()`. It is here as a placeholder for future custom global memory management.
+ *
+ * @param p_Dst An iterator pointing to the destination memory.
+ * @param p_Begin An iterator pointing to the beginning of the source memory.
+ * @param p_End An iterator pointing to the end of the source memory.
+ */
+template <typename It1, typename It2> constexpr auto ForwardCopy(It1 p_Dst, It2 p_Begin, It2 p_End) noexcept
+{
+    return std::copy(p_Begin, p_End, p_Dst);
+}
+
+/**
+ * @brief Copy a range of elements from one iterator to another in reverse order.
+ *
+ * Uses the default `std::copy_backward()`. It is here as a placeholder for future custom global memory management.
+ *
+ * @param p_Dst An iterator pointing to the destination memory.
+ * @param p_Begin An iterator pointing to the beginning of the source memory.
+ * @param p_End An iterator pointing to the end of the source memory.
+ */
+template <typename It1, typename It2> constexpr auto BackwardCopy(It1 p_Dst, It2 p_Begin, It2 p_End) noexcept
+{
+    return std::copy_backward(p_Begin, p_End, p_Dst);
+}
+
+/**
+ * @brief Move a chunk of memory from one location to another.
+ *
+ * Uses the default `std::move()`. It is here as a placeholder for future custom global memory management.
+ *
+ * @param p_Dst An iterator pointing to the destination memory.
+ * @param p_Begin An iterator pointing to the beginning of the source memory.
+ * @param p_End An iterator pointing to the end of the source memory.
+ */
+template <typename It1, typename It2> constexpr auto ForwardMove(It1 p_Dst, It2 p_Begin, It2 p_End) noexcept
+{
+    return std::move(p_Begin, p_End, p_Dst);
+}
+
+/**
+ * @brief Move a chunk of memory from one location to another in reverse order.
+ *
+ * Uses the default `std::move_backward()`. It is here as a placeholder for future custom global memory management.
+ *
+ * @param p_Dst An iterator pointing to the destination memory.
+ * @param p_Begin An iterator pointing to the beginning of the source memory.
+ * @param p_End An iterator pointing to the end of the source memory.
+ */
+template <typename It1, typename It2> constexpr auto BackwardMove(It1 p_Dst, It2 p_Begin, It2 p_End) noexcept
+{
+    return std::move_backward(p_Begin, p_End, p_Dst);
+}
+
+/**
+ * @brief A custom allocator that uses a custom size_type (usually `u32`) for indexing, compatible with STL.
  *
  * This allocator is intended for environments or applications where the maximum container size never exceeds 2^32,
  * making 32-bit indices (`u32`) sufficient. By using a smaller index type, it can offer performance benefits in tight
@@ -78,7 +145,7 @@ TKIT_API void Copy(void *p_Dst, const void *p_Src, size_t p_Size) noexcept;
  *   because, in C++17 and later, `std::allocator_traits` can handle
  *   construction and destruction via placement-new and direct destructor calls.
  */
-template <typename T> class DefaultAllocator
+template <typename T> class STLAllocator
 {
   public:
     using value_type = T;
@@ -89,12 +156,12 @@ template <typename T> class DefaultAllocator
 
     template <typename U> struct rebind
     {
-        using other = DefaultAllocator<U>;
+        using other = STLAllocator<U>;
     };
 
-    DefaultAllocator() noexcept = default;
+    STLAllocator() noexcept = default;
 
-    template <typename U> DefaultAllocator(const DefaultAllocator<U> &) noexcept
+    template <typename U> STLAllocator(const STLAllocator<U> &) noexcept
     {
     }
 
@@ -108,11 +175,11 @@ template <typename T> class DefaultAllocator
         Deallocate(p_Ptr);
     }
 
-    bool operator==(const DefaultAllocator &) const noexcept
+    bool operator==(const STLAllocator &) const noexcept
     {
         return true;
     }
-    bool operator!=(const DefaultAllocator &) const noexcept
+    bool operator!=(const STLAllocator &) const noexcept
     {
         return false;
     }
@@ -129,7 +196,7 @@ template <typename T> class DefaultAllocator
  */
 template <typename T, typename... Args> T *Construct(T *p_Ptr, Args &&...p_Args) noexcept
 {
-    return ::new (p_Ptr) T(std::forward<Args>(p_Args)...);
+    return std::launder(::new (p_Ptr) T(std::forward<Args>(p_Args)...));
 }
 
 /**
@@ -181,7 +248,7 @@ template <typename It> void DestructFromIterator(const It p_It) noexcept
 }
 
 /**
- * @brief Construct a range of objects of type `T` in the given memory location.
+ * @brief Construct a range of objects of type `T` given some constructor arguments.
  *
  * @note This function does not allocate memory. It only calls the constructor of the object.
  *
@@ -190,14 +257,14 @@ template <typename It> void DestructFromIterator(const It p_It) noexcept
  * @param p_Args The arguments to pass to the constructor of `T`.
  */
 template <typename It, typename... Args>
-void ConstructRange(const It p_Begin, const It p_End, Args &&...p_Args) noexcept
+void ConstructRange(const It p_Begin, const It p_End, const Args &...p_Args) noexcept
 {
     for (auto it = p_Begin; it != p_End; ++it)
-        ConstructFromIterator(it, std::forward<Args>(p_Args)...);
+        ConstructFromIterator(it, p_Args...);
 }
 
 /**
- * @brief Construct a range of objects of type `T` in the given memory location by copying from another range.
+ * @brief Construct a range of objects of type `T` by copying from another range.
  *
  * @note This function does not allocate memory. It only calls the constructor of the object.
  *
@@ -205,15 +272,14 @@ void ConstructRange(const It p_Begin, const It p_End, Args &&...p_Args) noexcept
  * @param p_Begin An iterator pointing to the beginning of the source range where the objects should be copied from.
  * @param p_End An iterator pointing to the end of the source range where the objects should be copied from.
  */
-template <typename It1, typename It2, typename... Args>
-void ConstructRangeCopy(It1 p_Dst, const It2 p_Begin, const It2 p_End) noexcept
+template <typename It1, typename It2> void ConstructRangeCopy(It1 p_Dst, const It2 p_Begin, const It2 p_End) noexcept
 {
     for (auto it = p_Begin; it != p_End; ++it, ++p_Dst)
         ConstructFromIterator(p_Dst, *it);
 }
 
 /**
- * @brief Construct a range of objects of type `T` in the given memory location by moving from another range.
+ * @brief Construct a range of objects of type `T` by moving from another range.
  *
  * @note This function does not allocate memory. It only calls the constructor of the object.
  *
@@ -221,15 +287,14 @@ void ConstructRangeCopy(It1 p_Dst, const It2 p_Begin, const It2 p_End) noexcept
  * @param p_Begin An iterator pointing to the beginning of the source range where the objects should be moved from.
  * @param p_End An iterator pointing to the end of the source range where the objects should be moved from.
  */
-template <typename It1, typename It2, typename... Args>
-void ConstructRangeMove(It1 p_Dst, const It2 p_Begin, const It2 p_End) noexcept
+template <typename It1, typename It2> void ConstructRangeMove(It1 p_Dst, const It2 p_Begin, const It2 p_End) noexcept
 {
     for (auto it = p_Begin; it != p_End; ++it, ++p_Dst)
         ConstructFromIterator(p_Dst, std::move(*it));
 }
 
 /**
- * @brief Destroy a range of objects of type `T` in the given memory location.
+ * @brief Destroy a range of objects of type `T`.
  *
  * @note This function does not deallocate the memory. It only calls the destructor of the object.
  *

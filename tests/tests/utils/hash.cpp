@@ -1,75 +1,102 @@
 #include "tkit/utils/hash.hpp"
-#include "tkit/container/static_array.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <string>
+#include <vector>
+#include <array>
 
-namespace TKit
-{
-struct Example
-{
-    u32 elm0 = 0;
-    u32 elm1 = 0;
-    f32 elm2 = 0.0f;
-    std::string elm3 = "";
-};
-} // namespace TKit
+using namespace TKit;
 
-template <> struct std::hash<TKit::Example>
+TEST_CASE("Hash single values", "[Hash]")
 {
-    size_t operator()(const TKit::Example &p_Example) const noexcept
+    SECTION("integers")
     {
-        return TKit::Hash(p_Example.elm0, p_Example.elm1, p_Example.elm2, p_Example.elm3);
+        size_t h1 = Hash(42);
+        size_t h2 = std::hash<int>()(42);
+        REQUIRE(h1 == h2);
     }
-};
 
-namespace TKit
-{
-TEST_CASE("Hash consistency")
-{
-    const size_t hash1 = Hash(1, 2.f, std::string("3"));
-    const size_t hash2 = Hash(1, 2.f, std::string("4"));
+    SECTION("strings")
+    {
+        std::string s = "hello";
+        size_t h1 = Hash(s);
+        size_t h2 = std::hash<std::string>()(s);
+        REQUIRE(h1 == h2);
+    }
 
-    REQUIRE(hash1 != hash2);
+    SECTION("lvalue vs rvalue")
+    {
+        int x = 7;
+        size_t h1 = Hash(x);
+        size_t h2 = Hash(7);
+        REQUIRE(h1 == h2);
+    }
 }
 
-TEST_CASE("Hash deviation")
+TEST_CASE("Variadic Hash combines consistently", "[Hash][Variadic]")
 {
-    constexpr usize amount = 97;
-    StaticArray<u32, amount> ocurrences(amount, 0);
+    int a = 1, b = 2, c = 3;
+    size_t combined = Hash(a, b, c);
 
-    Example ex;
+    // manual combination
+    size_t seed = TKIT_HASH_SEED;
+    HashCombine(seed, a, b, c);
+    REQUIRE(combined == seed);
 
-    constexpr u32 samples = 100000;
-    for (u32 i = 0; i < samples; ++i)
-    {
-        ex.elm0 = i;
-        ++ocurrences[Hash(ex) % amount];
-    }
-    for (u32 i = 0; i < samples; ++i)
-    {
-        ex.elm1 = i;
-        ++ocurrences[Hash(ex) % amount];
-    }
-
-    for (u32 i = 0; i < samples; ++i)
-    {
-        ex.elm2 = static_cast<f32>(i);
-        ++ocurrences[Hash(ex) % amount];
-    }
-    for (u32 i = 0; i < samples; ++i)
-    {
-        ex.elm3 = std::to_string(i);
-        ++ocurrences[Hash(ex) % amount];
-    }
-
-    const f32 expected = static_cast<f32>(4 * samples) / amount;
-    f32 deviation = 0.0f;
-    for (u32 i = 0; i < amount; ++i)
-    {
-        const f32 diff = static_cast<f32>(ocurrences[i]) - expected;
-        deviation += diff * diff;
-    }
-
-    deviation = sqrtf(deviation / expected);
-    TKIT_LOG_INFO("[TOOLKIT] Hash deviation ({} samples with {} ocurrences): {}", samples, amount, deviation);
+    // order matters
+    size_t different = Hash(b, a, c);
+    REQUIRE(different != combined);
 }
-} // namespace TKit
+
+TEST_CASE("HashRange over iterators", "[HashRange]")
+{
+    std::vector<int> v{4, 5, 6, 7};
+    size_t hr = HashRange(v.begin(), v.end());
+
+    // manual equivalent
+    size_t seed = TKIT_HASH_SEED;
+    for (int x : v)
+        HashCombine(seed, x);
+    REQUIRE(hr == seed);
+
+    // empty range returns seed unchanged
+    std::array<int, 0> empty{};
+    REQUIRE(HashRange(empty.begin(), empty.end()) == TKIT_HASH_SEED);
+}
+
+TEST_CASE("HashCombine modifies seed", "[HashCombine]")
+{
+    size_t seed = 12345;
+    size_t before = seed;
+    HashCombine(seed, 10, std::string("abc"));
+    REQUIRE(seed != before);
+
+    // combining zero values leaves seed unchanged
+    size_t s2 = 999;
+    HashCombine(s2);
+    REQUIRE(s2 == 999);
+}
+
+TEST_CASE("Mixed types hashing", "[Hash]")
+{
+    const char *cstr = "xyz";
+    std::string str = "xyz";
+    // Hash should distinguish pointer vs string hash
+    size_t hptr = Hash(cstr);
+    size_t hstr = Hash(str);
+    REQUIRE(hptr != hstr);
+
+    // But combining same value twice differs from single
+    size_t single = Hash(str);
+    size_t doubled = Hash(str, str);
+    REQUIRE(doubled != single);
+}
+
+TEST_CASE("Hash of different types in range", "[HashRange]")
+{
+    std::vector<std::string> vs{"a", "b", "c"};
+    size_t hr = HashRange(vs.begin(), vs.end());
+    size_t seed = TKIT_HASH_SEED;
+    for (auto &s : vs)
+        HashCombine(seed, s);
+    REQUIRE(hr == seed);
+}

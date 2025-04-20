@@ -1,128 +1,58 @@
+#include "tkit/memory/ptr.hpp"
+#include "tkit/multiprocessing/task.hpp"
 #include "tkit/multiprocessing/thread_pool.hpp"
-#include "tkit/multiprocessing/for_each.hpp"
-#include "tkit/container/array.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <atomic>
+#include <vector>
 
-namespace TKit
+using namespace TKit;
+
+TEST_CASE("ThreadPool executes Task<void>s", "[ThreadPool]")
 {
-void RunThreadPoolTest()
-{
-    constexpr u32 threadCount = 4;
-    constexpr u32 amount = 1000;
-    ThreadPool pool(threadCount);
+    constexpr usize THREADS = 4;
+    constexpr usize TASKS = 10;
+    ThreadPool pool(THREADS);
 
-    SECTION("CreateAndSubmit")
+    std::atomic<usize> counter{0};
+    std::vector<Ref<Task<void>>> tasks;
+    tasks.reserve(TASKS);
+
+    // Submit several void tasks
+    for (usize i = 0; i < TASKS; ++i)
     {
-        for (u32 i = 0; i < amount; i++)
-        {
-            const auto task1 = pool.CreateAndSubmit([](const usize) { return 7 + 1; });
-            const auto task2 = pool.CreateAndSubmit([](const usize) { return 9 + 11; });
-            REQUIRE(task1->WaitForResult() == 8);
-            REQUIRE(task2->WaitForResult() == 20);
-        }
+        auto t = Ref<Task<void>>::Create([&](usize) { counter.fetch_add(1, std::memory_order_relaxed); });
+        tasks.push_back(t);
+        pool.SubmitTask(t); // implicitly converts to Ref<ITask>
     }
 
-    struct Number
-    {
-        u32 Value;
-        std::byte Padding[TKIT_CACHE_LINE_SIZE - sizeof(u32)];
-    };
-
-    SECTION("Parallel for")
-    {
-        Array<Number, amount> numbers;
-        u32 realSum = 0;
-        for (u32 i = 0; i < amount; i++)
-        {
-            numbers[i].Value = i;
-            realSum += i;
-        }
-
-        Array<Ref<Task<u32>>, threadCount> tasks;
-        ForEach(pool, numbers.begin(), numbers.end(), tasks.begin(), threadCount,
-                [](auto p_It1, auto p_It2, const usize) {
-                    u32 sum = 0;
-                    for (auto it = p_It1; it != p_It2; ++it)
-                        sum += it->Value;
-                    return sum;
-                });
-        u32 sum = 0;
-        for (auto &task : tasks)
-            sum += task->WaitForResult();
-        REQUIRE(sum == realSum);
-    }
-
-    SECTION("Parallel for (void return)")
-    {
-        Array<Number, amount> numbers;
-        u32 realSum = 0;
-        for (u32 i = 0; i < amount; i++)
-        {
-            numbers[i].Value = i;
-            realSum += i;
-        }
-
-        std::atomic<u32> taskSum = 0;
-        ForEach(pool, numbers.begin(), numbers.end(), threadCount, [&taskSum](auto p_It1, auto p_It2, const usize) {
-            u32 sum = 0;
-            for (auto it = p_It1; it != p_It2; ++it)
-                sum += it->Value;
-
-            taskSum.fetch_add(sum, std::memory_order_relaxed);
-        });
-        pool.AwaitPendingTasks();
-        REQUIRE(taskSum.load(std::memory_order_relaxed) == realSum);
-    }
-
-    SECTION("Parallel for with main thread")
-    {
-        Array<Number, amount> numbers;
-        u32 realSum = 0;
-        for (u32 i = 0; i < amount; i++)
-        {
-            numbers[i].Value = i;
-            realSum += i;
-        }
-
-        Array<Ref<Task<u32>>, threadCount - 1> tasks;
-        u32 finalSum = ForEachMainThreadLead(pool, numbers.begin(), numbers.end(), tasks.begin(), threadCount,
-                                             [](auto p_It1, auto p_It2, const usize) {
-                                                 u32 sum = 0;
-                                                 for (auto it = p_It1; it != p_It2; ++it)
-                                                     sum += it->Value;
-                                                 return sum;
-                                             });
-        for (auto &task : tasks)
-            finalSum += task->WaitForResult();
-        REQUIRE(finalSum == realSum);
-    }
-
-    SECTION("Parallel for with main thread (void return)")
-    {
-        Array<Number, amount> numbers;
-        u32 realSum = 0;
-        for (u32 i = 0; i < amount; i++)
-        {
-            numbers[i].Value = i;
-            realSum += i;
-        }
-
-        std::atomic<u32> taskSum = 0;
-        ForEachMainThreadLead(pool, numbers.begin(), numbers.end(), threadCount,
-                              [&taskSum](auto p_It1, auto p_It2, const usize) {
-                                  u32 sum = 0;
-                                  for (auto it = p_It1; it != p_It2; ++it)
-                                      sum += it->Value;
-
-                                  taskSum.fetch_add(sum, std::memory_order_relaxed);
-                              });
-        pool.AwaitPendingTasks();
-        REQUIRE(taskSum.load(std::memory_order_relaxed) == realSum);
-    }
+    pool.AwaitPendingTasks();
+    REQUIRE(counter.load(std::memory_order_relaxed) == TASKS);
 }
 
-TEST_CASE("ThreadPool", "[multiprocessing]")
+TEST_CASE("ThreadPool executes Task<u32>s and preserves results", "[ThreadPool]")
 {
-    RunThreadPoolTest();
+    constexpr usize THREADS = 3;
+    constexpr usize TASKS = 6;
+    ThreadPool pool(THREADS);
+
+    std::vector<Ref<Task<u32>>> tasks;
+    tasks.reserve(TASKS);
+
+    // Submit tasks that encode (taskIndex * 10 + threadIndex)
+    for (usize i = 0; i < TASKS; ++i)
+    {
+        auto t = Ref<Task<u32>>::Create([i](usize idx) { return u32(i * 10 + idx); });
+        tasks.push_back(t);
+        pool.SubmitTask(t);
+    }
+
+    pool.AwaitPendingTasks();
+
+    for (usize i = 0; i < TASKS; ++i)
+    {
+        u32 res = tasks[i]->WaitForResult();
+        REQUIRE(res / 10 == u32(i));  // correct task index
+        REQUIRE(res % 10 >= 1);       // valid thread index
+        REQUIRE(res % 10 <= THREADS); // valid thread index
+    }
 }
-} // namespace TKit

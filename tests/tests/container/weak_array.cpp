@@ -1,289 +1,275 @@
 #include "tkit/container/weak_array.hpp"
-#include "tkit/memory/arena_allocator.hpp"
-#include "tkit/utils/alias.hpp"
-#include "tkit/utils/literals.hpp"
-#include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <array>
+#include <vector>
+#include <string>
+#include <algorithm>
 
-namespace TKit
+using namespace TKit;
+using namespace TKit::Container;
+using namespace TKit::Alias;
+
+// track constructions/destructions
+static u32 g_CtorCount = 0;
+static u32 g_DtorCount = 0;
+struct WTrackable
 {
-using namespace Literals;
-ArenaAllocator g_Arena(1_mb);
-
-template <typename T, usize Capacity> WeakArray<T, Capacity> CreateArray()
-{
-    if constexpr (Capacity == Limits<usize>::max())
-        return WeakArray<T, Capacity>(g_Arena.Allocate<T>(10), 10);
-    else
-        return WeakArray<T, Capacity>(g_Arena.Allocate<T>(Capacity));
-}
-
-template <typename T, usize Capacity = Limits<usize>::max()> void RunStaticArrayOperatorTests(const Array<T, 5> &p_Args)
-{
-    WeakArray<T, Capacity> array = CreateArray<T, Capacity>();
-    for (usize i = 0; i < 5; i++)
-        array.push_back(p_Args[i]);
-
-    REQUIRE(array.size() == 5);
-
-    SECTION("Move semantics")
+    u32 Value;
+    WTrackable() : Value(0)
     {
-        WeakArray<T, Capacity> other = std::move(array);
-        REQUIRE(array.size() == 0);
-        REQUIRE(other.size() == 5);
-        if constexpr (Capacity == Limits<usize>::max())
-            REQUIRE(array.capacity() == 0);
-        REQUIRE(!array);
-
-        array = std::move(other);
-        REQUIRE(array.size() == 5);
-        REQUIRE(other.size() == 0);
-        if constexpr (Capacity == Limits<usize>::max())
-            REQUIRE(other.capacity() == 0);
-        REQUIRE(!other);
+        ++g_CtorCount;
     }
-    SECTION("Const elements")
+    WTrackable(u32 v) : Value(v)
     {
-        const WeakArray<T, Capacity> constArray1 = CreateArray<T, Capacity>();
-        REQUIRE(constArray1);
-        const WeakArray<const T, Capacity> constArray2 = CreateArray<T, Capacity>();
-        REQUIRE(constArray2);
-        WeakArray<const T, Capacity> constArray3 = CreateArray<T, Capacity>();
-        REQUIRE(constArray3);
+        ++g_CtorCount;
     }
-    SECTION("Push back")
+    WTrackable(const WTrackable &o) : Value(o.Value)
     {
-        for (usize i = 0; i < 5; i++)
-        {
-            array.push_back(array[i]);
-            REQUIRE(array.size() == i + 6);
-            REQUIRE(array.back() == array[i]);
-        }
-        if constexpr (Capacity == 10)
-            REQUIRE(array.full());
+        ++g_CtorCount;
     }
-
-    SECTION("Pop back")
+    WTrackable(WTrackable &&o) noexcept : Value(o.Value)
     {
-        while (!array.empty())
-            array.pop_back();
-        REQUIRE(array.size() == 0);
+        ++g_CtorCount;
     }
-
-    SECTION("Insert")
+    ~WTrackable()
     {
-        // Must insert explicit copies, because perfect forwarding will catch those as references and the array will be
-        // mangled *before* inserting the element
-        T elem0 = array[0];
-        T elem2 = array[2];
-        array.insert(array.begin(), elem2);
-        REQUIRE(array.size() == 6);
-        REQUIRE(elem2 == array[0]);
-        array.insert(array.begin() + 2, elem0);
-        REQUIRE(array.size() == 7);
-        REQUIRE(elem0 == array[2]);
-
-        T elem4 = array[4];
-        T elem5 = array[5];
-        T elem6 = array[6];
-        array.insert(array.begin() + 4, {elem4, elem5, elem6});
-        REQUIRE(array.size() == 10);
-        for (usize i = 4; i < 7; ++i)
-            REQUIRE(array[i] == array[i + 3]);
-
-        SECTION("Build in reverse")
-        {
-            array.clear();
-            Array<T, 5> values = p_Args;
-            for (const T &value : values)
-                array.insert(array.begin(), value);
-
-            usize index = 0;
-            for (auto it = array.rbegin(); it != array.rend(); ++it)
-                REQUIRE(*it == values[index++]);
-        }
+        ++g_DtorCount;
     }
-
-    SECTION("Erase")
+    WTrackable &operator=(const WTrackable &o)
     {
-        T elem1 = array[1];
-        T elem3 = array[3];
-        array.erase(array.begin());
-        REQUIRE(array.size() == 4);
-        REQUIRE(array[0] == elem1);
-        array.erase(array.begin(), array.begin() + 2);
-        REQUIRE(array.size() == 2);
-        REQUIRE(array[0] == elem3);
-
-        array.insert(array.end(), {elem1, elem3});
-        while (!array.empty())
-        {
-            if (array.size() > 1)
-            {
-                const T elem = array[1];
-                array.erase(array.begin());
-                REQUIRE(array[0] == elem);
-            }
-            else
-                array.erase(array.begin());
-        }
-
-        array.insert(array.end(), p_Args.begin(), p_Args.end());
-        array.erase(array.begin(), array.end());
-        REQUIRE(array.size() == 0);
+        Value = o.Value;
+        return *this;
     }
-
-    SECTION("Resize")
+    WTrackable &operator=(WTrackable &&o) noexcept
     {
-        Array<T, 5> values = p_Args;
-        SECTION("Clear from resize")
-        {
-            array.resize(0);
-            REQUIRE(array.size() == 0);
-            REQUIRE(array.empty());
-        }
-
-        SECTION("Decrease size")
-        {
-            array.resize(3);
-            REQUIRE(array.size() == 3);
-            for (usize i = 0; i < 3; ++i)
-                REQUIRE(array[i] == values[i]);
-        }
-
-        SECTION("Increase size")
-        {
-            array.resize(7);
-            REQUIRE(array.size() == 7);
-            for (usize i = 0; i < 3; ++i)
-                REQUIRE(array[i] == values[i]);
-        }
+        Value = o.Value;
+        return *this;
     }
+};
 
-    SECTION("Emplace back")
-    {
-        Array<T, 5> values = p_Args;
-        array.clear();
-        for (usize i = 0; i < 5; ++i)
-            array.emplace_back(values[i]);
-
-        for (usize i = 0; i < 5; ++i)
-            REQUIRE(array[i] == values[i]);
-    }
-
-    SECTION("Clear")
-    {
-        array.clear();
-        REQUIRE(array.size() == 0);
-    }
-}
-
-TEST_CASE("WeakArray (i32) Dynamic capacity", "[core][container][weak_array]")
+TEST_CASE("WeakArray static: default, pointer, pointer+size", "[WeakArray]")
 {
-    RunStaticArrayOperatorTests<i32>({1, 2, 3, 4, 5});
-    g_Arena.Reset();
+    u32 buffer[4] = {1, 2, 3, 4};
+
+    WeakArray<u32, 4> arr1;
+    REQUIRE(!arr1);
+    REQUIRE(arr1.IsEmpty());
+    REQUIRE(arr1.GetSize() == 0);
+
+    WeakArray<u32, 4> arr2(buffer);
+    REQUIRE(arr2);
+    REQUIRE(arr2.GetData() == buffer);
+    REQUIRE(arr2.GetSize() == 0);
+
+    WeakArray<u32, 4> arr3(buffer, 3);
+    REQUIRE(arr3.GetSize() == 3);
+    REQUIRE(arr3[2] == 3);
+    REQUIRE(arr3.GetFront() == 1);
+    REQUIRE(arr3.GetBack() == 3);
 }
-TEST_CASE("WeakArray (i32) Static capacity", "[core][container][weak_array]")
+
+TEST_CASE("WeakArray static: from Array and StaticArray", "[WeakArray]")
 {
-    RunStaticArrayOperatorTests<i32, 10>({1, 2, 3, 4, 5});
-    g_Arena.Reset();
+    Array<u32, 3> rawArr{10u, 20u, 30u};
+    WeakArray<u32, 3> arr1(rawArr, 2);
+    REQUIRE(arr1.GetData() == rawArr.GetData());
+    REQUIRE(arr1.GetSize() == 2);
+
+    StaticArray<u32, 3> staticArr{5u, 6u};
+    WeakArray<u32, 3> arr2(staticArr);
+    REQUIRE(arr2.GetSize() == 2);
+    REQUIRE(arr2[1] == 6u);
 }
 
-TEST_CASE("WeakArray (f32) Dynamic capacity", "[core][container][weak_array]")
+TEST_CASE("WeakArray static: move ctor and move assign", "[WeakArray]")
 {
-    RunStaticArrayOperatorTests<f32>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f});
-    g_Arena.Reset();
+    u32 buffer[2] = {7, 8};
+    WeakArray<u32, 2> source(buffer, 2);
+
+    WeakArray<u32, 2> arr1(std::move(source));
+    REQUIRE(arr1.GetSize() == 2);
+    REQUIRE(!source);
+
+    WeakArray<u32, 2> arr2(buffer, 1);
+    arr2 = std::move(arr1);
+    REQUIRE(arr2.GetSize() == 2);
+    REQUIRE(!arr1);
 }
-TEST_CASE("WeakArray (f32) Static capacity", "[core][container][weak_array]")
+
+TEST_CASE("WeakArray static: modify elements", "[WeakArray]")
 {
-    RunStaticArrayOperatorTests<f32, 10>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f});
-    g_Arena.Reset();
+    u32 buffer[5] = {};
+    WeakArray<u32, 5> arr(buffer, 0);
+
+    arr.Append(1);
+    arr.Append(2);
+    arr.Append(3);
+    REQUIRE(arr.GetSize() == 3);
+
+    arr.Pop();
+    REQUIRE(arr.GetSize() == 2);
+
+    arr.Insert(arr.begin() + 1, 9);
+    REQUIRE(arr.GetSize() == 3);
+    REQUIRE(arr[1] == 9);
+
+    std::array<u32, 2> extra = {7, 8};
+    arr.Insert(arr.begin() + 3, extra.begin(), extra.end());
+    REQUIRE(arr.GetSize() == 5);
+    REQUIRE(arr[3] == 7);
+    REQUIRE(arr[4] == 8);
+
+    arr.RemoveOrdered(arr.begin() + 1);
+    REQUIRE(arr.GetSize() == 4);
+
+    arr.RemoveOrdered(arr.begin() + 1, arr.begin() + 3);
+    REQUIRE(arr.GetSize() == 2);
+
+    arr = WeakArray<u32, 5>(buffer, 2);
+    arr.RemoveUnordered(arr.begin());
+    REQUIRE(arr.GetSize() == 1);
 }
 
-TEST_CASE("WeakArray (f64) Dynamic capacity", "[core][container][weak_array]")
+TEST_CASE("WeakArray static: Resize, Clear, iteration", "[WeakArray]")
 {
-    RunStaticArrayOperatorTests<f64>({1.0, 2.0, 3.0, 4.0, 5.0});
-    g_Arena.Reset();
+    std::array<WTrackable, 4> backing;
+    WeakArray<WTrackable, 4> arr(backing.data(), 0);
+    g_CtorCount = g_DtorCount = 0;
+
+    arr.Resize(3, 42u);
+    REQUIRE(arr.GetSize() == 3);
+    REQUIRE(g_CtorCount == 3);
+    for (u32 i = 0; i < 3; ++i)
+        REQUIRE(arr[i].Value == 42u);
+
+    arr.Resize(1);
+    REQUIRE(arr.GetSize() == 1);
+    REQUIRE(g_DtorCount == 2);
+
+    arr.Clear();
+    REQUIRE(arr.IsEmpty());
+
+    // iteration
+    arr.Resize(2, 7u);
+    u32 sum = 0;
+    for (auto &x : arr)
+        sum += x.Value;
+    REQUIRE(sum == 14u);
 }
-TEST_CASE("WeakArray (f64) Static capacity", "[core][container][weak_array]")
+
+TEST_CASE("WeakArray static<string>: non-trivial", "[WeakArray][string]")
 {
-    RunStaticArrayOperatorTests<f64, 10>({1.0, 2.0, 3.0, 4.0, 5.0});
-    g_Arena.Reset();
+    std::string buffer[4];
+    WeakArray<std::string, 4> arr(buffer, 0);
+
+    arr.Append("a");
+    arr.Append("b");
+    REQUIRE(arr.GetSize() == 2);
+    REQUIRE(arr[1] == "b");
+
+    auto arr2 = std::move(arr);
+    REQUIRE(arr2.GetSize() == 2);
+    arr2.Clear();
+    REQUIRE(arr2.IsEmpty());
 }
 
-TEST_CASE("WeakArray (std::string) Dynamic capacity", "[core][container][weak_array]")
+TEST_CASE("WeakArray dynamic: default, pointer+capacity, pointer+capacity+size", "[WeakArray]")
 {
-    RunStaticArrayOperatorTests<std::string>({"10", "20", "30", "40", "50"});
-    g_Arena.Reset();
+    u32 buffer[5] = {1, 2, 3, 4, 5};
+
+    WeakArray<u32> arr1;
+    REQUIRE(!arr1);
+    REQUIRE(arr1.IsEmpty());
+    REQUIRE(arr1.GetCapacity() == 0);
+
+    WeakArray<u32> arr2(buffer, 5);
+    REQUIRE(arr2.GetCapacity() == 5);
+    REQUIRE(arr2.GetSize() == 0);
+
+    WeakArray<u32> arr3(buffer, 5, 3);
+    REQUIRE(arr3.GetSize() == 3);
+    REQUIRE(arr3[2] == 3);
 }
-TEST_CASE("WeakArray (std::string) Static capacity", "[core][container][weak_array]")
+
+TEST_CASE("WeakArray dynamic: from Array, StaticArray, DynamicArray", "[WeakArray]")
 {
-    RunStaticArrayOperatorTests<std::string, 10>({"10", "20", "30", "40", "50"});
-    g_Arena.Reset();
+    Array<u32, 3> rawArr{2u, 4u, 6u};
+    StaticArray<u32, 3> staticArr{7u, 8u};
+    DynamicArray<u32> dynArr{9u, 10u, 11u};
+
+    WeakArray<u32> arr1(rawArr, 2);
+    WeakArray<u32> arr2(staticArr);
+    WeakArray<u32> arr3(dynArr);
+
+    REQUIRE(arr1.GetCapacity() == 3);
+    REQUIRE(arr1.GetSize() == 2);
+    REQUIRE(arr2.GetCapacity() == 3);
+    REQUIRE(arr2.GetSize() == 2);
+    REQUIRE(arr3.GetCapacity() == dynArr.GetCapacity());
+    REQUIRE(arr3.GetSize() == 3);
 }
 
-TEST_CASE("WeakArray cleanup check", "[core][container][weak_array]")
+TEST_CASE("WeakArray dynamic: move ctor and move assign", "[WeakArray]")
 {
-    WeakArray<NonTrivialData, 10> array = CreateArray<NonTrivialData, 10>();
-    for (usize i = 0; i < 5; i++)
-        array.emplace_back();
-    REQUIRE(NonTrivialData::Instances == 5);
-    array.pop_back();
-    REQUIRE(NonTrivialData::Instances == 4);
-    array.erase(array.begin());
-    REQUIRE(NonTrivialData::Instances == 3);
-    array.erase(array.begin(), array.begin() + 2);
-    REQUIRE(NonTrivialData::Instances == 1);
-    array.clear();
-    REQUIRE(NonTrivialData::Instances == 0);
+    u32 buffer[4] = {};
+    WeakArray<u32> source(buffer, 4, 2);
 
-    SECTION("Cleanup check with erase and resize")
-    {
-        NonTrivialData data1;
-        NonTrivialData data2;
-        NonTrivialData data3;
-        NonTrivialData data4;
-        NonTrivialData data5;
+    WeakArray<u32> arr1(std::move(source));
+    REQUIRE(arr1.GetSize() == 2);
+    REQUIRE(!source);
 
-        SECTION("Insert and erase")
-        {
-            array.push_back(data1);
-            REQUIRE(NonTrivialData::Instances == 1 + 5);
-            array.insert(array.begin(), data2);
-            REQUIRE(NonTrivialData::Instances == 2 + 5);
-            array.insert(array.begin() + 1, {data3, data4, data5});
-            REQUIRE(NonTrivialData::Instances == 5 + 5);
-
-            array.erase(array.begin());
-            REQUIRE(NonTrivialData::Instances == 4 + 5);
-            array.erase(array.begin(), array.begin() + 2);
-            REQUIRE(NonTrivialData::Instances == 2 + 5);
-        }
-
-        SECTION("Resize")
-        {
-            array.insert(array.end(), {data1, data2, data3, data4, data5, data1, data2, data3, data4, data5});
-            REQUIRE(NonTrivialData::Instances == 10 + 5);
-
-            array.resize(7);
-            REQUIRE(NonTrivialData::Instances == 7 + 5);
-
-            array.resize(10);
-            REQUIRE(NonTrivialData::Instances == 10 + 5);
-
-            array.resize(2);
-            REQUIRE(NonTrivialData::Instances == 2 + 5);
-
-            array.resize(5);
-            REQUIRE(NonTrivialData::Instances == 5 + 5);
-
-            array.resize(0);
-            REQUIRE(NonTrivialData::Instances == 0 + 5);
-        }
-    }
-
-    array.clear();
-    REQUIRE(NonTrivialData::Instances == 0);
-    g_Arena.Reset();
+    WeakArray<u32> arr2;
+    arr2 = std::move(arr1);
+    REQUIRE(arr2.GetSize() == 2);
+    REQUIRE(!arr1);
 }
-} // namespace TKit
+
+TEST_CASE("WeakArray dynamic: modify & inspect", "[WeakArray]")
+{
+    u32 buffer[6] = {};
+    WeakArray<u32> arr(buffer, 6, 0);
+
+    arr.Append(5);
+    arr.Append(6);
+    REQUIRE(arr.GetSize() == 2);
+
+    arr.Pop();
+    REQUIRE(arr.GetSize() == 1);
+
+    arr.Insert(arr.begin() + 1, 7);
+    REQUIRE(arr[1] == 7);
+
+    std::vector<u32> extra{8, 9, 10};
+    arr.Insert(arr.begin() + 2, extra.begin(), extra.end());
+    REQUIRE(arr.GetSize() == 5);
+    REQUIRE(arr.GetBack() == 10);
+
+    arr.RemoveOrdered(arr.begin() + 1);
+    REQUIRE(arr.GetSize() == 4);
+
+    arr.RemoveUnordered(arr.begin());
+    REQUIRE(arr.GetSize() == 3);
+
+    arr.Resize(4, 3);
+    REQUIRE(arr.GetSize() == 4);
+    REQUIRE(arr[3] == 3);
+
+    arr.Clear();
+    REQUIRE(arr.IsEmpty());
+}
+
+TEST_CASE("WeakArray dynamic<string>: non-trivial", "[WeakArray][string]")
+{
+    std::string buffer[5];
+    WeakArray<std::string> arr(buffer, 5, 0);
+
+    arr.Append("x");
+    arr.Append("y");
+    REQUIRE(arr.GetSize() == 2);
+    REQUIRE(arr[0] == "x");
+
+    auto arr2 = std::move(arr);
+    REQUIRE(arr2.GetSize() == 2);
+    arr2.Clear();
+    REQUIRE(arr2.IsEmpty());
+}

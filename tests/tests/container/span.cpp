@@ -1,89 +1,94 @@
 #include "tkit/container/span.hpp"
-#include "tkit/container/array.hpp"
-#include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <array>
+#include <vector>
+#include <string>
+#include <algorithm>
 
-namespace TKit
+using namespace TKit;
+using namespace TKit::Container;
+using namespace TKit::Alias;
+
+TEST_CASE("Span static extent: default and pointer ctor", "[Span]")
 {
-template <typename T, usize Capacity = Limits<usize>::max()> void RunSpanTest(Array<T, 5> p_Args)
-{
-    SECTION("Constructor")
-    {
-        Span<T, Capacity> span(p_Args);
-        REQUIRE(span.size() == 5);
-        for (usize i = 0; i < 5; ++i)
-            REQUIRE(span[i] == p_Args[i]);
-    }
+    u32 raw[3] = {1, 2, 3};
 
-    SECTION("Copy constructor")
-    {
-        Span<T, Capacity> span1(p_Args);
-        Span<T, Capacity> span2 = span1;
-        REQUIRE(span1.size() == 5);
-        REQUIRE(span2.size() == 5);
-        for (usize i = 0; i < 5; ++i)
-            REQUIRE(span1[i] == span2[i]);
-    }
+    Span<u32, 3> span1;
+    REQUIRE(!span1);
 
-    SECTION("Copy assignment")
-    {
-        Span<T, Capacity> span1(p_Args);
-        Span<T, Capacity> span2;
-        span2 = span1;
-        REQUIRE(span1.size() == 5);
-        REQUIRE(span2.size() == 5);
-        for (usize i = 0; i < 5; ++i)
-        {
-            REQUIRE(span1[i] == span2[i]);
-            REQUIRE(&span1[i] == &span2[i]);
-        }
-    }
+    Span<u32, 3> span2(raw);
+    REQUIRE(span2);
+    REQUIRE(span2.GetData() == raw);
+    REQUIRE(span2.GetSize() == 3);
+    REQUIRE(span2[0] == 1);
+    REQUIRE(span2.At(2) == 3);
+    REQUIRE(span2.GetFront() == 1);
+    REQUIRE(span2.GetBack() == 3);
 
-    SECTION("Const elements")
-    {
-        const Span<T, Capacity> span1(p_Args);
-        REQUIRE(span1.size() == 5);
+    // construction from Array<T,Extent>
+    Array<u32, 3> arr = {10u, 20u, 30u};
+    Span<u32, 3> span3(arr);
+    REQUIRE(span3.GetSize() == 3);
+    REQUIRE(span3[1] == 20u);
 
-        const Span<const T, Capacity> span2(p_Args);
-        const Span<const T, Capacity> span3(span1);
-        REQUIRE(span2.size() == 5);
-        REQUIRE(span3.size() == 5);
-    }
+    // conversion from Span<U,Extent>
+    Span<const u32, 3> span4 = span3;
+    REQUIRE(span4.GetData() == span3.GetData());
 }
 
-TEST_CASE("Span (i32) Dynamic capacity", "[core][container][span]")
+TEST_CASE("Span dynamic extent: default and pointer+size ctor", "[Span]")
 {
-    RunSpanTest<i32>({1, 2, 3, 4, 5});
-}
-TEST_CASE("Span (i32) Static capacity", "[core][container][span]")
-{
-    RunSpanTest<i32, 5>({1, 2, 3, 4, 5});
+    Span<u32> span1;
+    REQUIRE(!span1);
+    REQUIRE(span1.IsEmpty());
+
+    u32 raw[4] = {4, 5, 6, 7};
+    Span<u32> span2(raw, 4);
+    REQUIRE(span2);
+    REQUIRE(!span2.IsEmpty());
+    REQUIRE(span2.GetSize() == 4);
+    REQUIRE(span2[0] == 4);
+    REQUIRE(span2.At(3) == 7);
 }
 
-TEST_CASE("Span (f32) Dynamic capacity", "[core][container][span]")
+TEST_CASE("Span dynamic extent: from Array, StaticArray, WeakArray, DynamicArray", "[Span]")
 {
-    RunSpanTest<f32>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f});
-}
-TEST_CASE("Span (f32) Static capacity", "[core][container][span]")
-{
-    RunSpanTest<f32, 5>({1.0f, 2.0f, 3.0f, 4.0f, 5.0f});
+    Array<u32, 3> arr = {2u, 4u, 6u};
+    StaticArray<u32, 3> sarr{7u, 8u};
+    DynamicArray<u32> darr{9u, 10u, 11u};
+    std::array<u32, 4> backing = {1u, 2u, 3u, 4u};
+    WeakArray<u32, 4> warr(backing.data(), 2);
+
+    Span<u32> span1(arr);
+    REQUIRE(span1.GetSize() == 3);
+
+    Span<u32> span2(sarr);
+    REQUIRE(span2.GetSize() == 2);
+
+    Span<u32> span3(darr);
+    REQUIRE(span3.GetSize() == 3);
+
+    Span<u32> span4(warr);
+    REQUIRE(span4.GetSize() == 2);
+
+    // conversion from Span<U,?>
+    Span<const u32> span5 = span3;
+    REQUIRE(span5.GetSize() == span3.GetSize());
 }
 
-TEST_CASE("Span (f64) Dynamic capacity", "[core][container][span]")
+TEST_CASE("Span dynamic extent: iteration and bool", "[Span]")
 {
-    RunSpanTest<f64>({1.0, 2.0, 3.0, 4.0, 5.0});
-}
-TEST_CASE("Span (f64) Static capacity", "[core][container][span]")
-{
-    RunSpanTest<f64, 5>({1.0, 2.0, 3.0, 4.0, 5.0});
-}
+    std::vector<std::string> vec = {"a", "b", "c"};
+    Span<std::string> span(vec.data(), vec.size());
+    REQUIRE(span);
+    REQUIRE(!span.IsEmpty());
 
-TEST_CASE("Span (std::string) Dynamic capacity", "[core][container][span]")
-{
-    RunSpanTest<std::string>({"10", "20", "30", "40", "50"});
+    std::string concat;
+    for (auto &s : span)
+        concat += s;
+    REQUIRE(concat == "abc");
+
+    span = Span<std::string>(nullptr, 0);
+    REQUIRE(!span);
+    REQUIRE(span.IsEmpty());
 }
-TEST_CASE("Span (std::string) Static capacity", "[core][container][span]")
-{
-    RunSpanTest<std::string, 5>({"10", "20", "30", "40", "50"});
-}
-} // namespace TKit

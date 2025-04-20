@@ -60,7 +60,7 @@ class TKIT_API ArenaAllocator
      */
     template <typename T> T *Allocate(const usize p_N = 1) noexcept
     {
-        return static_cast<T *>(Allocate(p_N * TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
+        return static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
     }
 
     /**
@@ -81,7 +81,7 @@ class TKIT_API ArenaAllocator
         requires std::constructible_from<T, Args...>
     T *Create(Args &&...p_Args) noexcept
     {
-        T *ptr = static_cast<T *>(Allocate(TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
+        T *ptr = static_cast<T *>(Allocate(sizeof(T), alignof(T)));
         if (!ptr)
             return nullptr;
         return Memory::Construct(ptr, std::forward<Args>(p_Args)...);
@@ -101,7 +101,7 @@ class TKIT_API ArenaAllocator
         requires std::constructible_from<T, Args...>
     T *NCreate(const usize p_N, Args &&...p_Args) noexcept
     {
-        T *ptr = static_cast<T *>(Allocate(p_N * TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
+        T *ptr = static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
         if (!ptr)
             return nullptr;
         Memory::ConstructRange(ptr, ptr + p_N, std::forward<Args>(p_Args)...);

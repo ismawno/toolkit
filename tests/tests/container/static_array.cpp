@@ -1,317 +1,316 @@
 #include "tkit/container/static_array.hpp"
-#include "tkit/utils/alias.hpp"
-#include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <array>
+#include <algorithm>
+#include <numeric>
+#include <string>
 
-namespace TKit
+using namespace TKit;
+using namespace TKit::Container;
+using namespace TKit::Alias;
+
+// A simple non‑trivial type to track construction/destruction
+static u32 g_Constructions = 0;
+static u32 g_Destructions = 0;
+struct STrackable
 {
-// Assumed args contains 5 elements
-template <typename T, typename... Args> void RunStaticArrayConstructorTest(Args... p_Args)
+    u32 Value;
+    STrackable() : Value(0)
+    {
+        ++g_Constructions;
+    }
+    STrackable(u32 v) : Value(v)
+    {
+        ++g_Constructions;
+    }
+    STrackable(const STrackable &o) : Value(o.Value)
+    {
+        ++g_Constructions;
+    }
+    STrackable(STrackable &&o) noexcept : Value(o.Value)
+    {
+        ++g_Constructions;
+    }
+    ~STrackable()
+    {
+        ++g_Destructions;
+    }
+    STrackable &operator=(const STrackable &o)
+    {
+        Value = o.Value;
+        return *this;
+    }
+    STrackable &operator=(STrackable &&o) noexcept
+    {
+        Value = o.Value;
+        return *this;
+    }
+};
+
+TEST_CASE("StaticArray: basic capacity/size queries", "[StaticArray]")
 {
-    SECTION("Default constructor")
-    {
-        StaticArray<T, 10> array;
-        REQUIRE(array.size() == 0);
-        REQUIRE(array.capacity() == 10);
-    }
+    StaticArray<u32, 4> arr;
+    REQUIRE(arr.GetCapacity() == 4);
+    REQUIRE(arr.GetSize() == 0);
+    REQUIRE(arr.IsEmpty());
+    REQUIRE(!arr.IsFull());
 
-    SECTION("Size constructor")
-    {
-        StaticArray<T, 10> array(5);
-        REQUIRE(array.size() == 5);
-        REQUIRE(array.capacity() == 10);
-    }
+    // fill to capacity
+    arr.Append(10) = 15; // note: Append returns reference
+    arr.Append(20);
+    arr.Append(30);
+    arr.Append(40);
+    REQUIRE(arr.GetSize() == 4);
+    REQUIRE(arr.IsFull());
+    REQUIRE_FALSE(arr.IsEmpty());
 
-    SECTION("Iterator constructor")
-    {
-        Array<T, 5> values = {p_Args...};
-        StaticArray<T, 10> array(values.begin(), values.end());
-        REQUIRE(array.size() == 5);
-        REQUIRE(array.capacity() == 10);
-        for (usize i = 0; i < 5; ++i)
-            REQUIRE(array[i] == values[i]);
-    }
+    // reading via operator[]
+    REQUIRE(arr[0] == 15);
+    REQUIRE(arr[3] == 40);
 
-    SECTION("Copy constructor")
-    {
-        StaticArray<T, 10> array1 = {p_Args...};
-        StaticArray<T, 10> array2 = array1;
-        REQUIRE(array1.size() == 5);
-        REQUIRE(array1.capacity() == 10);
-        REQUIRE(array2.size() == 5);
-        REQUIRE(array2.capacity() == 10);
-        for (usize i = 0; i < 5; ++i)
-            REQUIRE(array1[i] == array2[i]);
-    }
-
-    SECTION("Copy constructor (different capacity)")
-    {
-        StaticArray<T, 10> array1 = {p_Args...};
-        StaticArray<T, 5> array2 = array1;
-        REQUIRE(array1.size() == 5);
-        REQUIRE(array1.capacity() == 10);
-        REQUIRE(array2.size() == 5);
-        REQUIRE(array2.capacity() == 5);
-        for (usize i = 0; i < 5; ++i)
-            REQUIRE(array1[i] == array2[i]);
-    }
-
-    SECTION("Copy assignment")
-    {
-        StaticArray<T, 10> array1 = {p_Args...};
-        StaticArray<T, 10> array2{5};
-        array2 = array1;
-        REQUIRE(array1.size() == 5);
-        REQUIRE(array1.capacity() == 10);
-        REQUIRE(array2.size() == 5);
-        REQUIRE(array2.capacity() == 10);
-        for (usize i = 0; i < 5; ++i)
-            REQUIRE(array1[i] == array2[i]);
-    }
-
-    SECTION("Copy assignment (different capacity)")
-    {
-        StaticArray<T, 10> array1 = {p_Args...};
-        StaticArray<T, 5> array2{5};
-        array2 = array1;
-        REQUIRE(array1.size() == 5);
-        REQUIRE(array1.capacity() == 10);
-        REQUIRE(array2.size() == 5);
-        REQUIRE(array2.capacity() == 5);
-        for (usize i = 0; i < 5; ++i)
-            REQUIRE(array1[i] == array2[i]);
-    }
-
-    if constexpr (std::integral<T>)
-    {
-        SECTION("Initializer list")
-        {
-            StaticArray<T, 10> array = {p_Args...};
-            REQUIRE(array.size() == 5);
-            REQUIRE(array.capacity() == 10);
-            for (i32 i = 0; i < 5; ++i)
-                REQUIRE(array[i] == i + 1);
-        }
-    }
+    // GetFront/GetBack
+    REQUIRE(arr.GetFront() == 15);
+    REQUIRE(arr.GetBack() == 40);
 }
 
-// Assumed args contains 5 elements
-template <typename T, typename... Args> void RunStaticArrayOperatorTests(Args... p_Args)
+TEST_CASE("StaticArray: Append and Pop", "[StaticArray]")
 {
-    StaticArray<T, 10> array = {p_Args...};
-    SECTION("Push back")
-    {
-        for (usize i = 0; i < 5; ++i)
-        {
-            array.push_back(array[i]);
-            REQUIRE(array.size() == i + 6);
-            REQUIRE(array.back() == array[i]);
-        }
-        REQUIRE(array.full());
-    }
+    StaticArray<STrackable, 3> arr;
+    g_Constructions = g_Destructions = 0;
 
-    SECTION("Pop back")
-    {
-        while (!array.empty())
-            array.pop_back();
-        REQUIRE(array.size() == 0);
-    }
+    // Append default-constructed
+    auto &r0 = arr.Append(); // one default construct
+    REQUIRE(arr.GetSize() == 1);
+    REQUIRE(g_Constructions == 1);
+    r0.Value = 7;
 
-    SECTION("Insert")
-    {
-        // Must insert explicit copies, because perfect forwarding will catch those as references and the array will be
-        // mangled *before* inserting the element
-        T elem0 = array[0];
-        T elem2 = array[2];
-        array.insert(array.begin(), elem2);
-        REQUIRE(array.size() == 6);
-        REQUIRE(elem2 == array[0]);
-        array.insert(array.begin() + 2, elem0);
-        REQUIRE(array.size() == 7);
-        REQUIRE(elem0 == array[2]);
+    // Append with args
+    auto &r1 = arr.Append(13u);
+    REQUIRE(arr.GetSize() == 2);
+    REQUIRE(g_Constructions == 2);
+    REQUIRE(r1.Value == 13);
 
-        T elem4 = array[4];
-        T elem5 = array[5];
-        T elem6 = array[6];
-        array.insert(array.begin() + 4, {elem4, elem5, elem6});
-        REQUIRE(array.size() == 10);
-        for (usize i = 4; i < 7; ++i)
-            REQUIRE(array[i] == array[i + 3]);
+    // Pop
+    arr.Pop();
+    REQUIRE(arr.GetSize() == 1);
+    REQUIRE(g_Destructions == 1); // destroyed the STrackable(13)
 
-        SECTION("Build in reverse")
-        {
-            array.clear();
-            Array<T, 5> values = {p_Args...};
-            for (const T &value : values)
-                array.insert(array.begin(), value);
-
-            usize index = 0;
-            for (auto it = array.rbegin(); it != array.rend(); ++it)
-                REQUIRE(*it == values[index++]);
-
-            StaticArray<T, 400> bigArray;
-            while (!bigArray.full())
-                bigArray.insert(bigArray.begin(), values[0]);
-        }
-    }
-
-    SECTION("Erase")
-    {
-        T elem1 = array[1];
-        T elem3 = array[3];
-        array.erase(array.begin());
-        REQUIRE(array.size() == 4);
-        REQUIRE(array[0] == elem1);
-        array.erase(array.begin(), array.begin() + 2);
-        REQUIRE(array.size() == 2);
-        REQUIRE(array[0] == elem3);
-
-        array.insert(array.end(), {elem1, elem3});
-        while (!array.empty())
-        {
-            if (array.size() > 1)
-            {
-                const T elem = array[1];
-                array.erase(array.begin());
-                REQUIRE(array[0] == elem);
-            }
-            else
-                array.erase(array.begin());
-        }
-
-        array.insert(array.end(), {p_Args...});
-        array.erase(array.begin(), array.end());
-        REQUIRE(array.size() == 0);
-    }
-
-    SECTION("Resize")
-    {
-        Array<T, 5> values = {p_Args...};
-        SECTION("Clear from resize")
-        {
-            array.resize(0);
-            REQUIRE(array.size() == 0);
-            REQUIRE(array.empty());
-        }
-
-        SECTION("Decrease size")
-        {
-            array.resize(3);
-            REQUIRE(array.size() == 3);
-            for (usize i = 0; i < 3; ++i)
-                REQUIRE(array[i] == values[i]);
-        }
-
-        SECTION("Increase size")
-        {
-            array.resize(7);
-            REQUIRE(array.size() == 7);
-            for (usize i = 0; i < 3; ++i)
-                REQUIRE(array[i] == values[i]);
-        }
-    }
-
-    SECTION("Emplace back")
-    {
-        Array<T, 5> values = {p_Args...};
-        array.clear();
-        for (usize i = 0; i < 5; ++i)
-            array.emplace_back(values[i]);
-
-        for (usize i = 0; i < 5; ++i)
-            REQUIRE(array[i] == values[i]);
-    }
-
-    SECTION("Clear")
-    {
-        array.clear();
-        REQUIRE(array.size() == 0);
-    }
+    // Pop to empty
+    arr.Pop();
+    REQUIRE(arr.GetSize() == 0);
+    REQUIRE(g_Destructions == 2);
 }
 
-TEST_CASE("StaticArray (i32)", "[core][container][static_array]")
+TEST_CASE("StaticArray: constructor from size+fill args", "[StaticArray]")
 {
-    RunStaticArrayConstructorTest<i32>(1, 2, 3, 4, 5);
-    RunStaticArrayOperatorTests<i32>(1, 2, 3, 4, 5);
+    // trivially default-constructible => no actual constructions happen
+    StaticArray<u32, 5> arr(3);
+    REQUIRE(arr.GetSize() == 3);
+
+    // non-trivial => should invoke CTOR for each
+    g_Constructions = g_Destructions = 0;
+    StaticArray<STrackable, 5> nt(2, 42u);
+    REQUIRE(nt.GetSize() == 2);
+    REQUIRE(g_Constructions == 2);
+    for (std::size_t i = 0; i < 2; ++i)
+        REQUIRE(nt[i].Value == 42u);
+    // destructor runs in ~StaticArray
 }
 
-TEST_CASE("StaticArray (f32)", "[core][container][static_array]")
+TEST_CASE("StaticArray: initializer_list & range constructors", "[StaticArray]")
 {
-    RunStaticArrayConstructorTest<f32>(1.0f, 2.0f, 3.0f, 4.0f, 5.0f);
-    RunStaticArrayOperatorTests<f32>(1.0f, 2.0f, 3.0f, 4.0f, 5.0f);
+    // initializer_list
+    StaticArray<u32, 4> arr{5u, 6u, 7u};
+    REQUIRE(arr.GetSize() == 3);
+    REQUIRE(std::equal(arr.begin(), arr.end(), std::array<u32, 3>{5, 6, 7}.begin()));
+
+    // range constructor from another container
+    std::array<u32, 4> src = {10, 20, 30, 40};
+    StaticArray<u32, 4> rg(src.begin() + 1, src.begin() + 4);
+    REQUIRE(rg.GetSize() == 3);
+    REQUIRE(rg[0] == 20);
+    REQUIRE(rg[2] == 40);
 }
 
-TEST_CASE("StaticArray (f64)", "[core][container][static_array]")
+TEST_CASE("StaticArray: copy/move ctor and assignment", "[StaticArray]")
 {
-    RunStaticArrayConstructorTest<f64>(1.0, 2.0, 3.0, 4.0, 5.0);
-    RunStaticArrayOperatorTests<f64>(1.0, 2.0, 3.0, 4.0, 5.0);
+    StaticArray<u32, 4> arr1{1, 2, 3};
+    StaticArray<u32, 4> arr2 = arr1; // copy ctor
+    REQUIRE(arr2.GetSize() == 3);
+    REQUIRE(std::equal(arr2.begin(), arr2.end(), arr1.begin()));
+
+    StaticArray<u32, 4> arr3 = std::move(arr1); // move ctor
+    REQUIRE(arr3.GetSize() == 3);
+    REQUIRE(arr3[0] == 1);
+
+    // copy assignment
+    StaticArray<u32, 4> arr4;
+    arr4 = arr3;
+    REQUIRE(arr4.GetSize() == 3);
+    REQUIRE(arr4[1] == 2);
+
+    // move assignment
+    StaticArray<u32, 4> arr5;
+    arr5 = std::move(arr4);
+    REQUIRE(arr5.GetSize() == 3);
+    REQUIRE(arr5[2] == 3);
 }
 
-TEST_CASE("StaticArray (std::string)", "[core][container][static_array]")
+TEST_CASE("StaticArray: member Insert wrappers", "[StaticArray]")
 {
-    RunStaticArrayConstructorTest<std::string>("10", "20", "30", "40", "50");
-    RunStaticArrayOperatorTests<std::string>("10", "20", "30", "40", "50");
+    StaticArray<u32, 7> a{1, 2, 4, 5};
+    a.Insert(a.begin() + 2, 3u); // insert single at pos 2
+    REQUIRE(a.GetSize() == 5);
+    REQUIRE(std::vector<u32>(a.begin(), a.end()) == std::vector<u32>{1, 2, 3, 4, 5});
+
+    // insert range
+    std::array<u32, 2> extra = {7, 8};
+    a.Insert(a.begin() + 5, extra.begin(), extra.end());
+    REQUIRE(a.GetSize() == 7); // capacity 5 => insertion of 2 at end should assert; skip if asserts disabled
 }
 
-TEST_CASE("StaticArray cleanup check", "[core][container][static_array]")
+TEST_CASE("StaticArray: member RemoveOrdered/Unordered wrappers", "[StaticArray]")
 {
-    StaticArray<NonTrivialData, 10> array{5};
-    REQUIRE(NonTrivialData::Instances == 5);
-    array.pop_back();
-    REQUIRE(NonTrivialData::Instances == 4);
-    array.erase(array.begin());
-    REQUIRE(NonTrivialData::Instances == 3);
-    array.erase(array.begin(), array.begin() + 2);
-    REQUIRE(NonTrivialData::Instances == 1);
-    array.clear();
-    REQUIRE(NonTrivialData::Instances == 0);
+    StaticArray<u32, 6> a{10, 20, 30, 40, 50};
+    REQUIRE(a.GetSize() == 5);
 
-    SECTION("Cleanup check with erase and resize")
-    {
-        NonTrivialData data1;
-        NonTrivialData data2;
-        NonTrivialData data3;
-        NonTrivialData data4;
-        NonTrivialData data5;
+    a.RemoveOrdered(a.begin() + 1); // remove '20'
+    REQUIRE(a.GetSize() == 4);
+    REQUIRE(std::vector<u32>(a.begin(), a.end()) == std::vector<u32>{10, 30, 40, 50});
 
-        SECTION("Insert and erase")
-        {
-            array.push_back(data1);
-            REQUIRE(NonTrivialData::Instances == 1 + 5);
-            array.insert(array.begin(), data2);
-            REQUIRE(NonTrivialData::Instances == 2 + 5);
-            array.insert(array.begin() + 1, {data3, data4, data5});
-            REQUIRE(NonTrivialData::Instances == 5 + 5);
+    a.RemoveOrdered(a.begin() + 1, a.begin() + 3); // remove '30','40'
+    REQUIRE(a.GetSize() == 2);
+    REQUIRE(a[0] == 10);
+    REQUIRE(a[1] == 50);
 
-            array.erase(array.begin());
-            REQUIRE(NonTrivialData::Instances == 4 + 5);
-            array.erase(array.begin(), array.begin() + 2);
-            REQUIRE(NonTrivialData::Instances == 2 + 5);
-        }
-
-        SECTION("Resize")
-        {
-            array.insert(array.end(), {data1, data2, data3, data4, data5, data1, data2, data3, data4, data5});
-            REQUIRE(NonTrivialData::Instances == 10 + 5);
-
-            array.resize(7);
-            REQUIRE(NonTrivialData::Instances == 7 + 5);
-
-            array.resize(10);
-            REQUIRE(NonTrivialData::Instances == 10 + 5);
-
-            array.resize(2);
-            REQUIRE(NonTrivialData::Instances == 2 + 5);
-
-            array.resize(5);
-            REQUIRE(NonTrivialData::Instances == 5 + 5);
-
-            array.resize(0);
-            REQUIRE(NonTrivialData::Instances == 0 + 5);
-        }
-    }
-
-    array.clear();
-    REQUIRE(NonTrivialData::Instances == 0);
+    // unordered remove
+    a = StaticArray<u32, 6>{1, 2, 3, 4};
+    a.RemoveUnordered(a.begin() + 1); // replace at idx1 with last
+    REQUIRE(a.GetSize() == 3);
+    REQUIRE(a[1] == 4);
 }
-} // namespace TKit
+
+TEST_CASE("StaticArray: Resize", "[StaticArray]")
+{
+    StaticArray<STrackable, 5> s;
+    g_Constructions = g_Destructions = 0;
+
+    // grow with default
+    s.Resize(3);
+    REQUIRE(s.GetSize() == 3);
+    REQUIRE(g_Constructions == 3);
+
+    // shrink
+    s.Resize(1);
+    REQUIRE(s.GetSize() == 1);
+    REQUIRE(g_Destructions == 2);
+
+    // grow with args
+    s.Resize(4, 99u);
+    REQUIRE(s.GetSize() == 4);
+    REQUIRE(g_Constructions == 3 + 3); // two phases: initial 3, +3 new (from 1→4)
+    for (u32 i = 1; i < 4; ++i)
+        REQUIRE(s[i].Value == 99u);
+}
+
+TEST_CASE("StaticArray: Clear and iteration", "[StaticArray]")
+{
+    StaticArray<u32, 4> a{9, 8, 7};
+    a.Clear();
+    REQUIRE(a.GetSize() == 0);
+    REQUIRE(a.IsEmpty());
+
+    // range-for
+    StaticArray<u32, 4> b{1, 2, 3};
+    u32 sum = 0;
+    for (auto &x : b)
+        sum += x;
+    REQUIRE(sum == 6);
+}
+
+TEST_CASE("StaticArray aliases", "[StaticArray]")
+{
+    StaticArray4<u32> a4;
+    StaticArray8<u32> a8;
+    StaticArray16<u32> a16;
+    REQUIRE(a4.GetCapacity() == 4);
+    REQUIRE(a8.GetCapacity() == 8);
+    REQUIRE(a16.GetCapacity() == 16);
+}
+
+TEST_CASE("StaticArray<std::string>: basic operations", "[StaticArray][string]")
+{
+    StaticArray<std::string, 15> arr1;
+    REQUIRE(arr1.GetSize() == 0);
+    REQUIRE(arr1.IsEmpty());
+
+    // Append & operator[]
+    arr1.Append("one");
+    arr1.Append("two");
+    arr1.Append("three");
+    REQUIRE(arr1.GetSize() == 3);
+    REQUIRE(arr1[0] == "one");
+    REQUIRE(arr1[1] == "two");
+    REQUIRE(arr1[2] == "three");
+
+    // Copy‐ctor isolates storage
+    auto arr2 = arr1;
+    REQUIRE(arr2.GetSize() == 3);
+    arr2[1] = "TWO";
+    REQUIRE(arr1[1] == "two"); // original unchanged
+    REQUIRE(arr2[1] == "TWO");
+
+    // Move‐ctor leaves moved‐from in valid state
+    auto arr3 = std::move(arr2);
+    REQUIRE(arr3.GetSize() == 3);
+    REQUIRE(arr3[0] == "one");
+    // arr2 is in valid but unspecified state; we at least can call Clear()
+    arr2.Clear();
+    REQUIRE(arr2.GetSize() == 0);
+
+    // Insert single
+    arr1.Insert(arr1.begin() + 1, std::string("inserted"));
+    REQUIRE(arr1.GetSize() == 4);
+    REQUIRE(arr1[1] == "inserted");
+    REQUIRE(arr1[2] == "two");
+
+    // Insert range
+    std::vector<std::string> extras{"x", "y", "z"};
+    arr1.Insert(arr1.begin() + 4, extras.begin(), extras.end());
+    REQUIRE(arr1.GetSize() == 7);
+    REQUIRE(arr1[4] == "x");
+    REQUIRE(arr1[6] == "z");
+
+    // RemoveOrdered single
+    arr1.RemoveOrdered(arr1.begin() + 1);
+    REQUIRE(arr1.GetSize() == 6);
+    REQUIRE(arr1[1] == "two");
+
+    // RemoveOrdered range
+    arr1.RemoveOrdered(arr1.begin() + 2, arr1.begin() + 4); // remove two elements
+    REQUIRE(arr1.GetSize() == 4);
+
+    // RemoveUnordered
+    arr1 = StaticArray<std::string, 5>{"A", "B", "C", "D"};
+    arr1.RemoveUnordered(arr1.begin() + 1);
+    REQUIRE(arr1.GetSize() == 3);
+    // element at idx1 should be one of the originals, but not "B"
+    REQUIRE(arr1[1] != "B");
+    REQUIRE((arr1[1] == "D" || arr1[1] == "C" || arr1[1] == "A"));
+
+    // Resize up with fill‐args
+    arr1.Resize(5, std::string("fill"));
+    REQUIRE(arr1.GetSize() == 5);
+    REQUIRE(arr1[3] == "fill");
+    REQUIRE(arr1[4] == "fill");
+
+    // Resize down
+    arr1.Resize(2);
+    REQUIRE(arr1.GetSize() == 2);
+
+    arr1.Pop();
+    REQUIRE(arr1.GetSize() == 1);
+
+    arr1.Clear();
+    REQUIRE(arr1.IsEmpty());
+}

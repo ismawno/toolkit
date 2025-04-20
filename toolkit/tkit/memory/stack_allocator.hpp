@@ -50,7 +50,7 @@ class TKIT_API StackAllocator
     // alignment of the individual allocations at all. You can still specify alignments of, say, 64 if you want when
     // allocating
 
-    explicit StackAllocator(usize p_Size, usize p_Alignment = TKIT_ALIGN_OF(std::max_align_t)) noexcept;
+    explicit StackAllocator(usize p_Size, usize p_Alignment = alignof(std::max_align_t)) noexcept;
 
     // This constructor is NOT owning the buffer, so it will not deallocate it. Up to the user to manage the memory
     StackAllocator(void *p_Buffer, usize p_Size) noexcept;
@@ -75,7 +75,7 @@ class TKIT_API StackAllocator
      */
     template <typename T> T *Allocate(const usize p_N = 1) noexcept
     {
-        return static_cast<T *>(Allocate(p_N * TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
+        return static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
     }
 
     /**
@@ -99,7 +99,7 @@ class TKIT_API StackAllocator
         requires std::constructible_from<T, Args...>
     T *Create(Args &&...p_Args) noexcept
     {
-        T *ptr = static_cast<T *>(Allocate(TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
+        T *ptr = static_cast<T *>(Allocate(sizeof(T), alignof(T)));
         if (!ptr)
             return nullptr;
         return Memory::Construct(ptr, std::forward<Args>(p_Args)...);
@@ -119,7 +119,7 @@ class TKIT_API StackAllocator
         requires std::constructible_from<T, Args...>
     T *NCreate(const usize p_N, Args &&...p_Args) noexcept
     {
-        T *ptr = static_cast<T *>(Allocate(p_N * TKIT_SIZE_OF(T), TKIT_ALIGN_OF(T)));
+        T *ptr = static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
         if (!ptr)
             return nullptr;
         Memory::ConstructRange(ptr, ptr + p_N, std::forward<Args>(p_Args)...);
@@ -136,11 +136,11 @@ class TKIT_API StackAllocator
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
-            TKIT_ASSERT(!m_Entries.empty(), "[TOOLKIT] Unable to deallocate because the stack allocator is empty");
-            TKIT_ASSERT(m_Entries.back().Ptr == reinterpret_cast<std::byte *>(p_Ptr),
+            TKIT_ASSERT(!m_Entries.IsEmpty(), "[TOOLKIT] Unable to deallocate because the stack allocator is empty");
+            TKIT_ASSERT(m_Entries.GetBack().Ptr == reinterpret_cast<std::byte *>(p_Ptr),
                         "[TOOLKIT] Elements must be deallocated in the reverse order they were allocated");
 
-            const usize n = m_Entries.back().Size / TKIT_SIZE_OF(T);
+            const usize n = m_Entries.GetBack().Size / sizeof(T);
             for (usize i = 0; i < n; ++i)
                 p_Ptr[i].~T();
         }

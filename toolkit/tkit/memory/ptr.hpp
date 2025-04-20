@@ -9,7 +9,6 @@
 namespace TKit
 {
 // I really tried to use this concept, but msvc wont fucking let me
-// template <typename T, template <typename> typename RC>
 // concept RCounted = std::is_base_of_v<RC<typename T::CountedType>, T>;
 
 // This is a small homemade implementation of a reference counter to avoid the shared_ptr's allocations overhead.
@@ -404,7 +403,7 @@ template <typename T> class Scope
 
 template <typename T> struct std::hash<TKit::Ref<T>>
 {
-    TKit::usize operator()(const TKit::Ref<T> &p_Ref) const noexcept
+    std::size_t operator()(const TKit::Ref<T> &p_Ref) const noexcept
     {
         return std::hash<T *>()(p_Ref.Get());
     }
@@ -412,7 +411,7 @@ template <typename T> struct std::hash<TKit::Ref<T>>
 
 template <typename T> struct std::hash<TKit::Scope<T>>
 {
-    TKit::usize operator()(const TKit::Scope<T> &p_Scope) const noexcept
+    std::size_t operator()(const TKit::Scope<T> &p_Scope) const noexcept
     {
         return std::hash<T *>()(p_Scope.Get());
     }

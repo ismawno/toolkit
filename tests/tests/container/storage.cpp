@@ -1,105 +1,131 @@
 #include "tkit/container/storage.hpp"
-#include "tkit/utils/alias.hpp"
-#include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
+#include <cstdint>
+#include <type_traits>
 
-namespace TKit
+using namespace TKit;
+using namespace TKit::Alias;
+
+static u32 g_CtorCount = 0;
+static u32 g_DtorCount = 0;
+
+TEST_CASE("RawStorage: trivial type construct and destruct", "[RawStorage]")
 {
-TEST_CASE("Raw storage", "[core][container][raw_storage]")
-{
-    SECTION("Trivial type")
-    {
-        RawStorage<16> storage;
-        storage.Construct<u32>(42);
-        REQUIRE(*storage.Get<u32>() == 42);
-
-        const RawStorage<16> other = storage;
-        REQUIRE(*other.Get<u32>() == 42);
-
-        storage.Destruct<u32>();
-    }
-
-    SECTION("Non-trivial type")
-    {
-        RawStorage<sizeof(NonTrivialData)> storage;
-        storage.Construct<NonTrivialData>();
-        REQUIRE(NonTrivialData::Instances == 1);
-
-        storage.Destruct<NonTrivialData>();
-        REQUIRE(NonTrivialData::Instances == 0);
-    }
-
-    SECTION("Aligned type")
-    {
-        RawStorage<sizeof(AlignedData), alignof(AlignedData)> storage;
-        AlignedData *data = storage.Construct<AlignedData>();
-        data->x = 1.0;
-        data->y = 2.0;
-        data->z = 3.0;
-        data->a = 4.0;
-        data->b = 5.0;
-        data->c = 6.0;
-
-        REQUIRE(data->x == 1.0);
-        REQUIRE(data->y == 2.0);
-        REQUIRE(data->z == 3.0);
-        REQUIRE(data->a == 4.0);
-        REQUIRE(data->b == 5.0);
-        REQUIRE(data->c == 6.0);
-
-        storage.Destruct<AlignedData>();
-    }
+    RawStorage<sizeof(int), alignof(int)> storage;
+    int *pValue = storage.Construct<int>(123);
+    REQUIRE(*pValue == 123);
+    storage.Destruct<int>();
 }
 
-TEST_CASE("Storage", "[core][container][storage]")
+struct NT
 {
-    SECTION("Trivial type")
+    static inline u32 ctorCount = 0;
+    static inline u32 dtorCount = 0;
+    u32 value;
+    NT(u32 v) : value(v)
     {
-        Storage<u32> storage;
-        storage.Construct(42);
-        REQUIRE(*storage.Get() == 42);
-
-        const Storage<u32> other = storage;
-        REQUIRE(*other.Get() == 42);
-
-        storage.Destruct();
+        ++ctorCount;
     }
-
-    SECTION("Non-trivial type")
+    ~NT()
     {
-        Storage<NonTrivialData> storage;
-        storage.Construct();
-        REQUIRE(NonTrivialData::Instances == 1);
-
-        const Storage<NonTrivialData> other = storage;
-        REQUIRE(NonTrivialData::Instances == 2);
-
-        other.Destruct();
-        REQUIRE(NonTrivialData::Instances == 1);
-
-        storage.Destruct();
-        REQUIRE(NonTrivialData::Instances == 0);
+        ++dtorCount;
     }
+};
 
-    SECTION("Aligned type")
-    {
-        Storage<AlignedData> storage;
-        AlignedData *data = storage.Construct();
-        data->x = 1.0;
-        data->y = 2.0;
-        data->z = 3.0;
-        data->a = 4.0;
-        data->b = 5.0;
-        data->c = 6.0;
-
-        REQUIRE(data->x == 1.0);
-        REQUIRE(data->y == 2.0);
-        REQUIRE(data->z == 3.0);
-        REQUIRE(data->a == 4.0);
-        REQUIRE(data->b == 5.0);
-        REQUIRE(data->c == 6.0);
-
-        storage.Destruct();
-    }
+TEST_CASE("RawStorage: non-trivial type construct and destruct", "[RawStorage]")
+{
+    RawStorage<sizeof(NT), alignof(NT)> storage;
+    NT *pObj = storage.Construct<NT>(77);
+    REQUIRE(pObj->value == 77);
+    REQUIRE(NT::ctorCount == 1);
+    storage.Destruct<NT>();
+    REQUIRE(NT::dtorCount == 1);
 }
-} // namespace TKit
+
+TEST_CASE("RawStorage: alignment correctness", "[RawStorage]")
+{
+    struct alignas(16) A16
+    {
+        char buf[16];
+    };
+    static_assert(alignof(A16) == 16, "alignment mismatch");
+
+    RawStorage<sizeof(A16), 16> storage;
+    A16 *pA = storage.Construct<A16>();
+    uintptr_t addr = reinterpret_cast<uintptr_t>(pA);
+    REQUIRE((addr % alignof(A16)) == 0);
+    storage.Destruct<A16>();
+}
+
+TEST_CASE("Storage: trivial type via constructor, destruct, reconstruct", "[Storage]")
+{
+    Storage<int> s1(5);
+    REQUIRE(*s1 == 5);
+
+    s1.Destruct();
+    *s1 = 9; // placement new left memory valid, assignment works
+    REQUIRE(*s1 == 9);
+
+    int *pNew = s1.Construct(42);
+    REQUIRE(*pNew == 42);
+    s1.Destruct();
+}
+
+TEST_CASE("Storage: type without default constructor", "[Storage]")
+{
+    struct NoDef
+    {
+        u32 x;
+        NoDef() = delete;
+        explicit NoDef(u32 v) : x(v)
+        {
+        }
+    };
+    Storage<NoDef> s1(99);
+    REQUIRE(s1->x == 99);
+
+    s1.Destruct();
+    s1.Construct(123);
+    REQUIRE((*s1).x == 123);
+    s1.Destruct();
+}
+
+struct Track
+{
+    static inline u32 ctorCount = 0;
+    static inline u32 copyCtorCount = 0;
+    static inline u32 moveCtorCount = 0;
+    u32 val;
+    Track(u32 v) : val(v)
+    {
+        ++ctorCount;
+    }
+    Track(const Track &o) : val(o.val)
+    {
+        ++copyCtorCount;
+    }
+    Track(Track &&o) noexcept : val(o.val)
+    {
+        ++moveCtorCount;
+    }
+};
+
+TEST_CASE("Storage: copy and move semantics", "[Storage]")
+{
+    // construct original
+    g_CtorCount = g_DtorCount = 0;
+    Track::ctorCount = Track::copyCtorCount = Track::moveCtorCount = 0;
+    Storage<Track> orig(55);
+    REQUIRE(Track::ctorCount == 1);
+    REQUIRE(orig->val == 55);
+
+    // copy-construct
+    Storage<Track> copy = orig;
+    REQUIRE(Track::copyCtorCount == 1);
+    REQUIRE((*copy).val == 55);
+
+    // move-construct
+    Storage<Track> moved = std::move(orig);
+    REQUIRE(Track::moveCtorCount == 1);
+    REQUIRE((*moved).val == 55);
+}

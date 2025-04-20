@@ -19,11 +19,14 @@ set(SOURCES
     tests/memory/arena_allocator.cpp
     tests/memory/ptr.cpp
     tests/container/static_array.cpp
+    tests/container/dynamic_array.cpp
+    tests/container/container.cpp
     tests/container/weak_array.cpp
     tests/container/span.cpp
     tests/container/storage.cpp
-    tests/container/buffer.cpp
+    tests/multiprocessing/task.cpp
     tests/multiprocessing/thread_pool.cpp
+    tests/multiprocessing/for_each.cpp
     tests/utils/result.cpp
     tests/utils/hash.cpp
 )

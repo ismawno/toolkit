@@ -10,6 +10,7 @@ toolkit/tkit/reflection/
 docs/html/
 docs/latex/
 __pycache__/
+reminders.txt
 
 # Prerequisites
 *.d

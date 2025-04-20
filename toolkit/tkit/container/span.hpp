@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tkit/container/weak_array.hpp"
+#include "tkit/container/dynamic_array.hpp"
 
 namespace TKit
 {
@@ -13,101 +14,82 @@ namespace TKit
  * @tparam T The type of the elements in the span.
  * @tparam Extent The extent of the span.
  */
-template <typename T, usize Extent = Limits<usize>::max()> // Consider adding allocator traits
+template <typename T, usize Extent = Limits<usize>::max(),
+          typename Traits = Container::ArrayTraits<NoCVRef<T>>> // Consider adding allocator traits
     requires(Extent > 0)
 class Span
 {
   public:
-    using element_type = T;
-    using value_type = NoCVRef<T>;
-    using size_type = usize;
-    using pointer = T *;
-    using reference = T &;
-    using iterator = pointer;
-    using reverse_iterator = std::reverse_iterator<iterator>;
-
-    using Traits = std::allocator_traits<Memory::DefaultAllocator<value_type>>;
+    using ElementType = T;
+    using ValueType = typename Traits::ValueType;
+    using SizeType = typename Traits::SizeType;
+    using Iterator = ElementType *;
 
     constexpr Span() noexcept : m_Data(nullptr)
     {
     }
-    constexpr explicit(false) Span(pointer p_Data) noexcept : m_Data(p_Data)
+    constexpr explicit(false) Span(ElementType *p_Data) noexcept : m_Data(p_Data)
     {
     }
 
-    constexpr explicit(false) Span(const Array<value_type, Extent> &p_Array) noexcept : m_Data(p_Array.data())
+    constexpr explicit(false) Span(const Array<ValueType, Extent, Traits> &p_Array) noexcept : m_Data(p_Array.GetData())
     {
     }
-    constexpr explicit(false) Span(Array<value_type, Extent> &p_Array) noexcept : m_Data(p_Array.data())
+    constexpr explicit(false) Span(Array<ValueType, Extent, Traits> &p_Array) noexcept : m_Data(p_Array.GetData())
     {
     }
 
     template <typename U>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(const Span<U, Extent> &p_Other) noexcept : m_Data(p_Other.data())
+    constexpr explicit(false) Span(const Span<U, Extent, Traits> &p_Other) noexcept : m_Data(p_Other.GetData())
     {
     }
 
-    constexpr Span(const Span &p_Other) noexcept = default;
-    constexpr Span(Span &&p_Other) noexcept = default;
-
-    constexpr Span &operator=(const Span &p_Other) noexcept = default;
-    constexpr Span &operator=(Span &&p_Other) noexcept = default;
-
-    constexpr pointer data() const noexcept
+    constexpr ElementType *GetData() const noexcept
     {
         return m_Data;
     }
-    constexpr size_type size() const noexcept
+    constexpr SizeType GetSize() const noexcept
     {
         return Extent;
     }
 
-    constexpr reference operator[](const size_type p_Index) const noexcept
+    constexpr ElementType &operator[](const SizeType p_Index) const noexcept
     {
         TKIT_ASSERT(p_Index < Extent, "[TOOLKIT] Index is out of bounds");
         return m_Data[p_Index];
     }
-    constexpr reference at(const size_type p_Index) const noexcept
+    constexpr ElementType &At(const SizeType p_Index) const noexcept
     {
         TKIT_ASSERT(p_Index < Extent, "[TOOLKIT] Index is out of bounds");
         return m_Data[p_Index];
     }
 
-    constexpr reference front() const noexcept
+    constexpr ElementType &GetFront() noexcept
     {
-        return *begin();
+        return At(0);
     }
-    constexpr reference back() const noexcept
+    constexpr ElementType &GetBack() noexcept
     {
-        return *(begin() + Extent - 1);
+        return At(Extent - 1);
     }
 
-    constexpr iterator begin() const noexcept
+    constexpr Iterator begin() const noexcept
     {
         return m_Data;
     }
-    constexpr iterator end() const noexcept
+    constexpr Iterator end() const noexcept
     {
         return m_Data + Extent;
     }
 
-    constexpr reverse_iterator rbegin() const noexcept
-    {
-        return reverse_iterator(end());
-    }
-    constexpr reverse_iterator rend() const noexcept
-    {
-        return reverse_iterator(begin());
-    }
-
-    operator bool() const noexcept
+    constexpr operator bool() const noexcept
     {
         return m_Data != nullptr;
     }
 
   private:
-    pointer m_Data;
+    ElementType *m_Data;
 };
 
 /**
@@ -118,141 +100,113 @@ class Span
  *
  * @tparam T The type of the elements in the span.
  */
-template <typename T> class Span<T, Limits<usize>::max()>
+template <typename T, typename Traits> class Span<T, Limits<usize>::max(), Traits>
 {
   public:
-    using element_type = T;
-    using value_type = NoCVRef<T>;
-    using size_type = usize;
-    using pointer = T *;
-    using reference = T &;
-    using iterator = pointer;
-    using reverse_iterator = std::reverse_iterator<iterator>;
-
-    using Traits = std::allocator_traits<Memory::DefaultAllocator<value_type>>;
+    using ElementType = T;
+    using ValueType = typename Traits::ValueType;
+    using SizeType = typename Traits::SizeType;
+    using Iterator = ElementType *;
 
     constexpr Span() noexcept : m_Data(nullptr), m_Size(0)
     {
     }
-    constexpr Span(pointer p_Data, const size_type p_Size) noexcept : m_Data(p_Data), m_Size(p_Size)
+    constexpr Span(ElementType *p_Data, const SizeType p_Size) noexcept : m_Data(p_Data), m_Size(p_Size)
     {
     }
 
-    template <size_type Extent>
-    constexpr explicit(false) Span(const Array<value_type, Extent> &p_Array) noexcept
-        : m_Data(p_Array.data()), m_Size(Extent)
+    template <SizeType Extent>
+    constexpr explicit(false) Span(const Array<ValueType, Extent, Traits> &p_Array) noexcept
+        : m_Data(p_Array.GetData()), m_Size(Extent)
     {
     }
-    template <size_type Extent>
-    constexpr explicit(false) Span(Array<value_type, Extent> &p_Array) noexcept : m_Data(p_Array.data()), m_Size(Extent)
-    {
-    }
-
-    template <size_type Capacity>
-    constexpr explicit(false) Span(const StaticArray<value_type, Capacity> &p_Array) noexcept
-        : m_Data(p_Array.data()), m_Size(p_Array.size())
-    {
-    }
-    template <size_type Capacity>
-    constexpr explicit(false) Span(StaticArray<value_type, Capacity> &p_Array) noexcept
-        : m_Data(p_Array.data()), m_Size(p_Array.size())
+    template <SizeType Extent>
+    constexpr explicit(false) Span(Array<ValueType, Extent, Traits> &p_Array) noexcept
+        : m_Data(p_Array.GetData()), m_Size(Extent)
     {
     }
 
-    template <typename U, size_type Capacity>
+    template <SizeType Capacity>
+    constexpr explicit(false) Span(const StaticArray<ValueType, Capacity, Traits> &p_Array) noexcept
+        : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
+    {
+    }
+    template <SizeType Capacity>
+    constexpr explicit(false) Span(StaticArray<ValueType, Capacity, Traits> &p_Array) noexcept
+        : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
+    {
+    }
+
+    template <typename U, SizeType Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(const WeakArray<U, Capacity> &p_Array) noexcept
-        : m_Data(p_Array.data()), m_Size(p_Array.size())
+    constexpr explicit(false) Span(const WeakArray<U, Capacity, Traits> &p_Array) noexcept
+        : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
-    template <typename U, size_type Capacity>
+    template <typename U, SizeType Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(WeakArray<U, Capacity> &p_Array) noexcept
-        : m_Data(p_Array.data()), m_Size(p_Array.size())
+    constexpr explicit(false) Span(WeakArray<U, Capacity, Traits> &p_Array) noexcept
+        : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
 
-    constexpr explicit(false) Span(const DynamicArray<value_type> &p_Array) noexcept
-        : m_Data(p_Array.data()), m_Size(p_Array.size())
+    constexpr explicit(false) Span(const DynamicArray<ValueType, Traits> &p_Array) noexcept
+        : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
-    constexpr explicit(false) Span(DynamicArray<value_type> &p_Array) noexcept
-        : m_Data(p_Array.data()), m_Size(p_Array.size())
+    constexpr explicit(false) Span(DynamicArray<ValueType, Traits> &p_Array) noexcept
+        : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
 
-    template <typename U, size_type Extent>
+    template <typename U, SizeType Extent>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(const Span<U, Extent> &p_Other) noexcept
-        : m_Data(p_Other.data()), m_Size(p_Other.size())
+    constexpr explicit(false) Span(const Span<U, Extent, Traits> &p_Other) noexcept
+        : m_Data(p_Other.GetData()), m_Size(p_Other.GetSize())
     {
     }
 
-    constexpr Span(const Span &p_Other) noexcept = default;
-    constexpr Span(Span &&p_Other) noexcept = default;
-
-    constexpr Span &operator=(const Span &p_Other) noexcept = default;
-    constexpr Span &operator=(Span &&p_Other) noexcept = default;
-
-    constexpr pointer data() const noexcept
+    constexpr ElementType *GetData() const noexcept
     {
         return m_Data;
     }
-    constexpr size_type size() const noexcept
+    constexpr SizeType GetSize() const noexcept
     {
         return m_Size;
     }
 
-    constexpr reference operator[](const size_type p_Index) const noexcept
+    constexpr ElementType &operator[](const SizeType p_Index) const noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return m_Data[p_Index];
     }
-    constexpr reference at(const size_type p_Index) const noexcept
+    constexpr ElementType &At(const SizeType p_Index) const noexcept
     {
         TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
         return m_Data[p_Index];
     }
 
-    constexpr reference front() const noexcept
-    {
-        return *begin();
-    }
-    constexpr reference back() const noexcept
-    {
-        return *(begin() + m_Size - 1);
-    }
-
-    constexpr iterator begin() const noexcept
+    constexpr Iterator begin() const noexcept
     {
         return m_Data;
     }
-    constexpr iterator end() const noexcept
+    constexpr Iterator end() const noexcept
     {
         return m_Data + m_Size;
     }
 
-    constexpr reverse_iterator rbegin() const noexcept
-    {
-        return reverse_iterator(end());
-    }
-    constexpr reverse_iterator rend() const noexcept
-    {
-        return reverse_iterator(begin());
-    }
-
-    constexpr bool empty() const noexcept
+    constexpr bool IsEmpty() const noexcept
     {
         return m_Size == 0;
     }
 
-    operator bool() const noexcept
+    constexpr operator bool() const noexcept
     {
         return m_Data != nullptr;
     }
 
   private:
-    pointer m_Data;
-    size_type m_Size;
+    ElementType *m_Data;
+    SizeType m_Size;
 };
 } // namespace TKit

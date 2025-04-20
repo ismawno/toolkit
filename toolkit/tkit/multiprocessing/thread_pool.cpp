@@ -17,14 +17,14 @@ ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
             { // This could potentially be lock free by implementing a lock free deque
                 std::scoped_lock lock(m_Mutex);
                 TKIT_PROFILE_MARK_LOCK(m_Mutex);
-                if (m_Queue.empty())
+                if (m_Queue.IsEmpty())
                 {
                     m_TaskReady.clear(std::memory_order_relaxed);
                     continue;
                 }
 
-                task = m_Queue.back();
-                m_Queue.pop_back();
+                task = m_Queue.GetBack();
+                m_Queue.Pop();
             }
 
             (*task)(p_ThreadIndex);
@@ -33,7 +33,7 @@ ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
         m_TerminatedCount.fetch_add(1, std::memory_order_relaxed);
     };
     for (usize i = 0; i < p_ThreadCount; ++i)
-        m_Threads.emplace_back(worker, i + 1);
+        m_Threads.Append(worker, i + 1);
 }
 
 ThreadPool::~ThreadPool() noexcept
@@ -51,12 +51,12 @@ ThreadPool::~ThreadPool() noexcept
 
     for (std::thread &thread : m_Threads)
         thread.join();
-    TKIT_LOG_WARNING_IF(!m_Queue.empty(),
+    TKIT_LOG_WARNING_IF(!m_Queue.IsEmpty(),
                         "[TOOLKIT] Destroying thread pool with pending tasks. Executing them serially now...");
-    while (!m_Queue.empty())
+    while (!m_Queue.IsEmpty())
     {
-        const Ref<ITask> task = m_Queue.back();
-        m_Queue.pop_back();
+        const Ref<ITask> task = m_Queue.GetBack();
+        m_Queue.Pop();
         (*task)(0);
     }
 }
@@ -79,7 +79,7 @@ void ThreadPool::SubmitTask(const Ref<ITask> &p_Task) noexcept
     {
         std::scoped_lock lock(m_Mutex);
         TKIT_PROFILE_MARK_LOCK(m_Mutex);
-        m_Queue.insert(m_Queue.begin(), p_Task);
+        m_Queue.Insert(m_Queue.begin(), p_Task);
     }
     m_TaskReady.test_and_set(std::memory_order_release);
     m_TaskReady.notify_one();

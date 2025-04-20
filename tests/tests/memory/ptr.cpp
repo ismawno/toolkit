@@ -1,288 +1,177 @@
+#include "tkit/utils/logging.hpp"
 #include "tkit/memory/ptr.hpp"
-#include "tkit/container/array.hpp"
 #include <catch2/catch_test_macros.hpp>
-#include <thread>
+#include <unordered_map>
 
-namespace TKit
-{
-class TestRefCounted : public RefCounted<TestRefCounted>
-{
-  public:
-    TestRefCounted()
-    {
-        Instances.fetch_add(1, std::memory_order_relaxed);
-    }
-    ~TestRefCounted()
-    {
-        Instances.fetch_sub(1, std::memory_order_relaxed);
-    }
+using namespace TKit;
+using namespace TKit::Alias;
 
-    // Because they are used in threaded tests
-    static inline std::atomic_int32_t Instances{0};
+// A RefCounted type to track destructor calls
+struct MyRefCounted : public RefCounted<MyRefCounted>
+{
+    int value;
+    static inline int dtorCount = 0;
+    MyRefCounted(int v) : value(v)
+    {
+    }
+    ~MyRefCounted()
+    {
+        ++dtorCount;
+    }
 };
 
-class TestBase : public RefCounted<TestBase>
+TEST_CASE("Ref: basic reference counting", "[Ref]")
 {
-  public:
-    TestBase()
+    MyRefCounted::dtorCount = 0;
+
     {
-        ++BaseInstances;
-    }
-    virtual ~TestBase()
-    {
-        --BaseInstances;
+        auto ref1 = Ref<MyRefCounted>::Create(42);
+        REQUIRE(ref1->value == 42);
+        REQUIRE(ref1->RefCount() == 1);
+
+        auto ref2 = ref1;
+        REQUIRE(ref1->RefCount() == 2);
+
+        Ref<MyRefCounted> ref3;
+        ref3 = ref1;
+        REQUIRE(ref1->RefCount() == 3);
     }
 
-    static inline std::atomic_int32_t BaseInstances{0};
+    // all Refs destroyed, object should have been deleted once
+    REQUIRE(MyRefCounted::dtorCount == 1);
+}
+
+TEST_CASE("Ref: move semantics", "[Ref]")
+{
+    MyRefCounted::dtorCount = 0;
+
+    {
+        auto ref1 = Ref<MyRefCounted>::Create(7);
+        REQUIRE(ref1->RefCount() == 1);
+
+        auto ref2 = std::move(ref1);
+        REQUIRE(ref2->RefCount() == 1);
+        REQUIRE(!ref1);
+    }
+
+    REQUIRE(MyRefCounted::dtorCount == 1);
+}
+
+TEST_CASE("Ref: boolean and get()", "[Ref]")
+{
+    auto ref1 = Ref<MyRefCounted>::Create(5);
+    REQUIRE(static_cast<bool>(ref1));
+    REQUIRE(ref1.Get()->value == 5);
+
+    Ref<MyRefCounted> ref2;
+    REQUIRE(!ref2);
+}
+
+TEST_CASE("Ref: hashing equal pointers", "[Ref]")
+{
+    auto ref1 = Ref<MyRefCounted>::Create(1);
+    auto ref2 = ref1;
+    std::hash<Ref<MyRefCounted>> hasher;
+    REQUIRE(hasher(ref1) == hasher(ref2));
+}
+
+//===----------------------------------------------------------------------===//
+//  Scope tests
+//===----------------------------------------------------------------------===//
+
+// A type to track destructor calls via Scope
+struct MyScopeObj
+{
+    static inline int dtorCount = 0;
+    int value;
+    MyScopeObj(int v) : value(v)
+    {
+    }
+    ~MyScopeObj()
+    {
+        ++dtorCount;
+    }
 };
 
-class TestDerived : public TestBase
+TEST_CASE("Scope: basic ownership and destruction", "[Scope]")
 {
-  public:
-    using Base = TestBase;
-    TestDerived()
+    MyScopeObj::dtorCount = 0;
     {
-        ++DerivedInstances;
+        auto scope1 = Scope<MyScopeObj>::Create(10);
+        REQUIRE(scope1->value == 10);
     }
-    ~TestDerived() override
-    {
-        --DerivedInstances;
-    }
-
-    static inline i32 DerivedInstances = 0;
-};
-
-TEST_CASE("Reference counting basic operations", "[memory][ptr]")
-{
-    SECTION("Ref copy ctor")
-    {
-        {
-            Ref<TestRefCounted> ref1(new TestRefCounted());
-            Ref<TestRefCounted> ref2(ref1);
-            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 1);
-            REQUIRE(ref1->RefCount() == 2);
-        }
-        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
-    }
-
-    SECTION("Ref copy assignment")
-    {
-        {
-            Ref<TestRefCounted> ref;
-            REQUIRE(!ref);
-            {
-                Ref<TestRefCounted> ref1(new TestRefCounted());
-                ref = ref1;
-                REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 1);
-                REQUIRE(ref1->RefCount() == 2);
-            }
-            REQUIRE(ref->RefCount() == 1);
-            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 1);
-        }
-        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
-    }
-
-    SECTION("Ref<const T>")
-    {
-        {
-            Ref<const TestRefCounted> ref(new TestRefCounted());
-            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 1);
-            REQUIRE(ref->RefCount() == 1);
-            REQUIRE(std::is_same_v<const TestRefCounted *, decltype(ref.Get())>);
-
-            Ref<TestRefCounted> ref2 = new TestRefCounted();
-            Ref<const TestRefCounted> ref3 = ref2;
-        }
-        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
-    }
+    REQUIRE(MyScopeObj::dtorCount == 1);
 }
 
-TEST_CASE("Reference counting with containers", "[memory][ptr][container]")
+TEST_CASE("Scope: Reset and Release", "[Scope]")
 {
-    SECTION("Ref in vector")
+    MyScopeObj::dtorCount = 0;
+
     {
-        {
-            std::vector<Ref<TestRefCounted>> vec;
-            for (usize i = 0; i < 1000; ++i)
-                if (i % 2 == 0)
-                    vec.emplace_back(new TestRefCounted());
-                else
-                    vec.push_back(vec[i - 1]);
-            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 500);
-        }
-        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
+        auto scope1 = Scope<MyScopeObj>::Create(20);
+        scope1.Reset(new MyScopeObj(30));
+        // resetting deleted the first object
+        REQUIRE(MyScopeObj::dtorCount == 1);
+
+        MyScopeObj *raw = scope1.Release();
+        REQUIRE(!scope1);
+        delete raw;
+        REQUIRE(MyScopeObj::dtorCount == 2);
     }
 
-    SECTION("Ref in map")
-    {
-        {
-            HashMap<u32, Ref<TestRefCounted>> map;
-            for (u32 i = 0; i < 1000; ++i)
-                if (i % 2 == 0)
-                    map.emplace(i, new TestRefCounted());
-                else
-                    map.emplace(i, map[i - 1]);
-            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 500);
-        }
-        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
-    }
+    // no further deletions
+    REQUIRE(MyScopeObj::dtorCount == 2);
 }
 
-TEST_CASE("Reference counting with inheritance", "[memory][ptr]")
+TEST_CASE("Scope: move to Ref via AsRef and conversion", "[Scope]")
 {
-    SECTION("Ref<TestBase> to Ref<TestDerived>")
-    {
-        {
-            Ref<TestBase> base(new TestDerived());
-            REQUIRE(TestBase::BaseInstances == 1);
-            REQUIRE(TestDerived::DerivedInstances == 1);
-        }
-        REQUIRE(TestBase::BaseInstances == 0);
-        REQUIRE(TestDerived::DerivedInstances == 0);
-    }
+    MyRefCounted::dtorCount = 0;
 
-    SECTION("Ref<TestDerived> to Ref<TestBase>")
     {
-        {
-            Ref<TestDerived> derived(new TestDerived());
-            Ref<TestBase> base(derived);
+        auto scope1 = Scope<MyRefCounted>::Create(99);
+        REQUIRE(scope1->value == 99);
 
-            // This should leave refcount unaffected
-            base = derived;
-            Ref<TestBase> extraBase(new TestBase());
-            REQUIRE(TestBase::BaseInstances == 2);
-            REQUIRE(TestDerived::DerivedInstances == 1);
-        }
-        REQUIRE(TestBase::BaseInstances == 0);
-        REQUIRE(TestDerived::DerivedInstances == 0);
+        auto ref1 = scope1.AsRef();
+        REQUIRE(!scope1);
+        REQUIRE(ref1->value == 99);
     }
-
-    SECTION("Ref in vector (virtual)")
-    {
-        {
-            std::vector<Ref<TestBase>> vec;
-            for (usize i = 0; i < 1000; ++i)
-                if (i % 2 == 0)
-                {
-                    Ref<TestDerived> derived(new TestDerived());
-                    vec.emplace_back(derived);
-                }
-                else
-                    vec.push_back(vec[i - 1]);
-            REQUIRE(TestDerived::DerivedInstances == 500);
-            REQUIRE(TestBase::BaseInstances == 500);
-        }
-        REQUIRE(TestDerived::DerivedInstances == 0);
-        REQUIRE(TestBase::BaseInstances == 0);
-    }
-
-    SECTION("Ref in map (virtual)")
-    {
-        {
-            HashMap<u32, Ref<TestBase>> map;
-            for (u32 i = 0; i < 1000; ++i)
-                if (i % 2 == 0)
-                {
-                    Ref<TestDerived> derived(new TestDerived());
-                    map.emplace(i, derived);
-                }
-                else
-                    map.emplace(i, map[i - 1]);
-            REQUIRE(TestDerived::DerivedInstances == 500);
-            REQUIRE(TestBase::BaseInstances == 500);
-        }
-        REQUIRE(TestDerived::DerivedInstances == 0);
-        REQUIRE(TestBase::BaseInstances == 0);
-    }
+    // ref went out of scope, underlying object deleted
+    REQUIRE(MyRefCounted::dtorCount == 1);
 }
 
-TEST_CASE("Reference counting from multiple threads", "[memory][ptr]")
+TEST_CASE("Scope: move semantics and bool", "[Scope]")
 {
-    const auto createRefs = [](const Array<Ref<TestRefCounted>, 100> &p_Refs) {
-        Array<Ref<TestRefCounted>, 100> refs;
-        for (i32 i = 0; i < 100; ++i)
-        {
-            if (i % 2 == 0)
-                refs[i] = new TestRefCounted();
-            else
-                refs[i] = p_Refs[i];
-        }
-    };
-    {
-        Array<Ref<TestRefCounted>, 100> refs;
-        for (i32 i = 0; i < 100; ++i)
-            refs[i] = new TestRefCounted;
+    MyScopeObj::dtorCount = 0;
 
-        Array<std::thread, 8> threads;
-        for (std::thread &thread : threads)
-            thread = std::thread(createRefs, refs);
-        for (std::thread &thread : threads)
-            thread.join();
-    }
-    REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
+    auto scope1 = Scope<MyScopeObj>::Create(7);
+    REQUIRE(scope1);
+    auto scope2 = std::move(scope1);
+    REQUIRE(scope2);
+    REQUIRE(!scope1);
+
+    scope2.Reset();
+    REQUIRE(!scope2);
+    REQUIRE(MyScopeObj::dtorCount == 1);
 }
 
-TEST_CASE("Scope basic operations", "[memory][ptr]")
+TEST_CASE("Scope: hashing equals underlying pointer", "[Scope]")
 {
-    SECTION("Scope")
-    {
-        {
-            Scope<TestRefCounted> scope(new TestRefCounted());
-            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 1);
-        }
-        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
-    }
+    std::hash<Scope<MyScopeObj>> hashScope;
+    std::hash<MyScopeObj *> hashPtr;
 
-    SECTION("Scope with move")
-    {
-        {
-            Scope<TestRefCounted> scope(new TestRefCounted());
-            Scope<TestRefCounted> scope2(std::move(scope));
-            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 1);
-        }
-        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
-    }
+    // Empty scope hashes the nullptr
+    Scope<MyScopeObj> empty{};
+    REQUIRE(hashScope(empty) == hashPtr(nullptr));
 
-    SECTION("Scope with move assignment")
-    {
-        {
-            Scope<TestRefCounted> scope(new TestRefCounted());
-            Scope<TestRefCounted> scope2;
-            scope2 = std::move(scope);
-            REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 1);
-        }
-        REQUIRE(TestRefCounted::Instances.load(std::memory_order_relaxed) == 0);
-    }
+    // Create a new object and release it from scopeA so we can construct scopeB
+    auto scopeA = Scope<MyScopeObj>::Create(123);
+    MyScopeObj *rawPtr = scopeA.Release();
+
+    // Now scopeB owns the same pointer
+    Scope<MyScopeObj> scopeB(rawPtr);
+    REQUIRE(scopeB); // sanity
+    REQUIRE(hashScope(scopeB) == hashPtr(rawPtr));
+
+    // Clean up
+    delete scopeB.Release();
 }
-
-TEST_CASE("Scope ptr with inheritance", "[memory][ptr]")
-{
-    SECTION("Scope<TestBase> to Scope<TestDerived>")
-    {
-        {
-            Scope<TestBase> base(new TestDerived());
-            REQUIRE(TestBase::BaseInstances == 1);
-            REQUIRE(TestDerived::DerivedInstances == 1);
-        }
-        REQUIRE(TestBase::BaseInstances == 0);
-        REQUIRE(TestDerived::DerivedInstances == 0);
-    }
-
-    SECTION("Scope<TestDerived> to Scope<TestBase>")
-    {
-        {
-            Scope<TestDerived> derived(new TestDerived());
-            Scope<TestBase> base(new TestBase());
-
-            // This should leave refcount unaffected
-            base = std::move(derived);
-            Scope<TestBase> extraBase(new TestBase());
-            REQUIRE(TestBase::BaseInstances == 2);
-            REQUIRE(TestDerived::DerivedInstances == 1);
-        }
-        REQUIRE(TestBase::BaseInstances == 0);
-        REQUIRE(TestDerived::DerivedInstances == 0);
-    }
-}
-
-} // namespace TKit

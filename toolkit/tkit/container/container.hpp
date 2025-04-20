@@ -3,20 +3,100 @@
 #include "tkit/container/alias.hpp"
 #include "tkit/memory/memory.hpp"
 #include "tkit/utils/logging.hpp"
+#include "tkit/utils/concepts.hpp"
 
-namespace TKit::Detail
+namespace TKit::Container
 {
-template <typename Traits> struct Container
+template <typename T> struct ArrayTraits
 {
-    using value_type = typename Traits::value_type;
-    using size_type = typename Traits::size_type;
-    using difference_type = typename Traits::difference_type;
-    using pointer = typename Traits::pointer;
-    using const_pointer = typename Traits::const_pointer;
-    using iterator = pointer;
-    using const_iterator = const_pointer;
-    using reverse_iterator = std::reverse_iterator<iterator>;
-    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    using ValueType = T;
+    using SizeType = usize;
+    using Iterator = T *;
+    using ConstIterator = const T *;
+};
+
+template <typename Traits> struct ArrayTools
+{
+    using ValueType = typename Traits::ValueType;
+    using SizeType = typename Traits::SizeType;
+    using Iterator = typename Traits::Iterator;
+    using ConstIterator = typename Traits::ConstIterator;
+
+    template <typename It>
+    static constexpr void CopyConstructFromRange(const Iterator p_DstBegin, const It p_SrcBegin,
+                                                 const It p_SrcEnd) noexcept
+    {
+        using T = decltype(*p_SrcBegin);
+        if constexpr (std::is_trivially_copyable_v<ValueType> && std::is_same_v<NoCVRef<T>, NoCVRef<ValueType>>)
+            Memory::ForwardCopy(p_DstBegin, p_SrcBegin, p_SrcEnd);
+        else
+            Memory::ConstructRangeCopy(p_DstBegin, p_SrcBegin, p_SrcEnd);
+    }
+    template <typename It>
+    static constexpr void MoveConstructFromRange(const Iterator p_DstBegin, const It p_SrcBegin,
+                                                 const It p_SrcEnd) noexcept
+    {
+        using T = decltype(*p_SrcBegin);
+        if constexpr (std::is_trivially_copyable_v<ValueType> && std::is_same_v<NoCVRef<T>, NoCVRef<ValueType>>)
+            Memory::ForwardMove(p_DstBegin, p_SrcBegin, p_SrcEnd);
+        else
+            Memory::ConstructRangeMove(p_DstBegin, p_SrcBegin, p_SrcEnd);
+    }
+
+    template <typename It>
+    static constexpr void CopyAssignFromRange(const Iterator p_DstBegin, const Iterator p_DstEnd, const It p_SrcBegin,
+                                              const It p_SrcEnd) noexcept
+    {
+        const SizeType dstSize = static_cast<SizeType>(std::distance(p_DstBegin, p_DstEnd));
+        const SizeType srcSize = static_cast<SizeType>(std::distance(p_SrcBegin, p_SrcEnd));
+
+        using T = decltype(*p_SrcBegin);
+        if constexpr (std::is_trivially_copyable_v<ValueType> && std::is_same_v<NoCVRef<T>, NoCVRef<ValueType>>)
+        {
+            Memory::ForwardCopy(p_DstBegin, p_SrcBegin, p_SrcEnd);
+            if constexpr (!std::is_trivially_destructible_v<ValueType>)
+            {
+                if (srcSize < dstSize)
+                    Memory::DestructRange(p_DstBegin + srcSize, p_DstEnd);
+            }
+        }
+        else
+        {
+            const SizeType minSize = dstSize < srcSize ? dstSize : srcSize;
+            Memory::ForwardCopy(p_DstBegin, p_SrcBegin, p_SrcBegin + minSize);
+
+            if (srcSize > dstSize)
+                Memory::ConstructRangeCopy(p_DstEnd, p_SrcBegin + dstSize, p_SrcEnd);
+            else if (srcSize < dstSize)
+                Memory::DestructRange(p_DstBegin + srcSize, p_DstEnd);
+        }
+    }
+    template <typename It>
+    static constexpr void MoveAssignFromRange(const Iterator p_DstBegin, const Iterator p_DstEnd, const It p_SrcBegin,
+                                              const It p_SrcEnd) noexcept
+    {
+        const SizeType dstSize = static_cast<SizeType>(std::distance(p_DstBegin, p_DstEnd));
+        const SizeType srcSize = static_cast<SizeType>(std::distance(p_SrcBegin, p_SrcEnd));
+        if constexpr (std::is_trivially_copyable_v<ValueType>)
+        {
+            Memory::ForwardMove(p_DstBegin, p_SrcBegin, p_SrcEnd);
+            if constexpr (!std::is_trivially_destructible_v<ValueType>)
+            {
+                if (srcSize < dstSize)
+                    Memory::DestructRange(p_DstBegin + srcSize, p_DstEnd);
+            }
+        }
+        else
+        {
+            const SizeType minSize = dstSize < srcSize ? dstSize : srcSize;
+            Memory::ForwardMove(p_DstBegin, p_SrcBegin, p_SrcBegin + minSize);
+
+            if (srcSize > dstSize)
+                Memory::ConstructRangeMove(p_DstEnd, p_SrcBegin + dstSize, p_SrcEnd);
+            else if (srcSize < dstSize)
+                Memory::DestructRange(p_DstBegin + srcSize, p_DstEnd);
+        }
+    }
 
     /**
      * @brief Insert a new element at the specified position. The element is copied or moved into the array.
@@ -25,7 +105,7 @@ template <typename Traits> struct Container
      * @param p_Pos The position to insert the element at.
      * @param p_Value The value to insert.
      */
-    template <typename T> static void Insert(const iterator p_End, const iterator p_Pos, T &&p_Value) noexcept
+    template <typename T> static constexpr void Insert(const Iterator p_End, const Iterator p_Pos, T &&p_Value) noexcept
     {
         if (p_Pos == p_End) [[unlikely]]
         {
@@ -33,19 +113,17 @@ template <typename Traits> struct Container
             return;
         }
 
-        if constexpr (!std::is_trivially_constructible_v<value_type>)
+        if constexpr (!std::is_trivially_constructible_v<ValueType>)
         { // Current p_End pointer is uninitialized, so it must be handled manually
             Memory::ConstructFromIterator(p_End, std::move(*(p_End - 1)));
 
-            if (const iterator shiftedEnd = p_End - 1; p_Pos < shiftedEnd)
-                std::move_backward(p_Pos, shiftedEnd, p_End);
+            if (const Iterator shiftedEnd = p_End - 1; p_Pos < shiftedEnd)
+                Memory::BackwardMove(p_End, p_Pos, shiftedEnd);
         }
         else
-            std::move_backward(p_Pos, p_End, p_End + 1);
+            Memory::BackwardMove(p_End + 1, p_Pos, p_End);
 
-        if constexpr (!std::is_trivially_destructible_v<value_type>)
-            Memory::DestructFromIterator(p_Pos);
-        Memory::ConstructFromIterator(p_Pos, std::forward<T>(p_Value));
+        *p_Pos = std::forward<T>(p_Value);
     }
 
     /**
@@ -58,76 +136,87 @@ template <typename Traits> struct Container
      * @return The amount of elements inserted.
      */
     template <typename It>
-    static size_type Insert(const iterator p_End, iterator p_Pos, It p_SrcBegin, It p_SrcEnd) noexcept
+    static constexpr SizeType Insert(const Iterator p_End, const Iterator p_Pos, const It p_SrcBegin,
+                                     const It p_SrcEnd) noexcept
     {
         TKIT_ASSERT(p_SrcBegin <= p_SrcEnd, "[TOOLKIT] Begin iterator is greater than end iterator");
         if (p_Pos == p_End)
         {
-            for (auto it = p_SrcBegin; it != p_SrcEnd; ++it)
-                Memory::ConstructFromIterator(p_Pos++, *it);
-            return static_cast<size_type>(std::distance(p_SrcBegin, p_SrcEnd));
+            CopyConstructFromRange(p_Pos, p_SrcBegin, p_SrcEnd);
+            return static_cast<SizeType>(std::distance(p_SrcBegin, p_SrcEnd));
         }
-
-        // This method is a bit verbose, but it has many edge cases to handle:
-        // If the amount of elements to insert is small (ie, less than the trailing end), then the out of bound elements
-        // must be copy-moved to the end of the array.
-
-        // If the amount of elements to insert is bigger than the trailing end, then the trailing end must be copy-moved
-        // to the end of the array, and the out of bound inserted elements must be copied as well to the remaining, left
-        // portion of the out of bounds array.
-
-        // The remaining elements inside the original array must then be shifted, in case the amount of elements to
-        // insert was small
-
-        const size_type trail = static_cast<size_type>(std::distance(p_Pos, p_End));
-        const size_type count = static_cast<size_type>(std::distance(p_SrcBegin, p_SrcEnd));
-        const size_type outOfBounds = count < trail ? count : trail;
-
-        // Current p_End + outOfBounds pointers are uninitialized, so they must be handled manually
-        for (size_type i = 0; i < count; ++i)
+        const SizeType tail = static_cast<SizeType>(std::distance(p_Pos, p_End));
+        const SizeType count = static_cast<SizeType>(std::distance(p_SrcBegin, p_SrcEnd));
+        if (tail > count)
         {
-            const size_type idx1 = count - i - 1;
-            if (i < outOfBounds)
-            {
-                const size_type idx2 = outOfBounds - i - 1;
-                Memory::ConstructFromIterator(p_End + idx1, std::move(*(p_Pos + idx2)));
-            }
-            else
-                Memory::ConstructFromIterator(p_End + idx1, *(--p_SrcEnd));
-        }
+            const Iterator overflowSrcBegin = p_End - count;
+            const Iterator overflowSrcEnd = p_End;
+            const Iterator overflowDstBegin = p_End;
+            MoveConstructFromRange(overflowDstBegin, overflowSrcBegin, overflowSrcEnd);
 
-        if (const iterator shiftedEnd = p_End - count; p_Pos < shiftedEnd)
-            std::move_backward(p_Pos, shiftedEnd, p_End);
-        for (size_type i = 0; i < outOfBounds; ++i)
+            const Iterator inBetweenSrcBegin = p_Pos;
+            const Iterator inBetweenSrcEnd = p_Pos + (tail - count);
+            const Iterator inBetweenDstEnd = p_End;
+            Memory::BackwardMove(inBetweenDstEnd, inBetweenSrcBegin, inBetweenSrcEnd);
+
+            Memory::ForwardCopy(p_Pos, p_SrcBegin, p_SrcEnd);
+        }
+        else if (tail < count)
         {
-            if constexpr (!std::is_trivially_destructible_v<value_type>)
-                Memory::DestructFromIterator(p_Pos + i);
-            Memory::ConstructFromIterator(p_Pos + i, *(p_SrcBegin++));
-        }
+            const Iterator overflowSrcBegin = p_Pos;
+            const Iterator overflowSrcEnd = p_End;
+            const Iterator overflowDstBegin = p_Pos + count;
+            MoveConstructFromRange(overflowDstBegin, overflowSrcBegin, overflowSrcEnd);
 
+            const It inBetweenSrcBegin = p_SrcBegin + tail;
+            const It inBetweenSrcEnd = p_SrcEnd;
+            const Iterator inBetweenDstEnd = p_End;
+            CopyConstructFromRange(inBetweenDstEnd, inBetweenSrcBegin, inBetweenSrcEnd);
+
+            Memory::ForwardCopy(p_Pos, p_SrcBegin, p_SrcBegin + tail);
+        }
+        else
+        {
+            const Iterator overflowSrcBegin = p_Pos;
+            const Iterator overflowSrcEnd = p_End;
+            const Iterator overflowDstBegin = p_End;
+            MoveConstructFromRange(overflowDstBegin, overflowSrcBegin, overflowSrcEnd);
+
+            Memory::ForwardCopy(p_Pos, p_SrcBegin, p_SrcEnd);
+        }
         return count;
     }
-    static void Erase(const iterator p_End, const iterator p_Pos) noexcept
+
+    static constexpr void RemoveOrdered(const Iterator p_End, const Iterator p_Pos) noexcept
     {
         // Copy/move the elements after the erased one
-        std::move(p_Pos + 1, p_End, p_Pos);
+        Memory::ForwardMove(p_Pos, p_Pos + 1, p_End);
         // And destroy the last element
-        if constexpr (!std::is_trivially_destructible_v<value_type>)
+        if constexpr (!std::is_trivially_destructible_v<ValueType>)
             Memory::DestructFromIterator(p_End - 1);
     }
 
-    static size_type Erase(const iterator p_End, const iterator p_RemBegin, const iterator p_RemEnd) noexcept
+    static constexpr SizeType RemoveOrdered(const Iterator p_End, const Iterator p_RemBegin,
+                                            const Iterator p_RemEnd) noexcept
     {
         TKIT_ASSERT(p_RemBegin <= p_RemEnd, "[TOOLKIT] Begin iterator is greater than end iterator");
-        // Copy the elements after the erased ones
-        std::move(p_RemEnd, p_End, p_RemBegin);
+        // Copy/move the elements after the erased ones
+        Memory::ForwardMove(p_RemBegin, p_RemEnd, p_End);
 
-        const size_type count = static_cast<size_type>(std::distance(p_RemBegin, p_RemEnd));
+        const SizeType count = static_cast<SizeType>(std::distance(p_RemBegin, p_RemEnd));
         // And destroy the last elements
-        if constexpr (!std::is_trivially_destructible_v<value_type>)
+        if constexpr (!std::is_trivially_destructible_v<ValueType>)
             Memory::DestructRange(p_End - count, p_End);
         return count;
     }
+
+    static constexpr void RemoveUnordered(const Iterator p_End, const Iterator p_Pos) noexcept
+    {
+        const Iterator last = p_End - 1;
+        *p_Pos = std::move(*last);
+        if constexpr (!std::is_trivially_destructible_v<ValueType>)
+            Memory::DestructFromIterator(last);
+    }
 };
 
-} // namespace TKit::Detail
+} // namespace TKit::Container

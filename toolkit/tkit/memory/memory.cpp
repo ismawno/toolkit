@@ -43,9 +43,13 @@ void DeallocateAligned(void *p_Ptr) noexcept
 #endif
 }
 
-void Copy(void *p_Dst, const void *p_Src, size_t p_Size) noexcept
+void *ForwardCopy(void *p_Dst, const void *p_Src, size_t p_Size) noexcept
 {
-    std::memcpy(p_Dst, p_Src, p_Size);
+    return std::memcpy(p_Dst, p_Src, p_Size);
+}
+void *BackwardCopy(void *p_Dst, const void *p_Src, size_t p_Size) noexcept
+{
+    return std::memmove(p_Dst, p_Src, p_Size);
 }
 
 } // namespace TKit::Memory

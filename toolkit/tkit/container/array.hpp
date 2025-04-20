@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tkit/container/alias.hpp"
+#include "tkit/container/container.hpp"
 #include "tkit/utils/logging.hpp"
 
 namespace TKit
@@ -8,150 +8,83 @@ namespace TKit
 /**
  * @brief A plain C array wrapper.
  *
- * Can be used as a drop-in replacement for `std::array`. It is here to provide a bit more control and use the
- * `DefaultAllocator` traits.
+ * Can be used as a drop-in replacement for `std::array`, accounting for method name differences. It is here to
+ * provide a bit more control.
  *
  * @tparam T The type of the elements.
  * @tparam Size The number of elements in the array.
- * @tparam Traits The allocator traits to use. By default, it uses the `DefaultAllocator` traits.
  */
-template <typename T, usize Size, typename Traits = std::allocator_traits<Memory::DefaultAllocator<T>>> class Array
+template <typename T, usize Size, typename Traits = Container::ArrayTraits<T>> class Array
 {
   public:
-    using value_type = T;
-    using size_type = typename Traits::size_type;
-    using difference_type = typename Traits::difference_type;
-    using pointer = typename Traits::pointer;
-    using const_pointer = typename Traits::const_pointer;
-    using reference = value_type &;
-    using const_reference = const value_type &;
-    using iterator = pointer;
-    using const_iterator = const_pointer;
-    using reverse_iterator = std::reverse_iterator<iterator>;
-    using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    using ValueType = typename Traits::ValueType;
+    using SizeType = typename Traits::SizeType;
+    using Iterator = typename Traits::Iterator;
+    using ConstIterator = typename Traits::ConstIterator;
+    using Tools = Container::ArrayTools<Traits>;
 
     constexpr Array() noexcept = default;
 
-    constexpr Array(const std::initializer_list<T> p_Elements) noexcept
+    constexpr Array(const std::initializer_list<ValueType> p_Elements) noexcept
     {
         TKIT_ASSERT(p_Elements.size() <= Size, "[TOOLKIT] Size is bigger than capacity");
-        Memory::ConstructRangeCopy(begin(), p_Elements.begin(), p_Elements.end());
+        Tools::CopyConstructFromRange(begin(), p_Elements.begin(), p_Elements.end());
     }
 
-    constexpr Array(const Array &p_Other) noexcept = default;
-    constexpr Array(Array &&p_Other) noexcept = default;
-
-    constexpr Array &operator=(const Array &p_Other) noexcept = default;
-    constexpr Array &operator=(Array &&p_Other) noexcept = default;
-
-    constexpr const_reference operator[](const size_type p_Index) const noexcept
+    constexpr const ValueType &operator[](const SizeType p_Index) const noexcept
     {
-        return at(p_Index);
+        return At(p_Index);
     }
-    constexpr reference operator[](const size_type p_Index) noexcept
+    constexpr ValueType &operator[](const SizeType p_Index) noexcept
     {
-        return at(p_Index);
+        return At(p_Index);
     }
 
-    constexpr const_reference at(const size_type p_Index) const noexcept
+    constexpr const ValueType &At(const SizeType p_Index) const noexcept
     {
         TKIT_ASSERT(p_Index < Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
     }
-    constexpr reference at(const size_type p_Index) noexcept
+    constexpr ValueType &At(const SizeType p_Index) noexcept
     {
         TKIT_ASSERT(p_Index < Size, "[TOOLKIT] Index is out of bounds");
         return *(begin() + p_Index);
     }
 
-    constexpr size_type size() const noexcept
+    constexpr SizeType GetSize() const noexcept
     {
         return Size;
     }
 
-    constexpr pointer data() noexcept
+    constexpr const ValueType *GetData() const noexcept
     {
         return m_Data;
     }
-    constexpr const_pointer data() const noexcept
+    constexpr ValueType *GetData() noexcept
     {
         return m_Data;
     }
 
-    constexpr const_reference front() const noexcept
-    {
-        return *begin();
-    }
-    constexpr const_reference back() const noexcept
-    {
-        return *(end() - 1);
-    }
-
-    constexpr reference front() noexcept
-    {
-        return *begin();
-    }
-    constexpr reference back() noexcept
-    {
-        return *(end() - 1);
-    }
-
-    constexpr iterator begin() noexcept
+    constexpr Iterator begin() noexcept
     {
         return m_Data;
     }
-    constexpr iterator end() noexcept
+    constexpr Iterator end() noexcept
     {
         return m_Data + Size;
     }
 
-    constexpr const_iterator begin() const noexcept
+    constexpr ConstIterator begin() const noexcept
     {
         return m_Data;
     }
-    constexpr const_iterator end() const noexcept
+    constexpr ConstIterator end() const noexcept
     {
         return m_Data + Size;
-    }
-
-    constexpr const_iterator cbegin() const noexcept
-    {
-        return m_Data;
-    }
-    constexpr const_iterator cend() const noexcept
-    {
-        return m_Data + Size;
-    }
-
-    constexpr reverse_iterator rbegin() noexcept
-    {
-        return reverse_iterator(end());
-    }
-    constexpr reverse_iterator rend() noexcept
-    {
-        return reverse_iterator(begin());
-    }
-
-    constexpr const_reverse_iterator rbegin() const noexcept
-    {
-        return const_reverse_iterator(end());
-    }
-    constexpr const_reverse_iterator rend() const noexcept
-    {
-        return const_reverse_iterator(begin());
-    }
-
-    constexpr const_reverse_iterator crbegin() const noexcept
-    {
-        return const_reverse_iterator(cend());
-    }
-    constexpr const_reverse_iterator crend() const noexcept
-    {
-        return const_reverse_iterator(cbegin());
     }
 
   private:
-    T m_Data[Size];
+    ValueType m_Data[Size];
 };
 
 template <typename T> using Array4 = Array<T, 4>;

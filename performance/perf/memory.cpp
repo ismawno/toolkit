@@ -68,7 +68,7 @@ void RecordStackAllocator(const AllocationSettings &p_Settings) noexcept
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
     file << "passes,stack_alloc (ns),stack_dealloc (ns)\n";
 
-    StackAllocator allocator{p_Settings.MaxPasses * TKIT_SIZE_OF(ExampleData)};
+    StackAllocator allocator{p_Settings.MaxPasses * sizeof(ExampleData)};
     for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
     {
         Clock clock;
@@ -91,7 +91,7 @@ void RecordArenaAllocator(const AllocationSettings &p_Settings) noexcept
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
     file << "passes,arena_alloc (ns)\n";
 
-    ArenaAllocator allocator{p_Settings.MaxPasses * TKIT_SIZE_OF(ExampleData)};
+    ArenaAllocator allocator{p_Settings.MaxPasses * sizeof(ExampleData)};
     for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
     {
         Clock clock;

@@ -1,140 +1,181 @@
 #include "tkit/memory/stack_allocator.hpp"
-#include "tkit/utils/literals.hpp"
-#include "tests/data_types.hpp"
 #include <catch2/catch_test_macros.hpp>
-#include <iostream>
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+#include <type_traits>
 
-namespace TKit
+using namespace TKit;
+
+// A helper non-trivial type for Create/Destroy tests
+struct NonTrivial
 {
-using namespace Literals;
+    static inline u32 ctorCount = 0;
+    static inline u32 dtorCount = 0;
+    u32 value;
+    NonTrivial(u32 v) : value(v)
+    {
+        ++ctorCount;
+    }
+    ~NonTrivial()
+    {
+        ++dtorCount;
+    }
+    NonTrivial(const NonTrivial &) = delete;
+    NonTrivial &operator=(const NonTrivial &) = delete;
+};
 
-template <typename T> void RunBasicConstructDestructOperations()
+TEST_CASE("Constructor and initial state", "[StackAllocator]")
 {
-    // Set the starting alignment...
-    StackAllocator allocator(4_kb, alignof(T) < sizeof(void *) ? sizeof(void *) : alignof(T));
-    T *ptr = allocator.NCreate<T>(10);
+    constexpr usize size = 256;
+    StackAllocator arena(size);
 
-    // ...so that this is guaranteed to pass (in case I coded it right lol)
-    REQUIRE(allocator.GetAllocated() == 10 * sizeof(T));
-    allocator.Destroy(ptr);
-
-    u32 *number1 = allocator.Create<u32>();
-    REQUIRE(allocator.GetAllocated() == sizeof(u32));
-    ptr = allocator.Create<T>();
-    REQUIRE(allocator.Top<T>() == ptr);
-
-    usize factor = alignof(T) > alignof(u32) ? alignof(T) - sizeof(u32) % alignof(T) : 0;
-    REQUIRE(allocator.GetAllocated() == sizeof(u32) + sizeof(T) + factor); // Because of the alignment
-
-    REQUIRE(reinterpret_cast<const uptr>(ptr) % alignof(T) == 0);
-    allocator.Destroy(ptr);
-    allocator.Destroy(number1);
-
-    u8 *number2 = allocator.Create<u8>();
-    ptr = allocator.Create<T>();
-    REQUIRE(allocator.Top<T>() == ptr);
-
-    factor = alignof(T) > alignof(u8) ? alignof(T) - sizeof(u8) % alignof(T) : 0;
-    REQUIRE(allocator.GetAllocated() == sizeof(u8) + sizeof(T) + factor); // Because of the alignment
-
-    REQUIRE(reinterpret_cast<const uptr>(ptr) % alignof(T) == 0);
-    allocator.Destroy(ptr);
-    allocator.Destroy(number2);
-
-    T *ptr1 = allocator.Create<T>();
-    T *ptr2 = allocator.Create<T>();
-
-    REQUIRE(ptr1 + 1 == ptr2);
-    REQUIRE(allocator.GetAllocated() == 2 * sizeof(T));
-    allocator.Destroy(ptr2);
-
-    T *ptr3 = allocator.Create<T>();
-    REQUIRE(ptr2 == ptr3);
-
-    T *ptr4 = allocator.NCreate<T>(10);
-
-    REQUIRE(allocator.GetAllocated() == 12 * sizeof(T));
-    T *ptr5 = allocator.Create<T>();
-    REQUIRE(ptr4 + 10 == ptr5);
-    allocator.Destroy(ptr5);
-
-    allocator.Destroy(ptr4);
-    allocator.Destroy(ptr3);
-    allocator.Destroy(ptr1);
-    REQUIRE(allocator.GetAllocated() == 0);
+    REQUIRE(arena.IsEmpty());
+    REQUIRE(!arena.IsFull());
+    REQUIRE(arena.GetSize() == size);
+    REQUIRE(arena.GetAllocated() == 0);
+    REQUIRE(arena.GetRemaining() == size);
+    // no allocations yet → no pointer belongs
+    u32 dummy;
+    REQUIRE(!arena.Belongs(&dummy));
 }
 
-TEST_CASE("Stack allocator basic operations", "[memory][stack_allocator][basic]")
+TEST_CASE("Allocate blocks and invariants", "[StackAllocator]")
 {
-    StackAllocator allocator(1_kb);
-    REQUIRE(allocator.GetSize() == 1_kb);
-    REQUIRE(allocator.GetAllocated() == 0);
-    REQUIRE(allocator.IsEmpty());
+    constexpr usize size = 64;
+    StackAllocator arena(size);
 
-    const void *ptr = allocator.Allocate(1_kb);
-    REQUIRE(allocator.GetAllocated() == 1_kb);
-    REQUIRE(allocator.IsFull());
-    allocator.Deallocate(ptr);
-    REQUIRE(allocator.GetAllocated() == 0);
-    REQUIRE(allocator.IsEmpty());
-
-    SECTION("Push and pop")
-    {
-        const void *ptr1 = allocator.Allocate(128_b);
-        REQUIRE(allocator.GetAllocated() == 128_b);
-
-        const void *ptr2 = allocator.Allocate(256_b);
-        REQUIRE(allocator.GetAllocated() == 384_b);
-
-        allocator.Deallocate(ptr2);
-        REQUIRE(allocator.GetAllocated() == 128_b);
-
-        allocator.Deallocate(ptr1);
-        REQUIRE(allocator.GetAllocated() == 0);
-    }
-
-    SECTION("Create and destroy (std::byte)")
-    {
-        RunBasicConstructDestructOperations<std::byte>();
-    }
-    SECTION("Create and destroy (std::string)")
-    {
-        RunBasicConstructDestructOperations<std::string>();
-    }
-    SECTION("Create and destroy (NonTrivialData)")
-    {
-        RunBasicConstructDestructOperations<NonTrivialData>();
-    }
-    SECTION("Create and destroy (SmallData)")
-    {
-        RunBasicConstructDestructOperations<SmallData>();
-    }
-    SECTION("Create and destroy (BigData)")
-    {
-        RunBasicConstructDestructOperations<BigData>();
-    }
+    // Allocate two small blocks
+    void *p1 = arena.Allocate(16);
+    REQUIRE(p1);
+    REQUIRE(arena.Belongs(p1));
+    REQUIRE(arena.GetAllocated() + arena.GetRemaining() == arena.GetSize());
+    void *p2 = arena.Allocate(8);
+    REQUIRE(p2);
+    REQUIRE(arena.Belongs(p2));
+    REQUIRE(!arena.IsEmpty());
+    // Deallocate in LIFO order
+    arena.Deallocate(p2);
+    REQUIRE(arena.GetRemaining() == arena.GetSize() - 16);
+    arena.Deallocate(p1);
+    REQUIRE(arena.IsEmpty());
 }
 
-TEST_CASE("Stack allocator complex data operations", "[memory][stack_allocator][complex]")
+TEST_CASE("Allocate<T> template overload", "[StackAllocator]")
 {
-    StackAllocator allocator(5_kb);
-    SECTION("Create and destruct with aligned data")
-    {
-        RunBasicConstructDestructOperations<AlignedData>();
-    }
-
-    SECTION("Fill allocator")
-    {
-        Array256<const void *> pointers;
-        u32 index = 0;
-        TKIT_IGNORE_WARNING_LOGS_PUSH();
-
-        while (void *ptr = allocator.Create<AlignedData>())
-            pointers[index++] = ptr;
-        while (!allocator.IsEmpty())
-            allocator.Deallocate(pointers[--index]);
-
-        TKIT_IGNORE_WARNING_LOGS_POP();
-    }
+    StackAllocator arena(128);
+    auto pi = arena.Allocate<u32>(4); // alloc 4×sizeof(u32)
+    REQUIRE(pi);
+    for (u32 i = 0; i < 4; ++i)
+        pi[i] = i * 5;
+    for (u32 i = 0; i < 4; ++i)
+        REQUIRE(pi[i] == i * 5);
+    arena.Deallocate(pi);
+    REQUIRE(arena.IsEmpty());
 }
-} // namespace TKit
+
+TEST_CASE("Alignment behavior", "[StackAllocator]")
+{
+    constexpr usize size = 64;
+    StackAllocator arena(size);
+
+    constexpr usize align = 32;
+    void *p = arena.Allocate(1, align);
+    REQUIRE(p);
+    REQUIRE(reinterpret_cast<uptr>(p) % align == 0);
+    arena.Deallocate(p);
+    REQUIRE(arena.IsEmpty());
+}
+
+TEST_CASE("Create<T> and NCreate<T> with Destroy<T>", "[StackAllocator]")
+{
+    StackAllocator arena(256);
+
+    // single Create
+    NonTrivial::ctorCount = 0;
+    NonTrivial::dtorCount = 0;
+    auto p = arena.Create<NonTrivial>(42);
+    REQUIRE(p);
+    REQUIRE(NonTrivial::ctorCount == 1);
+    REQUIRE(p->value == 42);
+
+    // array NCreate
+    NonTrivial::ctorCount = 0;
+    NonTrivial::dtorCount = 0;
+    auto arr = arena.NCreate<NonTrivial>(3, 7);
+    REQUIRE(arr);
+    REQUIRE(NonTrivial::ctorCount == 3);
+    for (u32 i = 0; i < 3; ++i)
+        REQUIRE(arr[i].value == 7);
+
+    // Destroy all (LIFO)
+    arena.Destroy(arr);
+    arena.Destroy(p);
+    REQUIRE(NonTrivial::dtorCount == 4);
+    REQUIRE(arena.IsEmpty());
+}
+
+TEST_CASE("Top() entry reflects last allocation", "[StackAllocator]")
+{
+    StackAllocator arena(64);
+    auto p1 = arena.Allocate(8);
+    auto p2 = arena.Allocate(16);
+    const auto &e = arena.Top();
+    REQUIRE(e.Ptr == p2);
+    REQUIRE(e.Size == 16);
+    arena.Deallocate(p2);
+    arena.Deallocate(p1);
+}
+
+TEST_CASE("Allocate until full and LIFO deallocate", "[StackAllocator]")
+{
+    constexpr usize blockSize = 16;
+    constexpr usize capacity = 128 / blockSize; // TKIT_STACK_ALLOCATOR_MAX_ENTRIES default ≥ capacity
+    StackAllocator arena(capacity * blockSize);
+
+    std::vector<void *> ptrs;
+    for (usize i = 0; i < capacity; ++i)
+    {
+        void *p = arena.Allocate(blockSize, 1);
+        REQUIRE(p);
+        ptrs.push_back(p);
+    }
+    REQUIRE(arena.IsFull());
+    REQUIRE(arena.GetRemaining() == 0);
+
+    // deallocate all in reverse
+    for (auto it = ptrs.rbegin(); it != ptrs.rend(); ++it)
+        arena.Deallocate(*it);
+    REQUIRE(arena.IsEmpty());
+}
+
+TEST_CASE("Move constructor and move assignment", "[StackAllocator]")
+{
+    StackAllocator a1(128);
+    a1.Allocate(32);
+    const auto rem = a1.GetRemaining();
+
+    StackAllocator a2(std::move(a1));
+    REQUIRE(a2.GetRemaining() == rem);
+    REQUIRE(a1.GetSize() == 0);
+
+    StackAllocator a3(64);
+    a3 = std::move(a2);
+    REQUIRE(a3.GetRemaining() == rem);
+    REQUIRE(a2.GetSize() == 0);
+}
+
+TEST_CASE("User-provided buffer constructor", "[StackAllocator]")
+{
+    constexpr usize size = 200;
+    alignas(std::max_align_t) std::byte buffer[size];
+    StackAllocator arena(buffer, size);
+
+    REQUIRE(arena.IsEmpty());
+    REQUIRE(arena.GetSize() == size);
+    void *p = arena.Allocate(32);
+    REQUIRE(p);
+    REQUIRE(arena.Belongs(p));
+    arena.Deallocate(p);
+    REQUIRE(arena.IsEmpty());
+}

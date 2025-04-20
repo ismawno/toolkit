@@ -42,7 +42,10 @@ BlockAllocator::BlockAllocator(BlockAllocator &&p_Other) noexcept
 {
     p_Other.m_Buffer = nullptr;
     p_Other.m_FreeList = nullptr;
+    p_Other.m_BufferSize = 0;
+    p_Other.m_AllocationSize = 0;
     p_Other.m_Allocations = 0;
+    m_Provided = false;
 }
 
 BlockAllocator &BlockAllocator::operator=(BlockAllocator &&p_Other) noexcept
@@ -56,8 +59,11 @@ BlockAllocator &BlockAllocator::operator=(BlockAllocator &&p_Other) noexcept
         m_Provided = p_Other.m_Provided;
 
         p_Other.m_Buffer = nullptr;
-        p_Other.m_FreeList = 0;
+        p_Other.m_FreeList = nullptr;
+        p_Other.m_BufferSize = 0;
+        p_Other.m_AllocationSize = 0;
         p_Other.m_Allocations = 0;
+        m_Provided = false;
     }
     return *this;
 }
