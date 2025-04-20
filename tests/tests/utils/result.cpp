@@ -74,18 +74,18 @@ TEST_CASE("Move construction and move assignment", "[Result]")
     REQUIRE(e2.GetError() == "foo");
 }
 
-struct Track
+struct RTrack
 {
     static inline u32 ctor = 0, dtor = 0;
-    Track()
+    RTrack()
     {
         ++ctor;
     }
-    Track(const Track &)
+    RTrack(const RTrack &)
     {
         ++ctor;
     }
-    ~Track()
+    ~RTrack()
     {
         ++dtor;
     }
@@ -96,18 +96,18 @@ TEST_CASE("Destruction cleans up union members without leak", "[Result]")
 
     // Ok path
     {
-        Track::ctor = Track::dtor = 0;
-        auto r = Result<Track>::Ok();
-        REQUIRE(Track::ctor == 1);
-        // r goes out of scope → destructor should call ~Track()
+        RTrack::ctor = RTrack::dtor = 0;
+        auto r = Result<RTrack>::Ok();
+        REQUIRE(RTrack::ctor == 1);
+        // r goes out of scope → destructor should call ~RTrack()
     }
-    REQUIRE(Track::ctor == Track::dtor);
+    REQUIRE(RTrack::ctor == RTrack::dtor);
 
     // Error path
     {
-        Track::ctor = Track::dtor = 0;
-        auto e = Result<u32, Track>::Error();
-        REQUIRE(Track::ctor == 1);
+        RTrack::ctor = RTrack::dtor = 0;
+        auto e = Result<u32, RTrack>::Error();
+        REQUIRE(RTrack::ctor == 1);
     }
-    REQUIRE(Track::ctor == Track::dtor);
+    REQUIRE(RTrack::ctor == RTrack::dtor);
 }
