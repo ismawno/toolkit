@@ -40,7 +40,6 @@
     TKIT_DEBUG_BREAK()
 
 #ifndef __TKIT_NO_LOGS
-#    include <atomic>
 #    include <string_view>
 #endif
 
@@ -70,30 +69,30 @@ constexpr const char *Format() noexcept
 #endif
 
 #ifdef TKIT_ENABLE_INFO_LOGS
-inline std::atomic_flag DisabledInfoLogs = ATOMIC_FLAG_INIT;
+inline thread_local bool DisabledInfoLogs = ATOMIC_FLAG_INIT;
 #endif
 
 #ifdef TKIT_ENABLE_WARNING_LOGS
-inline std::atomic_flag DisabledWarningLogs = ATOMIC_FLAG_INIT;
+inline thread_local bool DisabledWarningLogs = ATOMIC_FLAG_INIT;
 #endif
 
 #ifdef TKIT_ENABLE_ASSERTS
-inline std::atomic_flag DisabledAsserts = ATOMIC_FLAG_INIT;
+inline thread_local bool DisabledAsserts = ATOMIC_FLAG_INIT;
 #endif
 } // namespace TKit::Detail
 
 #ifdef TKIT_ENABLE_INFO_LOGS
 #    define TKIT_LOG_INFO(...)                                                                                         \
-        if (!TKit::Detail::DisabledInfoLogs.test(std::memory_order_relaxed))                                           \
+        if (!TKit::Detail::DisabledInfoLogs)                                                                           \
         TKit::Detail::LogMessage("INFO", __FILE__, Limits<i32>::max(), TKIT_LOG_COLOR_GREEN, false,                    \
                                  TKIT_FORMAT(__VA_ARGS__))
 #    define TKIT_LOG_INFO_IF(p_Condition, ...)                                                                         \
-        if ((p_Condition) && !TKit::Detail::DisabledInfoLogs.test(std::memory_order_relaxed))                          \
+        if ((p_Condition) && !TKit::Detail::DisabledInfoLogs)                                                          \
         TKit::Detail::LogMessage("INFO", __FILE__, Limits<i32>::max(), TKIT_LOG_COLOR_GREEN, false,                    \
                                  TKIT_FORMAT(__VA_ARGS__))
 
-#    define TKIT_IGNORE_INFO_LOGS_PUSH() (void)TKit::Detail::DisabledInfoLogs.test_and_set()
-#    define TKIT_IGNORE_INFO_LOGS_POP() TKit::Detail::DisabledInfoLogs.clear()
+#    define TKIT_IGNORE_INFO_LOGS_PUSH() TKit::Detail::DisabledInfoLogs = true
+#    define TKIT_IGNORE_INFO_LOGS_POP() TKit::Detail::DisabledInfoLogs = false
 #else
 #    define TKIT_LOG_INFO(...)
 #    define TKIT_LOG_INFO_IF(...)
@@ -104,14 +103,14 @@ inline std::atomic_flag DisabledAsserts = ATOMIC_FLAG_INIT;
 
 #ifdef TKIT_ENABLE_WARNING_LOGS
 #    define TKIT_LOG_WARNING(...)                                                                                      \
-        if (!TKit::Detail::DisabledWarningLogs.test(std::memory_order_relaxed))                                        \
+        if (!TKit::Detail::DisabledWarningLogs)                                                                        \
         TKit::Detail::LogMessage("WARNING", __FILE__, __LINE__, TKIT_LOG_COLOR_YELLOW, false, TKIT_FORMAT(__VA_ARGS__))
 #    define TKIT_LOG_WARNING_IF(p_Condition, ...)                                                                      \
-        if ((p_Condition) && !TKit::Detail::DisabledWarningLogs.test(std::memory_order_relaxed))                       \
+        if ((p_Condition) && !TKit::Detail::DisabledWarningLogs)                                                       \
         TKit::Detail::LogMessage("WARNING", __FILE__, __LINE__, TKIT_LOG_COLOR_YELLOW, false, TKIT_FORMAT(__VA_ARGS__))
 
-#    define TKIT_IGNORE_WARNING_LOGS_PUSH() (void)TKit::Detail::DisabledWarningLogs.test_and_set()
-#    define TKIT_IGNORE_WARNING_LOGS_POP() TKit::Detail::DisabledWarningLogs.clear()
+#    define TKIT_IGNORE_WARNING_LOGS_PUSH() TKit::Detail::DisabledWarningLogs = true
+#    define TKIT_IGNORE_WARNING_LOGS_POP() TKit::Detail::DisabledWarningLogs = false
 #else
 #    define TKIT_LOG_WARNING(...)
 #    define TKIT_LOG_WARNING_IF(...)
@@ -123,18 +122,18 @@ inline std::atomic_flag DisabledAsserts = ATOMIC_FLAG_INIT;
 #ifdef TKIT_ENABLE_ASSERTS
 
 #    define TKIT_ERROR(...)                                                                                            \
-        if (!TKit::Detail::DisabledAsserts.test(std::memory_order_relaxed))                                            \
+        if (!TKit::Detail::DisabledAsserts)                                                                            \
         TKit::Detail::LogMessage("ERROR", __FILE__, __LINE__, TKIT_LOG_COLOR_RED, true,                                \
                                  TKit::Detail::Format(__VA_ARGS__))
 #    define TKIT_ASSERT(p_Condition, ...)                                                                              \
-        if (!(p_Condition) && !TKit::Detail::DisabledAsserts.test(std::memory_order_relaxed))                          \
+        if (!(p_Condition) && !TKit::Detail::DisabledAsserts)                                                          \
         TKit::Detail::LogMessage("ERROR", __FILE__, __LINE__, TKIT_LOG_COLOR_RED, true,                                \
                                  TKit::Detail::Format(__VA_ARGS__))
 
 #    define TKIT_ASSERT_RETURNS(expression, expected, ...) TKIT_ASSERT((expression) == (expected), __VA_ARGS__)
 
-#    define TKIT_IGNORE_ASSERTS_PUSH() (void)TKit::Detail::DisabledAsserts.test_and_set()
-#    define TKIT_IGNORE_ASSERTS_POP() TKit::Detail::DisabledAsserts.clear()
+#    define TKIT_IGNORE_ASSERTS_PUSH() TKit::Detail::DisabledAsserts = true
+#    define TKIT_IGNORE_ASSERTS_POP() TKit::Detail::DisabledAsserts = false
 #else
 #    define TKIT_ERROR(...)
 #    define TKIT_ASSERT(...)
