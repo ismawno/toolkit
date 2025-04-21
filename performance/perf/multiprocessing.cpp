@@ -1,6 +1,7 @@
 #include "perf/settings.hpp"
 #include "tkit/multiprocessing/thread_pool.hpp"
 #include "tkit/multiprocessing/for_each.hpp"
+#include "tkit/container/dynamic_array.hpp"
 #include "tkit/profiling/clock.hpp"
 #include <fstream>
 

@@ -29,6 +29,9 @@ int main()
     TKIT_LOG_INFO("[TOOLKIT] Running arena allocator...");
     RecordArenaAllocator(settings.Allocation);
 
+    TKIT_LOG_INFO("[TOOLKIT] Running vector...");
+    RecordVector(settings.Container);
+
     TKIT_LOG_INFO("[TOOLKIT] Running dynamic array...");
     RecordDynamicArray(settings.Container);
 

@@ -60,11 +60,11 @@ if (TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION AND NOT TOOLKIT_ENABLE_INSTRUMENTATION
 endif()
 
 if (TOOLKIT_BUILD_PERFORMANCE AND (NOT CMAKE_BUILD_TYPE STREQUAL "Dist"))
-    message(WARNING "TOOLKIT: Building benchamrks in a non-distribution configuration! Results may not be representative")
+    message(WARNING "TOOLKIT: Building benchmarks in a non-distribution configuration! Results may not be representative")
 endif()
 
 if (TOOLKIT_BUILD_PERFORMANCE AND (TOOLKIT_ENABLE_WARNING_LOGS OR TOOLKIT_ENABLE_ASSERTS))
-    message(WARNING "TOOLKIT: Building benchamrks with asserts/logs enabled! Results may not be representative")
+    message(WARNING "TOOLKIT: Building benchmarks with asserts/logs enabled! Results may not be representative")
 endif()
 
 if (NOT TOOLKIT_ENABLE_INSTRUMENTATION AND NOT TOOLKIT_BUILD_PROFILER STREQUAL "none")
@@ -84,7 +84,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 
 if (TOOLKIT_BUILD_TESTS OR TOOLKIT_BUILD_PERFORMANCE)
-    message(WARNING "TOOLKIT: Tests are being built. All features will be enabled even if logs say otherwise")
+    message(WARNING "TOOLKIT: Tests or performance benchmarks are being built. All features (except for instrumentation) will be enabled even if logs say otherwise")
 endif()
 
 message(STATUS "TOOLKIT: Build type: ${CMAKE_BUILD_TYPE}")

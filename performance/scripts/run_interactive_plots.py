@@ -6,7 +6,8 @@ import dash
 
 
 def read_and_classify_benchmark_data() -> dict[str, dict[str, pd.DataFrame]]:
-    path = Path("performance/results")
+    root = Path(__file__).parent.parent
+    path = root / "results"
     dfs = {"single-thread": {}, "thread-scale": {}}
     for csv in path.glob("*.csv"):
         df = pd.read_csv(csv)
@@ -123,7 +124,7 @@ def update_graph(
     data = []
     xaxis_type = "log" if "xlog" in axis_type else "linear"
     yaxis_type = "log" if "ylog" in axis_type else "linear"
-    xcol = "<unsepcified>"
+    xcol = "<unspecified>"
 
     factor = time_unit_to_factor(time_unit)
     for benchmark in benchmarks:

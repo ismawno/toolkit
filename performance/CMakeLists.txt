@@ -3,10 +3,6 @@ project(toolkit-performance)
 
 set(NAME toolkit-performance)
 
-
-
-# yaml-cpp has warnings, so I need to disable -Werror...
-
 set(SOURCES
     perf/main.cpp
     perf/memory.cpp

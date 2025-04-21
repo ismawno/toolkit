@@ -3,6 +3,7 @@
 #include "tkit/memory/block_allocator.hpp"
 #include "tkit/memory/stack_allocator.hpp"
 #include "tkit/memory/arena_allocator.hpp"
+#include "tkit/container/dynamic_array.hpp"
 #include <fstream>
 #include <thread>
 
@@ -68,7 +69,7 @@ void RecordStackAllocator(const AllocationSettings &p_Settings) noexcept
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
     file << "passes,stack_alloc (ns),stack_dealloc (ns)\n";
 
-    StackAllocator allocator{p_Settings.MaxPasses * sizeof(ExampleData)};
+    StackAllocator allocator{static_cast<usize>(p_Settings.MaxPasses * sizeof(ExampleData))};
     for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
     {
         Clock clock;
@@ -91,7 +92,7 @@ void RecordArenaAllocator(const AllocationSettings &p_Settings) noexcept
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
     file << "passes,arena_alloc (ns)\n";
 
-    ArenaAllocator allocator{p_Settings.MaxPasses * sizeof(ExampleData)};
+    ArenaAllocator allocator{static_cast<usize>(p_Settings.MaxPasses * sizeof(ExampleData))};
     for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
     {
         Clock clock;
