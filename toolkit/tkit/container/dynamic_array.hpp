@@ -240,8 +240,10 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
     }
 
     /**
-     * @brief Resize the array. If the new size is smaller than the current size, the elements are destroyed. If the new
-     * size is bigger than the current size, the elements are constructed in place.
+     * @brief Resize the array.
+     *
+     * If the new size is smaller than the current size, the elements are destroyed. If the new size is bigger than the
+     * current size, the elements are constructed in place.
      *
      * @param p_Size The new size of the array.
      * @param args The arguments to pass to the constructor of `T` (only used if the new size is bigger than the current
@@ -302,6 +304,12 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
         return At(m_Size - 1);
     }
 
+    /**
+     * @brief Clear the array and set its size to 0.
+     *
+     * The elements are destroyed if not trivially destructible. The memory is not deallocated.
+     *
+     */
     constexpr void Clear() noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
@@ -309,6 +317,13 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
         m_Size = 0;
     }
 
+    /**
+     * @brief Reserve memory for the array ahead of time.
+     *
+     * This does not change the size of the array. It can potentially reduce the number of allocations.
+     *
+     * @param p_Capacity
+     */
     constexpr void Reserve(const SizeType p_Capacity) noexcept
     {
         if (p_Capacity > m_Capacity)
