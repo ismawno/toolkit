@@ -65,11 +65,11 @@ class Span
         return m_Data[p_Index];
     }
 
-    constexpr ElementType &GetFront() noexcept
+    constexpr ElementType &GetFront() const noexcept
     {
         return At(0);
     }
-    constexpr ElementType &GetBack() noexcept
+    constexpr ElementType &GetBack() const noexcept
     {
         return At(Extent - 1);
     }
@@ -186,11 +186,11 @@ template <typename T, typename Traits> class Span<T, Limits<usize>::max(), Trait
         return m_Data[p_Index];
     }
 
-    constexpr ElementType &GetFront() noexcept
+    constexpr ElementType &GetFront() const noexcept
     {
         return At(0);
     }
-    constexpr ElementType &GetBack() noexcept
+    constexpr ElementType &GetBack() const noexcept
     {
         return At(Extent - 1);
     }
