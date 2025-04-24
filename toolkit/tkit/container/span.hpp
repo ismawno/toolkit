@@ -186,6 +186,15 @@ template <typename T, typename Traits> class Span<T, Limits<usize>::max(), Trait
         return m_Data[p_Index];
     }
 
+    constexpr ElementType &GetFront() noexcept
+    {
+        return At(0);
+    }
+    constexpr ElementType &GetBack() noexcept
+    {
+        return At(Extent - 1);
+    }
+
     constexpr Iterator begin() const noexcept
     {
         return m_Data;
