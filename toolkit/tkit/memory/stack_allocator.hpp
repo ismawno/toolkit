@@ -2,7 +2,7 @@
 
 #ifndef TKIT_ENABLE_STACK_ALLOCATOR
 #    error                                                                                                             \
-        "To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_STACK_ALLOCATOR"
+        "[TOOLKIT] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_STACK_ALLOCATOR"
 #endif
 
 #include "tkit/utils/logging.hpp"
