@@ -21,7 +21,7 @@ namespace TKit
 template <typename T = void, typename ErrorType = const char *> class Result
 {
   public:
-    Result() = default;
+    Result() noexcept = default;
     /**
      * @brief Construct a `Result` object with a value of type `T`.
      *
@@ -200,7 +200,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
 template <typename ErrorType> class Result<void, ErrorType>
 {
   public:
-    Result() = default;
+    Result() noexcept = default;
     /**
      * @brief Construct a `Result` object with no error.
      *
