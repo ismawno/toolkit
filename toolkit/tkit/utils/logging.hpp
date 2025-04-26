@@ -69,15 +69,15 @@ constexpr const char *Format() noexcept
 #endif
 
 #ifdef TKIT_ENABLE_INFO_LOGS
-inline thread_local bool DisabledInfoLogs = ATOMIC_FLAG_INIT;
+inline thread_local bool DisabledInfoLogs = false;
 #endif
 
 #ifdef TKIT_ENABLE_WARNING_LOGS
-inline thread_local bool DisabledWarningLogs = ATOMIC_FLAG_INIT;
+inline thread_local bool DisabledWarningLogs = false;
 #endif
 
 #ifdef TKIT_ENABLE_ASSERTS
-inline thread_local bool DisabledAsserts = ATOMIC_FLAG_INIT;
+inline thread_local bool DisabledAsserts = false;
 #endif
 } // namespace TKit::Detail
 
