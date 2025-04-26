@@ -12,12 +12,16 @@ namespace TKit
  * The main difference between this class and `std::optional` is that this class explicitly holds an error if the result
  * could not be computed. It is meant to make my life easier to be honest.
  *
+ * Using the default constructor will create an uninitialized `Result`. Make sure to instantiate it with either `Ok` or
+ * `Error` before using it.
+ *
  * @tparam T The type of the value that can be held.
  * @tparam ErrorType The type of the error message that can be held.
  */
 template <typename T = void, typename ErrorType = const char *> class Result
 {
   public:
+    Result() = default;
     /**
      * @brief Construct a `Result` object with a value of type `T`.
      *
@@ -166,8 +170,6 @@ template <typename T = void, typename ErrorType = const char *> class Result
     }
 
   private:
-    Result() = default;
-
     void destroy() noexcept
     {
         if (m_Ok)
@@ -190,11 +192,15 @@ template <typename T = void, typename ErrorType = const char *> class Result
  * The main difference between this class and `std::optional` is that this class explicitly holds an error if the result
  * could not be computed. It is meant to make my life easier to be honest.
  *
+ * Using the default constructor will create an uninitialized `Result`. Make sure to instantiate it with either `Ok`
+ * or `Error` before using it.
+ *
  * @tparam ErrorType The type of the error message that can be held.
  */
 template <typename ErrorType> class Result<void, ErrorType>
 {
   public:
+    Result() = default;
     /**
      * @brief Construct a `Result` object with no error.
      *
@@ -291,8 +297,6 @@ template <typename ErrorType> class Result<void, ErrorType>
     }
 
   private:
-    Result() = default;
-
     void destroy() noexcept
     {
         if (!m_Ok)
