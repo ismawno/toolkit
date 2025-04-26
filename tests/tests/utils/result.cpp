@@ -111,3 +111,52 @@ TEST_CASE("Destruction cleans up union members without leak", "[Result]")
     }
     REQUIRE(RTrack::ctor == RTrack::dtor);
 }
+
+TEST_CASE("Result<void> Ok and Error basic", "[Result][void]")
+{
+    auto okRes = Result<>::Ok();
+    REQUIRE(okRes.IsOk());
+    REQUIRE(static_cast<bool>(okRes));
+
+    auto errRes = Result<>::Error("failure");
+    REQUIRE(!errRes.IsOk());
+    REQUIRE(!static_cast<bool>(errRes));
+    REQUIRE(std::string(errRes.GetError()) == "failure");
+}
+
+TEST_CASE("Result<void, std::string> copy and copy-assignment", "[Result][void]")
+{
+    auto e1 = Result<void, std::string>::Error(std::string("copyErr"));
+    auto e2 = e1; // copy ctor
+    REQUIRE(!e2.IsOk());
+    REQUIRE(e2.GetError() == "copyErr");
+
+    auto e3 = Result<void, std::string>::Ok();
+    e3 = e2; // copy assign
+    REQUIRE(!e3.IsOk());
+    REQUIRE(e3.GetError() == "copyErr");
+}
+
+TEST_CASE("Result<void, std::string> move and move-assignment", "[Result][void]")
+{
+    auto e1 = Result<void, std::string>::Error(std::string("moveErr"));
+    auto e2 = std::move(e1); // move ctor
+    REQUIRE(!e2.IsOk());
+    REQUIRE(e2.GetError() == "moveErr");
+
+    auto e3 = Result<void, std::string>::Ok();
+    e3 = std::move(e2); // move assign
+    REQUIRE(!e3.IsOk());
+    REQUIRE(e3.GetError() == "moveErr");
+}
+
+TEST_CASE("Result<void, Track> destruction cleans up error storage", "[Result][void]")
+{
+
+    {
+        RTrack::ctor = RTrack::dtor = 0;
+        auto r = Result<void, RTrack>::Error();
+        REQUIRE(RTrack::ctor == 1);
+    }
+    REQUIRE(RTrack::ctor == RTrack::dtor);
+}

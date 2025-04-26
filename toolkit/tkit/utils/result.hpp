@@ -15,11 +15,11 @@ namespace TKit
  * @tparam T The type of the value that can be held.
  * @tparam ErrorType The type of the error message that can be held.
  */
-template <typename T, typename ErrorType = const char *> class Result
+template <typename T = void, typename ErrorType = const char *> class Result
 {
   public:
     /**
-     * @brief Construct a Result object with a value of type `T`.
+     * @brief Construct a `Result` object with a value of type `T`.
      *
      * @param p_Args The arguments to pass to the constructor of `T`.
      */
@@ -32,7 +32,7 @@ template <typename T, typename ErrorType = const char *> class Result
     }
 
     /**
-     * @brief Construct a Result object with an error message of type `ErrorType`.
+     * @brief Construct a `Result` object with an error message of type `ErrorType`.
      *
      * @param p_Args The arguments to pass to the constructor of `ErrorType`.
      */
@@ -182,4 +182,124 @@ template <typename T, typename ErrorType = const char *> class Result
     };
     bool m_Ok;
 };
+
+/**
+ * @brief A specialization of `Result` that does not hold a value.
+ *
+ * This class is meant to be used in functions that can fail and return an error message, or succeed and return nothing.
+ * The main difference between this class and `std::optional` is that this class explicitly holds an error if the result
+ * could not be computed. It is meant to make my life easier to be honest.
+ *
+ * @tparam ErrorType The type of the error message that can be held.
+ */
+template <typename ErrorType> class Result<void, ErrorType>
+{
+  public:
+    /**
+     * @brief Construct a `Result` object with no error.
+     *
+     */
+    static Result Ok() noexcept
+    {
+        Result result{};
+        result.m_Ok = true;
+        return result;
+    }
+
+    /**
+     * @brief Construct a `Result` object with an error message of type `ErrorType`.
+     *
+     * @param p_Args The arguments to pass to the constructor of `ErrorType`.
+     */
+    template <typename... ErrorArgs> static Result Error(ErrorArgs &&...p_Args) noexcept
+    {
+        Result result{};
+        result.m_Ok = false;
+        result.m_Error.Construct(std::forward<ErrorArgs>(p_Args)...);
+        return result;
+    }
+
+    Result(const Result &p_Other) noexcept
+        requires(std::copy_constructible<ErrorType>)
+        : m_Ok(p_Other.m_Ok)
+    {
+        if (!m_Ok)
+            m_Error.Construct(*p_Other.m_Error.Get());
+    }
+    Result(Result &&p_Other) noexcept
+        requires(std::move_constructible<ErrorType>)
+        : m_Ok(p_Other.m_Ok)
+    {
+        if (!m_Ok)
+            m_Error.Construct(std::move(*p_Other.m_Error.Get()));
+    }
+
+    Result &operator=(const Result &p_Other) noexcept
+        requires(std::is_copy_assignable_v<ErrorType>)
+    {
+        if (this == &p_Other)
+            return *this;
+        destroy();
+        m_Ok = p_Other.m_Ok;
+        if (!m_Ok)
+            m_Error.Construct(*p_Other.m_Error.Get());
+
+        return *this;
+    }
+    Result &operator=(Result &&p_Other) noexcept
+        requires(std::is_move_assignable_v<ErrorType>)
+    {
+        if (this == &p_Other)
+            return *this;
+        destroy();
+        m_Ok = p_Other.m_Ok;
+        if (!m_Ok)
+            m_Error.Construct(std::move(*p_Other.m_Error.Get()));
+
+        return *this;
+    }
+
+    ~Result() noexcept
+    {
+        destroy();
+    }
+
+    /**
+     * @brief Check if the result is valid.
+     *
+     */
+    bool IsOk() const noexcept
+    {
+        return m_Ok;
+    }
+
+    /**
+     * @brief Get the error message of the result.
+     *
+     * If the result is valid, this will cause undefined behavior.
+     *
+     */
+    const ErrorType &GetError() const noexcept
+    {
+        TKIT_ASSERT(!m_Ok, "[TOOLKIT] Result is Ok");
+        return *m_Error.Get();
+    }
+
+    explicit(false) operator bool() const noexcept
+    {
+        return m_Ok;
+    }
+
+  private:
+    Result() = default;
+
+    void destroy() noexcept
+    {
+        if (!m_Ok)
+            m_Error.Destruct();
+    }
+    Storage<ErrorType> m_Error;
+    bool m_Ok;
+};
+
 } // namespace TKit
