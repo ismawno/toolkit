@@ -18,15 +18,15 @@ struct STrackable
     {
         ++g_Constructions;
     }
-    STrackable(u32 v) : Value(v)
+    STrackable(const u32 p_Value) : Value(p_Value)
     {
         ++g_Constructions;
     }
-    STrackable(const STrackable &o) : Value(o.Value)
+    STrackable(const STrackable &p_Other) : Value(p_Other.Value)
     {
         ++g_Constructions;
     }
-    STrackable(STrackable &&o) noexcept : Value(o.Value)
+    STrackable(STrackable &&p_Other) noexcept : Value(p_Other.Value)
     {
         ++g_Constructions;
     }
@@ -34,14 +34,14 @@ struct STrackable
     {
         ++g_Destructions;
     }
-    STrackable &operator=(const STrackable &o)
+    STrackable &operator=(const STrackable &p_Other)
     {
-        Value = o.Value;
+        Value = p_Other.Value;
         return *this;
     }
-    STrackable &operator=(STrackable &&o) noexcept
+    STrackable &operator=(STrackable &&p_Other) noexcept
     {
-        Value = o.Value;
+        Value = p_Other.Value;
         return *this;
     }
 };
@@ -84,7 +84,7 @@ TEST_CASE("StaticArray: Append and Pop", "[StaticArray]")
     r0.Value = 7;
 
     // Append with args
-    auto &r1 = arr.Append(13u);
+    const auto &r1 = arr.Append(13u);
     REQUIRE(arr.GetSize() == 2);
     REQUIRE(g_Constructions == 2);
     REQUIRE(r1.Value == 13);
@@ -103,12 +103,12 @@ TEST_CASE("StaticArray: Append and Pop", "[StaticArray]")
 TEST_CASE("StaticArray: constructor from size+fill args", "[StaticArray]")
 {
     // trivially default-constructible => no actual constructions happen
-    StaticArray<u32, 5> arr(3);
+    const StaticArray<u32, 5> arr(3);
     REQUIRE(arr.GetSize() == 3);
 
     // non-trivial => should invoke CTOR for each
     g_Constructions = g_Destructions = 0;
-    StaticArray<STrackable, 5> nt(2, 42);
+    const StaticArray<STrackable, 5> nt(2, 42);
     REQUIRE(nt.GetSize() == 2);
     REQUIRE(g_Constructions == 2);
     for (usize i = 0; i < 2; ++i)
@@ -119,13 +119,13 @@ TEST_CASE("StaticArray: constructor from size+fill args", "[StaticArray]")
 TEST_CASE("StaticArray: initializer_list & range constructors", "[StaticArray]")
 {
     // initializer_list
-    StaticArray<u32, 4> arr{5u, 6u, 7u};
+    const StaticArray<u32, 4> arr{5u, 6u, 7u};
     REQUIRE(arr.GetSize() == 3);
     REQUIRE(std::equal(arr.begin(), arr.end(), TKit::Array<u32, 3>{5, 6, 7}.begin()));
 
     // range constructor from another container
-    TKit::Array<u32, 4> src = {10, 20, 30, 40};
-    StaticArray<u32, 4> rg(src.begin() + 1, src.begin() + 4);
+    const TKit::Array<u32, 4> src = {10, 20, 30, 40};
+    const StaticArray<u32, 4> rg(src.begin() + 1, src.begin() + 4);
     REQUIRE(rg.GetSize() == 3);
     REQUIRE(rg[0] == 20);
     REQUIRE(rg[2] == 40);
@@ -134,11 +134,11 @@ TEST_CASE("StaticArray: initializer_list & range constructors", "[StaticArray]")
 TEST_CASE("StaticArray: copy/move ctor and assignment", "[StaticArray]")
 {
     StaticArray<u32, 4> arr1{1, 2, 3};
-    StaticArray<u32, 4> arr2 = arr1; // copy ctor
+    const StaticArray<u32, 4> arr2 = arr1; // copy ctor
     REQUIRE(arr2.GetSize() == 3);
     REQUIRE(std::equal(arr2.begin(), arr2.end(), arr1.begin()));
 
-    StaticArray<u32, 4> arr3 = std::move(arr1); // move ctor
+    const StaticArray<u32, 4> arr3 = std::move(arr1); // move ctor
     REQUIRE(arr3.GetSize() == 3);
     REQUIRE(arr3[0] == 1);
 
@@ -157,79 +157,79 @@ TEST_CASE("StaticArray: copy/move ctor and assignment", "[StaticArray]")
 
 TEST_CASE("StaticArray: member Insert wrappers", "[StaticArray]")
 {
-    StaticArray<u32, 7> a{1, 2, 4, 5};
-    a.Insert(a.begin() + 2, 3u); // insert single at pos 2
-    REQUIRE(a.GetSize() == 5);
+    StaticArray<u32, 7> arr{1, 2, 4, 5};
+    arr.Insert(arr.begin() + 2, 3u); // insert single at pos 2
+    REQUIRE(arr.GetSize() == 5);
 
     // insert range
     TKit::Array<u32, 2> extra = {7, 8};
-    a.Insert(a.begin() + 5, extra.begin(), extra.end());
-    REQUIRE(a.GetSize() == 7); // capacity 5 => insertion of 2 at end should assert; skip if asserts disabled
+    arr.Insert(arr.begin() + 5, extra.begin(), extra.end());
+    REQUIRE(arr.GetSize() == 7); // capacity 5 => insertion of 2 at end should assert; skip if asserts disabled
 }
 
 TEST_CASE("StaticArray: member RemoveOrdered/Unordered wrappers", "[StaticArray]")
 {
-    StaticArray<u32, 6> a{10, 20, 30, 40, 50};
-    REQUIRE(a.GetSize() == 5);
+    StaticArray<u32, 6> arr{10, 20, 30, 40, 50};
+    REQUIRE(arr.GetSize() == 5);
 
-    a.RemoveOrdered(a.begin() + 1); // remove '20'
-    REQUIRE(a.GetSize() == 4);
+    arr.RemoveOrdered(arr.begin() + 1); // remove '20'
+    REQUIRE(arr.GetSize() == 4);
 
-    a.RemoveOrdered(a.begin() + 1, a.begin() + 3); // remove '30','40'
-    REQUIRE(a.GetSize() == 2);
-    REQUIRE(a[0] == 10);
-    REQUIRE(a[1] == 50);
+    arr.RemoveOrdered(arr.begin() + 1, arr.begin() + 3); // remove '30','40'
+    REQUIRE(arr.GetSize() == 2);
+    REQUIRE(arr[0] == 10);
+    REQUIRE(arr[1] == 50);
 
     // unordered remove
-    a = StaticArray<u32, 6>{1, 2, 3, 4};
-    a.RemoveUnordered(a.begin() + 1); // replace at idx1 with last
-    REQUIRE(a.GetSize() == 3);
-    REQUIRE(a[1] == 4);
+    arr = StaticArray<u32, 6>{1, 2, 3, 4};
+    arr.RemoveUnordered(arr.begin() + 1); // replace at idx1 with last
+    REQUIRE(arr.GetSize() == 3);
+    REQUIRE(arr[1] == 4);
 }
 
 TEST_CASE("StaticArray: Resize", "[StaticArray]")
 {
-    StaticArray<STrackable, 5> s;
+    StaticArray<STrackable, 5> arr;
     g_Constructions = g_Destructions = 0;
 
     // grow with default
-    s.Resize(3);
-    REQUIRE(s.GetSize() == 3);
+    arr.Resize(3);
+    REQUIRE(arr.GetSize() == 3);
     REQUIRE(g_Constructions == 3);
 
     // shrink
-    s.Resize(1);
-    REQUIRE(s.GetSize() == 1);
+    arr.Resize(1);
+    REQUIRE(arr.GetSize() == 1);
     REQUIRE(g_Destructions == 2);
 
     // grow with args
-    s.Resize(4, 99u);
-    REQUIRE(s.GetSize() == 4);
+    arr.Resize(4, 99u);
+    REQUIRE(arr.GetSize() == 4);
     REQUIRE(g_Constructions == 3 + 3); // two phases: initial 3, +3 new (from 1→4)
     for (u32 i = 1; i < 4; ++i)
-        REQUIRE(s[i].Value == 99u);
+        REQUIRE(arr[i].Value == 99u);
 }
 
 TEST_CASE("StaticArray: Clear and iteration", "[StaticArray]")
 {
-    StaticArray<u32, 4> a{9, 8, 7};
-    a.Clear();
-    REQUIRE(a.GetSize() == 0);
-    REQUIRE(a.IsEmpty());
+    StaticArray<u32, 4> arr1{9, 8, 7};
+    arr1.Clear();
+    REQUIRE(arr1.GetSize() == 0);
+    REQUIRE(arr1.IsEmpty());
 
     // range-for
-    StaticArray<u32, 4> b{1, 2, 3};
+    const StaticArray<u32, 4> arr2{1, 2, 3};
     u32 sum = 0;
-    for (auto &x : b)
+    for (const u32 x : arr2)
         sum += x;
     REQUIRE(sum == 6);
 }
 
 TEST_CASE("StaticArray aliases", "[StaticArray]")
 {
-    StaticArray4<u32> a4;
-    StaticArray8<u32> a8;
-    StaticArray16<u32> a16;
+    const StaticArray4<u32> a4;
+    const StaticArray8<u32> a8;
+    const StaticArray16<u32> a16;
     REQUIRE(a4.GetCapacity() == 4);
     REQUIRE(a8.GetCapacity() == 8);
     REQUIRE(a16.GetCapacity() == 16);
@@ -272,7 +272,7 @@ TEST_CASE("StaticArray<std::string>: basic operations", "[StaticArray][string]")
     REQUIRE(arr1[2] == "two");
 
     // Insert range
-    Array<std::string, 3> extras{"x", "y", "z"};
+    const Array<std::string, 3> extras{"x", "y", "z"};
     arr1.Insert(arr1.begin() + 4, extras.begin(), extras.end());
     REQUIRE(arr1.GetSize() == 7);
     REQUIRE(arr1[4] == "x");
