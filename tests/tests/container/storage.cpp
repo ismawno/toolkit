@@ -19,16 +19,16 @@ TEST_CASE("RawStorage: trivial type construct and destruct", "[RawStorage]")
 
 struct NT
 {
-    static inline u32 s_CtorCount = 0;
-    static inline u32 dtorCount = 0;
+    static inline u32 CtorCount = 0;
+    static inline u32 DtorCount = 0;
     u32 value;
     NT(const u32 p_Value) : value(p_Value)
     {
-        ++s_CtorCount;
+        ++CtorCount;
     }
     ~NT()
     {
-        ++dtorCount;
+        ++DtorCount;
     }
 };
 
@@ -37,9 +37,9 @@ TEST_CASE("RawStorage: non-trivial type construct and destruct", "[RawStorage]")
     RawStorage<sizeof(NT), alignof(NT)> storage;
     const NT *pObj = storage.Construct<NT>(77);
     REQUIRE(pObj->value == 77);
-    REQUIRE(NT::s_CtorCount == 1);
+    REQUIRE(NT::CtorCount == 1);
     storage.Destruct<NT>();
-    REQUIRE(NT::dtorCount == 1);
+    REQUIRE(NT::DtorCount == 1);
 }
 
 TEST_CASE("RawStorage: alignment correctness", "[RawStorage]")
@@ -92,21 +92,21 @@ TEST_CASE("Storage: type without default constructor", "[Storage]")
 
 struct STrack
 {
-    static inline u32 s_CtorCount = 0;
-    static inline u32 s_CopyCtorCount = 0;
-    static inline u32 s_MoveCtorCount = 0;
+    static inline u32 CtorCount = 0;
+    static inline u32 CopyCtorCount = 0;
+    static inline u32 MoveCtorCount = 0;
     u32 Val;
     STrack(const u32 p_Value) : Val(p_Value)
     {
-        ++s_CtorCount;
+        ++CtorCount;
     }
     STrack(const STrack &p_Other) : Val(p_Other.Val)
     {
-        ++s_CopyCtorCount;
+        ++CopyCtorCount;
     }
     STrack(STrack &&p_Other) noexcept : Val(p_Other.Val)
     {
-        ++s_MoveCtorCount;
+        ++MoveCtorCount;
     }
 };
 
@@ -114,18 +114,18 @@ TEST_CASE("Storage: copy and move semantics", "[Storage]")
 {
     // construct original
     g_CtorCount = g_DtorCount = 0;
-    STrack::s_CtorCount = STrack::s_CopyCtorCount = STrack::s_MoveCtorCount = 0;
+    STrack::CtorCount = STrack::CopyCtorCount = STrack::MoveCtorCount = 0;
     Storage<STrack> orig(55);
-    REQUIRE(STrack::s_CtorCount == 1);
+    REQUIRE(STrack::CtorCount == 1);
     REQUIRE(orig->Val == 55);
 
     // copy-construct
     const Storage<STrack> copy = orig;
-    REQUIRE(STrack::s_CopyCtorCount == 1);
+    REQUIRE(STrack::CopyCtorCount == 1);
     REQUIRE((*copy).Val == 55);
 
     // move-construct
     const Storage<STrack> moved = std::move(orig);
-    REQUIRE(STrack::s_MoveCtorCount == 1);
+    REQUIRE(STrack::MoveCtorCount == 1);
     REQUIRE((*moved).Val == 55);
 }

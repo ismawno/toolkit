@@ -17,15 +17,15 @@ struct WTrackable
     {
         ++g_CtorCount;
     }
-    WTrackable(u32 v) : Value(v)
+    WTrackable(const u32 p_Value) : Value(p_Value)
     {
         ++g_CtorCount;
     }
-    WTrackable(const WTrackable &o) : Value(o.Value)
+    WTrackable(const WTrackable &p_Other) : Value(p_Other.Value)
     {
         ++g_CtorCount;
     }
-    WTrackable(WTrackable &&o) noexcept : Value(o.Value)
+    WTrackable(WTrackable &&p_Other) noexcept : Value(p_Other.Value)
     {
         ++g_CtorCount;
     }
@@ -33,14 +33,14 @@ struct WTrackable
     {
         ++g_DtorCount;
     }
-    WTrackable &operator=(const WTrackable &o)
+    WTrackable &operator=(const WTrackable &p_Other)
     {
-        Value = o.Value;
+        Value = p_Other.Value;
         return *this;
     }
-    WTrackable &operator=(WTrackable &&o) noexcept
+    WTrackable &operator=(WTrackable &&p_Other) noexcept
     {
-        Value = o.Value;
+        Value = p_Other.Value;
         return *this;
     }
 };
@@ -49,17 +49,17 @@ TEST_CASE("WeakArray static: default, pointer, pointer+size", "[WeakArray]")
 {
     u32 buffer[4] = {1, 2, 3, 4};
 
-    WeakArray<u32, 4> arr1;
+    const WeakArray<u32, 4> arr1;
     REQUIRE(!arr1);
     REQUIRE(arr1.IsEmpty());
     REQUIRE(arr1.GetSize() == 0);
 
-    WeakArray<u32, 4> arr2(buffer);
+    const WeakArray<u32, 4> arr2(buffer);
     REQUIRE(arr2);
     REQUIRE(arr2.GetData() == buffer);
     REQUIRE(arr2.GetSize() == 0);
 
-    WeakArray<u32, 4> arr3(buffer, 3);
+    const WeakArray<u32, 4> arr3(buffer, 3);
     REQUIRE(arr3.GetSize() == 3);
     REQUIRE(arr3[2] == 3);
     REQUIRE(arr3.GetFront() == 1);
@@ -69,12 +69,12 @@ TEST_CASE("WeakArray static: default, pointer, pointer+size", "[WeakArray]")
 TEST_CASE("WeakArray static: from Array and StaticArray", "[WeakArray]")
 {
     Array<u32, 3> rawArr{10u, 20u, 30u};
-    WeakArray<u32, 3> arr1(rawArr, 2);
+    const WeakArray<u32, 3> arr1(rawArr, 2);
     REQUIRE(arr1.GetData() == rawArr.GetData());
     REQUIRE(arr1.GetSize() == 2);
 
     StaticArray<u32, 3> staticArr{5u, 6u};
-    WeakArray<u32, 3> arr2(staticArr);
+    const WeakArray<u32, 3> arr2(staticArr);
     REQUIRE(arr2.GetSize() == 2);
     REQUIRE(arr2[1] == 6u);
 }
@@ -111,7 +111,7 @@ TEST_CASE("WeakArray static: modify elements", "[WeakArray]")
     REQUIRE(arr.GetSize() == 3);
     REQUIRE(arr[1] == 9);
 
-    TKit::Array<u32, 2> extra = {7, 8};
+    const TKit::Array<u32, 2> extra = {7, 8};
     arr.Insert(arr.begin() + 3, extra.begin(), extra.end());
     REQUIRE(arr.GetSize() == 5);
     REQUIRE(arr[3] == 7);
@@ -150,7 +150,7 @@ TEST_CASE("WeakArray static: Resize, Clear, iteration", "[WeakArray]")
     // iteration
     arr.Resize(2, 7u);
     u32 sum = 0;
-    for (auto &x : arr)
+    for (const auto &x : arr)
         sum += x.Value;
     REQUIRE(sum == 14u);
 }
@@ -175,16 +175,16 @@ TEST_CASE("WeakArray dynamic: default, pointer+capacity, pointer+capacity+size",
 {
     u32 buffer[5] = {1, 2, 3, 4, 5};
 
-    WeakArray<u32> arr1;
+    const WeakArray<u32> arr1;
     REQUIRE(!arr1);
     REQUIRE(arr1.IsEmpty());
     REQUIRE(arr1.GetCapacity() == 0);
 
-    WeakArray<u32> arr2(buffer, 5);
+    const WeakArray<u32> arr2(buffer, 5);
     REQUIRE(arr2.GetCapacity() == 5);
     REQUIRE(arr2.GetSize() == 0);
 
-    WeakArray<u32> arr3(buffer, 5, 3);
+    const WeakArray<u32> arr3(buffer, 5, 3);
     REQUIRE(arr3.GetSize() == 3);
     REQUIRE(arr3[2] == 3);
 }
@@ -195,9 +195,9 @@ TEST_CASE("WeakArray dynamic: from Array, StaticArray, DynamicArray", "[WeakArra
     StaticArray<u32, 3> staticArr{7u, 8u};
     DynamicArray<u32> dynArr{9u, 10u, 11u};
 
-    WeakArray<u32> arr1(rawArr, 2);
-    WeakArray<u32> arr2(staticArr);
-    WeakArray<u32> arr3(dynArr);
+    const WeakArray<u32> arr1(rawArr, 2);
+    const WeakArray<u32> arr2(staticArr);
+    const WeakArray<u32> arr3(dynArr);
 
     REQUIRE(arr1.GetCapacity() == 3);
     REQUIRE(arr1.GetSize() == 2);
@@ -237,7 +237,7 @@ TEST_CASE("WeakArray dynamic: modify & inspect", "[WeakArray]")
     arr.Insert(arr.begin() + 1, 7);
     REQUIRE(arr[1] == 7);
 
-    Array<u32, 3> extra{8, 9, 10};
+    const Array<u32, 3> extra{8, 9, 10};
     arr.Insert(arr.begin() + 2, extra.begin(), extra.end());
     REQUIRE(arr.GetSize() == 5);
     REQUIRE(arr.GetBack() == 10);

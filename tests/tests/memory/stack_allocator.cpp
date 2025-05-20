@@ -8,21 +8,21 @@
 using namespace TKit;
 
 // A helper non-trivial type for Create/Destroy tests
-struct NonTrivial
+struct NonTrivialSA
 {
     static inline u32 ctorCount = 0;
     static inline u32 dtorCount = 0;
     u32 value;
-    NonTrivial(u32 v) : value(v)
+    NonTrivialSA(u32 v) : value(v)
     {
         ++ctorCount;
     }
-    ~NonTrivial()
+    ~NonTrivialSA()
     {
         ++dtorCount;
     }
-    NonTrivial(const NonTrivial &) = delete;
-    NonTrivial &operator=(const NonTrivial &) = delete;
+    NonTrivialSA(const NonTrivialSA &) = delete;
+    NonTrivialSA &operator=(const NonTrivialSA &) = delete;
 };
 
 TEST_CASE("Constructor and initial state", "[StackAllocator]")
@@ -92,26 +92,26 @@ TEST_CASE("Create<T> and NCreate<T> with Destroy<T>", "[StackAllocator]")
     StackAllocator arena(256);
 
     // single Create
-    NonTrivial::ctorCount = 0;
-    NonTrivial::dtorCount = 0;
-    auto p = arena.Create<NonTrivial>(42);
+    NonTrivialSA::ctorCount = 0;
+    NonTrivialSA::dtorCount = 0;
+    auto p = arena.Create<NonTrivialSA>(42);
     REQUIRE(p);
-    REQUIRE(NonTrivial::ctorCount == 1);
+    REQUIRE(NonTrivialSA::ctorCount == 1);
     REQUIRE(p->value == 42);
 
     // array NCreate
-    NonTrivial::ctorCount = 0;
-    NonTrivial::dtorCount = 0;
-    auto arr = arena.NCreate<NonTrivial>(3, 7);
+    NonTrivialSA::ctorCount = 0;
+    NonTrivialSA::dtorCount = 0;
+    auto arr = arena.NCreate<NonTrivialSA>(3, 7);
     REQUIRE(arr);
-    REQUIRE(NonTrivial::ctorCount == 3);
+    REQUIRE(NonTrivialSA::ctorCount == 3);
     for (u32 i = 0; i < 3; ++i)
         REQUIRE(arr[i].value == 7);
 
     // Destroy all (LIFO)
     arena.Destroy(arr);
     arena.Destroy(p);
-    REQUIRE(NonTrivial::dtorCount == 4);
+    REQUIRE(NonTrivialSA::dtorCount == 4);
     REQUIRE(arena.IsEmpty());
 }
 

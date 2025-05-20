@@ -7,30 +7,30 @@
 using namespace TKit;
 
 // A helper non-trivial type to test Create<T> and Destroy<T>
-struct NonTrivial
+struct NonTrivialBA
 {
-    static inline u32 ctorCount = 0;
-    static inline u32 dtorCount = 0;
+    static inline u32 CtorCount = 0;
+    static inline u32 DtorCount = 0;
     u32 value;
 
-    NonTrivial(u32 v) : value(v)
+    NonTrivialBA(const u32 p_Value) : value(p_Value)
     {
-        ++ctorCount;
+        ++CtorCount;
     }
-    ~NonTrivial()
+    ~NonTrivialBA()
     {
-        ++dtorCount;
+        ++DtorCount;
     }
 
-    NonTrivial(const NonTrivial &) = delete;
-    NonTrivial &operator=(const NonTrivial &) = delete;
+    NonTrivialBA(const NonTrivialBA &) = delete;
+    NonTrivialBA &operator=(const NonTrivialBA &) = delete;
 };
 
 TEST_CASE("Constructor and initial state", "[BlockAllocator]")
 {
     constexpr usize bufSize = 1024;
     constexpr usize allocSize = 64;
-    BlockAllocator alloc(bufSize, allocSize);
+    const BlockAllocator alloc(bufSize, allocSize);
 
     REQUIRE(alloc.IsEmpty());
     REQUIRE(!alloc.IsFull());
@@ -125,16 +125,16 @@ TEST_CASE("Move constructor and move assignment", "[BlockAllocator]")
 
 TEST_CASE("Create<T> and Destroy<T>", "[BlockAllocator]")
 {
-    auto alloc = BlockAllocator::CreateFromType<NonTrivial>(3);
+    auto alloc = BlockAllocator::CreateFromType<NonTrivialBA>(3);
 
-    NonTrivial::ctorCount = 0;
-    NonTrivial::dtorCount = 0;
+    NonTrivialBA::CtorCount = 0;
+    NonTrivialBA::DtorCount = 0;
 
-    // Create three NonTrivial instances
-    NonTrivial *a = alloc.Create<NonTrivial>(7);
-    NonTrivial *b = alloc.Create<NonTrivial>(8);
-    NonTrivial *c = alloc.Create<NonTrivial>(9);
-    REQUIRE(NonTrivial::ctorCount == 3);
+    // Create three NonTrivialBA instances
+    NonTrivialBA *a = alloc.Create<NonTrivialBA>(7);
+    NonTrivialBA *b = alloc.Create<NonTrivialBA>(8);
+    NonTrivialBA *c = alloc.Create<NonTrivialBA>(9);
+    REQUIRE(NonTrivialBA::CtorCount == 3);
     REQUIRE(a->value == 7);
     REQUIRE(b->value == 8);
     REQUIRE(c->value == 9);
@@ -144,7 +144,7 @@ TEST_CASE("Create<T> and Destroy<T>", "[BlockAllocator]")
     alloc.Destroy(a);
     alloc.Destroy(b);
     alloc.Destroy(c);
-    REQUIRE(NonTrivial::dtorCount == 3);
+    REQUIRE(NonTrivialBA::DtorCount == 3);
     REQUIRE(alloc.IsEmpty());
 }
 
@@ -160,7 +160,7 @@ TEST_CASE("User-provided buffer constructor", "[BlockAllocator]")
     REQUIRE(alloc.GetAllocationSize() == allocSize);
     REQUIRE(alloc.GetRemainingCount() == bufSize / allocSize);
 
-    void *p = alloc.Allocate();
+    const void *p = alloc.Allocate();
     REQUIRE(p);
     REQUIRE(alloc.Belongs(p));
 }

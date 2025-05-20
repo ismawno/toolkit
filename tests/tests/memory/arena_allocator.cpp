@@ -25,30 +25,30 @@ struct WarningShutter : Catch::EventListenerBase
 CATCH_REGISTER_LISTENER(WarningShutter)
 
 // A helper non-trivial type to test Create/NCreate
-struct NonTrivial
+struct NonTrivialAA
 {
-    static inline u32 ctorCount = 0;
-    static inline u32 dtorCount = 0;
-    u32 value;
+    static inline u32 CtorCount = 0;
+    static inline u32 DtorCount = 0;
+    u32 Value;
 
-    NonTrivial(u32 v) : value(v)
+    NonTrivialAA(const u32 p_Value) : Value(p_Value)
     {
-        ++ctorCount;
+        ++CtorCount;
     }
-    ~NonTrivial()
+    ~NonTrivialAA()
     {
-        ++dtorCount;
+        ++DtorCount;
     }
 
     // non-copyable to force Create path
-    NonTrivial(const NonTrivial &) = delete;
-    NonTrivial &operator=(const NonTrivial &) = delete;
+    NonTrivialAA(const NonTrivialAA &) = delete;
+    NonTrivialAA &operator=(const NonTrivialAA &) = delete;
 };
 
 TEST_CASE("Constructor and initial state", "[ArenaAllocator]")
 {
     constexpr usize size = 1024;
-    ArenaAllocator arena(size);
+    const ArenaAllocator arena(size);
 
     REQUIRE(arena.IsEmpty());
     REQUIRE(!arena.IsFull());
@@ -63,10 +63,10 @@ TEST_CASE("Constructor and initial state", "[ArenaAllocator]")
 TEST_CASE("Allocate blocks and invariants", "[ArenaAllocator]")
 {
     ArenaAllocator arena(256);
-    auto beforeRem = arena.GetRemaining();
+    const usize beforeRem = arena.GetRemaining();
 
     // allocate 64 bytes
-    void *p = arena.Allocate(64);
+    const void *p = arena.Allocate(64);
     REQUIRE(p);
     REQUIRE(arena.Belongs(p));
     // allocated + remaining == total
@@ -74,7 +74,7 @@ TEST_CASE("Allocate blocks and invariants", "[ArenaAllocator]")
     REQUIRE(arena.GetRemaining() < beforeRem);
 
     // default Allocate<T>
-    auto pi = arena.Allocate<u32>(4);
+    const auto pi = arena.Allocate<u32>(4);
     REQUIRE(pi != nullptr);
     // It's safe to write into it
     for (u32 i = 0; i < 4; ++i)
@@ -91,7 +91,7 @@ TEST_CASE("Alignment behavior", "[ArenaAllocator]")
 
     // ask for 1 byte but 32-byte alignment
     constexpr usize align = 32;
-    void *p = arena.Allocate(1, align);
+    const void *p = arena.Allocate(1, align);
     REQUIRE(p);
     REQUIRE(arena.Belongs(p));
     REQUIRE(reinterpret_cast<uptr>(p) % align == 0);
@@ -120,7 +120,7 @@ TEST_CASE("Allocate until full and Reset", "[ArenaAllocator]")
     arena.Reset();
     REQUIRE(arena.IsEmpty());
     REQUIRE(arena.GetRemaining() == arena.GetSize());
-    void *p2 = arena.Allocate(8);
+    const void *p2 = arena.Allocate(8);
     REQUIRE(p2 != nullptr);
     REQUIRE(!arena.IsEmpty());
 }
@@ -153,23 +153,23 @@ TEST_CASE("Create<T> and NCreate<T>", "[ArenaAllocator]")
     ArenaAllocator arena(512);
 
     // Create a single u32
-    u32 *pi = arena.Create<u32>(42);
+    const u32 *pi = arena.Create<u32>(42);
     REQUIRE(pi != nullptr);
     REQUIRE(*pi == 42);
 
-    // Create an array of NonTrivial, track ctor/dtor
-    NonTrivial::ctorCount = 0;
-    NonTrivial::dtorCount = 0;
-    auto ptr = arena.NCreate<NonTrivial>(3, 7);
-    REQUIRE(ptr != nullptr);
-    REQUIRE(NonTrivial::ctorCount == 3);
+    // Create an array of NonTrivialAA, track ctor/dtor
+    NonTrivialAA::CtorCount = 0;
+    NonTrivialAA::DtorCount = 0;
+    const auto ptr = arena.NCreate<NonTrivialAA>(3, 7);
+    REQUIRE(ptr);
+    REQUIRE(NonTrivialAA::CtorCount == 3);
     for (u32 i = 0; i < 3; ++i)
-        REQUIRE(ptr[i].value == 7);
+        REQUIRE(ptr[i].Value == 7);
 
     // manually destroy them since ArenaAllocator won't call dtors
     for (u32 i = 0; i < 3; ++i)
-        ptr[i].~NonTrivial();
-    REQUIRE(NonTrivial::dtorCount == 3);
+        ptr[i].~NonTrivialAA();
+    REQUIRE(NonTrivialAA::DtorCount == 3);
 }
 
 TEST_CASE("User-provided buffer constructor", "[ArenaAllocator]")
@@ -181,7 +181,7 @@ TEST_CASE("User-provided buffer constructor", "[ArenaAllocator]")
     REQUIRE(arena.IsEmpty());
     REQUIRE(arena.GetSize() == size);
 
-    void *p = arena.Allocate(32);
+    const void *p = arena.Allocate(32);
     REQUIRE(p);
     REQUIRE(arena.Belongs(p));
 }
