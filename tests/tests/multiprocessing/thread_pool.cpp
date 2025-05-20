@@ -20,7 +20,7 @@ TEST_CASE("ThreadPool executes Task<void>s", "[ThreadPool]")
     // Submit several void tasks
     for (usize i = 0; i < taskCount; ++i)
     {
-        auto t = Ref<Task<void>>::Create([&](usize) { counter.fetch_add(1, std::memory_order_relaxed); });
+        const auto t = Ref<Task<void>>::Create([&](usize) { counter.fetch_add(1, std::memory_order_relaxed); });
         tasks.Append(t);
         pool.SubmitTask(t); // implicitly converts to Ref<ITask>
     }
@@ -41,7 +41,7 @@ TEST_CASE("ThreadPool executes Task<u32>s and preserves results", "[ThreadPool]"
     // Submit tasks that encode (taskIndex * 10 + threadIndex)
     for (usize i = 0; i < taskCount; ++i)
     {
-        auto t = Ref<Task<u32>>::Create([i](usize idx) { return u32(i * 10 + idx); });
+        const auto t = Ref<Task<u32>>::Create([i](usize idx) { return u32(i * 10 + idx); });
         tasks.Append(t);
         pool.SubmitTask(t);
     }
@@ -50,7 +50,7 @@ TEST_CASE("ThreadPool executes Task<u32>s and preserves results", "[ThreadPool]"
 
     for (usize i = 0; i < taskCount; ++i)
     {
-        u32 res = tasks[i]->WaitForResult();
+        const u32 res = tasks[i]->WaitForResult();
         REQUIRE(res / 10 == u32(i));      // correct task index
         REQUIRE(res % 10 >= 1);           // valid thread index
         REQUIRE(res % 10 <= threadCount); // valid thread index

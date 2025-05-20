@@ -4,7 +4,6 @@
 #include "tkit/container/dynamic_array.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <atomic>
-#include <iterator>
 
 using namespace TKit;
 using namespace TKit::Alias;
@@ -18,9 +17,10 @@ TEST_CASE("ForEach (void) with ThreadPool sums all elements", "[ForEach][ThreadP
     std::atomic<usize> totalSum{0};
 
     // Partition [0,100) into 5 chunks; each chunk adds its length to totalSum
-    ForEach(pool, firstIndex, lastIndex, partitionCount, [&](usize start, usize end, usize /*threadIndex*/) {
-        totalSum.fetch_add(end - start, std::memory_order_relaxed);
-    });
+    ForEach(pool, firstIndex, lastIndex, partitionCount,
+            [&](const usize p_Start, const usize p_End, const usize /*p_ThreadIndex*/) {
+                totalSum.fetch_add(p_End - p_Start, std::memory_order_relaxed);
+            });
 
     pool.AwaitPendingTasks();
     REQUIRE(totalSum.load(std::memory_order_relaxed) == lastIndex - firstIndex);
@@ -38,15 +38,15 @@ TEST_CASE("ForEach with output iterator collects and executes all", "[ForEach][T
 
     // Partition [10,25) into 5 chunks; capture tasks and sum chunk sizes
     ForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount,
-            [&](usize start, usize end, usize /*threadIndex*/) {
-                totalSum.fetch_add(end - start, std::memory_order_relaxed);
+            [&](const usize p_Start, const usize p_End, const usize /*p_ThreadIndex*/) {
+                totalSum.fetch_add(p_End - p_Start, std::memory_order_relaxed);
             });
 
     // we should have one task per partition
     REQUIRE(tasks.GetSize() == partitionCount);
 
     // wait for each task to finish
-    for (auto &t : tasks)
+    for (const auto &t : tasks)
         t->WaitUntilFinished();
 
     REQUIRE(totalSum.load(std::memory_order_relaxed) == lastIndex - firstIndex);
@@ -64,16 +64,17 @@ TEST_CASE("ForEachMainThreadLead with output iterator partitions and returns mai
     tasks.Resize(partitionCount - 1);
 
     // Callable returns usize length for main partition; others add to otherSum
-    auto callable = [&](usize start, usize end, usize /*threadIndex*/) -> usize {
-        if (start != firstIndex)
+    const auto callable = [&](const usize p_Start, const usize p_End, const usize /*p_ThreadIndex*/) -> usize {
+        if (p_Start != firstIndex)
         {
-            otherSum.fetch_add(end - start, std::memory_order_relaxed);
+            otherSum.fetch_add(p_End - p_Start, std::memory_order_relaxed);
             return 0;
         }
-        return end - start;
+        return p_End - p_Start;
     };
 
-    usize mainLength = ForEachMainThreadLead(pool, firstIndex, lastIndex, tasks.begin(), partitionCount, callable);
+    const usize mainLength =
+        ForEachMainThreadLead(pool, firstIndex, lastIndex, tasks.begin(), partitionCount, callable);
 
     // main partition [0,25) length = 25
     REQUIRE(mainLength == (lastIndex - firstIndex) / partitionCount);
@@ -81,7 +82,7 @@ TEST_CASE("ForEachMainThreadLead with output iterator partitions and returns mai
     REQUIRE(tasks.GetSize() == partitionCount - 1);
 
     // wait all other partitions
-    for (auto &t : tasks)
+    for (const auto &t : tasks)
         t->WaitUntilFinished();
     pool.AwaitPendingTasks();
 
@@ -99,8 +100,8 @@ TEST_CASE("ForEachMainThreadLead without output iterator executes all partitions
     std::atomic<usize> totalSum{0};
 
     // Callable adds length of each range to totalSum
-    auto callable = [&](usize start, usize end, usize /*threadIndex*/) {
-        totalSum.fetch_add(end - start, std::memory_order_relaxed);
+    const auto callable = [&](const usize p_Start, const usize p_End, const usize /*p_ThreadIndex*/) {
+        totalSum.fetch_add(p_End - p_Start, std::memory_order_relaxed);
     };
 
     // This overload does not return a value

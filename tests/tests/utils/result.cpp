@@ -8,7 +8,7 @@ TEST_CASE("Ok and Error static constructors, basic accessors", "[Result]")
 {
     SECTION("Ok with u32")
     {
-        auto r = Result<u32>::Ok(42);
+        const auto r = Result<u32>::Ok(42);
         REQUIRE(r.IsOk());
         REQUIRE(static_cast<bool>(r));
         REQUIRE(r.GetValue() == 42);
@@ -17,7 +17,7 @@ TEST_CASE("Ok and Error static constructors, basic accessors", "[Result]")
     }
     SECTION("Error with const char*")
     {
-        auto e = Result<u32>::Error("failure");
+        const auto e = Result<u32>::Error("failure");
         REQUIRE(!e.IsOk());
         REQUIRE(!static_cast<bool>(e));
         REQUIRE(std::string(e.GetError()) == "failure");
@@ -26,7 +26,7 @@ TEST_CASE("Ok and Error static constructors, basic accessors", "[Result]")
 
 TEST_CASE("Pointer-like operators", "[Result]")
 {
-    auto r = Result<std::string>::Ok("hello");
+    const auto r = Result<std::string>::Ok("hello");
     // operator->
     REQUIRE(r->size() == 5);
     // operator*
@@ -36,7 +36,7 @@ TEST_CASE("Pointer-like operators", "[Result]")
 TEST_CASE("Copy construction and copy assignment", "[Result]")
 {
     // copy Ok<Result<std::string>>
-    auto r1 = Result<std::string>::Ok("orig");
+    const auto r1 = Result<std::string>::Ok("orig");
     auto r2 = r1; // copy ctor
     r2.GetValue()[0] = 'O';
     REQUIRE(r1.GetValue() == "orig");
@@ -48,8 +48,8 @@ TEST_CASE("Copy construction and copy assignment", "[Result]")
     REQUIRE(r3.GetValue() == "orig");
 
     // copy Error<Result<u32, std::string>>
-    auto e1 = Result<u32, std::string>::Error(std::string("err"));
-    auto e2 = e1; // copy ctor
+    const auto e1 = Result<u32, std::string>::Error(std::string("err"));
+    const auto e2 = e1; // copy ctor
     REQUIRE(e2.GetError() == "err");
 
     // copy assign Ok -> Error
@@ -63,7 +63,7 @@ TEST_CASE("Move construction and move assignment", "[Result]")
 {
     // move Ok<Result<std::string>>
     auto r1 = Result<std::string>::Ok("move");
-    auto r2 = std::move(r1);
+    const auto r2 = std::move(r1);
     REQUIRE(r2.GetValue() == "move");
 
     // move assign Error
@@ -97,7 +97,7 @@ TEST_CASE("Destruction cleans up union members without leak", "[Result]")
     // Ok path
     {
         RTrack::ctor = RTrack::dtor = 0;
-        auto r = Result<RTrack>::Ok();
+        const auto r = Result<RTrack>::Ok();
         REQUIRE(RTrack::ctor == 1);
         // r goes out of scope → destructor should call ~RTrack()
     }
@@ -106,7 +106,7 @@ TEST_CASE("Destruction cleans up union members without leak", "[Result]")
     // Error path
     {
         RTrack::ctor = RTrack::dtor = 0;
-        auto e = Result<u32, RTrack>::Error();
+        const auto e = Result<u32, RTrack>::Error();
         REQUIRE(RTrack::ctor == 1);
     }
     REQUIRE(RTrack::ctor == RTrack::dtor);
@@ -114,11 +114,11 @@ TEST_CASE("Destruction cleans up union members without leak", "[Result]")
 
 TEST_CASE("Result<void> Ok and Error basic", "[Result][void]")
 {
-    auto okRes = Result<>::Ok();
+    const auto okRes = Result<>::Ok();
     REQUIRE(okRes.IsOk());
     REQUIRE(static_cast<bool>(okRes));
 
-    auto errRes = Result<>::Error("failure");
+    const auto errRes = Result<>::Error("failure");
     REQUIRE(!errRes.IsOk());
     REQUIRE(!static_cast<bool>(errRes));
     REQUIRE(std::string(errRes.GetError()) == "failure");
@@ -126,8 +126,8 @@ TEST_CASE("Result<void> Ok and Error basic", "[Result][void]")
 
 TEST_CASE("Result<void, std::string> copy and copy-assignment", "[Result][void]")
 {
-    auto e1 = Result<void, std::string>::Error(std::string("copyErr"));
-    auto e2 = e1; // copy ctor
+    const auto e1 = Result<void, std::string>::Error(std::string("copyErr"));
+    const auto e2 = e1; // copy ctor
     REQUIRE(!e2.IsOk());
     REQUIRE(e2.GetError() == "copyErr");
 
@@ -155,7 +155,7 @@ TEST_CASE("Result<void, Track> destruction cleans up error storage", "[Result][v
 
     {
         RTrack::ctor = RTrack::dtor = 0;
-        auto r = Result<void, RTrack>::Error();
+        const auto r = Result<void, RTrack>::Error();
         REQUIRE(RTrack::ctor == 1);
     }
     REQUIRE(RTrack::ctor == RTrack::dtor);

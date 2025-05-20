@@ -10,7 +10,7 @@ using namespace TKit;
 TEST_CASE("Task<T> basic behavior", "[Task]")
 {
     // Create a Task<u32> that doubles the thread index
-    auto task = Ref<Task<u32>>::Create([](const usize p_Index) { return u32(p_Index * 2); });
+    const auto task = Ref<Task<u32>>::Create([](const usize p_Index) { return u32(p_Index * 2); });
     REQUIRE(!task->IsFinished());
 
     // Invoke it with index 5
@@ -44,7 +44,7 @@ TEST_CASE("Task<void> basic behavior", "[Task]")
 TEST_CASE("Task::WaitUntilFinished blocks from another thread", "[Task]")
 {
     // Create a task that sleeps then returns its index
-    auto task = Ref<Task<u32>>::Create([](const usize p_Index) {
+    const auto task = Ref<Task<u32>>::Create([](const usize p_Index) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         return u32(p_Index);
     });
