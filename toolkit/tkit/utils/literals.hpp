@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tkit/utils/alias.hpp"
+#include "tkit/preprocessor/system.hpp"
 
 namespace TKit::Literals
 {

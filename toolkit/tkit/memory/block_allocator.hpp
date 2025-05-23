@@ -8,7 +8,6 @@
 #include "tkit/utils/non_copyable.hpp"
 #include "tkit/memory/memory.hpp"
 #include "tkit/profiling/macros.hpp"
-#include "tkit/container/alias.hpp"
 #include "tkit/utils/logging.hpp"
 #include <mutex>
 

@@ -5,7 +5,6 @@
         "[TOOLKIT] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_MULTIPROCESSING"
 #endif
 
-#include "tkit/utils/concepts.hpp"
 #include "tkit/multiprocessing/task_manager.hpp"
 #include "tkit/profiling/macros.hpp"
 #include "tkit/container/static_array.hpp"

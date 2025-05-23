@@ -1,6 +1,5 @@
 #pragma once
 
-#include "tkit/preprocessor/system.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <limits>

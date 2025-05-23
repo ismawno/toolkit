@@ -1,6 +1,5 @@
 #include "tkit/core/pch.hpp"
 #include "tkit/multiprocessing/task.hpp"
-#include "tkit/multiprocessing/task_manager.hpp"
 
 namespace TKit
 {

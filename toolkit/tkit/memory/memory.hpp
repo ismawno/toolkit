@@ -2,7 +2,7 @@
 
 #include "tkit/preprocessor/system.hpp"
 #include "tkit/utils/alias.hpp"
-#include <functional>
+#include <algorithm>
 
 namespace TKit::Memory
 {

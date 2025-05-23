@@ -7,7 +7,6 @@
 
 #include "tkit/memory/ptr.hpp"
 #include <functional>
-#include <future>
 
 namespace TKit
 {

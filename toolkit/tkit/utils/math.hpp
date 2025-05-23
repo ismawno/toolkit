@@ -1,7 +1,5 @@
 #pragma once
 
-#include "tkit/utils/alias.hpp"
-
 namespace TKit
 {
 template <std::floating_point Float> bool ApproachesZero(const Float x)

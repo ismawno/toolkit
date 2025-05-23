@@ -1,6 +1,5 @@
 #pragma once
 
-#include "tkit/preprocessor/system.hpp"
 #include "tkit/utils/alias.hpp"
 
 // This utility is used is here because I usually create projects where 2D and 3D entities are involved, and it is handy

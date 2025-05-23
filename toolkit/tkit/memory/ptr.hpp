@@ -1,9 +1,7 @@
 #pragma once
 
 #include "tkit/utils/logging.hpp"
-#include "tkit/utils/concepts.hpp"
 #include "tkit/utils/non_copyable.hpp"
-#include <memory>
 #include <atomic>
 
 namespace TKit

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "tkit/memory/memory.hpp"
-#include <vector>
 #include <unordered_map>
 #include <unordered_set>
 #include <map>
