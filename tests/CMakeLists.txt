@@ -8,8 +8,7 @@ include(FetchContent)
 FetchContent_Declare(
   Catch2
   GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG        v3.6.0
-)
+  GIT_TAG v3.6.0)
 
 FetchContent_MakeAvailable(Catch2)
 
@@ -28,20 +27,20 @@ set(SOURCES
     tests/multiprocessing/thread_pool.cpp
     tests/multiprocessing/for_each.cpp
     tests/utils/result.cpp
-    tests/utils/hash.cpp
-)
+    tests/utils/hash.cpp)
 
 add_executable(toolkit-tests ${SOURCES})
 
 target_link_libraries(toolkit-tests PRIVATE Catch2::Catch2WithMain toolkit)
 target_include_directories(toolkit-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-if (MSVC)
-    tkit_configure_compile_link_options(toolkit-tests FLAGS /W4 /WX)
+if(MSVC)
+  tkit_configure_compile_link_options(toolkit-tests FLAGS /W4 /WX)
 else()
-    tkit_configure_compile_link_options(toolkit-tests FLAGS -Wall -Wextra -Wpedantic -Werror)
+  tkit_configure_compile_link_options(toolkit-tests FLAGS -Wall -Wextra
+                                      -Wpedantic -Werror)
 endif()
 
 include(CTest)
 include(Catch)
-Catch_discover_tests(toolkit-tests)
+catch_discover_tests(toolkit-tests)
