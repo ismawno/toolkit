@@ -258,7 +258,7 @@ if refetch is not None and deps_path.exists():
                 shutil.rmtree(path, onexc=on_error if Convoy.is_windows else None)
 
 gitconfig = Path.home() / ".gitconfig"
-if gitconfig.exists():
+if gitconfig.exists() and deps_path.exists():
     Convoy.verbose(f"Found git configuration file at <underline>{gitconfig}</underline>.")
     with open(gitconfig) as f:
         content = f.read()
@@ -279,7 +279,7 @@ if gitconfig.exists():
             )
         else:
             Convoy.verbose(f"<fyellow>Failed to mark <underline>{dep}</underline> as owner safe to git. Skipping...")
-else:
+elif not gitconfig.exists():
     Convoy.verbose(
         "<fyellow>Git configuration file not found. You may experience issues with git's safe directory feature in some specific cases. If so, remove your build directory and re-run this script."
     )
