@@ -18,6 +18,14 @@
 #    define TKIT_THREAD_POOL_MAX_TASKS 32
 #endif
 
+#if TKIT_THREAD_POOL_MAX_THREADS < 1
+#    error "[TOOLKIT] The maximum threads of a thread pool must be greater than one"
+#endif
+
+#if TKIT_THREAD_POOL_MAX_TASKS < 1
+#    error "[TOOLKIT] The maximum tasks of a thread pool must be greater than one"
+#endif
+
 namespace TKit
 {
 // TODO: Implement a lock-free queue

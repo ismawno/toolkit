@@ -12,6 +12,9 @@
 #ifndef TKIT_STACK_ALLOCATOR_MAX_ENTRIES
 #    define TKIT_STACK_ALLOCATOR_MAX_ENTRIES 128
 #endif
+#if TKIT_STACK_ALLOCATOR_MAX_ENTRIES < 1
+#    error "[TOOLKIT] Maximum stack allocator entries must be greater than one"
+#endif
 
 namespace TKit
 {
