@@ -5,7 +5,7 @@
 #include "tkit/profiling/clock.hpp"
 #include <fstream>
 
-namespace TKit
+namespace TKit::Perf
 {
 struct Number
 {
@@ -88,4 +88,4 @@ void RecordParallelSum(const ThreadPoolSumSettings &p_Settings) noexcept
         nthreads *= 2;
     }
 }
-} // namespace TKit
+} // namespace TKit::Perf

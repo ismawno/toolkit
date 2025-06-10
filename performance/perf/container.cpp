@@ -4,7 +4,7 @@
 #include "tkit/container/dynamic_array.hpp"
 #include <fstream>
 
-namespace TKit
+namespace TKit::Perf
 {
 struct Example
 {
@@ -142,4 +142,4 @@ void RecordDynamicArray(const ContainerSettings &p_Settings) noexcept
              << moveTime.AsNanoseconds() << '\n';
     }
 }
-} // namespace TKit
+} // namespace TKit::Perf

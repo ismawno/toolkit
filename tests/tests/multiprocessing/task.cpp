@@ -1,7 +1,6 @@
 #include "tkit/memory/ptr.hpp"
 #include "tkit/multiprocessing/task.hpp"
 #include <catch2/catch_test_macros.hpp>
-#include <atomic>
 #include <thread>
 #include <chrono>
 

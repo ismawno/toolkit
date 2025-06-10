@@ -1,6 +1,5 @@
 #include "tkit/container/container.hpp"
 #include "tkit/container/array.hpp"
-#include "tkit/container/dynamic_array.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <algorithm>
 #include <cstring>

@@ -84,11 +84,11 @@ inline thread_local bool DisabledAsserts = false;
 #ifdef TKIT_ENABLE_INFO_LOGS
 #    define TKIT_LOG_INFO(...)                                                                                         \
         if (!TKit::Detail::DisabledInfoLogs)                                                                           \
-        TKit::Detail::LogMessage("INFO", __FILE__, Limits<i32>::max(), TKIT_LOG_COLOR_GREEN, false,                    \
+        TKit::Detail::LogMessage("INFO", __FILE__, TKit::Limits<i32>::max(), TKIT_LOG_COLOR_GREEN, false,              \
                                  TKIT_FORMAT(__VA_ARGS__))
 #    define TKIT_LOG_INFO_IF(p_Condition, ...)                                                                         \
         if ((p_Condition) && !TKit::Detail::DisabledInfoLogs)                                                          \
-        TKit::Detail::LogMessage("INFO", __FILE__, Limits<i32>::max(), TKIT_LOG_COLOR_GREEN, false,                    \
+        TKit::Detail::LogMessage("INFO", __FILE__, TKit::Limits<i32>::max(), TKIT_LOG_COLOR_GREEN, false,              \
                                  TKIT_FORMAT(__VA_ARGS__))
 
 #    define TKIT_IGNORE_INFO_LOGS_PUSH() TKit::Detail::DisabledInfoLogs = true

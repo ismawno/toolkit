@@ -1,7 +1,5 @@
-#include "tkit/utils/logging.hpp"
 #include "tkit/memory/ptr.hpp"
 #include <catch2/catch_test_macros.hpp>
-#include <unordered_map>
 
 using namespace TKit;
 using namespace TKit::Alias;

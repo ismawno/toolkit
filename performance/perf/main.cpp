@@ -1,16 +1,16 @@
 #include "perf/memory.hpp"
 #include "perf/multiprocessing.hpp"
 #include "perf/container.hpp"
-#include "tkit/memory/block_allocator.hpp"
 #include "tkit/profiling/clock.hpp"
+#include "tkit/utils/logging.hpp"
 
-using namespace TKit;
+using namespace TKit::Alias;
 
 int main()
 {
-    const Settings settings = ReadOrWriteSettingsFile();
+    const TKit::Perf::Settings settings = TKit::Perf::ReadOrWriteSettingsFile();
 
-    Clock clock;
+    TKit::Clock clock;
     TKIT_LOG_INFO("[TOOLKIT] Running thread pool sum...");
     RecordThreadPoolSum(settings.ThreadPoolSum);
 

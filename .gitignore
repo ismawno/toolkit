@@ -8,6 +8,7 @@ performance/perf-settings.yaml
 toolkit/tkit/reflection/
 .venv/
 .DS_Store
+.cache/
 docs/html/
 docs/latex/
 __pycache__/

@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <fstream>
 
-namespace TKit
+namespace TKit::Perf
 {
 Settings ReadOrWriteSettingsFile()
 {
@@ -23,4 +23,4 @@ Settings ReadOrWriteSettingsFile()
     std::filesystem::create_directories(g_Root + "/performance/results");
     return settings;
 }
-} // namespace TKit
+} // namespace TKit::Perf

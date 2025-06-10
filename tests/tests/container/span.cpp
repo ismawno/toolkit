@@ -1,7 +1,6 @@
 #include "tkit/container/span.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <string>
-#include <algorithm>
 
 using namespace TKit;
 using namespace TKit::Container;

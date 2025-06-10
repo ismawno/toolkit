@@ -5,9 +5,8 @@
 #include "tkit/memory/arena_allocator.hpp"
 #include "tkit/container/dynamic_array.hpp"
 #include <fstream>
-#include <thread>
 
-namespace TKit
+namespace TKit::Perf
 {
 struct ExampleData
 {
@@ -105,4 +104,4 @@ void RecordArenaAllocator(const AllocationSettings &p_Settings) noexcept
         file << passes << ',' << allocTime.AsNanoseconds() << '\n';
     }
 }
-} // namespace TKit
+} // namespace TKit::Perf
