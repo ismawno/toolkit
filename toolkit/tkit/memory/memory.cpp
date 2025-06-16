@@ -2,6 +2,7 @@
 #include "tkit/memory/memory.hpp"
 #include "tkit/profiling/macros.hpp"
 #include "tkit/preprocessor/utils.hpp"
+#include <cstring>
 
 namespace TKit::Memory
 {
