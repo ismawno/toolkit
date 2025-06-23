@@ -165,12 +165,7 @@ target_include_directories(toolkit PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_precompile_headers(toolkit PRIVATE
                           ${CMAKE_CURRENT_SOURCE_DIR}/tkit/core/pch.hpp)
 
-if(MSVC)
-  tkit_configure_compile_link_options(toolkit FLAGS /W4 /WX)
-else()
-  tkit_configure_compile_link_options(toolkit FLAGS -Wall -Wextra -Wpedantic
-                                      -Werror)
-endif()
+tkit_default_configure(toolkit)
 
 target_compile_definitions(toolkit PUBLIC TKIT_ROOT_PATH="${TOOLKIT_ROOT_PATH}")
 

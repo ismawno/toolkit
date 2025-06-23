@@ -302,6 +302,24 @@ function(tkit_configure_compile_link_options target)
   endif()
 endfunction()
 
+function(tkit_default_configure target)
+  if(MSVC)
+    tkit_configure_compile_link_options(${target} FLAGS /W4 /WX)
+  elseif(UNIX AND APPLE)
+    tkit_configure_compile_link_options(${target} FLAGS -Wall -Wextra
+                                        -Wpedantic -Werror)
+  else()
+    tkit_configure_compile_link_options(
+      ${target}
+      FLAGS
+      -Wall
+      -Wextra
+      -Wpedantic
+      -Werror
+      -Wno-changes-meaning)
+  endif()
+endfunction()
+
 # Add subdirectories
 add_subdirectory(toolkit)
 
