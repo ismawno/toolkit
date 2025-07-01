@@ -26,4 +26,29 @@ template <glm::length_t L, typename T, glm::qualifier Q> struct Codec<glm::vec<L
         return true;
     }
 };
+template <typename T, glm::qualifier Q> struct Codec<glm::quat<T, Q>>
+{
+    static Node Encode(const glm::quat<T, Q> &p_Instance) noexcept
+    {
+        Node node;
+        node.push_back(p_Instance.x);
+        node.push_back(p_Instance.y);
+        node.push_back(p_Instance.z);
+        node.push_back(p_Instance.w);
+        node.SetStyle(YAML::EmitterStyle::Flow);
+        return node;
+    }
+
+    static bool Decode(const Node &p_Node, glm::quat<T, Q> &p_Instance) noexcept
+    {
+        if (!p_Node.IsSequence() || p_Node.size() != L)
+            return false;
+
+        p_Instance.x = p_Node[0].as<T>();
+        p_Instance.y = p_Node[1].as<T>();
+        p_Instance.z = p_Node[2].as<T>();
+        p_Instance.w = p_Node[3].as<T>();
+        return true;
+    }
+};
 } // namespace TKit::Yaml
