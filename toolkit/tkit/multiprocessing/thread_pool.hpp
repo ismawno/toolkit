@@ -9,6 +9,7 @@
 #include "tkit/profiling/macros.hpp"
 #include "tkit/container/static_array.hpp"
 #include <thread>
+#include <mutex>
 
 #ifndef TKIT_THREAD_POOL_MAX_THREADS
 #    define TKIT_THREAD_POOL_MAX_THREADS 16

@@ -305,7 +305,7 @@ endfunction()
 function(tkit_default_configure target)
   if(MSVC)
     tkit_configure_compile_link_options(${target} FLAGS /W4 /WX)
-  elseif(UNIX AND APPLE)
+  elseif((UNIX AND APPLE) OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     tkit_configure_compile_link_options(${target} FLAGS -Wall -Wextra
                                         -Wpedantic -Werror)
   else()
