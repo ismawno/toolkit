@@ -43,7 +43,7 @@ The building process is very straightforward (or so I hope). Because of how much
 
 The reason behind this is that `CMake` sometimes stores some variables in cache that you may not want to persist. This results in some default values for variables being only relevant if the variable itself is not already stored in cache. The problem with this is that I feel it is very easy to lose track of what configuration is being built unless I type in all my `CMake` flags explicitly every time I build the project, and that is just unbearable. Hence, these python scripts provide flags with reliable defaults stored in a `build.ini` file that are always applied unless explicitly changed with a command line argument.
 
-Specifically, the [build.py](https://github.com/ismawno/toolkit/blob/main/setup/build.py) file, when executed from root, will handle the entire `CMake` execution process for you. You can enter `python setup/build.py -h` to see the available options.
+Specifically, the [build.py](https://github.com/ismawno/toolkit/blob/main/setup/build.py) file, when executed from the root folder, will handle the entire `CMake` execution process for you. You can enter `python setup/build.py -h` to see the available options.
 
 If you prefer using `CMake` directly, that's perfectly fine as well. Create a `build` folder, `cd` into it, and run `cmake ..`. All available Toolkit options will be printed out, and they are self-explanatory. If an inconsistent combination of these options is entered, a warning or error message should appear (or so I hope).
 
