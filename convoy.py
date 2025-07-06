@@ -83,7 +83,7 @@ class _Style:
                     )
                     break
             else:
-                formatted += segment
+                formatted += f"<{segment}"
         if void:
             return formatted
 
