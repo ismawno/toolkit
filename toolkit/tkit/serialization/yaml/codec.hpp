@@ -21,14 +21,34 @@ TKIT_COMPILER_WARNING_IGNORE_POP()
 namespace TKit::Yaml
 {
 using Node = YAML::Node;
+
+/**
+ * @brief This struct encapsulated serialization and deserialization code for a type `T`.
+ *
+ * To enable serialization for a custom type, a valid specialization of this struct for it must exist. There are many
+ * ways to generate it:
+ *
+ * - *Manual approach*: The simplest. Create a specialization of `Codec` and (de)serialize your type according to your
+ * specific needs.
+
+ * - *Automatic generation through reflection API*: If the class has been marked for reflection code generation, such
+ * code is visible, and the macro `TKIT_SERIALIZATION_FROM_REFLECTION` has been defined, `Codec` will try to
+ * automatically generate (de)serialization code for `T`. This generation will be limited and not very customizable.
+ *
+ * - *Automatic generation through serialization API*: The most customizable and recommended approach. It will directly
+ generate `Codec` specialization for your types, with the possibility of customizing how fields serialize or
+ deserialize. Further documentatuion can be found in the `serialize.hpp` file.
+ *
+ */
 template <typename T> struct Codec
 {
     static Node Encode(const T &p_Instance) noexcept
     {
+        Node node;
+#ifdef TKIT_SERIALIZATION_FROM_REFLECTION
         static_assert(Reflect<T>::Implemented || std::is_enum_v<T>,
                       "If type has not a dedicated 'Codec<T>' specialization, it must be reflected "
-                      "to auto-serialize");
-        Node node;
+                      "to auto-serialize. It is recommended to use the serialization marks and scripts available.");
         if constexpr (Reflect<T>::Implemented)
             Reflect<T>::ForEachField(
                 [&node, &p_Instance](const auto &p_Field) { node[p_Field.Name] = p_Field.Get(p_Instance); });
@@ -37,18 +57,39 @@ template <typename T> struct Codec
             using Integer = std::underlying_type_t<T>;
             node = Node{static_cast<Integer>(p_Instance)};
         }
+#else
+        if constexpr (Reflect<T>::Implemented)
+            static_assert(
+                std::is_enum_v<T>,
+                "By default, the general implementation of Codec<T> only adds automatic (de)serialization of "
+                "enums, even if reflection code for T has been generated and is visible when generating this "
+                "template (which IS the case). To enable automatic serialization using such reflection, "
+                "simply define TKIT_SERIALIZATION_FROM_REFLECTION before including this file. Serialization code "
+                "generated this way will be somewhat limited and is not recommended. Use the the serialization marks "
+                "and scripts instead, which behave very similarly to the reflection API.");
+        else
+            static_assert(
+                std::is_enum_v<T>,
+                "By default, the general implementation of Codec<T> only adds automatic (de)serialization of "
+                "enums, even if reflection code for T has been generated and is visible when generating this "
+                "template (which is NOT the case). To enable automatic serialization, use the the serialization marks "
+                "and scripts available, which is the recommended approach.");
+        using Integer = std::underlying_type_t<T>;
+        node = Node{static_cast<Integer>(p_Instance)};
+#endif
         return node;
     }
 
     static bool Decode(const Node &p_Node, T &p_Instance) noexcept
     {
-        static_assert(
-            Reflect<T>::Implemented || std::is_enum_v<T>,
-            "If type has not a dedicated 'Codec<T>' specialization, it must be reflected to auto-deserialize");
+#ifdef TKIT_SERIALIZATION_FROM_REFLECTION
+        static_assert(Reflect<T>::Implemented || std::is_enum_v<T>,
+                      "If type has not a dedicated 'Codec<T>' specialization, it must be reflected "
+                      "to auto-deserialize. It is recommended to use the serialization marks and scripts available.");
+
         if constexpr (Reflect<T>::Implemented)
             Reflect<T>::ForEachField([&p_Node, &p_Instance](const auto &p_Field) {
-                using Field = decltype(p_Field);
-                using Type = typename NoCVRef<Field>::Type;
+                using Type = TKIT_REFLECT_FIELD_TYPE(p_Field);
                 p_Field.Set(p_Instance, p_Node[p_Field.Name].template as<Type>());
             });
         else
@@ -56,6 +97,27 @@ template <typename T> struct Codec
             using Integer = std::underlying_type_t<T>;
             p_Instance = static_cast<T>(p_Node.as<Integer>());
         }
+#else
+        if constexpr (Reflect<T>::Implemented)
+            static_assert(
+                std::is_enum_v<T>,
+                "By default, the general implementation of Codec<T> only adds automatic (de)serialization of "
+                "enums, even if reflection code for T has been generated and is visible when generating this "
+                "template (which IS the case). To enable automatic serialization using such reflection, "
+                "simply define TKIT_SERIALIZATION_FROM_REFLECTION before including this file. Serialization code "
+                "generated this way will be somewhat limited and is not recommended. Use the the serialization marks "
+                "and scripts instead, which behave very similarly to the reflection API.");
+        else
+            static_assert(
+                std::is_enum_v<T>,
+                "By default, the general implementation of Codec<T> only adds automatic (de)serialization of "
+                "enums, even if reflection code for T has been generated and is visible when generating this "
+                "template (which is NOT the case). To enable automatic serialization, use the the serialization marks "
+                "and scripts available, which is the recommended approach.");
+
+        using Integer = std::underlying_type_t<T>;
+        p_Instance = static_cast<T>(p_Node.as<Integer>());
+#endif
         return true;
     }
 };

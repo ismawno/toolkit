@@ -147,12 +147,14 @@ def get_fields_with_options(clsinfo: Class, /) -> list[tuple[Field, list[str]]]:
 
 
 with hpp.scope(f"namespace TKit::{args.backend.capitalize()}", indent=0):
+    used_namespaces = ["TKit"]
     for clsinfo in classes:
         fields = get_fields_with_options(clsinfo)
 
         for namespace in clsinfo.namespaces:
-            if namespace != "TKit":
-                hpp(f"using namespace {namespace}")
+            if namespace not in used_namespaces:
+                hpp(f"using namespace {namespace};")
+                used_namespaces.append(namespace)
 
         with hpp.doc():
             hpp.brief(
@@ -236,10 +238,10 @@ with hpp.scope(f"namespace TKit::{args.backend.capitalize()}", indent=0):
                                 )
 
                     if in_options("skip-if-missing", options):
-                        with hpp.scope(f'if (node["{field.name}"])', delimiters=False):
-                            hpp(f'p_Instance.{field.name} = node["{field.name}"].as<{vtype}>();')
+                        with hpp.scope(f'if (p_Node["{field.name}"])', delimiters=False):
+                            hpp(f'p_Instance.{field.name} = p_Node["{field.name}"].as<{vtype}>();')
                     else:
-                        hpp(f'p_Instance.{field.name} = node["{field.name}"].as<{vtype}>();')
+                        hpp(f'p_Instance.{field.name} = p_Node["{field.name}"].as<{vtype}>();')
 
                 hpp("return true;")
 

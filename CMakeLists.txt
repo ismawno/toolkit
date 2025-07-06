@@ -180,25 +180,37 @@ set(TOOLKIT_PYTHON_EXECUTABLE
     python
     CACHE STRING "I hate cmake" FORCE)
 
+function(tkit_register_code_generation_target target directory src pypath)
+  string(REPLACE / _ src_underscore ${src})
+  string(REPLACE .cpp .hpp src_hpp ${src})
+  set(OUTPUT_PATH "${TOOLKIT_ROOT_PATH}/${directory}/${src_hpp}")
+  add_custom_command(
+    OUTPUT ${OUTPUT_PATH}
+    COMMAND ${TOOLKIT_PYTHON_EXECUTABLE} ${TOOLKIT_ROOT_PATH}/${pypath} -i
+            ${CMAKE_CURRENT_SOURCE_DIR}/${src} -o ${OUTPUT_PATH} -v
+    DEPENDS ${src}
+    VERBATIM)
+  add_custom_target(${src_underscore} DEPENDS ${OUTPUT_PATH})
+  add_dependencies(${target} ${src_underscore})
+endfunction()
+
 function(tkit_register_for_reflection target)
   set(multi_value_args SOURCES)
 
   cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "${multi_value_args}")
   foreach(src ${ARG_SOURCES})
-    string(REPLACE / _ src_underscore ${src})
-    string(REPLACE .cpp .hpp src_hpp ${src})
-    add_custom_command(
-      OUTPUT "${TOOLKIT_ROOT_PATH}/toolkit/tkit/reflection/${src_hpp}"
-      COMMAND
-        ${TOOLKIT_PYTHON_EXECUTABLE} ${TOOLKIT_ROOT_PATH}/codegen/reflect.py -v
-        -i ${CMAKE_CURRENT_SOURCE_DIR}/${src} -o
-        ${TOOLKIT_ROOT_PATH}/toolkit/tkit/reflection/${src_hpp} -v
-      DEPENDS ${src}
-      VERBATIM)
-    add_custom_target(
-      ${src_underscore}
-      DEPENDS ${TOOLKIT_ROOT_PATH}/toolkit/tkit/reflection/${src_hpp})
-    add_dependencies(${target} ${src_underscore})
+    tkit_register_code_generation_target(${target} toolkit/tkit/reflection
+                                         ${src} codegen/reflect.py)
+  endforeach()
+endfunction()
+
+function(tkit_register_for_serialization target backend)
+  set(multi_value_args SOURCES)
+
+  cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "${multi_value_args}")
+  foreach(src ${ARG_SOURCES})
+    tkit_register_code_generation_target(
+      ${target} toolkit/tkit/serialization/yaml ${src} codegen/serialize.py)
   endforeach()
 endfunction()
 

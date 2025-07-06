@@ -91,10 +91,12 @@ hpp.include("tkit/utils/concepts.hpp", quotes=True)
 hpp.include("tuple")
 
 with hpp.scope("namespace TKit", indent=0):
+    used_namespaces = ["TKit"]
     for clsinfo in classes:
         for namespace in clsinfo.namespaces:
-            if namespace != "TKit":
+            if namespace not in used_namespaces:
                 hpp(f"using namespace {namespace};")
+                used_namespaces.append(namespace)
 
         with hpp.doc():
             hpp.brief(

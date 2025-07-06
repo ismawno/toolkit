@@ -5,7 +5,8 @@
 performance/results
 performance/reports
 performance/perf-settings.yaml
-toolkit/tkit/reflection/
+toolkit/tkit/reflection/perf
+toolkit/tkit/serialization/yaml/perf
 .venv/
 .DS_Store
 .cache/
