@@ -1,7 +1,5 @@
 #pragma once
 
-#include "tkit/serialization/yaml/codec.hpp"
-
 /**
  * These serialization macros are placeholder macros that will trigger serialization code generation scripts. These
  * triggers are set up with CMake, so the project must be built with it for it to work. Marking classes/structs with
@@ -29,7 +27,12 @@
  * The main serialization macro, used to mark classes or structs required for serialization. Unmarked classes or structs
  * will be ignored. The macro expands to a friend statement so that the Codec class may have access to private fields.
  */
-#define TKIT_SERIALIZE_DECLARE(p_ClassName) friend struct TKit::Yaml::Codec<p_ClassName>;
+#ifdef TKIT_ENABLE_YAML_SERIALIZATION
+#    include "tkit/serialization/yaml/codec.hpp"
+#    define TKIT_SERIALIZE_DECLARE(p_ClassName) friend struct TKit::Yaml::Codec<p_ClassName>;
+#else
+#    define TKIT_SERIALIZE_DECLARE(p_ClassName)
+#endif
 
 /**
  * A pair of macros that will allow you to customize how each field gets (de)serialized. The available options are the
