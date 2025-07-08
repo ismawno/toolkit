@@ -2,6 +2,7 @@
 
 #include "tkit/utils/alias.hpp"
 #include "tkit/serialization/yaml/serialize.hpp"
+#include "tkit/reflection/reflect.hpp"
 #include <string>
 
 namespace TKit::Perf
@@ -11,6 +12,7 @@ inline std::string g_Root = TKIT_ROOT_PATH;
 struct AllocationSettings
 {
     TKIT_SERIALIZE_DECLARE(AllocationSettings)
+    TKIT_REFLECT_DECLARE(AllocationSettings)
     usize MinPasses = 100;
     usize MaxPasses = 10000;
     usize PassIncrement = 100;
@@ -18,9 +20,10 @@ struct AllocationSettings
 
 using ContainerSettings = AllocationSettings;
 
-struct ThreadPoolSumSettings
+struct ThreadPoolSettings
 {
-    TKIT_SERIALIZE_DECLARE(ThreadPoolSumSettings)
+    TKIT_SERIALIZE_DECLARE(ThreadPoolSettings)
+    TKIT_REFLECT_DECLARE(ThreadPoolSettings)
     usize MaxThreads = 8;
     usize SumCount = 1000000;
 };
@@ -28,10 +31,11 @@ struct ThreadPoolSumSettings
 struct Settings
 {
     TKIT_SERIALIZE_DECLARE(Settings)
+    TKIT_REFLECT_DECLARE(Settings)
     AllocationSettings Allocation{};
-    ThreadPoolSumSettings ThreadPoolSum{};
+    ThreadPoolSettings ThreadPoolSum{};
     ContainerSettings Container{};
 };
 
-Settings ReadOrWriteSettingsFile();
+Settings CreateSettings(int argc, char **argv);
 } // namespace TKit::Perf

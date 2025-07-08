@@ -6,9 +6,9 @@
 
 using namespace TKit::Alias;
 
-int main()
+int main(int argc, char **argv)
 {
-    const TKit::Perf::Settings settings = TKit::Perf::ReadOrWriteSettingsFile();
+    const TKit::Perf::Settings settings = TKit::Perf::CreateSettings(argc, argv);
 
     TKit::Clock clock;
     TKIT_LOG_INFO("[TOOLKIT] Running thread pool sum...");

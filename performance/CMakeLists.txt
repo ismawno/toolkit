@@ -6,10 +6,16 @@ set(NAME toolkit-performance)
 set(SOURCES perf/main.cpp perf/memory.cpp perf/multiprocessing.cpp
             perf/container.cpp perf/settings.cpp)
 
+FetchContent_Declare(
+  argparse
+  GIT_REPOSITORY https://github.com/p-ranav/argparse.git
+  GIT_TAG v3.2)
+FetchContent_MakeAvailable(argparse)
+
 add_executable(toolkit-performance ${SOURCES})
 tkit_register_for_serialization(toolkit-performance SOURCES perf/settings.hpp)
 
-target_link_libraries(toolkit-performance PRIVATE toolkit)
+target_link_libraries(toolkit-performance PRIVATE toolkit argparse)
 target_include_directories(toolkit-performance
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
