@@ -9,6 +9,9 @@ using namespace TKit::Alias;
 int main(int argc, char **argv)
 {
     const TKit::Perf::Settings settings = TKit::Perf::CreateSettings(argc, argv);
+#ifdef TKIT_ENABLE_INFO_LOGS
+    TKit::Perf::LogSettings(settings);
+#endif
 
     TKit::Clock clock;
     TKIT_LOG_INFO("[TOOLKIT] Running thread pool sum...");
