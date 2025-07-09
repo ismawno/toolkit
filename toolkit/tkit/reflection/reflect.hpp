@@ -40,8 +40,8 @@
 /**
  * This pair of macros will allow you to completely ignore the fields that lay in between them.
  */
-#define TKIT_REFLECT_IGNORE_BEGIN
-#define TKIT_REFLECT_IGNORE_END
+#define TKIT_REFLECT_IGNORE_BEGIN()
+#define TKIT_REFLECT_IGNORE_END()
 
 #define TKIT_REFLECT_FIELD_TYPE(p_Field) typename std::remove_cvref_t<decltype(p_Field)>::Type
 
