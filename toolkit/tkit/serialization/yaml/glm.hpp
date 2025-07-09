@@ -26,7 +26,28 @@ template <glm::length_t L, typename T, glm::qualifier Q> struct Codec<glm::vec<L
         return true;
     }
 };
-template <typename T, glm::qualifier Q> struct Codec<glm::quat<T, Q>>
+template <glm::length_t C, glm::length_t R, typename T, glm::qualifier Q>
+struct Codec<glm::mat<C, R, T, Q>> template <typename T, glm::qualifier Q>
+{
+    static Node Encode(const glm::mat<C, R, T, Q> &p_Instance) noexcept
+    {
+        Node node;
+        for (usize i = 0; i < C; ++i)
+            node.push_back(p_Instance[i]);
+        return node;
+    }
+
+    static bool Decode(const Node &p_Node, glm::mat<C, R, T, Q> &p_Instance) noexcept
+    {
+        if (!p_Node.IsSequence() || p_Node.size() != C)
+            return false;
+
+        for (usize i = 0; i < C; ++i)
+            p_Instance[i] = p_Node[i].as<glm::vec<R, T, Q>>();
+        return true;
+    }
+};
+struct Codec<glm::quat<T, Q>>
 {
     static Node Encode(const glm::quat<T, Q> &p_Instance) noexcept
     {
