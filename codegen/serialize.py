@@ -68,20 +68,25 @@ def parse_arguments() -> Namespace:
 
 Convoy.log_label = "SERIALIZE"
 args = parse_arguments()
+backend: str = args.backend.strip()
 Convoy.is_verbose = args.verbose
+if backend != "yaml":
+    Convoy.exit_error(
+        f"The serialization backend <bold>{backend}</bold> is not supported. Currently, only <bold>yaml</bold> is supported."
+    )
 
 output: Path = args.output.resolve()
 ffile: Path = args.input.resolve()
 gpair = MacroPair(
-    "TKIT_SERIALIZE_GROUP_BEGIN",
-    "TKIT_SERIALIZE_GROUP_END",
+    f"TKIT_{backend.upper()}_SERIALIZE_GROUP_BEGIN",
+    f"TKIT_{backend.upper()}_SERIALIZE_GROUP_END",
 )
 ipair = MacroPair(
-    "TKIT_SERIALIZE_IGNORE_BEGIN",
-    "TKIT_SERIALIZE_IGNORE_END",
+    f"TKIT_{backend.upper()}_SERIALIZE_IGNORE_BEGIN",
+    f"TKIT_{backend.upper()}_SERIALIZE_IGNORE_END",
 )
 macros = ControlMacros(
-    "TKIT_SERIALIZE_DECLARE",
+    f"TKIT_{backend.upper()}_SERIALIZE_DECLARE",
     gpair,
     ipair,
 )
@@ -95,17 +100,13 @@ with ffile.open("r") as f:
         Convoy.exit_ok()
     classes = parser.parse()
 
-if args.backend != "yaml":
-    Convoy.exit_error(
-        f"The serialization backend <bold>{args.backend}</bold> is not supported. Currently, only <bold>yaml</bold> is supported."
-    )
 
 options = ["skip-if-missing", "only-serialize", "only-deserialize", "serialize-as", "deserialize-as"]
 hpp = CPPFile(output.name)
 hpp.disclaimer("serialize.py")
 hpp("#pragma once")
 hpp.include(str(ffile.resolve()), quotes=True)
-hpp.include(f"tkit/serialization/{args.backend}/codec.hpp", quotes=True)
+hpp.include(f"tkit/serialization/{backend}/codec.hpp", quotes=True)
 
 
 def in_options(candidate: str, opts: list[str], /) -> bool:
@@ -146,7 +147,7 @@ def get_fields_with_options(clsinfo: Class, /) -> list[tuple[Field, list[str]]]:
     return result
 
 
-with hpp.scope(f"namespace TKit::{args.backend.capitalize()}", indent=0):
+with hpp.scope(f"namespace TKit::{backend.capitalize()}", indent=0):
     used_namespaces = ["TKit"]
     for clsinfo in classes:
         fields = get_fields_with_options(clsinfo)
@@ -158,7 +159,7 @@ with hpp.scope(f"namespace TKit::{args.backend.capitalize()}", indent=0):
 
         with hpp.doc():
             hpp.brief(
-                f"This is an auto-generated specialization of the placeholder `TKit::Codec` struct containing {args.backend} serialization code for `{clsinfo.name}`."
+                f"This is an auto-generated specialization of the placeholder `TKit::Codec` struct containing {backend} serialization code for `{clsinfo.name}`."
             )
             hpp(
                 f"For serialization to work, this file must be included before any `TKit::Codec` instantiations occur. If `{clsinfo.name}` also includes fields that have automatic serialization code, such files must also be included."

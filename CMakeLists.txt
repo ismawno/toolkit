@@ -79,6 +79,7 @@ define_option(TOOLKIT_BUILD_PERFORMANCE OFF)
 define_option(TOOLKIT_BUILD_PROFILER "none")
 # none, address, leak, thread, undefined
 define_option(TOOLKIT_SANITIZERS "none")
+define_option(TOOLKIT_ENABLE_REFLECTION OFF)
 define_option(TOOLKIT_ENABLE_YAML_SERIALIZATION OFF)
 
 if(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION AND NOT TOOLKIT_ENABLE_INSTRUMENTATION)
@@ -180,37 +181,67 @@ set(TOOLKIT_PYTHON_EXECUTABLE
     python
     CACHE STRING "I hate cmake" FORCE)
 
-function(tkit_register_code_generation_target target directory src pypath)
+function(
+  tkit_register_code_generation_target
+  name
+  target
+  directory
+  src
+  pypath
+  args)
+
   string(REPLACE / _ src_underscore ${src})
   string(REPLACE .cpp .hpp src_hpp ${src})
+  set(SRC_NAME "${name}_${src_underscore}")
   set(OUTPUT_PATH "${TOOLKIT_ROOT_PATH}/${directory}/${src_hpp}")
+
   add_custom_command(
     OUTPUT ${OUTPUT_PATH}
     COMMAND ${TOOLKIT_PYTHON_EXECUTABLE} ${TOOLKIT_ROOT_PATH}/${pypath} -i
-            ${CMAKE_CURRENT_SOURCE_DIR}/${src} -o ${OUTPUT_PATH} -v
+            ${CMAKE_CURRENT_SOURCE_DIR}/${src} -o ${OUTPUT_PATH} -v ${args}
     DEPENDS ${src}
     VERBATIM)
-  add_custom_target(${src_underscore} DEPENDS ${OUTPUT_PATH})
-  add_dependencies(${target} ${src_underscore})
+
+  add_custom_target(${SRC_NAME} DEPENDS ${OUTPUT_PATH})
+  add_dependencies(${target} ${SRC_NAME})
 endfunction()
 
 function(tkit_register_for_reflection target)
   set(multi_value_args SOURCES)
 
-  cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "${multi_value_args}")
-  foreach(src ${ARG_SOURCES})
-    tkit_register_code_generation_target(${target} toolkit/tkit/reflection
-                                         ${src} codegen/reflect.py)
-  endforeach()
-endfunction()
-
-function(tkit_register_for_serialization target backend)
-  set(multi_value_args SOURCES)
+  if(NOT ${target} STREQUAL "toolkit-performance" AND NOT
+                                                      TOOLKIT_ENABLE_REFLECTION)
+    message(
+      STATUS
+        "TOOLKIT: Reflection feature is not enabled. Code generation for it will be skipped."
+    )
+    return()
+  endif()
 
   cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "${multi_value_args}")
   foreach(src ${ARG_SOURCES})
     tkit_register_code_generation_target(
-      ${target} toolkit/tkit/serialization/yaml ${src} codegen/serialize.py)
+      reflection ${target} toolkit/tkit/reflection ${src} codegen/reflect.py "")
+  endforeach()
+endfunction()
+
+function(tkit_register_for_yaml_serialization target)
+  set(multi_value_args SOURCES)
+
+  if(NOT ${target} STREQUAL "toolkit-performance"
+     AND NOT TOOLKIT_ENABLE_YAML_SERIALIZATION)
+    message(
+      STATUS
+        "TOOLKIT: Yaml serialization feature is not enabled. Code generation for it will be skipped."
+    )
+    return()
+  endif()
+
+  cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "${multi_value_args}")
+  foreach(src ${ARG_SOURCES})
+    tkit_register_code_generation_target(
+      yaml_serialization ${target} toolkit/tkit/serialization/yaml ${src}
+      codegen/serialize.py "-b yaml")
   endforeach()
 endfunction()
 

@@ -228,18 +228,20 @@ with hpp.scope("namespace TKit", indent=0):
                     hpp.param("p_Field", "The name of the field.")
 
                 with hpp.scope(
-                    f"template <typename Ref_Type> static constexpr auto Get{modifier}Field(const std::string_view p_Field) noexcept"
+                    f"template <typename Ref_Type> static auto Get{modifier}Field(const std::string_view p_Field) noexcept"
                 ):
 
                     def generator(fields: list[Field], vtype: str, /) -> None:
                         for field in fields:
                             with hpp.scope(f'if (p_Field == "{field.name}")', delimiters=False):
                                 hpp(f"return {convert_field_to_cpp(field)};")
-                        hpp(f"return Field<{vtype}>{{}};")
+                        hpp(f"return {modifier}Field<{vtype}>{{}};")
 
-                    create_if_constexpr_per_type(generator, "Field<u8>{}", as_sequence=False, delimiters=True)
+                    create_if_constexpr_per_type(
+                        generator, f"{modifier}Field<u8>{{}}", as_sequence=False, delimiters=True
+                    )
 
-                with hpp.scope(f"static constexpr bool Has{modifier}Field(const std::string p_Field) noexcept"):
+                with hpp.scope(f"static bool Has{modifier}Field(const std::string p_Field) noexcept"):
                     for vtype in fcollection.per_type:
                         with hpp.scope(f"if (Get{modifier}Field<{vtype}>(p_Field))", delimiters=False):
                             hpp("return true;")
@@ -269,7 +271,7 @@ with hpp.scope("namespace TKit", indent=0):
                             "You may optionally provide type filters so that only fields with such types are retrieved.",
                         )
                         hpp.ret(
-                            "If the retrieved fields share all the same type, the return value will be simplified to a `TKit::Array<Field>`. If that is not the case however, the fields will be stored in a `std::tuple`."
+                            f"If the retrieved fields share all the same type, the return value will be simplified to a `TKit::Array<{modifier}Field>`. If that is not the case however, the fields will be stored in a `std::tuple`."
                         )
 
                     with hpp.scope(
@@ -316,7 +318,7 @@ with hpp.scope("namespace TKit", indent=0):
                     )
                     hpp.param(
                         "p_Fields",
-                        "A collection of fields. It is advisable for this parameter to be of the type returned by the `GetFields()` methods.",
+                        f"A collection of fields. It is advisable for this parameter to be of the type returned by the `Get{modifier}Fields()` methods.",
                     )
                     hpp.param(
                         "p_Fun",
@@ -324,7 +326,7 @@ with hpp.scope("namespace TKit", indent=0):
                     )
 
                 with hpp.scope(
-                    f"template <typename Ref_Type, typename Ref_Fun> static constexpr void For{modifier}EachField(const Ref_Type &p_Fields, Ref_Fun &&p_Fun) noexcept"
+                    f"template <typename Ref_Type, typename Ref_Fun> static constexpr void ForEach{modifier}Field(const Ref_Type &p_Fields, Ref_Fun &&p_Fun) noexcept"
                 ):
                     with hpp.scope("if constexpr (Iterable<Ref_Type>)", delimiters=False):
                         with hpp.scope(
@@ -349,7 +351,7 @@ with hpp.scope("namespace TKit", indent=0):
                             "You may optionally provide type filters so that only fields with such types are retrieved.",
                         )
                         hpp.ret(
-                            "If the retrieved fields share all the same type, the return value will be simplified to a `TKit::Array<Field>`. If that is not the case however, the fields will be stored in a `std::tuple`."
+                            f"If the retrieved fields share all the same type, the return value will be simplified to a `TKit::Array<{modifier}Field>`. If that is not the case however, the fields will be stored in a `std::tuple`."
                         )
                     with hpp.scope(
                         f"template <Group Ref_Group, typename... Ref_Types> static constexpr auto Get{modifier}FieldsByGroup() noexcept"

@@ -19,8 +19,7 @@
  * then, assuming a typical CMake project setup, the output file will be located in the following path:
  * `${workspaceFolder}/build/_deps/toolkit-src/toolkit/tkit/serialization/project-small-identifier/my_marked_classes.hpp`
  * and you may include it in your code as follows:
- * `#include "tkit/serialization/${backend}/project-small-identifier/my_marked_classes.hpp"`
- * where backend is the underlying serialization format (currently only yaml, with yaml-cpp).
+ * `#include "tkit/serialization/yaml/project-small-identifier/my_marked_classes.hpp"`.
  */
 
 /**
@@ -29,9 +28,9 @@
  */
 #ifdef TKIT_ENABLE_YAML_SERIALIZATION
 #    include "tkit/serialization/yaml/codec.hpp"
-#    define TKIT_SERIALIZE_DECLARE(p_ClassName) friend struct TKit::Yaml::Codec<p_ClassName>;
+#    define TKIT_YAML_SERIALIZE_DECLARE(p_ClassName) friend struct TKit::Yaml::Codec<p_ClassName>;
 #else
-#    define TKIT_SERIALIZE_DECLARE(p_ClassName)
+#    define TKIT_YAML_SERIALIZE_DECLARE(p_ClassName)
 #endif
 
 /**
@@ -48,14 +47,14 @@
  *
  * - `deserialize-a`s <type>: Override the field's type and use the provided one when deserializing.
  *
- * You may specify the above options with the group begin macro: `TKIT_SERIALIZE_GROUP_BEGIN("GroupName",
+ * You may specify the above options with the group begin macro: `TKIT_YAML_SERIALIZE_GROUP_BEGIN("GroupName",
  * "--skip-if-missing", "serialize-as int")`.
  */
-#define TKIT_SERIALIZE_GROUP_BEGIN(...)
-#define TKIT_SERIALIZE_GROUP_END()
+#define TKIT_YAML_SERIALIZE_GROUP_BEGIN(...)
+#define TKIT_YAML_SERIALIZE_GROUP_END()
 
 /**
  * This pair of macros will allow you to completely ignore the fields that lay in between them.
  */
-#define TKIT_SERIALIZE_IGNORE_BEGIN()
-#define TKIT_SERIALIZE_IGNORE_END()
+#define TKIT_YAML_SERIALIZE_IGNORE_BEGIN()
+#define TKIT_YAML_SERIALIZE_IGNORE_END()

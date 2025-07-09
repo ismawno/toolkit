@@ -27,13 +27,13 @@ static std::string cliName(std::string p_Name) noexcept
 #ifdef TKIT_ENABLE_INFO_LOGS
 void LogSettings(const Settings &p_Settings)
 {
-    TKit::Reflect<Settings>::ForEachField([&p_Settings](const auto &p_Field1) {
+    TKit::Reflect<Settings>::ForEachMemberField([&p_Settings](const auto &p_Field1) {
         using Type1 = TKIT_REFLECT_FIELD_TYPE(p_Field1);
         const std::string name = p_Field1.Name;
         TKIT_LOG_INFO("{}: ", name);
         const auto &setting = p_Field1.Get(p_Settings);
 
-        TKit::Reflect<Type1>::ForEachField([&setting](const auto &p_Field2) {
+        TKit::Reflect<Type1>::ForEachMemberField([&setting](const auto &p_Field2) {
             using Type2 = TKIT_REFLECT_FIELD_TYPE(p_Field2);
             const std::string name = p_Field2.Name;
             const std::string value = std::to_string(p_Field2.Get(setting));
@@ -58,12 +58,12 @@ Settings CreateSettings(int argc, char **argv)
               "program's structure to work.");
 
     Settings settings{};
-    TKit::Reflect<Settings>::ForEachField([&parser, &settings](const auto &p_Field1) {
+    TKit::Reflect<Settings>::ForEachMemberField([&parser, &settings](const auto &p_Field1) {
         using Type1 = TKIT_REFLECT_FIELD_TYPE(p_Field1);
         const std::string name = p_Field1.Name;
         const auto &setting = p_Field1.Get(settings);
 
-        TKit::Reflect<Type1>::ForEachField([&parser, &name, &setting](const auto &p_Field2) {
+        TKit::Reflect<Type1>::ForEachMemberField([&parser, &name, &setting](const auto &p_Field2) {
             using Type2 = TKIT_REFLECT_FIELD_TYPE(p_Field2);
             const std::string value = std::to_string(p_Field2.Get(setting));
             argparse::Argument &arg = parser.add_argument(cliName(name + p_Field2.Name))
@@ -85,11 +85,11 @@ Settings CreateSettings(int argc, char **argv)
     if (const auto path = parser.present("--settings"))
         settings = TKit::Yaml::Deserialize<Settings>(*path);
 
-    TKit::Reflect<Settings>::ForEachField([&parser, &settings](const auto &p_Field1) {
+    TKit::Reflect<Settings>::ForEachMemberField([&parser, &settings](const auto &p_Field1) {
         using Type1 = TKIT_REFLECT_FIELD_TYPE(p_Field1);
         auto &setting = p_Field1.Get(settings);
         const std::string name = p_Field1.Name;
-        TKit::Reflect<Type1>::ForEachField([&parser, &setting, &name](const auto &p_Field2) {
+        TKit::Reflect<Type1>::ForEachMemberField([&parser, &setting, &name](const auto &p_Field2) {
             using Type2 = TKIT_REFLECT_FIELD_TYPE(p_Field2);
             if (const auto value = parser.present<Type2>(cliName(name + p_Field2.Name)))
                 p_Field2.Set(setting, *value);

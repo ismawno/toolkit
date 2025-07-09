@@ -13,7 +13,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(argparse)
 
 add_executable(toolkit-performance ${SOURCES})
-tkit_register_for_serialization(toolkit-performance SOURCES perf/settings.hpp)
+tkit_register_for_yaml_serialization(toolkit-performance SOURCES
+                                     perf/settings.hpp)
+tkit_register_for_reflection(toolkit-performance SOURCES perf/settings.hpp)
 
 target_link_libraries(toolkit-performance PRIVATE toolkit argparse)
 target_include_directories(toolkit-performance
