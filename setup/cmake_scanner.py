@@ -103,7 +103,7 @@ def process_option(content: list[str]) -> tuple[str, str, str | bool]:
     return cmake_varname.lower().replace("_", "-"), cli_varname, val
 
 
-Convoy.log_label = "SCANNER"
+Convoy.program_label = "SCANNER"
 args = parse_arguments()
 Convoy.is_verbose = args.verbose
 
@@ -137,8 +137,8 @@ if cmake_path is not None:
         if cli_varname not in unique_varnames:
             unique_varnames[cli_varname] = cmake_varname
             continue
-        Convoy.verbose(
-            f"<fyellow>Warning: Found name clash with <bold>{cli_varname}</bold>. Trying to resolve by restoring preffixes..."
+        Convoy.warning(
+            f"Found name clash with <bold>{cli_varname}</bold>. Trying to resolve by restoring preffixes..."
         )
         if not strip_preffix:
             Convoy.exit_error(

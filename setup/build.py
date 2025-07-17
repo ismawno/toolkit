@@ -134,7 +134,7 @@ def parse_arguments(
     return parser.parse_known_args(), cli_vname_map
 
 
-Convoy.log_label = "BUILD"
+Convoy.program_label = "BUILD"
 cfg = load_build_ini()
 cmake_vname_map = parse_default_values(cfg)
 (args, unknown), cli_vname_map = parse_arguments(cmake_vname_map)
@@ -236,9 +236,7 @@ if refetch is not None and deps_path.exists():
             os.chmod(path, stat.S_IWRITE)
             func(path)
         except Exception as e:
-            Convoy.verbose(
-                f"<fyellow>Failed to remove <bold>{path}</bold> due to: <underline>{e}</underline>. Skipping..."
-            )
+            Convoy.warning(f"Failed to remove <bold>{path}</bold> due to: <underline>{e}</underline>. Skipping...")
 
     if not refetch:
         Convoy.verbose("Removing all dependencies to force CMake to re-fetch them...")
@@ -248,8 +246,8 @@ if refetch is not None and deps_path.exists():
             for thingy in ["build", "src", "subbuild"]:
                 path = deps_path / f"{dep}-{thingy}"
                 if not path.exists():
-                    Convoy.verbose(
-                        f"<fyellow>Dependency subfolder <underline>{dep}-{thingy}</underline> not found. Skipping..."
+                    Convoy.warning(
+                        f"Dependency subfolder <underline>{dep}-{thingy}</underline> not found. Skipping..."
                     )
                     continue
                 Convoy.verbose(
@@ -278,10 +276,10 @@ if gitconfig.exists() and deps_path.exists():
                 f"Marked <underline>{dep}</underline> as safe to git. This is required for CMake to work properly in some specific cases."
             )
         else:
-            Convoy.verbose(f"<fyellow>Failed to mark <underline>{dep}</underline> as owner safe to git. Skipping...")
+            Convoy.warning(f"Failed to mark <underline>{dep}</underline> as owner safe to git. Skipping...")
 elif not gitconfig.exists():
-    Convoy.verbose(
-        "<fyellow>Git configuration file not found. You may experience issues with git's safe directory feature in some specific cases. If so, remove your build directory and re-run this script."
+    Convoy.warning(
+        "Git configuration file not found. You may experience issues with git's safe directory feature in some specific cases. If so, remove your build directory and re-run this script."
     )
 
 
