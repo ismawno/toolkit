@@ -146,7 +146,7 @@ if args.build_command is None and unknown:
     )
 
 if unknown:
-    Convoy.verbose(
+    Convoy.log(
         f"Unknown arguments detected: <bold>{' '.join(unknown)}</bold>. These will be forwarded to the build command: <bold>{args.build_command}</bold>."
     )
 
@@ -272,7 +272,7 @@ if gitconfig.exists() and deps_path.exists():
             continue
 
         if Convoy.run_process_success(["git", "config", "--global", "--add", "safe.directory", dep_str]):
-            Convoy.verbose(
+            Convoy.log(
                 f"Marked <underline>{dep}</underline> as safe to git. This is required for CMake to work properly in some specific cases."
             )
         else:

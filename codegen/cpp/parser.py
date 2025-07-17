@@ -76,6 +76,7 @@ class FieldCollection:
 class ClassIdentifier:
     identifier: str
     name: str
+    ctype: str
     templdecl: str | None
     inheritance: list[str]
 
@@ -84,7 +85,6 @@ class ClassIdentifier:
 class Class:
     id: ClassIdentifier
     parents: list[Class]
-    ctype: str
     namespaces: list[str]
     member: FieldCollection
     static: FieldCollection
@@ -107,10 +107,9 @@ class ClassCollection:
 
 @dataclass(frozen=True)
 class _ClassInfo:
+    id: ClassIdentifier
     file: Path | None
     namespaces: list[str]
-    ctype: str
-    decl: str
     body: list[str]
     macro_args: list[str]
     has_declare_macro: bool
@@ -154,34 +153,25 @@ class CPParser:
             reserved_group_names = []
 
         classes = ClassCollection()
-        clinfos: dict[str, tuple[ClassIdentifier, _ClassInfo]] = {}
-        for clinfo in self.__find_classes(line_delm=line_delm):
-            identifier = self.__parse_class_identifier(clinfo.decl, clinfo.ctype)
-            if identifier.identifier in clinfos:
-                Convoy.exit_error(
-                    f"Found a {clinfo.ctype} with a duplicate identifier: <bold>{identifier.identifier}</bold>."
-                )
-            clinfos[identifier.identifier] = (identifier, clinfo)
+        clinfos = self.__find_classes(line_delm=line_delm)
 
-        def parse_class(
-            identifier: ClassIdentifier, clinfo: _ClassInfo, /, *, override_declare_macro=False
-        ) -> Class | None:
+        def parse_class(clinfo: _ClassInfo, /, *, override_declare_macro=False) -> Class | None:
             declm = self.__macros.declare
             if clinfo.has_declare_macro:
                 pids = clinfo.macro_args.copy()
                 if not pids:
                     Convoy.exit_error(
-                        f"The first argument of the declare macro <bold>{declm}</bold> must be the {clinfo.ctype} name, but it has currently no arguments. Expected <bold>{identifier.name}</bold>."
+                        f"The first argument of the declare macro <bold>{declm}</bold> must be the {clinfo.id.ctype} name, but it has currently no arguments. Expected <bold>{clinfo.id.name}</bold>."
                     )
                 name = pids.pop(0)
-                if name != identifier.name:
+                if name != clinfo.id.name:
                     Convoy.exit_error(
-                        f"The first argument of the declare macro <bold>{declm}</bold> must be the {clinfo.ctype} name, but it found <bold>{name}</bold>. Expected: <bold>{identifier.name}</bold>."
+                        f"The first argument of the declare macro <bold>{declm}</bold> must be the {clinfo.id.ctype} name, but it found <bold>{name}</bold>. Expected: <bold>{clinfo.id.name}</bold>."
                     )
                 if resolve_hierarchies_with_inheritance:
-                    pids = identifier.inheritance
+                    pids = clinfo.id.inheritance
             elif override_declare_macro:
-                pids = identifier.inheritance if resolve_hierarchies_with_inheritance else []
+                pids = clinfo.id.inheritance if resolve_hierarchies_with_inheritance else []
             else:
                 return None
 
@@ -197,30 +187,18 @@ class CPParser:
                     )
                     continue
 
-                pidd, pclinfo = clinfos[pid]
-                c = parse_class(pidd, pclinfo, override_declare_macro=True)
+                pclinfo = clinfos[pid]
+                c = parse_class(pclinfo, override_declare_macro=True)
                 if c is not None:
                     parents.append(c)
                 else:
                     Convoy.exit_error(
                         f"The function parse_class returned None when overriding declare macro for parent <bold>{pid}</bold>. It should not happen."
                     )
-            cl = self.__gather_fields(identifier, clinfo, parents, reserved_group_names)
-            Convoy.verbose(f"Found and parsed <bold>{cl.id.identifier}</bold> {clinfo.ctype}.")
-            if not clinfo.has_declare_macro:
-                Convoy.verbose(
-                    f"This {clinfo.ctype} was not explicitly marked with the declare macro <bold>{declm}</bold>, but it is being parsed because another class or struct is inheriting its fields."
-                )
-            for field in cl.member.fields:
-                Convoy.verbose(f" - Registered field <bold>{field.as_str(cl.id.identifier, is_static=False)}</bold>.")
+            return self.__gather_fields(clinfo, parents, reserved_group_names)
 
-            for field in cl.static.fields:
-                Convoy.verbose(f" - Registered field <bold>{field.as_str(cl.id.identifier, is_static=True)}</bold>.")
-
-            return cl
-
-        for identifier, clinfo in clinfos.values():
-            cl = parse_class(identifier, clinfo)
+        for clinfo in clinfos.values():
+            cl = parse_class(clinfo)
             if cl is not None:
                 classes.add(cl)
 
@@ -239,8 +217,8 @@ class CPParser:
                             )
                             cfields.add(f)
 
-                Convoy.verbose(
-                    f"Processing <bold>{c.id.identifier}</bold> parent: <bold>{parent.id.identifier}</bold>."
+                Convoy.log(
+                    f"Inheriting fields from <bold>{c.id.identifier}</bold> parent: <bold>{parent.id.identifier}</bold>."
                 )
                 add_fields(parent.member, c.member, static=False)
                 add_fields(parent.static, c.static, static=True)
@@ -251,13 +229,13 @@ class CPParser:
         self,
         *,
         line_delm: str = "\n",
-    ) -> list[_ClassInfo]:
+    ) -> dict[str, _ClassInfo]:
 
         lines = self.__code.split(line_delm)
         namespaces = []
         file = None
         index = 0
-        classes = []
+        classes = {}
         while index < len(lines):
             line = lines[index].strip()
             if "CPParser file" in line:
@@ -280,15 +258,35 @@ class CPParser:
             if not is_class and not is_struct:
                 index += 1
                 continue
+            clstype = "class" if is_class else "struct"
 
             start = index
             end = len(lines)
             macro_args = []
             has_declm = False
+
+            template_line = (
+                lines[index - 1].strip()
+                if index > 0
+                and "template" in lines[index - 1]
+                and "struct" not in lines[index - 1]
+                and "class" not in lines[index - 1]
+                else None
+            )
+
+            Convoy.verbose(f"Found a {clstype} declaration. ")
+            if template_line is not None:
+                Convoy.verbose(f" - {template_line}")
+            Convoy.verbose(f" - {lines[index].strip()}")
+
             while index < end:
                 subline = lines[index].strip()
                 declm = self.__macros.declare
                 if declm in subline:
+                    if has_declm:
+                        Convoy.exit_error(f"Found a duplicate declare macro statement for the {clstype}.")
+                    Convoy.log(f"Found a {clstype} marked with the declare macro <bold>{declm}</bold>.")
+
                     mtch = re.match(rf"{declm}\((.*?)\)", subline)
                     if mtch is None:
                         Convoy.exit_error(
@@ -305,19 +303,16 @@ class CPParser:
 
                 index += 1
 
-            template_line = (
-                lines[start - 1]
-                if start > 0
-                and "template" in lines[start - 1]
-                and "struct" not in lines[start - 1]
-                and "class" not in lines[start - 1]
-                else None
-            )
-            clstype = "class" if is_class else "struct"
             clsdecl = lines[start] if template_line is None else lines[start] + "\n" + template_line
             clsbody = lines[start + 1 : end]
 
-            classes.append(_ClassInfo(file, namespaces, clstype, clsdecl, clsbody, macro_args, has_declm))
+            identifier = self.__parse_class_identifier(clsdecl, clstype)
+            if identifier.identifier in classes:
+                Convoy.exit_error(
+                    f"Found a {clstype} with a duplicate identifier: <bold>{identifier.identifier}</bold>."
+                )
+            classes[identifier.identifier] = _ClassInfo(identifier, file, namespaces, clsbody, macro_args, has_declm)
+
             index += 1
         return classes
 
@@ -329,6 +324,8 @@ class CPParser:
         return merged
 
     def __parse_class_identifier(self, clsdecl: str, clstype: str, /) -> ClassIdentifier:
+        Convoy.verbose(f"Attempting to parse {clstype} identifier.")
+
         pattern = r"(?:template<(.*)>[\n ]*)?(?:class|struct)(?: [a-zA-Z0-9_]+)? ([a-zA-Z0-9_<>, ]+)(?:: ?([a-zA-Z0-9_<>, ]+))?"
         declaration = re.match(pattern, clsdecl)
         if declaration is None:
@@ -338,25 +335,40 @@ class CPParser:
         templdecl = declaration.group(1)
         identifier = declaration.group(2)
         inheritance = declaration.group(3)
+        if not templdecl:
+            templdecl = None
 
-        if identifier is None:
+        if identifier is not None:
+            Convoy.verbose(f" - Extracted initial identifier: <bold>{identifier}</bold>.")
+        else:
             Convoy.exit_error(
-                f"Failed to extract a {clstype} name with the following declaration line: <bold>{clsdecl}</bold>."
+                f"Failed to extract a {clstype} identifier with the following declaration line: <bold>{clsdecl}</bold>."
             )
         identifier = identifier.strip()
         if templdecl is not None:
             templdecl.strip()
+            Convoy.verbose(f" - Extracted template arguments declaration: <bold>{templdecl}</bold>.")
+        else:
+            Convoy.verbose(" - No template declaration was found.")
+
         if inheritance is not None:
             inheritance.replace("public", "").replace("private", "").replace("protected", "").strip()
+            Convoy.verbose(f" - Extracted inheritance list: <bold>{inheritance}</bold>.")
+        else:
+            Convoy.verbose(" - No inheritance list was found.")
 
         if templdecl is not None and "<" not in identifier:
             template_vars = ", ".join([var.split(" ")[1] for var in templdecl.replace(", ", ",").split(",")])
             identifier = f"{identifier}<{template_vars}>"
+            Convoy.verbose(
+                f" - Generated a more accurate identifier with template arguments: <bold>{identifier}</bold>."
+            )
 
         name = identifier.split("<", 1)[0]
         return ClassIdentifier(
             identifier,
             name,
+            clstype,
             templdecl,
             (
                 [inh.strip() for inh in Convoy.nested_split(inheritance, delim=",", openers="<", closers=">")]
@@ -367,14 +379,19 @@ class CPParser:
 
     def __gather_fields(
         self,
-        identifier: ClassIdentifier,
         clinfo: _ClassInfo,
         parents: list[Class],
         reserved_group_names: list[str],
         /,
     ) -> Class:
-        if identifier.identifier in self.__cache.per_identifier:
-            return self.__cache.per_identifier[identifier.identifier]
+        if clinfo.id.identifier in self.__cache.per_identifier:
+            return self.__cache.per_identifier[clinfo.id.identifier]
+
+        Convoy.log(f"Gathering fields for {clinfo.id.ctype} <bold>{clinfo.id.identifier}</bold>.")
+        if not clinfo.has_declare_macro:
+            Convoy.log(
+                f"This {clinfo.id.ctype} was not explicitly marked with the declare macro, but it is being parsed because another class or struct is inheriting its fields."
+            )
 
         groups = []
 
@@ -384,28 +401,36 @@ class CPParser:
         scope_counter = 0
         ignore = False
 
-        visibility = "private" if clinfo.ctype == "class" else "public"
+        visibility = "private" if clinfo.id.ctype == "class" else "public"
 
         def check_group_macros(line: str, /) -> None:
             if self.__macros.group.begin in line:
                 group = re.match(rf"{self.__macros.group.begin}\((.*?)\)", line)
                 if group is not None:
-                    group = group.group(1).replace('"', "")
+                    group = group.group(1).replace('"', "").replace(", ", ",")
                 else:
-                    Convoy.exit_error("Failed to match group name macro")
-                properties = [p.strip() for p in group.split(",")]
+                    Convoy.exit_error("Failed to match group name macro.")
+                properties = group.split(",")
                 name = properties.pop(0)
-
                 if name == "":
                     Convoy.exit_error("Group name cannot be empty.")
                 if name in reserved_group_names:
                     Convoy.exit_error(
-                        f"Group name cannot be <bold>{name}</bold>. It is listed as a reserved name: {reserved_group_names}"
+                        f"Group name cannot be <bold>{name}</bold>. It is listed as a reserved name: {reserved_group_names}."
                     )
+
+                if not properties:
+                    Convoy.verbose(f" - Pushing group <bold>{name}</bold>.")
+                else:
+                    Convoy.verbose(
+                        f" - Pushing group <bold>{name}</bold> with properties <bold>{', '.join(properties)}</bold>."
+                    )
+
                 groups.append(Group(name, properties))
 
             elif self.__macros.group.end in line:
-                groups.pop()
+                name = groups.pop()
+                Convoy.verbose(f" - Popping group <bold>{name}</bold>.")
 
         def check_ignore_macros(line: str, /) -> bool:
             nonlocal ignore
@@ -447,7 +472,7 @@ class CPParser:
             check_privacy("public")
             check_privacy("protected")
 
-            if not line.endswith(";") or "noexcept" in line or "override" in line:
+            if not line.endswith(";") or "noexcept" in line or "override" in line or "using" in line:
                 continue
 
             line = line.replace(";", "").strip().removeprefix("inline ")
@@ -480,6 +505,10 @@ class CPParser:
                 vtype.replace(",", ", "),
                 list({g.name: g for g in groups}.values()),
             )
+
+            Convoy.verbose(
+                f" - Registered field <bold>{field.as_str(clinfo.id.identifier, is_static=is_static)}</bold>."
+            )
             fields = static if is_static else member
             fields.add(field)
 
@@ -490,9 +519,8 @@ class CPParser:
             Convoy.exit_error(f"Group macro was not closed properly with a <bold>{self.__macros.group.end}</bold>.")
 
         cl = Class(
-            identifier,
+            clinfo.id,
             parents,
-            clinfo.ctype,
             clinfo.namespaces,
             member,
             static,

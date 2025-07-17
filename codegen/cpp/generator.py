@@ -98,7 +98,7 @@ class CPPGenerator:
         with path.open("w") as file:
             file.write(self.__code)
 
-        Convoy.verbose(
+        Convoy.log(
             f"Exported generated code to <underline>{path.resolve()}</underline>. Attempting to format with <bold>clang-format</bold>."
         )
         cfpath = shutil.which("clang-format")
@@ -107,7 +107,7 @@ class CPPGenerator:
             return
 
         if Convoy.run_process_success([str(cfpath), "-i", str(path)]):
-            Convoy.verbose("Successfully formatted.")
+            Convoy.log("Successfully formatted.")
         else:
             Convoy.warning("Failed to run <bold>clang-format</bold>.")
 
