@@ -252,7 +252,7 @@ class CPParser:
                 index += 1
                 continue
 
-            is_class = "class" in line
+            is_class = "class" in line and not "enum" in line
             is_struct = not is_class and "struct" in line
 
             if not is_class and not is_struct:
