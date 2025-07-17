@@ -23,11 +23,13 @@
 /**
  * The main reflection macro, used to mark classes or structs required for reflection. Unmarked classes or structs will
  * be ignored. The macro expands to a friend statement so that the Reflect class may have access to private fields.
+ *
+ * The extra arguments can be used to list the parents of the target class so it can also inherit its fields.
  */
 #ifdef TKIT_ENABLE_REFLECTION
-#    define TKIT_REFLECT_DECLARE(p_ClassName) friend class TKit::Reflect<p_ClassName>;
+#    define TKIT_REFLECT_DECLARE(p_ClassName, ...) friend class TKit::Reflect<p_ClassName>;
 #else
-#    define TKIT_REFLECT_DECLARE(p_ClassName)
+#    define TKIT_REFLECT_DECLARE(p_ClassName, ...)
 #endif
 
 /**
