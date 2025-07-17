@@ -32,7 +32,7 @@ class CPPOrchestrator:
         outputs = Convoy.resolve_paths(routputs, recursive=recursive, remove_duplicates=True)
 
         def log_paths(name: str, paths: list[Path], /) -> None:
-            Convoy.verbose(f"Scanner resolved {len(paths)} {name} paths.")
+            Convoy.verbose(f"Scanner resolved {len(paths)} {name} path(s).")
             for p in paths:
                 Convoy.verbose(f" - <underline>{p}</underline>")
 

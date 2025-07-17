@@ -212,10 +212,10 @@ class CPParser:
                     f"This {clinfo.ctype} was not explicitly marked with the declare macro <bold>{declm}</bold>, but it is being parsed because another class or struct is inheriting its fields."
                 )
             for field in cl.member.fields:
-                Convoy.verbose(f"  -Registered field <bold>{field.as_str(cl.id.identifier, is_static=False)}</bold>.")
+                Convoy.verbose(f" - Registered field <bold>{field.as_str(cl.id.identifier, is_static=False)}</bold>.")
 
             for field in cl.static.fields:
-                Convoy.verbose(f"  -Registered field <bold>{field.as_str(cl.id.identifier, is_static=True)}</bold>.")
+                Convoy.verbose(f" - Registered field <bold>{field.as_str(cl.id.identifier, is_static=True)}</bold>.")
 
             return cl
 
@@ -299,7 +299,7 @@ class CPParser:
                     ]
                     has_declm = True
 
-                if subline.endswith("};"):
+                if subline == "};":
                     end = index + 1
                     break
 
