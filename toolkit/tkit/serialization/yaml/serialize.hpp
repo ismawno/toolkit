@@ -45,9 +45,9 @@
  *
  * - `only-deserialize`: Only deserialize selected fields.
  *
- * - `serialize-a`s <type>: Override the field's type and use the provided one when serializing.
+ * - `serialize-as` <type>: Override the field's type and use the provided one when serializing.
  *
- * - `deserialize-a`s <type>: Override the field's type and use the provided one when deserializing.
+ * - `deserialize-as` <type>: Override the field's type and use the provided one when deserializing.
  *
  * You may specify the above options with the group begin macro: `TKIT_YAML_SERIALIZE_GROUP_BEGIN("GroupName",
  * "--skip-if-missing", "serialize-as int")`.
