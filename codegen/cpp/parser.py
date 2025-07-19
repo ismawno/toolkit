@@ -121,8 +121,8 @@ class CPParser:
         if not isinstance(code, str):
             code = CPParser.__merge_code(code)
         self.__code = (
-            code.replace("<class", "<typename")
-            .replace(", class", ",typename")
+            code.replace(", ", ",")
+            .replace("<class", "<typename")
             .replace(",class", ",typename")
             .replace("template ", "template")
         )
@@ -326,7 +326,7 @@ class CPParser:
     def __parse_class_identifier(self, clsdecl: str, clstype: str, /) -> ClassIdentifier:
         Convoy.verbose(f"Attempting to parse {clstype} identifier.")
 
-        pattern = r"(?:template<(.*)>[\n ]*)?(?:class|struct)(?: [a-zA-Z0-9_]+)? ([a-zA-Z0-9_<>, ]+)(?:: ?([a-zA-Z0-9_<>, ]+))?"
+        pattern = r"(?:template<(.*)>[\n ]*)?(?:class|struct)(?: [a-zA-Z0-9_]+)? ([a-zA-Z0-9_<>,:]+) ?(?:: ?([a-zA-Z0-9_<>, :]+))?"
         declaration = re.match(pattern, clsdecl)
         if declaration is None:
             Convoy.exit_error(
@@ -358,7 +358,7 @@ class CPParser:
             Convoy.verbose(" - No inheritance list was found.")
 
         if templdecl is not None and "<" not in identifier:
-            template_vars = ", ".join([var.split(" ")[1] for var in templdecl.replace(", ", ",").split(",")])
+            template_vars = ", ".join([var.split(" ")[1] for var in templdecl.split(",")])
             identifier = f"{identifier}<{template_vars}>"
             Convoy.verbose(
                 f" - Generated a more accurate identifier with template arguments: <bold>{identifier}</bold>."
@@ -407,7 +407,7 @@ class CPParser:
             if self.__macros.group.begin in line:
                 group = re.match(rf"{self.__macros.group.begin}\((.*?)\)", line)
                 if group is not None:
-                    group = group.group(1).replace('"', "").replace(", ", ",")
+                    group = group.group(1).replace('"', "")
                 else:
                     Convoy.exit_error("Failed to match group name macro.")
                 properties = group.split(",")
@@ -483,7 +483,7 @@ class CPParser:
             line = line.removeprefix("static ").removeprefix("inline ")
 
             line = re.sub(r"=.*", "", line)
-            line = re.sub(r"{.*", "", line).strip().replace(", ", ",")
+            line = re.sub(r"{.*", "", line).strip()
 
             splits = line.split(" ")
             ln = len(splits) - ("const" in line)
