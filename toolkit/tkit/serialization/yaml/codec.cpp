@@ -5,13 +5,18 @@
 
 namespace TKit::Yaml
 {
-Node LoadFromString(const std::string_view p_String) noexcept
+Node FromString(const std::string_view p_String) noexcept
 {
     return YAML::Load(p_String.data());
 }
-Node LoadFromFile(const std::string_view p_Path) noexcept
+Node FromFile(const std::string_view p_Path) noexcept
 {
     TKIT_ASSERT(std::filesystem::exists(p_Path.data()), "File does not exist: {}", p_Path);
     return YAML::LoadFile(p_Path.data());
+}
+void ToFile(const std::string_view p_Path, const Node &p_Node) noexcept
+{
+    std::ofstream file(p_Path.data());
+    file << p_Node;
 }
 } // namespace TKit::Yaml
