@@ -26,8 +26,7 @@ template <glm::length_t L, typename T, glm::qualifier Q> struct Codec<glm::vec<L
         return true;
     }
 };
-template <glm::length_t C, glm::length_t R, typename T, glm::qualifier Q>
-struct Codec<glm::mat<C, R, T, Q>> template <typename T, glm::qualifier Q>
+template <glm::length_t C, glm::length_t R, typename T, glm::qualifier Q> struct Codec<glm::mat<C, R, T, Q>>
 {
     static Node Encode(const glm::mat<C, R, T, Q> &p_Instance) noexcept
     {
