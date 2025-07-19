@@ -131,13 +131,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   endif()
 endif()
 
-if(TOOLKIT_BUILD_TESTS OR TOOLKIT_BUILD_PERFORMANCE)
-  message(
-    WARNING
-      "TOOLKIT: Tests or performance benchmarks are being built. All features (except for instrumentation) will be enabled even if logs say otherwise"
-  )
-endif()
-
 message(STATUS "TOOLKIT: Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "TOOLKIT: Build tests: ${TOOLKIT_BUILD_TESTS}")
 message(STATUS "TOOLKIT: Build performance tests: ${TOOLKIT_BUILD_PERFORMANCE}")
@@ -209,8 +202,7 @@ endfunction()
 function(tkit_register_for_reflection target)
   set(multi_value_args SOURCES)
 
-  if(NOT ${target} STREQUAL "toolkit-performance" AND NOT
-                                                      TOOLKIT_ENABLE_REFLECTION)
+  if(NOT TOOLKIT_ENABLE_REFLECTION)
     message(
       STATUS
         "TOOLKIT: Reflection feature is not enabled. Code generation for it will be skipped."
@@ -229,8 +221,7 @@ endfunction()
 function(tkit_register_for_yaml_serialization target)
   set(multi_value_args SOURCES)
 
-  if(NOT ${target} STREQUAL "toolkit-performance"
-     AND NOT TOOLKIT_ENABLE_YAML_SERIALIZATION)
+  if(NOT TOOLKIT_ENABLE_YAML_SERIALIZATION)
     message(
       STATUS
         "TOOLKIT: Yaml serialization feature is not enabled. Code generation for it will be skipped."

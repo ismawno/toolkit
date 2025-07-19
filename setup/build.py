@@ -177,8 +177,18 @@ for argname, argvalue in parser_args_dict.items():
     override_section = f"{cmake_varname}.{value}"
     if override_section not in cfg:
         continue
+    sections = cfg.sections()
+    idx = sections.index(override_section)
 
     overrides = cfg[override_section]
+    while not overrides:
+        idx += 1
+        if idx < len(sections):
+            overrides = cfg[sections[idx]]
+        else:
+            Convoy.exit_error(
+                "Override sections cannot be fully empty. To reuse overrides, make sure the empty section is stacked against a section with values."
+            )
     for cli_varname, new_default in overrides.items():
         if cli_varname not in cli_vname_map:
             Convoy.exit_error(
@@ -186,9 +196,10 @@ for argname, argvalue in parser_args_dict.items():
             )
 
         old_value = cli_vname_map[cli_varname][1]
-        Convoy.verbose(
-            f"Overriding default value of option <bold>{cli_varname}</bold> from <bold>{old_value}</bold> to <bold>{new_default}</bold> as <bold>{cmake_varname}</bold> was set to <bold>{value}</bold>."
-        )
+        if old_value != new_default:
+            Convoy.verbose(
+                f"Overriding default value of option <bold>{cli_varname}</bold> from <bold>{old_value}</bold> to <bold>{new_default}</bold> as <bold>{cmake_varname}</bold> was set to <bold>{value}</bold>."
+            )
         new_value = (
             cli_vname_map[cli_varname][0],
             try_convert_bool(new_default),

@@ -210,11 +210,15 @@ write_help(
 )
 write_help("[<lowercase-cmake-option>.<value-that-triggers-override>]")
 write_help("<lowercase-build-cli-option> = <new-default-value>")
+write_help("This is useful when you would like to disable assertions or logs for distribution builds.")
+write_help("You can stack empty override sections to have those inherit the values of the bottom section:")
+write_help("[<lowercase-cmake-option-1>.<value-that-triggers-override-1>]")
+write_help("[<lowercase-cmake-option-2>.<value-that-triggers-override-2>]")
+write_help("<lowercase-build-cli-option> = <new-default-value>")
 write_help(
     "<value-that-triggers-override> may have uppercase letters, as well as <new-default-value> or <default-value>."
 )
 
-write_help("This is useful when you would like to disable assertions or logs for distribution builds.")
 
 for section, cnts in sections.items():
     if section == "cmake-options":
