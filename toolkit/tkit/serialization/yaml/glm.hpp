@@ -46,9 +46,9 @@ template <glm::length_t C, glm::length_t R, typename T, glm::qualifier Q> struct
         return true;
     }
 };
-struct Codec<glm::quat<T, Q>>
+struct Codec<glm::qua<T, Q>>
 {
-    static Node Encode(const glm::quat<T, Q> &p_Instance) noexcept
+    static Node Encode(const glm::qua<T, Q> &p_Instance) noexcept
     {
         Node node;
         node.push_back(p_Instance.x);
@@ -59,7 +59,7 @@ struct Codec<glm::quat<T, Q>>
         return node;
     }
 
-    static bool Decode(const Node &p_Node, glm::quat<T, Q> &p_Instance) noexcept
+    static bool Decode(const Node &p_Node, glm::qua<T, Q> &p_Instance) noexcept
     {
         if (!p_Node.IsSequence() || p_Node.size() != L)
             return false;
