@@ -64,7 +64,9 @@ class CPPOrchestrator:
             if disclaimer is not None:
                 gen.disclaimer(disclaimer)
             gen("#pragma once")
-            gen.include(str(out), quotes=True)
+
+            for c in classes.classes:
+                gen.include(str(c.file), quotes=True)
 
             generator(gen, classes)
 
