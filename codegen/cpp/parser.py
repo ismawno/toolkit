@@ -326,7 +326,7 @@ class CPParser:
     def __parse_class_identifier(self, clsdecl: str, clstype: str, /) -> ClassIdentifier:
         Convoy.verbose(f"Attempting to parse {clstype} identifier.")
 
-        pattern = r"(?:template<(.*)>[\n ]*)?(?:class|struct)(?: [a-zA-Z0-9_]+)? ([a-zA-Z0-9_<>,:]+) ?(?:: ?([a-zA-Z0-9_<>, :]+))?"
+        pattern = r"(?:template<(.*)>[\n ]*)?(?:class|struct)(?: alignas\(.*?\))?(?: [a-zA-Z0-9_]+)? ([a-zA-Z0-9_<>,:]+) ?(?:: ?([a-zA-Z0-9_<>, :]+))?"
         declaration = re.match(pattern, clsdecl)
         if declaration is None:
             Convoy.exit_error(
