@@ -62,7 +62,7 @@ template <typename T, glm::qualifier Q> struct Codec<glm::qua<T, Q>>
 
     static bool Decode(const Node &p_Node, glm::qua<T, Q> &p_Instance) noexcept
     {
-        if (!p_Node.IsSequence() || p_Node.size() != L)
+        if (!p_Node.IsSequence())
             return false;
 
         p_Instance.x = p_Node[0].as<T>();
