@@ -24,7 +24,20 @@
  * The main reflection macro, used to mark classes or structs required for reflection. Unmarked classes or structs will
  * be ignored. The macro expands to a friend statement so that the Reflect class may have access to private fields.
  *
- * The extra arguments can be used to list the parents of the target class so it can also inherit its fields.
+ * The extra arguments can be used to list the parents of the target class so it can also inherit its fields. The list
+ * of parents may invoke instantiations not explicitly present in the code.
+ *
+ * template <typename T, typename U, u32 X> class Parent;
+ *
+ * class Child1 {TKIT_REFLECT_DECLARE(Child1, Parent<int, float, 0>)}
+ * -- OK, will instantiate Parent with int, float and 0
+ *
+ * template <typename T> class Child2 {TKIT_REFLECT_DECLARE(Child2, Parent<T, float, 0>)}
+ * -- OK, will instantiate Parent with float and 0, while keeping T a template parameter.
+ *
+ * template <typename T> class Child3 {TKIT_REFLECT_DECLARE(Child3, Parent<int, T, 0>)}
+ * -- NOT OK, will not interpret T as a template parameter, and will try to instantiate as a type globally available.
+ * Fix: template <typename U> class Child3 {TKIT_REFLECT_DECLARE(Child3, Parent<int, U, 0>)}
  */
 #ifdef TKIT_ENABLE_REFLECTION
 #    define TKIT_REFLECT_DECLARE(p_ClassName, ...) friend class TKit::Reflect<p_ClassName>;
