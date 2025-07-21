@@ -273,7 +273,7 @@ class CPParser:
                (\[\[nodiscard\]\])\s+|
                (\[\[maybe_unused\]\])\s+|
                (\[\[deprecated\]\])\s+|
-               (\[\[no_unique_address\]\])\s+)+
+               (\[\[no_unique_address\]\])\s+)*
             ((?:\w+(?:<.*>)?::)*\w+(?:<.*>)?(?:\s*[&\*]\s*)?)\s*
             (\w+)(?:\s*(?:(?:=\s*.*)|{.*})*\s*)?(?!\s*\(\));
         """,
