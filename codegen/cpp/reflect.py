@@ -82,14 +82,21 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                     hpp("Protected = 1,")
                     hpp("Public = 2")
 
-                hpp(f"static constexpr bool HasMemberFields = {'true' if clsinfo.member.fields else 'false'};")
-                hpp(f"static constexpr bool HasStaticFields = {'true' if clsinfo.static.fields else 'false'};")
+                memfields = FieldCollection()
+                statfields = FieldCollection()
+                for f in clsinfo.fields.filter_modifier(exclude="static"):
+                    memfields.add(f)
+                for f in clsinfo.fields.filter_modifier(include="static"):
+                    statfields.add(f)
+
+                hpp(f"static constexpr bool HasMemberFields = {'true' if memfields.fields else 'false'};")
+                hpp(f"static constexpr bool HasStaticFields = {'true' if statfields.fields else 'false'};")
 
                 def generate_reflect_body(fcollection: FieldCollection, /, *, is_static: bool) -> None:
                     modifier = "Static" if is_static else "Member"
 
                     hpp("public:")
-                    dtype = "u8" if len(clsinfo.member.per_group) < 256 else "u16"
+                    dtype = "u8" if len(fcollection.per_group) < 256 else "u16"
                     if fcollection.per_group:
                         with hpp.doc():
                             hpp.brief(
@@ -398,10 +405,10 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                         create_get_array_method(group=group.name)
                         create_get_tuple_method(group=group.name)
 
-                if clsinfo.member.fields:
-                    generate_reflect_body(clsinfo.member, is_static=False)
-                if clsinfo.static.fields:
-                    generate_reflect_body(clsinfo.static, is_static=True)
+                if memfields.fields:
+                    generate_reflect_body(memfields, is_static=False)
+                if statfields.fields:
+                    generate_reflect_body(statfields, is_static=True)
 
 
 orchestrator.generate(generate_reflection_code, disclaimer="reflect.py")

@@ -89,24 +89,19 @@ def ensure_options_consistency(options: list[str], /) -> None:
 
 def get_fields_with_options(clsinfo: Class, /) -> list[tuple[Field, list[str]]]:
     result = []
+    for field in clsinfo.fields.fields:
+        opts = []
+        for group in field.groups:
+            for opt in group.properties:
+                if not in_options(opt, options):
+                    Convoy.exit_error(
+                        f"Unrecognized serialization option for group <bold>{group}</bold>: <bold>{opt}</bold>."
+                    )
+                if opt not in opts:
+                    opts.append(opt)
 
-    def gather_fields(fields: list[Field], /) -> None:
-        for field in fields:
-            opts = []
-            for group in field.groups:
-                for opt in group.properties:
-                    if not in_options(opt, options):
-                        Convoy.exit_error(
-                            f"Unrecognized serialization option for group <bold>{group}</bold>: <bold>{opt}</bold>."
-                        )
-                    if opt not in opts:
-                        opts.append(opt)
-
-            ensure_options_consistency(opts)
-            result.append((field, opts))
-
-    gather_fields(clsinfo.member.fields)
-    gather_fields(clsinfo.static.fields)
+        ensure_options_consistency(opts)
+        result.append((field, opts))
 
     return result
 
