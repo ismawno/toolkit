@@ -523,7 +523,7 @@ class CPParser:
     def __parse_class_identifier(self, clsdecl: str, clstype: str, /) -> ClassIdentifier:
         Convoy.verbose(f"Attempting to parse {clstype} identifier.")
 
-        declaration = re.match(self.__class_pattern, clsdecl.replace(", ", ","))
+        declaration = re.match(self.__class_pattern, clsdecl.replace(", ", ",").replace("final", "").strip())
         if declaration is None:
             Convoy.exit_error(
                 f"A match was not found when trying to extract the name of the {clstype}. The identified declaration was the following: <bold>{clsdecl}</bold>."
