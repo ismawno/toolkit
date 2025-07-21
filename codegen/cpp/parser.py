@@ -251,30 +251,31 @@ class CPParser:
             r"""
             (?:template\s*<([^\(\)]*)>\s*)*
             (?:class|struct)\s+
-            (?:alignas\s*\([^\(\)]+\)\s*)*
+            (?:alignas\s*\(.+\)\s*)*
             (?:[\w\s]*\b)?
-            ((?:\w+(?:<[^<>]*>)?::)*\w+(?:<[^<>]*>)?)\s*
+            ((?:\w+(?:<.*>)?::)*\w+(?:<.*>)?)\s*
             (?::\s*(.+))?
         """,
             re.VERBOSE,
         )
         self.__field_pattern = re.compile(
             r"""
-            (?:(static)\s+)*
-            (?:(inline)\s+)*
-            (?:(const)\s+)*
-            (?:(constexpr)\s+)*
-            (?:(mutable)\s+)*
-            (?:(thread_local)\s+)*
-            (?:(register)\s+)*
-            (?:(extern)\s+)*
-            (?:(alignas\(.*\))\s+)*
-            (?:(\[\[nodiscard\]\])\s+)*
-            (?:(\[\[maybe_unused\]\])\s+)*
-            (?:(\[\[deprecated\]\])\s+)*
-            (?:(\[\[no_unique_adress\]\])\s+)*
-            ((?:\w+(?:<[^<>]*>)?::)*\w+(?:<[^<>]*>)?(?:\s*[&\*]\s*)?)\s*
-            (\w+)(?:\s*[^\(\)]*)?(?!\s*\();
+            (?:\s+|^)
+            (?:(static)\s+|
+               (const)\s+|
+               (constexpr)\s+|
+               (inline)\s+|
+               (mutable)\s+|
+               (thread_local)\s+|
+               (register)\s+|
+               (extern)\s+|
+               (alignas\(.*?\))\s+|
+               (\[\[nodiscard\]\])\s+|
+               (\[\[maybe_unused\]\])\s+|
+               (\[\[deprecated\]\])\s+|
+               (\[\[no_unique_address\]\])\s+)+
+            ((?:\w+(?:<.*>)?::)*\w+(?:<.*>)?(?:\s*[&\*]\s*)?)\s*
+            (\w+)(?:\s*(?:(?:=\s*.*)|{.*})*\s*)?(?!\s*\(\));
         """,
             re.VERBOSE,
         )
@@ -536,6 +537,13 @@ class CPParser:
         if identifier is not None:
             identifier = identifier.strip().replace(",", ", ")
             Convoy.verbose(f" - Extracted initial identifier: <bold>{identifier}</bold>.")
+            parts = re.split(r"(?<!:):(?!:)", identifier, maxsplit=1)
+            if len(parts) > 1:
+                Convoy.verbose(
+                    f" - Detected possible template arguments in inheritance list that may have caused the latter to leak into the identifier."
+                )
+                identifier, inheritance = [p.strip() for p in parts]
+                Convoy.verbose(f" - Fixed identifier: <bold>{identifier}</bold>.")
         else:
             Convoy.exit_error(
                 f"Failed to extract a {clstype} identifier with the following declaration line: <bold>{clsdecl}</bold>."
@@ -547,7 +555,7 @@ class CPParser:
             Convoy.verbose(" - No template declaration was found.")
 
         if inheritance is not None:
-            inheritance.replace("public", "").replace("private", "").replace("protected", "").strip()
+            inheritance = inheritance.replace("public", "").replace("private", "").replace("protected", "").strip()
             Convoy.verbose(f" - Extracted inheritance list: <bold>{inheritance}</bold>.")
         else:
             Convoy.verbose(" - No inheritance list was found.")
@@ -668,7 +676,6 @@ class CPParser:
             if match is None:
                 continue
             modifiers = [match.group(g) for g in range(1, 14) if match.group(g) is not None]
-            is_static = "static" in modifiers
 
             vtype = match.group(14)
             vname = match.group(15)
