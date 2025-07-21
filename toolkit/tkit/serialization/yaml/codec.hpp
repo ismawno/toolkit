@@ -55,7 +55,10 @@ template <typename T> struct Codec
         else
         {
             using Integer = std::underlying_type_t<T>;
-            node = Node{static_cast<Integer>(p_Instance)};
+            if constexpr (std::is_same_v<Integer, u8>)
+                node = Node{static_cast<u16>(p_Instance)};
+            else
+                node = Node{static_cast<Integer>(p_Instance)};
         }
 #else
         if constexpr (Reflect<T>::Implemented)
@@ -75,7 +78,10 @@ template <typename T> struct Codec
                 "template (which is NOT the case). To enable automatic serialization, use the the serialization marks "
                 "and scripts available, which is the recommended approach.");
         using Integer = std::underlying_type_t<T>;
-        node = Node{static_cast<Integer>(p_Instance)};
+        if constexpr (std::is_same_v<Integer, u8>)
+            node = Node{static_cast<u16>(p_Instance)};
+        else
+            node = Node{static_cast<Integer>(p_Instance)};
 #endif
         return node;
     }
