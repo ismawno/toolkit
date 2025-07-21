@@ -53,7 +53,7 @@ template <typename T, usize N, typename Traits> struct Codec<StaticArray<T, N, T
             return false;
 
         for (const Node &element : p_Node)
-            p_Instance.push_back(element.template as<T>());
+            p_Instance.Append(element.template as<T>());
         return true;
     }
 };
