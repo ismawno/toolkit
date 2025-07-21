@@ -275,7 +275,7 @@ class CPParser:
                (\[\[deprecated\]\])\s+|
                (\[\[no_unique_address\]\])\s+)*
             ((?:\w+(?:<.*>)?::)*\w+(?:<.*>)?(?:\s*[&\*]\s*)?)\s*
-            (\w+)(?:\s*(?:(?:=\s*.*)|{.*})*\s*)?(?!\s*\(\));
+            (\w+)(?:\s*(?:{.*})*\s*)?(?!\s*\(\));
         """,
             re.VERBOSE,
         )
@@ -660,7 +660,7 @@ class CPParser:
 
             if scope_counter < 0:
                 Convoy.exit_error(f"Scope counter reached a negative value: {scope_counter}.")
-            if scope_counter != 1:
+            if "using" in line or scope_counter != 1:
                 continue
 
             def check_privacy(look_for: str, /) -> None:
@@ -671,6 +671,12 @@ class CPParser:
             check_privacy("private")
             check_privacy("public")
             check_privacy("protected")
+            count = line.count("=")
+            if count > 1:
+                continue
+            if count == 1:
+                decl, val = line.split("=", 1)
+                line = f"{decl.strip()}{{{val.strip(';').strip()}}};"
 
             match = re.match(self.__field_pattern, line)
             if match is None:
