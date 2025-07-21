@@ -81,6 +81,7 @@ class CPPOrchestrator:
             macros=macros,
             recursive=args.recursive,
             file_per_class=args.file_per_class,
+            resolve_hierarchies_with_inheritance=args.use_inheritance_list,
             **parser_kwargs,
         )
 
@@ -115,6 +116,12 @@ class CPPOrchestrator:
             action="store_true",
             default=False,
             help="Whether to generate a file per parsed class or struct. If selected, the output must be a single folder.",
+        )
+        parser.add_argument(
+            "--use-inheritance-list",
+            action="store_true",
+            default=False,
+            help="Use the class or struct inheritance list to resolve parents instead of the manually specified through the declare macros.",
         )
         if add_verbose:
             parser.add_argument(

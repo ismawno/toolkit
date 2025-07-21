@@ -80,6 +80,30 @@ class ClassIdentifier:
     templdecl: str | None
     inheritance: list[str]
 
+    def template_matches(self, templargs: str, /) -> int:
+        if self.templdecl is None:
+            Convoy.exit_error(f"Cannot measure template matches in a non template {self.ctype}.")
+
+        templdecl = CPParser._split_template_list(self.templdecl)
+        templvars1, templvars2 = self.template_arguments_instantiation_pairs(templargs)
+        matches = 0
+        for t1, t2 in zip(templvars1, templvars2):
+            if t1 == t2:
+                matches += 1
+            elif t1 not in templdecl:
+                return -1
+
+        return matches
+
+    def template_arguments_instantiation_pairs(self, templargs: str, /) -> tuple[list[str], list[str]]:
+        templvars1 = self.identifier.split("<", 1)[1].strip(">").strip().replace(", ", ",").split(",")
+        templvars2 = templargs.replace(", ", ",").split(",")
+        if len(templvars1) != len(templvars2):
+            Convoy.exit_error(
+                f"The amount of template arguments between the class declaration to instantiate (<bold>{self.id.identifier}</bold>) and the ones to instantiate (<bold>{self.id.name}<{templargs}></bold>) does not match."
+            )
+        return templvars1, templvars2
+
 
 @dataclass(frozen=True)
 class Class:
@@ -89,6 +113,57 @@ class Class:
     member: FieldCollection
     static: FieldCollection
     file: Path | None
+
+    def instantiate(self, templargs: str, /) -> Class:
+        Convoy.log(f"Instantiating <bold>{self.id.identifier}</bold> to <bold>{self.id.name}<{templargs}></bold>.")
+        if self.id.templdecl is None:
+            Convoy.exit_error(f"Cannot instantiate a non-template {self.id.ctype}.")
+
+        templvars1, templvars2 = self.id.template_arguments_instantiation_pairs(templargs)
+        templdecl = CPParser._split_template_list(self.id.templdecl)
+
+        member = FieldCollection()
+        static = FieldCollection()
+        tdecl: str | list[str] = []
+        for t1, t2 in zip(templvars1, templvars2):
+            if t1 == t2:
+                if t1 in templdecl:
+                    idx = templdecl.index(t1)
+                    tdecl.append(self.id.templdecl.replace(", ", ",").split(",")[idx])
+
+                continue
+            if t1 not in templdecl:
+                Convoy.exit_error(
+                    f"The template argument to instantiate, <bold>{t1}</bold>, is not present in the template declaration list: <bold>{self.id.templdecl}</bold>."
+                )
+
+            Convoy.verbose(
+                f"Instantiating <bold>{t1}</bold> to <bold>{t2}</bold> in all fields of <bold>{self.id.identifier}</bold>."
+            )
+
+            def apply(fcol: FieldCollection, outcol: FieldCollection, /) -> None:
+                for f in fcol.fields:
+                    vtype = re.sub(rf"\b{t1}\b", t2, f.vtype)
+                    fi = Field(f.name, f.visibility, vtype, f.groups)
+                    outcol.add(fi)
+
+            apply(self.member, member)
+            apply(self.static, static)
+
+        tdecl = ", ".join(tdecl)
+        idf = f"{self.id.name}<{templargs}>"
+        Convoy.verbose(f"Successfully instantiated <bold>{self.id.identifier}</bold> to <bold>{idf}</bold>.")
+        if tdecl:
+            Convoy.verbose(
+                f"The template declaration went from <bold>template <{self.id.templdecl}></bold> to <bold>template <{tdecl}></bold>."
+            )
+        else:
+            Convoy.verbose(
+                f"The template declaration (<bold>template <{self.id.templdecl}></bold>) was fully instantiated."
+            )
+
+        id = ClassIdentifier(idf, self.id.name, self.id.ctype, tdecl if tdecl else None, self.id.inheritance)
+        return Class(id, self.parents, self.namespaces, member, static, self.file)
 
 
 @dataclass(frozen=True)
@@ -115,16 +190,27 @@ class _ClassInfo:
     has_declare_macro: bool
 
 
+@dataclass(frozen=True)
+class _ClassInfoCollection:
+    classes: list[_ClassInfo] = field(default_factory=list)
+    per_name: dict[str, list[_ClassInfo]] = field(default_factory=dict)
+    per_identifier: dict[str, _ClassInfo] = field(default_factory=dict)
+
+    def add(self, c: _ClassInfo, /) -> None:
+        if c.id.identifier in self.per_identifier:
+            Convoy.exit_error(f"Tried to add a class info that already exists: <bold>{c.id.identifier}</bold>.")
+        self.classes.append(c)
+        self.per_name.setdefault(c.id.name, []).append(c)
+        self.per_identifier[c.id.identifier] = c
+
+
 class CPParser:
 
     def __init__(self, code: str | dict[Path, str], /, *, macros: ControlMacros) -> None:
         if not isinstance(code, str):
             code = CPParser.__merge_code(code)
         self.__code = (
-            code.replace(", ", ",")
-            .replace("<class", "<typename")
-            .replace(",class", ",typename")
-            .replace("template ", "template")
+            code.replace("<class", "<typename").replace(",class", ",typename").replace("template ", "template")
         )
         self.__macros = macros
         self.__cache = ClassCollection()
@@ -180,24 +266,63 @@ class CPParser:
                 if pid in self.__cache.per_identifier:
                     parents.append(self.__cache.per_identifier[pid])
                     continue
-                if pid not in clinfos:
-                    errfn = Convoy.warning if resolve_hierarchies_with_inheritance else Convoy.exit_error
-                    errfn(
-                        f"The class or struct <bold>{pid}</bold> was not found in the current parser context. The parent's identifier must exactly match how it is defined in the file. If using template arguments, the identifier must carry those as well. For instance, the identifier of template<typename T> class Parent would be: Parent<T>."
+                needs_instantiation = pid not in clinfos.per_identifier
+                templargs = pid.split("<", 1)[1].strip(">").strip()
+                if needs_instantiation:
+                    Convoy.log(
+                        f"The parent identifier <bold>{pid}</bold> of the {clinfo.id.ctype} <bold>{clinfo.id.identifier}</bold> was not found explicitly. Attempting to instantiate from a general definition..."
                     )
-                    continue
+                    errfn = Convoy.warning if resolve_hierarchies_with_inheritance else Convoy.exit_error
 
-                pclinfo = clinfos[pid]
-                c = parse_class(pclinfo, override_declare_macro=True)
-                if c is not None:
-                    parents.append(c)
+                    if "<" not in pid:
+                        errfn(
+                            f"The parent identifier <bold>{pid}</bold> is not templated. An instantiation is not possible."
+                        )
+                        continue
+
+                    pname = pid.split("<", 1)[0]
+                    if pname not in clinfos.per_name:
+                        errfn(
+                            f"The parent name <bold>{pname}</bold>, extracted from the identifier <bold>{pid}</bold>, of the {clinfo.id.ctype} <bold>{clinfo.id.identifier}</bold> was not found, and so it is not possible to instantiate and resolve the parent's definition."
+                        )
+                        continue
+                    max_matches = 0
+                    pclinfo = None
+                    for p in clinfos.per_name[pname]:
+                        if p.id.templdecl is None:
+                            Convoy.verbose(
+                                f"The {p.id.ctype} <bold>{p.id.identifier}</bold> is not elligible as it does not have a template declaration."
+                            )
+                            continue
+                        matches = p.id.template_matches(templargs)
+                        if matches >= max_matches:
+                            pclinfo = p
+                            max_matches = matches
+
+                    if pclinfo is None:
+                        errfn(f"No elligible class or struct was found from which to instantiate <bold>{pid}</bold>.")
+                        continue
+                    else:
+                        Convoy.verbose(
+                            f"Found an elligible {pclinfo.id.ctype} to instantiate: <bold>{pclinfo.id.identifier}</bold>."
+                        )
+
                 else:
+                    pclinfo = clinfos.per_identifier[pid]
+
+                c = parse_class(pclinfo, override_declare_macro=True)
+                if c is None:
                     Convoy.exit_error(
                         f"The function parse_class returned None when overriding declare macro for parent <bold>{pid}</bold>. It should not happen."
                     )
+
+                if needs_instantiation:
+                    c = c.instantiate(templargs)
+                parents.append(c)
+
             return self.__gather_fields(clinfo, parents, reserved_group_names)
 
-        for clinfo in clinfos.values():
+        for clinfo in clinfos.classes:
             cl = parse_class(clinfo)
             if cl is not None:
                 classes.add(cl)
@@ -229,13 +354,13 @@ class CPParser:
         self,
         *,
         line_delm: str = "\n",
-    ) -> dict[str, _ClassInfo]:
+    ) -> _ClassInfoCollection:
 
         lines = self.__code.split(line_delm)
         namespaces = []
         file = None
         index = 0
-        classes = {}
+        classes = _ClassInfoCollection()
         while index < len(lines):
             line = lines[index].strip()
             if "CPParser file" in line:
@@ -276,8 +401,13 @@ class CPParser:
 
             Convoy.verbose(f"Found a {clstype} declaration. ")
             if template_line is not None:
-                Convoy.verbose(f" - {template_line}")
-            Convoy.verbose(f" - {lines[index].strip()}")
+                if template_line.count("template") > 1:
+                    Convoy.warning(f"Nested template arguments are not supported: <bold>{template_line}</bold>.")
+                    index += 1
+                    continue
+
+                Convoy.verbose(f" - <bold>{template_line}</bold>")
+            Convoy.verbose(f" - <bold>{lines[index].strip()}</bold>")
 
             while index < end:
                 subline = lines[index].strip()
@@ -292,9 +422,7 @@ class CPParser:
                         Convoy.exit_error(
                             f"Failed to match declare macro arguments for the line <bold>{subline}</bold>. Declare macro: <bold>{declm}</bold>."
                         )
-                    macro_args = [
-                        m.strip() for m in Convoy.nested_split(mtch.group(1), delim=",", openers="<", closers=">")
-                    ]
+                    macro_args = [m.strip() for m in Convoy.nested_split(mtch.group(1), ",", openers="<", closers=">")]
                     has_declm = True
 
                 if subline == "};":
@@ -307,11 +435,13 @@ class CPParser:
             clsbody = lines[start + 1 : end]
 
             identifier = self.__parse_class_identifier(clsdecl, clstype)
-            if identifier.identifier in classes:
+            if identifier.identifier in classes.per_identifier:
                 Convoy.exit_error(
                     f"Found a {clstype} with a duplicate identifier: <bold>{identifier.identifier}</bold>."
                 )
-            classes[identifier.identifier] = _ClassInfo(identifier, file, namespaces, clsbody, macro_args, has_declm)
+
+            clinfo = _ClassInfo(identifier, file, namespaces, clsbody, macro_args, has_declm)
+            classes.add(clinfo)
 
             index += 1
         return classes
@@ -323,11 +453,18 @@ class CPParser:
             merged += f"\n// CPParser file: {p}\n" + c
         return merged
 
+    @classmethod
+    def _split_template_list(cls, tlist: str, /) -> list[str]:
+        return [
+            Convoy.nested_split(var, " ", openers="<", closers=">", n=1)[1]
+            for var in tlist.replace(", ", ",").split(",")
+        ]
+
     def __parse_class_identifier(self, clsdecl: str, clstype: str, /) -> ClassIdentifier:
         Convoy.verbose(f"Attempting to parse {clstype} identifier.")
 
         pattern = r"(?:template<(.*)>[\n ]*)?(?:class|struct)(?: alignas\(.*?\))?(?: [a-zA-Z0-9_]+)? ([a-zA-Z0-9_<>,:]+) ?(?:: ?([a-zA-Z0-9_<>, :]+))?"
-        declaration = re.match(pattern, clsdecl)
+        declaration = re.match(pattern, clsdecl.replace(", ", ","))
         if declaration is None:
             Convoy.exit_error(
                 f"A match was not found when trying to extract the name of the {clstype}. The identified declaration was the following: <bold>{clsdecl}</bold>."
@@ -339,12 +476,12 @@ class CPParser:
             templdecl = None
 
         if identifier is not None:
+            identifier = identifier.strip().replace(",", ", ")
             Convoy.verbose(f" - Extracted initial identifier: <bold>{identifier}</bold>.")
         else:
             Convoy.exit_error(
                 f"Failed to extract a {clstype} identifier with the following declaration line: <bold>{clsdecl}</bold>."
             )
-        identifier = identifier.strip()
         if templdecl is not None:
             templdecl.strip()
             Convoy.verbose(f" - Extracted template arguments declaration: <bold>{templdecl}</bold>.")
@@ -358,7 +495,8 @@ class CPParser:
             Convoy.verbose(" - No inheritance list was found.")
 
         if templdecl is not None and "<" not in identifier:
-            template_vars = ", ".join([var.split(" ")[1] for var in templdecl.split(",")])
+            template_vars = ", ".join(CPParser._split_template_list(templdecl))
+
             identifier = f"{identifier}<{template_vars}>"
             Convoy.verbose(
                 f" - Generated a more accurate identifier with template arguments: <bold>{identifier}</bold>."
@@ -371,7 +509,7 @@ class CPParser:
             clstype,
             templdecl,
             (
-                [inh.strip() for inh in Convoy.nested_split(inheritance, delim=",", openers="<", closers=">")]
+                [inh.strip() for inh in Convoy.nested_split(inheritance, ",", openers="<", closers=">")]
                 if inheritance is not None
                 else []
             ),
@@ -410,7 +548,7 @@ class CPParser:
                     group = group.group(1).replace('"', "")
                 else:
                     Convoy.exit_error("Failed to match group name macro.")
-                properties = group.split(",")
+                properties = group.replace(", ", ",").split(",")
                 name = properties.pop(0)
                 if name == "":
                     Convoy.exit_error("Group name cannot be empty.")
