@@ -249,11 +249,11 @@ class CPParser:
         self.__cache = ClassCollection()
         self.__class_pattern = re.compile(
             r"""
-            (?:template\s*<(.*)>\s*)*
+            (?:template\s*<([^\(\)]*)>\s*)*
             (?:class|struct)\s+
-            (?:alignas\s*\(.*\)\s*)*
+            (?:alignas\s*\([^\(\)]+\)\s*)*
             (?:[\w\s]*\b)?
-            ((?:\w+(?:<.*>)?::)*\w+(?:<.*>)?)\s*
+            ((?:\w+(?:<[^<>]*>)?::)*\w+(?:<[^<>]*>)?)\s*
             (?::\s*(.+))?
         """,
             re.VERBOSE,
@@ -273,7 +273,7 @@ class CPParser:
             (?:(\[\[maybe_unused\]\])\s+)*
             (?:(\[\[deprecated\]\])\s+)*
             (?:(\[\[no_unique_adress\]\])\s+)*
-            ((?:\w+(?:<.*>)?::)*\w+(?:<.*>)?(?:\s*[&\*]\s*)?)\s*
+            ((?:\w+(?:<[^<>]*>)?::)*\w+(?:<[^<>]*>)?(?:\s*[&\*]\s*)?)\s*
             (\w+)(?:\s*[^\(\)]*)?(?!\s*\();
         """,
             re.VERBOSE,
