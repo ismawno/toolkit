@@ -105,7 +105,7 @@ if(TOOLKIT_ENABLE_INSTRUMENTATION)
   FetchContent_Declare(
     tracy
     GIT_REPOSITORY https://github.com/wolfpld/tracy.git
-    GIT_TAG v0.11.1)
+    GIT_TAG v0.12.2)
   FetchContent_MakeAvailable(tracy)
   target_link_libraries(toolkit PUBLIC TracyClient)
   target_compile_definitions(toolkit PUBLIC TRACY_ENABLE)
