@@ -163,6 +163,8 @@ tkit_default_configure(toolkit)
 
 target_compile_definitions(toolkit PUBLIC TKIT_ROOT_PATH="${TOOLKIT_ROOT_PATH}")
 
+tkit_register_for_yaml_serialization(toolkit SOURCES tkit/utils/dimension.hpp)
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_definitions(toolkit PUBLIC TKIT_DEBUG)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
