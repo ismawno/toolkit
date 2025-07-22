@@ -459,6 +459,7 @@ class CPParser:
             is_class = "class" in line and not is_enum
             is_struct = "struct" in line and not is_class
             if is_enum and not include_enums:
+                index += 1
                 continue
 
             if is_enum + is_class + is_struct > 1:
@@ -525,7 +526,7 @@ class CPParser:
             clsdecl = lines[start] if template_line is None else lines[start] + "\n" + template_line
             clsbody = lines[start + 1 : end]
 
-            identifier = self.__parse_class_identifier(clsdecl, clstype)
+            identifier = self.__parse_identifier(clsdecl, clstype)
             if identifier.identifier in classes.per_identifier:
                 Convoy.exit_error(
                     f"Found a {clstype} with a duplicate identifier: <bold>{identifier.identifier}</bold>."
@@ -551,11 +552,12 @@ class CPParser:
             for var in tlist.replace(", ", ",").split(",")
         ]
 
-    def __parse_class_identifier(self, clsdecl: str, clstype: str, /) -> Identifier:
+    def __parse_identifier(self, clsdecl: str, clstype: str, /) -> Identifier:
         Convoy.verbose(f"Attempting to parse {clstype} identifier.")
         if clstype == "enum":
-            clsdecl = clsdecl.strip("enum").strip().strip("class").strip()
-            name = clsdecl.split(":", 1)[0].strip()
+            id = clsdecl.split(":", 1)[0].strip()
+            name = id.rsplit(" ", 1)[-1].strip()
+            Convoy.verbose(f"Extracted identifier: <bold>{name}</bold>.")
             return Identifier(name, name, clstype, None, [])
 
         declaration = re.match(self.__class_pattern, clsdecl.replace(", ", ",").replace("final", "").strip())
