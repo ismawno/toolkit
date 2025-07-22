@@ -68,7 +68,7 @@ macros = ControlMacros(
     gpair,
     ipair,
 )
-orchestrator = CPPOrchestrator.from_cli_arguments(args, macros=macros)
+orchestrator = CPPOrchestrator.from_cli_arguments(args, macros=macros, include_enums=True)
 
 options = ["skip-if-missing", "only-serialize", "only-deserialize", "serialize-as", "deserialize-as"]
 
@@ -108,8 +108,57 @@ def get_fields_with_options(clsinfo: Class, /) -> list[tuple[Field, list[str]]]:
 
 def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> None:
     hpp.include(f"tkit/serialization/{backend}/codec.hpp", quotes=True)
+    if classes.enums:
+        hpp.include(f"tkit/utils/logging.hpp", quotes=True)
+        hpp.include("string")
 
     with hpp.scope(f"namespace TKit::{backend.capitalize()}", indent=0):
+        for enum in classes.enums:
+            for namespace in enum.namespaces:
+                if namespace != "TKit":
+                    hpp(f"using namespace {namespace};", unique_line=True)
+
+            with hpp.doc():
+                hpp.brief(
+                    f"This is an auto-generated specialization of the placeholder `TKit::Codec` struct containing {backend} serialization code for `{enum.id.identifier}`."
+                )
+                hpp(
+                    f"For serialization to work, this file must be included before any `TKit::Codec` instantiations occur. If `{enum.id.identifier}` also includes fields that have automatic serialization code, such files must also be included."
+                )
+            with hpp.scope(
+                f"template <> struct Codec<{enum.id.name}>",
+                closer="};",
+            ):
+                with hpp.doc():
+                    hpp.brief(f"Encode an instance of type `{enum.id.name}` into a `Node` (serialization step).")
+                    hpp.param("p_Instance", f"An instance of type `{enum.id.name}`.")
+                    hpp.ret("A node with serialization information.")
+
+                with hpp.scope(f"static Node Encode(const {enum.id.name} &p_Instance) noexcept"):
+                    with hpp.scope(f"switch (p_Instance)"):
+                        for entry in enum.values:
+                            with hpp.scope(f"case {enum.id.name}::{entry}:", delimiters=False):
+                                hpp(f'return Node{{"{entry}"}};')
+                        with hpp.scope(f"default:", delimiters=False):
+                            hpp('TKIT_ERROR("[TOOLKIT] Unknown enum value");')
+                            hpp('return Node{"[TOOLKIT] Error - Unknown enum value."};')
+
+                with hpp.doc():
+                    hpp.brief(
+                        f"Decode an instance of type `{enum.id.identifier}` from a `Node` (deserialization step)."
+                    )
+                    hpp.param("p_Node", "A node with serialization information.")
+                    hpp.param("p_Instance", f"An instance of type `{enum.id.identifier}`.")
+
+                with hpp.scope(f"static bool Decode(const Node &p_Node, {enum.id.identifier} &p_Instance) noexcept"):
+                    hpp("const std::string val = p_Node.as<std::string>();")
+                    for entry in enum.values:
+                        with hpp.scope(f'if (val == "{entry}")'):
+                            hpp(f"p_Instance = {enum.id.identifier}::{entry};")
+                            hpp(f"return true;")
+
+                    hpp(f"return false;")
+
         for clsinfo in classes.classes:
             fields = get_fields_with_options(clsinfo)
 

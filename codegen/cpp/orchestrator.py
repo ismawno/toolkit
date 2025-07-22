@@ -1,7 +1,7 @@
 from pathlib import Path
 from argparse import ArgumentParser, Namespace
 from generator import CPPGenerator
-from parser import CPParser, ClassCollection, ControlMacros
+from parser import CPParser, ClassCollection, ControlMacros, Class, Enum
 from collections.abc import Callable
 
 import sys
@@ -57,7 +57,7 @@ class CPPOrchestrator:
         self, generator: Callable[[CPPGenerator, ClassCollection], None], /, *, disclaimer: str | None = None
     ) -> None:
         for out, classes in self.__outputs.items():
-            if not classes:
+            if not classes.classes and not classes.enums:
                 continue
             gen = self.__generators[out]
 
@@ -159,11 +159,16 @@ class CPPOrchestrator:
 
             inp_to_out = {inp: out for inp, out in zip(inputs, outputs)}
             result: dict[Path, ClassCollection] = {}
-            for c in classes.classes:
-                if c.file is None:
-                    Convoy.exit_error(f"The class <bold>{c.id.identifier}</bold> has no file attribute.")
-                out = inp_to_out[c.file]
-                result.setdefault(out, ClassCollection()).add(c)
+
+            def resolve(objs: list[Class] | list[Enum], /) -> None:
+                for obj in objs:
+                    if obj.file is None:
+                        Convoy.exit_error(f"The class <bold>{obj.id.identifier}</bold> has no file attribute.")
+                    out = inp_to_out[obj.file]
+                    result.setdefault(out, ClassCollection()).add(obj)
+
+            resolve(classes.classes)
+            resolve(classes.enums)
 
             return result
 
@@ -176,15 +181,23 @@ class CPPOrchestrator:
         outputs = {}
         forbidden = r"<>:\"/\|?*"
 
-        for name, cs in classes.per_name.items():
+        def check(name: str, /) -> None:
             if any(f in name for f in forbidden):
                 Convoy.exit_error(
-                    f"The class name <bold>{name}</bold> contains forbidden characters that cannot be used as a file name. To avoid this error, do not set the <bold>--file-per-class</bold> option and choose another way to export the generated code."
+                    f"The name <bold>{name}</bold> contains forbidden characters that cannot be used as a file name. To avoid this error, do not set the <bold>--file-per-class</bold> option and choose another way to export the generated code."
                 )
+
+        for name, cs in classes.per_name.items():
+            check(name)
             cc = ClassCollection()
             for c in cs:
                 cc.add(c)
             outputs[directory / name] = cc
+        for enum in classes.enums:
+            check(enum.id.name)
+            cc = ClassCollection()
+            cc.add(enum)
+            outputs[directory / enum.id.name] = cc
 
         return outputs
 
@@ -193,10 +206,15 @@ class CPPOrchestrator:
         cls, classes: ClassCollection, directory: Path, /
     ) -> dict[Path, ClassCollection]:
         outputs: dict[Path, ClassCollection] = {}
-        for c in classes.classes:
-            if c.file is None:
-                Convoy.exit_error(f"The class <bold>{c.id.identifier}</bold> has no file attribute.")
-            outputs.setdefault(directory / c.file.name, ClassCollection()).add(c)
+
+        def resolve(objs: list[Class] | list[Enum], /) -> None:
+            for obj in objs:
+                if obj.file is None:
+                    Convoy.exit_error(f"The {obj.id.ctype} <bold>{obj.id.identifier}</bold> has no file attribute.")
+                outputs.setdefault(directory / obj.file.name, ClassCollection()).add(obj)
+
+        resolve(classes.classes)
+        resolve(classes.enums)
 
         return outputs
 

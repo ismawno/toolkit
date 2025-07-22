@@ -112,7 +112,7 @@ class FieldCollection:
 
 
 @dataclass(frozen=True)
-class ClassIdentifier:
+class Identifier:
     identifier: str
     name: str
     ctype: str
@@ -146,7 +146,7 @@ class ClassIdentifier:
 
 @dataclass(frozen=True)
 class Class:
-    id: ClassIdentifier
+    id: Identifier
     parents: list[Class]
     namespaces: list[str]
     fields: FieldCollection
@@ -195,17 +195,29 @@ class Class:
                 f"The template declaration (<bold>template <{self.id.templdecl}></bold>) was fully instantiated."
             )
 
-        id = ClassIdentifier(idf, self.id.name, self.id.ctype, tdecl if tdecl else None, self.id.inheritance)
+        id = Identifier(idf, self.id.name, self.id.ctype, tdecl if tdecl else None, self.id.inheritance)
         return Class(id, self.parents, self.namespaces, fields, self.file)
+
+
+@dataclass(frozen=True)
+class Enum:
+    id: Identifier
+    namespaces: list[str]
+    values: dict[str, str | None]
+    file: Path | None
 
 
 @dataclass(frozen=True)
 class ClassCollection:
     classes: list[Class] = field(default_factory=list)
+    enums: list[Enum] = field(default_factory=list)
     per_name: dict[str, list[Class]] = field(default_factory=dict)
     per_identifier: dict[str, Class] = field(default_factory=dict)
 
-    def add(self, c: Class, /) -> None:
+    def add(self, c: Class | Enum, /) -> None:
+        if isinstance(c, Enum):
+            self.enums.append(c)
+            return
         if c.id.identifier in self.per_identifier:
             Convoy.exit_error(f"Tried to add a class that already exists: <bold>{c.id.identifier}</bold>.")
         self.classes.append(c)
@@ -215,7 +227,7 @@ class ClassCollection:
 
 @dataclass(frozen=True)
 class _ClassInfo:
-    id: ClassIdentifier
+    id: Identifier
     file: Path | None
     namespaces: list[str]
     body: list[str]
@@ -296,6 +308,7 @@ class CPParser:
         line_delm: str = "\n",
         reserved_group_names: str | list[str] | None = None,
         resolve_hierarchies_with_inheritance: bool = False,
+        include_enums: bool = False,
     ) -> ClassCollection:
 
         if isinstance(reserved_group_names, str):
@@ -304,7 +317,7 @@ class CPParser:
             reserved_group_names = []
 
         classes = ClassCollection()
-        clinfos = self.__find_classes(line_delm=line_delm)
+        clinfos = self.__find_entities(line_delm=line_delm, include_enums=include_enums)
 
         def parse_class(clinfo: _ClassInfo, /, *, override_declare_macro=False) -> Class | None:
             declm = self.__macros.declare
@@ -385,9 +398,13 @@ class CPParser:
                     c = c.instantiate(templargs)
                 parents.append(c)
 
-            return self.__gather_fields(clinfo, parents, reserved_group_names)
+            return self.__create_class(clinfo, parents, reserved_group_names)
 
         for clinfo in clinfos.classes:
+            if clinfo.id.ctype == "enum":
+                classes.add(self.__create_enum(clinfo))
+                continue
+
             cl = parse_class(clinfo)
             if cl is not None:
                 classes.add(cl)
@@ -400,7 +417,7 @@ class CPParser:
                 for f in parent.fields.fields:
                     if f.name in c.fields.per_name:
                         Convoy.warning(
-                            f" - The field <bold>{f.as_str(parent.id.identifier)}</bold> is being shadowed by a field with the same name in the child {c.ctype} <bold>{c.id.identifier}</bold>."
+                            f" - The field <bold>{f.as_str(parent.id.identifier)}</bold> is being shadowed by a field with the same name in the child {c.id.ctype} <bold>{c.id.identifier}</bold>."
                         )
                     else:
                         Convoy.verbose(
@@ -410,10 +427,11 @@ class CPParser:
 
         return classes
 
-    def __find_classes(
+    def __find_entities(
         self,
         *,
         line_delm: str = "\n",
+        include_enums: bool = False,
     ) -> _ClassInfoCollection:
 
         lines = self.__code.split(line_delm)
@@ -437,13 +455,26 @@ class CPParser:
                 index += 1
                 continue
 
-            is_class = "class" in line and not "enum" in line
-            is_struct = not is_class and "struct" in line
+            is_enum = "enum" in line
+            is_class = "class" in line and not is_enum
+            is_struct = "struct" in line and not is_class
+            if is_enum and not include_enums:
+                continue
 
-            if not is_class and not is_struct:
+            if is_enum + is_class + is_struct > 1:
+                Convoy.exit_error(
+                    f"Class type mismatch. Parser is not sure if it found an enum, struct or class for the line <bold>{line}</bold>."
+                )
+
+            if is_enum:
+                clstype = "enum"
+            elif is_class:
+                clstype = "class"
+            elif is_struct:
+                clstype = "struct"
+            else:
                 index += 1
                 continue
-            clstype = "class" if is_class else "struct"
 
             start = index
             end = len(lines)
@@ -520,8 +551,12 @@ class CPParser:
             for var in tlist.replace(", ", ",").split(",")
         ]
 
-    def __parse_class_identifier(self, clsdecl: str, clstype: str, /) -> ClassIdentifier:
+    def __parse_class_identifier(self, clsdecl: str, clstype: str, /) -> Identifier:
         Convoy.verbose(f"Attempting to parse {clstype} identifier.")
+        if clstype == "enum":
+            clsdecl = clsdecl.strip("enum").strip().strip("class").strip()
+            name = clsdecl.split(":", 1)[0].strip()
+            return Identifier(name, name, clstype, None, [])
 
         declaration = re.match(self.__class_pattern, clsdecl.replace(", ", ",").replace("final", "").strip())
         if declaration is None:
@@ -569,7 +604,7 @@ class CPParser:
             )
 
         name = identifier.split("<", 1)[0]
-        return ClassIdentifier(
+        return Identifier(
             identifier,
             name,
             clstype,
@@ -581,13 +616,40 @@ class CPParser:
             ),
         )
 
-    def __gather_fields(
+    def __create_enum(self, clinfo: _ClassInfo, /) -> Enum:
+        if clinfo.id.ctype != "enum":
+            Convoy.exit_error(
+                f"Cannot use __create_enum for an entity that is not an enum. Type found: <bold>{clinfo.id.ctype}</bold>."
+            )
+
+        Convoy.log(f"Gathering values for enum <bold>{clinfo.id.identifier}</bold>.")
+        forbidden = ["{", "}", "(", ")", ";"]
+        values = {}
+        for line in clinfo.body:
+            line = line.strip(",").strip()
+            for f in forbidden:
+                if f in line:
+                    break
+            else:
+                splt = line.split("=", 1)
+                name = splt.pop(0).strip()
+                val = splt[0].strip() if splt else None
+                values[name] = val
+                Convoy.verbose(f" - Registered enum entry <bold>{name}</bold>.")
+
+        return Enum(clinfo.id, clinfo.namespaces, values, clinfo.file)
+
+    def __create_class(
         self,
         clinfo: _ClassInfo,
         parents: list[Class],
         reserved_group_names: list[str],
         /,
     ) -> Class:
+        if clinfo.id.ctype != "class" and clinfo.id.ctype != "struct":
+            Convoy.exit_error(
+                f"Cannot use __create_class for an entity that is not a class or struct. Type found: <bold>{clinfo.id.ctype}</bold>."
+            )
         if clinfo.id.identifier in self.__cache.per_identifier:
             return self.__cache.per_identifier[clinfo.id.identifier]
 
@@ -647,7 +709,6 @@ class CPParser:
 
         for line in clinfo.body:
             line = line.strip()
-
             check_group_macros(line)
             if not check_ignore_macros(line):
                 continue
