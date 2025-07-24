@@ -49,6 +49,11 @@
 #endif
 
 /**
+ * A serialization macro for enums. It must be used outside of the enum definition, before its declaration.
+ */
+#define TKIT_YAML_SERIALIZE_DECLARE_ENUM(p_EnumName)
+
+/**
  * A pair of macros that will allow you to customize how each field gets (de)serialized. The available options are the
  * following:
  *

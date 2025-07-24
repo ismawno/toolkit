@@ -65,10 +65,11 @@ ipair = MacroPair(
 )
 macros = ControlMacros(
     f"TKIT_{backend.upper()}_SERIALIZE_DECLARE",
+    f"TKIT_{backend.upper()}_SERIALIZE_DECLARE_ENUM",
     gpair,
     ipair,
 )
-orchestrator = CPPOrchestrator.from_cli_arguments(args, macros=macros, include_enums=True)
+orchestrator = CPPOrchestrator.from_cli_arguments(args, macros=macros)
 
 options = ["skip-if-missing", "only-serialize", "only-deserialize", "serialize-as", "deserialize-as"]
 

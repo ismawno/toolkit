@@ -46,6 +46,11 @@
 #endif
 
 /**
+ * A reflection macro for enums. It must be used outside of the enum definition, before its declaration.
+ */
+#define TKIT_REFLECT_DECLARE_ENUM(p_EnumName)
+
+/**
  * A pair of macros that will allow you to group fields in any way you prefer, so that later, when iterating over the
  * fields of a class, you may do so only within a subset of the fields.
  */

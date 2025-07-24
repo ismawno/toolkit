@@ -19,6 +19,7 @@ class MacroPair:
 @dataclass(frozen=True)
 class ControlMacros:
     declare: str
+    enum: str
     group: MacroPair
     ignore: MacroPair
 
@@ -308,7 +309,6 @@ class CPParser:
         line_delm: str = "\n",
         reserved_group_names: str | list[str] | None = None,
         resolve_hierarchies_with_inheritance: bool = False,
-        include_enums: bool = False,
     ) -> ClassCollection:
 
         if isinstance(reserved_group_names, str):
@@ -317,7 +317,7 @@ class CPParser:
             reserved_group_names = []
 
         classes = ClassCollection()
-        clinfos = self.__find_entities(line_delm=line_delm, include_enums=include_enums)
+        clinfos = self.__find_entities(line_delm=line_delm)
 
         def parse_class(clinfo: _ClassInfo, /, *, override_declare_macro=False) -> Class | None:
             declm = self.__macros.declare
@@ -402,7 +402,9 @@ class CPParser:
 
         for clinfo in clinfos.classes:
             if clinfo.id.ctype == "enum":
-                classes.add(self.__create_enum(clinfo))
+                enum = self.__create_enum(clinfo)
+                if enum.values:
+                    classes.add(enum)
                 continue
 
             cl = parse_class(clinfo)
@@ -431,7 +433,6 @@ class CPParser:
         self,
         *,
         line_delm: str = "\n",
-        include_enums: bool = False,
     ) -> _ClassInfoCollection:
 
         lines = self.__code.split(line_delm)
@@ -439,10 +440,26 @@ class CPParser:
         file = None
         index = 0
         classes = _ClassInfoCollection()
+        enums = []
         while index < len(lines):
             line = lines[index].strip()
             if "CPParser file" in line:
                 file = Path(line.split(": ", 1)[1].strip("\n").strip())
+
+            declenum = self.__macros.enum
+            if declenum in line and "#define" not in line:
+                mtch = re.match(rf"{declenum}\((.*?)\)", line)
+                if mtch is None:
+                    Convoy.exit_error(
+                        f"Failed to match enum declare macro arguments for the line <bold>{line}</bold>. Declare macro: <bold>{declenum}</bold>."
+                    )
+                name = mtch.group(1)
+                if name in enums:
+                    Convoy.warning(f"Found duplicate enum declaration macro: <bold>{name}</bold>.")
+                Convoy.log(f"Found enum marked with the declare macro: <bold>{declenum}</bold>.")
+                enums.append(name)
+                index += 1
+                continue
 
             if line.endswith(";"):
                 index += 1
@@ -458,9 +475,6 @@ class CPParser:
             is_enum = "enum" in line
             is_class = "class" in line and not is_enum
             is_struct = "struct" in line and not is_class
-            if is_enum and not include_enums:
-                index += 1
-                continue
 
             if is_enum + is_class + is_struct > 1:
                 Convoy.exit_error(
@@ -527,6 +541,10 @@ class CPParser:
             clsbody = lines[start + 1 : end]
 
             identifier = self.__parse_identifier(clsdecl, clstype)
+            if is_enum and identifier.identifier not in enums:
+                index += 1
+                continue
+
             if identifier.identifier in classes.per_identifier:
                 Convoy.exit_error(
                     f"Found a {clstype} with a duplicate identifier: <bold>{identifier.identifier}</bold>."
