@@ -162,6 +162,10 @@ class _MetaConvoy(type):
             self.__label_indent[name.lower()] = label_indent - ln
 
     @property
+    def version(self) -> str:
+        return "v0.1.0"
+
+    @property
     def is_windows(self) -> bool:
         return sys.platform.startswith("win")
 
