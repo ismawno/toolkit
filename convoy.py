@@ -118,19 +118,6 @@ class _MetaConvoy(type):
         self.safe = False
 
         self.__indent = 1
-        self.__no_colors = False
-        if self.is_windows:
-            kernel32 = ctypes.windll.kernel32
-            hstdout = kernel32.GetStdHandle(-11)
-            mode = ctypes.c_ulong()
-            if not kernel32.GetConsoleMode(hstdout, ctypes.byref(mode)):
-                self.__no_colors = True
-                self.log("Failed to get console mode. Text colors will be disabled.")
-
-            new_mode = mode.value | 0x0004
-            if not kernel32.SetConsoleMode(hstdout, new_mode):
-                self.__no_colors = True
-                self.log("Failed to set console mode. Text colors will be disabled.")
 
         labels = [
             ("CONVOY", "fblue"),
@@ -160,6 +147,20 @@ class _MetaConvoy(type):
             lp = self.__create_label_prefix(label)
             ln = len(_Style.format(lp, void=True))
             self.__label_indent[name.lower()] = label_indent - ln
+
+        self.__no_colors = False
+        if self.is_windows:
+            kernel32 = ctypes.windll.kernel32
+            hstdout = kernel32.GetStdHandle(-11)
+            mode = ctypes.c_ulong()
+            if not kernel32.GetConsoleMode(hstdout, ctypes.byref(mode)):
+                self.__no_colors = True
+                self.log("Failed to get console mode. Text colors will be disabled.")
+
+            new_mode = mode.value | 0x0004
+            if not kernel32.SetConsoleMode(hstdout, new_mode):
+                self.__no_colors = True
+                self.log("Failed to set console mode. Text colors will be disabled.")
 
     @property
     def version(self) -> str:
