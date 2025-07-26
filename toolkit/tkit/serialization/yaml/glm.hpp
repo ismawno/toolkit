@@ -52,23 +52,31 @@ template <typename T, glm::qualifier Q> struct Codec<glm::qua<T, Q>>
     static Node Encode(const glm::qua<T, Q> &p_Instance) noexcept
     {
         Node node;
-        node.push_back(p_Instance.x);
-        node.push_back(p_Instance.y);
-        node.push_back(p_Instance.z);
-        node.push_back(p_Instance.w);
+        const glm::vec<3, T, Q> angles = glm::degrees(glm::eulerAngles(p_Instance));
+        node.push_back(angles.x);
+        node.push_back(angles.y);
+        node.push_back(angles.z);
         node.SetStyle(YAML::EmitterStyle::Flow);
         return node;
     }
 
     static bool Decode(const Node &p_Node, glm::qua<T, Q> &p_Instance) noexcept
     {
-        if (!p_Node.IsSequence())
+        if (!p_Node.IsSequence() || (p_Node.size() != 3 && p_Node.size() != 4))
             return false;
 
-        p_Instance.x = p_Node[0].as<T>();
-        p_Instance.y = p_Node[1].as<T>();
-        p_Instance.z = p_Node[2].as<T>();
-        p_Instance.w = p_Node[3].as<T>();
+        if (p_Node.size() == 4)
+        {
+            p_Instance.x = p_Node[0].as<T>();
+            p_Instance.y = p_Node[1].as<T>();
+            p_Instance.z = p_Node[2].as<T>();
+            p_Instance.w = p_Node[3].as<T>();
+        }
+        else
+        {
+            const glm::vec<3, T, Q> angles = glm::radians(p_Node.as<glm::vec<3, T, Q>>());
+            p_Instance = glm::qua<T, Q>{angles};
+        }
         return true;
     }
 };
