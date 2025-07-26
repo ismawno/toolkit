@@ -164,7 +164,7 @@ class _MetaConvoy(type):
 
     @property
     def version(self) -> str:
-        return "v0.1.0"
+        return "v0.1.1"
 
     @property
     def is_windows(self) -> bool:
@@ -278,6 +278,8 @@ class _MetaConvoy(type):
         for c in s:
             if c.isupper():
                 result.append(f"_{c.lower()}" if result else c.lower())
+            elif c == "-":
+                result.append("_")
             else:
                 result.append(c)
         return "".join(result)
@@ -286,7 +288,7 @@ class _MetaConvoy(type):
         result = []
         s = s[:1].lower() + s[1:]
         for c in s:
-            if c == "_":
+            if c == "_" or c == "-":
                 result.append(c.upper())
             else:
                 result.append(c)
@@ -296,8 +298,19 @@ class _MetaConvoy(type):
         result = []
         s = s.capitalize()
         for c in s:
-            if c == "_":
+            if c == "_" or c == "-":
                 result.append(c.upper())
+            else:
+                result.append(c)
+        return "".join(result)
+
+    def to_dyphen_case(self, s: str, /) -> str:
+        result = []
+        for c in s:
+            if c.isupper():
+                result.append(f"-{c.lower()}" if result else c.lower())
+            elif c == "_":
+                result.append("-")
             else:
                 result.append(c)
         return "".join(result)
