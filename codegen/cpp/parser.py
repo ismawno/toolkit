@@ -515,8 +515,20 @@ class CPParser:
                 Convoy.verbose(f" - <bold>{template_line}</bold>")
             Convoy.verbose(f" - <bold>{lines[index].strip()}</bold>")
 
+            scope_counter = 0
+            can_exit = False
             while index < end:
                 subline = lines[index].strip()
+                if "{" in subline:
+                    scope_counter += 1
+                    can_exit = True
+                if "}" in subline:
+                    scope_counter -= 1
+
+                if scope_counter == 0 and can_exit:
+                    end = index + 1
+                    break
+
                 declm = self.__macros.declare
                 if declm in subline:
                     if has_declm:
@@ -530,10 +542,6 @@ class CPParser:
                         )
                     macro_args = [m.strip() for m in Convoy.nested_split(mtch.group(1), ",", openers="<", closers=">")]
                     has_declm = True
-
-                if subline == "};":
-                    end = index + 1
-                    break
 
                 index += 1
 

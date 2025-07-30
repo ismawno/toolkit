@@ -192,6 +192,10 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                 f"template <{clsinfo.id.templdecl if clsinfo.id.templdecl is not None else ''}> struct Codec<{clsinfo.id.identifier}>",
                 closer="};",
             ):
+                if not fields:
+                    hpp.comment(f"The {clsinfo.id.ctype} `{clsinfo.id.identifier}` had no fields!")
+                    continue
+
                 with hpp.doc():
                     hpp.brief(
                         f"Encode an instance of type `{clsinfo.id.identifier}` into a `Node` (serialization step)."

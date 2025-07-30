@@ -455,6 +455,9 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                 if statfields.fields:
                     generate_reflect_body(statfields, is_static=True)
 
+                if not memfields.fields and not statfields.fields:
+                    hpp.comment(f"The {clsinfo.id.ctype} `{clsinfo.id.identifier}` had no fields!")
+
 
 orchestrator.generate(generate_reflection_code, disclaimer="reflect.py")
 
