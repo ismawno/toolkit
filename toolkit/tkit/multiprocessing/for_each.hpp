@@ -107,7 +107,7 @@ void ForEach(TManager &p_Manager, const It p_First, const It p_Last, const usize
  * container to store all the tasks through the iterator and to await for them. The amount of tasks created is equal to
  * `p_Partitions - 1` (because the main thread will execute the first task/partition).
  * @param p_OutRet A pointer to a variable where the return value of the main thread task will be stored.
- * @param p_Partitions The number of partitions to create.
+ * @param p_Partitions The number of partitions to create. This number takes into account the main thread.
  * @param p_Callable The callable object to execute. It must be a function object that takes two iterators as arguments
  * (and the mandatory thread index argument at the end as well). It will be called for each element in the range
  * [`p_First`, `p_Last`). The function is called as: `p_Callable(YouArgs..., p_Start, p_End, p_ThreadIndex)`
@@ -140,14 +140,15 @@ auto ForEachMainThreadLead(TManager &p_Manager, const It1 p_First, const It1 p_L
  *
  * It is most useful when used as a way to parallelize a loop, where each iteration is independent of the others.
  * The main difference with the other overload is that this one does not store the tasks in an output iterator. This is
- * useful when the tasks do not return a value. The user still needs to await for the tasks to finish before going on.
+ * useful when the tasks do not return a value. The user needs to await for the whole manager to finish, as tasks are
+ * not retrieved by the user.
  *
  * This version of the function will let the main thread execute the first task of each partition.
  *
  * @param p_Manager The task manager to use, which must be derived from `ITaskManager`.
  * @param p_First The first iterator or index of the range.
  * @param p_Last The last iterator or index of the range.
- * @param p_Partitions The number of partitions to create.
+ * @param p_Partitions The number of partitions to create. This number takes into account the main thread.
  * @param p_Callable The callable object to execute. It must be a function object that takes two iterators as arguments
  * (and the mandatory thread index argument at the end as well). It will be called for each element in the range
  * [`p_First`, `p_Last`). The function is called as: `p_Callable(YouArgs..., p_Start, p_End, p_ThreadIndex)`
