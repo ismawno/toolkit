@@ -267,12 +267,19 @@ endfunction()
 
 function(tkit_configure_compile_link_options target)
   set(options FORBID_SANITIZERS)
-  set(multi_value_args COMPILER_FLAGS)
-  set(multi_value_args LINKER_FLAGS)
+  set(multi_value_args1 COMPILER_FLAGS)
+  set(multi_value_args2 LINKER_FLAGS)
   set(one_value_args CONFIG VISIBILITY)
 
-  cmake_parse_arguments(PARSE_ARGV 1 ARG "${options}" "${one_value_args}"
-                        "${multi_value_args}")
+  cmake_parse_arguments(
+    PARSE_ARGV
+    1
+    ARG
+    "${options}"
+    "${one_value_args}"
+    "${multi_value_args1}"
+    "${multi_value_args2}")
+
   if(NOT DEFINED ARG_CONFIG)
     set(ARG_CONFIG ${CMAKE_BUILD_TYPE})
   endif()
