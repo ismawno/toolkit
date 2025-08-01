@@ -114,7 +114,9 @@ if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
     target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_SAMPLING)
   else()
     set(TRACY_NO_SAMPLING ON)
-    set(TRACY_NO_CALLSTACK ON)
+    if(NOT TOOLKIT_ENABLE_CALLSTACK)
+      set(TRACY_NO_CALLSTACK ON)
+    endif()
   endif()
 
   FetchContent_Declare(
