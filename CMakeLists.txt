@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;Dist")
 
-function(define_option varname default)
+function(define_option varname default unused_opt_type)
   if(NOT DEFINED ${varname})
     set(${varname}
         ${default}
@@ -16,7 +16,13 @@ function(define_option varname default)
   endif()
 endfunction()
 
-define_option(CMAKE_BUILD_TYPE "Debug")
+define_option(CMAKE_BUILD_TYPE "Debug" "Toolkit - Build")
+define_option(TOOLKIT_BUILD_TESTS OFF "Toolkit - Build")
+define_option(TOOLKIT_BUILD_PERFORMANCE OFF "Toolkit - Build")
+# none, gui, cli or csv
+define_option(TOOLKIT_BUILD_PROFILER "none" "Toolkit - Build")
+# none, address, leak, thread, undefined
+define_option(TOOLKIT_SANITIZERS "none" "Toolkit - Build")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -59,28 +65,24 @@ set(CMAKE_SHARED_LINKER_FLAGS_DIST
     ""
     CACHE STRING "I hate cmake" FORCE)
 
-define_option(TOOLKIT_ENABLE_INFO_LOGS OFF)
-define_option(TOOLKIT_ENABLE_WARNING_LOGS OFF)
-define_option(TOOLKIT_ENABLE_ASSERTS OFF)
+define_option(TOOLKIT_ENABLE_INFO_LOGS OFF "Toolkit - Feature")
+define_option(TOOLKIT_ENABLE_WARNING_LOGS OFF "Toolkit - Feature")
+define_option(TOOLKIT_ENABLE_ASSERTS OFF "Toolkit - Feature")
 
-define_option(TOOLKIT_ENABLE_ARENA_ALLOCATOR OFF)
-define_option(TOOLKIT_ENABLE_BLOCK_ALLOCATOR OFF)
-define_option(TOOLKIT_ENABLE_STACK_ALLOCATOR OFF)
+define_option(TOOLKIT_ENABLE_ARENA_ALLOCATOR OFF "Toolkit - Feature")
+define_option(TOOLKIT_ENABLE_BLOCK_ALLOCATOR OFF "Toolkit - Feature")
+define_option(TOOLKIT_ENABLE_STACK_ALLOCATOR OFF "Toolkit - Feature")
 
-define_option(TOOLKIT_ENABLE_MULTIPROCESSING OFF)
-define_option(TOOLKIT_ENABLE_PROFILING OFF)
+define_option(TOOLKIT_ENABLE_MULTIPROCESSING OFF "Toolkit - Feature")
+define_option(TOOLKIT_ENABLE_PROFILING OFF "Toolkit - Feature")
 
-define_option(TOOLKIT_ENABLE_INSTRUMENTATION OFF)
-define_option(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION OFF)
+define_option(TOOLKIT_ENABLE_REFLECTION OFF "Toolkit - Code generation")
+define_option(TOOLKIT_ENABLE_YAML_SERIALIZATION OFF "Toolkit - Code generation")
 
-define_option(TOOLKIT_BUILD_TESTS OFF)
-define_option(TOOLKIT_BUILD_PERFORMANCE OFF)
-# none, gui, cli or csv
-define_option(TOOLKIT_BUILD_PROFILER "none")
-# none, address, leak, thread, undefined
-define_option(TOOLKIT_SANITIZERS "none")
-define_option(TOOLKIT_ENABLE_REFLECTION OFF)
-define_option(TOOLKIT_ENABLE_YAML_SERIALIZATION OFF)
+define_option(TOOLKIT_ENABLE_INSTRUMENTATION OFF "Toolkit - Profiling")
+define_option(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION OFF "Toolkit - Profiling")
+define_option(TOOLKIT_ENABLE_SAMPLING OFF "Toolkit - Profiling")
+define_option(TOOLKIT_ENABLE_CALLSTACK OFF "Toolkit - Profiling")
 
 if(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION AND NOT TOOLKIT_ENABLE_INSTRUMENTATION)
   message(
@@ -131,42 +133,57 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   endif()
 endif()
 
-message(STATUS "TOOLKIT: Build type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "TOOLKIT: Build tests: ${TOOLKIT_BUILD_TESTS}")
-message(STATUS "TOOLKIT: Build performance tests: ${TOOLKIT_BUILD_PERFORMANCE}")
-message(STATUS "TOOLKIT: Enable info logs: ${TOOLKIT_ENABLE_INFO_LOGS}")
-message(STATUS "TOOLKIT: Enable warning logs: ${TOOLKIT_ENABLE_WARNING_LOGS}")
-message(STATUS "TOOLKIT: Enable asserts: ${TOOLKIT_ENABLE_ASSERTS}")
+message(STATUS "TOOLKIT: Build settings")
+message(STATUS "TOOLKIT:  Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "TOOLKIT:  Build tests: ${TOOLKIT_BUILD_TESTS}")
 message(
-  STATUS "TOOLKIT: Enable arena allocator: ${TOOLKIT_ENABLE_ARENA_ALLOCATOR}")
-message(
-  STATUS "TOOLKIT: Enable block allocator: ${TOOLKIT_ENABLE_BLOCK_ALLOCATOR}")
-message(
-  STATUS "TOOLKIT: Enable stack allocator: ${TOOLKIT_ENABLE_STACK_ALLOCATOR}")
-message(
-  STATUS "TOOLKIT: Enable multiprocessing: ${TOOLKIT_ENABLE_MULTIPROCESSING}")
+  STATUS "TOOLKIT:  Build performance tests: ${TOOLKIT_BUILD_PERFORMANCE}")
 message(
   STATUS
-    "TOOLKIT: Enable profiling: ${TOOLKIT_ENABLE_PROFILING} (This only enables features located under the 'profiling' directory. To enable the instrumentation profiling macros, set TOOLKIT_ENABLE_INSTRUMENTATION to ON)"
+    "TOOLKIT:  Build profiler: ${TOOLKIT_BUILD_PROFILER} (can be none, gui, cli or csv)"
 )
 message(
   STATUS
-    "TOOLKIT: Enable yaml serialization: ${TOOLKIT_ENABLE_YAML_SERIALIZATION}")
-message(
-  STATUS
-    "TOOLKIT: Sanitizer: ${TOOLKIT_SANITIZERS} (can be none, address, leak, thread, undefined)"
-)
-message(STATUS "TOOLKIT: Instrumentation: ${TOOLKIT_ENABLE_INSTRUMENTATION}")
-message(
-  STATUS
-    "TOOLKIT: Vulkan instrumentation: ${TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION}")
-message(
-  STATUS
-    "TOOLKIT: Build profiler: ${TOOLKIT_BUILD_PROFILER} (can be none, gui, cli or csv)"
+    "TOOLKIT:  Sanitizer(s): ${TOOLKIT_SANITIZERS} (can be none, address, leak, thread, undefined)"
 )
 
+message(STATUS "TOOLKIT: Feature settings")
+message(STATUS "TOOLKIT:  Enable info logs: ${TOOLKIT_ENABLE_INFO_LOGS}")
+message(STATUS "TOOLKIT:  Enable warning logs: ${TOOLKIT_ENABLE_WARNING_LOGS}")
+message(STATUS "TOOLKIT:  Enable asserts: ${TOOLKIT_ENABLE_ASSERTS}")
+
 message(
-  STATUS "TOOLKIT: The toolkit root path is set to ${CMAKE_CURRENT_SOURCE_DIR}")
+  STATUS "TOOLKIT:  Enable arena allocator: ${TOOLKIT_ENABLE_ARENA_ALLOCATOR}")
+message(
+  STATUS "TOOLKIT:  Enable block allocator: ${TOOLKIT_ENABLE_BLOCK_ALLOCATOR}")
+message(
+  STATUS "TOOLKIT:  Enable stack allocator: ${TOOLKIT_ENABLE_STACK_ALLOCATOR}")
+
+message(
+  STATUS "TOOLKIT:  Enable multiprocessing: ${TOOLKIT_ENABLE_MULTIPROCESSING}")
+message(
+  STATUS
+    "TOOLKIT:  Enable profiling: ${TOOLKIT_ENABLE_PROFILING} (This only enables features located under the 'profiling' directory. To enable the instrumentation profiling macros, set TOOLKIT_ENABLE_INSTRUMENTATION to ON)"
+)
+
+message(STATUS "TOOLKIT: Code generation settings")
+message(
+  STATUS
+    "TOOLKIT:  Enable yaml serialization: ${TOOLKIT_ENABLE_YAML_SERIALIZATION}")
+message(STATUS "TOOLKIT:  Enable reflection: ${TOOLKIT_ENABLE_REFLECTION}")
+
+message(STATUS "TOOLKIT: Profiling settings")
+message(STATUS "TOOLKIT:  Instrumentation: ${TOOLKIT_ENABLE_INSTRUMENTATION}")
+message(
+  STATUS
+    "TOOLKIT:  Vulkan instrumentation: ${TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION}"
+)
+message(STATUS "TOOLKIT:  Enable sampling: ${TOOLKIT_ENABLE_SAMPLING}")
+message(STATUS "TOOLKIT:  Enable callstacks: ${TOOLKIT_ENABLE_CALLSTACK}")
+
+message(
+  STATUS "TOOLKIT:  The toolkit root path is set to ${CMAKE_CURRENT_SOURCE_DIR}"
+)
 set(TOOLKIT_ROOT_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}
     CACHE STRING "I hate cmake" FORCE)
@@ -237,9 +254,22 @@ function(tkit_register_for_yaml_serialization target)
   endforeach()
 endfunction()
 
+function(remove_duplicates input output)
+  set(result "")
+  foreach(item IN LISTS ${input})
+    if(NOT "${result}" MATCHES "(^|;)${item}(;|$)")
+      list(APPEND result "${item}")
+    endif()
+  endforeach()
+  set(${output_list_var}
+      "${result}"
+      PARENT_SCOPE)
+endfunction()
+
 function(tkit_configure_compile_link_options target)
   set(options FORBID_SANITIZERS)
-  set(multi_value_args FLAGS)
+  set(multi_value_args COMPILER_FLAGS)
+  set(multi_value_args LINKER_FLAGS)
   set(one_value_args CONFIG VISIBILITY)
 
   cmake_parse_arguments(PARSE_ARGV 1 ARG "${options}" "${one_value_args}"
@@ -250,8 +280,11 @@ function(tkit_configure_compile_link_options target)
   if(NOT DEFINED ARG_FORBID_SANITIZERS)
     set(ARG_FORBID_SANITIZERS FALSE)
   endif()
-  if(NOT DEFINED ARG_FLAGS)
-    set(ARG_FLAGS "")
+  if(NOT DEFINED ARG_COMPILER_FLAGS)
+    set(ARG_COMPILER_FLAGS "")
+  endif()
+  if(NOT DEFINED ARG_LINKER_FLAGS)
+    set(ARG_LINKER_FLAGS "")
   endif()
   if(NOT DEFINED ARG_VISIBILITY)
     set(ARG_VISIBILITY "PRIVATE")
@@ -265,88 +298,87 @@ function(tkit_configure_compile_link_options target)
     message(STATUS "TOOLKIT:     Sanitizers: ${TOOLKIT_SANITIZERS}")
   endif()
   message(STATUS "TOOLKIT:     Visibility: ${ARG_VISIBILITY}")
-  message(STATUS "TOOLKIT:     Provided flags: ${ARG_FLAGS}")
+  message(STATUS "TOOLKIT:     Provided compiler flags: ${ARG_COMPILER_FLAGS}")
+  message(STATUS "TOOLKIT:     Provided linker flags: ${ARG_LINKER_FLAGS}")
 
   if(ARG_CONFIG STREQUAL "Debug")
     if(MSVC)
-      target_compile_options(${target} ${ARG_VISIBILITY} /ZI /Od /MP
-                             ${ARG_FLAGS})
-      target_link_options(${target} ${ARG_VISIBILITY} /DEBUG /INCREMENTAL:NO)
-      message(STATUS "TOOLKIT:     Compiler flags: /ZI;/Od;/MP")
-      message(STATUS "TOOLKIT:     Linker flags: /DEBUG;/INCREMENTAL:NO")
+      set(compiler_flags /ZI /0d /0y- /MP)
+      set(linker_flags /DEBUG /INCREMENTAL:NO)
     else()
-      target_compile_options(${target} ${ARG_VISIBILITY} -g -O0 ${ARG_FLAGS})
-      message(STATUS "TOOLKIT:     Compiler flags: -g;-O0")
+      set(compiler_flags -g -O0 -fno-omit-frame-pointer)
     endif()
 
   elseif(ARG_CONFIG STREQUAL "Release")
     if(MSVC)
-      target_compile_options(${target} ${ARG_VISIBILITY} /ZI /O2 /MP
-                             ${ARG_FLAGS})
-      target_link_options(${target} ${ARG_VISIBILITY} /DEBUG /INCREMENTAL:NO)
-      message(STATUS "TOOLKIT:     Compiler flags: /ZI;/O2;/MP")
-      message(STATUS "TOOLKIT:     Linker flags: /DEBUG;/INCREMENTAL:NO")
+      set(compiler_flags /ZI /O2 /0y- /MP)
+      set(linker_flags /DEBUG /INCREMENTAL:NO)
     else()
-      target_compile_options(${target} ${ARG_VISIBILITY} -g -O2 ${ARG_FLAGS})
-      message(STATUS "TOOLKIT:     Compiler flags: -g;-O2")
+      set(compiler_flags -g -O0)
     endif()
 
   elseif(ARG_CONFIG STREQUAL "Dist")
     if(MSVC)
-      target_compile_options(${target} ${ARG_VISIBILITY} /Ox /GL /MP
-                             ${ARG_FLAGS})
-      target_link_options(${target} ${ARG_VISIBILITY} /LTCG /INCREMENTAL:NO)
-      message(STATUS "TOOLKIT:     Compiler flags: /Ox;/GL;/MP")
-      message(STATUS "TOOLKIT:     Linker flags: /LTCG;/INCREMENTAL:NO")
+      set(compiler_flags /Ox /GL /MP)
+      set(linker_flags /LTCG /INCREMENTAL:NO)
     else()
-      target_compile_options(${target} ${ARG_VISIBILITY} -O3 -flto ${ARG_FLAGS})
-      target_link_options(${target} ${ARG_VISIBILITY} -flto)
-      message(STATUS "TOOLKIT:     Compiler flags: -O3;-flto")
-      message(STATUS "TOOLKIT:     Linker flags: -flto")
+      set(compiler_flags -O3 -flto)
+      set(linker_flags -flto)
     endif()
   endif()
 
-  if(NOT DEFINED TOOLKIT_SANITIZERS
-     OR TOOLKIT_SANITIZERS STREQUAL "none"
-     OR ARG_FORBID_SANITIZERS)
-    return()
+  if(NOT DEFINED linker_flags)
+    set(linker_flags "")
   endif()
 
-  if(MSVC)
-    target_compile_options(${target} ${ARG_VISIBILITY}
-                           /fsanitize=${TOOLKIT_SANITIZERS} /FS)
-    message(
-      STATUS
-        "TOOLKIT:     Sanitizer compiler flags: /fsanitize=${TOOLKIT_SANITIZERS};/FS"
-    )
-  else()
-    target_compile_options(
-      ${target} ${ARG_VISIBILITY} -fsanitize=${TOOLKIT_SANITIZERS}
-      -fno-omit-frame-pointer)
-    target_link_options(
-      ${target} ${ARG_VISIBILITY} -fsanitize=${TOOLKIT_SANITIZERS}
-      -fno-omit-frame-pointer)
-    message(
-      STATUS
-        "TOOLKIT:     Sanitizer compiler flags: -fsanitize=${TOOLKIT_SANITIZERS};-fno-omit-frame-pointer"
-    )
-    message(
-      STATUS
-        "TOOLKIT:     Sanitizer linker flags: -fsanitize=${TOOLKIT_SANITIZERS};-fno-omit-frame-pointer"
-    )
+  if(DEFINED TOOLKIT_SANITIZERS
+     AND NOT TOOLKIT_SANITIZERS STREQUAL "none"
+     AND NOT ARG_FORBID_SANITIZERS)
+    if(MSVC)
+      list(APPEND compiler_flags /fsanitize=${TOOLKIT_SANITIZERS} /ZI)
+    else()
+      list(APPEND compiler_flags -fsanitize=${TOOLKIT_SANITIZERS} -g
+           -fno-omit-frame-pointer)
+      list(APPEND linker_flags -fsanitize=${TOOLKIT_SANITIZERS} -g
+           -fno-omit-frame-pointer)
+    endif()
+
   endif()
+  if(TOOLKIT_ENABLE_SAMPLING)
+    if(MSVC)
+      list(APPEND compiler_flags /ZI)
+    else()
+      list(APPEND compiler_flags -g -fno-omit-frame-pointer)
+    endif()
+
+  endif()
+
+  remove_duplicates(compiler_flags ucompiler_flags)
+  remove_duplicates(linker_flags ulinker_flags)
+  message(
+    STATUS
+      "TOOLKIT:    Final compiler flags: ${ucompiler_flags} ${ARG_COMPILER_FLAGS}"
+  )
+  message(
+    STATUS
+      "TOOLKIT:    Final linker flags: ${ulinker_flags} ${ARG_LINKER_FLAGS}")
+  target_compile_options(${target} ${ARG_VISIBILITY} ${ucompiler_flags}
+                         ${ARG_COMPILER_FLAGS})
+  target_link_options(${target} ${ARG_VISIBILITY} ${ulinker_flags}
+                      ${ARG_LINKER_FLAGS})
+
 endfunction()
 
 function(tkit_default_configure target)
   if(MSVC)
-    tkit_configure_compile_link_options(${target} FLAGS /W4 /WX)
+    tkit_configure_compile_link_options(${target} COMPILER_FLAGS /W4 /WX)
   elseif((UNIX AND APPLE) OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    tkit_configure_compile_link_options(${target} FLAGS -Wall -Wextra
+    tkit_configure_compile_link_options(${target} COMPILER_FLAGS -Wall -Wextra
                                         -Wpedantic -Werror)
   else()
     tkit_configure_compile_link_options(
       ${target}
-      FLAGS
+      COMPILER_FLAGS
       -Wall
       -Wextra
       -Wpedantic

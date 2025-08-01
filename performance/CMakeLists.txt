@@ -9,7 +9,9 @@ set(SOURCES perf/main.cpp perf/memory.cpp perf/multiprocessing.cpp
 FetchContent_Declare(
   argparse
   GIT_REPOSITORY https://github.com/p-ranav/argparse.git
-  GIT_TAG v3.2)
+  GIT_TAG v3.2
+  GIT_SHALLOW TRUE
+  GIT_PROGRESS TRUE)
 FetchContent_MakeAvailable(argparse)
 
 add_executable(toolkit-performance ${SOURCES})

@@ -48,7 +48,9 @@ if(TOOLKIT_ENABLE_YAML_SERIALIZATION)
   FetchContent_Declare(
     yaml-cpp
     GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-    GIT_TAG 0.8.0)
+    GIT_TAG 0.8.0
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE)
 
   FetchContent_MakeAvailable(yaml-cpp)
 
@@ -67,7 +69,10 @@ if(UNIX AND NOT APPLE)
   FetchContent_Declare(
     fmt
     GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-    GIT_TAG 11.0.2)
+    GIT_TAG 11.0.2
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE)
+
   FetchContent_MakeAvailable(fmt)
 
   tkit_configure_compile_link_options(fmt FORBID_SANITIZERS)
@@ -76,12 +81,12 @@ endif()
 
 function(configure_tracy target)
   if(MSVC)
-    tkit_configure_compile_link_options(${target} FLAGS /wd4996 CONFIG Dist
-                                        FORBID_SANITIZERS)
+    tkit_configure_compile_link_options(${target} COMPILER_FLAGS /wd4996 CONFIG
+                                        Dist FORBID_SANITIZERS)
   elseif(APPLE)
     tkit_configure_compile_link_options(
       ${target}
-      FLAGS
+      COMPILER_FLAGS
       -Wno-format
       -Wno-deprecated-declarations
       -Wno-deprecated-anon-enum-enum-conversion
@@ -91,7 +96,7 @@ function(configure_tracy target)
   else()
     tkit_configure_compile_link_options(
       ${target}
-      FLAGS
+      COMPILER_FLAGS
       -Wno-format
       -Wno-deprecated-declarations
       -Wno-deprecated-enum-enum-conversion
@@ -101,15 +106,27 @@ function(configure_tracy target)
   endif()
 endfunction()
 
-if(TOOLKIT_ENABLE_INSTRUMENTATION)
+if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
+  if(TOOLKIT_ENABLE_INSTRUMENTATION)
+    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_INSTRUMENTATION)
+  endif()
+  if(TOOLKIT_ENABLE_SAMPLING)
+    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_SAMPLING)
+  else()
+    set(TRACY_NO_SAMPLING ON)
+    set(TRACY_NO_CALLSTACK ON)
+  endif()
+
   FetchContent_Declare(
     tracy
     GIT_REPOSITORY https://github.com/wolfpld/tracy.git
-    GIT_TAG v0.12.2)
+    GIT_TAG v0.12.2
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE)
+
   FetchContent_MakeAvailable(tracy)
   target_link_libraries(toolkit PUBLIC TracyClient)
   target_compile_definitions(toolkit PUBLIC TRACY_ENABLE)
-  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_INSTRUMENTATION)
 
   # Because of this check, the profiler binaries will always persist and will
   # keep the first cmake options that were set. Recompile with other options by

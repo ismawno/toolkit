@@ -89,8 +89,8 @@ def create_cli_varname(cmake_varname: str, /, *, override_strip_preffix: bool = 
     return cli_varname.lower().replace("_", "-")
 
 
-def process_option(content: list[str]) -> tuple[str, str, str | bool]:
-    cmake_varname, val = content
+def process_option(content: list[str]) -> tuple[str, str, str, str | bool]:
+    cmake_varname, val, section = content
     Convoy.verbose(f"    Detected option <bold>{cmake_varname}</bold> with default value <bold>{val}</bold>.")
 
     cli_varname = create_cli_varname(cmake_varname)
@@ -100,7 +100,7 @@ def process_option(content: list[str]) -> tuple[str, str, str | bool]:
     elif val == "OFF":
         val = False
 
-    return cmake_varname.lower().replace("_", "-"), cli_varname, val
+    return section, cmake_varname.lower().replace("_", "-"), cli_varname, val
 
 
 Convoy.program_label = "SCANNER"
@@ -114,8 +114,10 @@ preffixes: list[str] = args.preffixes
 
 
 contents = None
+per_section = None
 if cmake_path is not None:
     contents = []
+    per_section = {}
     for cmake_file in cmake_path.rglob(args.cmake_name):
         Convoy.verbose(
             f"Scanning file at <underline>{cmake_file}</underline>. Looking for lines starting with <bold>{hint}</bold>..."
@@ -126,6 +128,7 @@ if cmake_path is not None:
                 for content in f.read().splitlines()
                 if content.startswith(hint)
             ]
+            per_section.setdefault(options[0], []).append(options[1:])
             contents.extend(options)
         if not options:
             Convoy.verbose("    Nothing found...")
@@ -191,13 +194,15 @@ write_help(
     "<default-value> -> It is the value 'build.py' will use if no other value is provided through the command line. If the value is a boolean, you may use 'true/on/yes' or 'false/off/no'. Case insensitive."
 )
 
-if contents is not None:
-    for cmake_varname, (cli_varname, val) in contents.items():
-        cfg["cmake-options"][cmake_varname] = (
-            f"{cli_varname}: {val}"
-            if "cmake-options" not in sections or cmake_varname not in sections["cmake-options"]
-            else sections["cmake-options"][cmake_varname]
-        )
+if per_section is not None:
+    for section, cnt in per_section.items():
+        write_help(f"\n{section}")
+        for cmake_varname, (cli_varname, val) in cnt.items():
+            cfg["cmake-options"][cmake_varname] = (
+                f"{cli_varname}: {val}"
+                if "cmake-options" not in sections or cmake_varname not in sections["cmake-options"]
+                else sections["cmake-options"][cmake_varname]
+            )
 
 if "cmake-options" in sections:
     for k, v in sections["cmake-options"].items():

@@ -1,11 +1,16 @@
 #pragma once
 
+#if defined(TKIT_ENABLE_INSTRUMENTATION) || defined(TKIT_ENABLE_SAMPLING)
+#    include "tracy/Tracy.hpp"
+#    define TKIT_PROFILE_NOOP() TracyNoop
+#else
+#    define TKIT_PROFILE_NOOP()
+#endif
+
 #ifdef TKIT_ENABLE_INSTRUMENTATION
 
 // The main reason of this wrap around the tracy library is, in case I switch to another profiling library, I can keep
 // the same interface and just change the implementation of the macros.
-
-#    include "tracy/Tracy.hpp"
 
 namespace TKit
 {
