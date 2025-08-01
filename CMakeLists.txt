@@ -260,7 +260,7 @@ function(remove_duplicates input output)
       list(APPEND result "${item}")
     endif()
   endforeach()
-  set(${output_list_var}
+  set(${output}
       "${result}"
       PARENT_SCOPE)
 endfunction()
@@ -290,15 +290,15 @@ function(tkit_configure_compile_link_options target)
   endif()
 
   message(STATUS "TOOLKIT: Configuring ${target}...")
-  message(STATUS "TOOLKIT:     Configuration: ${ARG_CONFIG}")
+  message(STATUS "TOOLKIT:  Configuration: ${ARG_CONFIG}")
   if(ARG_FORBID_SANITIZERS)
-    message(STATUS "TOOLKIT:     Sanitizers: Forbidden")
+    message(STATUS "TOOLKIT:  Sanitizers: Forbidden")
   else()
-    message(STATUS "TOOLKIT:     Sanitizers: ${TOOLKIT_SANITIZERS}")
+    message(STATUS "TOOLKIT:  Sanitizers: ${TOOLKIT_SANITIZERS}")
   endif()
-  message(STATUS "TOOLKIT:     Visibility: ${ARG_VISIBILITY}")
-  message(STATUS "TOOLKIT:     Provided compiler flags: ${ARG_COMPILER_FLAGS}")
-  message(STATUS "TOOLKIT:     Provided linker flags: ${ARG_LINKER_FLAGS}")
+  message(STATUS "TOOLKIT:  Visibility: ${ARG_VISIBILITY}")
+  message(STATUS "TOOLKIT:  Provided compiler flags: ${ARG_COMPILER_FLAGS}")
+  message(STATUS "TOOLKIT:  Provided linker flags: ${ARG_LINKER_FLAGS}")
 
   if(ARG_CONFIG STREQUAL "Debug")
     if(MSVC)
@@ -356,11 +356,10 @@ function(tkit_configure_compile_link_options target)
   remove_duplicates(linker_flags ulinker_flags)
   message(
     STATUS
-      "TOOLKIT:    Final compiler flags: ${ucompiler_flags} ${ARG_COMPILER_FLAGS}"
+      "TOOLKIT:  Final compiler flags: ${ucompiler_flags} ${ARG_COMPILER_FLAGS}"
   )
   message(
-    STATUS
-      "TOOLKIT:    Final linker flags: ${ulinker_flags} ${ARG_LINKER_FLAGS}")
+    STATUS "TOOLKIT:  Final linker flags: ${ulinker_flags} ${ARG_LINKER_FLAGS}")
   target_compile_options(${target} ${ARG_VISIBILITY} ${ucompiler_flags}
                          ${ARG_COMPILER_FLAGS})
   target_link_options(${target} ${ARG_VISIBILITY} ${ulinker_flags}
