@@ -182,8 +182,7 @@ message(STATUS "TOOLKIT:  Enable sampling: ${TOOLKIT_ENABLE_SAMPLING}")
 message(STATUS "TOOLKIT:  Enable callstacks: ${TOOLKIT_ENABLE_CALLSTACK}")
 
 message(
-  STATUS "TOOLKIT:  The toolkit root path is set to ${CMAKE_CURRENT_SOURCE_DIR}"
-)
+  STATUS "TOOLKIT: The toolkit root path is set to ${CMAKE_CURRENT_SOURCE_DIR}")
 set(TOOLKIT_ROOT_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}
     CACHE STRING "I hate cmake" FORCE)
