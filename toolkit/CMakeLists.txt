@@ -129,6 +129,8 @@ if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
   FetchContent_MakeAvailable(tracy)
   target_link_libraries(toolkit PUBLIC TracyClient)
   target_compile_definitions(toolkit PUBLIC TRACY_ENABLE)
+  target_compile_definitions(TracyClient
+                             PUBLIC TRACY_SAMPLING_HZ=${TOOLKIT_SAMPLING_RATE})
 
   # Because of this check, the profiler binaries will always persist and will
   # keep the first cmake options that were set. Recompile with other options by

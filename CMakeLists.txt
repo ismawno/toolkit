@@ -83,6 +83,7 @@ define_option(TOOLKIT_ENABLE_INSTRUMENTATION OFF "Toolkit - Profiling")
 define_option(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION OFF "Toolkit - Profiling")
 define_option(TOOLKIT_ENABLE_SAMPLING OFF "Toolkit - Profiling")
 define_option(TOOLKIT_ENABLE_CALLSTACK OFF "Toolkit - Profiling")
+define_option(TOOLKIT_SAMPLING_RATE 10000 "Toolkit - Profiling")
 
 if(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION AND NOT TOOLKIT_ENABLE_INSTRUMENTATION)
   message(
