@@ -96,5 +96,5 @@
 #endif
 
 #ifndef TKIT_CACHE_LINE_SIZE
-#    define TKIT_CACHE_LINE_SIZE std::hardware_destructive_interference_size
+#    define TKIT_CACHE_LINE_SIZE 64
 #endif
