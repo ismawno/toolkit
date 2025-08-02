@@ -315,7 +315,7 @@ function(tkit_configure_compile_link_options target)
       set(compiler_flags /ZI /O2 /0y- /MP)
       set(linker_flags /DEBUG /INCREMENTAL:NO)
     else()
-      set(compiler_flags -g -O0)
+      set(compiler_flags -g -O2)
     endif()
 
   elseif(ARG_CONFIG STREQUAL "Dist")
