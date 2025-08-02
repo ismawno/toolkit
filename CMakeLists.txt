@@ -22,6 +22,7 @@ define_option(TOOLKIT_BUILD_PERFORMANCE OFF "Toolkit - Build")
 # none, gui, cli or csv
 define_option(TOOLKIT_BUILD_PROFILER "none" "Toolkit - Build")
 # none, address, leak, thread, undefined
+define_option(TOOLKIT_ENABLE_SYMBOLS OFF)
 define_option(TOOLKIT_SANITIZERS "none" "Toolkit - Build")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -344,7 +345,7 @@ function(tkit_configure_compile_link_options target)
     endif()
 
   endif()
-  if(TOOLKIT_ENABLE_SAMPLING)
+  if(TOOLKIT_ENABLE_SAMPLING OR TOOLKIT_ENABLE_SYMBOLS)
     if(MSVC)
       list(APPEND compiler_flags /ZI)
     else()
