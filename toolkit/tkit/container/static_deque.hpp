@@ -404,4 +404,16 @@ class StaticDeque
     SizeType m_Front = Capacity - 1;
     SizeType m_Back = 0;
 };
+template <typename T> using StaticDeque4 = StaticDeque<T, 4>;
+template <typename T> using StaticDeque8 = StaticDeque<T, 8>;
+template <typename T> using StaticDeque16 = StaticDeque<T, 16>;
+template <typename T> using StaticDeque32 = StaticDeque<T, 32>;
+template <typename T> using StaticDeque64 = StaticDeque<T, 64>;
+template <typename T> using StaticDeque128 = StaticDeque<T, 128>;
+template <typename T> using StaticDeque196 = StaticDeque<T, 196>;
+template <typename T> using StaticDeque256 = StaticDeque<T, 256>;
+template <typename T> using StaticDeque384 = StaticDeque<T, 384>;
+template <typename T> using StaticDeque512 = StaticDeque<T, 512>;
+template <typename T> using StaticDeque768 = StaticDeque<T, 768>;
+template <typename T> using StaticDeque1024 = StaticDeque<T, 1024>;
 } // namespace TKit
