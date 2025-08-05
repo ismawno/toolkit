@@ -75,7 +75,10 @@ class TKIT_API ITaskManager
      *
      * @return The index of the current thread.
      */
-    virtual usize GetThreadIndex() const noexcept;
+    static usize GetThreadIndex() noexcept;
+
+  protected:
+    static inline thread_local usize s_ThreadIndex = 0;
 
   private:
     usize m_ThreadCount;

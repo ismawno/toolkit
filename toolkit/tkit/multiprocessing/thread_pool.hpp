@@ -8,6 +8,7 @@
 #include "tkit/multiprocessing/task_manager.hpp"
 #include "tkit/profiling/macros.hpp"
 #include "tkit/container/static_array.hpp"
+#include "tkit/container/static_deque.hpp"
 #include <thread>
 #include <mutex>
 
@@ -60,16 +61,9 @@ class TKIT_API ThreadPool final : public ITaskManager
      */
     void AwaitPendingTasks() const noexcept;
 
-    /**
-     * @brief Ask for the thread index of the current thread.
-     *
-     * @return The index of the current thread.
-     */
-    usize GetThreadIndex() const noexcept override;
-
   private:
     StaticArray<std::thread, TKIT_THREAD_POOL_MAX_THREADS> m_Threads;
-    StaticArray<Ref<ITask>, TKIT_THREAD_POOL_MAX_TASKS> m_Queue;
+    StaticDeque<Ref<ITask>, TKIT_THREAD_POOL_MAX_TASKS> m_Queue;
 
     std::atomic_flag m_TaskReady = ATOMIC_FLAG_INIT;
     std::atomic_flag m_Shutdown = ATOMIC_FLAG_INIT;
@@ -78,6 +72,5 @@ class TKIT_API ThreadPool final : public ITaskManager
     std::atomic<u32> m_PendingCount = 0;
 
     mutable TKIT_PROFILE_DECLARE_MUTEX(std::mutex, m_Mutex);
-    static inline thread_local usize s_ThreadIndex = 0;
 };
 } // namespace TKit
