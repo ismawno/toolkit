@@ -384,11 +384,6 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
     }
 
   private:
-    static constexpr SizeType growth(const SizeType p_Size) noexcept
-    {
-        return 1 + p_Size + p_Size / 2;
-    }
-
     constexpr void modifyCapacity(const SizeType p_Capacity) noexcept
     {
         TKIT_ASSERT(p_Capacity > 0, "[TOOLKIT] Capacity must be greater than 0");
@@ -421,7 +416,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
 
     constexpr void growCapacity(const SizeType p_Size) noexcept
     {
-        modifyCapacity(growth(p_Size));
+        modifyCapacity(Tools::GrowthFactor(p_Size));
     }
 
     ValueType *m_Data = nullptr;

@@ -77,7 +77,7 @@ class WeakArray
         return *this;
     }
 
-    constexpr WeakArray(WeakArray &&p_Other) noexcept : m_Data(p_Other.m_Data), m_Size(p_Other.m_Size)
+    constexpr WeakArray(WeakArray &&p_Other) noexcept : m_Data(p_Other.m_Data), m_Size(p_Other.GetSize())
     {
         p_Other.m_Data = nullptr;
         p_Other.m_Size = 0;
@@ -87,7 +87,7 @@ class WeakArray
         if (this != &p_Other)
         {
             m_Data = p_Other.m_Data;
-            m_Size = p_Other.m_Size;
+            m_Size = p_Other.GetSize();
 
             p_Other.m_Data = nullptr;
             p_Other.m_Size = 0;
@@ -399,7 +399,7 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
     }
 
     constexpr WeakArray(WeakArray &&p_Other) noexcept
-        : m_Data(p_Other.m_Data), m_Size(p_Other.m_Size), m_Capacity(p_Other.m_Capacity)
+        : m_Data(p_Other.m_Data), m_Size(p_Other.GetSize()), m_Capacity(p_Other.GetCapacity())
     {
         p_Other.m_Data = nullptr;
         p_Other.m_Size = 0;
@@ -410,8 +410,8 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
         if (this != &p_Other)
         {
             m_Data = p_Other.m_Data;
-            m_Size = p_Other.m_Size;
-            m_Capacity = p_Other.m_Capacity;
+            m_Size = p_Other.GetSize();
+            m_Capacity = p_Other.GetCapacity();
 
             p_Other.m_Data = nullptr;
             p_Other.m_Size = 0;

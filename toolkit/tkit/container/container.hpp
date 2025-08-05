@@ -187,6 +187,11 @@ template <typename Traits> struct ArrayTools
         return count;
     }
 
+    static constexpr SizeType GrowthFactor(const SizeType p_Size) noexcept
+    {
+        return 1 + p_Size + p_Size / 2;
+    }
+
     static constexpr void RemoveOrdered(const Iterator p_End, const Iterator p_Pos) noexcept
     {
         // Copy/move the elements after the erased one

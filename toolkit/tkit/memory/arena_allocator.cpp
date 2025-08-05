@@ -20,7 +20,7 @@ ArenaAllocator::~ArenaAllocator() noexcept
 }
 
 ArenaAllocator::ArenaAllocator(ArenaAllocator &&p_Other) noexcept
-    : m_Buffer(p_Other.m_Buffer), m_Size(p_Other.m_Size), m_Remaining(p_Other.m_Remaining),
+    : m_Buffer(p_Other.m_Buffer), m_Size(p_Other.GetSize()), m_Remaining(p_Other.m_Remaining),
       m_Provided(p_Other.m_Provided)
 {
     p_Other.m_Buffer = nullptr;
@@ -34,7 +34,7 @@ ArenaAllocator &ArenaAllocator::operator=(ArenaAllocator &&p_Other) noexcept
     {
         deallocateBuffer();
         m_Buffer = p_Other.m_Buffer;
-        m_Size = p_Other.m_Size;
+        m_Size = p_Other.GetSize();
         m_Remaining = p_Other.m_Remaining;
         m_Provided = p_Other.m_Provided;
 

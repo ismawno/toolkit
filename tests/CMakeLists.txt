@@ -21,6 +21,7 @@ set(SOURCES
     tests/memory/ptr.cpp
     tests/container/static_array.cpp
     tests/container/dynamic_array.cpp
+    tests/container/static_deque.cpp
     tests/container/container.cpp
     tests/container/weak_array.cpp
     tests/container/span.cpp

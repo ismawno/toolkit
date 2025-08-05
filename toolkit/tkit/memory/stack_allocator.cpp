@@ -22,7 +22,7 @@ StackAllocator::~StackAllocator() noexcept
 }
 
 StackAllocator::StackAllocator(StackAllocator &&p_Other) noexcept
-    : m_Entries(std::move(p_Other.m_Entries)), m_Buffer(p_Other.m_Buffer), m_Size(p_Other.m_Size),
+    : m_Entries(std::move(p_Other.m_Entries)), m_Buffer(p_Other.m_Buffer), m_Size(p_Other.GetSize()),
       m_Remaining(p_Other.m_Remaining), m_Provided(p_Other.m_Provided)
 
 {
@@ -38,7 +38,7 @@ StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other) noexcept
     {
         deallocateBuffer();
         m_Buffer = p_Other.m_Buffer;
-        m_Size = p_Other.m_Size;
+        m_Size = p_Other.GetSize();
         m_Remaining = p_Other.m_Remaining;
         m_Entries = std::move(p_Other.m_Entries);
         m_Provided = p_Other.m_Provided;
