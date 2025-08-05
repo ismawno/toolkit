@@ -56,6 +56,7 @@ TEST_CASE("StaticDeque: basic operations", "[StaticDeque]")
     REQUIRE_FALSE(dq.IsFull());
 
     dq.PushBack(1);
+    REQUIRE(dq.GetFront() == 1);
     dq.PushFront(2);
     dq.PushBack(3);
     dq.PushFront(4);

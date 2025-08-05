@@ -1,23 +1,19 @@
 #pragma once
 
 #include "tkit/container/container.hpp"
-#include "tkit/container/array.hpp"
 #include "tkit/utils/logging.hpp"
 
 namespace TKit
 {
 /**
- * @brief A circular container with a fixed capacity buffer designed for quick insertions at its front and back.
+ * @brief A circular container with a dynamic capacity buffer designed for quick insertions at its front and back.
  *
  * It is meant to be used as a double ended queue.
  *
  * @tparam T The type of the elements in the deque.
- * @tparam Capacity The capacity of the deque.
  * @tparam Traits The traits of the deque, to define the types used for the iterators, size, etc.
  */
-template <typename T, usize Capacity, typename Traits = Container::ArrayTraits<T>>
-    requires(Capacity > 0)
-class StaticDeque
+template <typename T, typename Traits = Container::ArrayTraits<T>> class DynamicDeque
 {
   public:
     using ValueType = typename Traits::ValueType;
@@ -26,103 +22,63 @@ class StaticDeque
     using ConstIterator = typename Traits::ConstIterator;
     using Tools = Container::ArrayTools<Traits>;
 
-    constexpr StaticDeque() noexcept = default;
+    constexpr DynamicDeque() noexcept = default;
 
-    // This constructor WONT include the case M == Capacity (ie, copy constructor)
-    template <SizeType M>
-    explicit(false) constexpr StaticDeque(const StaticDeque<ValueType, M, Traits> &p_Other) noexcept
+    constexpr DynamicDeque(const DynamicDeque &p_Other) noexcept
     {
-        if constexpr (M > Capacity)
-        {
-            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
-        }
-        for (u32 i = p_Other.GetFrontIndex(), j = 0; j < p_Other.GetSize(); i = NextIndex(i), ++j)
+        const u32 otherSize = p_Other.GetSize();
+        if (otherSize > 0)
+            growCapacity(otherSize);
+        for (u32 i = p_Other.GetFrontIndex(), j = 0; j < otherSize; i = NextIndex(i), ++j)
             PushBack(p_Other.At(i));
     }
 
-    // This constructor WONT include the case M == Capacity (ie, move constructor)
-    template <SizeType M> explicit(false) constexpr StaticDeque(StaticDeque<ValueType, M, Traits> &&p_Other) noexcept
+    constexpr DynamicDeque(DynamicDeque &&p_Other) noexcept
+        : m_Data(p_Other.m_Data), m_Size(p_Other.m_Size), m_Capacity(p_Other.m_Capacity), m_Front(p_Other.m_Front),
+          m_Back(p_Other.m_Back)
     {
-        if constexpr (M > Capacity)
-        {
-            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
-        }
-        for (u32 i = p_Other.GetFrontIndex(), j = 0; j < p_Other.GetSize(); i = NextIndex(i), ++j)
-            PushBack(p_Other.At(i));
+        p_Other.m_Data = nullptr;
+        p_Other.m_Size = 0;
+        p_Other.m_Capacity = 0;
+        p_Other.m_Front = 0;
+        p_Other.m_Back = 0;
     }
 
-    constexpr StaticDeque(const StaticDeque &p_Other) noexcept
-    {
-        for (u32 i = p_Other.GetFrontIndex(), j = 0; j < p_Other.GetSize(); i = NextIndex(i), ++j)
-            PushBack(p_Other.At(i));
-    }
-
-    constexpr StaticDeque(StaticDeque &&p_Other) noexcept
-    {
-        for (u32 i = p_Other.GetFrontIndex(), j = 0; j < p_Other.GetSize(); i = NextIndex(i), ++j)
-            PushBack(p_Other.At(i));
-    }
-
-    ~StaticDeque() noexcept
+    ~DynamicDeque() noexcept
     {
         Clear();
     }
 
-    // Same goes for assignment. It wont include `M == Capacity`, and use the default assignment operator
-    template <SizeType M> constexpr StaticDeque &operator=(const StaticDeque<ValueType, M, Traits> &p_Other) noexcept
-    {
-        if constexpr (M == Capacity)
-        {
-            if (this == &p_Other)
-                return *this;
-        }
-        if constexpr (M > Capacity)
-        {
-            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
-        }
-        Clear();
-        for (u32 i = p_Other.GetFrontIndex(), j = 0; j < p_Other.GetSize(); i = NextIndex(i), ++j)
-            PushBack(p_Other.At(i));
-        return *this;
-    }
-    // Same goes for assignment. It wont include `M == Capacity`, and use the default assignment operator
-    template <SizeType M> constexpr StaticDeque &operator=(StaticDeque<ValueType, M, Traits> &&p_Other) noexcept
-    {
-        if constexpr (M == Capacity)
-        {
-            if (this == &p_Other)
-                return *this;
-        }
-        if constexpr (M > Capacity)
-        {
-            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
-        }
-
-        Clear();
-        for (u32 i = p_Other.GetFrontIndex(), j = 0; j < p_Other.GetSize(); i = NextIndex(i), ++j)
-            PushBack(p_Other.At(i));
-        return *this;
-    }
-
-    constexpr StaticDeque &operator=(const StaticDeque &p_Other) noexcept
+    constexpr DynamicDeque &operator=(const DynamicDeque &p_Other) noexcept
     {
         if (this == &p_Other)
             return *this;
 
         Clear();
-        for (u32 i = p_Other.GetFrontIndex(), j = 0; j < p_Other.GetSize(); i = NextIndex(i), ++j)
+        const u32 otherSize = p_Other.GetSize();
+        if (otherSize > m_Capacity)
+            growCapacity(otherSize);
+
+        for (u32 i = p_Other.GetFrontIndex(), j = 0; j < otherSize; i = NextIndex(i), ++j)
             PushBack(p_Other.At(i));
         return *this;
     }
 
-    constexpr StaticDeque &operator=(StaticDeque &&p_Other) noexcept
+    constexpr DynamicDeque &operator=(DynamicDeque &&p_Other) noexcept
     {
         if (this == &p_Other)
             return *this;
 
-        Clear();
-        for (u32 i = p_Other.GetFrontIndex(), j = 0; j < p_Other.GetSize(); i = NextIndex(i), ++j)
-            PushBack(p_Other.At(i));
+        m_Data = p_Other.m_Data;
+        m_Size = p_Other.m_Size;
+        m_Capacity = p_Other.m_Capacity;
+        m_Front = p_Other.m_Front;
+        m_Back = p_Other.m_Back;
+        p_Other.m_Data = nullptr;
+        p_Other.m_Size = 0;
+        p_Other.m_Capacity = 0;
+        p_Other.m_Front = 0;
+        p_Other.m_Back = 0;
         return *this;
     }
 
@@ -138,10 +94,12 @@ class StaticDeque
         requires std::constructible_from<ValueType, Args...>
     constexpr ValueType &PushFront(Args &&...p_Args) noexcept
     {
-        TKIT_ASSERT(!IsFull(), "[TOOLKIT] Container is already full");
+        const SizeType newSize = m_Size + 1;
+        if (newSize > m_Capacity)
+            growCapacity(newSize);
         ValueType &val = *Memory::ConstructFromIterator(GetData() + m_Front, std::forward<Args>(p_Args)...);
         m_Front = PrevIndex(m_Front);
-        ++m_Size;
+        m_Size = newSize;
         return val;
     }
 
@@ -157,10 +115,12 @@ class StaticDeque
         requires std::constructible_from<ValueType, Args...>
     constexpr ValueType &PushBack(Args &&...p_Args) noexcept
     {
-        TKIT_ASSERT(!IsFull(), "[TOOLKIT] Container is already full");
+        const SizeType newSize = m_Size + 1;
+        if (newSize > m_Capacity)
+            growCapacity(newSize);
         ValueType &val = *Memory::ConstructFromIterator(GetData() + m_Back, std::forward<Args>(p_Args)...);
         m_Back = NextIndex(m_Back);
-        ++m_Size;
+        m_Size = newSize;
         return val;
     }
 
@@ -211,18 +171,18 @@ class StaticDeque
         else
         {
             m_Size = 0;
-            m_Front = Capacity - 1;
+            m_Front = m_Capacity - 1;
             m_Back = 0;
         }
     }
 
     constexpr const ValueType *GetData() const noexcept
     {
-        return reinterpret_cast<const ValueType *>(&m_Data[0]);
+        return m_Data;
     }
     constexpr ValueType *GetData() noexcept
     {
-        return reinterpret_cast<ValueType *>(&m_Data[0]);
+        return m_Data;
     }
 
     /**
@@ -237,7 +197,6 @@ class StaticDeque
     constexpr const ValueType &At(const SizeType p_Index) const noexcept
     {
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT] Cannot index into an empty queue");
-        TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT] Index is out of bounds");
         return *(GetData() + p_Index);
     }
     /**
@@ -251,8 +210,6 @@ class StaticDeque
      */
     constexpr ValueType &At(const SizeType p_Index) noexcept
     {
-        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT] Cannot index into an empty queue");
-        TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT] Index is out of bounds");
         return *(GetData() + p_Index);
     }
 
@@ -332,9 +289,9 @@ class StaticDeque
      *
      * @return The next index.
      */
-    constexpr static SizeType NextIndex(const SizeType p_Index) noexcept
+    constexpr SizeType NextIndex(const SizeType p_Index) const noexcept
     {
-        if (p_Index == Capacity - 1)
+        if (p_Index == m_Capacity - 1)
             return 0;
         return p_Index + 1;
     }
@@ -346,10 +303,10 @@ class StaticDeque
      *
      * @return The previous index.
      */
-    constexpr static SizeType PrevIndex(const SizeType p_Index) noexcept
+    constexpr SizeType PrevIndex(const SizeType p_Index) const noexcept
     {
         if (p_Index == 0)
-            return Capacity - 1;
+            return m_Capacity - 1;
         return p_Index - 1;
     }
 
@@ -377,7 +334,7 @@ class StaticDeque
 
     constexpr SizeType GetCapacity() const noexcept
     {
-        return Capacity;
+        return m_Capacity;
     }
 
     constexpr bool IsEmpty() const noexcept
@@ -387,21 +344,54 @@ class StaticDeque
 
     constexpr bool IsFull() const noexcept
     {
-        return m_Size >= Capacity;
+        return m_Size == m_Capacity;
     }
 
   private:
-    struct alignas(ValueType) Element
+    constexpr void modifyCapacity(const SizeType p_Capacity) noexcept
     {
-        std::byte Data[sizeof(ValueType)];
-    };
+        TKIT_ASSERT(p_Capacity > 0, "[TOOLKIT] Capacity must be greater than 0");
+        TKIT_ASSERT(p_Capacity >= m_Size, "[TOOLKIT] Capacity is smaller than size");
+        ValueType *newData =
+            static_cast<ValueType *>(Memory::AllocateAligned(p_Capacity * sizeof(ValueType), alignof(ValueType)));
+        TKIT_ASSERT(newData, "[TOOLKIT] Failed to allocate memory");
 
-    static_assert(sizeof(Element) == sizeof(ValueType), "Element size is not equal to T size");
-    static_assert(alignof(Element) == alignof(ValueType), "Element alignment is not equal to T alignment");
+        if (m_Data)
+        {
+            for (u32 i = GetFrontIndex(), j = 0; j < m_Size; i = NextIndex(i), ++j)
+            {
+                Memory::ConstructFromIterator(newData + j, std::move(At(i)));
+                if constexpr (!std::is_trivially_destructible_v<T>)
+                    Memory::DestructFromIterator(GetData() + i);
+            }
+            Memory::DeallocateAligned(m_Data);
+        }
+        m_Data = newData;
+        m_Capacity = p_Capacity;
+        m_Front = p_Capacity - 1;
+        m_Back = m_Size;
+    }
 
-    Array<Element, Capacity> m_Data{};
+    constexpr void deallocateBuffer() noexcept
+    {
+        TKIT_ASSERT(m_Size == 0, "[TOOLKIT] Cannot deallocate buffer while it is not empty");
+        if (m_Data)
+        {
+            Memory::DeallocateAligned(m_Data);
+            m_Data = nullptr;
+            m_Capacity = 0;
+        }
+    }
+
+    constexpr void growCapacity(const SizeType p_Size) noexcept
+    {
+        modifyCapacity(Tools::GrowthFactor(p_Size));
+    }
+
+    ValueType *m_Data = nullptr;
     SizeType m_Size = 0;
-    SizeType m_Front = Capacity - 1;
+    SizeType m_Capacity = 0;
+    SizeType m_Front = 0;
     SizeType m_Back = 0;
 };
 } // namespace TKit

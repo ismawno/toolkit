@@ -29,7 +29,8 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
     template <typename... Args>
     constexpr DynamicArray(const SizeType p_Size, const Args &...p_Args) noexcept : m_Size(p_Size)
     {
-        growCapacity(p_Size);
+        if (m_Size > 0)
+            growCapacity(m_Size);
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
             Memory::ConstructRange(begin(), end(), p_Args...);
     }
@@ -37,13 +38,15 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
     template <std::input_iterator It> constexpr DynamicArray(const It p_Begin, const It p_End) noexcept
     {
         m_Size = static_cast<SizeType>(std::distance(p_Begin, p_End));
-        growCapacity(m_Size);
+        if (m_Size > 0)
+            growCapacity(m_Size);
         Tools::CopyConstructFromRange(begin(), p_Begin, p_End);
     }
 
     constexpr DynamicArray(const DynamicArray &p_Other) noexcept : m_Size(p_Other.GetSize())
     {
-        growCapacity(m_Size);
+        if (m_Size > 0)
+            growCapacity(m_Size);
         Tools::CopyConstructFromRange(begin(), p_Other.begin(), p_Other.end());
     }
 
@@ -59,7 +62,8 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
     constexpr DynamicArray(const std::initializer_list<ValueType> p_List) noexcept
         : m_Size(static_cast<SizeType>(p_List.size()))
     {
-        growCapacity(m_Size);
+        if (m_Size > 0)
+            growCapacity(m_Size);
         Tools::CopyConstructFromRange(begin(), p_List.begin(), p_List.end());
     }
 
@@ -381,6 +385,11 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
     constexpr bool IsEmpty() const noexcept
     {
         return m_Size == 0;
+    }
+
+    constexpr bool IsFull() const noexcept
+    {
+        return m_Size == m_Capacity;
     }
 
   private:
