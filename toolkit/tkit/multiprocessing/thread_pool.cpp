@@ -12,7 +12,7 @@
 namespace TKit
 {
 #ifdef TKIT_OS_WINDOWS
-static void SetAffinityAndName(const u32 p_ThreadIndex) noexcept
+static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nullptr) noexcept
 {
     const u32 totalCores = std::thread::hardware_concurrency();
     const u32 coreId = p_ThreadIndex % totalCores;
@@ -20,16 +20,21 @@ static void SetAffinityAndName(const u32 p_ThreadIndex) noexcept
     const DWORD_PTR mask = 1ULL << coreId;
     const HANDLE thread = GetCurrentThread();
     TKIT_ASSERT_NOT_RETURNS(SetThreadAffinityMask(thread, mask), 0);
+    if (p_Name)
+    {
+        SetThreadDescription(thread, name.c_str());
+        return;
+    }
 
     std::ostringstream oss;
     oss << "tkit-worker-" << p_ThreadIndex;
     const auto str = oss.str();
     const std::wstring name(str.begin(), str.end());
 
-    SetThreadDescription(GetCurrentThread(), name.c_str());
+    SetThreadDescription(thread, name.c_str());
 }
 #else
-static void SetAffinityAndName(const u32 p_ThreadIndex) noexcept
+static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nullptr) noexcept
 {
     const u32 totalCores = std::thread::hardware_concurrency();
     const u32 coreId = p_ThreadIndex % totalCores;
@@ -40,6 +45,11 @@ static void SetAffinityAndName(const u32 p_ThreadIndex) noexcept
 
     const pthread_t current = pthread_self();
     TKIT_ASSERT_RETURNS(pthread_setaffinity_np(current, sizeof(cpu_set_t), &cpu), 0);
+    if (p_Name)
+    {
+        pthread_setname_np(current, p_Name);
+        return;
+    }
 
     const std::string name = "tkit-worker-" + std::to_string(p_ThreadIndex);
     pthread_setname_np(current, name.c_str());
@@ -47,6 +57,7 @@ static void SetAffinityAndName(const u32 p_ThreadIndex) noexcept
 #endif
 ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
 {
+    SetAffinityAndName(0, "tkit-main");
     const auto worker = [this](const usize p_ThreadIndex) {
         SetAffinityAndName(p_ThreadIndex);
         s_ThreadIndex = p_ThreadIndex;
