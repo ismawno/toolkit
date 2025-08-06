@@ -131,6 +131,7 @@ inline thread_local bool DisabledAsserts = false;
                                  TKit::Detail::Format(__VA_ARGS__))
 
 #    define TKIT_ASSERT_RETURNS(expression, expected, ...) TKIT_ASSERT((expression) == (expected), __VA_ARGS__)
+#    define TKIT_ASSERT_NOT_RETURNS(expression, expected, ...) TKIT_ASSERT((expression) != (expected), __VA_ARGS__)
 
 #    define TKIT_IGNORE_ASSERTS_PUSH() TKit::Detail::DisabledAsserts = true
 #    define TKIT_IGNORE_ASSERTS_POP() TKit::Detail::DisabledAsserts = false
@@ -138,6 +139,7 @@ inline thread_local bool DisabledAsserts = false;
 #    define TKIT_ERROR(...)
 #    define TKIT_ASSERT(...)
 #    define TKIT_ASSERT_RETURNS(expression, expected, ...) expression
+#    define TKIT_ASSERT_NOT_RETURNS(expression, expected, ...) expression
 
 #    define TKIT_IGNORE_ASSERTS_PUSH()
 #    define TKIT_IGNORE_ASSERTS_POP()

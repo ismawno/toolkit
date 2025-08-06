@@ -1,12 +1,43 @@
 #include "tkit/core/pch.hpp"
 #include "tkit/multiprocessing/thread_pool.hpp"
 #include <mutex>
+#ifdef TKIT_OS_WINDOWS
+#    include <windows.h>
+#else
+#    include <pthread.h>
+#    include <sched.h>
+#endif
 
 namespace TKit
 {
+#ifdef TKIT_OS_WINDOWS
+static void SetAffinity(const u32 p_ThreadIndex) noexcept
+{
+    const u32 totalCores = std::thread::hardware_concurrency();
+    const u32 coreId = p_ThreadIndex % totalCores;
+
+    const DWORD_PTR mask = 1ULL << coreId;
+    const HANDLE thread = GetCurrentThread();
+    TKIT_ASSERT_NOT_RETURNS(SetThreadAffinityMask(thread, mask), 0);
+}
+#else
+static void SetAffinity(const u32 p_ThreadIndex) noexcept
+{
+    const u32 totalCores = std::thread::hardware_concurrency();
+    const u32 coreId = p_ThreadIndex % totalCores;
+
+    cpu_set_t cpu;
+    CPU_ZERO(&cpu);
+    CPU_SET(coreId, &cpu);
+
+    const pthread_t current = pthread_self();
+    TKIT_ASSERT_RETURNS(pthread_setaffinity_np(current, sizeof(cpu_set_t), &cpu), 0);
+}
+#endif
 ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
 {
     const auto worker = [this](const usize p_ThreadIndex) {
+        SetAffinity(p_ThreadIndex);
         s_ThreadIndex = p_ThreadIndex;
         for (;;)
         {
