@@ -1,6 +1,7 @@
 #include "tkit/core/pch.hpp"
 #include "tkit/multiprocessing/thread_pool.hpp"
 #include <mutex>
+#include <string>
 #ifdef TKIT_OS_WINDOWS
 #    include <windows.h>
 #else
@@ -11,7 +12,7 @@
 namespace TKit
 {
 #ifdef TKIT_OS_WINDOWS
-static void SetAffinity(const u32 p_ThreadIndex) noexcept
+static void SetAffinityAndName(const u32 p_ThreadIndex) noexcept
 {
     const u32 totalCores = std::thread::hardware_concurrency();
     const u32 coreId = p_ThreadIndex % totalCores;
@@ -19,9 +20,16 @@ static void SetAffinity(const u32 p_ThreadIndex) noexcept
     const DWORD_PTR mask = 1ULL << coreId;
     const HANDLE thread = GetCurrentThread();
     TKIT_ASSERT_NOT_RETURNS(SetThreadAffinityMask(thread, mask), 0);
+
+    std::ostringstream oss;
+    oss << "tkit-worker-" << p_ThreadIndex;
+    const auto str = oss.str();
+    const std::wstring name(str.begin(), str.end());
+
+    SetThreadDescription(GetCurrentThread(), name.c_str());
 }
 #else
-static void SetAffinity(const u32 p_ThreadIndex) noexcept
+static void SetAffinityAndName(const u32 p_ThreadIndex) noexcept
 {
     const u32 totalCores = std::thread::hardware_concurrency();
     const u32 coreId = p_ThreadIndex % totalCores;
@@ -32,12 +40,15 @@ static void SetAffinity(const u32 p_ThreadIndex) noexcept
 
     const pthread_t current = pthread_self();
     TKIT_ASSERT_RETURNS(pthread_setaffinity_np(current, sizeof(cpu_set_t), &cpu), 0);
+
+    const std::string name = "tkit-worker-" + std::to_string(p_ThreadIndex);
+    pthread_setname_np(current, name.c_str());
 }
 #endif
 ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
 {
     const auto worker = [this](const usize p_ThreadIndex) {
-        SetAffinity(p_ThreadIndex);
+        SetAffinityAndName(p_ThreadIndex);
         s_ThreadIndex = p_ThreadIndex;
         for (;;)
         {
