@@ -27,9 +27,9 @@ void ITask::notifyCompleted() noexcept
     m_Finished.notify_all();
 }
 
-void Task<void>::operator()(const usize p_ThreadIndex) noexcept
+void Task<void>::operator()() noexcept
 {
-    m_Function(p_ThreadIndex);
+    m_Function();
     notifyCompleted();
 }
 } // namespace TKit

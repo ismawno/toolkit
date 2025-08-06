@@ -20,7 +20,7 @@ TEST_CASE("ThreadPool executes Task<void>s", "[ThreadPool]")
     // Submit several void tasks
     for (usize i = 0; i < taskCount; ++i)
     {
-        const auto t = Ref<Task<void>>::Create([&](usize) { counter.fetch_add(1, std::memory_order_relaxed); });
+        const auto t = Ref<Task<void>>::Create([&]() { counter.fetch_add(1, std::memory_order_relaxed); });
         tasks.Append(t);
         pool.SubmitTask(t); // implicitly converts to Ref<ITask>
     }
@@ -29,19 +29,22 @@ TEST_CASE("ThreadPool executes Task<void>s", "[ThreadPool]")
     REQUIRE(counter.load(std::memory_order_relaxed) == taskCount);
 }
 
-TEST_CASE("ThreadPool executes Task<u32>s and preserves results", "[ThreadPool]")
+TEST_CASE("ThreadPool executes Task<usize>s and preserves results", "[ThreadPool]")
 {
     constexpr usize threadCount = 3;
     constexpr usize taskCount = 6;
     ThreadPool pool(threadCount);
 
-    DynamicArray<Ref<Task<u32>>> tasks;
+    DynamicArray<Ref<Task<usize>>> tasks;
     tasks.Reserve(taskCount);
 
     // Submit tasks that encode (taskIndex * 10 + threadIndex)
     for (usize i = 0; i < taskCount; ++i)
     {
-        const auto t = Ref<Task<u32>>::Create([i](usize idx) { return u32(i * 10 + idx); });
+        const auto t = Ref<Task<usize>>::Create([i]() {
+            thread_local const usize idx = ITaskManager::GetThreadIndex();
+            return i * 10 + idx;
+        });
         tasks.Append(t);
         pool.SubmitTask(t);
     }
@@ -50,8 +53,8 @@ TEST_CASE("ThreadPool executes Task<u32>s and preserves results", "[ThreadPool]"
 
     for (usize i = 0; i < taskCount; ++i)
     {
-        const u32 res = tasks[i]->WaitForResult();
-        REQUIRE(res / 10 == u32(i));      // correct task index
+        const usize res = tasks[i]->WaitForResult();
+        REQUIRE(res / 10 == i);           // correct task index
         REQUIRE(res % 10 >= 1);           // valid thread index
         REQUIRE(res % 10 <= threadCount); // valid thread index
     }

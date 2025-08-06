@@ -33,7 +33,7 @@ class TKIT_API ITask : public RefCounted<ITask>
     ITask() noexcept = default;
     virtual ~ITask() noexcept = default;
 
-    virtual void operator()(usize p_ThreadIndex) noexcept = 0;
+    virtual void operator()() noexcept = 0;
 
     /**
      * @brief Check if the task has finished executing.
@@ -81,9 +81,9 @@ class TKIT_API ITask : public RefCounted<ITask>
 template <typename T> class Task final : public ITask
 {
   public:
-    void operator()(const usize p_ThreadIndex) noexcept override
+    void operator()() noexcept override
     {
-        m_Result = m_Function(p_ThreadIndex);
+        m_Result = m_Function();
         notifyCompleted();
     }
 
@@ -99,7 +99,7 @@ template <typename T> class Task final : public ITask
     }
 
     template <typename Callable, typename... Args>
-        requires std::invocable<Callable, Args..., usize>
+        requires std::invocable<Callable, Args...>
     explicit Task(Callable &&p_Callable, Args &&...p_Args) noexcept
         : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
@@ -117,7 +117,7 @@ template <typename T> class Task final : public ITask
     {
     }
 
-    std::function<T(usize)> m_Function = nullptr;
+    std::function<T()> m_Function = nullptr;
     T m_Result{};
 };
 
@@ -130,10 +130,10 @@ template <typename T> class Task final : public ITask
 template <> class TKIT_API Task<void> final : public ITask
 {
   public:
-    void operator()(usize p_ThreadIndex) noexcept override;
+    void operator()() noexcept override;
 
     template <typename Callable, typename... Args>
-        requires std::invocable<Callable, Args..., usize>
+        requires std::invocable<Callable, Args...>
     explicit Task(Callable &&p_Callable, Args &&...p_Args) noexcept
         : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
@@ -150,6 +150,6 @@ template <> class TKIT_API Task<void> final : public ITask
     }
 
   private:
-    std::function<void(usize)> m_Function = nullptr;
+    std::function<void()> m_Function = nullptr;
 };
 } // namespace TKit

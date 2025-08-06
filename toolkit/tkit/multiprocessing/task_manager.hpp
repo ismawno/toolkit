@@ -41,9 +41,9 @@ class TKIT_API ITaskManager
      */
     template <typename Callable, typename... Args>
     auto CreateTask(Callable &&p_Callable, Args &&...p_Args) const noexcept
-        -> Ref<Task<std::invoke_result_t<Callable, Args..., usize>>>
+        -> Ref<Task<std::invoke_result_t<Callable, Args...>>>
     {
-        using RType = std::invoke_result_t<Callable, Args..., usize>;
+        using RType = std::invoke_result_t<Callable, Args...>;
         return Ref<Task<RType>>::Create(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
     }
 
@@ -56,9 +56,9 @@ class TKIT_API ITaskManager
      */
     template <typename Callable, typename... Args>
     auto CreateAndSubmit(Callable &&p_Callable, Args &&...p_Args) noexcept
-        -> Ref<Task<std::invoke_result_t<Callable, Args..., usize>>>
+        -> Ref<Task<std::invoke_result_t<Callable, Args...>>>
     {
-        using RType = std::invoke_result_t<Callable, Args..., usize>;
+        using RType = std::invoke_result_t<Callable, Args...>;
         const Ref<Task<RType>> task = CreateTask(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
         SubmitTask(task);
         return task;

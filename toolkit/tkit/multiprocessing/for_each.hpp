@@ -87,8 +87,7 @@ void NonBlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last
 template <std::derived_from<ITaskManager> TManager, RandomIterOrIndex It1, OutputIterOrIndex<Ref<ITask>> It2,
           typename Callable, typename... Args>
 auto BlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last, It2 p_Dest, const usize p_Partitions,
-                     Callable &&p_Callable, Args &&...p_Args)
-    -> std::invoke_result_t<Callable, Args..., It1, It1, usize>
+                     Callable &&p_Callable, Args &&...p_Args) -> std::invoke_result_t<Callable, Args..., It1, It1>
 {
     const usize size = Detail::Distance(p_First, p_Last);
     usize start = size / p_Partitions;
@@ -102,6 +101,6 @@ auto BlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last, I
         start = end;
     }
     const usize end = size / p_Partitions;
-    return p_Callable(std::forward<Args>(p_Args)..., p_First, p_First + end, 0);
+    return p_Callable(std::forward<Args>(p_Args)..., p_First, p_First + end);
 }
 } // namespace TKit

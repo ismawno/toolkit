@@ -81,7 +81,7 @@ ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
                 m_Queue.PopBack();
             }
 
-            (*task)(p_ThreadIndex);
+            (*task)();
             m_PendingCount.fetch_sub(1, std::memory_order_release);
         }
         m_TerminatedCount.fetch_add(1, std::memory_order_relaxed);
@@ -111,7 +111,7 @@ ThreadPool::~ThreadPool() noexcept
     {
         const Ref<ITask> task = m_Queue.GetBack();
         m_Queue.PopBack();
-        (*task)(0);
+        (*task)();
     }
 }
 

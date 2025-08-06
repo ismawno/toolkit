@@ -20,11 +20,11 @@ TEST_CASE("NonBlockingForEach (void) with ThreadPool sums all elements", "[NonBl
     using Task = Ref<Task<void>>;
     Array<Task, partitionCount> tasks{};
     NonBlockingForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount,
-                       [&](const usize p_Start, const usize p_End, const usize /*p_ThreadIndex*/) {
+                       [&](const usize p_Start, const usize p_End) {
                            totalSum.fetch_add(p_End - p_Start, std::memory_order_relaxed);
                        });
 
-    for (u32 i = 0; i < partitionCount; ++i)
+    for (usize i = 0; i < partitionCount; ++i)
         tasks[i]->WaitUntilFinished();
     REQUIRE(totalSum.load(std::memory_order_relaxed) == lastIndex - firstIndex);
 }
@@ -43,7 +43,7 @@ TEST_CASE("NonBlockingForEach with output iterator collects and executes all", "
 
     // Partition [10,25) into 5 chunks; capture tasks and sum chunk sizes
     NonBlockingForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount,
-                       [&](const usize p_Start, const usize p_End, const usize /*p_ThreadIndex*/) {
+                       [&](const usize p_Start, const usize p_End) {
                            totalSum.fetch_add(p_End - p_Start, std::memory_order_relaxed);
                        });
 
@@ -68,7 +68,7 @@ TEST_CASE("BlockingForEach with output iterator partitions and returns main resu
     tasks.Resize(partitionCount - 1);
 
     // Callable returns usize length for main partition; others add to otherSum
-    const auto callable = [&](const usize p_Start, const usize p_End, const usize /*p_ThreadIndex*/) -> usize {
+    const auto callable = [&](const usize p_Start, const usize p_End) -> usize {
         if (p_Start != firstIndex)
         {
             otherSum.fetch_add(p_End - p_Start, std::memory_order_relaxed);
@@ -104,14 +104,14 @@ TEST_CASE("BlockingForEach without output iterator executes all partitions", "[B
     Array<Task, partitionCount - 1> tasks{};
 
     // Callable adds length of each range to totalSum
-    const auto callable = [&](const usize p_Start, const usize p_End, const usize /*p_ThreadIndex*/) {
+    const auto callable = [&](const usize p_Start, const usize p_End) {
         totalSum.fetch_add(p_End - p_Start, std::memory_order_relaxed);
     };
 
     // This overload does not return a value
     BlockingForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount, callable);
 
-    for (u32 i = 0; i < partitionCount - 1; ++i)
+    for (usize i = 0; i < partitionCount - 1; ++i)
         tasks[i]->WaitUntilFinished();
 
     // entire range length = lastIndex - firstIndex
