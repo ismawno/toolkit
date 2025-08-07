@@ -1,7 +1,5 @@
 #pragma once
 
-#define TKIT_VERSION "v0.2.1"
-
 #ifdef _WIN32
 #    define TKIT_OS_WINDOWS
 #    if defined(_WIN64)
