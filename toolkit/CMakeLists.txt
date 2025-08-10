@@ -60,7 +60,7 @@ endif()
 
 # Create the library
 add_library(toolkit STATIC ${SOURCES})
-target_compile_definitions(toolkit PUBLIC TKIT_VERSION=\"v0.3.0\")
+target_compile_definitions(toolkit PUBLIC TKIT_VERSION=\"v0.3.1\")
 
 if(TOOLKIT_ENABLE_YAML_SERIALIZATION)
   target_link_libraries(toolkit PUBLIC yaml-cpp)
