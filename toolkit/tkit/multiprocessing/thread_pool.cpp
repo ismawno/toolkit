@@ -22,7 +22,7 @@ static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nul
     TKIT_ASSERT_NOT_RETURNS(SetThreadAffinityMask(thread, mask), 0);
     if (p_Name)
     {
-        SetThreadDescription(thread, name.c_str());
+        SetThreadDescription(thread, p_Name);
         return;
     }
 
@@ -36,6 +36,7 @@ static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nul
 #else
 static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nullptr) noexcept
 {
+#    ifdef TKIT_OS_LINUX
     const u32 totalCores = std::thread::hardware_concurrency();
     const u32 coreId = p_ThreadIndex % totalCores;
 
@@ -45,6 +46,8 @@ static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nul
 
     const pthread_t current = pthread_self();
     TKIT_ASSERT_RETURNS(pthread_setaffinity_np(current, sizeof(cpu_set_t), &cpu), 0);
+#    endif
+
     if (p_Name)
     {
         pthread_setname_np(current, p_Name);
