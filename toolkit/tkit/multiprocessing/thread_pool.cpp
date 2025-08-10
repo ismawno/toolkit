@@ -35,7 +35,6 @@ static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nul
 #else
 static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nullptr) noexcept
 {
-    const pthread_t current = pthread_self();
 #    ifdef TKIT_OS_LINUX
     const u32 totalCores = std::thread::hardware_concurrency();
     const u32 coreId = p_ThreadIndex % totalCores;
@@ -44,17 +43,16 @@ static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nul
     CPU_ZERO(&cpu);
     CPU_SET(coreId, &cpu);
 
+    const pthread_t current = pthread_self();
     TKIT_ASSERT_RETURNS(pthread_setaffinity_np(current, sizeof(cpu_set_t), &cpu), 0);
 #    endif
 
-    if (p_Name)
-    {
-        pthread_setname_np(current, p_Name);
-        return;
-    }
-
-    const std::string name = "tkit-worker-" + std::to_string(p_ThreadIndex);
+    const std::string name = p_Name ? p_Name : ("tkit-worker-" + std::to_string(p_ThreadIndex));
+#    ifdef TKIT_OS_LINUX
     pthread_setname_np(current, name.c_str());
+#    else
+    pthread_setname_np(name.c_str());
+#    endif
 }
 #endif
 ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
