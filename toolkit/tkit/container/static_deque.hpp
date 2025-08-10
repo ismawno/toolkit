@@ -28,6 +28,32 @@ class StaticDeque
 
     constexpr StaticDeque() noexcept = default;
 
+    template <typename... Args>
+    constexpr StaticDeque(const SizeType p_Size, const Args &...p_Args) noexcept : m_Size(p_Size)
+    {
+        TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT] Size is bigger than capacity");
+        if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
+            Memory::ConstructRange(GetData(), GetData() + m_Size, p_Args...);
+
+        m_Back = m_Size;
+    }
+
+    template <std::input_iterator It> constexpr StaticDeque(const It p_Begin, const It p_End) noexcept
+    {
+        m_Size = static_cast<SizeType>(std::distance(p_Begin, p_End));
+        TKIT_ASSERT(m_Size <= Capacity, "[TOOLKIT] Size is bigger than capacity");
+        Tools::CopyConstructFromRange(GetData(), p_Begin, p_End);
+        m_Back = m_Size;
+    }
+
+    constexpr StaticDeque(const std::initializer_list<ValueType> p_List) noexcept
+        : m_Size(static_cast<SizeType>(p_List.size()))
+    {
+        TKIT_ASSERT(p_List.size() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
+        Tools::CopyConstructFromRange(GetData(), p_List.begin(), p_List.end());
+        m_Back = m_Size;
+    }
+
     // This constructor WONT include the case M == Capacity (ie, copy constructor)
     template <SizeType M>
     explicit(false) constexpr StaticDeque(const StaticDeque<ValueType, M, Traits> &p_Other) noexcept

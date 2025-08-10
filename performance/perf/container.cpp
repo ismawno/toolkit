@@ -2,6 +2,9 @@
 #include "tkit/profiling/clock.hpp"
 #include "tkit/container/static_array.hpp"
 #include "tkit/container/dynamic_array.hpp"
+#include "tkit/container/dynamic_deque.hpp"
+#include "tkit/container/static_deque.hpp"
+#include <deque>
 #include <fstream>
 
 namespace TKit::Perf
@@ -45,6 +48,8 @@ struct Example
 
     u32 *Element;
 };
+
+// using Example = u32; // to test trivial types
 
 void RecordVector(const ContainerSettings &p_Settings) noexcept
 {
@@ -142,4 +147,96 @@ void RecordDynamicArray(const ContainerSettings &p_Settings) noexcept
              << moveTime.AsNanoseconds() << '\n';
     }
 }
+
+void RecordDeque(const ContainerSettings &p_Settings) noexcept
+{
+    std::ofstream file(g_Root + "/performance/results/deque.csv");
+    file << "passes,pushback,pushfront,popback,popfront,copy,move\n";
+
+    std::deque<Example> deque;
+    for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
+    {
+        Clock clock;
+        deque.push_back(Example{});
+        const Timespan pushBackTime = clock.Restart();
+
+        deque.push_front(Example{});
+        const Timespan pushFrontTime = clock.Restart();
+
+        deque.pop_back();
+        const Timespan popBackTime = clock.Restart();
+
+        deque.pop_front();
+        const Timespan popFrontTime = clock.Restart();
+
+        std::deque<Example> copyDeque = deque;
+        const Timespan copyTime = clock.Restart();
+
+        std::deque<Example> moveDeque = std::move(copyDeque);
+        const Timespan moveTime = clock.Restart();
+
+        file << passes << ',' << pushBackTime.AsNanoseconds() << ',' << pushFrontTime.AsNanoseconds() << ','
+             << popBackTime.AsNanoseconds() << ',' << popFrontTime.AsNanoseconds() << ',' << copyTime.AsNanoseconds()
+             << ',' << moveTime.AsNanoseconds() << '\n';
+    }
+}
+void RecordStaticDeque(const ContainerSettings &p_Settings) noexcept
+{
+    std::ofstream file(g_Root + "/performance/results/static_deque.csv");
+    file << "passes,pushback,pushfront,popback,popfront\n";
+
+    StaticDeque<Example, 1000000> deque;
+    for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
+    {
+        Clock clock;
+        deque.PushBack(Example{});
+        const Timespan pushBackTime = clock.Restart();
+
+        deque.PushFront(Example{});
+        const Timespan pushFrontTime = clock.Restart();
+
+        deque.PopBack();
+        const Timespan popBackTime = clock.Restart();
+
+        deque.PopFront();
+        const Timespan popFrontTime = clock.Restart();
+
+        file << passes << ',' << pushBackTime.AsNanoseconds() << ',' << pushFrontTime.AsNanoseconds() << ','
+             << popBackTime.AsNanoseconds() << ',' << popFrontTime.AsNanoseconds() << '\n';
+    }
+}
+
+void RecordDynamicDeque(const ContainerSettings &p_Settings) noexcept
+{
+    std::ofstream file(g_Root + "/performance/results/dynamic_deque.csv");
+    file << "passes,pushback,pushfront,popback,popfront,copy,move\n";
+
+    DynamicDeque<Example> deque;
+    for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
+    {
+        Clock clock;
+        deque.PushBack(Example{});
+        const Timespan pushBackTime = clock.Restart();
+
+        deque.PushFront(Example{});
+        const Timespan pushFrontTime = clock.Restart();
+
+        deque.PopBack();
+        const Timespan popBackTime = clock.Restart();
+
+        deque.PopFront();
+        const Timespan popFrontTime = clock.Restart();
+
+        DynamicDeque<Example> copyDeque = deque;
+        const Timespan copyTime = clock.Restart();
+
+        DynamicDeque<Example> moveDeque = std::move(copyDeque);
+        const Timespan moveTime = clock.Restart();
+
+        file << passes << ',' << pushBackTime.AsNanoseconds() << ',' << pushFrontTime.AsNanoseconds() << ','
+             << popBackTime.AsNanoseconds() << ',' << popFrontTime.AsNanoseconds() << ',' << copyTime.AsNanoseconds()
+             << ',' << moveTime.AsNanoseconds() << '\n';
+    }
+}
+
 } // namespace TKit::Perf

@@ -1,7 +1,6 @@
 #include "tkit/container/dynamic_deque.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <string>
-#include <algorithm>
 
 using namespace TKit;
 using namespace TKit::Container;
@@ -47,6 +46,60 @@ struct DQTrackable
         return *this;
     }
 };
+
+TEST_CASE("DynamicDeque: constructors", "[DynamicDeque][constructors]")
+{
+    // 1. Default constructor
+    {
+        DynamicDeque<u32> dq;
+        REQUIRE(dq.GetSize() == 0);
+        REQUIRE(dq.IsEmpty());
+    }
+
+    // 2. Size + Args constructor
+    {
+        DynamicDeque<u32> dq(3u, 42u);
+        REQUIRE(dq.GetSize() == 3);
+        for (u32 i = 0; i < dq.GetSize(); ++i)
+            REQUIRE(dq[i] == 42u);
+
+        dq.PushBack(6u);
+        dq.PushFront(7u);
+
+        REQUIRE(dq.GetBack() == 6u);
+        REQUIRE(dq.GetFront() == 7u);
+    }
+
+    // 3. Iterator range constructor
+    {
+        std::vector<u32> values = {1u, 2u, 3u, 4u};
+        DynamicDeque<u32> dq(values.begin(), values.end());
+        REQUIRE(dq.GetSize() == values.size());
+        for (u32 i = 0; i < dq.GetSize(); ++i)
+            REQUIRE(dq[i] == values[i]);
+
+        dq.PushBack(6u);
+        dq.PushFront(7u);
+
+        REQUIRE(dq.GetBack() == 6u);
+        REQUIRE(dq.GetFront() == 7u);
+    }
+
+    // 4. std::initializer_list constructor
+    {
+        DynamicDeque<u32> dq{10u, 20u, 30u};
+        REQUIRE(dq.GetSize() == 3);
+        REQUIRE(dq[0] == 10u);
+        REQUIRE(dq[1] == 20u);
+        REQUIRE(dq[2] == 30u);
+
+        dq.PushBack(6u);
+        dq.PushFront(7u);
+
+        REQUIRE(dq.GetBack() == 6u);
+        REQUIRE(dq.GetFront() == 7u);
+    }
+}
 
 TEST_CASE("DynamicDeque: basic operations (Push/Pop)", "[DynamicDeque]")
 {

@@ -43,6 +43,14 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
         Tools::CopyConstructFromRange(begin(), p_Begin, p_End);
     }
 
+    constexpr DynamicArray(const std::initializer_list<ValueType> p_List) noexcept
+        : m_Size(static_cast<SizeType>(p_List.size()))
+    {
+        if (m_Size > 0)
+            growCapacity(m_Size);
+        Tools::CopyConstructFromRange(begin(), p_List.begin(), p_List.end());
+    }
+
     constexpr DynamicArray(const DynamicArray &p_Other) noexcept : m_Size(p_Other.GetSize())
     {
         if (m_Size > 0)
@@ -57,14 +65,6 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
         p_Other.m_Data = nullptr;
         p_Other.m_Size = 0;
         p_Other.m_Capacity = 0;
-    }
-
-    constexpr DynamicArray(const std::initializer_list<ValueType> p_List) noexcept
-        : m_Size(static_cast<SizeType>(p_List.size()))
-    {
-        if (m_Size > 0)
-            growCapacity(m_Size);
-        Tools::CopyConstructFromRange(begin(), p_List.begin(), p_List.end());
     }
 
     ~DynamicArray() noexcept

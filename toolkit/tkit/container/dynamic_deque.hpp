@@ -24,6 +24,31 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
 
     constexpr DynamicDeque() noexcept = default;
 
+    template <typename... Args>
+    constexpr DynamicDeque(const SizeType p_Size, const Args &...p_Args) noexcept : m_Size(p_Size)
+    {
+        if (m_Size > 0)
+            growCapacity(m_Size);
+        if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
+            Memory::ConstructRange(GetData(), GetData() + p_Size, p_Args...);
+    }
+
+    template <std::input_iterator It> constexpr DynamicDeque(const It p_Begin, const It p_End) noexcept
+    {
+        m_Size = static_cast<SizeType>(std::distance(p_Begin, p_End));
+        if (m_Size > 0)
+            growCapacity(m_Size);
+        Tools::CopyConstructFromRange(GetData(), p_Begin, p_End);
+    }
+
+    constexpr DynamicDeque(const std::initializer_list<ValueType> p_List) noexcept
+        : m_Size(static_cast<SizeType>(p_List.size()))
+    {
+        if (m_Size > 0)
+            growCapacity(m_Size);
+        Tools::CopyConstructFromRange(GetData(), p_List.begin(), p_List.end());
+    }
+
     constexpr DynamicDeque(const DynamicDeque &p_Other) noexcept
     {
         const u32 otherSize = p_Other.GetSize();
@@ -174,6 +199,19 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
             m_Front = m_Capacity - 1;
             m_Back = 0;
         }
+    }
+
+    /**
+     * @brief Reserve memory for the array ahead of time.
+     *
+     * This does not change the size of the array. It can potentially reduce the number of allocations.
+     *
+     * @param p_Capacity
+     */
+    constexpr void Reserve(const SizeType p_Capacity) noexcept
+    {
+        if (p_Capacity > m_Capacity)
+            modifyCapacity(p_Capacity);
     }
 
     constexpr const ValueType *GetData() const noexcept

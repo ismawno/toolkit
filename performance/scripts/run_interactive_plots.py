@@ -133,7 +133,7 @@ def update_graph(
             df = df.drop(columns=exclude)
 
         # Assuming the first column is the x-axis
-        xcol = df.columns[0]
+        xcol = str(df.columns[0])
         data.extend(
             [
                 go.Scatter(

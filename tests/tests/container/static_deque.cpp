@@ -47,6 +47,76 @@ struct SQTrackable
     }
 };
 
+TEST_CASE("StaticDeque: various constructors", "[StaticDeque][constructors]")
+{
+    // Default constructor
+    {
+        StaticDeque<int, 3> dq;
+        REQUIRE(dq.GetSize() == 0);
+        REQUIRE(dq.GetCapacity() == 3);
+        REQUIRE(dq.IsEmpty());
+    }
+
+    // Size + fill value constructor
+    {
+        StaticDeque<int, 8> dq(3, 42);
+        REQUIRE(dq.GetSize() == 3);
+        REQUIRE(dq[0] == 42);
+        REQUIRE(dq[1] == 42);
+        REQUIRE(dq[2] == 42);
+
+        dq.PushBack(6u);
+        dq.PushFront(7u);
+
+        REQUIRE(dq.GetBack() == 6u);
+        REQUIRE(dq.GetFront() == 7u);
+    }
+
+    // Size constructor with non-trivial type
+    {
+        g_Constructions = g_Destructions = 0;
+        StaticDeque<SQTrackable, 2> dq(2, SQTrackable{99});
+        REQUIRE(dq.GetSize() == 2);
+        REQUIRE(dq[0].Value == 99);
+        REQUIRE(dq[1].Value == 99);
+        REQUIRE(g_Constructions == 3); // 1 temp + 2 copies
+    }
+
+    // Range constructor
+    {
+        std::vector<int> v = {1, 2, 3};
+        StaticDeque<int, 5> dq(v.begin(), v.end());
+        REQUIRE(dq.GetSize() == 3);
+        REQUIRE(dq[0] == 1);
+        REQUIRE(dq[1] == 2);
+        REQUIRE(dq[2] == 3);
+
+        dq.PushBack(6u);
+        dq.PushFront(7u);
+
+        REQUIRE(dq.GetBack() == 6u);
+        REQUIRE(dq.GetFront() == 7u);
+    }
+
+    // Initializer list constructor
+    {
+        StaticDeque<std::string, 4> dq({"a", "b", "c"});
+        REQUIRE(dq.GetSize() == 3);
+        REQUIRE(dq[0] == "a");
+        REQUIRE(dq[1] == "b");
+        REQUIRE(dq[2] == "c");
+    }
+
+    // Cross-capacity construction (smaller → larger)
+    {
+        StaticDeque<int, 2> small(2, 7);
+        StaticDeque<int, 5> large(small);
+        REQUIRE(large.GetSize() == 2);
+        REQUIRE(large[0] == 7);
+        REQUIRE(large[1] == 7);
+    }
+}
+
 TEST_CASE("StaticDeque: basic operations", "[StaticDeque]")
 {
     StaticDeque<u32, 4> dq;

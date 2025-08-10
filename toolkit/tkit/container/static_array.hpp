@@ -45,6 +45,13 @@ class StaticArray
         Tools::CopyConstructFromRange(begin(), p_Begin, p_End);
     }
 
+    constexpr StaticArray(const std::initializer_list<ValueType> p_List) noexcept
+        : m_Size(static_cast<SizeType>(p_List.size()))
+    {
+        TKIT_ASSERT(p_List.size() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
+        Tools::CopyConstructFromRange(begin(), p_List.begin(), p_List.end());
+    }
+
     // This constructor WONT include the case M == Capacity (ie, copy constructor)
     template <SizeType M>
     explicit(false) constexpr StaticArray(const StaticArray<ValueType, M, Traits> &p_Other) noexcept
@@ -77,13 +84,6 @@ class StaticArray
     constexpr StaticArray(StaticArray &&p_Other) noexcept : m_Size(p_Other.GetSize())
     {
         Tools::MoveConstructFromRange(begin(), p_Other.begin(), p_Other.end());
-    }
-
-    constexpr StaticArray(const std::initializer_list<ValueType> p_List) noexcept
-        : m_Size(static_cast<SizeType>(p_List.size()))
-    {
-        TKIT_ASSERT(p_List.size() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
-        Tools::CopyConstructFromRange(begin(), p_List.begin(), p_List.end());
     }
 
     ~StaticArray() noexcept
