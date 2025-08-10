@@ -98,7 +98,7 @@ def main() -> None:
         },
         children=elements,
     )
-    app.run_server(debug=True)
+    app.run(debug=True)
 
 
 def time_unit_to_factor(time_unit: str) -> int:
@@ -141,7 +141,7 @@ def update_graph(
                     y=df[col] * factor,
                     mode=plot_mode,
                     marker={"size": 8},
-                    name=f"{col.replace('ns', time_unit)} ({benchmark})",
+                    name=f"{col} ({benchmark})",
                 )
                 for col in df.columns[1:]
             ]
@@ -179,9 +179,7 @@ def update_graph(
         dash.dependencies.Input("single-thread-axis-type", "value"),
     ],
 )
-def update_plain_graph(
-    names: list[str], plot_mode: str, time_unit: str, axis_type: list[str], /
-) -> go.Figure:
+def update_plain_graph(names: list[str], plot_mode: str, time_unit: str, axis_type: list[str], /) -> go.Figure:
     return update_graph(
         names,
         plot_mode,
@@ -201,9 +199,7 @@ def update_plain_graph(
         dash.dependencies.Input("thread-scale-axis-type", "value"),
     ],
 )
-def update_thread_scale_graph(
-    names: list[str], plot_mode: str, time_unit: str, axis_type: list[str], /
-) -> go.Figure:
+def update_thread_scale_graph(names: list[str], plot_mode: str, time_unit: str, axis_type: list[str], /) -> go.Figure:
     return update_graph(
         names,
         plot_mode,
