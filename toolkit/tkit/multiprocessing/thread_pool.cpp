@@ -22,7 +22,7 @@ static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nul
     TKIT_ASSERT_NOT_RETURNS(SetThreadAffinityMask(thread, mask), 0);
     if (p_Name)
     {
-        SetThreadDescription(thread, p_Name);
+        SetThreadDescription(thread, std::wstring(p_Name));
         return;
     }
 
