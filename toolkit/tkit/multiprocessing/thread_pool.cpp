@@ -20,14 +20,13 @@ static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nul
     const DWORD_PTR mask = 1ULL << coreId;
     const HANDLE thread = GetCurrentThread();
     TKIT_ASSERT_NOT_RETURNS(SetThreadAffinityMask(thread, mask), 0);
-    if (p_Name)
-    {
-        SetThreadDescription(thread, std::wstring(p_Name));
-        return;
-    }
 
     std::ostringstream oss;
-    oss << "tkit-worker-" << p_ThreadIndex;
+    if (p_Name)
+        oss << p_Name;
+    else
+        oss << "tkit-worker-" << p_ThreadIndex;
+
     const auto str = oss.str();
     const std::wstring name(str.begin(), str.end());
 
@@ -36,6 +35,7 @@ static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nul
 #else
 static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nullptr) noexcept
 {
+    const pthread_t current = pthread_self();
 #    ifdef TKIT_OS_LINUX
     const u32 totalCores = std::thread::hardware_concurrency();
     const u32 coreId = p_ThreadIndex % totalCores;
@@ -44,7 +44,6 @@ static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nul
     CPU_ZERO(&cpu);
     CPU_SET(coreId, &cpu);
 
-    const pthread_t current = pthread_self();
     TKIT_ASSERT_RETURNS(pthread_setaffinity_np(current, sizeof(cpu_set_t), &cpu), 0);
 #    endif
 
