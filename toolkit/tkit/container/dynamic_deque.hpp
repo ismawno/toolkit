@@ -72,6 +72,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
     ~DynamicDeque() noexcept
     {
         Clear();
+        deallocateBuffer();
     }
 
     constexpr DynamicDeque &operator=(const DynamicDeque &p_Other) noexcept
