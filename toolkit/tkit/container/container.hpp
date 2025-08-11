@@ -6,10 +6,10 @@
 
 namespace TKit::Container
 {
-template <typename T> struct ArrayTraits
+template <typename T, typename SType = usize> struct ArrayTraits
 {
     using ValueType = T;
-    using SizeType = usize;
+    using SizeType = SType;
     using Iterator = T *;
     using ConstIterator = const T *;
 };
