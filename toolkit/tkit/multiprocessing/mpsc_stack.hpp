@@ -4,7 +4,7 @@
 
 namespace TKit
 {
-template <typename T> class alignas(TKIT_CACHE_LINE_SIZE) MpscStack
+template <typename T> class MpscStack
 {
   public:
     struct Node
