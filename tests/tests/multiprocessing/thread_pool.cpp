@@ -1,9 +1,9 @@
 #include "tkit/memory/ptr.hpp"
 #include "tkit/multiprocessing/task.hpp"
 #include "tkit/multiprocessing/thread_pool.hpp"
-#include "tkit/container/dynamic_array.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <atomic>
+#include <vector>
 
 using namespace TKit;
 
@@ -14,14 +14,14 @@ TEST_CASE("ThreadPool executes Task<void>s", "[ThreadPool]")
     ThreadPool pool(threadCount);
 
     std::atomic<usize> counter{0};
-    DynamicArray<Ref<Task<void>>> tasks;
-    tasks.Reserve(taskCount);
+    std::vector<Ref<Task<void>>> tasks;
+    tasks.reserve(taskCount);
 
     // Submit several void tasks
     for (usize i = 0; i < taskCount; ++i)
     {
         const auto t = Ref<Task<void>>::Create([&]() { counter.fetch_add(1, std::memory_order_relaxed); });
-        tasks.Append(t);
+        tasks.push_back(t);
         pool.SubmitTask(t); // implicitly converts to Ref<ITask>
     }
 
@@ -35,8 +35,8 @@ TEST_CASE("ThreadPool executes Task<usize>s and preserves results", "[ThreadPool
     constexpr usize taskCount = 6;
     ThreadPool pool(threadCount);
 
-    DynamicArray<Ref<Task<usize>>> tasks;
-    tasks.Reserve(taskCount);
+    std::vector<Ref<Task<usize>>> tasks;
+    tasks.reserve(taskCount);
 
     // Submit tasks that encode (taskIndex * 10 + threadIndex)
     for (usize i = 0; i < taskCount; ++i)
@@ -45,7 +45,7 @@ TEST_CASE("ThreadPool executes Task<usize>s and preserves results", "[ThreadPool
             thread_local const usize idx = ITaskManager::GetThreadIndex();
             return i * 10 + idx;
         });
-        tasks.Append(t);
+        tasks.push_back(t);
         pool.SubmitTask(t);
     }
 

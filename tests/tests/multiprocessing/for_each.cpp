@@ -1,9 +1,9 @@
 #include "tkit/multiprocessing/for_each.hpp"
 #include "tkit/multiprocessing/thread_pool.hpp"
 #include "tkit/memory/ptr.hpp"
-#include "tkit/container/dynamic_array.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <atomic>
+#include <vector>
 
 using namespace TKit;
 using namespace TKit::Alias;
@@ -38,8 +38,8 @@ TEST_CASE("NonBlockingForEach with output iterator collects and executes all", "
     std::atomic<usize> totalSum{0};
 
     using Task = Ref<Task<void>>;
-    DynamicArray<Task> tasks;
-    tasks.Resize(partitionCount);
+    std::vector<Task> tasks;
+    tasks.resize(partitionCount);
 
     // Partition [10,25) into 5 chunks; capture tasks and sum chunk sizes
     NonBlockingForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount,
@@ -48,7 +48,7 @@ TEST_CASE("NonBlockingForEach with output iterator collects and executes all", "
                        });
 
     // we should have one task per partition
-    REQUIRE(tasks.GetSize() == partitionCount);
+    REQUIRE(static_cast<usize>(tasks.size()) == partitionCount);
 
     // wait for each task to finish
     for (const auto &t : tasks)
@@ -64,8 +64,8 @@ TEST_CASE("BlockingForEach with output iterator partitions and returns main resu
     const usize lastIndex = 100;
     const usize partitionCount = 4;
     std::atomic<usize> otherSum{0};
-    DynamicArray<Ref<ITask>> tasks;
-    tasks.Resize(partitionCount - 1);
+    std::vector<Ref<ITask>> tasks;
+    tasks.resize(partitionCount - 1);
 
     // Callable returns usize length for main partition; others add to otherSum
     const auto callable = [&](const usize p_Start, const usize p_End) -> usize {
@@ -82,7 +82,7 @@ TEST_CASE("BlockingForEach with output iterator partitions and returns main resu
     // main partition [0,25) length = 25
     REQUIRE(mainLength == (lastIndex - firstIndex) / partitionCount);
     // should have enqueued partitionCount-1 tasks
-    REQUIRE(tasks.GetSize() == partitionCount - 1);
+    REQUIRE(static_cast<usize>(tasks.size()) == partitionCount - 1);
 
     // wait all other partitions
     for (const auto &t : tasks)

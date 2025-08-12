@@ -43,7 +43,9 @@ TEST_CASE("ChaseLevDeque: uniqueness", "[ChaseLevDeque][uniqueness]")
 
     std::atomic<u32> winners{0};
     std::vector<std::thread> stealers{};
-    for (u32 i = 0; i < 4; ++i)
+    constexpr u32 threads = 4;
+
+    for (u32 i = 0; i < threads; ++i)
         stealers.emplace_back([&]() {
             if (q.PopFront())
                 winners.fetch_add(1, std::memory_order_relaxed);
@@ -57,7 +59,8 @@ TEST_CASE("ChaseLevDeque: uniqueness", "[ChaseLevDeque][uniqueness]")
 
 static void sort(std::vector<DTask> &p_Vector)
 {
-    std::sort(p_Vector.begin(), p_Vector.end(), [](const DTask &a, const DTask &b) { return a.Value < b.Value; });
+    std::sort(p_Vector.begin(), p_Vector.end(),
+              [](const DTask &p_Task1, const DTask &p_Task2) { return p_Task1.Value < p_Task2.Value; });
 }
 
 TEST_CASE("ChaseLevDeque: many thieves steal while owner pushes", "[ChaseLevDeque][wrap]")

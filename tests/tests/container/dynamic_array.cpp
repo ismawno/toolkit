@@ -1,8 +1,8 @@
 #include "tkit/container/dynamic_array.hpp"
-#include "tkit/container/array.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <string>
 #include <algorithm>
+#include <array>
 
 using namespace TKit;
 using namespace TKit::Container;
@@ -117,7 +117,7 @@ TEST_CASE("DynamicArray: Insert single and range", "[DynamicArray]")
     arr.Insert(arr.begin() + 2, 3u);
     REQUIRE(arr.GetSize() == 5);
 
-    const TKit::Array<u32, 2> extra = {7u, 8u};
+    const std::array<u32, 2> extra = {7u, 8u};
     arr.Insert(arr.begin() + 5, extra.begin(), extra.end());
     REQUIRE(arr.GetSize() == 7);
     REQUIRE(arr[5] == 7u);
@@ -194,7 +194,7 @@ TEST_CASE("DynamicArray<std::string>: non-trivial operations", "[DynamicArray][s
     arr1.Insert(arr1.begin() + 1, std::string("inserted"));
     REQUIRE(arr1[1] == "inserted");
 
-    const Array<std::string, 2> extras{"x", "y"};
+    const std::array<std::string, 2> extras{"x", "y"};
     arr1.Insert(arr1.begin() + 4, extras.begin(), extras.end());
     REQUIRE(arr1.GetBack() == "y");
 

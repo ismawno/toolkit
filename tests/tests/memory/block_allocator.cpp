@@ -1,7 +1,7 @@
 #include "tkit/memory/block_allocator.hpp"
-#include "tkit/container/dynamic_array.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <cstddef>
+#include <vector>
 
 using namespace TKit;
 
@@ -58,13 +58,13 @@ TEST_CASE("Allocate and Deallocate blocks", "[BlockAllocator]")
     constexpr usize capacity = 4;
     auto alloc = BlockAllocator::CreateFromType<u32>(capacity);
 
-    DynamicArray<void *> ptrs;
+    std::vector<void *> ptrs;
     for (usize i = 0; i < capacity; ++i)
     {
         void *p = alloc.Allocate();
         REQUIRE(p);
         REQUIRE(alloc.Belongs(p));
-        ptrs.Append(p);
+        ptrs.push_back(p);
         REQUIRE(alloc.GetAllocationCount() == i + 1);
         REQUIRE(alloc.GetRemainingCount() == capacity - (i + 1));
     }

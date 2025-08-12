@@ -15,8 +15,8 @@ namespace TKit
  * The owner of the queue is the only one allowed to push elements into it or pop them from the back. Any thread may pop
  * from the front concurrently.
  *
- * @tparam T The type of the elements in the array.
- * @tparam Capacity The capacity of the array.
+ * @tparam T The type of the elements in the deque.
+ * @tparam Capacity The capacity of the deque.
  */
 template <typename T, u64 Capacity> class ChaseLevDeque
 {
