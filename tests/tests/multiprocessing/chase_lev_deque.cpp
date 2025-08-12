@@ -46,13 +46,13 @@ TEST_CASE("ChaseLevDeque: uniqueness", "[ChaseLevDeque][uniqueness]")
     for (u32 i = 0; i < 4; ++i)
         stealers.emplace_back([&]() {
             if (q.PopFront())
-                winners.fetch_add(1, std::memory_order_seq_cst);
+                winners.fetch_add(1, std::memory_order_relaxed);
         });
 
     for (std::thread &t : stealers)
         t.join();
 
-    REQUIRE(winners.load(std::memory_order_seq_cst) == 1);
+    REQUIRE(winners.load(std::memory_order_relaxed) == 1);
 }
 
 static void sort(std::vector<DTask> &p_Vector)
@@ -80,11 +80,11 @@ TEST_CASE("ChaseLevDeque: many thieves steal while owner pushes", "[ChaseLevDequ
     for (u32 t = 0; t < thieves; ++t)
     {
         ts.emplace_back([&, t] {
-            while (run.load(std::memory_order_seq_cst))
+            while (run.load(std::memory_order_relaxed))
                 if (auto it = q.PopFront())
                 {
                     stolen[t].push_back(*it);
-                    remaining.fetch_add(1, std::memory_order_seq_cst);
+                    remaining.fetch_add(1, std::memory_order_relaxed);
                 }
                 else
                     std::this_thread::yield();
@@ -95,9 +95,9 @@ TEST_CASE("ChaseLevDeque: many thieves steal while owner pushes", "[ChaseLevDequ
     u32 pushed = 0;
     while (pushed < total)
     {
-        const u32 r = remaining.load(std::memory_order_seq_cst);
+        const u32 r = remaining.load(std::memory_order_relaxed);
         const u32 burst = std::min<u32>(r, total - pushed);
-        remaining.fetch_sub(burst, std::memory_order_seq_cst);
+        remaining.fetch_sub(burst, std::memory_order_relaxed);
 
         for (u32 k = 0; k < burst; ++k)
             q.PushBack(pushed + k);
@@ -113,7 +113,7 @@ TEST_CASE("ChaseLevDeque: many thieves steal while owner pushes", "[ChaseLevDequ
         else
             break;
 
-    run.store(false, std::memory_order_seq_cst);
+    run.store(false, std::memory_order_relaxed);
     for (auto &th : ts)
         th.join();
 

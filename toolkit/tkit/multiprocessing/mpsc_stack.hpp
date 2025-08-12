@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tkit/container/container.hpp"
+#include <atomic>
 
 namespace TKit
 {
