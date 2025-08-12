@@ -4,6 +4,9 @@
 #include <atomic>
 #include <optional>
 
+TKIT_COMPILER_WARNING_IGNORE_PUSH()
+TKIT_MSVC_WARNING_IGNORE(4324)
+
 namespace TKit
 {
 /**
@@ -115,4 +118,5 @@ template <typename T, u64 Capacity> class ChaseLevDeque
     alignas(TKIT_CACHE_LINE_SIZE) std::atomic<u64> m_Back{1};
     alignas(TKIT_CACHE_LINE_SIZE) Array<std::atomic<T>, Capacity, Container::ArrayTraits<std::atomic<T>, u64>> m_Data{};
 };
+TKIT_COMPILER_WARNING_IGNORE_POP()
 } // namespace TKit
