@@ -30,6 +30,7 @@ set(SOURCES
     tests/multiprocessing/task.cpp
     tests/multiprocessing/thread_pool.cpp
     tests/multiprocessing/for_each.cpp
+    tests/multiprocessing/chase_lev_deque.cpp
     tests/utils/result.cpp
     tests/utils/hash.cpp)
 
