@@ -4,15 +4,15 @@
 
 namespace TKit
 {
-template <typename T>
-concept RandomIterOrIndex = std::integral<T> || std::random_access_iterator<T>;
+// template <typename T>
+// concept RandomIterOrIndex = std::integral<T> || std::random_access_iterator<T>;
 
-template <typename T, typename U>
-concept OutputIterOrIndex = std::integral<T> || std::output_iterator<T, U>;
+// template <typename T, typename U>
+// concept OutputIterOrIndex = std::integral<T> || std::output_iterator<T, U>;
 
 namespace Detail
 {
-template <RandomIterOrIndex It> usize Distance(const It p_First, const It p_Last)
+template <typename It> usize Distance(const It p_First, const It p_Last)
 {
     if constexpr (std::integral<It>)
         return static_cast<usize>(p_Last - p_First);
@@ -43,8 +43,7 @@ template <RandomIterOrIndex It> usize Distance(const It p_First, const It p_Last
  * @param p_Args Extra arguments to pass to the callable object. These arguments go before the iterators and thread
  * index.
  */
-template <std::derived_from<ITaskManager> TManager, RandomIterOrIndex It1, OutputIterOrIndex<Ref<ITask>> It2,
-          typename Callable, typename... Args>
+template <std::derived_from<ITaskManager> TManager, typename It1, typename It2, typename Callable, typename... Args>
 void NonBlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last, It2 p_Dest, const usize p_Partitions,
                         Callable &&p_Callable, Args &&...p_Args)
 {
@@ -84,8 +83,7 @@ void NonBlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last
  * @param p_Args Extra arguments to pass to the callable object. These arguments go before the iterators and thread
  * index.
  */
-template <std::derived_from<ITaskManager> TManager, RandomIterOrIndex It1, OutputIterOrIndex<Ref<ITask>> It2,
-          typename Callable, typename... Args>
+template <std::derived_from<ITaskManager> TManager, typename It1, typename It2, typename Callable, typename... Args>
 auto BlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last, It2 p_Dest, const usize p_Partitions,
                      Callable &&p_Callable, Args &&...p_Args) -> std::invoke_result_t<Callable, Args..., It1, It1>
 {

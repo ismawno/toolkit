@@ -53,7 +53,7 @@ class TKIT_API ThreadPool final : public ITaskManager
     explicit ThreadPool(usize p_ThreadCount);
     ~ThreadPool() noexcept override;
 
-    void SubmitTask(const Ref<ITask> &p_Task) noexcept override;
+    void SubmitTask(ITask *p_Task) noexcept override;
 
     /**
      * @brief Wait for all pending tasks to finish executing.
@@ -63,7 +63,7 @@ class TKIT_API ThreadPool final : public ITaskManager
 
   private:
     StaticArray<std::thread, TKIT_THREAD_POOL_MAX_THREADS> m_Threads;
-    StaticDeque<Ref<ITask>, TKIT_THREAD_POOL_MAX_TASKS> m_Queue;
+    StaticDeque<ITask *, TKIT_THREAD_POOL_MAX_TASKS> m_Queue;
 
     std::atomic_flag m_TaskReady = ATOMIC_FLAG_INIT;
     std::atomic_flag m_Shutdown = ATOMIC_FLAG_INIT;

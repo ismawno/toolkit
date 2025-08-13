@@ -1,8 +1,18 @@
 #include "tkit/core/pch.hpp"
 #include "tkit/multiprocessing/task.hpp"
 
+#ifndef TKIT_TASK_ALLOCATOR_CAPACITY
+#    define TKIT_TASK_ALLOCATOR_CAPACITY 1024
+#endif
+
 namespace TKit
 {
+template <typename T> BlockAllocator &getAllocator() noexcept
+{
+    thread_local BlockAllocator allocator = BlockAllocator::CreateFromType<T>(TKIT_TASK_ALLOCATOR_CAPACITY);
+    return allocator;
+}
+
 bool ITask::IsFinished() const noexcept
 {
     return m_Finished.test(std::memory_order_relaxed);

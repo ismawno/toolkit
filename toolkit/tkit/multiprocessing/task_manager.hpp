@@ -28,23 +28,35 @@ class TKIT_API ITaskManager
      *
      * @param p_Task The task to submit.
      */
-    virtual void SubmitTask(const Ref<ITask> &p_Task) noexcept = 0;
+    virtual void SubmitTask(ITask *p_Task) noexcept = 0;
 
     /**
-     * @brief Create a new task that can be submitted to the task manager.
+     * @brief Create a task allocated with a thread-dedicated allocator.
      *
-     * The task is not submitted automatically.
+     * The created task must be deallocated by the same thread it was allocated with.
      *
      * @param p_Callable The callable object to execute.
      * @param p_Args Extra arguments to pass to the callable object.
      * @return A new task object.
      */
     template <typename Callable, typename... Args>
-    auto CreateTask(Callable &&p_Callable, Args &&...p_Args) const noexcept
-        -> Ref<Task<std::invoke_result_t<Callable, Args...>>>
+    static auto CreateTask(Callable &&p_Callable, Args &&...p_Args) noexcept
+        -> Task<std::invoke_result_t<Callable, Args...>> *
     {
         using RType = std::invoke_result_t<Callable, Args...>;
-        return Ref<Task<RType>>::Create(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
+        return Task<RType>::Create(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
+    }
+
+    /**
+     * @brief Destroy a task, deallocating it with the calling thread's dedicated allocator.
+     *
+     * The calling thread must be the one that allocated the task in the first place.
+     *
+     * @param p_Task The task to be destroyed.
+     */
+    template <typename T> static void DestroyTask(Task<T> *p_Task) noexcept
+    {
+        Task<T>::Destroy(p_Task);
     }
 
     /**
@@ -56,10 +68,10 @@ class TKIT_API ITaskManager
      */
     template <typename Callable, typename... Args>
     auto CreateAndSubmit(Callable &&p_Callable, Args &&...p_Args) noexcept
-        -> Ref<Task<std::invoke_result_t<Callable, Args...>>>
+        -> Task<std::invoke_result_t<Callable, Args...>> *
     {
         using RType = std::invoke_result_t<Callable, Args...>;
-        const Ref<Task<RType>> task = CreateTask(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
+        Task<RType> *task = CreateTask(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
         SubmitTask(task);
         return task;
     }

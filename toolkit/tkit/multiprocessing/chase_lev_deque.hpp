@@ -15,6 +15,8 @@ namespace TKit
  * The owner of the queue is the only one allowed to push elements into it or pop them from the back. Any thread may pop
  * from the front concurrently.
  *
+ * It is best used when `T` is lightweight and trivial, so that its atomic counterpart is lock-less.
+ *
  * @tparam T The type of the elements in the deque.
  * @tparam Capacity The capacity of the deque.
  */

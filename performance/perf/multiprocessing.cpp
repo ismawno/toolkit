@@ -19,7 +19,7 @@ void RecordThreadPoolSum(const ThreadPoolSettings &p_Settings) noexcept
     file << "threads,sum (ns),result\n";
 
     ThreadPool threadPool(p_Settings.MaxThreads);
-    DynamicArray<Ref<Task<u32>>> tasks(p_Settings.MaxThreads);
+    DynamicArray<Task<u32> *> tasks(p_Settings.MaxThreads);
     DynamicArray<u32> values(p_Settings.SumCount);
 
     for (u32 i = 0; i < p_Settings.SumCount; i++)
@@ -39,7 +39,10 @@ void RecordThreadPoolSum(const ThreadPoolSettings &p_Settings) noexcept
         Clock clock;
         u32 sum = 0;
         for (usize i = 0; i < nthreads; i++)
+        {
             sum += tasks[i]->WaitForResult();
+            threadPool.DestroyTask(tasks[i]);
+        }
 
         const Timespan mtTime = clock.GetElapsed();
         file << nthreads << ',' << mtTime.AsNanoseconds() << ',' << sum << '\n';
@@ -54,7 +57,6 @@ void RecordParallelSum(const ThreadPoolSettings &p_Settings) noexcept
 
     DynamicArray<std::thread> threads(p_Settings.MaxThreads);
     DynamicArray<u32> sums(p_Settings.MaxThreads);
-    DynamicArray<Ref<Task<u32>>> tasks(p_Settings.MaxThreads);
     DynamicArray<u32> values(p_Settings.SumCount);
 
     for (u32 i = 0; i < p_Settings.SumCount; i++)

@@ -5,8 +5,13 @@
         "[TOOLKIT] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_MULTIPROCESSING"
 #endif
 
-#include "tkit/memory/ptr.hpp"
+#include "tkit/memory/block_allocator.hpp"
 #include <functional>
+#include <atomic>
+
+#ifndef TKIT_TASK_ALLOCATOR_CAPACITY
+#    define TKIT_TASK_ALLOCATOR_CAPACITY 1024
+#endif
 
 namespace TKit
 {
@@ -16,7 +21,10 @@ namespace TKit
  * @brief A simple task interface that allows the user to create tasks that can be executed by any task manager that
  * inherits from `ITaskManager`.
  *
- * The task is a simple callable object that takes a thread index as an argument.
+ * The task is a simple callable object that takes a thread index as an argument. To dynamically allocate tasks, you may
+ * use the `Create()`/`Destroy()` methods, which will delegate allocation to a specific per-thread allocator. If using
+ * this allocation strategy, tasks must be destroyed by the exact same thread that created them. Otherwise, you may
+ * allocate tasks on the stack or with the `new` and `delete` operators.
  *
  * @note A task may only be submitted again if it has finished execution and its `Reset()` method has been called.
  * Multiple threads can wait for the same task at the same time as long as none of them resets it immediately after.
@@ -24,7 +32,7 @@ namespace TKit
  * may be a nasty bug to track down.
  *
  */
-class TKIT_API ITask : public RefCounted<ITask>
+class TKIT_API ITask
 {
     // Having the overloads does grant us some asserts in case something goes terribly wrong or user forgets to use
     // their/our overriden new/delete, but it is not worth the cost.
@@ -78,7 +86,7 @@ class TKIT_API ITask : public RefCounted<ITask>
  *
  * @tparam T The return type of the task.
  */
-template <typename T> class Task final : public ITask
+template <typename T = void> class Task final : public ITask
 {
   public:
     void operator()() noexcept override
@@ -98,6 +106,31 @@ template <typename T> class Task final : public ITask
         return m_Result;
     }
 
+    /**
+     * @brief Create a task allocated with a thread-dedicated allocator.
+     *
+     * The created task must be deallocated by the same thread it was allocated with.
+     *
+     * @return A task pointer.
+     */
+    template <typename Callable, typename... Args>
+        requires std::invocable<Callable, Args...>
+    static Task *Create(Callable &&p_Callable, Args &&...p_Args) noexcept
+    {
+        return s_Allocator.Create<Task>(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
+    };
+
+    static void Destroy(Task *p_Task) noexcept
+    {
+        s_Allocator.Destroy(p_Task);
+    }
+
+    /**
+     * @brief Destroy a task, deallocating it with the calling thread's dedicated allocator.
+     *
+     * The calling thread must be the one that allocated the task in the first place.
+     *
+     */
     template <typename Callable, typename... Args>
         requires std::invocable<Callable, Args...>
     explicit Task(Callable &&p_Callable, Args &&...p_Args) noexcept
@@ -117,8 +150,11 @@ template <typename T> class Task final : public ITask
     {
     }
 
+  private:
     std::function<T()> m_Function = nullptr;
     T m_Result{};
+    static inline thread_local BlockAllocator s_Allocator =
+        BlockAllocator::CreateFromType<Task>(TKIT_TASK_ALLOCATOR_CAPACITY);
 };
 
 /**
@@ -131,6 +167,34 @@ template <> class TKIT_API Task<void> final : public ITask
 {
   public:
     void operator()() noexcept override;
+
+    /**
+     * @brief Create a task allocated with a thread-dedicated allocator.
+     *
+     * The created task must be deallocated by the same thread it was allocated with.
+     *
+     * @param p_Callable The callable object to execute.
+     * @param p_Args Extra arguments to pass to the callable object.
+     * @return A new task object.
+     */
+    template <typename Callable, typename... Args>
+        requires std::invocable<Callable, Args...>
+    static Task *Create(Callable &&p_Callable, Args &&...p_Args) noexcept
+    {
+        return s_Allocator.Create<Task>(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
+    };
+
+    /**
+     * @brief Destroy a task, deallocating it with the calling thread's dedicated allocator.
+     *
+     * The calling thread must be the one that allocated the task in the first place.
+     *
+     * @param p_Task The task to be destroyed.
+     */
+    static void Destroy(Task *p_Task) noexcept
+    {
+        s_Allocator.Destroy(p_Task);
+    }
 
     template <typename Callable, typename... Args>
         requires std::invocable<Callable, Args...>
@@ -149,7 +213,11 @@ template <> class TKIT_API Task<void> final : public ITask
     {
     }
 
+    static BlockAllocator &getAllocator() noexcept;
+
   private:
     std::function<void()> m_Function = nullptr;
+    static inline thread_local BlockAllocator s_Allocator =
+        BlockAllocator::CreateFromType<Task>(TKIT_TASK_ALLOCATOR_CAPACITY);
 };
 } // namespace TKit

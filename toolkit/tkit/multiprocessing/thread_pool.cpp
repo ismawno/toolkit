@@ -67,7 +67,7 @@ ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
             if (m_Shutdown.test(std::memory_order_relaxed))
                 break;
 
-            Ref<ITask> task;
+            ITask *task;
             { // This could potentially be lock free by implementing a lock free deque
                 std::scoped_lock lock(m_Mutex);
                 TKIT_PROFILE_MARK_LOCK(m_Mutex);
@@ -109,7 +109,7 @@ ThreadPool::~ThreadPool() noexcept
                         "[TOOLKIT] Destroying thread pool with pending tasks. Executing them serially now...");
     while (!m_Queue.IsEmpty())
     {
-        const Ref<ITask> task = m_Queue.GetBack();
+        ITask *task = m_Queue.GetBack();
         m_Queue.PopBack();
         (*task)();
     }
@@ -122,7 +122,7 @@ void ThreadPool::AwaitPendingTasks() const noexcept
         std::this_thread::yield();
 }
 
-void ThreadPool::SubmitTask(const Ref<ITask> &p_Task) noexcept
+void ThreadPool::SubmitTask(ITask *p_Task) noexcept
 {
     m_PendingCount.fetch_add(1, std::memory_order_relaxed);
     {
