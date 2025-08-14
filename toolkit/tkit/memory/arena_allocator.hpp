@@ -2,7 +2,7 @@
 
 #ifndef TKIT_ENABLE_ARENA_ALLOCATOR
 #    error                                                                                                             \
-        "[TOOLKIT] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_ARENA_ALLOCATOR"
+        "[TOOLKIT][ARENA-ALLOC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_ARENA_ALLOCATOR"
 #endif
 
 #include "tkit/utils/non_copyable.hpp"

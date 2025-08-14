@@ -27,7 +27,7 @@ template <typename T, usize Size, typename Traits = Container::ArrayTraits<T>> c
 
     constexpr Array(const std::initializer_list<ValueType> p_Elements) noexcept
     {
-        TKIT_ASSERT(p_Elements.size() <= Size, "[TOOLKIT] Size is bigger than capacity");
+        TKIT_ASSERT(p_Elements.size() <= Size, "[TOOLKIT][ARRAY] Size is bigger than capacity");
         Tools::CopyConstructFromRange(begin(), p_Elements.begin(), p_Elements.end());
     }
 
@@ -42,12 +42,12 @@ template <typename T, usize Size, typename Traits = Container::ArrayTraits<T>> c
 
     constexpr const ValueType &At(const SizeType p_Index) const noexcept
     {
-        TKIT_ASSERT(p_Index < Size, "[TOOLKIT] Index is out of bounds");
+        TKIT_ASSERT(p_Index < Size, "[TOOLKIT][ARRAY] Index is out of bounds");
         return *(begin() + p_Index);
     }
     constexpr ValueType &At(const SizeType p_Index) noexcept
     {
-        TKIT_ASSERT(p_Index < Size, "[TOOLKIT] Index is out of bounds");
+        TKIT_ASSERT(p_Index < Size, "[TOOLKIT][ARRAY] Index is out of bounds");
         return *(begin() + p_Index);
     }
 

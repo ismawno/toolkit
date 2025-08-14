@@ -128,7 +128,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
      */
     constexpr void Pop() noexcept
     {
-        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT] Container is already empty");
+        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][DYN-ARRAY] Container is already empty");
         --m_Size;
         if constexpr (!std::is_trivially_destructible_v<ValueType>)
             Memory::DestructFromIterator(end());
@@ -146,7 +146,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
         requires(std::is_convertible_v<NoCVRef<ValueType>, NoCVRef<U>>)
     constexpr void Insert(Iterator p_Pos, U &&p_Value) noexcept
     {
-        TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
+        TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][DYN-ARRAY] Iterator is out of bounds");
         const SizeType newSize = m_Size + 1;
         if (newSize > m_Capacity)
         {
@@ -170,7 +170,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
      */
     template <std::input_iterator It> constexpr void Insert(Iterator p_Pos, It p_Begin, It p_End) noexcept
     {
-        TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
+        TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][DYN-ARRAY] Iterator is out of bounds");
 
         const SizeType newSize = m_Size + static_cast<SizeType>(std::distance(p_Begin, p_End));
         if (newSize > m_Capacity)
@@ -206,7 +206,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
      */
     constexpr void RemoveOrdered(const Iterator p_Pos) noexcept
     {
-        TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT] Iterator is out of bounds");
+        TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT][DYN-ARRAY] Iterator is out of bounds");
         Tools::RemoveOrdered(end(), p_Pos);
         --m_Size;
     }
@@ -221,9 +221,9 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
      */
     constexpr void RemoveOrdered(const Iterator p_Begin, const Iterator p_End) noexcept
     {
-        TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT] Begin iterator is out of bounds");
-        TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT] End iterator is out of bounds");
-        TKIT_ASSERT(m_Size >= std::distance(p_Begin, p_End), "[TOOLKIT] Range overflows array");
+        TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT][DYN-ARRAY] Begin iterator is out of bounds");
+        TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT][DYN-ARRAY] End iterator is out of bounds");
+        TKIT_ASSERT(m_Size >= std::distance(p_Begin, p_End), "[TOOLKIT][DYN-ARRAY] Range overflows array");
 
         m_Size -= Tools::RemoveOrdered(end(), p_Begin, p_End);
     }
@@ -238,7 +238,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
      */
     constexpr void RemoveUnordered(const Iterator p_Pos) noexcept
     {
-        TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT] Iterator is out of bounds");
+        TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT][DYN-ARRAY] Iterator is out of bounds");
         Tools::RemoveUnordered(end(), p_Pos);
         --m_Size;
     }
@@ -281,12 +281,12 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
     }
     constexpr const ValueType &At(const SizeType p_Index) const noexcept
     {
-        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
+        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT][DYN-ARRAY] Index is out of bounds");
         return *(begin() + p_Index);
     }
     constexpr ValueType &At(const SizeType p_Index) noexcept
     {
-        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
+        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT][DYN-ARRAY] Index is out of bounds");
         return *(begin() + p_Index);
     }
 
@@ -395,11 +395,11 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
   private:
     constexpr void modifyCapacity(const SizeType p_Capacity) noexcept
     {
-        TKIT_ASSERT(p_Capacity > 0, "[TOOLKIT] Capacity must be greater than 0");
-        TKIT_ASSERT(p_Capacity >= m_Size, "[TOOLKIT] Capacity is smaller than size");
+        TKIT_ASSERT(p_Capacity > 0, "[TOOLKIT][DYN-ARRAY] Capacity must be greater than 0");
+        TKIT_ASSERT(p_Capacity >= m_Size, "[TOOLKIT][DYN-ARRAY] Capacity is smaller than size");
         ValueType *newData =
             static_cast<ValueType *>(Memory::AllocateAligned(p_Capacity * sizeof(ValueType), alignof(ValueType)));
-        TKIT_ASSERT(newData, "[TOOLKIT] Failed to allocate memory");
+        TKIT_ASSERT(newData, "[TOOLKIT][DYN-ARRAY] Failed to allocate memory");
 
         if (m_Data)
         {
@@ -414,7 +414,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
 
     constexpr void deallocateBuffer() noexcept
     {
-        TKIT_ASSERT(m_Size == 0, "[TOOLKIT] Cannot deallocate buffer while it is not empty");
+        TKIT_ASSERT(m_Size == 0, "[TOOLKIT][DYN-ARRAY] Cannot deallocate buffer while it is not empty");
         if (m_Data)
         {
             Memory::DeallocateAligned(m_Data);

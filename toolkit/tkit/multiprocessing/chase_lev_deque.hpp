@@ -22,7 +22,8 @@ namespace TKit
  */
 template <typename T, u64 Capacity> class ChaseLevDeque
 {
-    static_assert((Capacity & (Capacity - 1)) == 0, "[TOOLKIT] Chase Lev Deque capacity must be a multiple of 2");
+    static_assert((Capacity & (Capacity - 1)) == 0,
+                  "[TOOLKIT][CHASE-LEV] Chase Lev Deque capacity must be a multiple of 2");
 
   public:
     static constexpr u64 Mask = Capacity - 1;
@@ -42,7 +43,7 @@ template <typename T, u64 Capacity> class ChaseLevDeque
     void PushBack(Args &&...p_Args) noexcept
     {
         const u64 back = m_Back.load(std::memory_order_relaxed);
-        TKIT_ASSERT(back - m_Front.load(std::memory_order_relaxed) < Capacity, "[TOOLKIT] Queue is full!");
+        TKIT_ASSERT(back - m_Front.load(std::memory_order_relaxed) < Capacity, "[TOOLKIT][CHASE-LEV] Queue is full!");
 
         store(back, std::move(T{std::forward<Args>(p_Args)...}));
 

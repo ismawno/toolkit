@@ -2,7 +2,7 @@
 
 #ifndef TKIT_ENABLE_STACK_ALLOCATOR
 #    error                                                                                                             \
-        "[TOOLKIT] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_STACK_ALLOCATOR"
+        "[TOOLKIT][STACK-ALLOC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_STACK_ALLOCATOR"
 #endif
 
 #include "tkit/utils/logging.hpp"
@@ -13,7 +13,7 @@
 #    define TKIT_STACK_ALLOCATOR_MAX_ENTRIES 128
 #endif
 #if TKIT_STACK_ALLOCATOR_MAX_ENTRIES < 1
-#    error "[TOOLKIT] Maximum stack allocator entries must be greater than one"
+#    error "[TOOLKIT][STACK-ALLOC] Maximum stack allocator entries must be greater than one"
 #endif
 
 namespace TKit
@@ -139,9 +139,10 @@ class TKIT_API StackAllocator
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
-            TKIT_ASSERT(!m_Entries.IsEmpty(), "[TOOLKIT] Unable to deallocate because the stack allocator is empty");
+            TKIT_ASSERT(!m_Entries.IsEmpty(),
+                        "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is empty");
             TKIT_ASSERT(m_Entries.GetBack().Ptr == reinterpret_cast<std::byte *>(p_Ptr),
-                        "[TOOLKIT] Elements must be deallocated in the reverse order they were allocated");
+                        "[TOOLKIT][STACK-ALLOC] Elements must be deallocated in the reverse order they were allocated");
 
             const usize n = m_Entries.GetBack().Size / sizeof(T);
             for (usize i = 0; i < n; ++i)

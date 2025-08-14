@@ -17,7 +17,7 @@ namespace TKit
 template <typename T, usize Capacity = Limits<usize>::max(), typename Traits = Container::ArrayTraits<NoCVRef<T>>>
 class WeakArray
 {
-    static_assert(Capacity > 0, "[TOOLKIT] Capacity must be greater than 0");
+    static_assert(Capacity > 0, "[TOOLKIT][WEAK-ARRAY] Capacity must be greater than 0");
     TKIT_NON_COPYABLE(WeakArray)
 
   public:
@@ -107,7 +107,7 @@ class WeakArray
         requires std::constructible_from<ValueType, Args...>
     constexpr ValueType &Append(Args &&...p_Args) noexcept
     {
-        TKIT_ASSERT(!IsFull(), "[TOOLKIT] Container is already full");
+        TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Container is already full");
         return *Memory::ConstructFromIterator(begin() + m_Size++, std::forward<Args>(p_Args)...);
     }
 
@@ -117,7 +117,7 @@ class WeakArray
      */
     constexpr void Pop() noexcept
     {
-        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT] Container is already empty");
+        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][WEAK-ARRAY] Container is already empty");
         --m_Size;
         if constexpr (!std::is_trivially_destructible_v<ValueType>)
             Memory::DestructFromIterator(end());
@@ -135,8 +135,8 @@ class WeakArray
         requires(std::is_convertible_v<NoCVRef<ValueType>, NoCVRef<U>>)
     constexpr void Insert(const Iterator p_Pos, U &&p_Value) noexcept
     {
-        TKIT_ASSERT(!IsFull(), "[TOOLKIT] Container is already full");
-        TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
+        TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Container is already full");
+        TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
         Tools::Insert(end(), p_Pos, std::forward<U>(p_Value));
         ++m_Size;
     }
@@ -152,8 +152,9 @@ class WeakArray
      */
     template <std::input_iterator It> constexpr void Insert(const Iterator p_Pos, It p_Begin, It p_End) noexcept
     {
-        TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
-        TKIT_ASSERT(std::distance(p_Begin, p_End) + m_Size <= Capacity, "[TOOLKIT] New size exceeds capacity");
+        TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
+        TKIT_ASSERT(std::distance(p_Begin, p_End) + m_Size <= Capacity,
+                    "[TOOLKIT][WEAK-ARRAY] New size exceeds capacity");
 
         m_Size += Tools::Insert(end(), p_Pos, p_Begin, p_End);
     }
@@ -180,7 +181,7 @@ class WeakArray
      */
     constexpr void RemoveOrdered(const Iterator p_Pos) noexcept
     {
-        TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT] Iterator is out of bounds");
+        TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
         Tools::RemoveOrdered(end(), p_Pos);
         --m_Size;
     }
@@ -195,9 +196,9 @@ class WeakArray
      */
     constexpr void RemoveOrdered(const Iterator p_Begin, const Iterator p_End) noexcept
     {
-        TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT] Begin iterator is out of bounds");
-        TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT] End iterator is out of bounds");
-        TKIT_ASSERT(m_Size >= std::distance(p_Begin, p_End), "[TOOLKIT] New size is negative");
+        TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT][WEAK-ARRAY] Begin iterator is out of bounds");
+        TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT][WEAK-ARRAY] End iterator is out of bounds");
+        TKIT_ASSERT(m_Size >= std::distance(p_Begin, p_End), "[TOOLKIT][WEAK-ARRAY] New size is negative");
 
         m_Size -= Tools::RemoveOrdered(end(), p_Begin, p_End);
     }
@@ -212,7 +213,7 @@ class WeakArray
      */
     constexpr void RemoveUnordered(const Iterator p_Pos) noexcept
     {
-        TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT] Iterator is out of bounds");
+        TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
         Tools::RemoveUnordered(end(), p_Pos);
         --m_Size;
     }
@@ -231,7 +232,7 @@ class WeakArray
         requires std::constructible_from<ValueType, Args...>
     constexpr void Resize(const SizeType p_Size, Args &&...args) noexcept
     {
-        TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT] Size is bigger than capacity");
+        TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT][WEAK-ARRAY] Size is bigger than capacity");
 
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (p_Size < m_Size)
@@ -251,7 +252,7 @@ class WeakArray
 
     constexpr ElementType &At(const SizeType p_Index) const noexcept
     {
-        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
+        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT][WEAK-ARRAY] Index is out of bounds");
         return *(begin() + p_Index);
     }
 
@@ -432,7 +433,7 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
         requires std::constructible_from<ValueType, Args...>
     constexpr ValueType &Append(Args &&...p_Args) noexcept
     {
-        TKIT_ASSERT(!IsFull(), "[TOOLKIT] Container is already full");
+        TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Container is already full");
         return *Memory::ConstructFromIterator(begin() + m_Size++, std::forward<Args>(p_Args)...);
     }
 
@@ -442,7 +443,7 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
      */
     constexpr void Pop() noexcept
     {
-        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT] Container is already empty");
+        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][WEAK-ARRAY] Container is already empty");
         --m_Size;
         if constexpr (!std::is_trivially_destructible_v<ValueType>)
             Memory::DestructFromIterator(end());
@@ -460,8 +461,8 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
         requires(std::is_convertible_v<NoCVRef<ValueType>, NoCVRef<U>>)
     constexpr void Insert(const Iterator p_Pos, U &&p_Value) noexcept
     {
-        TKIT_ASSERT(!IsFull(), "[TOOLKIT] Container is already full");
-        TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
+        TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Container is already full");
+        TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
         Tools::Insert(end(), p_Pos, std::forward<U>(p_Value));
         ++m_Size;
     }
@@ -477,8 +478,9 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
      */
     template <std::input_iterator It> constexpr void Insert(const Iterator p_Pos, It p_Begin, It p_End) noexcept
     {
-        TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT] Iterator is out of bounds");
-        TKIT_ASSERT(std::distance(p_Begin, p_End) + m_Size <= m_Capacity, "[TOOLKIT] New size exceeds capacity");
+        TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
+        TKIT_ASSERT(std::distance(p_Begin, p_End) + m_Size <= m_Capacity,
+                    "[TOOLKIT][WEAK-ARRAY] New size exceeds capacity");
 
         m_Size += Tools::Insert(end(), p_Pos, p_Begin, p_End);
     }
@@ -505,7 +507,7 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
      */
     constexpr void RemoveOrdered(const Iterator p_Pos) noexcept
     {
-        TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT] Iterator is out of bounds");
+        TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
         Tools::RemoveOrdered(end(), p_Pos);
         --m_Size;
     }
@@ -520,9 +522,9 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
      */
     constexpr void RemoveOrdered(const Iterator p_Begin, const Iterator p_End) noexcept
     {
-        TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT] Begin iterator is out of bounds");
-        TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT] End iterator is out of bounds");
-        TKIT_ASSERT(m_Size >= std::distance(p_Begin, p_End), "[TOOLKIT] New size is negative");
+        TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT][WEAK-ARRAY] Begin iterator is out of bounds");
+        TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT][WEAK-ARRAY] End iterator is out of bounds");
+        TKIT_ASSERT(m_Size >= std::distance(p_Begin, p_End), "[TOOLKIT][WEAK-ARRAY] New size is negative");
 
         m_Size -= Tools::RemoveOrdered(end(), p_Begin, p_End);
     }
@@ -537,7 +539,7 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
      */
     constexpr void RemoveUnordered(const Iterator p_Pos) noexcept
     {
-        TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT] Iterator is out of bounds");
+        TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
         Tools::RemoveUnordered(end(), p_Pos);
         --m_Size;
     }
@@ -556,7 +558,7 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
         requires std::constructible_from<ValueType, Args...>
     constexpr void Resize(const SizeType p_Size, Args &&...args) noexcept
     {
-        TKIT_ASSERT(p_Size <= m_Capacity, "[TOOLKIT] Size is bigger than capacity");
+        TKIT_ASSERT(p_Size <= m_Capacity, "[TOOLKIT][WEAK-ARRAY] Size is bigger than capacity");
 
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (p_Size < m_Size)
@@ -575,7 +577,7 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
     }
     constexpr ElementType &At(const SizeType p_Index) const noexcept
     {
-        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT] Index is out of bounds");
+        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT][WEAK-ARRAY] Index is out of bounds");
         return *(begin() + p_Index);
     }
 

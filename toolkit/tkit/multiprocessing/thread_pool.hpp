@@ -2,7 +2,7 @@
 
 #ifndef TKIT_ENABLE_MULTIPROCESSING
 #    error                                                                                                             \
-        "[TOOLKIT] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_MULTIPROCESSING"
+        "[TOOLKIT][MULTIPROC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_MULTIPROCESSING"
 #endif
 
 #include "tkit/multiprocessing/task_manager.hpp"
@@ -21,11 +21,11 @@
 #endif
 
 #if TKIT_THREAD_POOL_MAX_WORKERS < 1
-#    error "[TOOLKIT] The maximum workers of a thread pool must be greater than one"
+#    error "[TOOLKIT][MULTIPROC] The maximum workers of a thread pool must be greater than one"
 #endif
 
 #if TKIT_THREAD_POOL_MAX_TASKS < 1
-#    error "[TOOLKIT] The maximum tasks of a thread pool must be greater than one"
+#    error "[TOOLKIT][MULTIPROC] The maximum tasks of a thread pool must be greater than one"
 #endif
 
 namespace TKit

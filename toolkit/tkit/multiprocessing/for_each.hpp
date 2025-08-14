@@ -52,7 +52,7 @@ void NonBlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last
     for (usize i = 0; i < p_Partitions; ++i)
     {
         const usize end = (i + 1) * size / p_Partitions;
-        TKIT_ASSERT(end <= size, "[TOOLKIT] Partition exceeds container size");
+        TKIT_ASSERT(end <= size, "[TOOLKIT][FOR-EACH] Partition exceeds container size");
         *p_Dest = p_Manager.CreateAndSubmit(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...,
                                             p_First + start, p_First + end);
         ++p_Dest;
@@ -92,7 +92,7 @@ auto BlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last, I
     for (usize i = 1; i < p_Partitions; ++i)
     {
         const usize end = (i + 1) * size / p_Partitions;
-        TKIT_ASSERT(end <= size, "[TOOLKIT] Partition exceeds container size");
+        TKIT_ASSERT(end <= size, "[TOOLKIT][FOR-EACH] Partition exceeds container size");
         *p_Dest = p_Manager.CreateAndSubmit(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...,
                                             p_First + start, p_First + end);
         ++p_Dest;

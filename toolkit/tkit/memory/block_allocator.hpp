@@ -2,7 +2,7 @@
 
 #ifndef TKIT_ENABLE_BLOCK_ALLOCATOR
 #    error                                                                                                             \
-        "[TOOLKIT] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_BLOCK_ALLOCATOR"
+        "[TOOLKIT][BLOCK-ALLOC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_BLOCK_ALLOCATOR"
 #endif
 
 #include "tkit/utils/non_copyable.hpp"
@@ -86,7 +86,8 @@ class BlockAllocator
      */
     template <typename T> T *Allocate() noexcept
     {
-        TKIT_ASSERT(sizeof(T) <= m_AllocationSize, "[TOOLKIT] Block allocator cannot fit {} bytes!", sizeof(T));
+        TKIT_ASSERT(sizeof(T) <= m_AllocationSize, "[TOOLKIT][BLOCK-ALLOC] Block allocator cannot fit {} bytes!",
+                    sizeof(T));
         return static_cast<T *>(Allocate());
     }
 
@@ -186,8 +187,8 @@ template <typename T, usize N> auto &GetBlockAllocatorMutex() noexcept
     {                                                                                                                  \
         auto &mtx = TKit::Detail::GetBlockAllocatorMutex<p_ClassName, p_N>();                                          \
         std::scoped_lock lock{mtx};                                                                                    \
-        TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
-                    "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
+        TKIT_ASSERT(p_Size == sizeof(p_ClassName), "[TOOLKIT][BLOCK-ALLOC] Trying to block allocate a derived class "  \
+                                                   "from a base class overloaded new/delete");                         \
         TKIT_PROFILE_MARK_LOCK(mtx);                                                                                   \
         return TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Allocate();                                 \
     }                                                                                                                  \
@@ -202,8 +203,8 @@ template <typename T, usize N> auto &GetBlockAllocatorMutex() noexcept
     {                                                                                                                  \
         auto &mtx = TKit::Detail::GetBlockAllocatorMutex<p_ClassName, p_N>();                                          \
         std::scoped_lock lock{mtx};                                                                                    \
-        TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
-                    "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
+        TKIT_ASSERT(p_Size == sizeof(p_ClassName), "[TOOLKIT][BLOCK-ALLOC] Trying to block allocate a derived class "  \
+                                                   "from a base class overloaded new/delete");                         \
         TKIT_PROFILE_MARK_LOCK(mtx);                                                                                   \
         return TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Allocate();                                 \
     }                                                                                                                  \
@@ -218,8 +219,8 @@ template <typename T, usize N> auto &GetBlockAllocatorMutex() noexcept
 #define TKIT_BLOCK_ALLOCATED_SERIAL(p_ClassName, p_N)                                                                  \
     static void *operator new([[maybe_unused]] size_t p_Size)                                                          \
     {                                                                                                                  \
-        TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
-                    "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
+        TKIT_ASSERT(p_Size == sizeof(p_ClassName), "[TOOLKIT][BLOCK-ALLOC] Trying to block allocate a derived class "  \
+                                                   "from a base class overloaded new/delete");                         \
         return TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Allocate();                                 \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr)                                                                           \
@@ -228,8 +229,8 @@ template <typename T, usize N> auto &GetBlockAllocatorMutex() noexcept
     }                                                                                                                  \
     static void *operator new([[maybe_unused]] size_t p_Size, const std::nothrow_t &)                                  \
     {                                                                                                                  \
-        TKIT_ASSERT(p_Size == sizeof(p_ClassName),                                                                     \
-                    "[TOOLKIT] Trying to block allocate a derived class from a base class overloaded new/delete");     \
+        TKIT_ASSERT(p_Size == sizeof(p_ClassName), "[TOOLKIT][BLOCK-ALLOC] Trying to block allocate a derived class "  \
+                                                   "from a base class overloaded new/delete");                         \
         return TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Allocate();                                 \
     }                                                                                                                  \
     static void operator delete(void *p_Ptr, const std::nothrow_t &)                                                   \

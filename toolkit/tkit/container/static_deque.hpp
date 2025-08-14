@@ -31,7 +31,7 @@ class StaticDeque
     template <typename... Args>
     constexpr StaticDeque(const SizeType p_Size, const Args &...p_Args) noexcept : m_Size(p_Size)
     {
-        TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT] Size is bigger than capacity");
+        TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT][STAT-DEQUE] Size is bigger than capacity");
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
             Memory::ConstructRange(GetData(), GetData() + m_Size, p_Args...);
 
@@ -41,7 +41,7 @@ class StaticDeque
     template <std::input_iterator It> constexpr StaticDeque(const It p_Begin, const It p_End) noexcept
     {
         m_Size = static_cast<SizeType>(std::distance(p_Begin, p_End));
-        TKIT_ASSERT(m_Size <= Capacity, "[TOOLKIT] Size is bigger than capacity");
+        TKIT_ASSERT(m_Size <= Capacity, "[TOOLKIT][STAT-DEQUE] Size is bigger than capacity");
         Tools::CopyConstructFromRange(GetData(), p_Begin, p_End);
         m_Back = m_Size;
     }
@@ -49,7 +49,7 @@ class StaticDeque
     constexpr StaticDeque(const std::initializer_list<ValueType> p_List) noexcept
         : m_Size(static_cast<SizeType>(p_List.size()))
     {
-        TKIT_ASSERT(p_List.size() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
+        TKIT_ASSERT(p_List.size() <= Capacity, "[TOOLKIT][STAT-DEQUE] Size is bigger than capacity");
         Tools::CopyConstructFromRange(GetData(), p_List.begin(), p_List.end());
         m_Back = m_Size;
     }
@@ -60,7 +60,7 @@ class StaticDeque
     {
         if constexpr (M > Capacity)
         {
-            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
+            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT][STAT-DEQUE] Size is bigger than capacity");
         }
         for (u32 i = p_Other.GetFrontIndex(), j = 0; j < p_Other.GetSize(); i = NextIndex(i), ++j)
             PushBack(p_Other.At(i));
@@ -71,7 +71,7 @@ class StaticDeque
     {
         if constexpr (M > Capacity)
         {
-            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
+            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT][STAT-DEQUE] Size is bigger than capacity");
         }
         for (u32 i = p_Other.GetFrontIndex(), j = 0; j < p_Other.GetSize(); i = NextIndex(i), ++j)
             PushBack(p_Other.At(i));
@@ -104,7 +104,7 @@ class StaticDeque
         }
         if constexpr (M > Capacity)
         {
-            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
+            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT][STAT-DEQUE] Size is bigger than capacity");
         }
         Clear();
         for (u32 i = p_Other.GetFrontIndex(), j = 0; j < p_Other.GetSize(); i = NextIndex(i), ++j)
@@ -121,7 +121,7 @@ class StaticDeque
         }
         if constexpr (M > Capacity)
         {
-            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT] Size is bigger than capacity");
+            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT][STAT-DEQUE] Size is bigger than capacity");
         }
 
         Clear();
@@ -164,7 +164,7 @@ class StaticDeque
         requires std::constructible_from<ValueType, Args...>
     constexpr ValueType &PushFront(Args &&...p_Args) noexcept
     {
-        TKIT_ASSERT(!IsFull(), "[TOOLKIT] Container is already full");
+        TKIT_ASSERT(!IsFull(), "[TOOLKIT][STAT-DEQUE] Container is already full");
         ValueType &val = *Memory::ConstructFromIterator(GetData() + m_Front, std::forward<Args>(p_Args)...);
         m_Front = PrevIndex(m_Front);
         ++m_Size;
@@ -183,7 +183,7 @@ class StaticDeque
         requires std::constructible_from<ValueType, Args...>
     constexpr ValueType &PushBack(Args &&...p_Args) noexcept
     {
-        TKIT_ASSERT(!IsFull(), "[TOOLKIT] Container is already full");
+        TKIT_ASSERT(!IsFull(), "[TOOLKIT][STAT-DEQUE] Container is already full");
         ValueType &val = *Memory::ConstructFromIterator(GetData() + m_Back, std::forward<Args>(p_Args)...);
         m_Back = NextIndex(m_Back);
         ++m_Size;
@@ -200,7 +200,7 @@ class StaticDeque
      */
     constexpr void PopFront() noexcept
     {
-        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT] Container is already empty");
+        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][STAT-DEQUE] Container is already empty");
         m_Front = NextIndex(m_Front);
         if constexpr (!std::is_trivially_destructible_v<T>)
             Memory::DestructFromIterator(GetData() + m_Front);
@@ -216,7 +216,7 @@ class StaticDeque
      */
     constexpr void PopBack() noexcept
     {
-        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT] Container is already empty");
+        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][STAT-DEQUE] Container is already empty");
         m_Back = PrevIndex(m_Back);
         if constexpr (!std::is_trivially_destructible_v<T>)
             Memory::DestructFromIterator(GetData() + m_Back);
@@ -262,8 +262,8 @@ class StaticDeque
      */
     constexpr const ValueType &At(const SizeType p_Index) const noexcept
     {
-        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT] Cannot index into an empty queue");
-        TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT] Index is out of bounds");
+        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][STAT-DEQUE] Cannot index into an empty queue");
+        TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT][STAT-DEQUE] Index is out of bounds");
         return *(GetData() + p_Index);
     }
     /**
@@ -277,8 +277,8 @@ class StaticDeque
      */
     constexpr ValueType &At(const SizeType p_Index) noexcept
     {
-        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT] Cannot index into an empty queue");
-        TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT] Index is out of bounds");
+        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][STAT-DEQUE] Cannot index into an empty queue");
+        TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT][STAT-DEQUE] Index is out of bounds");
         return *(GetData() + p_Index);
     }
 

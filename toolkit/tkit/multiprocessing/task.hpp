@@ -2,7 +2,7 @@
 
 #ifndef TKIT_ENABLE_MULTIPROCESSING
 #    error                                                                                                             \
-        "[TOOLKIT] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_MULTIPROCESSING"
+        "[TOOLKIT][MULTIPROC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_MULTIPROCESSING"
 #endif
 
 #include "tkit/memory/block_allocator.hpp"

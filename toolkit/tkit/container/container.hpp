@@ -139,7 +139,7 @@ template <typename Traits> struct ArrayTools
     static constexpr SizeType Insert(const Iterator p_End, const Iterator p_Pos, const It p_SrcBegin,
                                      const It p_SrcEnd) noexcept
     {
-        TKIT_ASSERT(p_SrcBegin <= p_SrcEnd, "[TOOLKIT] Begin iterator is greater than end iterator");
+        TKIT_ASSERT(p_SrcBegin <= p_SrcEnd, "[TOOLKIT][CONTAINER] Begin iterator is greater than end iterator");
         if (p_Pos == p_End)
         {
             CopyConstructFromRange(p_Pos, p_SrcBegin, p_SrcEnd);
@@ -204,7 +204,7 @@ template <typename Traits> struct ArrayTools
     static constexpr SizeType RemoveOrdered(const Iterator p_End, const Iterator p_RemBegin,
                                             const Iterator p_RemEnd) noexcept
     {
-        TKIT_ASSERT(p_RemBegin <= p_RemEnd, "[TOOLKIT] Begin iterator is greater than end iterator");
+        TKIT_ASSERT(p_RemBegin <= p_RemEnd, "[TOOLKIT][CONTAINER] Begin iterator is greater than end iterator");
         // Copy/move the elements after the erased ones
         Memory::ForwardMove(p_RemBegin, p_RemEnd, p_End);
 

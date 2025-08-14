@@ -30,7 +30,7 @@ void ITask::notifyCompleted() noexcept
 {
 #ifdef TKIT_ENABLE_ASSERTS
     const bool flag = m_Finished.test_and_set(std::memory_order_release);
-    TKIT_ASSERT(!flag, "[TOOLKIT] Notifying an already completed task");
+    TKIT_ASSERT(!flag, "[TOOLKIT][TASK] Notifying an already completed task");
 #else
     m_Finished.test_and_set(std::memory_order_release);
 #endif

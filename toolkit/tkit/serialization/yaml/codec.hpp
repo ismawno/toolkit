@@ -2,7 +2,7 @@
 
 #ifndef TKIT_ENABLE_YAML_SERIALIZATION
 #    error                                                                                                             \
-        "[TOOLKIT] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_YAML_SERIALIZATION"
+        "[TOOLKIT][YAML] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_YAML_SERIALIZATION"
 #endif
 
 #include "tkit/reflection/reflect.hpp"

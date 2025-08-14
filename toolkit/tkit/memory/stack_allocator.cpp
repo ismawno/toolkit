@@ -13,7 +13,7 @@ StackAllocator::StackAllocator(const usize p_Size, const usize p_Alignment) noex
     : m_Size(p_Size), m_Remaining(p_Size), m_Provided(false)
 {
     m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(static_cast<size_t>(p_Size), p_Alignment));
-    TKIT_ASSERT(m_Buffer, "[TOOLKIT] Failed to allocate memory");
+    TKIT_ASSERT(m_Buffer, "[TOOLKIT][STACK-ALLOC] Failed to allocate memory");
 }
 
 StackAllocator::~StackAllocator() noexcept
@@ -57,15 +57,16 @@ void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment) noex
     size_t remaining = static_cast<size_t>(m_Remaining);
 
     std::byte *alignedPtr = static_cast<std::byte *>(std::align(p_Alignment, p_Size, ptr, remaining));
-    TKIT_LOG_WARNING_IF(!alignedPtr, "[TOOLKIT] Stack allocator cannot fit {} bytes with {} alignment!", p_Size,
-                        p_Alignment);
+    TKIT_LOG_WARNING_IF(!alignedPtr, "[TOOLKIT][STACK-ALLOC] Stack allocator cannot fit {} bytes with {} alignment!",
+                        p_Size, p_Alignment);
     if (!alignedPtr)
         return nullptr;
     TKIT_ASSERT(alignedPtr + p_Size <= m_Buffer + m_Size,
-                "[TOOLKIT] Stack allocator failed to fit {} bytes with {} alignment! This is should not have triggered",
+                "[TOOLKIT][STACK-ALLOC] Stack allocator failed to fit {} bytes with {} alignment! This is should not "
+                "have triggered",
                 p_Size, p_Alignment);
     TKIT_ASSERT(reinterpret_cast<uptr>(alignedPtr) % p_Alignment == 0,
-                "[TOOLKIT] Aligned pointer is not aligned to the requested alignment");
+                "[TOOLKIT][STACK-ALLOC] Aligned pointer is not aligned to the requested alignment");
 
     const usize offset = m_Remaining - static_cast<usize>(remaining);
     m_Remaining = static_cast<usize>(remaining) - p_Size;
@@ -76,16 +77,17 @@ void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment) noex
 
 void StackAllocator::Deallocate([[maybe_unused]] const void *p_Ptr) noexcept
 {
-    TKIT_ASSERT(!m_Entries.IsEmpty(), "[TOOLKIT] Unable to deallocate because the stack allocator is IsEmpty");
+    TKIT_ASSERT(!m_Entries.IsEmpty(),
+                "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is IsEmpty");
     TKIT_ASSERT(m_Entries.GetBack().Ptr == p_Ptr,
-                "[TOOLKIT] Elements must be deallocated in the reverse order they were allocated");
+                "[TOOLKIT][STACK-ALLOC] Elements must be deallocated in the reverse order they were allocated");
     m_Remaining += m_Entries.GetBack().Size + m_Entries.GetBack().AlignmentOffset;
     m_Entries.Pop();
 }
 
 const StackAllocator::Entry &StackAllocator::Top() const noexcept
 {
-    TKIT_ASSERT(!m_Entries.IsEmpty(), "[TOOLKIT] No elements in the stack allocator");
+    TKIT_ASSERT(!m_Entries.IsEmpty(), "[TOOLKIT][STACK-ALLOC] No elements in the stack allocator");
     return m_Entries.GetBack();
 }
 
@@ -126,7 +128,7 @@ void StackAllocator::deallocateBuffer() noexcept
         return;
     TKIT_LOG_WARNING_IF(
         !m_Entries.IsEmpty(),
-        "[TOOLKIT] Deallocating a stack allocator with active allocations. If the elements are not "
+        "[TOOLKIT][STACK-ALLOC] Deallocating a stack allocator with active allocations. If the elements are not "
         "trivially destructible, you will have to call "
         "Destroy() for each element to avoid undefined behaviour (this deallocation will not call the destructor)");
     Memory::DeallocateAligned(m_Buffer);

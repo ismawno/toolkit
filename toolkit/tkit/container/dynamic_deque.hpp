@@ -160,7 +160,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
      */
     constexpr void PopFront() noexcept
     {
-        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT] Container is already empty");
+        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][DYN-DEQUE] Container is already empty");
         m_Front = NextIndex(m_Front);
         if constexpr (!std::is_trivially_destructible_v<T>)
             Memory::DestructFromIterator(GetData() + m_Front);
@@ -176,7 +176,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
      */
     constexpr void PopBack() noexcept
     {
-        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT] Container is already empty");
+        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][DYN-DEQUE] Container is already empty");
         m_Back = PrevIndex(m_Back);
         if constexpr (!std::is_trivially_destructible_v<T>)
             Memory::DestructFromIterator(GetData() + m_Back);
@@ -235,7 +235,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
      */
     constexpr const ValueType &At(const SizeType p_Index) const noexcept
     {
-        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT] Cannot index into an empty queue");
+        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][DYN-DEQUE] Cannot index into an empty queue");
         return *(GetData() + p_Index);
     }
     /**
@@ -389,11 +389,11 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
   private:
     constexpr void modifyCapacity(const SizeType p_Capacity) noexcept
     {
-        TKIT_ASSERT(p_Capacity > 0, "[TOOLKIT] Capacity must be greater than 0");
-        TKIT_ASSERT(p_Capacity >= m_Size, "[TOOLKIT] Capacity is smaller than size");
+        TKIT_ASSERT(p_Capacity > 0, "[TOOLKIT][DYN-DEQUE] Capacity must be greater than 0");
+        TKIT_ASSERT(p_Capacity >= m_Size, "[TOOLKIT][DYN-DEQUE] Capacity is smaller than size");
         ValueType *newData =
             static_cast<ValueType *>(Memory::AllocateAligned(p_Capacity * sizeof(ValueType), alignof(ValueType)));
-        TKIT_ASSERT(newData, "[TOOLKIT] Failed to allocate memory");
+        TKIT_ASSERT(newData, "[TOOLKIT][DYN-DEQUE] Failed to allocate memory");
 
         if (m_Data)
         {
@@ -413,7 +413,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
 
     constexpr void deallocateBuffer() noexcept
     {
-        TKIT_ASSERT(m_Size == 0, "[TOOLKIT] Cannot deallocate buffer while it is not empty");
+        TKIT_ASSERT(m_Size == 0, "[TOOLKIT][DYN-DEQUE] Cannot deallocate buffer while it is not empty");
         if (m_Data)
         {
             Memory::DeallocateAligned(m_Data);

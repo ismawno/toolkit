@@ -19,7 +19,7 @@ BlockAllocator::BlockAllocator(const usize p_BufferSize, const usize p_Allocatio
         "The allocation size must be a multiple of the alignment to ensure every block of memory is aligned to it");
 
     m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(p_BufferSize, p_Alignment));
-    TKIT_ASSERT(m_Buffer, "[TOOLKIT] Failed to allocate memory");
+    TKIT_ASSERT(m_Buffer, "[TOOLKIT][BLOCK-ALLOC] Failed to allocate memory");
     setupMemoryLayout();
 }
 
@@ -153,7 +153,7 @@ void BlockAllocator::deallocateBuffer() noexcept
         return;
     TKIT_LOG_WARNING_IF(
         !IsEmpty(),
-        "[TOOLKIT] Deallocating a block allocator with active allocations. If the elements are not "
+        "[TOOLKIT][BLOCK-ALLOC] Deallocating a block allocator with active allocations. If the elements are not "
         "trivially destructible, you will have to call "
         "Destroy() for each element to avoid undefined behaviour (this deallocation will not call the destructor)");
 

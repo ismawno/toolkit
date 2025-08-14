@@ -12,7 +12,7 @@ ArenaAllocator::ArenaAllocator(const usize p_Size, const usize p_Alignment) noex
     : m_Size(p_Size), m_Remaining(p_Size), m_Provided(false)
 {
     m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(static_cast<size_t>(p_Size), p_Alignment));
-    TKIT_ASSERT(m_Buffer, "[TOOLKIT] Failed to allocate memory");
+    TKIT_ASSERT(m_Buffer, "[TOOLKIT][ARENA-ALLOC] Failed to allocate memory");
 }
 ArenaAllocator::~ArenaAllocator() noexcept
 {
@@ -51,15 +51,16 @@ void *ArenaAllocator::Allocate(const usize p_Size, const usize p_Alignment) noex
     size_t remaining = static_cast<size_t>(m_Remaining);
 
     std::byte *alignedPtr = static_cast<std::byte *>(std::align(p_Alignment, p_Size, ptr, remaining));
-    TKIT_LOG_WARNING_IF(!alignedPtr, "[TOOLKIT] Arena allocator cannot fit {} bytes with {} alignment!", p_Size,
-                        p_Alignment);
+    TKIT_LOG_WARNING_IF(!alignedPtr, "[TOOLKIT][ARENA-ALLOC] Arena allocator cannot fit {} bytes with {} alignment!",
+                        p_Size, p_Alignment);
     if (!alignedPtr)
         return nullptr;
     TKIT_ASSERT(alignedPtr + p_Size <= m_Buffer + m_Size,
-                "[TOOLKIT] Arena allocator failed to fit {} bytes with {} alignment! This is should not have triggered",
+                "[TOOLKIT][ARENA-ALLOC] Arena allocator failed to fit {} bytes with {} alignment! This is should not "
+                "have triggered",
                 p_Size, p_Alignment);
     TKIT_ASSERT(reinterpret_cast<uptr>(alignedPtr) % p_Alignment == 0,
-                "[TOOLKIT] Aligned pointer is not aligned to the requested alignment");
+                "[TOOLKIT][ARENA-ALLOC] Aligned pointer is not aligned to the requested alignment");
 
     m_Remaining = static_cast<usize>(remaining) - p_Size;
     return alignedPtr;
@@ -105,7 +106,7 @@ void ArenaAllocator::deallocateBuffer() noexcept
         return;
     TKIT_LOG_WARNING_IF(
         m_Remaining != m_Size,
-        "[TOOLKIT] Deallocating an arena allocator with active allocations. If the elements are not "
+        "[TOOLKIT][ARENA-ALLOC] Deallocating an arena allocator with active allocations. If the elements are not "
         "trivially destructible, you will have to call "
         "Destroy() for each element to avoid undefined behaviour (this deallocation will not call the destructor)");
     Memory::DeallocateAligned(m_Buffer);
