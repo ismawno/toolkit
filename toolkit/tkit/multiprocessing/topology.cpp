@@ -49,25 +49,57 @@ struct Handle
 
 DynamicArray<u32> s_BuildOrder{};
 
-static u32 kindRank(const hwloc_topology_t p_Topology, const u32 PuIndex) noexcept
+struct KindInfo
+{
+    enum CoreType
+    {
+        Unk = Unknown,
+        IntelCore = 0,
+        IntelAtom = 1
+    };
+    u32 Rank = Unknown;
+    u32 Efficiency = Unknown;
+    CoreType CType = Unk;
+};
+
+static KindInfo getKindInfo(const hwloc_topology_t p_Topology, const u32 PuIndex) noexcept
 {
     const i32 err = hwloc_cpukinds_get_nr(p_Topology, 0);
+    KindInfo kinfo{};
+
     if (err == -1)
-        return Unknown;
+        return kinfo;
+
     const u32 nr = static_cast<u32>(err);
     for (u32 i = 0; i < nr; ++i)
     {
         const hwloc_bitmap_t set = hwloc_bitmap_alloc();
-        if (hwloc_cpukinds_get_info(p_Topology, i, set, nullptr, nullptr, nullptr, 0) == 0 &&
+        i32 eff = -1;
+        u32 ninfos = 0;
+        struct hwloc_info_s *infos = nullptr;
+
+        if (hwloc_cpukinds_get_info(p_Topology, i, set, &eff, &ninfos, &infos, 0) == 0 &&
             hwloc_bitmap_isset(set, PuIndex))
         {
+            kinfo.Rank = i;
+            kinfo.Efficiency = eff == -1 ? Unknown : static_cast<u32>(eff);
+            for (u32 j = 0; j < ninfos; j++)
+            {
+                if (strcmp(infos[j].name, "CoreType") != 0)
+                    continue;
+                if (strcmp(infos[j].value, "IntelCore") == 0)
+                    kinfo.CType = KindInfo::IntelCore;
+                else if (strcmp(infos[j].value, "IntelAtom") == 0)
+                    kinfo.CType = KindInfo::IntelAtom;
+            }
+
             hwloc_bitmap_free(set);
-            return i;
+            return kinfo;
         }
         hwloc_bitmap_free(set);
     }
 
-    return Unknown;
+    return kinfo;
 }
 
 #    ifdef TKIT_ENABLE_INFO_LOGS
@@ -77,6 +109,18 @@ static std::string toString(const u32 p_Value) noexcept
         return "Unknown";
     return std::to_string(p_Value);
 }
+static std::string toString(const KindInfo::CoreType p_CType) noexcept
+{
+    switch (p_CType)
+    {
+    case KindInfo::IntelCore:
+        return "IntelCore";
+    case KindInfo::IntelAtom:
+        return "IntelAtom";
+    default:
+        return "Unknown";
+    }
+}
 #    endif
 
 struct PuInfo
@@ -85,7 +129,7 @@ struct PuInfo
     u32 Numa = Unknown;
     u32 Core = Unknown;
     u32 SmtRank = Unknown;
-    u32 KindRank = Unknown;
+    KindInfo KInfo{};
 };
 
 static hwloc_obj_t ancestor(const hwloc_topology_t p_Topology, const hwloc_obj_t p_Object,
@@ -110,7 +154,6 @@ static DynamicArray<u32> buildOrder(const hwloc_topology_t p_Topology)
 
     for (u32 i = 0; i < nbpus; ++i)
     {
-        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY] Processing PU {}...", i);
         const hwloc_obj_t pu = hwloc_get_obj_by_type(p_Topology, HWLOC_OBJ_PU, i);
         if (!pu)
         {
@@ -139,36 +182,53 @@ static DynamicArray<u32> buildOrder(const hwloc_topology_t p_Topology)
             }
         }
         p.SmtRank = rank;
-        p.KindRank = kindRank(p_Topology, p.Pu);
+        p.KInfo = getKindInfo(p_Topology, p.Pu);
 
-        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    PU {} SMT Rank: {}", i, toString(p.SmtRank));
-        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    PU {} Kind Rank: {}", i, toString(p.KindRank));
+        // TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    PU {} SMT rank: {}", i, toString(p.SmtRank));
+        // TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    PU {} Kind rank: {}", i, toString(p.KInfo.Rank));
+        // TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    PU {} Efficiency rank: {}", i, toString(p.KInfo.Efficiency));
+        // TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    PU {} Core type: {}", i, toString(p.KInfo.CType));
 
         infos.Append(p);
     }
 
-    // Partition per node into buckets:
-    // A: kind=0 & smt=0 (best single threads on P-cores)
-    // B: kind=0 & smt>0 (P-core siblings)
-    // C: kind>0 & smt=0 (E-cores primary)
-    // D: kind>0 & smt>0 (E-cores siblings)
-    // Fallback if kind unknown: F0 (smt=0), F1 (smt>0)
-
     std::sort(infos.begin(), infos.end(), [](const PuInfo &p_Node1, const PuInfo &p_Node2) {
         if (p_Node1.SmtRank != p_Node2.SmtRank)
             return p_Node1.SmtRank < p_Node2.SmtRank;
-        if (p_Node1.KindRank != p_Node2.KindRank)
-            return p_Node1.KindRank < p_Node2.KindRank;
+
+        const u32 e1 = p_Node1.KInfo.Efficiency;
+        const u32 e2 = p_Node2.KInfo.Efficiency;
+
+        if (e1 != Unknown && e2 != Unknown && e1 != e2)
+            return e1 > e2;
+
+        if (p_Node1.KInfo.CType != p_Node2.KInfo.CType)
+            return p_Node1.KInfo.CType < p_Node2.KInfo.CType;
+
+        const u32 r1 = p_Node1.KInfo.Rank;
+        const u32 r2 = p_Node2.KInfo.Rank;
+
+        if (r1 != Unknown && r2 != Unknown && r1 != r2)
+            return r1 > r2;
+
         if (p_Node1.Core != p_Node2.Core)
             return p_Node1.Core < p_Node2.Core;
+
         return p_Node1.Pu < p_Node2.Pu;
     });
 
     TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY] Gathered all PUs. Sorting by desirability...");
-    for (const PuInfo &p : infos)
+    for (u32 i = 0; i < infos.GetSize(); ++i)
     {
-        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY] PU - {}, Core - {}, Kind Rank - {}, SMT Rank - {}, Numa - {}",
-                      toString(p.Pu), toString(p.Core), toString(p.KindRank), toString(p.SmtRank), toString(p.Numa));
+        const PuInfo &p = infos[i];
+        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY] Pu reserved to thread with index {}:", i);
+        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    Pu: {}", toString(p.Pu));
+        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    Core: {}", toString(p.Core));
+        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    Numa: {}", toString(p.Numa));
+        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    SMT rank: {}", toString(p.SmtRank));
+        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    Kind score: {}", toString(p.KInfo.Rank));
+        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    Efficiency score: {}", toString(p.KInfo.Efficiency));
+        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    Core type: {}", toString(p.KInfo.CType));
         order.Append(p.Pu);
     }
 
@@ -187,9 +247,9 @@ static void bindCurrentThread(const hwloc_topology_t p_Topology, const u32 p_PuI
     const hwloc_cpuset_t set = hwloc_bitmap_dup(pu->cpuset);
     hwloc_bitmap_singlify(set);
 
-    const u32 rc = static_cast<u32>(hwloc_set_cpubind(p_Topology, set, HWLOC_CPUBIND_THREAD));
+    TKIT_ASSERT_RETURNS(hwloc_set_cpubind(p_Topology, set, HWLOC_CPUBIND_THREAD), 0,
+                        "[TOOLKIT][TOPOLOGY] CPU Bind to Pu index {} failed", p_PuIndex);
     hwloc_bitmap_free(set);
-    TKIT_LOG_WARNING_IF(rc != 0, "[TOOLKIT][TOPOLOGY] CPU Bind failed...");
 }
 
 void BuildAffinityOrder(const Handle *p_Handle) noexcept
@@ -215,8 +275,7 @@ const Handle *Initialize() noexcept
 {
     Handle *handle = new Handle;
     hwloc_topology_init(&handle->Topology);
-    hwloc_topology_set_flags(handle->Topology,
-                             HWLOC_TOPOLOGY_FLAG_INCLUDE_DISALLOWED | HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM);
+    hwloc_topology_set_flags(handle->Topology, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM);
     hwloc_topology_load(handle->Topology);
     return handle;
 }

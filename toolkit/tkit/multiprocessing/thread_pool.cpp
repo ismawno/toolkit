@@ -129,7 +129,7 @@ static void assignTask(const u32 p_WorkerIndex, ThreadPool::Worker &p_Worker, IT
 void ThreadPool::SubmitTask(ITask *p_Task) noexcept
 {
     u32 minCount = Limits<u32>::max();
-    u32 index;
+    u32 index = 0;
     const u32 size = m_Workers.GetSize();
     for (u32 i = 0; i < size; ++i)
     {
