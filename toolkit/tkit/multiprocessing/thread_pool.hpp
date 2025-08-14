@@ -6,22 +6,22 @@
 #endif
 
 #include "tkit/multiprocessing/task_manager.hpp"
-#include "tkit/profiling/macros.hpp"
+#include "tkit/multiprocessing/chase_lev_deque.hpp"
+#include "tkit/multiprocessing/mpmc_stack.hpp"
 #include "tkit/container/static_array.hpp"
-#include "tkit/container/static_deque.hpp"
+#include "tkit/multiprocessing/topology.hpp"
 #include <thread>
-#include <mutex>
 
-#ifndef TKIT_THREAD_POOL_MAX_THREADS
-#    define TKIT_THREAD_POOL_MAX_THREADS 16
+#ifndef TKIT_THREAD_POOL_MAX_WORKERS
+#    define TKIT_THREAD_POOL_MAX_WORKERS 16
 #endif
 
 #ifndef TKIT_THREAD_POOL_MAX_TASKS
 #    define TKIT_THREAD_POOL_MAX_TASKS 32
 #endif
 
-#if TKIT_THREAD_POOL_MAX_THREADS < 1
-#    error "[TOOLKIT] The maximum threads of a thread pool must be greater than one"
+#if TKIT_THREAD_POOL_MAX_WORKERS < 1
+#    error "[TOOLKIT] The maximum workers of a thread pool must be greater than one"
 #endif
 
 #if TKIT_THREAD_POOL_MAX_TASKS < 1
@@ -50,27 +50,31 @@ namespace TKit
 class TKIT_API ThreadPool final : public ITaskManager
 {
   public:
+    struct alignas(TKIT_CACHE_LINE_SIZE) Worker
+    {
+        template <typename Callable, typename... Args>
+        Worker(Callable &&p_Callable, Args &&...p_Args)
+            : Thread(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...)
+        {
+        }
+
+        std::thread Thread;
+        ChaseLevDeque<ITask *, TKIT_THREAD_POOL_MAX_TASKS> Queue{};
+        MpmcStack<ITask *> Inbox{};
+        std::atomic<u64> Epochs{0};
+        std::atomic<u32> TaskCount{0}; // Speculative
+        std::atomic_flag TerminateSignal = ATOMIC_FLAG_INIT;
+        std::atomic_flag TerminateConfirmation = ATOMIC_FLAG_INIT;
+    };
+
     explicit ThreadPool(usize p_ThreadCount);
     ~ThreadPool() noexcept override;
 
     void SubmitTask(ITask *p_Task) noexcept override;
-
-    /**
-     * @brief Wait for all pending tasks to finish executing.
-     *
-     */
-    void AwaitPendingTasks() const noexcept;
+    void SubmitTasks(Span<ITask *const> p_Tasks) noexcept override;
 
   private:
-    StaticArray<std::thread, TKIT_THREAD_POOL_MAX_THREADS> m_Threads;
-    StaticDeque<ITask *, TKIT_THREAD_POOL_MAX_TASKS> m_Queue;
-
-    std::atomic_flag m_TaskReady = ATOMIC_FLAG_INIT;
-    std::atomic_flag m_Shutdown = ATOMIC_FLAG_INIT;
-
-    std::atomic<u32> m_TerminatedCount = 0;
-    std::atomic<u32> m_PendingCount = 0;
-
-    mutable TKIT_PROFILE_DECLARE_MUTEX(std::mutex, m_Mutex);
+    StaticArray<Worker, TKIT_THREAD_POOL_MAX_WORKERS> m_Workers;
+    const Topology::Handle *m_Handle;
 };
 } // namespace TKit

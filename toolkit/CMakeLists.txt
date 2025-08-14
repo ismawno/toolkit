@@ -26,7 +26,7 @@ endif()
 if(TOOLKIT_ENABLE_MULTIPROCESSING)
   list(APPEND SOURCES tkit/multiprocessing/task.cpp
        tkit/multiprocessing/task_manager.cpp
-       tkit/multiprocessing/thread_pool.cpp)
+       tkit/multiprocessing/thread_pool.cpp tkit/multiprocessing/topology.cpp)
 endif()
 
 if(TOOLKIT_ENABLE_PROFILING)

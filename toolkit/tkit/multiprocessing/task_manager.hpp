@@ -6,6 +6,7 @@
 #endif
 
 #include "tkit/multiprocessing/task.hpp"
+#include "tkit/container/span.hpp"
 #include <type_traits>
 
 namespace TKit
@@ -29,6 +30,15 @@ class TKIT_API ITaskManager
      * @param p_Task The task to submit.
      */
     virtual void SubmitTask(ITask *p_Task) noexcept = 0;
+
+    /**
+     * @brief Submit a group of tasks to be executed by the task manager.
+     *
+     * It may provide a speedup compared to calling `SubmitTask()` multiple times.
+     *
+     * @param p_Tasks The tasks to submit.
+     */
+    virtual void SubmitTasks(Span<ITask *const> p_Tasks) noexcept = 0;
 
     /**
      * @brief Create a task allocated with a thread-dedicated allocator.

@@ -92,7 +92,6 @@ TEST_CASE("BlockingForEach with output iterator partitions and returns main resu
         t->WaitUntilFinished();
         pool.DestroyTask(t);
     }
-    pool.AwaitPendingTasks();
 
     // sum of other partitions = total length minus mainLength
     REQUIRE(otherSum.load(std::memory_order_relaxed) == (lastIndex - firstIndex) - mainLength);

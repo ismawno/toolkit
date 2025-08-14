@@ -1,136 +1,201 @@
 #include "tkit/core/pch.hpp"
 #include "tkit/multiprocessing/thread_pool.hpp"
-#include <mutex>
-#include <string>
-#ifdef TKIT_OS_WINDOWS
-#    include <windows.h>
-#else
-#    include <pthread.h>
-#    include <sched.h>
-#endif
 
 namespace TKit
 {
-#ifdef TKIT_OS_WINDOWS
-static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nullptr) noexcept
-{
-    const u32 totalCores = std::thread::hardware_concurrency();
-    const u32 coreId = p_ThreadIndex % totalCores;
-
-    const DWORD_PTR mask = 1ULL << coreId;
-    const HANDLE thread = GetCurrentThread();
-    TKIT_ASSERT_NOT_RETURNS(SetThreadAffinityMask(thread, mask), 0);
-
-    std::ostringstream oss;
-    if (p_Name)
-        oss << p_Name;
-    else
-        oss << "tkit-worker-" << p_ThreadIndex;
-
-    const auto str = oss.str();
-    const std::wstring name(str.begin(), str.end());
-
-    SetThreadDescription(thread, name.c_str());
-}
-#else
-static void SetAffinityAndName(const u32 p_ThreadIndex, const char *p_Name = nullptr) noexcept
-{
-#    ifdef TKIT_OS_LINUX
-    const u32 totalCores = std::thread::hardware_concurrency();
-    const u32 coreId = p_ThreadIndex % totalCores;
-
-    cpu_set_t cpu;
-    CPU_ZERO(&cpu);
-    CPU_SET(coreId, &cpu);
-
-    const pthread_t current = pthread_self();
-    TKIT_ASSERT_RETURNS(pthread_setaffinity_np(current, sizeof(cpu_set_t), &cpu), 0);
-#    endif
-
-    const std::string name = p_Name ? p_Name : ("tkit-worker-" + std::to_string(p_ThreadIndex));
-#    ifdef TKIT_OS_LINUX
-    pthread_setname_np(current, name.c_str());
-#    else
-    pthread_setname_np(name.c_str());
-#    endif
-}
-#endif
 ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
 {
-    SetAffinityAndName(0, "tkit-main");
+    m_Handle = Topology::Initialize();
+    Topology::BuildAffinityOrder(m_Handle);
+    Topology::PinThread(m_Handle, 0);
+    Topology::SetThreadName(0, "tkit-main");
+
     const auto worker = [this](const usize p_ThreadIndex) {
-        SetAffinityAndName(p_ThreadIndex);
+        Topology::PinThread(m_Handle, p_ThreadIndex);
+        Topology::SetThreadName(p_ThreadIndex);
+
         s_ThreadIndex = p_ThreadIndex;
+        const u32 workerIndex = p_ThreadIndex - 1;
+
+        Worker &myself = m_Workers[workerIndex];
+
+        u32 seed = 0x9e3779b9u ^ p_ThreadIndex;
+        const u32 nworkers = m_Workers.GetSize();
+
+        const auto rand = [&seed, nworkers]() {
+            seed ^= seed << 13;
+            seed ^= seed >> 17;
+            seed ^= seed << 5;
+
+            return (u64(seed) * u64(nworkers)) >> 32;
+        };
+
+        const auto chooseVictim = [workerIndex, &rand]() {
+            u32 victim = rand();
+            while (victim == workerIndex)
+                victim = rand();
+            return victim;
+        };
+
+        u32 victim = chooseVictim();
+        u64 epoch = 0;
         for (;;)
         {
-            m_TaskReady.wait(false, std::memory_order_relaxed);
-            if (m_Shutdown.test(std::memory_order_relaxed))
-                break;
+            myself.Epochs.wait(epoch, std::memory_order_acquire);
+            epoch = myself.Epochs.load(std::memory_order_relaxed);
 
-            ITask *task;
-            { // This could potentially be lock free by implementing a lock free deque
-                std::scoped_lock lock(m_Mutex);
-                TKIT_PROFILE_MARK_LOCK(m_Mutex);
-                if (m_Queue.IsEmpty())
+            using Node = MpmcStack<ITask *>::Node;
+            const Node *freshTasks = myself.Inbox.Claim();
+
+            if (freshTasks)
+            {
+                while (freshTasks->Next)
                 {
-                    m_TaskReady.clear(std::memory_order_relaxed);
-                    continue;
-                }
+                    ITask *task = freshTasks->Value;
+                    myself.Queue.PushBack(task);
 
-                task = m_Queue.GetBack();
-                m_Queue.PopBack();
+                    const Node *next = freshTasks->Next;
+                    myself.Inbox.DestroyNode(freshTasks);
+                    freshTasks = next;
+                }
+                ITask *task = freshTasks->Value;
+                (*task)();
+                myself.Inbox.DestroyNode(freshTasks);
+                myself.TaskCount.fetch_sub(1, std::memory_order_relaxed);
             }
 
-            (*task)();
-            m_PendingCount.fetch_sub(1, std::memory_order_release);
+            while (const auto t = myself.Queue.PopBack())
+            {
+                ITask *task = *t;
+                (*task)();
+                myself.TaskCount.fetch_sub(1, std::memory_order_relaxed);
+            }
+
+            if (const auto stolen = m_Workers[victim].Queue.PopFront())
+            {
+                ITask *task = *stolen;
+                (*task)();
+                myself.TaskCount.fetch_sub(1, std::memory_order_relaxed);
+            }
+            else
+                victim = chooseVictim();
+
+            if (myself.TerminateSignal.test(std::memory_order_relaxed))
+                break;
         }
-        m_TerminatedCount.fetch_add(1, std::memory_order_relaxed);
+        myself.TerminateConfirmation.test_and_set(std::memory_order_relaxed);
     };
     for (usize i = 0; i < p_ThreadCount; ++i)
-        m_Threads.Append(worker, i + 1);
+        m_Workers.Append(worker, i + 1);
 }
 
 ThreadPool::~ThreadPool() noexcept
 {
-    // It is up to the user to make sure that all tasks are finished before destroying the thread pool
-    m_Shutdown.test_and_set(std::memory_order_relaxed);
-
-    // Aggressively force all threads out
-    while (m_PendingCount.load(std::memory_order_relaxed) != 0 ||
-           m_TerminatedCount.load(std::memory_order_relaxed) != GetThreadCount())
+    bool allFinished = false;
+    while (!allFinished)
     {
-        m_TaskReady.test_and_set(std::memory_order_relaxed);
-        m_TaskReady.notify_all();
+        allFinished = true;
+        for (Worker &worker : m_Workers)
+        {
+            if (worker.TerminateConfirmation.test(std::memory_order_relaxed))
+            {
+                if (worker.Thread.joinable())
+                    worker.Thread.join();
+                continue;
+            }
+            allFinished = false;
+            worker.TerminateSignal.test_and_set(std::memory_order_relaxed);
+            worker.Epochs.fetch_add(1, std::memory_order_release);
+            worker.Epochs.notify_all();
+        }
+        if (allFinished)
+            break;
     }
-
-    for (std::thread &thread : m_Threads)
-        thread.join();
-    TKIT_LOG_WARNING_IF(!m_Queue.IsEmpty(),
-                        "[TOOLKIT] Destroying thread pool with pending tasks. Executing them serially now...");
-    while (!m_Queue.IsEmpty())
-    {
-        ITask *task = m_Queue.GetBack();
-        m_Queue.PopBack();
-        (*task)();
-    }
+    Topology::Terminate(m_Handle);
 }
 
-void ThreadPool::AwaitPendingTasks() const noexcept
+static void assignTask(const u32 p_WorkerIndex, ThreadPool::Worker &p_Worker, ITask *p_Task) noexcept
 {
-    // TODO: Consider using _mm_pause() instead of std::this_thread::yield()
-    while (m_PendingCount.load(std::memory_order_acquire) != 0)
-        std::this_thread::yield();
+    if (p_WorkerIndex == ITaskManager::GetThreadIndex() - 1)
+        p_Worker.Queue.PushBack(p_Task);
+    else
+        p_Worker.Inbox.Push(p_Task);
+
+    p_Worker.TaskCount.fetch_add(1, std::memory_order_relaxed);
+    p_Worker.Epochs.fetch_add(1, std::memory_order_release);
+    p_Worker.Epochs.notify_one();
 }
 
 void ThreadPool::SubmitTask(ITask *p_Task) noexcept
 {
-    m_PendingCount.fetch_add(1, std::memory_order_relaxed);
+    u32 minCount = Limits<u32>::max();
+    u32 index;
+    const u32 size = m_Workers.GetSize();
+    for (u32 i = 0; i < size; ++i)
     {
-        std::scoped_lock lock(m_Mutex);
-        TKIT_PROFILE_MARK_LOCK(m_Mutex);
-        m_Queue.PushFront(p_Task);
+        Worker &worker = m_Workers[i];
+        const u32 count = worker.TaskCount.load(std::memory_order_relaxed);
+        if (count == 0)
+        {
+            assignTask(i, worker, p_Task);
+            return;
+        }
+        if (minCount > count)
+        {
+            minCount = count;
+            index = i;
+        }
     }
-    m_TaskReady.test_and_set(std::memory_order_release);
-    m_TaskReady.notify_one();
+    assignTask(index, m_Workers[index], p_Task);
 }
+void ThreadPool::SubmitTasks(const Span<ITask *const> p_Tasks) noexcept
+{
+    u32 stride = 0;
+    const u32 size = p_Tasks.GetSize();
+
+    const u32 wcount = m_Workers.GetSize();
+    constexpr u32 workers = TKIT_THREAD_POOL_MAX_WORKERS;
+
+    Array<u32, workers> counts{};
+    for (u32 i = 0; i < wcount; ++i)
+        counts[i] = m_Workers[i].TaskCount.load(std::memory_order_relaxed);
+
+    ITask *task = p_Tasks[stride];
+    u32 minCount = Limits<u32>::max();
+
+    for (u32 i = 0; i < wcount; ++i)
+    {
+        Worker &worker = m_Workers[i];
+        u32 &count = counts[i];
+        if (count == 0)
+        {
+            assignTask(i, worker, task);
+            ++count;
+            if (++stride == size)
+                return;
+            task = p_Tasks[stride];
+        }
+        if (minCount > count)
+            minCount = count;
+    }
+
+    for (;;)
+    {
+        for (u32 i = 0; i < wcount; ++i)
+        {
+            Worker &worker = m_Workers[i];
+            u32 &count = counts[i];
+            if (count <= minCount)
+            {
+                assignTask(i, worker, task);
+                ++count;
+                if (++stride == size)
+                    return;
+                task = p_Tasks[stride];
+            }
+        }
+        ++minCount;
+    }
+}
+
 } // namespace TKit

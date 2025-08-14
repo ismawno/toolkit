@@ -42,19 +42,23 @@ void SetThreadName(const u32 p_ThreadIndex, const char *p_Name) noexcept
 }
 
 #ifdef TKIT_HWLOC_INSTALLED
-hwloc_topology_t s_Topology = nullptr;
+struct Handle
+{
+    hwloc_topology_t Topology = nullptr;
+};
+
 DynamicArray<u32> s_BuildOrder{};
 
-static u32 kindRank(const u32 PuIndex) noexcept
+static u32 kindRank(const hwloc_topology_t p_Topology, const u32 PuIndex) noexcept
 {
-    const i32 err = hwloc_cpukinds_get_nr(s_Topology, 0);
+    const i32 err = hwloc_cpukinds_get_nr(p_Topology, 0);
     if (err == -1)
         return Unknown;
     const u32 nr = static_cast<u32>(err);
     for (u32 i = 0; i < nr; ++i)
     {
         const hwloc_bitmap_t set = hwloc_bitmap_alloc();
-        if (hwloc_cpukinds_get_info(s_Topology, i, set, nullptr, nullptr, nullptr, 0) == 0 &&
+        if (hwloc_cpukinds_get_info(p_Topology, i, set, nullptr, nullptr, nullptr, 0) == 0 &&
             hwloc_bitmap_isset(set, PuIndex))
         {
             hwloc_bitmap_free(set);
@@ -84,18 +88,19 @@ struct PuInfo
     u32 KindRank = Unknown;
 };
 
-static hwloc_obj_t ancestor(const hwloc_obj_t p_Object, const hwloc_obj_type_t p_Type)
+static hwloc_obj_t ancestor(const hwloc_topology_t p_Topology, const hwloc_obj_t p_Object,
+                            const hwloc_obj_type_t p_Type)
 {
-    return hwloc_get_ancestor_obj_by_type(s_Topology, p_Type, p_Object);
+    return hwloc_get_ancestor_obj_by_type(p_Topology, p_Type, p_Object);
 }
 
-static DynamicArray<u32> buildOrder()
+static DynamicArray<u32> buildOrder(const hwloc_topology_t p_Topology)
 {
     TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY] Building affinity order...");
 
     DynamicArray<u32> order{};
 
-    const u32 nbpus = static_cast<u32>(hwloc_get_nbobjs_by_type(s_Topology, HWLOC_OBJ_PU));
+    const u32 nbpus = static_cast<u32>(hwloc_get_nbobjs_by_type(p_Topology, HWLOC_OBJ_PU));
     TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY] Found {} PUs", nbpus);
     if (nbpus == 0)
         return order;
@@ -106,7 +111,7 @@ static DynamicArray<u32> buildOrder()
     for (u32 i = 0; i < nbpus; ++i)
     {
         TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY] Processing PU {}...", i);
-        const hwloc_obj_t pu = hwloc_get_obj_by_type(s_Topology, HWLOC_OBJ_PU, i);
+        const hwloc_obj_t pu = hwloc_get_obj_by_type(p_Topology, HWLOC_OBJ_PU, i);
         if (!pu)
         {
             TKIT_LOG_WARNING("[TOOLKIT][TOPOLOGY]    PU {} is NULL", i);
@@ -115,16 +120,16 @@ static DynamicArray<u32> buildOrder()
 
         PuInfo p{};
         p.Pu = pu->os_index;
-        if (const hwloc_obj_t numa = ancestor(pu, HWLOC_OBJ_NUMANODE))
+        if (const hwloc_obj_t numa = ancestor(p_Topology, pu, HWLOC_OBJ_NUMANODE))
             p.Numa = numa->os_index;
-        if (const hwloc_obj_t core = ancestor(pu, HWLOC_OBJ_CORE))
+        if (const hwloc_obj_t core = ancestor(p_Topology, pu, HWLOC_OBJ_CORE))
             p.Core = core->os_index;
 
         u32 rank = 0;
-        if (const hwloc_obj_t core = ancestor(pu, HWLOC_OBJ_CORE))
+        if (const hwloc_obj_t core = ancestor(p_Topology, pu, HWLOC_OBJ_CORE))
         {
-            const auto next = [core](const hwloc_obj_t p_Child = nullptr) {
-                return hwloc_get_next_obj_inside_cpuset_by_type(s_Topology, core->cpuset, HWLOC_OBJ_PU, p_Child);
+            const auto next = [p_Topology, core](const hwloc_obj_t p_Child = nullptr) {
+                return hwloc_get_next_obj_inside_cpuset_by_type(p_Topology, core->cpuset, HWLOC_OBJ_PU, p_Child);
             };
             for (hwloc_obj_t child = next(); child; child = next(child))
             {
@@ -134,7 +139,7 @@ static DynamicArray<u32> buildOrder()
             }
         }
         p.SmtRank = rank;
-        p.KindRank = kindRank(p.Pu);
+        p.KindRank = kindRank(p_Topology, p.Pu);
 
         TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    PU {} SMT Rank: {}", i, toString(p.SmtRank));
         TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    PU {} Kind Rank: {}", i, toString(p.KindRank));
@@ -170,9 +175,9 @@ static DynamicArray<u32> buildOrder()
     return order;
 }
 
-static void bindCurrentThread(const u32 p_PuIndex) noexcept
+static void bindCurrentThread(const hwloc_topology_t p_Topology, const u32 p_PuIndex) noexcept
 {
-    const hwloc_obj_t pu = hwloc_get_pu_obj_by_os_index(s_Topology, p_PuIndex);
+    const hwloc_obj_t pu = hwloc_get_pu_obj_by_os_index(p_Topology, p_PuIndex);
     if (!pu)
     {
         TKIT_LOG_WARNING("[TOOLKIT][TOPOLOGY] Failed to bind PU index {}: PU was NULL", p_PuIndex);
@@ -182,59 +187,65 @@ static void bindCurrentThread(const u32 p_PuIndex) noexcept
     const hwloc_cpuset_t set = hwloc_bitmap_dup(pu->cpuset);
     hwloc_bitmap_singlify(set);
 
-    const u32 rc = static_cast<u32>(hwloc_set_cpubind(s_Topology, set, HWLOC_CPUBIND_THREAD));
+    const u32 rc = static_cast<u32>(hwloc_set_cpubind(p_Topology, set, HWLOC_CPUBIND_THREAD));
     hwloc_bitmap_free(set);
     TKIT_LOG_WARNING_IF(rc != 0, "[TOOLKIT][TOPOLOGY] CPU Bind failed...");
 }
 
-void BuildAffinityOrder() noexcept
+void BuildAffinityOrder(const Handle *p_Handle) noexcept
 {
     if (s_BuildOrder.IsEmpty())
     {
-        s_BuildOrder = buildOrder();
+        s_BuildOrder = buildOrder(p_Handle->Topology);
         return;
     }
     TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY] A build order has already been created. Using that instead");
 }
 
-void PinThread(const u32 p_ThreadIndex) noexcept
+void PinThread(const Handle *p_Handle, const u32 p_ThreadIndex) noexcept
 {
     if (s_BuildOrder.IsEmpty())
         return;
     const u32 index = p_ThreadIndex % s_BuildOrder.GetSize();
     const u32 pindex = s_BuildOrder[index];
-    bindCurrentThread(pindex);
+    bindCurrentThread(p_Handle->Topology, pindex);
 }
 
-void Initialize() noexcept
+const Handle *Initialize() noexcept
 {
-    hwloc_topology_init(&s_Topology);
-    hwloc_topology_set_flags(s_Topology, HWLOC_TOPOLOGY_FLAG_INCLUDE_DISALLOWED | HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM);
-    hwloc_topology_load(s_Topology);
+    Handle *handle = new Handle;
+    hwloc_topology_init(&handle->Topology);
+    hwloc_topology_set_flags(handle->Topology,
+                             HWLOC_TOPOLOGY_FLAG_INCLUDE_DISALLOWED | HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM);
+    hwloc_topology_load(handle->Topology);
+    return handle;
 }
 
-void Terminate() noexcept
+void Terminate(const Handle *p_Handle) noexcept
 {
-    hwloc_topology_destroy(s_Topology);
-    s_Topology = nullptr;
+    hwloc_topology_destroy(p_Handle->Topology);
+    delete p_Handle;
 }
 #else
-void BuildAffinityOrder() noexcept
+struct Handle
+{
+};
+void BuildAffinityOrder(const Handle *p_Handle) noexcept
 {
 }
 
-void PinThread() noexcept
+void PinThread(const Handle *p_Handle) noexcept
 {
 }
 
-void Initialize() noexcept
+const Handle *Initialize() noexcept
 {
     TKIT_LOG_WARNING(
         "[TOOLKIT][TOPOLOGY] The library HWLOC, required to pin threads to optimal cpu cores, has not been found. "
         "Thread affinity will be disabled and threads will be scheduled by default, which may be non-optimal.");
 }
 
-void Terminate() noexcept
+void Terminate(const Handle *p_Handle) noexcept
 {
 }
 #endif

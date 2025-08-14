@@ -25,7 +25,9 @@ TEST_CASE("ThreadPool executes Task<void>s", "[ThreadPool]")
         pool.SubmitTask(task); // implicitly converts to Ref<ITask>
     }
 
-    pool.AwaitPendingTasks();
+    for (usize i = 0; i < taskCount; ++i)
+        tasks[i]->WaitUntilFinished();
+
     REQUIRE(counter.load(std::memory_order_relaxed) == taskCount);
     for (usize i = 0; i < taskCount; ++i)
         pool.DestroyTask(tasks[i]);
@@ -50,8 +52,6 @@ TEST_CASE("ThreadPool executes Task<usize>s and preserves results", "[ThreadPool
         tasks.push_back(task);
         pool.SubmitTask(task);
     }
-
-    pool.AwaitPendingTasks();
 
     for (usize i = 0; i < taskCount; ++i)
     {
