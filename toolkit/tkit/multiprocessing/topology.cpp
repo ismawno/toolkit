@@ -293,7 +293,7 @@ void BuildAffinityOrder(const Handle *) noexcept
 {
 }
 
-void PinThread(const Handle *) noexcept
+void PinThread(const u32, const Handle *) noexcept
 {
 }
 
