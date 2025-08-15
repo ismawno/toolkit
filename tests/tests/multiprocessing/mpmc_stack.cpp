@@ -1,4 +1,5 @@
 #include "tkit/multiprocessing/mpmc_stack.hpp" // adjust path if needed
+#include "tkit/utils/alias.hpp"
 #include <catch2/catch_test_macros.hpp>
 
 #include <thread>

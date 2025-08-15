@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tkit/container/array.hpp"
+#include "tkit/utils/non_copyable.hpp"
 #include <atomic>
 #include <optional>
 
@@ -25,6 +26,7 @@ template <typename T, u64 Capacity> class ChaseLevDeque
     static_assert((Capacity & (Capacity - 1)) == 0,
                   "[TOOLKIT][CHASE-LEV] Chase Lev Deque capacity must be a multiple of 2");
 
+    TKIT_NON_COPYABLE(ChaseLevDeque)
   public:
     static constexpr u64 Mask = Capacity - 1;
 

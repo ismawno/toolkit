@@ -1,7 +1,9 @@
 #pragma once
 
-#include "tkit/container/container.hpp"
+#include "tkit/preprocessor/system.hpp"
+#include "tkit/utils/non_copyable.hpp"
 #include <atomic>
+#include <concepts>
 
 TKIT_COMPILER_WARNING_IGNORE_PUSH()
 TKIT_MSVC_WARNING_IGNORE(4324)
@@ -18,6 +20,7 @@ namespace TKit
  */
 template <typename T> class MpmcStack
 {
+    TKIT_NON_COPYABLE(MpmcStack)
   public:
     struct Node
     {
