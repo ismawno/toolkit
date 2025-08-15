@@ -289,11 +289,11 @@ void Terminate(const Handle *p_Handle) noexcept
 struct Handle
 {
 };
-void BuildAffinityOrder(const Handle *p_Handle) noexcept
+void BuildAffinityOrder(const Handle *) noexcept
 {
 }
 
-void PinThread(const Handle *p_Handle) noexcept
+void PinThread(const Handle *) noexcept
 {
 }
 
@@ -302,9 +302,10 @@ const Handle *Initialize() noexcept
     TKIT_LOG_WARNING(
         "[TOOLKIT][TOPOLOGY] The library HWLOC, required to pin threads to optimal cpu cores, has not been found. "
         "Thread affinity will be disabled and threads will be scheduled by default, which may be non-optimal.");
+    return nullptr;
 }
 
-void Terminate(const Handle *p_Handle) noexcept
+void Terminate(const Handle *) noexcept
 {
 }
 #endif
