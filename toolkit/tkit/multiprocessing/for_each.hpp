@@ -102,6 +102,8 @@ auto BlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last, I
     thread_local ArenaAllocator allocator{10_kb};
     const usize size = Detail::Distance(p_First, p_Last);
     usize start = size / p_Partitions;
+    if (p_Partitions == 1)
+        return p_Callable(std::forward<Args>(p_Args)..., p_First, p_First + start);
 
     ITask **allocation = allocator.Allocate<ITask *>(p_Partitions);
     const Span<ITask *> tasks{allocation, p_Partitions - 1};
