@@ -182,7 +182,7 @@ template <> class TKIT_API Task<void> final : public ITask
     static Task *Create(Callable &&p_Callable, Args &&...p_Args) noexcept
     {
         return s_Allocator.Create<Task>(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
-    };
+    }
 
     /**
      * @brief Destroy a task, deallocating it with the calling thread's dedicated allocator.
