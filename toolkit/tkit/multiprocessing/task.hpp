@@ -118,7 +118,7 @@ template <typename T = void> class Task final : public ITask
     static Task *Create(Callable &&p_Callable, Args &&...p_Args) noexcept
     {
         return s_Allocator.Create<Task>(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
-    };
+    }
 
     static void Destroy(Task *p_Task) noexcept
     {
