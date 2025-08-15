@@ -30,3 +30,8 @@ TKIT_CONSTEVAL unsigned long long operator"" _tb(const unsigned long long p_Valu
     return p_Value * 1024_gb;
 }
 }; // namespace TKit::Literals
+
+namespace TKit
+{
+using namespace Literals;
+}
