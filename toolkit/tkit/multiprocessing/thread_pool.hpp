@@ -73,6 +73,8 @@ class TKIT_API ThreadPool final : public ITaskManager
     void SubmitTask(ITask *p_Task) noexcept override;
     void SubmitTasks(Span<ITask *const> p_Tasks) noexcept override;
 
+    using ITaskManager::SubmitTasks;
+
   private:
     StaticArray<Worker, TKIT_THREAD_POOL_MAX_WORKERS> m_Workers;
     const Topology::Handle *m_Handle;

@@ -7,6 +7,7 @@
 
 #include "tkit/multiprocessing/task.hpp"
 #include "tkit/container/span.hpp"
+#include "tkit/container/array.hpp"
 #include <type_traits>
 
 namespace TKit
@@ -39,6 +40,15 @@ class TKIT_API ITaskManager
      * @param p_Tasks The tasks to submit.
      */
     virtual void SubmitTasks(Span<ITask *const> p_Tasks) noexcept = 0;
+
+    template <typename T> void SubmitTasks(const Span<Task<T> *const> p_Tasks) noexcept
+    {
+        Array<ITask *, 128> tasks{};
+        const u32 size = p_Tasks.GetSize();
+        for (u32 i = 0; i < size; ++i)
+            tasks[i] = p_Tasks[i];
+        SubmitTasks(Span<ITask *const>{tasks.begin(), size});
+    }
 
     /**
      * @brief Create a task allocated with a thread-dedicated allocator.

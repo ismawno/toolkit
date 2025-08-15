@@ -2,8 +2,7 @@
 
 #include "tkit/multiprocessing/task_manager.hpp"
 #include "tkit/container/span.hpp"
-#include "tkit/memory/arena_allocator.hpp"
-#include "tkit/utils/literals.hpp"
+#include "tkit/utils/concepts.hpp"
 
 namespace TKit
 {
@@ -21,6 +20,14 @@ template <typename It> usize Distance(const It p_First, const It p_Last) noexcep
         return static_cast<usize>(p_Last - p_First);
     else
         return static_cast<usize>(std::distance(p_First, p_Last));
+}
+template <typename It> auto CreateSpan(const It p_First, const usize p_Size) noexcept
+{
+    using T = NoCVRef<decltype(*p_First)>;
+    if constexpr (std::is_pointer_v<It>)
+        return Span<const T>{p_First, p_Size};
+    else
+        return Span<const T>{&*p_First, p_Size};
 }
 } // namespace Detail
 
@@ -50,27 +57,21 @@ template <std::derived_from<ITaskManager> TManager, typename It1, typename It2, 
 void NonBlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last, It2 p_Dest, const usize p_Partitions,
                         Callable &&p_Callable, Args &&...p_Args)
 {
-    thread_local ArenaAllocator allocator{10_kb};
     const usize size = Detail::Distance(p_First, p_Last);
     usize start = 0;
 
-    ITask **allocation = allocator.Allocate<ITask *>(p_Partitions);
-    const Span<ITask *> tasks{allocation, p_Partitions};
+    const auto tasks = Detail::CreateSpan(p_Dest, p_Partitions);
 
     for (usize i = 0; i < p_Partitions; ++i)
     {
         const usize end = (i + 1) * size / p_Partitions;
         TKIT_ASSERT(end <= size, "[TOOLKIT][FOR-EACH] Partition exceeds container size");
-        const auto task = p_Manager.CreateTask(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...,
-                                               p_First + start, p_First + end);
-        *p_Dest = task;
-        tasks[i] = task;
+        *p_Dest = p_Manager.CreateTask(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...,
+                                       p_First + start, p_First + end);
         ++p_Dest;
-
         start = end;
     }
     p_Manager.SubmitTasks(tasks);
-    allocator.Reset();
 }
 
 /**
@@ -99,30 +100,23 @@ template <std::derived_from<ITaskManager> TManager, typename It1, typename It2, 
 auto BlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last, It2 p_Dest, const usize p_Partitions,
                      Callable &&p_Callable, Args &&...p_Args) -> std::invoke_result_t<Callable, Args..., It1, It1>
 {
-    thread_local ArenaAllocator allocator{10_kb};
     const usize size = Detail::Distance(p_First, p_Last);
     usize start = size / p_Partitions;
     if (p_Partitions == 1)
         return p_Callable(std::forward<Args>(p_Args)..., p_First, p_First + start);
 
-    ITask **allocation = allocator.Allocate<ITask *>(p_Partitions);
-    const Span<ITask *> tasks{allocation, p_Partitions - 1};
-
+    const auto tasks = Detail::CreateSpan(p_Dest, p_Partitions - 1);
     for (usize i = 1; i < p_Partitions; ++i)
     {
         const usize end = (i + 1) * size / p_Partitions;
         TKIT_ASSERT(end <= size, "[TOOLKIT][FOR-EACH] Partition exceeds container size");
 
-        const auto task = p_Manager.CreateTask(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...,
-                                               p_First + start, p_First + end);
-        *p_Dest = task;
-        tasks[i - 1] = task;
+        *p_Dest = p_Manager.CreateTask(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...,
+                                       p_First + start, p_First + end);
         ++p_Dest;
-
         start = end;
     }
     p_Manager.SubmitTasks(tasks);
-    allocator.Reset();
 
     const usize end = size / p_Partitions;
     return p_Callable(std::forward<Args>(p_Args)..., p_First, p_First + end);
