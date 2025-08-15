@@ -36,7 +36,7 @@ void SetThreadName(const u32 p_ThreadIndex, const char *p_Name) noexcept
 #ifdef TKIT_OS_LINUX
     const pthread_t current = pthread_self();
     pthread_setname_np(current, name.c_str());
-#else
+#elif defined(TKIT_OS_APPLE)
     pthread_setname_np(name.c_str());
 #endif
 }

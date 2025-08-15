@@ -27,7 +27,7 @@ ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
             seed ^= seed >> 17;
             seed ^= seed << 5;
 
-            return (u64(seed) * u64(nworkers)) >> 32;
+            return static_cast<u32>((u64(seed) * u64(nworkers)) >> 32);
         };
 
         const auto chooseVictim = [workerIndex, &rand]() {
