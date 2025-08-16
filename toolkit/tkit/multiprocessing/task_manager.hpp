@@ -41,6 +41,13 @@ class TKIT_API ITaskManager
      */
     virtual void SubmitTasks(Span<ITask *const> p_Tasks) noexcept = 0;
 
+    /**
+     * @brief Submit a group of tasks to be executed by the task manager.
+     *
+     * It may provide a speedup compared to calling `SubmitTask()` multiple times.
+     *
+     * @param p_Tasks The tasks to submit.
+     */
     template <typename T> void SubmitTasks(const Span<Task<T> *const> p_Tasks) noexcept
     {
         Array<ITask *, 128> tasks{};

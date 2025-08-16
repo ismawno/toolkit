@@ -73,9 +73,9 @@ ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
 
             if (const auto stolen = m_Workers[victim].Queue.PopFront())
             {
+                m_Workers[victim].TaskCount.fetch_sub(1, std::memory_order_relaxed);
                 ITask *task = *stolen;
                 (*task)();
-                myself.TaskCount.fetch_sub(1, std::memory_order_relaxed);
             }
             else
                 victim = chooseVictim();
@@ -116,7 +116,7 @@ ThreadPool::~ThreadPool() noexcept
 
 static void assignTask(const u32 p_WorkerIndex, ThreadPool::Worker &p_Worker, ITask *p_Task) noexcept
 {
-    if (p_WorkerIndex == ITaskManager::GetThreadIndex() - 1)
+    if (p_WorkerIndex + 1 == ITaskManager::GetThreadIndex())
         p_Worker.Queue.PushBack(p_Task);
     else
         p_Worker.Inbox.Push(p_Task);
