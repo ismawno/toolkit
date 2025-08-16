@@ -247,8 +247,8 @@ static void bindCurrentThread(const hwloc_topology_t p_Topology, const u32 p_PuI
     const hwloc_cpuset_t set = hwloc_bitmap_dup(pu->cpuset);
     hwloc_bitmap_singlify(set);
 
-    TKIT_ASSERT_RETURNS(hwloc_set_cpubind(p_Topology, set, HWLOC_CPUBIND_THREAD), 0,
-                        "[TOOLKIT][TOPOLOGY] CPU Bind to Pu index {} failed", p_PuIndex);
+    TKIT_LOG_WARNING_IF_NOT_RETURNS(hwloc_set_cpubind(p_Topology, set, HWLOC_CPUBIND_THREAD), 0,
+                                    "[TOOLKIT][TOPOLOGY] CPU Bind to Pu index {} failed", p_PuIndex);
     hwloc_bitmap_free(set);
 }
 
