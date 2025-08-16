@@ -193,14 +193,14 @@ static DynamicArray<u32> buildOrder(const hwloc_topology_t p_Topology)
     }
 
     std::sort(infos.begin(), infos.end(), [](const PuInfo &p_Node1, const PuInfo &p_Node2) {
-        if (p_Node1.SmtRank != p_Node2.SmtRank)
-            return p_Node1.SmtRank < p_Node2.SmtRank;
-
         const u32 e1 = p_Node1.KInfo.Efficiency;
         const u32 e2 = p_Node2.KInfo.Efficiency;
 
         if (e1 != Unknown && e2 != Unknown && e1 != e2)
             return e1 > e2;
+
+        if (p_Node1.SmtRank != p_Node2.SmtRank)
+            return p_Node1.SmtRank < p_Node2.SmtRank;
 
         if (p_Node1.KInfo.CType != p_Node2.KInfo.CType)
             return p_Node1.KInfo.CType < p_Node2.KInfo.CType;
