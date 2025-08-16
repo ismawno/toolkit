@@ -54,6 +54,10 @@ class TKIT_API ITask
     /**
      * @brief Block the calling thread until the task has finished executing.
      *
+     * This method may not safe to use if the thread calling it belongs to the task manager the task was submitted, as
+     * deadlocks may happen under heavy load. It is recommended to always wait for tasks using the `ITaskManager` method
+     * `WaitUntilFinished()` instead of this one.
+     *
      */
     void WaitUntilFinished() const noexcept;
 
@@ -99,6 +103,10 @@ template <typename T = void> class Task final : public ITask
 
     /**
      * @brief Block the calling thread until the task has finished executing and return the result.
+     *
+     * This method may not safe to use if the thread calling it belongs to the task manager the task was submitted, as
+     * deadlocks may happen under heavy load. It is recommended to always wait for tasks using the `ITaskManager` method
+     * `WaitForResult()` instead of this one.
      *
      * @return The result of the task.
      */

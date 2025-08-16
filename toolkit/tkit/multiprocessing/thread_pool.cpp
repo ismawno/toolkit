@@ -3,6 +3,66 @@
 
 namespace TKit
 {
+thread_local u32 s_Victim;
+static u32 cheapRand(const u32 p_Workers) noexcept
+{
+    thread_local u32 seed = 0x9e3779b9u ^ ITaskManager::GetThreadIndex();
+    seed ^= seed << 13;
+    seed ^= seed >> 17;
+    seed ^= seed << 5;
+
+    return static_cast<u32>((u64(seed) * u64(p_Workers)) >> 32);
+}
+static void shuffleVictim(const u32 p_WorkerIndex, const u32 p_Workers) noexcept
+{
+    u32 victim = cheapRand(p_Workers);
+    while (victim == p_WorkerIndex)
+        victim = cheapRand(p_Workers);
+    s_Victim = victim;
+}
+
+void ThreadPool::drainTasks(const u32 p_WorkerIndex, const u32 p_Workers) noexcept
+{
+    Worker &myself = m_Workers[p_WorkerIndex];
+
+    using Node = MpmcStack<ITask *>::Node;
+    const Node *freshTasks = myself.Inbox.Claim();
+
+    if (freshTasks)
+    {
+        while (freshTasks->Next)
+        {
+            ITask *task = freshTasks->Value;
+            myself.Queue.PushBack(task);
+
+            const Node *next = freshTasks->Next;
+            myself.Inbox.DestroyNode(freshTasks);
+            freshTasks = next;
+        }
+        ITask *task = freshTasks->Value;
+        (*task)();
+        myself.Inbox.DestroyNode(freshTasks);
+        myself.TaskCount.fetch_sub(1, std::memory_order_relaxed);
+    }
+
+    while (const auto t = myself.Queue.PopBack())
+    {
+        ITask *task = *t;
+        (*task)();
+        myself.TaskCount.fetch_sub(1, std::memory_order_relaxed);
+    }
+
+    const u32 victim = s_Victim;
+    if (const auto stolen = m_Workers[victim].Queue.PopFront())
+    {
+        m_Workers[victim].TaskCount.fetch_sub(1, std::memory_order_relaxed);
+        ITask *task = *stolen;
+        (*task)();
+    }
+    else
+        shuffleVictim(p_WorkerIndex, p_Workers);
+}
+
 ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
 {
     m_Handle = Topology::Initialize();
@@ -18,67 +78,16 @@ ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
         const u32 workerIndex = p_ThreadIndex - 1;
 
         Worker &myself = m_Workers[workerIndex];
-
-        u32 seed = 0x9e3779b9u ^ p_ThreadIndex;
         const u32 nworkers = m_Workers.GetSize();
 
-        const auto rand = [&seed, nworkers]() {
-            seed ^= seed << 13;
-            seed ^= seed >> 17;
-            seed ^= seed << 5;
-
-            return static_cast<u32>((u64(seed) * u64(nworkers)) >> 32);
-        };
-
-        const auto chooseVictim = [workerIndex, &rand]() {
-            u32 victim = rand();
-            while (victim == workerIndex)
-                victim = rand();
-            return victim;
-        };
-
-        u32 victim = chooseVictim();
+        shuffleVictim(workerIndex, nworkers);
         u64 epoch = 0;
         for (;;)
         {
             myself.Epochs.wait(epoch, std::memory_order_acquire);
             epoch = myself.Epochs.load(std::memory_order_relaxed);
 
-            using Node = MpmcStack<ITask *>::Node;
-            const Node *freshTasks = myself.Inbox.Claim();
-
-            if (freshTasks)
-            {
-                while (freshTasks->Next)
-                {
-                    ITask *task = freshTasks->Value;
-                    myself.Queue.PushBack(task);
-
-                    const Node *next = freshTasks->Next;
-                    myself.Inbox.DestroyNode(freshTasks);
-                    freshTasks = next;
-                }
-                ITask *task = freshTasks->Value;
-                (*task)();
-                myself.Inbox.DestroyNode(freshTasks);
-                myself.TaskCount.fetch_sub(1, std::memory_order_relaxed);
-            }
-
-            while (const auto t = myself.Queue.PopBack())
-            {
-                ITask *task = *t;
-                (*task)();
-                myself.TaskCount.fetch_sub(1, std::memory_order_relaxed);
-            }
-
-            if (const auto stolen = m_Workers[victim].Queue.PopFront())
-            {
-                m_Workers[victim].TaskCount.fetch_sub(1, std::memory_order_relaxed);
-                ITask *task = *stolen;
-                (*task)();
-            }
-            else
-                victim = chooseVictim();
+            drainTasks(workerIndex, nworkers);
 
             if (myself.TerminateSignal.test(std::memory_order_relaxed))
                 break;
@@ -116,7 +125,7 @@ ThreadPool::~ThreadPool() noexcept
 
 static void assignTask(const u32 p_WorkerIndex, ThreadPool::Worker &p_Worker, ITask *p_Task) noexcept
 {
-    if (p_WorkerIndex + 1 == ITaskManager::GetThreadIndex())
+    if (p_WorkerIndex == ThreadPool::GetWorkerIndex())
         p_Worker.Queue.PushBack(p_Task);
     else
         p_Worker.Inbox.Push(p_Task);
@@ -196,6 +205,26 @@ void ThreadPool::SubmitTasks(const Span<ITask *const> p_Tasks) noexcept
         }
         ++minCount;
     }
+}
+
+void ThreadPool::WaitUntilFinished(ITask *p_Task) noexcept
+{
+    if (s_ThreadIndex == 0)
+    {
+        p_Task->WaitUntilFinished();
+        return;
+    }
+
+    const u32 workerIndex = GetWorkerIndex();
+    const u32 nworkers = m_Workers.GetSize();
+
+    while (!p_Task->IsFinished(std::memory_order_acquire))
+        drainTasks(workerIndex, nworkers);
+}
+
+usize ThreadPool::GetWorkerIndex() noexcept
+{
+    return s_ThreadIndex - 1;
 }
 
 } // namespace TKit

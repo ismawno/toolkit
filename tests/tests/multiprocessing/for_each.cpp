@@ -25,7 +25,7 @@ TEST_CASE("NonBlockingForEach (void) with ThreadPool sums all elements", "[NonBl
 
     for (Task<> *t : tasks)
     {
-        t->WaitUntilFinished();
+        pool.WaitUntilFinished(t);
         pool.DestroyTask(t);
     }
     REQUIRE(totalSum.load(std::memory_order_relaxed) == lastIndex - firstIndex);
@@ -89,7 +89,7 @@ TEST_CASE("BlockingForEach with output iterator partitions and returns main resu
     // wait all other partitions
     for (Task<usize> *t : tasks)
     {
-        t->WaitUntilFinished();
+        pool.WaitUntilFinished(t);
         pool.DestroyTask(t);
     }
 

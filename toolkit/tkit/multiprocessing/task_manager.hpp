@@ -32,6 +32,15 @@ class TKIT_API ITaskManager
      */
     virtual void SubmitTask(ITask *p_Task) noexcept = 0;
 
+    virtual void WaitUntilFinished(ITask *p_Task) noexcept = 0;
+
+    template <typename T> T WaitForResult(Task<T> *p_Task) noexcept
+    {
+        ITask *task = static_cast<ITask *>(p_Task);
+        WaitUntilFinished(task);
+        return p_Task->WaitForResult();
+    }
+
     /**
      * @brief Submit a group of tasks to be executed by the task manager.
      *
