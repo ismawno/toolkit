@@ -54,7 +54,7 @@ class TKIT_API ITaskManager
         const u32 size = p_Tasks.GetSize();
         for (u32 i = 0; i < size; ++i)
             tasks[i] = p_Tasks[i];
-        SubmitTasks(Span<ITask *const>{tasks.begin(), size});
+        SubmitTasks(Span<ITask *const>{tasks.GetData(), size});
     }
 
     /**

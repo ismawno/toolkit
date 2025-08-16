@@ -46,8 +46,10 @@ class TKIT_API ITask
     /**
      * @brief Check if the task has finished executing.
      *
+     * @param p_Order The memory order of the operation.
+     *
      */
-    bool IsFinished() const noexcept;
+    bool IsFinished(std::memory_order p_Order = std::memory_order_relaxed) const noexcept;
 
     /**
      * @brief Block the calling thread until the task has finished executing.

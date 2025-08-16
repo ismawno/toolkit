@@ -13,9 +13,9 @@ template <typename T> BlockAllocator &getAllocator() noexcept
     return allocator;
 }
 
-bool ITask::IsFinished() const noexcept
+bool ITask::IsFinished(const std::memory_order p_Order) const noexcept
 {
-    return m_Finished.test(std::memory_order_relaxed);
+    return m_Finished.test(p_Order);
 }
 void ITask::WaitUntilFinished() const noexcept
 {
