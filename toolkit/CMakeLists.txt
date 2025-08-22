@@ -193,8 +193,8 @@ if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
     target_compile_options(TracyClient
                            PRIVATE -Wno-deprecated-anon-enum-enum-conversion)
   endif()
-
   if(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION)
+    target_compile_definitions(TracyClient PRIVATE TRACY_VK_USE_SYMBOL_TABLE)
     target_compile_definitions(toolkit
                                PUBLIC TKIT_ENABLE_VULKAN_INSTRUMENTATION)
   endif()

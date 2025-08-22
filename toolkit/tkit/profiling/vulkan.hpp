@@ -9,10 +9,13 @@ using VkProfilingContext = TracyVkCtx;
 } // namespace TKit
 
 // Symbol table is missing for now
-#    define TKIT_PROFILE_CREATE_VULKAN_CONTEXT(p_Physdev, p_Device, p_Queue, p_Cmdbuf)                                 \
-        TracyVkContext(p_Physdev, p_Device, p_Queue, p_Cmdbuf)
-#    define TKIT_PROFILE_CREATE_VULKAN_CALIBRATED_CONTEXT(p_Physdev, p_Device, p_Queue, p_Cmdbuf, p_Gpdctd, p_Gct)     \
-        TracyVkContextCalibrated(p_Physdev, p_Device, p_Queue, p_Cmdbuf, p_Gpdctd, p_Gct)
+#    define TKIT_PROFILE_CREATE_VULKAN_CONTEXT(p_Instance, p_Physdev, p_Device, p_Queue, p_Cmdbuf, p_GetInstance,      \
+                                               p_GetDevice)                                                            \
+        TracyVkContext(p_Instance, p_Physdev, p_Device, p_Queue, p_Cmdbuf, p_GetInstance, p_GetDevice)
+#    define TKIT_PROFILE_CREATE_VULKAN_CALIBRATED_CONTEXT(p_Instance, p_Physdev, p_Device, p_Queue, p_Cmdbuf,          \
+                                                          p_Gpdctd, p_Gct, p_GetInstance, p_GetDevice)                 \
+        TracyVkContextCalibrated(p_Instance, p_Physdev, p_Device, p_Queue, p_Cmdbuf, p_Gpdctd, p_Gct, p_GetInstance,   \
+                                 p_GetDevice)
 
 #    define TKIT_PROFILE_DESTROY_VULKAN_CONTEXT(p_Context) TracyVkDestroy(p_Context)
 
