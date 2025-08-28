@@ -20,7 +20,7 @@ namespace TKit
 class TKIT_API ITaskManager
 {
   public:
-    explicit ITaskManager(usize p_ThreadCount) noexcept;
+    explicit ITaskManager(usize p_WorkerCount) noexcept;
     virtual ~ITaskManager() noexcept = default;
 
     /**
@@ -113,10 +113,10 @@ class TKIT_API ITaskManager
     }
 
     /**
-     * @brief Get the number of threads that the task manager is using.
+     * @brief Get the number of workers that the task manager is using.
      *
      */
-    usize GetThreadCount() const noexcept;
+    usize GetWorkerCount() const noexcept;
 
     /**
      * @brief Ask for the thread index of the current thread.
@@ -129,6 +129,6 @@ class TKIT_API ITaskManager
     static inline thread_local usize s_ThreadIndex = 0;
 
   private:
-    usize m_ThreadCount;
+    usize m_WorkerCount;
 };
 } // namespace TKit

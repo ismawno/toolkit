@@ -4,14 +4,14 @@
 
 namespace TKit
 {
-ITaskManager::ITaskManager(const usize p_ThreadCount) noexcept : m_ThreadCount(p_ThreadCount)
+ITaskManager::ITaskManager(const usize p_WorkerCount) noexcept : m_WorkerCount(p_WorkerCount)
 {
-    TKIT_ASSERT(p_ThreadCount != 0, "The thread count must be greater than 0.");
+    TKIT_ASSERT(p_WorkerCount != 0, "The thread count must be greater than 0.");
 }
 
-usize ITaskManager::GetThreadCount() const noexcept
+usize ITaskManager::GetWorkerCount() const noexcept
 {
-    return m_ThreadCount;
+    return m_WorkerCount;
 }
 
 usize ITaskManager::GetThreadIndex() noexcept

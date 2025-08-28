@@ -63,8 +63,9 @@ void ThreadPool::drainTasks(const u32 p_WorkerIndex, const u32 p_Workers) noexce
         shuffleVictim(p_WorkerIndex, p_Workers);
 }
 
-ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
+ThreadPool::ThreadPool(const usize p_WorkerCount) : ITaskManager(p_WorkerCount)
 {
+    TKIT_ASSERT(p_WorkerCount > 1, "[TOOLKIT][MULTIPROC] At least 2 workers are required to create a thread pool");
     m_Handle = Topology::Initialize();
     Topology::BuildAffinityOrder(m_Handle);
     Topology::PinThread(m_Handle, 0);
@@ -76,6 +77,8 @@ ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
 
         s_ThreadIndex = p_ThreadIndex;
         const u32 workerIndex = p_ThreadIndex - 1;
+
+        m_ReadySignal.wait(false, std::memory_order_acquire);
 
         Worker &myself = m_Workers[workerIndex];
         const u32 nworkers = m_Workers.GetSize();
@@ -94,8 +97,10 @@ ThreadPool::ThreadPool(const usize p_ThreadCount) : ITaskManager(p_ThreadCount)
         }
         myself.TerminateConfirmation.test_and_set(std::memory_order_relaxed);
     };
-    for (usize i = 0; i < p_ThreadCount; ++i)
+    for (usize i = 0; i < p_WorkerCount; ++i)
         m_Workers.Append(worker, i + 1);
+
+    m_ReadySignal.test_and_set(std::memory_order_release);
 }
 
 ThreadPool::~ThreadPool() noexcept
