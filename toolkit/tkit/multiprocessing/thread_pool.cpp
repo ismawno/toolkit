@@ -100,6 +100,7 @@ ThreadPool::ThreadPool(const usize p_WorkerCount) : ITaskManager(p_WorkerCount)
         m_Workers.Append(worker, i + 1);
 
     m_ReadySignal.test_and_set(std::memory_order_release);
+    m_ReadySignal.notify_all();
 }
 
 ThreadPool::~ThreadPool() noexcept
