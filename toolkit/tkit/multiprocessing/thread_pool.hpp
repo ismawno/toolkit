@@ -64,7 +64,6 @@ class TKIT_API ThreadPool final : public ITaskManager
         std::atomic<u64> Epochs{0};
         std::atomic<u32> TaskCount{0}; // Speculative
         std::atomic_flag TerminateSignal = ATOMIC_FLAG_INIT;
-        std::atomic_flag TerminateConfirmation = ATOMIC_FLAG_INIT;
     };
 
     explicit ThreadPool(usize p_WokerCount);

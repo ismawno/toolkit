@@ -95,7 +95,6 @@ ThreadPool::ThreadPool(const usize p_WorkerCount) : ITaskManager(p_WorkerCount)
             if (myself.TerminateSignal.test(std::memory_order_relaxed))
                 break;
         }
-        myself.TerminateConfirmation.test_and_set(std::memory_order_relaxed);
     };
     for (usize i = 0; i < p_WorkerCount; ++i)
         m_Workers.Append(worker, i + 1);
@@ -111,16 +110,13 @@ ThreadPool::~ThreadPool() noexcept
         allFinished = true;
         for (Worker &worker : m_Workers)
         {
-            if (worker.TerminateConfirmation.test(std::memory_order_relaxed))
-            {
-                if (worker.Thread.joinable())
-                    worker.Thread.join();
+            if (!worker.Thread.joinable())
                 continue;
-            }
             allFinished = false;
             worker.TerminateSignal.test_and_set(std::memory_order_relaxed);
             worker.Epochs.fetch_add(1, std::memory_order_release);
             worker.Epochs.notify_all();
+            worker.Thread.join();
             std::this_thread::yield();
         }
         if (allFinished)
