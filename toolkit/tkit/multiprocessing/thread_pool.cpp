@@ -121,6 +121,7 @@ ThreadPool::~ThreadPool() noexcept
             worker.TerminateSignal.test_and_set(std::memory_order_relaxed);
             worker.Epochs.fetch_add(1, std::memory_order_release);
             worker.Epochs.notify_all();
+            std::this_thread::yield();
         }
         if (allFinished)
             break;
