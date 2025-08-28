@@ -38,7 +38,7 @@ class TKIT_API ITaskManager
     {
         ITask *task = static_cast<ITask *>(p_Task);
         WaitUntilFinished(task);
-        return p_Task->WaitForResult();
+        return p_Task->GetResult();
     }
 
     /**
