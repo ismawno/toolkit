@@ -105,23 +105,13 @@ ThreadPool::ThreadPool(const usize p_WorkerCount) : ITaskManager(p_WorkerCount)
 
 ThreadPool::~ThreadPool() noexcept
 {
-    bool allFinished = false;
-    while (!allFinished)
+    m_ReadySignal.notify_all();
+    for (Worker &worker : m_Workers)
     {
-        allFinished = true;
-        for (Worker &worker : m_Workers)
-        {
-            if (!worker.Thread.joinable())
-                continue;
-            allFinished = false;
-            worker.TerminateSignal.test_and_set(std::memory_order_relaxed);
-            worker.Epochs.fetch_add(1, std::memory_order_release);
-            worker.Epochs.notify_all();
-            worker.Thread.join();
-            std::this_thread::yield();
-        }
-        if (allFinished)
-            break;
+        worker.TerminateSignal.test_and_set(std::memory_order_relaxed);
+        worker.Epochs.fetch_add(1, std::memory_order_release);
+        worker.Epochs.notify_all();
+        worker.Thread.join();
     }
     Topology::Terminate(m_Handle);
 }
