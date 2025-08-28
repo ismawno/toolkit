@@ -70,19 +70,13 @@ if(TOOLKIT_ENABLE_MULTIPROCESSING)
   find_package(PkgConfig QUIET)
 
   if(PkgConfig_FOUND)
-    pkg_check_modules(HWLOC QUIET hwloc)
+    pkg_check_modules(HWLOC QUIET IMPORTED_TARGET hwloc)
   endif()
 
   if(HWLOC_FOUND)
 
     message(STATUS "TOOLKIT: HWLOC found")
-    add_library(hwloc::hwloc INTERFACE IMPORTED)
-    set_target_properties(
-      hwloc::hwloc
-      PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${HWLOC_INCLUDE_DIRS}"
-                 INTERFACE_LINK_LIBRARIES "${HWLOC_LIBRARIES}")
-
-    target_link_libraries(toolkit PRIVATE hwloc::hwloc)
+    target_link_libraries(toolkit PRIVATE PkgConfig::HWLOC)
     target_compile_definitions(toolkit PRIVATE TKIT_HWLOC_INSTALLED)
 
   else()
