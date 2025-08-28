@@ -67,7 +67,7 @@ class TKIT_API ThreadPool final : public ITaskManager
         std::atomic_flag TerminateConfirmation = ATOMIC_FLAG_INIT;
     };
 
-    explicit ThreadPool(usize p_ThreadCount);
+    explicit ThreadPool(usize p_WokerCount);
     ~ThreadPool() noexcept override;
 
     void SubmitTask(ITask *p_Task) noexcept override;
@@ -83,6 +83,7 @@ class TKIT_API ThreadPool final : public ITaskManager
     void drainTasks(u32 p_WorkerIndex, u32 p_Workers) noexcept;
 
     StaticArray<Worker, TKIT_THREAD_POOL_MAX_WORKERS> m_Workers;
+    std::atomic_flag m_ReadySignal = ATOMIC_FLAG_INIT;
     const Topology::Handle *m_Handle;
 };
 } // namespace TKit
