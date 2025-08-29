@@ -379,7 +379,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                                 f"If the retrieved fields share all the same type, the return value will be simplified to a `TKit::Array<{modifier}Field>`. If that is not the case however, the fields will be stored in a `std::tuple`."
                             )
                         with hpp.scope(
-                            f"template <Group Ref_Group, typename... Ref_Types> static constexpr auto Get{modifier}FieldsByGroup() noexcept"
+                            f"template <{modifier}Group Ref_Group, typename... Ref_Types> static constexpr auto Get{modifier}FieldsByGroup() noexcept"
                         ):
                             cnd = "if"
                             for group in fcollection.per_group:
@@ -410,7 +410,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                                 "A callable object that must accept any field type. The most straightforward way of doing so is by declaring the macro as `[](const auto &p_Field){};`.",
                             )
                         with hpp.scope(
-                            f"template <Group Ref_Group, typename... Ref_Types, typename Ref_Fun> static constexpr void ForEach{modifier}FieldByGroup(Ref_Fun &&p_Fun) noexcept"
+                            f"template <{modifier}Group Ref_Group, typename... Ref_Types, typename Ref_Fun> static constexpr void ForEach{modifier}FieldByGroup(Ref_Fun &&p_Fun) noexcept"
                         ):
                             hpp(f"const auto fields = Get{modifier}FieldsByGroup<Ref_Group, Ref_Types...>();")
                             hpp(f"ForEach{modifier}Field(fields, std::forward<Ref_Fun>(p_Fun));")

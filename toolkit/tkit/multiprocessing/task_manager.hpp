@@ -13,8 +13,9 @@
 namespace TKit
 {
 /**
- * @brief A task manager that is responsible for managing tasks and executing them. It is an abstract class that
- * must be implemented by the user to create a custom task system.
+ * @brief A task manager that is responsible for managing tasks and executing them.
+ *
+ * It is an abstract class that must be implemented by the user to create a custom task system.
  *
  */
 class TKIT_API ITaskManager
@@ -130,5 +131,23 @@ class TKIT_API ITaskManager
 
   private:
     usize m_WorkerCount;
+};
+
+/**
+ * @brief The simplest task manager implementation.
+ *
+ * This trivial task manager uses only the main thread and executes all of the submitted tasks sequentially and
+ * immediately.
+ *
+ */
+class TKIT_API TaskManager final : public ITaskManager
+{
+  public:
+    TaskManager() noexcept;
+
+    void SubmitTask(ITask *p_Task) noexcept override;
+    void SubmitTasks(Span<ITask *const> p_Tasks) noexcept override;
+
+    void WaitUntilFinished(ITask *p_Task) noexcept override;
 };
 } // namespace TKit
