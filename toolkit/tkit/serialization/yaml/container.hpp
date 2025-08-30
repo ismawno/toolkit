@@ -30,8 +30,8 @@ template <typename T, usize N, typename Traits> struct Codec<Array<T, N, Traits>
         if (!p_Node.IsSequence() || p_Node.size() > N)
             return false;
 
-        using size_type = typename Traits::size_type;
-        for (size_type i = 0; i < N; ++i)
+        using SizeType = typename Traits::SizeType;
+        for (SizeType i = 0; i < N; ++i)
             p_Instance[i] = p_Node[i].template as<T>();
         return true;
     }
