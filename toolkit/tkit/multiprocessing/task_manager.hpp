@@ -68,7 +68,9 @@ class TKIT_API ITaskManager
         TKIT_ASSERT(p_Tasks.GetSize() <= TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION,
                     "[ONYX][MULTIPROC] Amount of tasks submitted exceeds maximum");
 
-        const u32 size = std::min(TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION, p_Tasks.GetSize());
+        const u32 size = p_Tasks.GetSize() < TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION
+                             ? p_Tasks.GetSize()
+                             : TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION;
         for (u32 i = 0; i < size; ++i)
             tasks[i] = p_Tasks[i];
         SubmitTasks(Span<ITask *const>{tasks.GetData(), size});
