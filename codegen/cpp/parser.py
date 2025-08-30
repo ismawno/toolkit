@@ -655,6 +655,8 @@ class CPParser:
         values = {}
         for line in clinfo.body:
             line = line.strip(",").strip()
+            if not line:
+                continue
             for f in forbidden:
                 if f in line:
                     break
