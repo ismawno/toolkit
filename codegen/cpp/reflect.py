@@ -82,7 +82,9 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                     hpp.brief("Get an enum value from a string.")
                     hpp("If no valid enum value is found, the first enum value will be returned. Take care.")
 
-                with hpp.scope(f"constexpr {enum.id.identifier} FromString(const std::string_view p_Value) noexcept"):
+                with hpp.scope(
+                    f"static constexpr {enum.id.identifier} FromString(const std::string_view p_Value) noexcept"
+                ):
                     vals = list(enum.values.keys())
                     for val in vals:
                         with hpp.scope(f'if (p_Value == "{val}")', delimiters=False):
@@ -95,7 +97,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                     hpp.brief("Transform an enum value to a string.")
                     hpp("If the enum is not valid, a null pointer will be returned.")
 
-                with hpp.scope(f"constexpr const char *ToString(const {enum.id.identifier} p_Value) noexcept"):
+                with hpp.scope(f"static constexpr const char *ToString(const {enum.id.identifier} p_Value) noexcept"):
                     with hpp.scope("switch(p_Value)"):
                         for val in enum.values:
                             with hpp.scope(f"case {enum.id.identifier}::{val}:", delimiters=False):
