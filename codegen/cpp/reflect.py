@@ -421,7 +421,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
 
                     def create_get_tuple_method(*, group: str | None = None) -> None:
                         with hpp.scope(
-                            f"template <typename Ref_Type> static constexpr auto get{modifier}{group if group is not None else ''}Tuple() noexcept"
+                            f"template <typename Ref_Type> static constexpr auto get{group if group is not None else ''}{modifier}Tuple() noexcept"
                         ):
 
                             def generator(fields_cpp: list[str], vtype: str, /) -> None:
@@ -431,7 +431,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
 
                     def create_get_array_method(*, group: str | None = None) -> None:
                         with hpp.scope(
-                            f"template <typename Ref_Type> static constexpr auto get{modifier}{group if group is not None else ''}Array() noexcept"
+                            f"template <typename Ref_Type> static constexpr auto get{group if group is not None else ''}{modifier}Array() noexcept"
                         ):
 
                             def generator(fields_cpp: list[str], vtype: str, /) -> None:
