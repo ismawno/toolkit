@@ -10,6 +10,10 @@
 #include "tkit/container/array.hpp"
 #include <type_traits>
 
+#ifndef TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION
+#    define TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION (32 * 4)
+#endif
+
 namespace TKit
 {
 /**
@@ -60,8 +64,10 @@ class TKIT_API ITaskManager
      */
     template <typename T> void SubmitTasks(const Span<Task<T> *const> p_Tasks) noexcept
     {
-        Array<ITask *, 128> tasks{};
+        Array<ITask *, TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION> tasks{};
         const u32 size = p_Tasks.GetSize();
+        TKIT_ASSERT(size <= TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION,
+                    "[ONYX][MULTIPROC] Amount of tasks submitted exceeds maximum");
         for (u32 i = 0; i < size; ++i)
             tasks[i] = p_Tasks[i];
         SubmitTasks(Span<ITask *const>{tasks.GetData(), size});
