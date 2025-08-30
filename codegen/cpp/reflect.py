@@ -300,7 +300,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                             )
 
                         with hpp.scope(
-                            f"template <typename... Ref_Types> static constexpr auto Get{modifier}{group}Fields() noexcept"
+                            f"template <typename... Ref_Types> static constexpr auto Get{group}{modifier}Fields() noexcept"
                         ):
                             with hpp.scope("if constexpr (sizeof...(Ref_Types) == 0)", delimiters=False):
                                 hpp(f"return {create_tuple_sequence(fields_cpp)};")
@@ -308,9 +308,9 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                                 "else if constexpr (sizeof...(Ref_Types) == 1)",
                                 delimiters=False,
                             ):
-                                hpp(f"return get{modifier}{group}Array<Ref_Types...>();")
+                                hpp(f"return get{group}{modifier}Array<Ref_Types...>();")
                             with hpp.scope("else", delimiters=False):
-                                hpp(f"return std::tuple_cat(get{modifier}{group}Tuple<Ref_Types>()...);")
+                                hpp(f"return std::tuple_cat(get{group}{modifier}Tuple<Ref_Types>()...);")
 
                     def create_for_each_method(*, group: str = "") -> None:
                         with hpp.doc():
@@ -330,9 +330,9 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                             )
 
                         with hpp.scope(
-                            f"template <typename... Ref_Types, typename Ref_Fun> static constexpr void ForEach{modifier}{group}Field(Ref_Fun &&p_Fun) noexcept"
+                            f"template <typename... Ref_Types, typename Ref_Fun> static constexpr void ForEach{group}{modifier}Field(Ref_Fun &&p_Fun) noexcept"
                         ):
-                            hpp(f"const auto fields = Get{modifier}{group}Fields<Ref_Types...>();")
+                            hpp(f"const auto fields = Get{group}{modifier}Fields<Ref_Types...>();")
                             hpp(f"ForEach{modifier}Field(fields, std::forward<Ref_Fun>(p_Fun));")
 
                     with hpp.doc():
@@ -387,7 +387,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                                     f"{cnd} constexpr (Ref_Group == {modifier}Group::{group})",
                                     delimiters=False,
                                 ):
-                                    hpp(f"return Get{modifier}{group}Fields<Ref_Types...>();")
+                                    hpp(f"return Get{group}{modifier}Fields<Ref_Types...>();")
                                 cnd = "else if"
 
                             with hpp.scope(
