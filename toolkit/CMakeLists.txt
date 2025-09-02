@@ -54,7 +54,7 @@ if(TOOLKIT_ENABLE_YAML_SERIALIZATION)
 
   FetchContent_MakeAvailable(yaml-cpp)
 
-  tkit_configure_compile_link_options(yaml-cpp FORBID_SANITIZERS)
+  tkit_configure_compile_link_options(yaml-cpp)
   list(APPEND SOURCES tkit/serialization/yaml/codec.cpp)
 endif()
 
@@ -94,14 +94,14 @@ if(UNIX AND NOT APPLE)
 
   FetchContent_MakeAvailable(fmt)
 
-  tkit_configure_compile_link_options(fmt FORBID_SANITIZERS)
+  tkit_configure_compile_link_options(fmt)
   target_link_libraries(toolkit PUBLIC fmt::fmt)
 endif()
 
 function(configure_tracy target)
   if(MSVC)
     tkit_configure_compile_link_options(${target} COMPILER_FLAGS /wd4996 CONFIG
-                                        Dist FORBID_SANITIZERS)
+                                        Dist)
   elseif(APPLE)
     tkit_configure_compile_link_options(
       ${target}
@@ -110,8 +110,7 @@ function(configure_tracy target)
       -Wno-deprecated-declarations
       -Wno-deprecated-anon-enum-enum-conversion
       CONFIG
-      Dist
-      FORBID_SANITIZERS)
+      Dist)
   else()
     tkit_configure_compile_link_options(
       ${target}
@@ -120,8 +119,7 @@ function(configure_tracy target)
       -Wno-deprecated-declarations
       -Wno-deprecated-enum-enum-conversion
       CONFIG
-      Dist
-      FORBID_SANITIZERS)
+      Dist)
   endif()
 endfunction()
 
