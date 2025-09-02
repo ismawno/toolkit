@@ -26,22 +26,21 @@ void ThreadPool::drainTasks(const u32 p_WorkerIndex, const u32 p_Workers) noexce
     Worker &myself = m_Workers[p_WorkerIndex];
 
     using Node = MpmcStack<ITask *>::Node;
-    const Node *freshTasks = myself.Inbox.Claim();
+    Node *taskTail = myself.Inbox.Acquire();
 
-    if (freshTasks)
+    if (taskTail)
     {
-        while (freshTasks->Next)
+        Node *taskHead = taskTail;
+        while (taskTail->Next)
         {
-            ITask *task = freshTasks->Value;
+            ITask *task = taskTail->Value;
             myself.Queue.PushBack(task);
-
-            const Node *next = freshTasks->Next;
-            myself.Inbox.DestroyNode(freshTasks);
-            freshTasks = next;
+            taskTail = taskTail->Next;
         }
-        ITask *task = freshTasks->Value;
+        ITask *task = taskTail->Value;
         (*task)();
-        myself.Inbox.DestroyNode(freshTasks);
+
+        myself.Inbox.Reclaim(taskHead, taskTail);
         myself.TaskCount.fetch_sub(1, std::memory_order_relaxed);
     }
 

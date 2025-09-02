@@ -62,28 +62,30 @@ TEST_CASE("MpmcStack: single-thread owner push/claim/recycle", "[MpmcStack]")
     g_Constructions.store(0, std::memory_order_relaxed);
     g_Destructions.store(0, std::memory_order_relaxed);
 
-    MpmcStack<STTrackable> stack{};
-    constexpr u32 elements = 1000;
-    using Node = MpmcStack<STTrackable>::Node;
-
-    for (u32 i = 0; i < elements; ++i)
-        stack.Push(i);
-
-    REQUIRE(g_Constructions.load(std::memory_order_relaxed) == elements);
-    REQUIRE(g_Destructions.load(std::memory_order_relaxed) == 0);
-
-    const Node *nodes = stack.Claim();
-    const Node *node = nodes;
-
-    for (u32 i = 0; i < elements; ++i)
     {
-        REQUIRE(node);
-        REQUIRE(node->Value.Value == elements - 1 - i);
-        node = node->Next;
-    }
-    REQUIRE(!node);
+        MpmcStack<STTrackable> stack{};
+        constexpr u32 elements = 1000;
+        using Node = MpmcStack<STTrackable>::Node;
 
-    stack.DestroyNodes(nodes);
+        for (u32 i = 0; i < elements; ++i)
+            stack.Push(i);
+
+        REQUIRE(g_Constructions.load(std::memory_order_relaxed) == elements);
+        REQUIRE(g_Destructions.load(std::memory_order_relaxed) == 0);
+
+        Node *nodes = stack.Acquire();
+        const Node *node = nodes;
+
+        for (u32 i = 0; i < elements; ++i)
+        {
+            REQUIRE(node);
+            REQUIRE(node->Value.Value == elements - 1 - i);
+            node = node->Next;
+        }
+        REQUIRE(!node);
+
+        stack.Reclaim(nodes);
+    }
 
     REQUIRE(g_Destructions.load(std::memory_order_relaxed) == g_Constructions.load(std::memory_order_relaxed));
 }
@@ -92,34 +94,37 @@ TEST_CASE("MpmcStack: single-thread owner push many/claim/recycle", "[MpmcStack]
     g_Constructions.store(0, std::memory_order_relaxed);
     g_Destructions.store(0, std::memory_order_relaxed);
 
-    MpmcStack<STTrackable> stack{};
-    constexpr u32 elements = 1000;
-    using Node = MpmcStack<STTrackable>::Node;
-
-    Node *head = stack.CreateNode(0);
-    Node *tail = head;
-    for (u32 i = 0; i < elements - 1; ++i)
     {
-        Node *prev = tail;
-        tail = stack.CreateNode(i + 1);
-        prev->Next = tail;
+        MpmcStack<STTrackable> stack{};
+        constexpr u32 elements = 1000;
+        using Node = MpmcStack<STTrackable>::Node;
+
+        Node *head = stack.CreateNode(0u);
+        Node *tail = head;
+        for (u32 i = 0; i < elements - 1; ++i)
+        {
+            Node *prev = tail;
+            tail = stack.CreateNode(i + 1);
+            prev->Next = tail;
+        }
+
+        stack.Push(head, tail);
+        REQUIRE(g_Constructions.load(std::memory_order_relaxed) == elements);
+
+        Node *nodes = stack.Acquire();
+        const Node *node = nodes;
+
+        for (u32 i = 0; i < elements; ++i)
+        {
+            REQUIRE(node);
+            REQUIRE(node->Value.Value == i);
+            node = node->Next;
+        }
+        REQUIRE(!node);
+
+        stack.Reclaim(nodes);
     }
 
-    stack.Push(head, tail);
-    REQUIRE(g_Constructions.load(std::memory_order_relaxed) == elements);
-
-    const Node *nodes = stack.Claim();
-    const Node *node = nodes;
-
-    for (u32 i = 0; i < elements; ++i)
-    {
-        REQUIRE(node);
-        REQUIRE(node->Value.Value == i);
-        node = node->Next;
-    }
-    REQUIRE(!node);
-
-    stack.DestroyNodes(nodes);
     REQUIRE(g_Destructions.load(std::memory_order_relaxed) == g_Constructions.load(std::memory_order_relaxed));
 }
 
@@ -151,7 +156,7 @@ TEST_CASE("MpmcStack: multi-thread owner push/claim/recycle", "[MpmcStack]")
             for (;;)
             {
                 const u32 s = signal.load(std::memory_order_acquire);
-                const Node *nodes = stack.Claim();
+                const Node *nodes = stack.Acquire();
                 while (nodes)
                 {
                     const Node *node = nodes;
@@ -212,7 +217,7 @@ TEST_CASE("MpmcStack: multi-thread owner many push/claim/recycle", "[MpmcStack]"
             for (;;)
             {
                 const u32 s = signal.load(std::memory_order_acquire);
-                const Node *nodes = stack.Claim();
+                const Node *nodes = stack.Acquire();
                 while (nodes)
                 {
                     const Node *node = nodes;
