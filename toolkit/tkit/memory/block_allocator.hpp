@@ -7,9 +7,7 @@
 
 #include "tkit/utils/non_copyable.hpp"
 #include "tkit/memory/memory.hpp"
-#include "tkit/profiling/macros.hpp"
 #include "tkit/utils/logging.hpp"
-#include <mutex>
 
 namespace TKit
 {
@@ -165,77 +163,4 @@ class BlockAllocator
     bool m_Provided;
 };
 
-namespace Detail
-{
-// This may cause problems for static objects allocated with this allocator !!! As the order of destruction is not
-// guaranteed, the allocator may be destroyed before the objects allocated with it
-template <typename T, usize N> BlockAllocator &GetBlockAllocatorInstance() noexcept
-{
-    static BlockAllocator alloc = BlockAllocator::CreateFromType<T>(N);
-    return alloc;
-}
-
-template <typename T, usize N> auto &GetBlockAllocatorMutex() noexcept
-{
-    static TKIT_PROFILE_DECLARE_MUTEX(std::mutex, mtx);
-    return mtx;
-}
-} // namespace Detail
-
 } // namespace TKit
-
-#define TKIT_BLOCK_ALLOCATED_CONCURRENT(p_ClassName, p_N)                                                              \
-    static void *operator new([[maybe_unused]] size_t p_Size)                                                          \
-    {                                                                                                                  \
-        auto &mtx = TKit::Detail::GetBlockAllocatorMutex<p_ClassName, p_N>();                                          \
-        std::scoped_lock lock{mtx};                                                                                    \
-        TKIT_ASSERT(p_Size == sizeof(p_ClassName), "[TOOLKIT][BLOCK-ALLOC] Trying to block allocate a derived class "  \
-                                                   "from a base class overloaded new/delete");                         \
-        TKIT_PROFILE_MARK_LOCK(mtx);                                                                                   \
-        return TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Allocate();                                 \
-    }                                                                                                                  \
-    static void operator delete(void *p_Ptr)                                                                           \
-    {                                                                                                                  \
-        auto &mtx = TKit::Detail::GetBlockAllocatorMutex<p_ClassName, p_N>();                                          \
-        std::scoped_lock lock{mtx};                                                                                    \
-        TKIT_PROFILE_MARK_LOCK(mtx);                                                                                   \
-        TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Deallocate(static_cast<p_ClassName *>(p_Ptr));     \
-    }                                                                                                                  \
-    static void *operator new([[maybe_unused]] size_t p_Size, const std::nothrow_t &)                                  \
-    {                                                                                                                  \
-        auto &mtx = TKit::Detail::GetBlockAllocatorMutex<p_ClassName, p_N>();                                          \
-        std::scoped_lock lock{mtx};                                                                                    \
-        TKIT_ASSERT(p_Size == sizeof(p_ClassName), "[TOOLKIT][BLOCK-ALLOC] Trying to block allocate a derived class "  \
-                                                   "from a base class overloaded new/delete");                         \
-        TKIT_PROFILE_MARK_LOCK(mtx);                                                                                   \
-        return TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Allocate();                                 \
-    }                                                                                                                  \
-    static void operator delete(void *p_Ptr, const std::nothrow_t &)                                                   \
-    {                                                                                                                  \
-        auto &mtx = TKit::Detail::GetBlockAllocatorMutex<p_ClassName, p_N>();                                          \
-        std::scoped_lock lock{mtx};                                                                                    \
-        TKIT_PROFILE_MARK_LOCK(mtx);                                                                                   \
-        TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Deallocate(static_cast<p_ClassName *>(p_Ptr));     \
-    }
-
-#define TKIT_BLOCK_ALLOCATED_SERIAL(p_ClassName, p_N)                                                                  \
-    static void *operator new([[maybe_unused]] size_t p_Size)                                                          \
-    {                                                                                                                  \
-        TKIT_ASSERT(p_Size == sizeof(p_ClassName), "[TOOLKIT][BLOCK-ALLOC] Trying to block allocate a derived class "  \
-                                                   "from a base class overloaded new/delete");                         \
-        return TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Allocate();                                 \
-    }                                                                                                                  \
-    static void operator delete(void *p_Ptr)                                                                           \
-    {                                                                                                                  \
-        TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Deallocate(static_cast<p_ClassName *>(p_Ptr));     \
-    }                                                                                                                  \
-    static void *operator new([[maybe_unused]] size_t p_Size, const std::nothrow_t &)                                  \
-    {                                                                                                                  \
-        TKIT_ASSERT(p_Size == sizeof(p_ClassName), "[TOOLKIT][BLOCK-ALLOC] Trying to block allocate a derived class "  \
-                                                   "from a base class overloaded new/delete");                         \
-        return TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Allocate();                                 \
-    }                                                                                                                  \
-    static void operator delete(void *p_Ptr, const std::nothrow_t &)                                                   \
-    {                                                                                                                  \
-        TKit::Detail::GetBlockAllocatorInstance<p_ClassName, p_N>().Deallocate(static_cast<p_ClassName *>(p_Ptr));     \
-    }
