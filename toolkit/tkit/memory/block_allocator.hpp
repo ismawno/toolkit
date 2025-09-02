@@ -30,7 +30,7 @@ namespace TKit
  * the user to ensure that all memory is freed at that point, especially when dealing with non-trivial destructors.
  *
  * This allocator holds a single memory buffer whose size is provided at construction and cannot be
- * modified afterwards. Attempting to allocate more memory than the buffer size will result in an error.
+ * modified afterwards. Attempting to allocate more memory than the buffer size will result in udefined behaviour.
  *
  * Some performance numbers (measured on my macOS M1):
  * - Allocating 10000 elements of 128 bytes in 0.035 ms (3.5 ns per allocation)
@@ -70,7 +70,8 @@ class BlockAllocator
     /**
      * @brief Allocate a new block of memory into the block allocator.
      *
-     * This allocation has a fixed size. Attempting to use more memory than the block size will result in an error.
+     * This allocation has a fixed size. Attempting to use more memory than the block size will result in udefined
+     * behaviour.
      *
      * @return A pointer to the allocated block.
      */
@@ -79,7 +80,8 @@ class BlockAllocator
     /**
      * @brief Allocate a new block of memory into the block allocator.
      *
-     * This allocation has a fixed size. Attempting to use more memory than the block size will result in an error.
+     * This allocation has a fixed size. Attempting to use more memory than the block size will result in udefined
+     * behaviour.
      *
      * @tparam T The type of object to allocate.
      * @return A pointer to the allocated block.
