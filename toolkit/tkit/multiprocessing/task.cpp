@@ -7,12 +7,6 @@
 
 namespace TKit
 {
-template <typename T> BlockAllocator &getAllocator() noexcept
-{
-    thread_local BlockAllocator allocator = BlockAllocator::CreateFromType<T>(TKIT_TASK_ALLOCATOR_CAPACITY);
-    return allocator;
-}
-
 bool ITask::IsFinished(const std::memory_order p_Order) const noexcept
 {
     return m_Finished.test(p_Order);

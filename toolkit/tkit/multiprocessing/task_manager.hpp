@@ -136,7 +136,7 @@ class TKIT_API ITaskManager
     static usize GetThreadIndex() noexcept;
 
   protected:
-    static inline thread_local usize s_ThreadIndex = 0;
+    static inline thread_local usize t_ThreadIndex = 0;
 
   private:
     usize m_WorkerCount;

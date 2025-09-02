@@ -140,12 +140,12 @@ template <typename T = void> class Task final : public ITask
         requires std::invocable<Callable, Args...>
     static Task *Create(Callable &&p_Callable, Args &&...p_Args) noexcept
     {
-        return s_Allocator.Create<Task>(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
+        return t_Allocator.Create<Task>(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
     }
 
     static void Destroy(Task *p_Task) noexcept
     {
-        s_Allocator.Destroy(p_Task);
+        t_Allocator.Destroy(p_Task);
     }
 
     /**
@@ -176,7 +176,7 @@ template <typename T = void> class Task final : public ITask
   private:
     std::function<T()> m_Function = nullptr;
     T m_Result{};
-    static inline thread_local BlockAllocator s_Allocator =
+    static inline thread_local BlockAllocator t_Allocator =
         BlockAllocator::CreateFromType<Task>(TKIT_TASK_ALLOCATOR_CAPACITY);
 };
 
@@ -204,7 +204,7 @@ template <> class TKIT_API Task<void> final : public ITask
         requires std::invocable<Callable, Args...>
     static Task *Create(Callable &&p_Callable, Args &&...p_Args) noexcept
     {
-        return s_Allocator.Create<Task>(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
+        return t_Allocator.Create<Task>(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
     }
 
     /**
@@ -216,7 +216,7 @@ template <> class TKIT_API Task<void> final : public ITask
      */
     static void Destroy(Task *p_Task) noexcept
     {
-        s_Allocator.Destroy(p_Task);
+        t_Allocator.Destroy(p_Task);
     }
 
     template <typename Callable, typename... Args>
@@ -240,7 +240,7 @@ template <> class TKIT_API Task<void> final : public ITask
 
   private:
     std::function<void()> m_Function = nullptr;
-    static inline thread_local BlockAllocator s_Allocator =
+    static inline thread_local BlockAllocator t_Allocator =
         BlockAllocator::CreateFromType<Task>(TKIT_TASK_ALLOCATOR_CAPACITY);
 };
 } // namespace TKit

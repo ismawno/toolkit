@@ -69,30 +69,30 @@ constexpr const char *Format() noexcept
 #endif
 
 #ifdef TKIT_ENABLE_INFO_LOGS
-inline thread_local bool DisabledInfoLogs = false;
+inline thread_local bool t_DisabledInfoLogs = false;
 #endif
 
 #ifdef TKIT_ENABLE_WARNING_LOGS
-inline thread_local bool DisabledWarningLogs = false;
+inline thread_local bool t_DisabledWarningLogs = false;
 #endif
 
 #ifdef TKIT_ENABLE_ASSERTS
-inline thread_local bool DisabledAsserts = false;
+inline thread_local bool t_DisabledAsserts = false;
 #endif
 } // namespace TKit::Detail
 
 #ifdef TKIT_ENABLE_INFO_LOGS
 #    define TKIT_LOG_INFO(...)                                                                                         \
-        if (!TKit::Detail::DisabledInfoLogs)                                                                           \
+        if (!TKit::Detail::t_DisabledInfoLogs)                                                                         \
         TKit::Detail::LogMessage("INFO", __FILE__, TKit::Limits<i32>::max(), TKIT_LOG_COLOR_GREEN, false,              \
                                  TKIT_FORMAT(__VA_ARGS__))
 #    define TKIT_LOG_INFO_IF(p_Condition, ...)                                                                         \
-        if ((p_Condition) && !TKit::Detail::DisabledInfoLogs)                                                          \
+        if ((p_Condition) && !TKit::Detail::t_DisabledInfoLogs)                                                        \
         TKit::Detail::LogMessage("INFO", __FILE__, TKit::Limits<i32>::max(), TKIT_LOG_COLOR_GREEN, false,              \
                                  TKIT_FORMAT(__VA_ARGS__))
 
-#    define TKIT_IGNORE_INFO_LOGS_PUSH() TKit::Detail::DisabledInfoLogs = true
-#    define TKIT_IGNORE_INFO_LOGS_POP() TKit::Detail::DisabledInfoLogs = false
+#    define TKIT_IGNORE_INFO_LOGS_PUSH() TKit::Detail::t_DisabledInfoLogs = true
+#    define TKIT_IGNORE_INFO_LOGS_POP() TKit::Detail::t_DisabledInfoLogs = false
 #else
 #    define TKIT_LOG_INFO(...)
 #    define TKIT_LOG_INFO_IF(...)
@@ -103,14 +103,14 @@ inline thread_local bool DisabledAsserts = false;
 
 #ifdef TKIT_ENABLE_WARNING_LOGS
 #    define TKIT_LOG_WARNING(...)                                                                                      \
-        if (!TKit::Detail::DisabledWarningLogs)                                                                        \
+        if (!TKit::Detail::t_DisabledWarningLogs)                                                                      \
         TKit::Detail::LogMessage("WARNING", __FILE__, __LINE__, TKIT_LOG_COLOR_YELLOW, false, TKIT_FORMAT(__VA_ARGS__))
 #    define TKIT_LOG_WARNING_IF(p_Condition, ...)                                                                      \
-        if ((p_Condition) && !TKit::Detail::DisabledWarningLogs)                                                       \
+        if ((p_Condition) && !TKit::Detail::t_DisabledWarningLogs)                                                     \
         TKit::Detail::LogMessage("WARNING", __FILE__, __LINE__, TKIT_LOG_COLOR_YELLOW, false, TKIT_FORMAT(__VA_ARGS__))
 
-#    define TKIT_IGNORE_WARNING_LOGS_PUSH() TKit::Detail::DisabledWarningLogs = true
-#    define TKIT_IGNORE_WARNING_LOGS_POP() TKit::Detail::DisabledWarningLogs = false
+#    define TKIT_IGNORE_WARNING_LOGS_PUSH() TKit::Detail::t_DisabledWarningLogs = true
+#    define TKIT_IGNORE_WARNING_LOGS_POP() TKit::Detail::t_DisabledWarningLogs = false
 #else
 #    define TKIT_LOG_WARNING(...)
 #    define TKIT_LOG_WARNING_IF(...)
@@ -122,11 +122,11 @@ inline thread_local bool DisabledAsserts = false;
 #ifdef TKIT_ENABLE_ASSERTS
 
 #    define TKIT_ERROR(...)                                                                                            \
-        if (!TKit::Detail::DisabledAsserts)                                                                            \
+        if (!TKit::Detail::t_DisabledAsserts)                                                                          \
         TKit::Detail::LogMessage("ERROR", __FILE__, __LINE__, TKIT_LOG_COLOR_RED, true,                                \
                                  TKit::Detail::Format(__VA_ARGS__))
 #    define TKIT_ASSERT(p_Condition, ...)                                                                              \
-        if (!(p_Condition) && !TKit::Detail::DisabledAsserts)                                                          \
+        if (!(p_Condition) && !TKit::Detail::t_DisabledAsserts)                                                        \
         TKit::Detail::LogMessage("ERROR", __FILE__, __LINE__, TKIT_LOG_COLOR_RED, true,                                \
                                  TKit::Detail::Format(__VA_ARGS__))
 
@@ -143,8 +143,8 @@ inline thread_local bool DisabledAsserts = false;
 #    define TKIT_LOG_WARNING_IF_NOT_RETURNS(expression, expected, ...)                                                 \
         TKIT_LOG_WARNING_IF((expression) != (expected), __VA_ARGS__)
 
-#    define TKIT_IGNORE_ASSERTS_PUSH() TKit::Detail::DisabledAsserts = true
-#    define TKIT_IGNORE_ASSERTS_POP() TKit::Detail::DisabledAsserts = false
+#    define TKIT_IGNORE_ASSERTS_PUSH() TKit::Detail::t_DisabledAsserts = true
+#    define TKIT_IGNORE_ASSERTS_POP() TKit::Detail::t_DisabledAsserts = false
 #else
 #    define TKIT_ERROR(...)
 #    define TKIT_ASSERT(...)

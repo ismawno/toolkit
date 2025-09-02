@@ -3,7 +3,7 @@
 
 namespace TKit
 {
-thread_local u32 s_Victim;
+thread_local u32 t_Victim;
 static u32 cheapRand(const u32 p_Workers) noexcept
 {
     thread_local u32 seed = 0x9e3779b9u ^ ITaskManager::GetThreadIndex();
@@ -18,7 +18,7 @@ static void shuffleVictim(const u32 p_WorkerIndex, const u32 p_Workers) noexcept
     u32 victim = cheapRand(p_Workers);
     while (victim == p_WorkerIndex)
         victim = cheapRand(p_Workers);
-    s_Victim = victim;
+    t_Victim = victim;
 }
 
 void ThreadPool::drainTasks(const u32 p_WorkerIndex, const u32 p_Workers) noexcept
@@ -52,7 +52,7 @@ void ThreadPool::drainTasks(const u32 p_WorkerIndex, const u32 p_Workers) noexce
         myself.TaskCount.fetch_sub(1, std::memory_order_relaxed);
     }
 
-    const u32 victim = s_Victim;
+    const u32 victim = t_Victim;
     if (const auto stolen = m_Workers[victim].Queue.PopFront())
     {
         m_Workers[victim].TaskCount.fetch_sub(1, std::memory_order_relaxed);
@@ -75,7 +75,7 @@ ThreadPool::ThreadPool(const usize p_WorkerCount) : ITaskManager(p_WorkerCount)
         Topology::PinThread(m_Handle, p_ThreadIndex);
         Topology::SetThreadName(p_ThreadIndex);
 
-        s_ThreadIndex = p_ThreadIndex;
+        t_ThreadIndex = p_ThreadIndex;
         const u32 workerIndex = p_ThreadIndex - 1;
 
         m_ReadySignal.wait(false, std::memory_order_acquire);
@@ -202,7 +202,7 @@ void ThreadPool::SubmitTasks(const Span<ITask *const> p_Tasks) noexcept
 
 void ThreadPool::WaitUntilFinished(ITask *p_Task) noexcept
 {
-    if (s_ThreadIndex == 0)
+    if (t_ThreadIndex == 0)
     {
         p_Task->WaitUntilFinished();
         return;
@@ -217,7 +217,7 @@ void ThreadPool::WaitUntilFinished(ITask *p_Task) noexcept
 
 usize ThreadPool::GetWorkerIndex() noexcept
 {
-    return s_ThreadIndex - 1;
+    return t_ThreadIndex - 1;
 }
 
 } // namespace TKit

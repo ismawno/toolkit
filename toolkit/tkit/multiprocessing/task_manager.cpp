@@ -16,7 +16,7 @@ usize ITaskManager::GetWorkerCount() const noexcept
 
 usize ITaskManager::GetThreadIndex() noexcept
 {
-    return s_ThreadIndex;
+    return t_ThreadIndex;
 }
 
 TaskManager::TaskManager() noexcept : ITaskManager(1)
