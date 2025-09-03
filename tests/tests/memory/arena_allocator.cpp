@@ -1,6 +1,10 @@
 #include "tkit/memory/arena_allocator.hpp"
 #include "tkit/utils/logging.hpp"
+TKIT_COMPILER_WARNING_IGNORE_PUSH()
+TKIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
+TKIT_GCC_WARNING_IGNORE("-Wunused-parameter")
 #include <catch2/catch_all.hpp>
+TKIT_COMPILER_WARNING_IGNORE_POP()
 #include <cstddef>
 #include <vector>
 
