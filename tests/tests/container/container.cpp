@@ -48,11 +48,11 @@ struct MoveOnly
     }
     MoveOnly(const MoveOnly &) = delete;
     MoveOnly &operator=(const MoveOnly &) = delete;
-    MoveOnly(MoveOnly &&p_Other) noexcept : Value(p_Other.Value)
+    MoveOnly(MoveOnly &&p_Other) : Value(p_Other.Value)
     {
         p_Other.Value = Limits<u32>::max();
     }
-    MoveOnly &operator=(MoveOnly &&p_Other) noexcept
+    MoveOnly &operator=(MoveOnly &&p_Other)
     {
         Value = p_Other.Value;
         p_Other.Value = Limits<u32>::max();

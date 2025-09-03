@@ -14,7 +14,7 @@
 namespace TKit::Detail
 {
 void LogMessage(const char *p_Level, const std::string_view p_File, const i32 p_Line, const char *p_Color,
-                const bool p_Crash, std::string_view p_Message) noexcept
+                const bool p_Crash, std::string_view p_Message)
 {
     if (p_Message.empty() && p_Crash)
         p_Message = "Assertion failed";

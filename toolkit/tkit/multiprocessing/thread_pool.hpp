@@ -67,19 +67,19 @@ class TKIT_API ThreadPool final : public ITaskManager
     };
 
     explicit ThreadPool(usize p_WokerCount);
-    ~ThreadPool() noexcept override;
+    ~ThreadPool() override;
 
-    void SubmitTask(ITask *p_Task) noexcept override;
-    void SubmitTasks(Span<ITask *const> p_Tasks) noexcept override;
+    void SubmitTask(ITask *p_Task) override;
+    void SubmitTasks(Span<ITask *const> p_Tasks) override;
 
-    void WaitUntilFinished(ITask *p_Task) noexcept override;
+    void WaitUntilFinished(ITask *p_Task) override;
 
     using ITaskManager::SubmitTasks;
 
-    static usize GetWorkerIndex() noexcept;
+    static usize GetWorkerIndex();
 
   private:
-    void drainTasks(u32 p_WorkerIndex, u32 p_Workers) noexcept;
+    void drainTasks(u32 p_WorkerIndex, u32 p_Workers);
 
     StaticArray<Worker, TKIT_THREAD_POOL_MAX_WORKERS> m_Workers;
     std::atomic_flag m_ReadySignal = ATOMIC_FLAG_INIT;

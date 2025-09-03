@@ -7,19 +7,19 @@ namespace TKit
 template <Hashable ID = u64> struct UUID
 {
     UUID() = default;
-    UUID(const ID p_ID) noexcept : Value(p_ID)
+    UUID(const ID p_ID) : Value(p_ID)
     {
     }
 
-    static UUID Random() noexcept
+    static UUID Random()
     {
     }
-    operator ID() const noexcept
+    operator ID() const
     {
         return Value;
     }
 
-    std::strong_ordering operator<=>(const UUID &p_Other) const noexcept = default;
+    std::strong_ordering operator<=>(const UUID &p_Other) const = default;
 
     ID Value;
 };
@@ -27,7 +27,7 @@ template <Hashable ID = u64> struct UUID
 
 template <TKit::Hashable ID> struct std::hash<TKit::UUID<ID>>
 {
-    std::size_t operator()(const TKit::UUID<ID> &p_UUID) const noexcept
+    std::size_t operator()(const TKit::UUID<ID> &p_UUID) const
     {
         return std::hash<ID>()(p_UUID.Value);
     }

@@ -5,7 +5,7 @@
 
 namespace TKit
 {
-BlockAllocator::BlockAllocator(const usize p_BufferSize, const usize p_AllocationSize, const usize p_Alignment) noexcept
+BlockAllocator::BlockAllocator(const usize p_BufferSize, const usize p_AllocationSize, const usize p_Alignment)
     : m_BufferSize(p_BufferSize), m_AllocationSize(p_AllocationSize), m_Provided(false)
 {
     TKIT_ASSERT(p_AllocationSize >= sizeof(Allocation), "The allocation size must be at least {} bytes",
@@ -23,7 +23,7 @@ BlockAllocator::BlockAllocator(const usize p_BufferSize, const usize p_Allocatio
     setupMemoryLayout();
 }
 
-BlockAllocator::BlockAllocator(void *p_Buffer, const usize p_BufferSize, const usize p_AllocationSize) noexcept
+BlockAllocator::BlockAllocator(void *p_Buffer, const usize p_BufferSize, const usize p_AllocationSize)
     : m_Buffer(static_cast<std::byte *>(p_Buffer)), m_BufferSize(p_BufferSize), m_AllocationSize(p_AllocationSize),
       m_Provided(true)
 {
@@ -32,12 +32,12 @@ BlockAllocator::BlockAllocator(void *p_Buffer, const usize p_BufferSize, const u
     setupMemoryLayout();
 }
 
-BlockAllocator::~BlockAllocator() noexcept
+BlockAllocator::~BlockAllocator()
 {
     deallocateBuffer();
 }
 
-BlockAllocator::BlockAllocator(BlockAllocator &&p_Other) noexcept
+BlockAllocator::BlockAllocator(BlockAllocator &&p_Other)
     : m_Buffer(p_Other.m_Buffer), m_FreeList(p_Other.m_FreeList), m_Allocations(p_Other.m_Allocations),
       m_Provided(p_Other.m_Provided)
 {
@@ -49,7 +49,7 @@ BlockAllocator::BlockAllocator(BlockAllocator &&p_Other) noexcept
     m_Provided = false;
 }
 
-BlockAllocator &BlockAllocator::operator=(BlockAllocator &&p_Other) noexcept
+BlockAllocator &BlockAllocator::operator=(BlockAllocator &&p_Other)
 {
     if (this != &p_Other)
     {
@@ -69,7 +69,7 @@ BlockAllocator &BlockAllocator::operator=(BlockAllocator &&p_Other) noexcept
     return *this;
 }
 
-void *BlockAllocator::Allocate() noexcept
+void *BlockAllocator::Allocate()
 {
     TKIT_ASSERT(m_FreeList, "The allocator is full");
 
@@ -79,7 +79,7 @@ void *BlockAllocator::Allocate() noexcept
     return alloc;
 }
 
-void BlockAllocator::Deallocate(void *p_Ptr) noexcept
+void BlockAllocator::Deallocate(void *p_Ptr)
 {
     TKIT_ASSERT(!IsEmpty(), "Cannot deallocate from an empty allocator");
 
@@ -89,7 +89,7 @@ void BlockAllocator::Deallocate(void *p_Ptr) noexcept
     m_FreeList = alloc;
 }
 
-void BlockAllocator::Reset() noexcept
+void BlockAllocator::Reset()
 {
     TKIT_ASSERT(IsEmpty(),
                 "The allocator still has active allocations. Resetting it will mangle the memory and corrupt it");
@@ -97,43 +97,43 @@ void BlockAllocator::Reset() noexcept
     setupMemoryLayout();
 }
 
-bool BlockAllocator::Belongs(const void *p_Ptr) const noexcept
+bool BlockAllocator::Belongs(const void *p_Ptr) const
 {
     const std::byte *ptr = static_cast<const std::byte *>(p_Ptr);
     return ptr >= m_Buffer && ptr < m_Buffer + m_BufferSize;
 }
-bool BlockAllocator::IsEmpty() const noexcept
+bool BlockAllocator::IsEmpty() const
 {
     return m_Allocations == 0;
 }
-bool BlockAllocator::IsFull() const noexcept
+bool BlockAllocator::IsFull() const
 {
     return m_Allocations == GetAllocationCapacityCount();
 }
 
-usize BlockAllocator::GetBufferSize() const noexcept
+usize BlockAllocator::GetBufferSize() const
 {
     return m_BufferSize;
 }
-usize BlockAllocator::GetAllocationSize() const noexcept
+usize BlockAllocator::GetAllocationSize() const
 {
     return m_AllocationSize;
 }
 
-usize BlockAllocator::GetAllocationCount() const noexcept
+usize BlockAllocator::GetAllocationCount() const
 {
     return m_Allocations;
 }
-usize BlockAllocator::GetRemainingCount() const noexcept
+usize BlockAllocator::GetRemainingCount() const
 {
     return m_BufferSize / m_AllocationSize - m_Allocations;
 }
-usize BlockAllocator::GetAllocationCapacityCount() const noexcept
+usize BlockAllocator::GetAllocationCapacityCount() const
 {
     return m_BufferSize / m_AllocationSize;
 }
 
-void BlockAllocator::setupMemoryLayout() noexcept
+void BlockAllocator::setupMemoryLayout()
 {
     const usize count = GetAllocationCapacityCount();
     m_FreeList = reinterpret_cast<Allocation *>(m_Buffer);
@@ -147,7 +147,7 @@ void BlockAllocator::setupMemoryLayout() noexcept
     }
 }
 
-void BlockAllocator::deallocateBuffer() noexcept
+void BlockAllocator::deallocateBuffer()
 {
     if (!m_Buffer || m_Provided)
         return;

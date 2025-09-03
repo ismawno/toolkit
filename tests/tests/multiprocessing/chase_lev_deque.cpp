@@ -13,7 +13,7 @@ struct DTask
     explicit DTask(u32 v) : Value(v)
     {
     }
-    bool operator==(const DTask &o) const noexcept
+    bool operator==(const DTask &o) const
     {
         return Value == o.Value;
     }

@@ -14,14 +14,14 @@ namespace TKit
 
 namespace Detail
 {
-template <typename It> usize Distance(const It p_First, const It p_Last) noexcept
+template <typename It> usize Distance(const It p_First, const It p_Last)
 {
     if constexpr (std::integral<It>)
         return static_cast<usize>(p_Last - p_First);
     else
         return static_cast<usize>(std::distance(p_First, p_Last));
 }
-template <typename It> auto CreateSpan(const It p_First, const usize p_Size) noexcept
+template <typename It> auto CreateSpan(const It p_First, const usize p_Size)
 {
     using T = NoCVRef<decltype(*p_First)>;
     if constexpr (std::is_pointer_v<It>)

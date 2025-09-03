@@ -26,10 +26,10 @@ class StaticDeque
     using ConstIterator = typename Traits::ConstIterator;
     using Tools = Container::ArrayTools<Traits>;
 
-    constexpr StaticDeque() noexcept = default;
+    constexpr StaticDeque() = default;
 
     template <typename... Args>
-    constexpr StaticDeque(const SizeType p_Size, const Args &...p_Args) noexcept : m_Size(p_Size)
+    constexpr StaticDeque(const SizeType p_Size, const Args &...p_Args) : m_Size(p_Size)
     {
         TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT][STAT-DEQUE] Size is bigger than capacity");
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
@@ -38,7 +38,7 @@ class StaticDeque
         m_Back = m_Size;
     }
 
-    template <std::input_iterator It> constexpr StaticDeque(const It p_Begin, const It p_End) noexcept
+    template <std::input_iterator It> constexpr StaticDeque(const It p_Begin, const It p_End)
     {
         m_Size = static_cast<SizeType>(std::distance(p_Begin, p_End));
         TKIT_ASSERT(m_Size <= Capacity, "[TOOLKIT][STAT-DEQUE] Size is bigger than capacity");
@@ -46,7 +46,7 @@ class StaticDeque
         m_Back = m_Size;
     }
 
-    constexpr StaticDeque(const std::initializer_list<ValueType> p_List) noexcept
+    constexpr StaticDeque(const std::initializer_list<ValueType> p_List)
         : m_Size(static_cast<SizeType>(p_List.size()))
     {
         TKIT_ASSERT(p_List.size() <= Capacity, "[TOOLKIT][STAT-DEQUE] Size is bigger than capacity");
@@ -56,7 +56,7 @@ class StaticDeque
 
     // This constructor WONT include the case M == Capacity (ie, copy constructor)
     template <SizeType M>
-    explicit(false) constexpr StaticDeque(const StaticDeque<ValueType, M, Traits> &p_Other) noexcept
+    explicit(false) constexpr StaticDeque(const StaticDeque<ValueType, M, Traits> &p_Other)
     {
         if constexpr (M > Capacity)
         {
@@ -67,7 +67,7 @@ class StaticDeque
     }
 
     // This constructor WONT include the case M == Capacity (ie, move constructor)
-    template <SizeType M> explicit(false) constexpr StaticDeque(StaticDeque<ValueType, M, Traits> &&p_Other) noexcept
+    template <SizeType M> explicit(false) constexpr StaticDeque(StaticDeque<ValueType, M, Traits> &&p_Other)
     {
         if constexpr (M > Capacity)
         {
@@ -77,25 +77,25 @@ class StaticDeque
             PushBack(p_Other.At(i));
     }
 
-    constexpr StaticDeque(const StaticDeque &p_Other) noexcept
+    constexpr StaticDeque(const StaticDeque &p_Other)
     {
         for (u32 i = p_Other.GetFrontIndex(), j = 0; j < p_Other.GetSize(); i = NextIndex(i), ++j)
             PushBack(p_Other.At(i));
     }
 
-    constexpr StaticDeque(StaticDeque &&p_Other) noexcept
+    constexpr StaticDeque(StaticDeque &&p_Other)
     {
         for (u32 i = p_Other.GetFrontIndex(), j = 0; j < p_Other.GetSize(); i = NextIndex(i), ++j)
             PushBack(p_Other.At(i));
     }
 
-    ~StaticDeque() noexcept
+    ~StaticDeque()
     {
         Clear();
     }
 
     // Same goes for assignment. It wont include `M == Capacity`, and use the default assignment operator
-    template <SizeType M> constexpr StaticDeque &operator=(const StaticDeque<ValueType, M, Traits> &p_Other) noexcept
+    template <SizeType M> constexpr StaticDeque &operator=(const StaticDeque<ValueType, M, Traits> &p_Other)
     {
         if constexpr (M == Capacity)
         {
@@ -112,7 +112,7 @@ class StaticDeque
         return *this;
     }
     // Same goes for assignment. It wont include `M == Capacity`, and use the default assignment operator
-    template <SizeType M> constexpr StaticDeque &operator=(StaticDeque<ValueType, M, Traits> &&p_Other) noexcept
+    template <SizeType M> constexpr StaticDeque &operator=(StaticDeque<ValueType, M, Traits> &&p_Other)
     {
         if constexpr (M == Capacity)
         {
@@ -130,7 +130,7 @@ class StaticDeque
         return *this;
     }
 
-    constexpr StaticDeque &operator=(const StaticDeque &p_Other) noexcept
+    constexpr StaticDeque &operator=(const StaticDeque &p_Other)
     {
         if (this == &p_Other)
             return *this;
@@ -141,7 +141,7 @@ class StaticDeque
         return *this;
     }
 
-    constexpr StaticDeque &operator=(StaticDeque &&p_Other) noexcept
+    constexpr StaticDeque &operator=(StaticDeque &&p_Other)
     {
         if (this == &p_Other)
             return *this;
@@ -162,7 +162,7 @@ class StaticDeque
      */
     template <typename... Args>
         requires std::constructible_from<ValueType, Args...>
-    constexpr ValueType &PushFront(Args &&...p_Args) noexcept
+    constexpr ValueType &PushFront(Args &&...p_Args)
     {
         TKIT_ASSERT(!IsFull(), "[TOOLKIT][STAT-DEQUE] Container is already full");
         ValueType &val = *Memory::ConstructFromIterator(GetData() + m_Front, std::forward<Args>(p_Args)...);
@@ -181,7 +181,7 @@ class StaticDeque
      */
     template <typename... Args>
         requires std::constructible_from<ValueType, Args...>
-    constexpr ValueType &PushBack(Args &&...p_Args) noexcept
+    constexpr ValueType &PushBack(Args &&...p_Args)
     {
         TKIT_ASSERT(!IsFull(), "[TOOLKIT][STAT-DEQUE] Container is already full");
         ValueType &val = *Memory::ConstructFromIterator(GetData() + m_Back, std::forward<Args>(p_Args)...);
@@ -198,7 +198,7 @@ class StaticDeque
      * @param p_Args The arguments to pass to the constructor of `T`.
      * @return A reference to the newly constructed element.
      */
-    constexpr void PopFront() noexcept
+    constexpr void PopFront()
     {
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][STAT-DEQUE] Container is already empty");
         m_Front = NextIndex(m_Front);
@@ -214,7 +214,7 @@ class StaticDeque
      * @param p_Args The arguments to pass to the constructor of `T`.
      * @return A reference to the newly constructed element.
      */
-    constexpr void PopBack() noexcept
+    constexpr void PopBack()
     {
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][STAT-DEQUE] Container is already empty");
         m_Back = PrevIndex(m_Back);
@@ -229,7 +229,7 @@ class StaticDeque
      * The elements are destroyed if not trivially destructible. The memory is not deallocated.
      *
      */
-    constexpr void Clear() noexcept
+    constexpr void Clear()
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
             while (!IsEmpty())
@@ -242,11 +242,11 @@ class StaticDeque
         }
     }
 
-    constexpr const ValueType *GetData() const noexcept
+    constexpr const ValueType *GetData() const
     {
         return reinterpret_cast<const ValueType *>(&m_Data[0]);
     }
-    constexpr ValueType *GetData() noexcept
+    constexpr ValueType *GetData()
     {
         return reinterpret_cast<ValueType *>(&m_Data[0]);
     }
@@ -260,7 +260,7 @@ class StaticDeque
      * @param p_Index The index of the element.
      * @return A reference to the element.
      */
-    constexpr const ValueType &At(const SizeType p_Index) const noexcept
+    constexpr const ValueType &At(const SizeType p_Index) const
     {
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][STAT-DEQUE] Cannot index into an empty queue");
         TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT][STAT-DEQUE] Index is out of bounds");
@@ -275,7 +275,7 @@ class StaticDeque
      * @param p_Index The index of the element.
      * @return A reference to the element.
      */
-    constexpr ValueType &At(const SizeType p_Index) noexcept
+    constexpr ValueType &At(const SizeType p_Index)
     {
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][STAT-DEQUE] Cannot index into an empty queue");
         TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT][STAT-DEQUE] Index is out of bounds");
@@ -291,7 +291,7 @@ class StaticDeque
      * @param p_Index The index of the element.
      * @return A reference to the element.
      */
-    constexpr const ValueType &operator[](const SizeType p_Index) const noexcept
+    constexpr const ValueType &operator[](const SizeType p_Index) const
     {
         return At(p_Index);
     }
@@ -305,7 +305,7 @@ class StaticDeque
      * @param p_Index The index of the element.
      * @return A reference to the element.
      */
-    constexpr ValueType &operator[](const SizeType p_Index) noexcept
+    constexpr ValueType &operator[](const SizeType p_Index)
     {
         return At(p_Index);
     }
@@ -316,7 +316,7 @@ class StaticDeque
      * Useful as an iteration starting point.
      *
      */
-    constexpr SizeType GetFrontIndex() const noexcept
+    constexpr SizeType GetFrontIndex() const
     {
         return NextIndex(m_Front);
     }
@@ -326,7 +326,7 @@ class StaticDeque
      * Useful as a reverse iteration starting point.
      *
      */
-    constexpr SizeType GetBackIndex() const noexcept
+    constexpr SizeType GetBackIndex() const
     {
         return PrevIndex(m_Back);
     }
@@ -336,7 +336,7 @@ class StaticDeque
      * Useful as a reverse iteration stop condition.
      *
      */
-    constexpr SizeType GetFrontEnd() const noexcept
+    constexpr SizeType GetFrontEnd() const
     {
         return m_Front;
     }
@@ -346,7 +346,7 @@ class StaticDeque
      * Useful as an iteration stop condition.
      *
      */
-    constexpr SizeType GetBackEnd() const noexcept
+    constexpr SizeType GetBackEnd() const
     {
         return m_Back;
     }
@@ -358,7 +358,7 @@ class StaticDeque
      *
      * @return The next index.
      */
-    constexpr static SizeType NextIndex(const SizeType p_Index) noexcept
+    constexpr static SizeType NextIndex(const SizeType p_Index)
     {
         if (p_Index == Capacity - 1)
             return 0;
@@ -372,46 +372,46 @@ class StaticDeque
      *
      * @return The previous index.
      */
-    constexpr static SizeType PrevIndex(const SizeType p_Index) noexcept
+    constexpr static SizeType PrevIndex(const SizeType p_Index)
     {
         if (p_Index == 0)
             return Capacity - 1;
         return p_Index - 1;
     }
 
-    constexpr const ValueType &GetFront() const noexcept
+    constexpr const ValueType &GetFront() const
     {
         return At(GetFrontIndex());
     }
-    constexpr const ValueType &GetBack() const noexcept
+    constexpr const ValueType &GetBack() const
     {
         return At(GetBackIndex());
     }
-    constexpr ValueType &GetFront() noexcept
+    constexpr ValueType &GetFront()
     {
         return At(GetFrontIndex());
     }
-    constexpr ValueType &GetBack() noexcept
+    constexpr ValueType &GetBack()
     {
         return At(GetBackIndex());
     }
 
-    constexpr SizeType GetSize() const noexcept
+    constexpr SizeType GetSize() const
     {
         return m_Size;
     }
 
-    constexpr SizeType GetCapacity() const noexcept
+    constexpr SizeType GetCapacity() const
     {
         return Capacity;
     }
 
-    constexpr bool IsEmpty() const noexcept
+    constexpr bool IsEmpty() const
     {
         return m_Size == 0;
     }
 
-    constexpr bool IsFull() const noexcept
+    constexpr bool IsFull() const
     {
         return m_Size >= Capacity;
     }

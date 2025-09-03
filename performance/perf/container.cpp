@@ -11,33 +11,33 @@ namespace TKit::Perf
 {
 struct Example
 {
-    Example() noexcept
+    Example()
     {
         Element = new u32;
     }
-    ~Example() noexcept
+    ~Example()
     {
         delete Element;
     }
 
-    Example(const Example &p_Other) noexcept
+    Example(const Example &p_Other)
     {
         Element = new u32(*p_Other.Element);
     }
-    Example(Example &&p_Other) noexcept
+    Example(Example &&p_Other)
     {
         Element = p_Other.Element;
         p_Other.Element = nullptr;
     }
 
-    Example &operator=(const Example &p_Other) noexcept
+    Example &operator=(const Example &p_Other)
     {
         if (this == &p_Other)
             return *this;
         *Element = *p_Other.Element;
         return *this;
     }
-    Example &operator=(Example &&p_Other) noexcept
+    Example &operator=(Example &&p_Other)
     {
         if (this == &p_Other)
             return *this;
@@ -51,7 +51,7 @@ struct Example
 
 // using Example = u32; // to test trivial types
 
-void RecordVector(const ContainerSettings &p_Settings) noexcept
+void RecordVector(const ContainerSettings &p_Settings)
 {
     std::ofstream file(g_Root + "/performance/results/vector.csv");
     file << "passes,pushback,pushfront,popback,popfront,copy,move\n";
@@ -86,7 +86,7 @@ void RecordVector(const ContainerSettings &p_Settings) noexcept
     }
 }
 
-void RecordStaticArray(const ContainerSettings &p_Settings) noexcept
+void RecordStaticArray(const ContainerSettings &p_Settings)
 {
     std::ofstream file(g_Root + "/performance/results/static_array.csv");
     file << "passes,append,insert,pop,remove\n";
@@ -113,7 +113,7 @@ void RecordStaticArray(const ContainerSettings &p_Settings) noexcept
     }
 }
 
-void RecordDynamicArray(const ContainerSettings &p_Settings) noexcept
+void RecordDynamicArray(const ContainerSettings &p_Settings)
 {
     std::ofstream file(g_Root + "/performance/results/dynamic_array.csv");
     file << "passes,append,insert,pop,remove,copy,move\n";
@@ -148,7 +148,7 @@ void RecordDynamicArray(const ContainerSettings &p_Settings) noexcept
     }
 }
 
-void RecordDeque(const ContainerSettings &p_Settings) noexcept
+void RecordDeque(const ContainerSettings &p_Settings)
 {
     std::ofstream file(g_Root + "/performance/results/deque.csv");
     file << "passes,pushback,pushfront,popback,popfront,copy,move\n";
@@ -180,7 +180,7 @@ void RecordDeque(const ContainerSettings &p_Settings) noexcept
              << ',' << moveTime.AsNanoseconds() << '\n';
     }
 }
-void RecordStaticDeque(const ContainerSettings &p_Settings) noexcept
+void RecordStaticDeque(const ContainerSettings &p_Settings)
 {
     std::ofstream file(g_Root + "/performance/results/static_deque.csv");
     file << "passes,pushback,pushfront,popback,popfront\n";
@@ -206,7 +206,7 @@ void RecordStaticDeque(const ContainerSettings &p_Settings) noexcept
     }
 }
 
-void RecordDynamicDeque(const ContainerSettings &p_Settings) noexcept
+void RecordDynamicDeque(const ContainerSettings &p_Settings)
 {
     std::ofstream file(g_Root + "/performance/results/dynamic_deque.csv");
     file << "passes,pushback,pushfront,popback,popfront,copy,move\n";

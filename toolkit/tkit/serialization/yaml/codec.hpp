@@ -42,7 +42,7 @@ using Node = YAML::Node;
  */
 template <typename T> struct Codec
 {
-    static Node Encode(const T &p_Instance) noexcept
+    static Node Encode(const T &p_Instance)
     {
         Node node;
 #ifdef TKIT_SERIALIZATION_FROM_REFLECTION
@@ -86,7 +86,7 @@ template <typename T> struct Codec
         return node;
     }
 
-    static bool Decode(const Node &p_Node, T &p_Instance) noexcept
+    static bool Decode(const Node &p_Node, T &p_Instance)
     {
 #ifdef TKIT_SERIALIZATION_FROM_REFLECTION
         static_assert(Reflect<T>::Implemented || std::is_enum_v<T>,
@@ -128,17 +128,17 @@ template <typename T> struct Codec
     }
 };
 
-TKIT_API Node FromString(std::string_view p_String) noexcept;
-TKIT_API Node FromFile(std::string_view p_Path) noexcept;
+TKIT_API Node FromString(std::string_view p_String);
+TKIT_API Node FromFile(std::string_view p_Path);
 
-TKIT_API void ToFile(std::string_view p_Path, const Node &p_Node) noexcept;
+TKIT_API void ToFile(std::string_view p_Path, const Node &p_Node);
 
-template <typename T> void Serialize(const std::string_view p_Path, const T &p_Instance) noexcept
+template <typename T> void Serialize(const std::string_view p_Path, const T &p_Instance)
 {
     const Node node{p_Instance};
     ToFile(p_Path, node);
 }
-template <typename T> T Deserialize(const std::string_view p_Path) noexcept
+template <typename T> T Deserialize(const std::string_view p_Path)
 {
     const Node node = FromFile(p_Path);
     return node.as<T>();
@@ -146,7 +146,9 @@ template <typename T> T Deserialize(const std::string_view p_Path) noexcept
 
 } // namespace TKit::Yaml
 
-template <typename T> struct YAML::convert
+namespace YAML
+{
+template <typename T> struct convert
 {
     static Node encode(const T &p_Instance)
     {
@@ -158,3 +160,4 @@ template <typename T> struct YAML::convert
         return TKit::Yaml::Codec<T>::Decode(p_Node, p_Instance);
     }
 };
+} // namespace YAML

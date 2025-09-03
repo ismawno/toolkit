@@ -4,22 +4,22 @@
 
 namespace TKit
 {
-ArenaAllocator::ArenaAllocator(void *p_Buffer, const usize p_Size) noexcept
+ArenaAllocator::ArenaAllocator(void *p_Buffer, const usize p_Size)
     : m_Buffer(static_cast<std::byte *>(p_Buffer)), m_Size(p_Size), m_Remaining(p_Size), m_Provided(true)
 {
 }
-ArenaAllocator::ArenaAllocator(const usize p_Size, const usize p_Alignment) noexcept
+ArenaAllocator::ArenaAllocator(const usize p_Size, const usize p_Alignment)
     : m_Size(p_Size), m_Remaining(p_Size), m_Provided(false)
 {
     m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(static_cast<size_t>(p_Size), p_Alignment));
     TKIT_ASSERT(m_Buffer, "[TOOLKIT][ARENA-ALLOC] Failed to allocate memory");
 }
-ArenaAllocator::~ArenaAllocator() noexcept
+ArenaAllocator::~ArenaAllocator()
 {
     deallocateBuffer();
 }
 
-ArenaAllocator::ArenaAllocator(ArenaAllocator &&p_Other) noexcept
+ArenaAllocator::ArenaAllocator(ArenaAllocator &&p_Other)
     : m_Buffer(p_Other.m_Buffer), m_Size(p_Other.GetSize()), m_Remaining(p_Other.m_Remaining),
       m_Provided(p_Other.m_Provided)
 {
@@ -28,7 +28,7 @@ ArenaAllocator::ArenaAllocator(ArenaAllocator &&p_Other) noexcept
     p_Other.m_Remaining = 0;
 }
 
-ArenaAllocator &ArenaAllocator::operator=(ArenaAllocator &&p_Other) noexcept
+ArenaAllocator &ArenaAllocator::operator=(ArenaAllocator &&p_Other)
 {
     if (this != &p_Other)
     {
@@ -45,7 +45,7 @@ ArenaAllocator &ArenaAllocator::operator=(ArenaAllocator &&p_Other) noexcept
     return *this;
 }
 
-void *ArenaAllocator::Allocate(const usize p_Size, const usize p_Alignment) noexcept
+void *ArenaAllocator::Allocate(const usize p_Size, const usize p_Alignment)
 {
     void *ptr = m_Buffer + (m_Size - m_Remaining);
     size_t remaining = static_cast<size_t>(m_Remaining);
@@ -66,41 +66,41 @@ void *ArenaAllocator::Allocate(const usize p_Size, const usize p_Alignment) noex
     return alignedPtr;
 }
 
-void ArenaAllocator::Reset() noexcept
+void ArenaAllocator::Reset()
 {
     m_Remaining = m_Size;
 }
 
-usize ArenaAllocator::GetSize() const noexcept
+usize ArenaAllocator::GetSize() const
 {
     return m_Size;
 }
-usize ArenaAllocator::GetAllocated() const noexcept
+usize ArenaAllocator::GetAllocated() const
 {
     return m_Size - m_Remaining;
 }
-usize ArenaAllocator::GetRemaining() const noexcept
+usize ArenaAllocator::GetRemaining() const
 {
     return m_Remaining;
 }
 
-bool ArenaAllocator::Belongs(const void *p_Ptr) const noexcept
+bool ArenaAllocator::Belongs(const void *p_Ptr) const
 {
     const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
     return ptr >= m_Buffer && ptr < m_Buffer + (m_Size - m_Remaining);
 }
 
-bool ArenaAllocator::IsEmpty() const noexcept
+bool ArenaAllocator::IsEmpty() const
 {
     return m_Remaining == m_Size;
 }
 
-bool ArenaAllocator::IsFull() const noexcept
+bool ArenaAllocator::IsFull() const
 {
     return m_Remaining == 0;
 }
 
-void ArenaAllocator::deallocateBuffer() noexcept
+void ArenaAllocator::deallocateBuffer()
 {
     if (!m_Buffer || m_Provided)
         return;

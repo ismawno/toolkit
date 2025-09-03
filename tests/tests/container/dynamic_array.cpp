@@ -26,7 +26,7 @@ struct DTrackable
     {
         ++g_Constructions;
     }
-    DTrackable(DTrackable &&p_Other) noexcept : Value(p_Other.Value)
+    DTrackable(DTrackable &&p_Other) : Value(p_Other.Value)
     {
         ++g_Constructions;
     }
@@ -39,7 +39,7 @@ struct DTrackable
         Value = p_Other.Value;
         return *this;
     }
-    DTrackable &operator=(DTrackable &&p_Other) noexcept
+    DTrackable &operator=(DTrackable &&p_Other)
     {
         Value = p_Other.Value;
         return *this;

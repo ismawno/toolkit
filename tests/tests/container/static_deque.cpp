@@ -25,7 +25,7 @@ struct SQTrackable
     {
         ++g_Constructions;
     }
-    SQTrackable(SQTrackable &&p_Other) noexcept : Value(p_Other.Value)
+    SQTrackable(SQTrackable &&p_Other) : Value(p_Other.Value)
     {
         ++g_Constructions;
     }
@@ -40,7 +40,7 @@ struct SQTrackable
         return *this;
     }
 
-    SQTrackable &operator=(SQTrackable &&p_Other) noexcept
+    SQTrackable &operator=(SQTrackable &&p_Other)
     {
         Value = p_Other.Value;
         return *this;

@@ -11,14 +11,14 @@ namespace TKit::Perf
 struct ExampleData
 {
     f64 Values[16];
-    void SetValues() noexcept
+    void SetValues()
     {
         for (usize i = 0; i < 16; ++i)
             Values[i] = static_cast<f64>(i);
     }
 };
 
-void RecordMallocFree(const AllocationSettings &p_Settings) noexcept
+void RecordMallocFree(const AllocationSettings &p_Settings)
 {
     std::ofstream file(g_Root + "/performance/results/malloc_free.csv");
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
@@ -39,7 +39,7 @@ void RecordMallocFree(const AllocationSettings &p_Settings) noexcept
     }
 }
 
-void RecordBlockAllocator(const AllocationSettings &p_Settings) noexcept
+void RecordBlockAllocator(const AllocationSettings &p_Settings)
 {
     std::ofstream file(g_Root + "/performance/results/block_allocator.csv");
     DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
@@ -61,7 +61,7 @@ void RecordBlockAllocator(const AllocationSettings &p_Settings) noexcept
     }
 }
 
-void RecordStackAllocator(const AllocationSettings &p_Settings) noexcept
+void RecordStackAllocator(const AllocationSettings &p_Settings)
 {
     const char *path = "/performance/results/stack_allocator.csv";
     std::ofstream file(g_Root + path);
@@ -84,7 +84,7 @@ void RecordStackAllocator(const AllocationSettings &p_Settings) noexcept
     }
 }
 
-void RecordArenaAllocator(const AllocationSettings &p_Settings) noexcept
+void RecordArenaAllocator(const AllocationSettings &p_Settings)
 {
     const char *path = "/performance/results/arena_allocator.csv";
     std::ofstream file(g_Root + path);

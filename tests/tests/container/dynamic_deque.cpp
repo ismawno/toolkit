@@ -25,7 +25,7 @@ struct DQTrackable
     {
         ++g_Constructions;
     }
-    DQTrackable(DQTrackable &&p_Other) noexcept : Value(p_Other.Value)
+    DQTrackable(DQTrackable &&p_Other) : Value(p_Other.Value)
     {
         ++g_Constructions;
     }
@@ -40,7 +40,7 @@ struct DQTrackable
         return *this;
     }
 
-    DQTrackable &operator=(DQTrackable &&p_Other) noexcept
+    DQTrackable &operator=(DQTrackable &&p_Other)
     {
         Value = p_Other.Value;
         return *this;

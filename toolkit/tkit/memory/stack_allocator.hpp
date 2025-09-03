@@ -53,14 +53,14 @@ class TKIT_API StackAllocator
     // alignment of the individual allocations at all. You can still specify alignments of, say, 64 if you want when
     // allocating
 
-    explicit StackAllocator(usize p_Size, usize p_Alignment = alignof(std::max_align_t)) noexcept;
+    explicit StackAllocator(usize p_Size, usize p_Alignment = alignof(std::max_align_t));
 
     // This constructor is NOT owning the buffer, so it will not deallocate it. Up to the user to manage the memory
-    StackAllocator(void *p_Buffer, usize p_Size) noexcept;
-    ~StackAllocator() noexcept;
+    StackAllocator(void *p_Buffer, usize p_Size);
+    ~StackAllocator();
 
-    StackAllocator(StackAllocator &&p_Other) noexcept;
-    StackAllocator &operator=(StackAllocator &&p_Other) noexcept;
+    StackAllocator(StackAllocator &&p_Other);
+    StackAllocator &operator=(StackAllocator &&p_Other);
 
     /**
      * @brief Allocate a new block of memory into the stack allocator.
@@ -69,14 +69,14 @@ class TKIT_API StackAllocator
      * @param p_Alignment The alignment of the block.
      * @return A pointer to the allocated block.
      */
-    void *Allocate(usize p_Size, usize p_Alignment = alignof(std::max_align_t)) noexcept;
+    void *Allocate(usize p_Size, usize p_Alignment = alignof(std::max_align_t));
     /**
      * @brief Allocate a new block of memory into the stack allocator and casts the result to `T`.
      *
      * @param p_N The number of elements of type `T` to allocate.
      * @return A pointer to the allocated block.
      */
-    template <typename T> T *Allocate(const usize p_N = 1) noexcept
+    template <typename T> T *Allocate(const usize p_N = 1)
     {
         return static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
     }
@@ -90,7 +90,7 @@ class TKIT_API StackAllocator
      *
      * @param p_Ptr The pointer to the block to deallocate.
      */
-    void Deallocate(const void *p_Ptr) noexcept;
+    void Deallocate(const void *p_Ptr);
 
     /**
      * @brief Allocate a new block of memory in the stack allocator and create a new object of type `T` out of it.
@@ -100,7 +100,7 @@ class TKIT_API StackAllocator
      */
     template <typename T, typename... Args>
         requires std::constructible_from<T, Args...>
-    T *Create(Args &&...p_Args) noexcept
+    T *Create(Args &&...p_Args)
     {
         T *ptr = static_cast<T *>(Allocate(sizeof(T), alignof(T)));
         if (!ptr)
@@ -120,7 +120,7 @@ class TKIT_API StackAllocator
      */
     template <typename T, typename... Args>
         requires std::constructible_from<T, Args...>
-    T *NCreate(const usize p_N, Args &&...p_Args) noexcept
+    T *NCreate(const usize p_N, Args &&...p_Args)
     {
         T *ptr = static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
         if (!ptr)
@@ -135,7 +135,7 @@ class TKIT_API StackAllocator
      * @tparam T The type of the block.
      * @param p_Ptr The pointer to the block to deallocate.
      */
-    template <typename T> void Destroy(T *p_Ptr) noexcept
+    template <typename T> void Destroy(T *p_Ptr)
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
@@ -155,13 +155,13 @@ class TKIT_API StackAllocator
      * @brief Get the top entry of the stack allocator.
      *
      */
-    const Entry &Top() const noexcept;
+    const Entry &Top() const;
 
     /**
      * @brief Get the top entry of the stack allocator.
      *
      */
-    template <typename T> T *Top() noexcept
+    template <typename T> T *Top()
     {
         return reinterpret_cast<T *>(Top().Ptr);
     }
@@ -172,17 +172,17 @@ class TKIT_API StackAllocator
      * @param p_Ptr The pointer to check.
      * @return Whether the pointer belongs to the stack allocator.
      */
-    bool Belongs(const void *p_Ptr) const noexcept;
+    bool Belongs(const void *p_Ptr) const;
 
-    bool IsEmpty() const noexcept;
-    bool IsFull() const noexcept;
+    bool IsEmpty() const;
+    bool IsFull() const;
 
-    usize GetSize() const noexcept;
-    usize GetAllocated() const noexcept;
-    usize GetRemaining() const noexcept;
+    usize GetSize() const;
+    usize GetAllocated() const;
+    usize GetRemaining() const;
 
   private:
-    void deallocateBuffer() noexcept;
+    void deallocateBuffer();
 
     StaticArray<Entry, TKIT_STACK_ALLOCATOR_MAX_ENTRIES> m_Entries{};
     std::byte *m_Buffer;

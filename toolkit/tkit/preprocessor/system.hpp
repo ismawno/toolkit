@@ -84,6 +84,12 @@
 #    define TKIT_MSVC_WARNING_IGNORE(p_Warning)
 #endif
 
+#ifdef TKIT_COMPILER_MSVC
+#    define TKIT_NO_RETURN __declspec(noreturn)
+#else
+#    define TKIT_NO_RETURN __attribute__((noreturn))
+#endif
+
 #define TKIT_PUSH_MACRO(p_Macro) TKIT_PRAGMA(push_macro(#p_Macro))
 #define TKIT_POP_MACRO(p_Macro) TKIT_PRAGMA(pop_macro(#p_Macro))
 

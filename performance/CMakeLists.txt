@@ -8,8 +8,8 @@ set(SOURCES perf/main.cpp perf/memory.cpp perf/multiprocessing.cpp
 
 FetchContent_Declare(
   argparse
-  GIT_REPOSITORY https://github.com/p-ranav/argparse.git
-  GIT_TAG v3.2
+  GIT_REPOSITORY https://github.com/ismawno/argparse.git
+  GIT_TAG v3.2.x
   GIT_SHALLOW TRUE
   GIT_PROGRESS TRUE)
 FetchContent_MakeAvailable(argparse)
@@ -23,4 +23,5 @@ target_link_libraries(toolkit-performance PRIVATE toolkit argparse)
 target_include_directories(toolkit-performance
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-tkit_configure_compile_link_options(toolkit-performance)
+tkit_configure_compile_link_options(toolkit-performance COMPILER_FLAGS
+                                    -fno-exceptions)

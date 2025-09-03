@@ -26,7 +26,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
      *
      * @param p_Args The arguments to pass to the constructor of `T`.
      */
-    template <typename... ValueArgs> static Result Ok(ValueArgs &&...p_Args) noexcept
+    template <typename... ValueArgs> static Result Ok(ValueArgs &&...p_Args)
     {
         Result result{};
         result.m_Ok = true;
@@ -39,7 +39,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
      *
      * @param p_Args The arguments to pass to the constructor of `ErrorType`.
      */
-    template <typename... ErrorArgs> static Result Error(ErrorArgs &&...p_Args) noexcept
+    template <typename... ErrorArgs> static Result Error(ErrorArgs &&...p_Args)
     {
         Result result{};
         result.m_Ok = false;
@@ -47,7 +47,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
         return result;
     }
 
-    Result(const Result &p_Other) noexcept
+    Result(const Result &p_Other)
         requires(std::copy_constructible<T> && std::copy_constructible<ErrorType>)
         : m_Ok(p_Other.m_Ok)
     {
@@ -56,7 +56,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
         else
             m_Error.Construct(*p_Other.m_Error.Get());
     }
-    Result(Result &&p_Other) noexcept
+    Result(Result &&p_Other)
         requires(std::move_constructible<T> && std::move_constructible<ErrorType>)
         : m_Ok(p_Other.m_Ok)
     {
@@ -66,7 +66,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
             m_Error.Construct(std::move(*p_Other.m_Error.Get()));
     }
 
-    Result &operator=(const Result &p_Other) noexcept
+    Result &operator=(const Result &p_Other)
         requires(std::is_copy_assignable_v<T> && std::is_copy_assignable_v<ErrorType>)
     {
         if (this == &p_Other)
@@ -80,7 +80,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
 
         return *this;
     }
-    Result &operator=(Result &&p_Other) noexcept
+    Result &operator=(Result &&p_Other)
         requires(std::is_move_assignable_v<T> && std::is_move_assignable_v<ErrorType>)
     {
         if (this == &p_Other)
@@ -95,7 +95,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
         return *this;
     }
 
-    ~Result() noexcept
+    ~Result()
     {
         destroy();
     }
@@ -104,7 +104,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
      * @brief Check if the result is valid.
      *
      */
-    bool IsOk() const noexcept
+    bool IsOk() const
     {
         return m_Ok;
     }
@@ -115,7 +115,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
      * If the result is not valid, this will cause undefined behavior.
      *
      */
-    const T &GetValue() const noexcept
+    const T &GetValue() const
     {
         TKIT_ASSERT(m_Ok, "[TOOLKIT][RESULT] Result is not Ok");
         return *m_Value.Get();
@@ -127,7 +127,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
      * If the result is not valid, this will cause undefined behavior.
      *
      */
-    T &GetValue() noexcept
+    T &GetValue()
     {
         TKIT_ASSERT(m_Ok, "[TOOLKIT][RESULT] Result is not Ok");
         return *m_Value.Get();
@@ -139,39 +139,39 @@ template <typename T = void, typename ErrorType = const char *> class Result
      * If the result is valid, this will cause undefined behavior.
      *
      */
-    const ErrorType &GetError() const noexcept
+    const ErrorType &GetError() const
     {
         TKIT_ASSERT(!m_Ok, "[TOOLKIT][RESULT] Result is Ok");
         return *m_Error.Get();
     }
 
-    const T *operator->() const noexcept
+    const T *operator->() const
     {
         return &GetValue();
     }
-    T *operator->() noexcept
+    T *operator->()
     {
         return &GetValue();
     }
 
-    const T &operator*() const noexcept
+    const T &operator*() const
     {
         return GetValue();
     }
-    T &operator*() noexcept
+    T &operator*()
     {
         return GetValue();
     }
 
-    explicit(false) operator bool() const noexcept
+    explicit(false) operator bool() const
     {
         return m_Ok;
     }
 
   private:
-    Result() noexcept = default;
+    Result() = default;
 
-    void destroy() noexcept
+    void destroy()
     {
         if (m_Ok)
             m_Value.Destruct();
@@ -205,7 +205,7 @@ template <typename ErrorType> class Result<void, ErrorType>
      * @brief Construct a `Result` object with no error.
      *
      */
-    static Result Ok() noexcept
+    static Result Ok()
     {
         Result result{};
         result.m_Ok = true;
@@ -217,7 +217,7 @@ template <typename ErrorType> class Result<void, ErrorType>
      *
      * @param p_Args The arguments to pass to the constructor of `ErrorType`.
      */
-    template <typename... ErrorArgs> static Result Error(ErrorArgs &&...p_Args) noexcept
+    template <typename... ErrorArgs> static Result Error(ErrorArgs &&...p_Args)
     {
         Result result{};
         result.m_Ok = false;
@@ -225,14 +225,14 @@ template <typename ErrorType> class Result<void, ErrorType>
         return result;
     }
 
-    Result(const Result &p_Other) noexcept
+    Result(const Result &p_Other)
         requires(std::copy_constructible<ErrorType>)
         : m_Ok(p_Other.m_Ok)
     {
         if (!m_Ok)
             m_Error.Construct(*p_Other.m_Error.Get());
     }
-    Result(Result &&p_Other) noexcept
+    Result(Result &&p_Other)
         requires(std::move_constructible<ErrorType>)
         : m_Ok(p_Other.m_Ok)
     {
@@ -240,7 +240,7 @@ template <typename ErrorType> class Result<void, ErrorType>
             m_Error.Construct(std::move(*p_Other.m_Error.Get()));
     }
 
-    Result &operator=(const Result &p_Other) noexcept
+    Result &operator=(const Result &p_Other)
         requires(std::is_copy_assignable_v<ErrorType>)
     {
         if (this == &p_Other)
@@ -252,7 +252,7 @@ template <typename ErrorType> class Result<void, ErrorType>
 
         return *this;
     }
-    Result &operator=(Result &&p_Other) noexcept
+    Result &operator=(Result &&p_Other)
         requires(std::is_move_assignable_v<ErrorType>)
     {
         if (this == &p_Other)
@@ -265,7 +265,7 @@ template <typename ErrorType> class Result<void, ErrorType>
         return *this;
     }
 
-    ~Result() noexcept
+    ~Result()
     {
         destroy();
     }
@@ -274,7 +274,7 @@ template <typename ErrorType> class Result<void, ErrorType>
      * @brief Check if the result is valid.
      *
      */
-    bool IsOk() const noexcept
+    bool IsOk() const
     {
         return m_Ok;
     }
@@ -285,21 +285,21 @@ template <typename ErrorType> class Result<void, ErrorType>
      * If the result is valid, this will cause undefined behavior.
      *
      */
-    const ErrorType &GetError() const noexcept
+    const ErrorType &GetError() const
     {
         TKIT_ASSERT(!m_Ok, "[TOOLKIT][RESULT] Result is Ok");
         return *m_Error.Get();
     }
 
-    explicit(false) operator bool() const noexcept
+    explicit(false) operator bool() const
     {
         return m_Ok;
     }
 
   private:
-    Result() noexcept = default;
+    Result() = default;
 
-    void destroy() noexcept
+    void destroy()
     {
         if (!m_Ok)
             m_Error.Destruct();

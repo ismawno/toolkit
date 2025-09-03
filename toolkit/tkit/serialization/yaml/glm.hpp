@@ -7,7 +7,7 @@ namespace TKit::Yaml
 {
 template <glm::length_t L, typename T, glm::qualifier Q> struct Codec<glm::vec<L, T, Q>>
 {
-    static Node Encode(const glm::vec<L, T, Q> &p_Instance) noexcept
+    static Node Encode(const glm::vec<L, T, Q> &p_Instance)
     {
         Node node;
         for (usize i = 0; i < L; ++i)
@@ -16,7 +16,7 @@ template <glm::length_t L, typename T, glm::qualifier Q> struct Codec<glm::vec<L
         return node;
     }
 
-    static bool Decode(const Node &p_Node, glm::vec<L, T, Q> &p_Instance) noexcept
+    static bool Decode(const Node &p_Node, glm::vec<L, T, Q> &p_Instance)
     {
         if (!p_Node.IsSequence() || p_Node.size() != L)
             return false;
@@ -28,7 +28,7 @@ template <glm::length_t L, typename T, glm::qualifier Q> struct Codec<glm::vec<L
 };
 template <glm::length_t C, glm::length_t R, typename T, glm::qualifier Q> struct Codec<glm::mat<C, R, T, Q>>
 {
-    static Node Encode(const glm::mat<C, R, T, Q> &p_Instance) noexcept
+    static Node Encode(const glm::mat<C, R, T, Q> &p_Instance)
     {
         Node node;
         for (usize i = 0; i < C; ++i)
@@ -36,7 +36,7 @@ template <glm::length_t C, glm::length_t R, typename T, glm::qualifier Q> struct
         return node;
     }
 
-    static bool Decode(const Node &p_Node, glm::mat<C, R, T, Q> &p_Instance) noexcept
+    static bool Decode(const Node &p_Node, glm::mat<C, R, T, Q> &p_Instance)
     {
         if (!p_Node.IsSequence() || p_Node.size() != C)
             return false;
@@ -49,7 +49,7 @@ template <glm::length_t C, glm::length_t R, typename T, glm::qualifier Q> struct
 
 template <typename T, glm::qualifier Q> struct Codec<glm::qua<T, Q>>
 {
-    static Node Encode(const glm::qua<T, Q> &p_Instance) noexcept
+    static Node Encode(const glm::qua<T, Q> &p_Instance)
     {
         Node node;
         const glm::vec<3, T, Q> angles = glm::degrees(glm::eulerAngles(p_Instance));
@@ -60,7 +60,7 @@ template <typename T, glm::qualifier Q> struct Codec<glm::qua<T, Q>>
         return node;
     }
 
-    static bool Decode(const Node &p_Node, glm::qua<T, Q> &p_Instance) noexcept
+    static bool Decode(const Node &p_Node, glm::qua<T, Q> &p_Instance)
     {
         if (!p_Node.IsSequence() || (p_Node.size() != 3 && p_Node.size() != 4))
             return false;

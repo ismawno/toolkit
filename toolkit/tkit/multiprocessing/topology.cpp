@@ -16,7 +16,7 @@
 namespace TKit::Topology
 {
 
-void SetThreadName(const u32 p_ThreadIndex, const char *p_Name) noexcept
+void SetThreadName(const u32 p_ThreadIndex, const char *p_Name)
 {
 #ifdef TKIT_OS_WINDOWS
     const HANDLE thread = GetCurrentThread();
@@ -62,7 +62,7 @@ struct KindInfo
     CoreType CType = Unk;
 };
 
-static KindInfo getKindInfo(const hwloc_topology_t p_Topology, const u32 PuIndex) noexcept
+static KindInfo getKindInfo(const hwloc_topology_t p_Topology, const u32 PuIndex)
 {
     const i32 err = hwloc_cpukinds_get_nr(p_Topology, 0);
     KindInfo kinfo{};
@@ -103,13 +103,13 @@ static KindInfo getKindInfo(const hwloc_topology_t p_Topology, const u32 PuIndex
 }
 
 #    ifdef TKIT_ENABLE_INFO_LOGS
-static std::string toString(const u32 p_Value) noexcept
+static std::string toString(const u32 p_Value)
 {
     if (p_Value == Unknown)
         return "Unknown";
     return std::to_string(p_Value);
 }
-static std::string toString(const KindInfo::CoreType p_CType) noexcept
+static std::string toString(const KindInfo::CoreType p_CType)
 {
     switch (p_CType)
     {
@@ -235,7 +235,7 @@ static DynamicArray<u32> buildOrder(const hwloc_topology_t p_Topology)
     return order;
 }
 
-static void bindCurrentThread(const hwloc_topology_t p_Topology, const u32 p_PuIndex) noexcept
+static void bindCurrentThread(const hwloc_topology_t p_Topology, const u32 p_PuIndex)
 {
     const hwloc_obj_t pu = hwloc_get_pu_obj_by_os_index(p_Topology, p_PuIndex);
     if (!pu)
@@ -252,7 +252,7 @@ static void bindCurrentThread(const hwloc_topology_t p_Topology, const u32 p_PuI
     hwloc_bitmap_free(set);
 }
 
-void BuildAffinityOrder(const Handle *p_Handle) noexcept
+void BuildAffinityOrder(const Handle *p_Handle)
 {
     if (s_BuildOrder.IsEmpty())
     {
@@ -262,7 +262,7 @@ void BuildAffinityOrder(const Handle *p_Handle) noexcept
     TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY] A build order has already been created. Using that instead");
 }
 
-void PinThread(const Handle *p_Handle, const u32 p_ThreadIndex) noexcept
+void PinThread(const Handle *p_Handle, const u32 p_ThreadIndex)
 {
     if (s_BuildOrder.IsEmpty())
         return;
@@ -271,7 +271,7 @@ void PinThread(const Handle *p_Handle, const u32 p_ThreadIndex) noexcept
     bindCurrentThread(p_Handle->Topology, pindex);
 }
 
-const Handle *Initialize() noexcept
+const Handle *Initialize()
 {
     Handle *handle = new Handle;
     hwloc_topology_init(&handle->Topology);
@@ -280,7 +280,7 @@ const Handle *Initialize() noexcept
     return handle;
 }
 
-void Terminate(const Handle *p_Handle) noexcept
+void Terminate(const Handle *p_Handle)
 {
     hwloc_topology_destroy(p_Handle->Topology);
     delete p_Handle;
@@ -289,15 +289,15 @@ void Terminate(const Handle *p_Handle) noexcept
 struct Handle
 {
 };
-void BuildAffinityOrder(const Handle *) noexcept
+void BuildAffinityOrder(const Handle *)
 {
 }
 
-void PinThread(const Handle *, const u32) noexcept
+void PinThread(const Handle *, const u32)
 {
 }
 
-const Handle *Initialize() noexcept
+const Handle *Initialize()
 {
     TKIT_LOG_WARNING(
         "[TOOLKIT][TOPOLOGY] The library HWLOC, required to pin threads to optimal cpu cores, has not been found. "
@@ -305,7 +305,7 @@ const Handle *Initialize() noexcept
     return nullptr;
 }
 
-void Terminate(const Handle *) noexcept
+void Terminate(const Handle *)
 {
 }
 #endif

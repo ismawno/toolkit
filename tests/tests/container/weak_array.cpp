@@ -24,7 +24,7 @@ struct WTrackable
     {
         ++g_CtorCount;
     }
-    WTrackable(WTrackable &&p_Other) noexcept : Value(p_Other.Value)
+    WTrackable(WTrackable &&p_Other) : Value(p_Other.Value)
     {
         ++g_CtorCount;
     }
@@ -37,7 +37,7 @@ struct WTrackable
         Value = p_Other.Value;
         return *this;
     }
-    WTrackable &operator=(WTrackable &&p_Other) noexcept
+    WTrackable &operator=(WTrackable &&p_Other)
     {
         Value = p_Other.Value;
         return *this;

@@ -23,62 +23,62 @@ template <typename T, usize Size, typename Traits = Container::ArrayTraits<T>> c
     using ConstIterator = typename Traits::ConstIterator;
     using Tools = Container::ArrayTools<Traits>;
 
-    constexpr Array() noexcept = default;
+    constexpr Array() = default;
 
-    constexpr Array(const std::initializer_list<ValueType> p_Elements) noexcept
+    constexpr Array(const std::initializer_list<ValueType> p_Elements)
     {
         TKIT_ASSERT(p_Elements.size() <= Size, "[TOOLKIT][ARRAY] Size is bigger than capacity");
         Tools::CopyConstructFromRange(begin(), p_Elements.begin(), p_Elements.end());
     }
 
-    constexpr const ValueType &operator[](const SizeType p_Index) const noexcept
+    constexpr const ValueType &operator[](const SizeType p_Index) const
     {
         return At(p_Index);
     }
-    constexpr ValueType &operator[](const SizeType p_Index) noexcept
+    constexpr ValueType &operator[](const SizeType p_Index)
     {
         return At(p_Index);
     }
 
-    constexpr const ValueType &At(const SizeType p_Index) const noexcept
+    constexpr const ValueType &At(const SizeType p_Index) const
     {
         TKIT_ASSERT(p_Index < Size, "[TOOLKIT][ARRAY] Index is out of bounds");
         return *(begin() + p_Index);
     }
-    constexpr ValueType &At(const SizeType p_Index) noexcept
+    constexpr ValueType &At(const SizeType p_Index)
     {
         TKIT_ASSERT(p_Index < Size, "[TOOLKIT][ARRAY] Index is out of bounds");
         return *(begin() + p_Index);
     }
 
-    constexpr SizeType GetSize() const noexcept
+    constexpr SizeType GetSize() const
     {
         return Size;
     }
 
-    constexpr const ValueType *GetData() const noexcept
+    constexpr const ValueType *GetData() const
     {
         return m_Data;
     }
-    constexpr ValueType *GetData() noexcept
+    constexpr ValueType *GetData()
     {
         return m_Data;
     }
 
-    constexpr Iterator begin() noexcept
+    constexpr Iterator begin()
     {
         return m_Data;
     }
-    constexpr Iterator end() noexcept
+    constexpr Iterator end()
     {
         return m_Data + Size;
     }
 
-    constexpr ConstIterator begin() const noexcept
+    constexpr ConstIterator begin() const
     {
         return m_Data;
     }
-    constexpr ConstIterator end() const noexcept
+    constexpr ConstIterator end() const
     {
         return m_Data + Size;
     }

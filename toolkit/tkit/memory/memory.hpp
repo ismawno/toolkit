@@ -17,7 +17,7 @@ namespace TKit::Memory
  * @param p_Size The size of the memory to allocate.
  * @return A pointer to the allocated memory.
  */
-TKIT_API void *Allocate(size_t p_Size) noexcept;
+TKIT_API void *Allocate(size_t p_Size);
 
 /**
  * @brief Deallocate a chunk of memory
@@ -26,7 +26,7 @@ TKIT_API void *Allocate(size_t p_Size) noexcept;
  *
  * @param p_Ptr A pointer to the memory to deallocate.
  */
-TKIT_API void Deallocate(void *p_Ptr) noexcept;
+TKIT_API void Deallocate(void *p_Ptr);
 
 /**
  * @brief Allocate a chunk of memory of a given size with a given alignment.
@@ -38,7 +38,7 @@ TKIT_API void Deallocate(void *p_Ptr) noexcept;
  * @param p_Alignment The alignment of the memory to allocate.
  * @return A pointer to the allocated memory.
  */
-TKIT_API void *AllocateAligned(size_t p_Size, size_t p_Alignment) noexcept;
+TKIT_API void *AllocateAligned(size_t p_Size, size_t p_Alignment);
 
 /**
  * @brief Deallocate a chunk of memory with a given alignment.
@@ -49,7 +49,7 @@ TKIT_API void *AllocateAligned(size_t p_Size, size_t p_Alignment) noexcept;
  * @param p_Ptr A pointer to the memory to deallocate.
  * @param p_Alignment The alignment of the memory to deallocate.
  */
-TKIT_API void DeallocateAligned(void *p_Ptr) noexcept;
+TKIT_API void DeallocateAligned(void *p_Ptr);
 
 /**
  * @brief Copy a chunk of memory from one location to another.
@@ -60,7 +60,7 @@ TKIT_API void DeallocateAligned(void *p_Ptr) noexcept;
  * @param p_Src A pointer to the source memory.
  * @param p_Size The size of the memory to copy, in bytes.
  */
-TKIT_API void *ForwardCopy(void *p_Dst, const void *p_Src, size_t p_Size) noexcept;
+TKIT_API void *ForwardCopy(void *p_Dst, const void *p_Src, size_t p_Size);
 
 /**
  * @brief Copy a chunk of memory from one location to another in reverse order.
@@ -71,7 +71,7 @@ TKIT_API void *ForwardCopy(void *p_Dst, const void *p_Src, size_t p_Size) noexce
  * @param p_Src A pointer to the source memory.
  * @param p_Size The size of the memory to copy, in bytes.
  */
-TKIT_API void *BackwardCopy(void *p_Dst, const void *p_Src, size_t p_Size) noexcept;
+TKIT_API void *BackwardCopy(void *p_Dst, const void *p_Src, size_t p_Size);
 
 /**
  * @brief Copy a range of elements from one iterator to another.
@@ -82,7 +82,7 @@ TKIT_API void *BackwardCopy(void *p_Dst, const void *p_Src, size_t p_Size) noexc
  * @param p_Begin An iterator pointing to the beginning of the source memory.
  * @param p_End An iterator pointing to the end of the source memory.
  */
-template <typename It1, typename It2> constexpr auto ForwardCopy(It1 p_Dst, It2 p_Begin, It2 p_End) noexcept
+template <typename It1, typename It2> constexpr auto ForwardCopy(It1 p_Dst, It2 p_Begin, It2 p_End)
 {
     return std::copy(p_Begin, p_End, p_Dst);
 }
@@ -96,7 +96,7 @@ template <typename It1, typename It2> constexpr auto ForwardCopy(It1 p_Dst, It2 
  * @param p_Begin An iterator pointing to the beginning of the source memory.
  * @param p_End An iterator pointing to the end of the source memory.
  */
-template <typename It1, typename It2> constexpr auto BackwardCopy(It1 p_Dst, It2 p_Begin, It2 p_End) noexcept
+template <typename It1, typename It2> constexpr auto BackwardCopy(It1 p_Dst, It2 p_Begin, It2 p_End)
 {
     return std::copy_backward(p_Begin, p_End, p_Dst);
 }
@@ -110,7 +110,7 @@ template <typename It1, typename It2> constexpr auto BackwardCopy(It1 p_Dst, It2
  * @param p_Begin An iterator pointing to the beginning of the source memory.
  * @param p_End An iterator pointing to the end of the source memory.
  */
-template <typename It1, typename It2> constexpr auto ForwardMove(It1 p_Dst, It2 p_Begin, It2 p_End) noexcept
+template <typename It1, typename It2> constexpr auto ForwardMove(It1 p_Dst, It2 p_Begin, It2 p_End)
 {
     return std::move(p_Begin, p_End, p_Dst);
 }
@@ -124,7 +124,7 @@ template <typename It1, typename It2> constexpr auto ForwardMove(It1 p_Dst, It2 
  * @param p_Begin An iterator pointing to the beginning of the source memory.
  * @param p_End An iterator pointing to the end of the source memory.
  */
-template <typename It1, typename It2> constexpr auto BackwardMove(It1 p_Dst, It2 p_Begin, It2 p_End) noexcept
+template <typename It1, typename It2> constexpr auto BackwardMove(It1 p_Dst, It2 p_Begin, It2 p_End)
 {
     return std::move_backward(p_Begin, p_End, p_Dst);
 }
@@ -159,9 +159,9 @@ template <typename T> class STLAllocator
         using other = STLAllocator<U>;
     };
 
-    STLAllocator() noexcept = default;
+    STLAllocator() = default;
 
-    template <typename U> STLAllocator(const STLAllocator<U> &) noexcept
+    template <typename U> STLAllocator(const STLAllocator<U> &)
     {
     }
 
@@ -175,11 +175,11 @@ template <typename T> class STLAllocator
         Deallocate(p_Ptr);
     }
 
-    bool operator==(const STLAllocator &) const noexcept
+    bool operator==(const STLAllocator &) const
     {
         return true;
     }
-    bool operator!=(const STLAllocator &) const noexcept
+    bool operator!=(const STLAllocator &) const
     {
         return false;
     }
@@ -194,7 +194,7 @@ template <typename T> class STLAllocator
  * @param p_Args The arguments to pass to the constructor of `T`.
  * @return A pointer to the constructed object.
  */
-template <typename T, typename... Args> T *Construct(T *p_Ptr, Args &&...p_Args) noexcept
+template <typename T, typename... Args> T *Construct(T *p_Ptr, Args &&...p_Args)
 {
     return std::launder(::new (p_Ptr) T(std::forward<Args>(p_Args)...));
 }
@@ -206,7 +206,7 @@ template <typename T, typename... Args> T *Construct(T *p_Ptr, Args &&...p_Args)
  *
  * @param p_Ptr A pointer to the memory location where the object should be destroyed.
  */
-template <typename T> void Destruct(T *p_Ptr) noexcept
+template <typename T> void Destruct(T *p_Ptr)
 {
     p_Ptr->~T();
 }
@@ -222,7 +222,7 @@ template <typename T> void Destruct(T *p_Ptr) noexcept
  * @param p_Args The arguments to pass to the constructor of `T`.
  * @return A pointer to the constructed object.
  */
-template <typename It, typename... Args> auto ConstructFromIterator(const It p_It, Args &&...p_Args) noexcept
+template <typename It, typename... Args> auto ConstructFromIterator(const It p_It, Args &&...p_Args)
 {
     if constexpr (std::is_pointer_v<It>)
         return Construct(p_It, std::forward<Args>(p_Args)...);
@@ -239,7 +239,7 @@ template <typename It, typename... Args> auto ConstructFromIterator(const It p_I
  *
  * @param p_It An iterator pointing to the memory location where the object should be destroyed.
  */
-template <typename It> void DestructFromIterator(const It p_It) noexcept
+template <typename It> void DestructFromIterator(const It p_It)
 {
     if constexpr (std::is_pointer_v<It>)
         Destruct(p_It);
@@ -256,8 +256,7 @@ template <typename It> void DestructFromIterator(const It p_It) noexcept
  * @param p_End An iterator pointing to the end of the range where the objects should be constructed.
  * @param p_Args The arguments to pass to the constructor of `T`.
  */
-template <typename It, typename... Args>
-void ConstructRange(const It p_Begin, const It p_End, const Args &...p_Args) noexcept
+template <typename It, typename... Args> void ConstructRange(const It p_Begin, const It p_End, const Args &...p_Args)
 {
     for (auto it = p_Begin; it != p_End; ++it)
         ConstructFromIterator(it, p_Args...);
@@ -272,7 +271,7 @@ void ConstructRange(const It p_Begin, const It p_End, const Args &...p_Args) noe
  * @param p_Begin An iterator pointing to the beginning of the source range where the objects should be copied from.
  * @param p_End An iterator pointing to the end of the source range where the objects should be copied from.
  */
-template <typename It1, typename It2> void ConstructRangeCopy(It1 p_Dst, const It2 p_Begin, const It2 p_End) noexcept
+template <typename It1, typename It2> void ConstructRangeCopy(It1 p_Dst, const It2 p_Begin, const It2 p_End)
 {
     for (auto it = p_Begin; it != p_End; ++it, ++p_Dst)
         ConstructFromIterator(p_Dst, *it);
@@ -287,7 +286,7 @@ template <typename It1, typename It2> void ConstructRangeCopy(It1 p_Dst, const I
  * @param p_Begin An iterator pointing to the beginning of the source range where the objects should be moved from.
  * @param p_End An iterator pointing to the end of the source range where the objects should be moved from.
  */
-template <typename It1, typename It2> void ConstructRangeMove(It1 p_Dst, const It2 p_Begin, const It2 p_End) noexcept
+template <typename It1, typename It2> void ConstructRangeMove(It1 p_Dst, const It2 p_Begin, const It2 p_End)
 {
     for (auto it = p_Begin; it != p_End; ++it, ++p_Dst)
         ConstructFromIterator(p_Dst, std::move(*it));
@@ -301,7 +300,7 @@ template <typename It1, typename It2> void ConstructRangeMove(It1 p_Dst, const I
  * @param p_Begin An iterator pointing to the beginning of the range where the objects should be destroyed.
  * @param p_End An iterator pointing to the end of the range where the objects should be destroyed.
  */
-template <typename It> void DestructRange(const It p_Begin, const It p_End) noexcept
+template <typename It> void DestructRange(const It p_Begin, const It p_End)
 {
     for (auto it = p_Begin; it != p_End; ++it)
         DestructFromIterator(it);

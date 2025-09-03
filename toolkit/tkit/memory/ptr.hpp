@@ -26,22 +26,22 @@ template <typename T> class RefCounted
   public:
     using CountedType = T;
     // No initialization of refcount. Refcount adds/removes are handled by Ref
-    RefCounted() noexcept = default;
+    RefCounted() = default;
 
     /* COPY-MOVE OPERATIONS */
     // Refcount should not be copied. When doing *ptr1 = *ptr2, I only want to transfer the user's data
-    RefCounted(const RefCounted &) noexcept
+    RefCounted(const RefCounted &)
     {
     }
-    RefCounted(RefCounted &&) noexcept
+    RefCounted(RefCounted &&)
     {
     }
 
-    RefCounted &operator=(const RefCounted &) noexcept
+    RefCounted &operator=(const RefCounted &)
     {
         return *this;
     }
-    RefCounted &operator=(RefCounted &&) noexcept
+    RefCounted &operator=(RefCounted &&)
     {
         return *this;
     }
@@ -50,14 +50,14 @@ template <typename T> class RefCounted
     TKIT_CLANG_WARNING_IGNORE("-Wexceptions")
     TKIT_GCC_WARNING_IGNORE("-Wterminate")
     TKIT_MSVC_WARNING_IGNORE(4297)
-    ~RefCounted() noexcept
+    ~RefCounted()
     {
         TKIT_ASSERT(m_RefCount.load(std::memory_order_relaxed) == 0,
                     "[TOOLKIT] RefCounted object deleted with non-zero refcount");
     }
     TKIT_COMPILER_WARNING_IGNORE_POP()
 
-    u32 RefCount() const noexcept
+    u32 RefCount() const
     {
         return m_RefCount.load(std::memory_order_relaxed);
     }
@@ -65,18 +65,18 @@ template <typename T> class RefCounted
   protected:
     // User may want to have control over the objects's destruction, so they can implement this method instead of using
     // the default
-    void selfDestruct() const noexcept
+    void selfDestruct() const
     {
         delete static_cast<const T *>(this);
     }
 
   private:
-    void increaseRef() const noexcept
+    void increaseRef() const
     {
         m_RefCount.fetch_add(1, std::memory_order_relaxed);
     }
 
-    void decreaseRef() const noexcept
+    void decreaseRef() const
     {
         if (m_RefCount.fetch_sub(1, std::memory_order_acq_rel) == 1)
             static_cast<const T *>(this)->selfDestruct();
@@ -100,24 +100,24 @@ template <typename T> class RefCounted
 template <typename T> class Ref
 {
   public:
-    Ref() noexcept = default;
+    Ref() = default;
 
     /* COPY-MOVE CTORS */
-    explicit(false) Ref(T *p_Ptr) noexcept : m_Ptr(p_Ptr)
+    explicit(false) Ref(T *p_Ptr) : m_Ptr(p_Ptr)
     {
         increaseRef();
     }
-    Ref(const Ref &p_Other) noexcept : m_Ptr(p_Other.m_Ptr)
+    Ref(const Ref &p_Other) : m_Ptr(p_Other.m_Ptr)
     {
         increaseRef();
     }
-    Ref(Ref &&p_Other) noexcept : m_Ptr(p_Other.m_Ptr)
+    Ref(Ref &&p_Other) : m_Ptr(p_Other.m_Ptr)
     {
         p_Other.m_Ptr = nullptr;
     }
 
     /* COPY-MOVE ASSIGNMENTS */
-    Ref &operator=(T *p_Ptr) noexcept
+    Ref &operator=(T *p_Ptr)
     {
         if (m_Ptr != p_Ptr)
         {
@@ -127,7 +127,7 @@ template <typename T> class Ref
         }
         return *this;
     }
-    Ref &operator=(const Ref &p_Other) noexcept
+    Ref &operator=(const Ref &p_Other)
     {
         if (m_Ptr != p_Other.m_Ptr)
         {
@@ -137,7 +137,7 @@ template <typename T> class Ref
         }
         return *this;
     }
-    Ref &operator=(Ref &&p_Other) noexcept
+    Ref &operator=(Ref &&p_Other)
     {
         if (m_Ptr != p_Other.m_Ptr)
         {
@@ -152,18 +152,18 @@ template <typename T> class Ref
     }
 
     /* COPY-MOVE CTORS TEMPLATED VARIANTS */
-    template <typename U> explicit(false) Ref(const Ref<U> &p_Other) noexcept : m_Ptr(p_Other.m_Ptr)
+    template <typename U> explicit(false) Ref(const Ref<U> &p_Other) : m_Ptr(p_Other.m_Ptr)
     {
         increaseRef();
     }
 
-    template <typename U> explicit(false) Ref(Ref<U> &&p_Other) noexcept : m_Ptr(p_Other.m_Ptr)
+    template <typename U> explicit(false) Ref(Ref<U> &&p_Other) : m_Ptr(p_Other.m_Ptr)
     {
         p_Other.m_Ptr = nullptr;
     }
 
     /* COPY-MOVE ASSIGNMENTS TEMPLATED VARIANTS */
-    template <typename U> Ref &operator=(const Ref<U> &p_Other) noexcept
+    template <typename U> Ref &operator=(const Ref<U> &p_Other)
     {
         if (m_Ptr != p_Other.m_Ptr)
         {
@@ -174,7 +174,7 @@ template <typename T> class Ref
         return *this;
     }
 
-    template <typename U> Ref &operator=(Ref<U> &&p_Other) noexcept
+    template <typename U> Ref &operator=(Ref<U> &&p_Other)
     {
         if (m_Ptr != p_Other.m_Ptr)
         {
@@ -185,24 +185,24 @@ template <typename T> class Ref
         return *this;
     }
 
-    ~Ref() noexcept
+    ~Ref()
     {
         decreaseRef();
     }
 
-    T *operator->() const noexcept
+    T *operator->() const
     {
         return m_Ptr;
     }
-    T &operator*() const noexcept
+    T &operator*() const
     {
         return *m_Ptr;
     }
-    explicit(false) operator T *() const noexcept
+    explicit(false) operator T *() const
     {
         return m_Ptr;
     }
-    explicit(false) operator bool() const noexcept
+    explicit(false) operator bool() const
     {
         return m_Ptr != nullptr;
     }
@@ -211,7 +211,7 @@ template <typename T> class Ref
      * @brief Get the pointer.
      *
      */
-    T *Get() const noexcept
+    T *Get() const
     {
         return m_Ptr;
     }
@@ -226,21 +226,21 @@ template <typename T> class Ref
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
-    static Ref Create(Args &&...p_Args) noexcept
+    static Ref Create(Args &&...p_Args)
     {
         return Ref(new T(std::forward<Args>(p_Args)...));
     }
 
-    std::strong_ordering operator<=>(const Ref &p_Other) const noexcept = default;
+    std::strong_ordering operator<=>(const Ref &p_Other) const = default;
 
   private:
-    void increaseRef() const noexcept
+    void increaseRef() const
     {
         // Must static_cast to RefCounted to access increaseRef
         if (m_Ptr)
             static_cast<const RefCounted<typename T::CountedType> *>(m_Ptr)->increaseRef();
     }
-    void decreaseRef() const noexcept
+    void decreaseRef() const
     {
         // Must static_cast to RefCounted to access decreaseRef
         if (m_Ptr)
@@ -258,7 +258,7 @@ template <typename T> class Ref
 // not just use a unique_ptr and thats it? Well, a Scope pointer is easy enough to implement, and it allows me to have a
 // bit more consistency with names conventions/factories (+ its fun). Also, I believe unique_ptr has some extra overhead
 // due to the need to be able to handle exceptions, which I dont need because I dont use them at all (you can optimize
-// that away with a noexcept, true, but I still like the idea of having a custom implementation)
+// that away with a, true, but I still like the idea of having a custom implementation)
 
 // All in all, I am aware moving out of my way to reinvent the wheel like this is not a good practice, and making
 // assumptions about unique_ptr's possible overhead is not a good idea. But for now, this is not important enough to
@@ -280,26 +280,26 @@ template <typename T> class Scope
 {
     TKIT_NON_COPYABLE(Scope)
   public:
-    Scope() noexcept = default;
-    explicit(false) Scope(T *p_Ptr) noexcept : m_Ptr(p_Ptr)
+    Scope() = default;
+    explicit(false) Scope(T *p_Ptr) : m_Ptr(p_Ptr)
     {
     }
-    Scope(Scope &&p_Other) noexcept : m_Ptr(p_Other.m_Ptr)
+    Scope(Scope &&p_Other) : m_Ptr(p_Other.m_Ptr)
     {
         p_Other.m_Ptr = nullptr;
     }
-    template <typename U> explicit(false) Scope(Scope<U> &&p_Other) noexcept : m_Ptr(p_Other.m_Ptr)
+    template <typename U> explicit(false) Scope(Scope<U> &&p_Other) : m_Ptr(p_Other.m_Ptr)
     {
         p_Other.m_Ptr = nullptr;
     }
 
-    Scope &operator=(Scope &&p_Other) noexcept
+    Scope &operator=(Scope &&p_Other)
     {
         if (m_Ptr != p_Other.m_Ptr)
             Reset(p_Other.Release());
         return *this;
     }
-    template <typename U> Scope &operator=(Scope<U> &&p_Other) noexcept
+    template <typename U> Scope &operator=(Scope<U> &&p_Other)
     {
         if (m_Ptr != p_Other.m_Ptr)
             Reset(p_Other.Release());
@@ -307,7 +307,7 @@ template <typename T> class Scope
         return *this;
     }
 
-    ~Scope() noexcept
+    ~Scope()
     {
         Reset();
     }
@@ -317,7 +317,7 @@ template <typename T> class Scope
      *
      * @param p_Ptr The new pointer to manage.
      */
-    void Reset(T *p_Ptr = nullptr) noexcept
+    void Reset(T *p_Ptr = nullptr)
     {
         delete m_Ptr;
         m_Ptr = p_Ptr;
@@ -330,7 +330,7 @@ template <typename T> class Scope
      *
      * @return The released pointer.
      */
-    T *Release() noexcept
+    T *Release()
     {
         T *ptr = m_Ptr;
         m_Ptr = nullptr;
@@ -342,26 +342,26 @@ template <typename T> class Scope
      *
      * @return A new `Ref<T>` object.
      */
-    Ref<T> AsRef() noexcept
+    Ref<T> AsRef()
     {
         return Ref<T>(Release());
     }
 
-    operator Ref<T>() noexcept
+    operator Ref<T>()
     {
         return AsRef();
     }
 
-    T *operator->() const noexcept
+    T *operator->() const
     {
         return m_Ptr;
     }
-    T &operator*() const noexcept
+    T &operator*() const
     {
         return *m_Ptr;
     }
 
-    explicit(false) operator bool() const noexcept
+    explicit(false) operator bool() const
     {
         return m_Ptr != nullptr;
     }
@@ -370,7 +370,7 @@ template <typename T> class Scope
      * @brief Get the pointer.
      *
      */
-    T *Get() const noexcept
+    T *Get() const
     {
         return m_Ptr;
     }
@@ -385,12 +385,12 @@ template <typename T> class Scope
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
-    static Scope Create(Args &&...p_Args) noexcept
+    static Scope Create(Args &&...p_Args)
     {
         return Scope(new T(std::forward<Args>(p_Args)...));
     }
 
-    std::strong_ordering operator<=>(const Scope &p_Other) const noexcept = default;
+    std::strong_ordering operator<=>(const Scope &p_Other) const = default;
 
   private:
     T *m_Ptr = nullptr;
@@ -401,7 +401,7 @@ template <typename T> class Scope
 
 template <typename T> struct std::hash<TKit::Ref<T>>
 {
-    std::size_t operator()(const TKit::Ref<T> &p_Ref) const noexcept
+    std::size_t operator()(const TKit::Ref<T> &p_Ref) const
     {
         return std::hash<T *>()(p_Ref.Get());
     }
@@ -409,7 +409,7 @@ template <typename T> struct std::hash<TKit::Ref<T>>
 
 template <typename T> struct std::hash<TKit::Scope<T>>
 {
-    std::size_t operator()(const TKit::Scope<T> &p_Scope) const noexcept
+    std::size_t operator()(const TKit::Scope<T> &p_Scope) const
     {
         return std::hash<T *>()(p_Scope.Get());
     }

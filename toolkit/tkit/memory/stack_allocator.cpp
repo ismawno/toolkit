@@ -4,24 +4,24 @@
 
 namespace TKit
 {
-StackAllocator::StackAllocator(void *p_Buffer, const usize p_Size) noexcept
+StackAllocator::StackAllocator(void *p_Buffer, const usize p_Size)
     : m_Buffer(static_cast<std::byte *>(p_Buffer)), m_Size(p_Size), m_Remaining(p_Size), m_Provided(true)
 {
 }
 
-StackAllocator::StackAllocator(const usize p_Size, const usize p_Alignment) noexcept
+StackAllocator::StackAllocator(const usize p_Size, const usize p_Alignment)
     : m_Size(p_Size), m_Remaining(p_Size), m_Provided(false)
 {
     m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(static_cast<size_t>(p_Size), p_Alignment));
     TKIT_ASSERT(m_Buffer, "[TOOLKIT][STACK-ALLOC] Failed to allocate memory");
 }
 
-StackAllocator::~StackAllocator() noexcept
+StackAllocator::~StackAllocator()
 {
     deallocateBuffer();
 }
 
-StackAllocator::StackAllocator(StackAllocator &&p_Other) noexcept
+StackAllocator::StackAllocator(StackAllocator &&p_Other)
     : m_Entries(std::move(p_Other.m_Entries)), m_Buffer(p_Other.m_Buffer), m_Size(p_Other.GetSize()),
       m_Remaining(p_Other.m_Remaining), m_Provided(p_Other.m_Provided)
 
@@ -32,7 +32,7 @@ StackAllocator::StackAllocator(StackAllocator &&p_Other) noexcept
     p_Other.m_Entries.Clear();
 }
 
-StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other) noexcept
+StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other)
 {
     if (this != &p_Other)
     {
@@ -51,7 +51,7 @@ StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other) noexcept
     return *this;
 }
 
-void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment) noexcept
+void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment)
 {
     void *ptr = m_Entries.IsEmpty() ? m_Buffer : m_Entries.GetBack().Ptr + m_Entries.GetBack().Size;
     size_t remaining = static_cast<size_t>(m_Remaining);
@@ -75,7 +75,7 @@ void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment) noex
     return alignedPtr;
 }
 
-void StackAllocator::Deallocate([[maybe_unused]] const void *p_Ptr) noexcept
+void StackAllocator::Deallocate([[maybe_unused]] const void *p_Ptr)
 {
     TKIT_ASSERT(!m_Entries.IsEmpty(),
                 "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is IsEmpty");
@@ -85,26 +85,26 @@ void StackAllocator::Deallocate([[maybe_unused]] const void *p_Ptr) noexcept
     m_Entries.Pop();
 }
 
-const StackAllocator::Entry &StackAllocator::Top() const noexcept
+const StackAllocator::Entry &StackAllocator::Top() const
 {
     TKIT_ASSERT(!m_Entries.IsEmpty(), "[TOOLKIT][STACK-ALLOC] No elements in the stack allocator");
     return m_Entries.GetBack();
 }
 
-usize StackAllocator::GetSize() const noexcept
+usize StackAllocator::GetSize() const
 {
     return m_Size;
 }
-usize StackAllocator::GetAllocated() const noexcept
+usize StackAllocator::GetAllocated() const
 {
     return m_Size - m_Remaining;
 }
-usize StackAllocator::GetRemaining() const noexcept
+usize StackAllocator::GetRemaining() const
 {
     return m_Remaining;
 }
 
-bool StackAllocator::Belongs(const void *p_Ptr) const noexcept
+bool StackAllocator::Belongs(const void *p_Ptr) const
 {
     if (m_Entries.IsEmpty())
         return false;
@@ -112,17 +112,17 @@ bool StackAllocator::Belongs(const void *p_Ptr) const noexcept
     return ptr >= m_Buffer && ptr < m_Entries.GetBack().Ptr + m_Entries.GetBack().Size;
 }
 
-bool StackAllocator::IsEmpty() const noexcept
+bool StackAllocator::IsEmpty() const
 {
     return m_Remaining == m_Size;
 }
 
-bool StackAllocator::IsFull() const noexcept
+bool StackAllocator::IsFull() const
 {
     return m_Remaining == 0;
 }
 
-void StackAllocator::deallocateBuffer() noexcept
+void StackAllocator::deallocateBuffer()
 {
     if (!m_Buffer || m_Provided)
         return;

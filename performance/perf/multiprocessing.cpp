@@ -13,7 +13,7 @@ struct Number
     std::byte Padding[TKIT_CACHE_LINE_SIZE - sizeof(u32)];
 };
 
-void RecordThreadPoolSum(const ThreadPoolSettings &p_Settings) noexcept
+void RecordThreadPoolSum(const ThreadPoolSettings &p_Settings)
 {
     std::ofstream file(g_Root + "/performance/results/thread_pool_sum.csv");
     file << "threads,sum (ns),result\n";
@@ -50,7 +50,7 @@ void RecordThreadPoolSum(const ThreadPoolSettings &p_Settings) noexcept
     }
 }
 
-void RecordParallelSum(const ThreadPoolSettings &p_Settings) noexcept
+void RecordParallelSum(const ThreadPoolSettings &p_Settings)
 {
     std::ofstream file(g_Root + "/performance/results/parallel_sum.csv");
     file << "threads,sum (ns),result\n";

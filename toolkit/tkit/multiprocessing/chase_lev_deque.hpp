@@ -30,7 +30,7 @@ template <typename T, u64 Capacity> class ChaseLevDeque
   public:
     static constexpr u64 Mask = Capacity - 1;
 
-    ChaseLevDeque() noexcept = default;
+    ChaseLevDeque() = default;
 
     /**
      * @brief Push a new element into the back of the queue.
@@ -42,7 +42,7 @@ template <typename T, u64 Capacity> class ChaseLevDeque
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
-    void PushBack(Args &&...p_Args) noexcept
+    void PushBack(Args &&...p_Args)
     {
         const u64 back = m_Back.load(std::memory_order_relaxed);
         TKIT_ASSERT(back - m_Front.load(std::memory_order_relaxed) < Capacity, "[TOOLKIT][CHASE-LEV] Queue is full!");
@@ -61,7 +61,7 @@ template <typename T, u64 Capacity> class ChaseLevDeque
      *
      * @reture If succeeded, a copy of the element. Otherwise null.
      */
-    constexpr std::optional<T> PopBack() noexcept
+    constexpr std::optional<T> PopBack()
     {
         const u64 back = m_Back.fetch_sub(1, std::memory_order_relaxed) - 1;
         std::atomic_thread_fence(std::memory_order_seq_cst);
@@ -93,7 +93,7 @@ template <typename T, u64 Capacity> class ChaseLevDeque
      *
      * @return If succeeded, a copy of the element. Otherwise null.
      */
-    constexpr std::optional<T> PopFront() noexcept
+    constexpr std::optional<T> PopFront()
     {
         u64 front = m_Front.load(std::memory_order_acquire);
         std::atomic_thread_fence(std::memory_order_seq_cst);
@@ -110,11 +110,11 @@ template <typename T, u64 Capacity> class ChaseLevDeque
     }
 
   private:
-    T load(const u64 p_Index) const noexcept
+    T load(const u64 p_Index) const
     {
         return m_Data[p_Index & Mask].load(std::memory_order_relaxed);
     }
-    void store(const u64 p_Index, T &&p_Element) noexcept
+    void store(const u64 p_Index, T &&p_Element)
     {
         m_Data[p_Index & Mask].store(std::move(p_Element), std::memory_order_relaxed);
     }

@@ -14,16 +14,16 @@ class TKIT_API Clock
   public:
     using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
 
-    Clock() noexcept;
+    Clock();
 
-    u64 GetStartTime() const noexcept;
-    TimePoint GetStartTimePoint() const noexcept;
+    u64 GetStartTime() const;
+    TimePoint GetStartTimePoint() const;
 
-    Timespan GetElapsed() const noexcept;
-    Timespan Restart() noexcept;
+    Timespan GetElapsed() const;
+    Timespan Restart();
 
-    static u64 GetCurrentTime() noexcept;
-    static TimePoint GetCurrentTimePoint() noexcept;
+    static u64 GetCurrentTime();
+    static TimePoint GetCurrentTimePoint();
 
   private:
     TimePoint m_Start;

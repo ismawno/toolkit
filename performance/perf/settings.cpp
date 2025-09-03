@@ -5,7 +5,7 @@
 
 namespace TKit::Perf
 {
-static std::string cliName(std::string p_Name) noexcept
+static std::string cliName(std::string p_Name)
 {
     const auto pos = p_Name.find("Settings");
     if (pos != std::string::npos)
@@ -72,15 +72,7 @@ Settings CreateSettings(int argc, char **argv)
         });
     });
 
-    try
-    {
-        parser.parse_args(argc, argv);
-    }
-    catch (const std::exception &err)
-    {
-        std::cerr << err.what() << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
+    parser.parse_args(argc, argv);
 
     if (const auto path = parser.present("--settings"))
         settings = TKit::Yaml::Deserialize<Settings>(*path);

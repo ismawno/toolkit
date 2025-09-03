@@ -7,20 +7,20 @@
 
 namespace TKit
 {
-bool ITask::IsFinished(const std::memory_order p_Order) const noexcept
+bool ITask::IsFinished(const std::memory_order p_Order) const
 {
     return m_Finished.test(p_Order);
 }
-void ITask::WaitUntilFinished() const noexcept
+void ITask::WaitUntilFinished() const
 {
     m_Finished.wait(false, std::memory_order_acquire);
 }
-void ITask::Reset() noexcept
+void ITask::Reset()
 {
     m_Finished.clear(std::memory_order_relaxed);
 }
 
-void ITask::notifyCompleted() noexcept
+void ITask::notifyCompleted()
 {
 #ifdef TKIT_ENABLE_ASSERTS
     const bool flag = m_Finished.test_and_set(std::memory_order_release);
@@ -31,7 +31,7 @@ void ITask::notifyCompleted() noexcept
     m_Finished.notify_all();
 }
 
-void Task<void>::operator()() noexcept
+void Task<void>::operator()()
 {
     m_Function();
     notifyCompleted();

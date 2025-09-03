@@ -371,10 +371,16 @@ endfunction()
 
 function(tkit_default_configure target)
   if(MSVC)
-    tkit_configure_compile_link_options(${target} COMPILER_FLAGS /W4 /WX)
+    tkit_configure_compile_link_options(${target} COMPILER_FLAGS /W4 /WX /EHsc-)
   elseif((UNIX AND APPLE) OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-    tkit_configure_compile_link_options(${target} COMPILER_FLAGS -Wall -Wextra
-                                        -Wpedantic -Werror)
+    tkit_configure_compile_link_options(
+      ${target}
+      COMPILER_FLAGS
+      -Wall
+      -Wextra
+      -Wpedantic
+      -Werror
+      -fno-exceptions)
   else()
     tkit_configure_compile_link_options(
       ${target}
@@ -383,7 +389,8 @@ function(tkit_default_configure target)
       -Wextra
       -Wpedantic
       -Werror
-      -Wno-changes-meaning)
+      -Wno-changes-meaning
+      -fno-exceptions)
   endif()
 endfunction()
 

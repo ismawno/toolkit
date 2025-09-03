@@ -38,10 +38,10 @@ class TKIT_API ITask
     // their/our overriden new/delete, but it is not worth the cost.
     TKIT_NON_COPYABLE(ITask)
   public:
-    ITask() noexcept = default;
-    virtual ~ITask() noexcept = default;
+    ITask() = default;
+    virtual ~ITask() = default;
 
-    virtual void operator()() noexcept = 0;
+    virtual void operator()() = 0;
 
     /**
      * @brief Check if the task has finished executing.
@@ -49,7 +49,7 @@ class TKIT_API ITask
      * @param p_Order The memory order of the operation.
      *
      */
-    bool IsFinished(std::memory_order p_Order = std::memory_order_relaxed) const noexcept;
+    bool IsFinished(std::memory_order p_Order = std::memory_order_relaxed) const;
 
     /**
      * @brief Block the calling thread until the task has finished executing.
@@ -59,20 +59,20 @@ class TKIT_API ITask
      * method `WaitUntilFinished()` instead of this one.
      *
      */
-    void WaitUntilFinished() const noexcept;
+    void WaitUntilFinished() const;
 
     /**
      * @brief Reset the task so that it can be submitted again.
      *
      */
-    void Reset() noexcept;
+    void Reset();
 
   protected:
     /**
      * @brief Notify that the task has finished executing.
      *
      */
-    void notifyCompleted() noexcept;
+    void notifyCompleted();
 
   private:
     std::atomic_flag m_Finished = ATOMIC_FLAG_INIT;
@@ -95,7 +95,7 @@ class TKIT_API ITask
 template <typename T = void> class Task final : public ITask
 {
   public:
-    void operator()() noexcept override
+    void operator()() override
     {
         m_Result = m_Function();
         notifyCompleted();
@@ -110,7 +110,7 @@ template <typename T = void> class Task final : public ITask
      *
      * @return The result of the task.
      */
-    const T &WaitForResult() const noexcept
+    const T &WaitForResult() const
     {
         WaitUntilFinished();
         return m_Result;
@@ -124,7 +124,7 @@ template <typename T = void> class Task final : public ITask
      *
      * @return The result of the task.
      */
-    const T &GetResult() const noexcept
+    const T &GetResult() const
     {
         return m_Result;
     }
@@ -138,12 +138,12 @@ template <typename T = void> class Task final : public ITask
      */
     template <typename Callable, typename... Args>
         requires std::invocable<Callable, Args...>
-    static Task *Create(Callable &&p_Callable, Args &&...p_Args) noexcept
+    static Task *Create(Callable &&p_Callable, Args &&...p_Args)
     {
         return t_Allocator.Create<Task>(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
     }
 
-    static void Destroy(Task *p_Task) noexcept
+    static void Destroy(Task *p_Task)
     {
         t_Allocator.Destroy(p_Task);
     }
@@ -156,7 +156,7 @@ template <typename T = void> class Task final : public ITask
      */
     template <typename Callable, typename... Args>
         requires std::invocable<Callable, Args...>
-    explicit Task(Callable &&p_Callable, Args &&...p_Args) noexcept
+    explicit Task(Callable &&p_Callable, Args &&...p_Args)
         : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
 #ifdef TKIT_ENABLE_ASSERTS
@@ -169,7 +169,7 @@ template <typename T = void> class Task final : public ITask
 
     template <typename Callable>
         requires(!std::is_same_v<Callable, Task>)
-    explicit Task(Callable &&p_Callable) noexcept : m_Function(std::forward<Callable>(p_Callable))
+    explicit Task(Callable &&p_Callable) : m_Function(std::forward<Callable>(p_Callable))
     {
     }
 
@@ -189,7 +189,7 @@ template <typename T = void> class Task final : public ITask
 template <> class TKIT_API Task<void> final : public ITask
 {
   public:
-    void operator()() noexcept override;
+    void operator()() override;
 
     /**
      * @brief Create a task allocated with a thread-dedicated allocator.
@@ -202,7 +202,7 @@ template <> class TKIT_API Task<void> final : public ITask
      */
     template <typename Callable, typename... Args>
         requires std::invocable<Callable, Args...>
-    static Task *Create(Callable &&p_Callable, Args &&...p_Args) noexcept
+    static Task *Create(Callable &&p_Callable, Args &&...p_Args)
     {
         return t_Allocator.Create<Task>(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
     }
@@ -214,14 +214,14 @@ template <> class TKIT_API Task<void> final : public ITask
      *
      * @param p_Task The task to be destroyed.
      */
-    static void Destroy(Task *p_Task) noexcept
+    static void Destroy(Task *p_Task)
     {
         t_Allocator.Destroy(p_Task);
     }
 
     template <typename Callable, typename... Args>
         requires std::invocable<Callable, Args...>
-    explicit Task(Callable &&p_Callable, Args &&...p_Args) noexcept
+    explicit Task(Callable &&p_Callable, Args &&...p_Args)
         : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
         if constexpr (sizeof...(Args) == 0)
@@ -232,11 +232,11 @@ template <> class TKIT_API Task<void> final : public ITask
 
     template <typename Callable>
         requires(!std::is_same_v<Callable, Task>)
-    explicit Task(Callable &&p_Callable) noexcept : m_Function(std::forward<Callable>(p_Callable))
+    explicit Task(Callable &&p_Callable) : m_Function(std::forward<Callable>(p_Callable))
     {
     }
 
-    static BlockAllocator &getAllocator() noexcept;
+    static BlockAllocator &getAllocator();
 
   private:
     std::function<void()> m_Function = nullptr;

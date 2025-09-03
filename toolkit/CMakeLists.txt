@@ -47,8 +47,8 @@ if(TOOLKIT_ENABLE_YAML_SERIALIZATION)
       CACHE BOOL "" FORCE)
   FetchContent_Declare(
     yaml-cpp
-    GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-    GIT_TAG 0.8.0
+    GIT_REPOSITORY https://github.com/ismawno/yaml-cpp.git
+    GIT_TAG 0.8.x
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE)
 

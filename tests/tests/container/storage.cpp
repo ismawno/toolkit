@@ -103,7 +103,7 @@ struct STrack
     {
         ++CopyCtorCount;
     }
-    STrack(STrack &&p_Other) noexcept : Val(p_Other.Val)
+    STrack(STrack &&p_Other) : Val(p_Other.Val)
     {
         ++MoveCtorCount;
     }

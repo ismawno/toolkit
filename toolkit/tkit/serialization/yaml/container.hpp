@@ -17,7 +17,7 @@ namespace TKit::Yaml
 {
 template <typename T, usize N, typename Traits> struct Codec<Array<T, N, Traits>>
 {
-    static Node Encode(const Array<T, N> &p_Instance) noexcept
+    static Node Encode(const Array<T, N> &p_Instance)
     {
         Node node;
         for (const T &element : p_Instance)
@@ -25,7 +25,7 @@ template <typename T, usize N, typename Traits> struct Codec<Array<T, N, Traits>
         return node;
     }
 
-    static bool Decode(const Node &p_Node, Array<T, N> &p_Instance) noexcept
+    static bool Decode(const Node &p_Node, Array<T, N> &p_Instance)
     {
         if (!p_Node.IsSequence() || p_Node.size() > N)
             return false;
@@ -39,7 +39,7 @@ template <typename T, usize N, typename Traits> struct Codec<Array<T, N, Traits>
 
 template <typename T, usize N, typename Traits> struct Codec<StaticArray<T, N, Traits>>
 {
-    static Node Encode(const StaticArray<T, N> &p_Instance) noexcept
+    static Node Encode(const StaticArray<T, N> &p_Instance)
     {
         Node node;
         for (const T &element : p_Instance)
@@ -47,7 +47,7 @@ template <typename T, usize N, typename Traits> struct Codec<StaticArray<T, N, T
         return node;
     }
 
-    static bool Decode(const Node &p_Node, StaticArray<T, N> &p_Instance) noexcept
+    static bool Decode(const Node &p_Node, StaticArray<T, N> &p_Instance)
     {
         if (!p_Node.IsSequence() || p_Node.size() > N)
             return false;
@@ -60,7 +60,7 @@ template <typename T, usize N, typename Traits> struct Codec<StaticArray<T, N, T
 
 template <typename T, usize N> struct Codec<Span<T, N>>
 {
-    static Node Encode(const Span<const T, N> &p_Instance) noexcept
+    static Node Encode(const Span<const T, N> &p_Instance)
     {
         Node node;
         for (const T &element : p_Instance)
@@ -71,7 +71,7 @@ template <typename T, usize N> struct Codec<Span<T, N>>
 
 template <typename T, usize N> struct Codec<WeakArray<T, N>>
 {
-    static Node Encode(const WeakArray<const T, N> &p_Instance) noexcept
+    static Node Encode(const WeakArray<const T, N> &p_Instance)
     {
         Node node;
         for (const T &element : p_Instance)

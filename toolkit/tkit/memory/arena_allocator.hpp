@@ -33,14 +33,14 @@ class TKIT_API ArenaAllocator
     // alignment of the individual allocations at all. You can still specify alignments of, say, 64 if you want when
     // allocating
 
-    explicit ArenaAllocator(usize p_Size, usize p_Alignment = alignof(std::max_align_t)) noexcept;
+    explicit ArenaAllocator(usize p_Size, usize p_Alignment = alignof(std::max_align_t));
 
     // This constructor is NOT owning the buffer, so it will not deallocate it. Up to the user to manage the memory
-    ArenaAllocator(void *p_Buffer, usize p_Size) noexcept;
-    ~ArenaAllocator() noexcept;
+    ArenaAllocator(void *p_Buffer, usize p_Size);
+    ~ArenaAllocator();
 
-    ArenaAllocator(ArenaAllocator &&p_Other) noexcept;
-    ArenaAllocator &operator=(ArenaAllocator &&p_Other) noexcept;
+    ArenaAllocator(ArenaAllocator &&p_Other);
+    ArenaAllocator &operator=(ArenaAllocator &&p_Other);
 
     /**
      * @brief Allocate a new block of memory into the arena allocator.
@@ -49,7 +49,7 @@ class TKIT_API ArenaAllocator
      * @param p_Alignment The alignment of the block.
      * @return A pointer to the allocated block.
      */
-    void *Allocate(usize p_Size, usize p_Alignment = alignof(std::max_align_t)) noexcept;
+    void *Allocate(usize p_Size, usize p_Alignment = alignof(std::max_align_t));
 
     /**
      * @brief Allocate a new block of memory into the arena allocator and casts the result to `T`.
@@ -57,7 +57,7 @@ class TKIT_API ArenaAllocator
      * @param p_N The number of elements of type `T` to allocate.
      * @return A pointer to the allocated block.
      */
-    template <typename T> T *Allocate(const usize p_N = 1) noexcept
+    template <typename T> T *Allocate(const usize p_N = 1)
     {
         return static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
     }
@@ -68,7 +68,7 @@ class TKIT_API ArenaAllocator
      * It may be used again after calling this method.
      *
      */
-    void Reset() noexcept;
+    void Reset();
 
     /**
      * @brief Allocate a new block of memory in the arena allocator and create a new object of type `T` out of it.
@@ -78,7 +78,7 @@ class TKIT_API ArenaAllocator
      */
     template <typename T, typename... Args>
         requires std::constructible_from<T, Args...>
-    T *Create(Args &&...p_Args) noexcept
+    T *Create(Args &&...p_Args)
     {
         T *ptr = static_cast<T *>(Allocate(sizeof(T), alignof(T)));
         if (!ptr)
@@ -98,7 +98,7 @@ class TKIT_API ArenaAllocator
      */
     template <typename T, typename... Args>
         requires std::constructible_from<T, Args...>
-    T *NCreate(const usize p_N, Args &&...p_Args) noexcept
+    T *NCreate(const usize p_N, Args &&...p_Args)
     {
         T *ptr = static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
         if (!ptr)
@@ -113,17 +113,17 @@ class TKIT_API ArenaAllocator
      * @param p_Ptr The pointer to check.
      * @return Whether the pointer belongs to the arena allocator.
      */
-    bool Belongs(const void *p_Ptr) const noexcept;
+    bool Belongs(const void *p_Ptr) const;
 
-    bool IsEmpty() const noexcept;
-    bool IsFull() const noexcept;
+    bool IsEmpty() const;
+    bool IsFull() const;
 
-    usize GetSize() const noexcept;
-    usize GetAllocated() const noexcept;
-    usize GetRemaining() const noexcept;
+    usize GetSize() const;
+    usize GetAllocated() const;
+    usize GetRemaining() const;
 
   private:
-    void deallocateBuffer() noexcept;
+    void deallocateBuffer();
 
     std::byte *m_Buffer;
     usize m_Size = 0;

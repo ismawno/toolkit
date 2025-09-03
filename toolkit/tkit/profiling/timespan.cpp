@@ -3,11 +3,11 @@
 
 namespace TKit
 {
-Timespan::Timespan(Nanoseconds p_Elapsed) noexcept : m_Elapsed(p_Elapsed)
+Timespan::Timespan(Nanoseconds p_Elapsed) : m_Elapsed(p_Elapsed)
 {
 }
 
-void Timespan::Sleep(Timespan p_Duration) noexcept
+void Timespan::Sleep(Timespan p_Duration)
 {
     std::this_thread::sleep_for(p_Duration.m_Elapsed);
 }

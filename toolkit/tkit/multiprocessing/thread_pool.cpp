@@ -4,7 +4,7 @@
 namespace TKit
 {
 thread_local u32 t_Victim;
-static u32 cheapRand(const u32 p_Workers) noexcept
+static u32 cheapRand(const u32 p_Workers)
 {
     thread_local u32 seed = 0x9e3779b9u ^ ITaskManager::GetThreadIndex();
     seed ^= seed << 13;
@@ -13,7 +13,7 @@ static u32 cheapRand(const u32 p_Workers) noexcept
 
     return static_cast<u32>((u64(seed) * u64(p_Workers)) >> 32);
 }
-static void shuffleVictim(const u32 p_WorkerIndex, const u32 p_Workers) noexcept
+static void shuffleVictim(const u32 p_WorkerIndex, const u32 p_Workers)
 {
     u32 victim = cheapRand(p_Workers);
     while (victim == p_WorkerIndex)
@@ -21,7 +21,7 @@ static void shuffleVictim(const u32 p_WorkerIndex, const u32 p_Workers) noexcept
     t_Victim = victim;
 }
 
-void ThreadPool::drainTasks(const u32 p_WorkerIndex, const u32 p_Workers) noexcept
+void ThreadPool::drainTasks(const u32 p_WorkerIndex, const u32 p_Workers)
 {
     Worker &myself = m_Workers[p_WorkerIndex];
 
@@ -102,7 +102,7 @@ ThreadPool::ThreadPool(const usize p_WorkerCount) : ITaskManager(p_WorkerCount)
     m_ReadySignal.notify_all();
 }
 
-ThreadPool::~ThreadPool() noexcept
+ThreadPool::~ThreadPool()
 {
     m_ReadySignal.notify_all();
     for (Worker &worker : m_Workers)
@@ -115,7 +115,7 @@ ThreadPool::~ThreadPool() noexcept
     Topology::Terminate(m_Handle);
 }
 
-static void assignTask(const u32 p_WorkerIndex, ThreadPool::Worker &p_Worker, ITask *p_Task) noexcept
+static void assignTask(const u32 p_WorkerIndex, ThreadPool::Worker &p_Worker, ITask *p_Task)
 {
     if (p_WorkerIndex == ThreadPool::GetWorkerIndex())
         p_Worker.Queue.PushBack(p_Task);
@@ -127,7 +127,7 @@ static void assignTask(const u32 p_WorkerIndex, ThreadPool::Worker &p_Worker, IT
     p_Worker.Epochs.notify_one();
 }
 
-void ThreadPool::SubmitTask(ITask *p_Task) noexcept
+void ThreadPool::SubmitTask(ITask *p_Task)
 {
     u32 minCount = Limits<u32>::max();
     u32 index = 0;
@@ -149,7 +149,7 @@ void ThreadPool::SubmitTask(ITask *p_Task) noexcept
     }
     assignTask(index, m_Workers[index], p_Task);
 }
-void ThreadPool::SubmitTasks(const Span<ITask *const> p_Tasks) noexcept
+void ThreadPool::SubmitTasks(const Span<ITask *const> p_Tasks)
 {
     u32 stride = 0;
     const u32 size = p_Tasks.GetSize();
@@ -199,7 +199,7 @@ void ThreadPool::SubmitTasks(const Span<ITask *const> p_Tasks) noexcept
     }
 }
 
-void ThreadPool::WaitUntilFinished(ITask *p_Task) noexcept
+void ThreadPool::WaitUntilFinished(ITask *p_Task)
 {
     if (t_ThreadIndex == 0)
     {
@@ -214,7 +214,7 @@ void ThreadPool::WaitUntilFinished(ITask *p_Task) noexcept
         drainTasks(workerIndex, nworkers);
 }
 
-usize ThreadPool::GetWorkerIndex() noexcept
+usize ThreadPool::GetWorkerIndex()
 {
     return t_ThreadIndex - 1;
 }

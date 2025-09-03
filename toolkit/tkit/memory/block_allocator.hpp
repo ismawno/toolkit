@@ -43,14 +43,14 @@ class TKIT_API BlockAllocator
     // The alignment parameter specifies the alignment of all consecuent allocations. Thus, the buffer size must be a
     // multiple of the alignment
 
-    BlockAllocator(usize p_BufferSize, usize p_AllocationSize, usize p_Alignment = alignof(std::max_align_t)) noexcept;
+    BlockAllocator(usize p_BufferSize, usize p_AllocationSize, usize p_Alignment = alignof(std::max_align_t));
 
     // This constructor is NOT owning the buffer, so it will not deallocate it. Up to the user to manage the memory
-    BlockAllocator(void *p_Buffer, usize p_BufferSize, usize p_AllocationSize) noexcept;
-    ~BlockAllocator() noexcept;
+    BlockAllocator(void *p_Buffer, usize p_BufferSize, usize p_AllocationSize);
+    ~BlockAllocator();
 
-    BlockAllocator(BlockAllocator &&p_Other) noexcept;
-    BlockAllocator &operator=(BlockAllocator &&p_Other) noexcept;
+    BlockAllocator(BlockAllocator &&p_Other);
+    BlockAllocator &operator=(BlockAllocator &&p_Other);
 
     /**
      * @brief Create a block allocator suited to allocate elements from type `T`.
@@ -59,7 +59,7 @@ class TKIT_API BlockAllocator
      * @param p_N The capacity of the allocator, measured in how many objects of type `T` will be able to allocate.
      * @return A `BlockAllocator` instance.
      */
-    template <typename T> static BlockAllocator CreateFromType(const usize p_N) noexcept
+    template <typename T> static BlockAllocator CreateFromType(const usize p_N)
     {
         const usize size = sizeof(T) > sizeof(Allocation) ? sizeof(T) : sizeof(Allocation);
         return BlockAllocator{p_N * size, size, alignof(T)};
@@ -73,7 +73,7 @@ class TKIT_API BlockAllocator
      *
      * @return A pointer to the allocated block.
      */
-    void *Allocate() noexcept;
+    void *Allocate();
 
     /**
      * @brief Allocate a new block of memory into the block allocator.
@@ -84,7 +84,7 @@ class TKIT_API BlockAllocator
      * @tparam T The type of object to allocate.
      * @return A pointer to the allocated block.
      */
-    template <typename T> T *Allocate() noexcept
+    template <typename T> T *Allocate()
     {
         TKIT_ASSERT(sizeof(T) <= m_AllocationSize, "[TOOLKIT][BLOCK-ALLOC] Block allocator cannot fit {} bytes!",
                     sizeof(T));
@@ -96,7 +96,7 @@ class TKIT_API BlockAllocator
      *
      * @param p_Ptr A pointer to the block to deallocate.
      */
-    void Deallocate(void *p_Ptr) noexcept;
+    void Deallocate(void *p_Ptr);
 
     /**
      * @brief Allocate a new block of memory and create a new object of type `T` out of it.
@@ -104,7 +104,7 @@ class TKIT_API BlockAllocator
      * @tparam T The type of the block.
      * @return A pointer to the allocated block.
      */
-    template <typename T, typename... Args> T *Create(Args &&...p_Args) noexcept
+    template <typename T, typename... Args> T *Create(Args &&...p_Args)
     {
         T *ptr = Allocate<T>();
         return Memory::Construct(ptr, std::forward<Args>(p_Args)...);
@@ -116,14 +116,14 @@ class TKIT_API BlockAllocator
      * @tparam T The type of the block.
      * @param p_Ptr The pointer to the block to deallocate.
      */
-    template <typename T> void Destroy(T *p_Ptr) noexcept
+    template <typename T> void Destroy(T *p_Ptr)
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
             p_Ptr->~T();
         Deallocate(p_Ptr);
     }
 
-    void Reset() noexcept;
+    void Reset();
 
     /**
      * @brief Check if a pointer belongs to the block allocator.
@@ -134,17 +134,17 @@ class TKIT_API BlockAllocator
      * @param p_Ptr The pointer to check.
      * @return Whether the pointer belongs to the block allocator.
      */
-    bool Belongs(const void *p_Ptr) const noexcept;
+    bool Belongs(const void *p_Ptr) const;
 
-    bool IsEmpty() const noexcept;
-    bool IsFull() const noexcept;
+    bool IsEmpty() const;
+    bool IsFull() const;
 
-    usize GetBufferSize() const noexcept;
-    usize GetAllocationSize() const noexcept;
+    usize GetBufferSize() const;
+    usize GetAllocationSize() const;
 
-    usize GetAllocationCount() const noexcept;
-    usize GetRemainingCount() const noexcept;
-    usize GetAllocationCapacityCount() const noexcept;
+    usize GetAllocationCount() const;
+    usize GetRemainingCount() const;
+    usize GetAllocationCapacityCount() const;
 
   private:
     struct Allocation
@@ -152,8 +152,8 @@ class TKIT_API BlockAllocator
         Allocation *Next;
     };
 
-    void setupMemoryLayout() noexcept;
-    void deallocateBuffer() noexcept;
+    void setupMemoryLayout();
+    void deallocateBuffer();
 
     std::byte *m_Buffer;
     Allocation *m_FreeList;

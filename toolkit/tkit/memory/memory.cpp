@@ -6,20 +6,20 @@
 
 namespace TKit::Memory
 {
-void *Allocate(const size_t p_Size) noexcept
+void *Allocate(const size_t p_Size)
 {
     void *ptr = std::malloc(p_Size);
     TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
     return ptr;
 }
 
-void Deallocate(void *p_Ptr) noexcept
+void Deallocate(void *p_Ptr)
 {
     TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
     std::free(p_Ptr);
 }
 
-void *AllocateAligned(const size_t p_Size, size_t p_Alignment) noexcept
+void *AllocateAligned(const size_t p_Size, size_t p_Alignment)
 {
     void *ptr = nullptr;
     p_Alignment = (p_Alignment + sizeof(void *) - 1) & ~(sizeof(void *) - 1);
@@ -33,7 +33,7 @@ void *AllocateAligned(const size_t p_Size, size_t p_Alignment) noexcept
     return ptr;
 }
 
-void DeallocateAligned(void *p_Ptr) noexcept
+void DeallocateAligned(void *p_Ptr)
 {
     TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
 #ifdef TKIT_OS_WINDOWS
@@ -43,11 +43,11 @@ void DeallocateAligned(void *p_Ptr) noexcept
 #endif
 }
 
-void *ForwardCopy(void *p_Dst, const void *p_Src, size_t p_Size) noexcept
+void *ForwardCopy(void *p_Dst, const void *p_Src, size_t p_Size)
 {
     return std::memcpy(p_Dst, p_Src, p_Size);
 }
-void *BackwardCopy(void *p_Dst, const void *p_Src, size_t p_Size) noexcept
+void *BackwardCopy(void *p_Dst, const void *p_Src, size_t p_Size)
 {
     return std::memmove(p_Dst, p_Src, p_Size);
 }

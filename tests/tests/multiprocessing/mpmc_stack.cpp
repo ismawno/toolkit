@@ -14,7 +14,7 @@ struct STTask
     explicit STTask(u32 v) : Value(v)
     {
     }
-    bool operator==(const STTask &o) const noexcept
+    bool operator==(const STTask &o) const
     {
         return Value == o.Value;
     }
@@ -37,7 +37,7 @@ struct STTrackable
     {
         g_Constructions.fetch_add(1, std::memory_order_relaxed);
     }
-    STTrackable(STTrackable &&p_Other) noexcept : Value(p_Other.Value)
+    STTrackable(STTrackable &&p_Other) : Value(p_Other.Value)
     {
         g_Constructions.fetch_add(1, std::memory_order_relaxed);
     }
@@ -50,7 +50,7 @@ struct STTrackable
         Value = p_Other.Value;
         return *this;
     }
-    STTrackable &operator=(STTrackable &&p_Other) noexcept
+    STTrackable &operator=(STTrackable &&p_Other)
     {
         Value = p_Other.Value;
         return *this;

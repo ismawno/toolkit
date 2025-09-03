@@ -25,8 +25,8 @@ namespace TKit
 class TKIT_API ITaskManager
 {
   public:
-    explicit ITaskManager(usize p_WorkerCount) noexcept;
-    virtual ~ITaskManager() noexcept = default;
+    explicit ITaskManager(usize p_WorkerCount);
+    virtual ~ITaskManager() = default;
 
     /**
      * @brief Submit a task to be executed by the task manager.
@@ -35,11 +35,11 @@ class TKIT_API ITaskManager
      *
      * @param p_Task The task to submit.
      */
-    virtual void SubmitTask(ITask *p_Task) noexcept = 0;
+    virtual void SubmitTask(ITask *p_Task) = 0;
 
-    virtual void WaitUntilFinished(ITask *p_Task) noexcept = 0;
+    virtual void WaitUntilFinished(ITask *p_Task) = 0;
 
-    template <typename T> T WaitForResult(Task<T> *p_Task) noexcept
+    template <typename T> T WaitForResult(Task<T> *p_Task)
     {
         ITask *task = static_cast<ITask *>(p_Task);
         WaitUntilFinished(task);
@@ -53,7 +53,7 @@ class TKIT_API ITaskManager
      *
      * @param p_Tasks The tasks to submit.
      */
-    virtual void SubmitTasks(Span<ITask *const> p_Tasks) noexcept = 0;
+    virtual void SubmitTasks(Span<ITask *const> p_Tasks) = 0;
 
     /**
      * @brief Submit a group of tasks to be executed by the task manager.
@@ -62,7 +62,7 @@ class TKIT_API ITaskManager
      *
      * @param p_Tasks The tasks to submit.
      */
-    template <typename T> void SubmitTasks(const Span<Task<T> *const> p_Tasks) noexcept
+    template <typename T> void SubmitTasks(const Span<Task<T> *const> p_Tasks)
     {
         Array<ITask *, TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION> tasks{};
         TKIT_ASSERT(p_Tasks.GetSize() <= TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION,
@@ -86,7 +86,7 @@ class TKIT_API ITaskManager
      * @return A new task object.
      */
     template <typename Callable, typename... Args>
-    static auto CreateTask(Callable &&p_Callable, Args &&...p_Args) noexcept
+    static auto CreateTask(Callable &&p_Callable, Args &&...p_Args)
         -> Task<std::invoke_result_t<Callable, Args...>> *
     {
         using RType = std::invoke_result_t<Callable, Args...>;
@@ -100,7 +100,7 @@ class TKIT_API ITaskManager
      *
      * @param p_Task The task to be destroyed.
      */
-    template <typename T> static void DestroyTask(Task<T> *p_Task) noexcept
+    template <typename T> static void DestroyTask(Task<T> *p_Task)
     {
         Task<T>::Destroy(p_Task);
     }
@@ -113,7 +113,7 @@ class TKIT_API ITaskManager
      * @return A new task object.
      */
     template <typename Callable, typename... Args>
-    auto CreateAndSubmit(Callable &&p_Callable, Args &&...p_Args) noexcept
+    auto CreateAndSubmit(Callable &&p_Callable, Args &&...p_Args)
         -> Task<std::invoke_result_t<Callable, Args...>> *
     {
         using RType = std::invoke_result_t<Callable, Args...>;
@@ -126,14 +126,14 @@ class TKIT_API ITaskManager
      * @brief Get the number of workers that the task manager is using.
      *
      */
-    usize GetWorkerCount() const noexcept;
+    usize GetWorkerCount() const;
 
     /**
      * @brief Ask for the thread index of the current thread.
      *
      * @return The index of the current thread.
      */
-    static usize GetThreadIndex() noexcept;
+    static usize GetThreadIndex();
 
   protected:
     static inline thread_local usize t_ThreadIndex = 0;
@@ -152,11 +152,11 @@ class TKIT_API ITaskManager
 class TKIT_API TaskManager final : public ITaskManager
 {
   public:
-    TaskManager() noexcept;
+    TaskManager();
 
-    void SubmitTask(ITask *p_Task) noexcept override;
-    void SubmitTasks(Span<ITask *const> p_Tasks) noexcept override;
+    void SubmitTask(ITask *p_Task) override;
+    void SubmitTasks(Span<ITask *const> p_Tasks) override;
 
-    void WaitUntilFinished(ITask *p_Task) noexcept override;
+    void WaitUntilFinished(ITask *p_Task) override;
 };
 } // namespace TKit
