@@ -23,5 +23,4 @@ target_link_libraries(toolkit-performance PRIVATE toolkit argparse)
 target_include_directories(toolkit-performance
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-tkit_configure_compile_link_options(toolkit-performance COMPILER_FLAGS
-                                    -fno-exceptions)
+tkit_configure_compile_link_options(toolkit-performance NO_EXCEPTIONS)

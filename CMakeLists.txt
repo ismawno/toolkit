@@ -268,7 +268,7 @@ function(remove_duplicates input output)
 endfunction()
 
 function(tkit_configure_compile_link_options target)
-  set(options FORBID_SANITIZERS)
+  set(options FORBID_SANITIZERS NO_EXCEPTIONS)
   set(multi_value_args COMPILER_FLAGS LINKER_FLAGS)
   set(one_value_args CONFIG VISIBILITY)
 
@@ -280,6 +280,9 @@ function(tkit_configure_compile_link_options target)
   endif()
   if(NOT DEFINED ARG_FORBID_SANITIZERS)
     set(ARG_FORBID_SANITIZERS FALSE)
+  endif()
+  if(NOT DEFINED ARG_NO_EXCEPTIONS)
+    set(ARG_NO_EXCEPTIONS FALSE)
   endif()
   if(NOT DEFINED ARG_COMPILER_FLAGS)
     set(ARG_COMPILER_FLAGS "")
@@ -297,6 +300,11 @@ function(tkit_configure_compile_link_options target)
     message(STATUS "TOOLKIT:  Sanitizers: Forbidden")
   else()
     message(STATUS "TOOLKIT:  Sanitizers: ${TOOLKIT_SANITIZERS}")
+  endif()
+  if(ARG_NO_EXCEPTIONS)
+    message(STATUS "TOOLKIT:  Exceptions: Disabled")
+  else()
+    message(STATUS "TOOLKIT:  Sanitizers: Enabled")
   endif()
   message(STATUS "TOOLKIT:  Visibility: ${ARG_VISIBILITY}")
   message(STATUS "TOOLKIT:  Provided compiler flags: ${ARG_COMPILER_FLAGS}")
@@ -345,6 +353,15 @@ function(tkit_configure_compile_link_options target)
     endif()
 
   endif()
+
+  if(ARG_NO_EXCEPTIONS)
+    if(MSVC)
+      list(APPEND compiler_flags /EHsc-)
+    else()
+      list(APPEND compiler_flags -fno-exceptions)
+    endif()
+  endif()
+
   if(TOOLKIT_ENABLE_SAMPLING OR TOOLKIT_ENABLE_SYMBOLS)
     if(MSVC)
       list(APPEND compiler_flags /ZI)
@@ -371,7 +388,8 @@ endfunction()
 
 function(tkit_default_configure target)
   if(MSVC)
-    tkit_configure_compile_link_options(${target} COMPILER_FLAGS /W4 /WX /EHsc-)
+    tkit_configure_compile_link_options(${target} COMPILER_FLAGS /W4 /WX
+                                        NO_EXCEPTIONS)
   elseif((UNIX AND APPLE) OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     tkit_configure_compile_link_options(
       ${target}
@@ -380,7 +398,7 @@ function(tkit_default_configure target)
       -Wextra
       -Wpedantic
       -Werror
-      -fno-exceptions)
+      NO_EXCEPTIONS)
   else()
     tkit_configure_compile_link_options(
       ${target}
@@ -390,7 +408,7 @@ function(tkit_default_configure target)
       -Wpedantic
       -Werror
       -Wno-changes-meaning
-      -fno-exceptions)
+      NO_EXCEPTIONS)
   endif()
 endfunction()
 
