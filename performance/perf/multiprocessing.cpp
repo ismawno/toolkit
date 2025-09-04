@@ -70,7 +70,7 @@ void RecordParallelSum(const ThreadPoolSettings &p_Settings)
         {
             const usize start = i * p_Settings.SumCount / nthreads;
             const usize end = (i + 1) * p_Settings.SumCount / nthreads;
-            threads[i] = std::thread([i, start, end, &sums, &values]() {
+            threads[i] = std::thread([i, start, end, &sums, &values] {
                 u32 sum = 0;
                 for (usize j = start; j < end; ++j)
                     sum += values[j];

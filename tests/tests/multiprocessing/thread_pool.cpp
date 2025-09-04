@@ -45,7 +45,7 @@ TEST_CASE("ThreadPool executes Task<usize>s and preserves results", "[ThreadPool
     // Submit tasks that encode (taskIndex * 10 + threadIndex)
     for (usize i = 0; i < taskCount; ++i)
     {
-        Task<usize> *task = pool.CreateTask([i]() {
+        Task<usize> *task = pool.CreateTask([i] {
             thread_local const usize idx = ITaskManager::GetThreadIndex();
             return i * 10 + idx;
         });

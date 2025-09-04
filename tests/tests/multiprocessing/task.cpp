@@ -43,7 +43,7 @@ TEST_CASE("Task<void> basic behavior", "[Task]")
 TEST_CASE("Task::WaitUntilFinished blocks from another thread", "[Task]")
 {
     // Create a task that sleeps then returns its index
-    Task<u32> task{[]() {
+    Task<u32> task{[] {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         return 32u;
     }};
