@@ -2,6 +2,7 @@
 
 #include "tkit/preprocessor/system.hpp"
 #include "tkit/utils/alias.hpp"
+#include "tkit/utils/logging.hpp"
 #include <algorithm>
 
 namespace TKit::Memory
@@ -130,6 +131,22 @@ template <typename It1, typename It2> constexpr auto BackwardMove(It1 p_Dst, It2
 }
 
 /**
+ * @brief Check if an adress pointer is aligned to a specific alignment.
+ *
+ * @param p_Ptr The adress that will be checked for alignment.
+ * @param p_Alignment The required alignment.
+ */
+bool IsAligned(const void *p_Ptr, size_t p_Alignment);
+
+/**
+ * @brief Check if an adress pointer is aligned to a specific alignment.
+ *
+ * @param p_Ptr The adress that will be checked for alignment.
+ * @param p_Alignment The required alignment.
+ */
+bool IsAligned(size_t p_Address, size_t p_Alignment);
+
+/**
  * @brief A custom allocator that uses a custom size_type (usually `u32`) for indexing, compatible with STL.
  *
  * This allocator is intended for environments or applications where the maximum container size never exceeds 2^32,
@@ -196,6 +213,8 @@ template <typename T> class STLAllocator
  */
 template <typename T, typename... Args> T *Construct(T *p_Ptr, Args &&...p_Args)
 {
+    TKIT_ASSERT(IsAligned(p_Ptr, alignof(T)),
+                "[TOOLKIT][MEMORY] The address used to construct an object is not correctly aligned to its alignment");
     return std::launder(::new (p_Ptr) T(std::forward<Args>(p_Args)...));
 }
 

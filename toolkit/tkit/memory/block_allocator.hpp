@@ -88,7 +88,11 @@ class TKIT_API BlockAllocator
     {
         TKIT_ASSERT(sizeof(T) <= m_AllocationSize, "[TOOLKIT][BLOCK-ALLOC] Block allocator cannot fit {} bytes!",
                     sizeof(T));
-        return static_cast<T *>(Allocate());
+        T *ptr = static_cast<T *>(Allocate());
+        TKIT_ASSERT(Memory::IsAligned(ptr, alignof(T)),
+                    "[TOOLKIT][BLOCK-ALLOC] Type T has stronger memory alignment requirements than specified. Bump the "
+                    "alignment of the allocator or prevent using it to allocate objects of such type");
+        return ptr;
     }
 
     /**

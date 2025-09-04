@@ -59,7 +59,8 @@ void *ArenaAllocator::Allocate(const usize p_Size, const usize p_Alignment)
                 "[TOOLKIT][ARENA-ALLOC] Arena allocator failed to fit {} bytes with {} alignment! This is should not "
                 "have triggered",
                 p_Size, p_Alignment);
-    TKIT_ASSERT(reinterpret_cast<uptr>(alignedPtr) % p_Alignment == 0,
+
+    TKIT_ASSERT(Memory::IsAligned(alignedPtr, p_Alignment),
                 "[TOOLKIT][ARENA-ALLOC] Aligned pointer is not aligned to the requested alignment");
 
     m_Remaining = static_cast<usize>(remaining) - p_Size;

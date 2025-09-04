@@ -93,6 +93,12 @@ class TKIT_API StackAllocator
     void Deallocate(const void *p_Ptr);
 
     /**
+     * @brief Deallocate a block of memory from the stack allocator.
+     *
+     */
+    void Deallocate();
+
+    /**
      * @brief Allocate a new block of memory in the stack allocator and create a new object of type `T` out of it.
      *
      * @tparam T The type of the block.
