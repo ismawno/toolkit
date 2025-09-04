@@ -145,14 +145,14 @@ TEST_CASE("MpmcStack: multi-thread owner push/claim/recycle", "[MpmcStack]")
     std::atomic<u32> sum{0};
     for (u32 i = 0; i < threads; ++i)
     {
-        producers.emplace_back([&, i]() {
+        producers.emplace_back([&, i] {
             for (u32 j = 0; j < elements; ++j)
                 stack.Push(i * elements + j);
 
             signal.fetch_add(1, std::memory_order_release);
         });
 
-        consumers.emplace_back([&]() {
+        consumers.emplace_back([&] {
             for (;;)
             {
                 const u32 s = signal.load(std::memory_order_acquire);
@@ -199,7 +199,7 @@ TEST_CASE("MpmcStack: multi-thread owner many push/claim/recycle", "[MpmcStack]"
     std::atomic<u32> sum{0};
     for (u32 i = 0; i < threads; ++i)
     {
-        producers.emplace_back([&, i]() {
+        producers.emplace_back([&, i] {
             Node *head = stack.CreateNode(i * elements);
             Node *tail = head;
             for (u32 j = 0; j < elements - 1; ++j)
@@ -213,7 +213,7 @@ TEST_CASE("MpmcStack: multi-thread owner many push/claim/recycle", "[MpmcStack]"
             signal.fetch_add(1, std::memory_order_release);
         });
 
-        consumers.emplace_back([&]() {
+        consumers.emplace_back([&] {
             for (;;)
             {
                 const u32 s = signal.load(std::memory_order_acquire);

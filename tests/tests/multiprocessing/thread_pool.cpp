@@ -20,7 +20,7 @@ TEST_CASE("ThreadPool executes Task<void>s", "[ThreadPool]")
     // Submit several void tasks
     for (usize i = 0; i < taskCount; ++i)
     {
-        Task<> *task = pool.CreateTask([&]() { counter.fetch_add(1, std::memory_order_relaxed); });
+        Task<> *task = pool.CreateTask([&] { counter.fetch_add(1, std::memory_order_relaxed); });
         tasks.push_back(task);
         pool.SubmitTask(task); // implicitly converts to Ref<ITask>
     }

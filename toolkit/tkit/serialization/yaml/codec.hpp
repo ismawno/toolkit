@@ -50,8 +50,7 @@ template <typename T> struct Codec
                       "If type has not a dedicated 'Codec<T>' specialization, it must be reflected "
                       "to auto-serialize. It is recommended to use the serialization marks and scripts available.");
         if constexpr (Reflect<T>::Implemented)
-            Reflect<T>::ForEachField(
-                [&node, &p_Instance](const auto &p_Field) { node[p_Field.Name] = p_Field.Get(p_Instance); });
+            Reflect<T>::ForEachField([&](const auto &p_Field) { node[p_Field.Name] = p_Field.Get(p_Instance); });
         else
         {
             using Integer = std::underlying_type_t<T>;
@@ -94,7 +93,7 @@ template <typename T> struct Codec
                       "to auto-deserialize. It is recommended to use the serialization marks and scripts available.");
 
         if constexpr (Reflect<T>::Implemented)
-            Reflect<T>::ForEachField([&p_Node, &p_Instance](const auto &p_Field) {
+            Reflect<T>::ForEachField([&](const auto &p_Field) {
                 using Type = TKIT_REFLECT_FIELD_TYPE(p_Field);
                 p_Field.Set(p_Instance, p_Node[p_Field.Name].template as<Type>());
             });

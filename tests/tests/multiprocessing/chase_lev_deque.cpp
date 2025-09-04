@@ -46,7 +46,7 @@ TEST_CASE("ChaseLevDeque: uniqueness", "[ChaseLevDeque][uniqueness]")
     constexpr u32 threads = 4;
 
     for (u32 i = 0; i < threads; ++i)
-        stealers.emplace_back([&]() {
+        stealers.emplace_back([&] {
             if (q.PopFront())
                 winners.fetch_add(1, std::memory_order_relaxed);
         });
