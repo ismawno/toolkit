@@ -71,7 +71,7 @@ class TKIT_API BlockAllocator
      * This allocation has a fixed size. Attempting to use more memory than the block size will result in udefined
      * behaviour.
      *
-     * @return A pointer to the allocated block.
+     * @return A pointer to the allocated block. If the allocation fails, `nullptr` will be returned.
      */
     void *Allocate();
 
@@ -82,14 +82,14 @@ class TKIT_API BlockAllocator
      * behaviour.
      *
      * @tparam T The type of object to allocate.
-     * @return A pointer to the allocated block.
+     * @return A pointer to the allocated block. If the allocation fails, `nullptr` will be returned.
      */
     template <typename T> T *Allocate()
     {
         TKIT_ASSERT(sizeof(T) <= m_AllocationSize, "[TOOLKIT][BLOCK-ALLOC] Block allocator cannot fit {} bytes!",
                     sizeof(T));
         T *ptr = static_cast<T *>(Allocate());
-        TKIT_ASSERT(Memory::IsAligned(ptr, alignof(T)),
+        TKIT_ASSERT(!ptr || Memory::IsAligned(ptr, alignof(T)),
                     "[TOOLKIT][BLOCK-ALLOC] Type T has stronger memory alignment requirements than specified. Bump the "
                     "alignment of the allocator or prevent using it to allocate objects of such type");
         return ptr;
@@ -105,23 +105,25 @@ class TKIT_API BlockAllocator
     /**
      * @brief Allocate a new block of memory and create a new object of type `T` out of it.
      *
-     * @tparam T The type of the block.
-     * @return A pointer to the allocated block.
+     * @tparam T The type of object to allocate.
+     * @return A pointer to the allocated block. If the allocation fails, `nullptr` will be returned and the object will
+     * not be constructed.
      */
     template <typename T, typename... Args> T *Create(Args &&...p_Args)
     {
         T *ptr = Allocate<T>();
-        return Memory::Construct(ptr, std::forward<Args>(p_Args)...);
+        return ptr ? Memory::Construct(ptr, std::forward<Args>(p_Args)...) : nullptr;
     }
 
     /**
      * @brief Deallocate a block of memory and destroy the object of type `T` created from it.
      *
-     * @tparam T The type of the block.
+     * @tparam T The type of object to deallocate.
      * @param p_Ptr The pointer to the block to deallocate.
      */
     template <typename T> void Destroy(T *p_Ptr)
     {
+        TKIT_ASSERT(p_Ptr, "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a null pointer");
         if constexpr (!std::is_trivially_destructible_v<T>)
             p_Ptr->~T();
         Deallocate(p_Ptr);
