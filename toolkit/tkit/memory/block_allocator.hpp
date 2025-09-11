@@ -56,13 +56,13 @@ class TKIT_API BlockAllocator
      * @brief Create a block allocator suited to allocate elements from type `T`.
      *
      * @tparam T The type the allocator will be suited for.
-     * @param p_N The capacity of the allocator, measured in how many objects of type `T` will be able to allocate.
+     * @param p_Count The capacity of the allocator, measured in how many objects of type `T` will be able to allocate.
      * @return A `BlockAllocator` instance.
      */
-    template <typename T> static BlockAllocator CreateFromType(const usize p_N)
+    template <typename T> static BlockAllocator CreateFromType(const usize p_Count)
     {
         const usize size = sizeof(T) > sizeof(Allocation) ? sizeof(T) : sizeof(Allocation);
-        return BlockAllocator{p_N * size, size, alignof(T)};
+        return BlockAllocator{p_Count * size, size, alignof(T)};
     }
 
     /**
