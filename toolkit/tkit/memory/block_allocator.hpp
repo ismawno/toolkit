@@ -86,8 +86,10 @@ class TKIT_API BlockAllocator
      */
     template <typename T> T *Allocate()
     {
-        TKIT_ASSERT(sizeof(T) <= m_AllocationSize, "[TOOLKIT][BLOCK-ALLOC] Block allocator cannot fit {} bytes!",
-                    sizeof(T));
+        TKIT_ASSERT(sizeof(T) <= m_AllocationSize,
+                    "[TOOLKIT][BLOCK-ALLOC] Block allocator allocation size is {}, but sizeof(T) is {} bytes, which "
+                    "does not fit into an allocation",
+                    m_AllocationSize, sizeof(T));
         T *ptr = static_cast<T *>(Allocate());
         TKIT_ASSERT(!ptr || Memory::IsAligned(ptr, alignof(T)),
                     "[TOOLKIT][BLOCK-ALLOC] Type T has stronger memory alignment requirements than specified. Bump the "
@@ -124,6 +126,9 @@ class TKIT_API BlockAllocator
     template <typename T> void Destroy(T *p_Ptr)
     {
         TKIT_ASSERT(p_Ptr, "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a null pointer");
+        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate from an empty allocator");
+        TKIT_ASSERT(Belongs(p_Ptr),
+                    "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a pointer that does not belong to the allocator");
         if constexpr (!std::is_trivially_destructible_v<T>)
             p_Ptr->~T();
         Deallocate(p_Ptr);
@@ -165,7 +170,7 @@ class TKIT_API BlockAllocator
     Allocation *m_FreeList;
     usize m_BufferSize;
     usize m_AllocationSize;
-    u32 m_Allocations = 0;
+    usize m_Allocations = 0;
     bool m_Provided;
 };
 

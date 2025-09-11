@@ -86,6 +86,8 @@ void BlockAllocator::Deallocate(void *p_Ptr)
 {
     TKIT_ASSERT(p_Ptr, "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a null pointer");
     TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate from an empty allocator");
+    TKIT_ASSERT(Belongs(p_Ptr),
+                "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a pointer that does not belong to the allocator");
 
     --m_Allocations;
     Allocation *alloc = static_cast<Allocation *>(p_Ptr);
