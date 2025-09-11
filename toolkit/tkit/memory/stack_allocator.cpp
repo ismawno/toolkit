@@ -57,8 +57,8 @@ void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment)
     size_t remaining = static_cast<size_t>(m_Remaining);
 
     std::byte *alignedPtr = static_cast<std::byte *>(std::align(p_Alignment, p_Size, ptr, remaining));
-    TKIT_LOG_WARNING_IF(!alignedPtr, "[TOOLKIT][STACK-ALLOC] Stack allocator cannot fit {} bytes with {} alignment!",
-                        p_Size, p_Alignment);
+    // TKIT_LOG_WARNING_IF(!alignedPtr, "[TOOLKIT][STACK-ALLOC] Stack allocator cannot fit {} bytes with {} alignment!",
+    //                     p_Size, p_Alignment);
     if (!alignedPtr)
         return nullptr;
     TKIT_ASSERT(alignedPtr + p_Size <= m_Buffer + m_Size,
@@ -77,6 +77,7 @@ void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment)
 
 void StackAllocator::Deallocate([[maybe_unused]] const void *p_Ptr)
 {
+    TKIT_ASSERT(p_Ptr, "[TOOLKIT][STACK-ALLOC] Cannot deallocate a null pointer");
     TKIT_ASSERT(!m_Entries.IsEmpty(),
                 "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is IsEmpty");
     TKIT_ASSERT(m_Entries.GetBack().Ptr == p_Ptr,

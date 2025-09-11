@@ -145,6 +145,7 @@ class TKIT_API StackAllocator
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
+            TKIT_ASSERT(p_Ptr, "[TOOLKIT][STACK-ALLOC] Cannot deallocate a null pointer");
             TKIT_ASSERT(!m_Entries.IsEmpty(),
                         "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is empty");
             TKIT_ASSERT(m_Entries.GetBack().Ptr == reinterpret_cast<std::byte *>(p_Ptr),
