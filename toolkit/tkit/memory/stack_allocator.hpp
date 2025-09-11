@@ -73,12 +73,12 @@ class TKIT_API StackAllocator
     /**
      * @brief Allocate a new block of memory into the stack allocator and casts the result to `T`.
      *
-     * @param p_N The number of elements of type `T` to allocate.
+     * @param p_Count The number of elements of type `T` to allocate.
      * @return A pointer to the allocated block.
      */
-    template <typename T> T *Allocate(const usize p_N = 1)
+    template <typename T> T *Allocate(const usize p_Count = 1)
     {
-        return static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
+        return static_cast<T *>(Allocate(p_Count * sizeof(T), alignof(T)));
     }
 
     /**
@@ -108,7 +108,7 @@ class TKIT_API StackAllocator
         requires std::constructible_from<T, Args...>
     T *Create(Args &&...p_Args)
     {
-        T *ptr = static_cast<T *>(Allocate(sizeof(T), alignof(T)));
+        T *ptr = Allocate<T>();
         if (!ptr)
             return nullptr;
         return Memory::Construct(ptr, std::forward<Args>(p_Args)...);
@@ -118,20 +118,20 @@ class TKIT_API StackAllocator
      * @brief Allocate a new block of memory in the stack allocator and create an array of objects of type `T` out of
      * it.
      *
-     * The block is created with the size of `sizeof(T) * p_N`.
+     * The block is created with the size of `sizeof(T) * p_Count`.
      *
      * @tparam T The type of the block.
-     * @param p_N The number of elements of type `T` to allocate.
+     * @param p_Count The number of elements of type `T` to allocate.
      * @return A pointer to the allocated block.
      */
     template <typename T, typename... Args>
         requires std::constructible_from<T, Args...>
-    T *NCreate(const usize p_N, Args &&...p_Args)
+    T *NCreate(const usize p_Count, Args &&...p_Args)
     {
-        T *ptr = static_cast<T *>(Allocate(p_N * sizeof(T), alignof(T)));
+        T *ptr = Allocate<T>(p_Count);
         if (!ptr)
             return nullptr;
-        Memory::ConstructRange(ptr, ptr + p_N, std::forward<Args>(p_Args)...);
+        Memory::ConstructRange(ptr, ptr + p_Count, std::forward<Args>(p_Args)...);
         return ptr;
     }
 
