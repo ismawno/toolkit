@@ -26,8 +26,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
 
     constexpr DynamicArray() = default;
 
-    template <typename... Args>
-    constexpr DynamicArray(const SizeType p_Size, const Args &...p_Args) : m_Size(p_Size)
+    template <typename... Args> constexpr DynamicArray(const SizeType p_Size, const Args &...p_Args) : m_Size(p_Size)
     {
         if (m_Size > 0)
             growCapacity(m_Size);
@@ -43,8 +42,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
         Tools::CopyConstructFromRange(begin(), p_Begin, p_End);
     }
 
-    constexpr DynamicArray(const std::initializer_list<ValueType> p_List)
-        : m_Size(static_cast<SizeType>(p_List.size()))
+    constexpr DynamicArray(const std::initializer_list<ValueType> p_List) : m_Size(static_cast<SizeType>(p_List.size()))
     {
         if (m_Size > 0)
             growCapacity(m_Size);

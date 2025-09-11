@@ -223,6 +223,10 @@ if(TOOLKIT_ENABLE_STACK_ALLOCATOR)
   target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_STACK_ALLOCATOR)
 endif()
 
+if(TOOLKIT_ENABLE_TIER_ALLOCATOR)
+  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_TIER_ALLOCATOR)
+endif()
+
 if(TOOLKIT_ENABLE_MULTIPROCESSING)
   target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_MULTIPROCESSING)
 endif()

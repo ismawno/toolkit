@@ -31,12 +31,9 @@ TEST_CASE("Constructor and initial state", "[BlockAllocator]")
     constexpr usize allocSize = 64;
     const BlockAllocator alloc(bufSize, allocSize);
 
-    REQUIRE(alloc.IsEmpty());
     REQUIRE(!alloc.IsFull());
     REQUIRE(alloc.GetBufferSize() == bufSize);
     REQUIRE(alloc.GetAllocationSize() == allocSize);
-    REQUIRE(alloc.GetAllocationCount() == 0);
-    REQUIRE(alloc.GetRemainingCount() == bufSize / allocSize);
     REQUIRE(alloc.GetAllocationCapacityCount() == bufSize / allocSize);
 
     u32 dummy;
@@ -65,8 +62,6 @@ TEST_CASE("Allocate and Deallocate blocks", "[BlockAllocator]")
         REQUIRE(p);
         REQUIRE(alloc.Belongs(p));
         ptrs.push_back(p);
-        REQUIRE(alloc.GetAllocationCount() == i + 1);
-        REQUIRE(alloc.GetRemainingCount() == capacity - (i + 1));
     }
     REQUIRE(alloc.IsFull());
 
@@ -74,10 +69,7 @@ TEST_CASE("Allocate and Deallocate blocks", "[BlockAllocator]")
     for (usize i = 0; i < capacity; ++i)
     {
         alloc.Deallocate(ptrs[i]);
-        REQUIRE(alloc.GetAllocationCount() == capacity - (i + 1));
-        REQUIRE(alloc.GetRemainingCount() == i + 1);
     }
-    REQUIRE(alloc.IsEmpty());
 }
 
 TEST_CASE("Reset after all deallocations", "[BlockAllocator]")
@@ -93,9 +85,7 @@ TEST_CASE("Reset after all deallocations", "[BlockAllocator]")
     alloc.Deallocate(b);
     alloc.Deallocate(c);
 
-    REQUIRE(alloc.IsEmpty());
     alloc.Reset();
-    REQUIRE(alloc.GetRemainingCount() == capacity);
 
     // can allocate again to full capacity
     for (usize i = 0; i < capacity; ++i)
@@ -106,20 +96,20 @@ TEST_CASE("Reset after all deallocations", "[BlockAllocator]")
 TEST_CASE("Move constructor and move assignment", "[BlockAllocator]")
 {
     auto a1 = BlockAllocator::CreateFromType<u32>(5);
-    a1.Allocate();
-    const auto countBefore = a1.GetAllocationCount();
+    void *ptr = a1.Allocate();
+    REQUIRE(a1.Belongs(ptr));
 
     // move-construct
     BlockAllocator a2(std::move(a1));
-    REQUIRE(a2.GetAllocationCount() == countBefore);
     REQUIRE(a1.GetBufferSize() == 0);
-    REQUIRE(a1.GetAllocationCount() == 0);
+    REQUIRE(a2.Belongs(ptr));
 
     // move-assign
     BlockAllocator a3 = BlockAllocator::CreateFromType<u32>(2);
     a3 = std::move(a2);
-    REQUIRE(a3.GetAllocationCount() == countBefore);
     REQUIRE(a2.GetBufferSize() == 0);
+    REQUIRE(a3.Belongs(ptr));
+    a3.Deallocate(ptr);
 }
 
 TEST_CASE("Create<T> and Destroy<T>", "[BlockAllocator]")
@@ -137,14 +127,12 @@ TEST_CASE("Create<T> and Destroy<T>", "[BlockAllocator]")
     REQUIRE(a->value == 7);
     REQUIRE(b->value == 8);
     REQUIRE(c->value == 9);
-    REQUIRE(alloc.GetAllocationCount() == 3);
 
     // Destroy them
     alloc.Destroy(a);
     alloc.Destroy(b);
     alloc.Destroy(c);
     REQUIRE(NonTrivialBA::DtorCount == 3);
-    REQUIRE(alloc.IsEmpty());
 }
 
 TEST_CASE("User-provided buffer constructor", "[BlockAllocator]")
@@ -154,10 +142,8 @@ TEST_CASE("User-provided buffer constructor", "[BlockAllocator]")
     alignas(std::max_align_t) std::byte buffer[bufSize];
     BlockAllocator alloc(buffer, bufSize, allocSize);
 
-    REQUIRE(alloc.IsEmpty());
     REQUIRE(alloc.GetBufferSize() == bufSize);
     REQUIRE(alloc.GetAllocationSize() == allocSize);
-    REQUIRE(alloc.GetRemainingCount() == bufSize / allocSize);
 
     const void *p = alloc.Allocate();
     REQUIRE(p);

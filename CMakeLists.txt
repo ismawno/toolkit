@@ -73,6 +73,7 @@ define_option(TOOLKIT_ENABLE_ASSERTS OFF "Toolkit - Feature")
 define_option(TOOLKIT_ENABLE_ARENA_ALLOCATOR OFF "Toolkit - Feature")
 define_option(TOOLKIT_ENABLE_BLOCK_ALLOCATOR OFF "Toolkit - Feature")
 define_option(TOOLKIT_ENABLE_STACK_ALLOCATOR OFF "Toolkit - Feature")
+define_option(TOOLKIT_ENABLE_TIER_ALLOCATOR OFF "Toolkit - Feature")
 
 define_option(TOOLKIT_ENABLE_MULTIPROCESSING OFF "Toolkit - Feature")
 define_option(TOOLKIT_ENABLE_PROFILING OFF "Toolkit - Feature")

@@ -126,7 +126,7 @@ class TKIT_API BlockAllocator
     template <typename T> void Destroy(T *p_Ptr)
     {
         TKIT_ASSERT(p_Ptr, "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a null pointer");
-        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate from an empty allocator");
+        // TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate from an empty allocator");
         TKIT_ASSERT(Belongs(p_Ptr),
                     "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a pointer that does not belong to the allocator");
         if constexpr (!std::is_trivially_destructible_v<T>)
@@ -147,14 +147,11 @@ class TKIT_API BlockAllocator
      */
     bool Belongs(const void *p_Ptr) const;
 
-    bool IsEmpty() const;
     bool IsFull() const;
 
     usize GetBufferSize() const;
     usize GetAllocationSize() const;
 
-    usize GetAllocationCount() const;
-    usize GetRemainingCount() const;
     usize GetAllocationCapacityCount() const;
 
   private:
@@ -170,7 +167,6 @@ class TKIT_API BlockAllocator
     Allocation *m_FreeList;
     usize m_BufferSize;
     usize m_AllocationSize;
-    usize m_Allocations = 0;
     bool m_Provided;
 };
 

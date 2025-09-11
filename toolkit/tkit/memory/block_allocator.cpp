@@ -39,14 +39,12 @@ BlockAllocator::~BlockAllocator()
 }
 
 BlockAllocator::BlockAllocator(BlockAllocator &&p_Other)
-    : m_Buffer(p_Other.m_Buffer), m_FreeList(p_Other.m_FreeList), m_Allocations(p_Other.m_Allocations),
-      m_Provided(p_Other.m_Provided)
+    : m_Buffer(p_Other.m_Buffer), m_FreeList(p_Other.m_FreeList), m_Provided(p_Other.m_Provided)
 {
     p_Other.m_Buffer = nullptr;
     p_Other.m_FreeList = nullptr;
     p_Other.m_BufferSize = 0;
     p_Other.m_AllocationSize = 0;
-    p_Other.m_Allocations = 0;
     m_Provided = false;
 }
 
@@ -57,14 +55,12 @@ BlockAllocator &BlockAllocator::operator=(BlockAllocator &&p_Other)
         deallocateBuffer();
         m_Buffer = p_Other.m_Buffer;
         m_FreeList = p_Other.m_FreeList;
-        m_Allocations = p_Other.m_Allocations;
         m_Provided = p_Other.m_Provided;
 
         p_Other.m_Buffer = nullptr;
         p_Other.m_FreeList = nullptr;
         p_Other.m_BufferSize = 0;
         p_Other.m_AllocationSize = 0;
-        p_Other.m_Allocations = 0;
         m_Provided = false;
     }
     return *this;
@@ -76,7 +72,6 @@ void *BlockAllocator::Allocate()
     if (!m_FreeList)
         return nullptr;
 
-    ++m_Allocations;
     Allocation *alloc = m_FreeList;
     m_FreeList = m_FreeList->Next;
     return alloc;
@@ -85,11 +80,9 @@ void *BlockAllocator::Allocate()
 void BlockAllocator::Deallocate(void *p_Ptr)
 {
     TKIT_ASSERT(p_Ptr, "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a null pointer");
-    TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate from an empty allocator");
     TKIT_ASSERT(Belongs(p_Ptr),
                 "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a pointer that does not belong to the allocator");
 
-    --m_Allocations;
     Allocation *alloc = static_cast<Allocation *>(p_Ptr);
     alloc->Next = m_FreeList;
     m_FreeList = alloc;
@@ -97,9 +90,6 @@ void BlockAllocator::Deallocate(void *p_Ptr)
 
 void BlockAllocator::Reset()
 {
-    TKIT_ASSERT(IsEmpty(), "[TOOLKIT][BLOCK-ALLOC] The allocator still has active allocations. Resetting it will "
-                           "mangle the memory and corrupt it");
-
     setupMemoryLayout();
 }
 
@@ -108,13 +98,9 @@ bool BlockAllocator::Belongs(const void *p_Ptr) const
     const std::byte *ptr = static_cast<const std::byte *>(p_Ptr);
     return ptr >= m_Buffer && ptr < m_Buffer + m_BufferSize;
 }
-bool BlockAllocator::IsEmpty() const
-{
-    return m_Allocations == 0;
-}
 bool BlockAllocator::IsFull() const
 {
-    return m_Allocations == GetAllocationCapacityCount();
+    return !m_FreeList;
 }
 
 usize BlockAllocator::GetBufferSize() const
@@ -126,14 +112,6 @@ usize BlockAllocator::GetAllocationSize() const
     return m_AllocationSize;
 }
 
-usize BlockAllocator::GetAllocationCount() const
-{
-    return m_Allocations;
-}
-usize BlockAllocator::GetRemainingCount() const
-{
-    return m_BufferSize / m_AllocationSize - m_Allocations;
-}
 usize BlockAllocator::GetAllocationCapacityCount() const
 {
     return m_BufferSize / m_AllocationSize;
@@ -157,15 +135,14 @@ void BlockAllocator::deallocateBuffer()
 {
     if (!m_Buffer || m_Provided)
         return;
-    TKIT_LOG_WARNING_IF(
-        !IsEmpty(),
-        "[TOOLKIT][BLOCK-ALLOC] Deallocating a block allocator with active allocations. If the elements are not "
-        "trivially destructible, you will have to call "
-        "Destroy() for each element to avoid undefined behaviour (this deallocation will not call the destructor)");
+    // TKIT_LOG_WARNING_IF(
+    //     !IsEmpty(),
+    //     "[TOOLKIT][BLOCK-ALLOC] Deallocating a block allocator with active allocations. If the elements are not "
+    //     "trivially destructible, you will have to call "
+    //     "Destroy() for each element to avoid undefined behaviour (this deallocation will not call the destructor)");
 
     Memory::DeallocateAligned(m_Buffer);
     m_Buffer = nullptr;
-    m_Allocations = 0;
     m_FreeList = nullptr;
 }
 
