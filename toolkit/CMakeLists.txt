@@ -23,6 +23,10 @@ if(TOOLKIT_ENABLE_STACK_ALLOCATOR)
   list(APPEND SOURCES tkit/memory/stack_allocator.cpp)
 endif()
 
+if(TOOLKIT_ENABLE_TIER_ALLOCATOR)
+  list(APPEND SOURCES tkit/memory/tier_allocator.cpp)
+endif()
+
 if(TOOLKIT_ENABLE_MULTIPROCESSING)
   list(APPEND SOURCES tkit/multiprocessing/task.cpp
        tkit/multiprocessing/task_manager.cpp

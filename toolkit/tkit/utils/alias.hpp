@@ -1,11 +1,13 @@
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
 #include <limits>
 
-#ifndef TKIT_SIZE_TYPE
-#    define TKIT_SIZE_TYPE TKit::Alias::u32 // std::size_t
+#ifndef TKIT_USIZE_TYPE
+#    define TKIT_USIZE_TYPE TKit::Alias::u32 // std::size_t
+#endif
+#ifndef TKIT_SSIZE_TYPE
+#    define TKIT_SSIZE_TYPE TKit::Alias::i32 // std::ssize_t
 #endif
 
 #ifndef TKIT_DIFFERENCE_TYPE
@@ -39,7 +41,8 @@ using i16 = std::int16_t;
 using i32 = std::int32_t;
 using i64 = std::int64_t;
 
-using usize = TKIT_SIZE_TYPE;
+using usize = TKIT_USIZE_TYPE;
+using ssize = TKIT_SSIZE_TYPE;
 using uptr = std::uintptr_t;
 using idiff = TKIT_DIFFERENCE_TYPE;
 

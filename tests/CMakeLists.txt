@@ -18,6 +18,7 @@ set(SOURCES
     tests/memory/block_allocator.cpp
     tests/memory/stack_allocator.cpp
     tests/memory/arena_allocator.cpp
+    tests/memory/tier_allocator.cpp
     tests/memory/ptr.cpp
     tests/container/static_array.cpp
     tests/container/dynamic_array.cpp

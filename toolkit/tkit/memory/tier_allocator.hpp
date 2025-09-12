@@ -114,7 +114,8 @@ class TKIT_API TierAllocator
         T *ptr = Allocate<T>(p_Count);
         if (!ptr)
             return nullptr;
-        return Memory::ConstructRange(ptr, ptr + p_Count, std::forward<Args>(p_Args)...);
+        Memory::ConstructRange(ptr, ptr + p_Count, std::forward<Args>(p_Args)...);
+        return ptr;
     }
 
     template <typename T> void Destroy(T *p_Ptr, const usize p_Count = 1)

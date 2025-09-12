@@ -37,6 +37,8 @@ TierAllocator::Description TierAllocator::CreateDescription(const usize p_MaxAll
     usize currentAlloc = nextAlloc(prevAlloc);
     usize currentSlots = 0;
 
+    desc.Tiers.Append(TierInfo{.Size = p_MaxAllocation, .AllocationSize = p_MaxAllocation, .Slots = 1});
+
     const auto enoughSlots = [&currentSlots, &prevSlots, p_TierSlotDecay]() {
         return static_cast<usize>(p_TierSlotDecay * currentSlots) >= prevSlots;
     };
@@ -44,7 +46,8 @@ TierAllocator::Description TierAllocator::CreateDescription(const usize p_MaxAll
     while (true)
     {
         const usize psize = size;
-        while (!enoughSlots() || (currentAlloc != p_MinAllocation && size % PrevPowerOfTwo(currentAlloc)))
+        const usize alignment = PrevPowerOfTwo(currentAlloc);
+        while (!enoughSlots() || (currentAlloc != p_MinAllocation && size % alignment != 0))
         {
             ++currentSlots;
             size += currentAlloc;
@@ -68,6 +71,7 @@ TierAllocator::Description TierAllocator::CreateDescription(const usize p_MaxAll
         currentAlloc = nextAlloc(prevAlloc);
         currentSlots = 0;
     }
+    desc.BufferSize = size;
     return desc;
 }
 TierAllocator::TierAllocator(const usize p_MaxAllocation, const usize p_MinAllocation, const usize p_Granularity,
@@ -83,7 +87,7 @@ TierAllocator::TierAllocator(const Description &p_Description, const usize p_Max
 
     m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(p_Description.BufferSize, p_MaxAlignment));
     TKIT_ASSERT(m_Buffer,
-                "[TOOLKIT][TIER-ALLOC] Failed to allocate final tier allocator buffer of {} bytes aligned to {}. "
+                "[TOOLKIT][TIER-ALLOC] Failed to allocate final allocator buffer of {} bytes aligned to {}. "
                 "Consider choosing another parameter combination",
                 p_Description.BufferSize, p_MaxAlignment);
     m_BufferSize = p_Description.BufferSize;
@@ -101,9 +105,9 @@ void TierAllocator::setupMemoryLayout(const Description &p_Description, const us
         tier.FreeList = reinterpret_cast<Allocation *>(tier.Buffer);
         const usize count = tinfo.Size / tinfo.AllocationSize;
 
-        TKIT_ASSERT(Memory::IsAligned(tier.Buffer, std::min(p_MaxAlignment, PrevPowerOfTwo(tinfo.Size))),
+        TKIT_ASSERT(Memory::IsAligned(tier.Buffer, std::min(p_MaxAlignment, PrevPowerOfTwo(tinfo.AllocationSize))),
                     "[TOOLKIT][TIER-ALLOC] Tier with size {} and buffer {} failed alignment check: it is not aligned "
-                    "to either the maximum alignment or its natural alignment",
+                    "to either the maximum alignment or its previous power of 2",
                     tinfo.Size, static_cast<void *>(tier.Buffer));
 
         Allocation *next = nullptr;
@@ -170,6 +174,14 @@ static usize getTierIndex(const usize p_Size, const usize p_MinAllocation, const
     const usize factor = p_Granularity >> 1;
     const usize reference = np2 - p_Size;
     const usize incIndex = bitIndex(increment);
+
+    // Signed code for a bit more correctness, but as final result is guaranteed to not exceed uint max, it is not
+    // strictly needed constexpr auto cast = [](const usize p_Value) { return static_cast<ssize>(p_Value); };
+    //
+    // const ssize offset = cast(bitIndex(p_MinAllocation)) - cast(bitIndex(p_Granularity));
+    //
+    // const ssize idx = cast(p_LastIndex) + cast(factor) * (offset - cast(incIndex)) + cast(reference / increment);
+    // return static_cast<usize>(idx);
     const usize offset = bitIndex(p_MinAllocation) - bitIndex(p_Granularity);
 
     return p_LastIndex + factor * (offset - incIndex) + reference / increment;
