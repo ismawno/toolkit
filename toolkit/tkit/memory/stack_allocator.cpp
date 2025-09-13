@@ -22,7 +22,7 @@ StackAllocator::~StackAllocator()
 }
 
 StackAllocator::StackAllocator(StackAllocator &&p_Other)
-    : m_Entries(std::move(p_Other.m_Entries)), m_Buffer(p_Other.m_Buffer), m_Size(p_Other.GetSize()),
+    : m_Entries(std::move(p_Other.m_Entries)), m_Buffer(p_Other.m_Buffer), m_Size(p_Other.m_Size),
       m_Remaining(p_Other.m_Remaining), m_Provided(p_Other.m_Provided)
 
 {
@@ -30,6 +30,7 @@ StackAllocator::StackAllocator(StackAllocator &&p_Other)
     p_Other.m_Size = 0;
     p_Other.m_Remaining = 0;
     p_Other.m_Entries.Clear();
+    p_Other.m_Provided = false;
 }
 
 StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other)
@@ -38,7 +39,7 @@ StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other)
     {
         deallocateBuffer();
         m_Buffer = p_Other.m_Buffer;
-        m_Size = p_Other.GetSize();
+        m_Size = p_Other.m_Size;
         m_Remaining = p_Other.m_Remaining;
         m_Entries = std::move(p_Other.m_Entries);
         m_Provided = p_Other.m_Provided;
@@ -47,6 +48,7 @@ StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other)
         p_Other.m_Size = 0;
         p_Other.m_Remaining = 0;
         p_Other.m_Entries.Clear();
+        p_Other.m_Provided = false;
     }
     return *this;
 }
@@ -140,9 +142,5 @@ void StackAllocator::deallocateBuffer()
         "trivially destructible, you will have to call "
         "Destroy() for each element to avoid undefined behaviour (this deallocation will not call the destructor)");
     Memory::DeallocateAligned(m_Buffer);
-    m_Buffer = nullptr;
-    m_Size = 0;
-    m_Remaining = 0;
-    m_Entries.Clear();
 }
 } // namespace TKit

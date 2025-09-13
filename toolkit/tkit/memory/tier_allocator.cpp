@@ -99,6 +99,42 @@ TierAllocator::TierAllocator(const Description &p_Description, const usize p_Max
 #endif
 }
 
+TierAllocator::~TierAllocator()
+{
+    deallocateBuffer();
+}
+
+TierAllocator::TierAllocator(TierAllocator &&p_Other)
+    : m_Tiers(std::move(p_Other.m_Tiers)), m_Buffer(p_Other.m_Buffer), m_BufferSize(p_Other.m_BufferSize),
+      m_MinAllocation(p_Other.m_MinAllocation), m_Granularity(p_Other.m_Granularity)
+{
+    p_Other.m_Tiers.Clear();
+    p_Other.m_Buffer = nullptr;
+    p_Other.m_BufferSize = 0;
+    p_Other.m_MinAllocation = 0;
+    p_Other.m_Granularity = 0;
+}
+
+TierAllocator &TierAllocator::operator=(TierAllocator &&p_Other)
+{
+    if (this != &p_Other)
+    {
+        deallocateBuffer();
+        m_Tiers = std::move(p_Other.m_Tiers);
+        m_Buffer = p_Other.m_Buffer;
+        m_BufferSize = p_Other.m_BufferSize;
+        m_MinAllocation = p_Other.m_MinAllocation;
+        m_Granularity = p_Other.m_Granularity;
+
+        p_Other.m_Tiers.Clear();
+        p_Other.m_Buffer = nullptr;
+        p_Other.m_BufferSize = 0;
+        p_Other.m_MinAllocation = 0;
+        p_Other.m_Granularity = 0;
+    }
+    return *this;
+}
+
 #ifdef TKIT_ENABLE_ASSERTS
 void TierAllocator::setupMemoryLayout(const Description &p_Description, const usize p_MaxAlignment)
 #else
@@ -128,6 +164,12 @@ void TierAllocator::setupMemoryLayout(const Description &p_Description)
         m_Tiers.Append(tier);
         size += tinfo.Size;
     }
+}
+
+void TierAllocator::deallocateBuffer()
+{
+    if (m_Buffer)
+        Memory::DeallocateAligned(m_Buffer);
 }
 
 void *TierAllocator::Allocate(const usize p_Size)

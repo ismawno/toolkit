@@ -89,6 +89,11 @@ class TKIT_API TierAllocator
                   f32 p_TierSlotDecay = 0.9f, usize p_MaxAlignment = 64);
     TierAllocator(const Description &p_Description, usize p_MaxAlignment = 64);
 
+    ~TierAllocator();
+
+    TierAllocator(TierAllocator &&p_Other);
+    TierAllocator &operator=(TierAllocator &&p_Other);
+
     void *Allocate(usize p_Size);
     void Deallocate(void *p_Ptr, usize p_Size);
 
@@ -161,6 +166,7 @@ class TKIT_API TierAllocator
 #else
     void setupMemoryLayout(const Description &p_Description);
 #endif
+    void deallocateBuffer();
 
     StaticArray<Tier, TKIT_TIER_ALLOCATOR_MAX_TIERS> m_Tiers{};
     std::byte *m_Buffer;

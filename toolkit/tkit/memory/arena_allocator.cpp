@@ -20,12 +20,13 @@ ArenaAllocator::~ArenaAllocator()
 }
 
 ArenaAllocator::ArenaAllocator(ArenaAllocator &&p_Other)
-    : m_Buffer(p_Other.m_Buffer), m_Size(p_Other.GetSize()), m_Remaining(p_Other.m_Remaining),
+    : m_Buffer(p_Other.m_Buffer), m_Size(p_Other.m_Size), m_Remaining(p_Other.m_Remaining),
       m_Provided(p_Other.m_Provided)
 {
     p_Other.m_Buffer = nullptr;
     p_Other.m_Size = 0;
     p_Other.m_Remaining = 0;
+    p_Other.m_Provided = false;
 }
 
 ArenaAllocator &ArenaAllocator::operator=(ArenaAllocator &&p_Other)
@@ -34,13 +35,14 @@ ArenaAllocator &ArenaAllocator::operator=(ArenaAllocator &&p_Other)
     {
         deallocateBuffer();
         m_Buffer = p_Other.m_Buffer;
-        m_Size = p_Other.GetSize();
+        m_Size = p_Other.m_Size;
         m_Remaining = p_Other.m_Remaining;
         m_Provided = p_Other.m_Provided;
 
         p_Other.m_Buffer = nullptr;
         p_Other.m_Size = 0;
         p_Other.m_Remaining = 0;
+        p_Other.m_Provided = false;
     }
     return *this;
 }
@@ -111,8 +113,5 @@ void ArenaAllocator::deallocateBuffer()
         "trivially destructible, you will have to call "
         "Destroy() for each element to avoid undefined behaviour (this deallocation will not call the destructor)");
     Memory::DeallocateAligned(m_Buffer);
-    m_Buffer = nullptr;
-    m_Size = 0;
-    m_Remaining = 0;
 }
 } // namespace TKit

@@ -39,7 +39,8 @@ BlockAllocator::~BlockAllocator()
 }
 
 BlockAllocator::BlockAllocator(BlockAllocator &&p_Other)
-    : m_Buffer(p_Other.m_Buffer), m_FreeList(p_Other.m_FreeList), m_Provided(p_Other.m_Provided)
+    : m_Buffer(p_Other.m_Buffer), m_FreeList(p_Other.m_FreeList), m_BufferSize(p_Other.m_BufferSize),
+      m_AllocationSize(p_Other.m_AllocationSize), m_Provided(p_Other.m_Provided)
 {
     p_Other.m_Buffer = nullptr;
     p_Other.m_FreeList = nullptr;
@@ -55,6 +56,8 @@ BlockAllocator &BlockAllocator::operator=(BlockAllocator &&p_Other)
         deallocateBuffer();
         m_Buffer = p_Other.m_Buffer;
         m_FreeList = p_Other.m_FreeList;
+        m_BufferSize = p_Other.m_BufferSize;
+        m_AllocationSize = p_Other.m_AllocationSize;
         m_Provided = p_Other.m_Provided;
 
         p_Other.m_Buffer = nullptr;
@@ -142,8 +145,6 @@ void BlockAllocator::deallocateBuffer()
     //     "Destroy() for each element to avoid undefined behaviour (this deallocation will not call the destructor)");
 
     Memory::DeallocateAligned(m_Buffer);
-    m_Buffer = nullptr;
-    m_FreeList = nullptr;
 }
 
 } // namespace TKit
