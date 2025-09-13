@@ -19,7 +19,7 @@ class TKIT_API Timespan
     using Milliseconds = std::chrono::milliseconds;
     using Seconds = std::chrono::seconds;
 
-    explicit(false) Timespan(Nanoseconds p_Elapsed = Nanoseconds::zero());
+    Timespan(Nanoseconds p_Elapsed = Nanoseconds::zero());
 
     template <typename TimeUnit, Numeric T = f32> T As() const
     {

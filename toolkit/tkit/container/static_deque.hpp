@@ -56,7 +56,7 @@ class StaticDeque
 
     // This constructor WONT include the case M == Capacity (ie, copy constructor)
     template <SizeType M>
-    explicit(false) constexpr StaticDeque(const StaticDeque<ValueType, M, Traits> &p_Other)
+    constexpr StaticDeque(const StaticDeque<ValueType, M, Traits> &p_Other)
     {
         if constexpr (M > Capacity)
         {
@@ -67,7 +67,7 @@ class StaticDeque
     }
 
     // This constructor WONT include the case M == Capacity (ie, move constructor)
-    template <SizeType M> explicit(false) constexpr StaticDeque(StaticDeque<ValueType, M, Traits> &&p_Other)
+    template <SizeType M> constexpr StaticDeque(StaticDeque<ValueType, M, Traits> &&p_Other)
     {
         if constexpr (M > Capacity)
         {

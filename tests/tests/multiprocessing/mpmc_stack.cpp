@@ -11,7 +11,7 @@ struct STTask
 {
     u32 Value{0};
     STTask() = default;
-    explicit STTask(u32 v) : Value(v)
+    STTask(u32 v) : Value(v)
     {
     }
     bool operator==(const STTask &o) const

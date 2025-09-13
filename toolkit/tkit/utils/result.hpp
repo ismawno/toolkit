@@ -163,7 +163,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
         return GetValue();
     }
 
-    explicit(false) operator bool() const
+    operator bool() const
     {
         return m_Ok;
     }
@@ -291,7 +291,7 @@ template <typename ErrorType> class Result<void, ErrorType>
         return *m_Error.Get();
     }
 
-    explicit(false) operator bool() const
+    operator bool() const
     {
         return m_Ok;
     }

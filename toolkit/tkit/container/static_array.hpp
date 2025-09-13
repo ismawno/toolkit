@@ -54,7 +54,7 @@ class StaticArray
 
     // This constructor WONT include the case M == Capacity (ie, copy constructor)
     template <SizeType M>
-    explicit(false) constexpr StaticArray(const StaticArray<ValueType, M, Traits> &p_Other)
+    constexpr StaticArray(const StaticArray<ValueType, M, Traits> &p_Other)
         : m_Size(p_Other.GetSize())
     {
         if constexpr (M > Capacity)
@@ -66,7 +66,7 @@ class StaticArray
 
     // This constructor WONT include the case M == Capacity (ie, move constructor)
     template <SizeType M>
-    explicit(false) constexpr StaticArray(StaticArray<ValueType, M, Traits> &&p_Other)
+    constexpr StaticArray(StaticArray<ValueType, M, Traits> &&p_Other)
         : m_Size(p_Other.GetSize())
     {
         if constexpr (M > Capacity)

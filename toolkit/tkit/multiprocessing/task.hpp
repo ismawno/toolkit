@@ -156,7 +156,7 @@ template <typename T = void> class Task final : public ITask
      */
     template <typename Callable, typename... Args>
         requires std::invocable<Callable, Args...>
-    explicit Task(Callable &&p_Callable, Args &&...p_Args)
+    Task(Callable &&p_Callable, Args &&...p_Args)
         : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
 #ifdef TKIT_ENABLE_ASSERTS
@@ -169,7 +169,7 @@ template <typename T = void> class Task final : public ITask
 
     template <typename Callable>
         requires(!std::is_same_v<Callable, Task>)
-    explicit Task(Callable &&p_Callable) : m_Function(std::forward<Callable>(p_Callable))
+    Task(Callable &&p_Callable) : m_Function(std::forward<Callable>(p_Callable))
     {
     }
 
@@ -221,7 +221,7 @@ template <> class TKIT_API Task<void> final : public ITask
 
     template <typename Callable, typename... Args>
         requires std::invocable<Callable, Args...>
-    explicit Task(Callable &&p_Callable, Args &&...p_Args)
+    Task(Callable &&p_Callable, Args &&...p_Args)
         : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
         if constexpr (sizeof...(Args) == 0)
@@ -232,7 +232,7 @@ template <> class TKIT_API Task<void> final : public ITask
 
     template <typename Callable>
         requires(!std::is_same_v<Callable, Task>)
-    explicit Task(Callable &&p_Callable) : m_Function(std::forward<Callable>(p_Callable))
+    Task(Callable &&p_Callable) : m_Function(std::forward<Callable>(p_Callable))
     {
     }
 

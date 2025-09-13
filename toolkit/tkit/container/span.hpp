@@ -28,20 +28,20 @@ class Span
     constexpr Span() : m_Data(nullptr)
     {
     }
-    constexpr explicit(false) Span(ElementType *p_Data) : m_Data(p_Data)
+    constexpr Span(ElementType *p_Data) : m_Data(p_Data)
     {
     }
 
-    constexpr explicit(false) Span(const Array<ValueType, Extent, Traits> &p_Array) : m_Data(p_Array.GetData())
+    constexpr Span(const Array<ValueType, Extent, Traits> &p_Array) : m_Data(p_Array.GetData())
     {
     }
-    constexpr explicit(false) Span(Array<ValueType, Extent, Traits> &p_Array) : m_Data(p_Array.GetData())
+    constexpr Span(Array<ValueType, Extent, Traits> &p_Array) : m_Data(p_Array.GetData())
     {
     }
 
     template <typename U>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(const Span<U, Extent, Traits> &p_Other) : m_Data(p_Other.GetData())
+    constexpr Span(const Span<U, Extent, Traits> &p_Other) : m_Data(p_Other.GetData())
     {
     }
 
@@ -116,52 +116,52 @@ template <typename T, typename Traits> class Span<T, Limits<usize>::max(), Trait
     }
 
     template <SizeType Extent>
-    constexpr explicit(false) Span(const Array<ValueType, Extent, Traits> &p_Array)
+    constexpr Span(const Array<ValueType, Extent, Traits> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(Extent)
     {
     }
     template <SizeType Extent>
-    constexpr explicit(false) Span(Array<ValueType, Extent, Traits> &p_Array)
+    constexpr Span(Array<ValueType, Extent, Traits> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(Extent)
     {
     }
 
     template <SizeType Capacity>
-    constexpr explicit(false) Span(const StaticArray<ValueType, Capacity, Traits> &p_Array)
+    constexpr Span(const StaticArray<ValueType, Capacity, Traits> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
     template <SizeType Capacity>
-    constexpr explicit(false) Span(StaticArray<ValueType, Capacity, Traits> &p_Array)
+    constexpr Span(StaticArray<ValueType, Capacity, Traits> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
 
     template <typename U, SizeType Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(const WeakArray<U, Capacity, Traits> &p_Array)
+    constexpr Span(const WeakArray<U, Capacity, Traits> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
     template <typename U, SizeType Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(WeakArray<U, Capacity, Traits> &p_Array)
+    constexpr Span(WeakArray<U, Capacity, Traits> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
 
-    constexpr explicit(false) Span(const DynamicArray<ValueType, Traits> &p_Array)
+    constexpr Span(const DynamicArray<ValueType, Traits> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
-    constexpr explicit(false) Span(DynamicArray<ValueType, Traits> &p_Array)
+    constexpr Span(DynamicArray<ValueType, Traits> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
 
     template <typename U, SizeType Extent>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) Span(const Span<U, Extent, Traits> &p_Other)
+    constexpr Span(const Span<U, Extent, Traits> &p_Other)
         : m_Data(p_Other.GetData()), m_Size(p_Other.GetSize())
     {
     }

@@ -103,7 +103,7 @@ template <typename T> class Ref
     Ref() = default;
 
     /* COPY-MOVE CTORS */
-    explicit(false) Ref(T *p_Ptr) : m_Ptr(p_Ptr)
+    Ref(T *p_Ptr) : m_Ptr(p_Ptr)
     {
         increaseRef();
     }
@@ -152,12 +152,12 @@ template <typename T> class Ref
     }
 
     /* COPY-MOVE CTORS TEMPLATED VARIANTS */
-    template <typename U> explicit(false) Ref(const Ref<U> &p_Other) : m_Ptr(p_Other.m_Ptr)
+    template <typename U> Ref(const Ref<U> &p_Other) : m_Ptr(p_Other.m_Ptr)
     {
         increaseRef();
     }
 
-    template <typename U> explicit(false) Ref(Ref<U> &&p_Other) : m_Ptr(p_Other.m_Ptr)
+    template <typename U> Ref(Ref<U> &&p_Other) : m_Ptr(p_Other.m_Ptr)
     {
         p_Other.m_Ptr = nullptr;
     }
@@ -198,11 +198,11 @@ template <typename T> class Ref
     {
         return *m_Ptr;
     }
-    explicit(false) operator T *() const
+    operator T *() const
     {
         return m_Ptr;
     }
-    explicit(false) operator bool() const
+    operator bool() const
     {
         return m_Ptr != nullptr;
     }
@@ -281,14 +281,14 @@ template <typename T> class Scope
     TKIT_NON_COPYABLE(Scope)
   public:
     Scope() = default;
-    explicit(false) Scope(T *p_Ptr) : m_Ptr(p_Ptr)
+    Scope(T *p_Ptr) : m_Ptr(p_Ptr)
     {
     }
     Scope(Scope &&p_Other) : m_Ptr(p_Other.m_Ptr)
     {
         p_Other.m_Ptr = nullptr;
     }
-    template <typename U> explicit(false) Scope(Scope<U> &&p_Other) : m_Ptr(p_Other.m_Ptr)
+    template <typename U> Scope(Scope<U> &&p_Other) : m_Ptr(p_Other.m_Ptr)
     {
         p_Other.m_Ptr = nullptr;
     }
@@ -361,7 +361,7 @@ template <typename T> class Scope
         return *m_Ptr;
     }
 
-    explicit(false) operator bool() const
+    operator bool() const
     {
         return m_Ptr != nullptr;
     }

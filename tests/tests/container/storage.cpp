@@ -76,7 +76,7 @@ TEST_CASE("Storage: type without default constructor", "[Storage]")
     {
         u32 x;
         NoDef() = delete;
-        explicit NoDef(u32 v) : x(v)
+        NoDef(u32 v) : x(v)
         {
         }
     };

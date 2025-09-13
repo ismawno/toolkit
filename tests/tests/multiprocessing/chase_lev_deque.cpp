@@ -10,7 +10,7 @@ struct DTask
 {
     u32 Value{0};
     DTask() = default;
-    explicit DTask(u32 v) : Value(v)
+    DTask(u32 v) : Value(v)
     {
     }
     bool operator==(const DTask &o) const

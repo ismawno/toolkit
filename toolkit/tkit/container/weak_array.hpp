@@ -30,28 +30,28 @@ class WeakArray
     constexpr WeakArray() : m_Data(nullptr), m_Size(0)
     {
     }
-    constexpr explicit(false) WeakArray(ElementType *p_Data) : m_Data(p_Data), m_Size(0)
+    constexpr WeakArray(ElementType *p_Data) : m_Data(p_Data), m_Size(0)
     {
     }
     constexpr WeakArray(ElementType *p_Data, const SizeType p_Size) : m_Data(p_Data), m_Size(p_Size)
     {
     }
 
-    constexpr explicit(false)
+    constexpr
         WeakArray(const Array<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
         : m_Data(p_Array.GetData()), m_Size(p_Size)
     {
     }
-    constexpr explicit(false) WeakArray(Array<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
+    constexpr WeakArray(Array<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
         : m_Data(p_Array.GetData()), m_Size(p_Size)
     {
     }
 
-    constexpr explicit(false) WeakArray(const StaticArray<ValueType, Capacity, Traits> &p_Array)
+    constexpr WeakArray(const StaticArray<ValueType, Capacity, Traits> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
-    constexpr explicit(false) WeakArray(StaticArray<ValueType, Capacity, Traits> &p_Array)
+    constexpr WeakArray(StaticArray<ValueType, Capacity, Traits> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
@@ -342,40 +342,40 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
     }
 
     template <SizeType Capacity>
-    constexpr explicit(false)
+    constexpr
         WeakArray(const Array<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
         : m_Data(p_Array.GetData()), m_Size(p_Size), m_Capacity(Capacity)
     {
     }
     template <SizeType Capacity>
-    constexpr explicit(false) WeakArray(Array<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
+    constexpr WeakArray(Array<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
         : m_Data(p_Array.GetData()), m_Size(p_Size), m_Capacity(Capacity)
     {
     }
 
     template <SizeType Capacity>
-    constexpr explicit(false) WeakArray(const StaticArray<ValueType, Capacity, Traits> &p_Array)
+    constexpr WeakArray(const StaticArray<ValueType, Capacity, Traits> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize()), m_Capacity(Capacity)
     {
     }
     template <SizeType Capacity>
-    constexpr explicit(false) WeakArray(StaticArray<ValueType, Capacity, Traits> &p_Array)
+    constexpr WeakArray(StaticArray<ValueType, Capacity, Traits> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize()), m_Capacity(Capacity)
     {
     }
 
-    constexpr explicit(false) WeakArray(const DynamicArray<ValueType> &p_Array)
+    constexpr WeakArray(const DynamicArray<ValueType> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize()), m_Capacity(p_Array.GetCapacity())
     {
     }
-    constexpr explicit(false) WeakArray(DynamicArray<ValueType> &p_Array)
+    constexpr WeakArray(DynamicArray<ValueType> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize()), m_Capacity(p_Array.GetCapacity())
     {
     }
 
     template <typename U, SizeType Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
-    constexpr explicit(false) WeakArray(WeakArray<U, Capacity, Traits> &&p_Other)
+    constexpr WeakArray(WeakArray<U, Capacity, Traits> &&p_Other)
         : m_Data(p_Other.GetData()), m_Size(p_Other.GetSize()), m_Capacity(p_Other.GetCapacity())
     {
         p_Other.m_Data = nullptr;

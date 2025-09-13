@@ -25,7 +25,7 @@ namespace TKit
 class TKIT_API ITaskManager
 {
   public:
-    explicit ITaskManager(usize p_WorkerCount);
+    ITaskManager(usize p_WorkerCount);
     virtual ~ITaskManager() = default;
 
     /**
@@ -86,8 +86,7 @@ class TKIT_API ITaskManager
      * @return A new task object.
      */
     template <typename Callable, typename... Args>
-    static auto CreateTask(Callable &&p_Callable, Args &&...p_Args)
-        -> Task<std::invoke_result_t<Callable, Args...>> *
+    static auto CreateTask(Callable &&p_Callable, Args &&...p_Args) -> Task<std::invoke_result_t<Callable, Args...>> *
     {
         using RType = std::invoke_result_t<Callable, Args...>;
         return Task<RType>::Create(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
@@ -113,8 +112,7 @@ class TKIT_API ITaskManager
      * @return A new task object.
      */
     template <typename Callable, typename... Args>
-    auto CreateAndSubmit(Callable &&p_Callable, Args &&...p_Args)
-        -> Task<std::invoke_result_t<Callable, Args...>> *
+    auto CreateAndSubmit(Callable &&p_Callable, Args &&...p_Args) -> Task<std::invoke_result_t<Callable, Args...>> *
     {
         using RType = std::invoke_result_t<Callable, Args...>;
         Task<RType> *task = CreateTask(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
