@@ -156,7 +156,11 @@ class TKIT_API TierAllocator
     };
 
     usize getTierIndex(usize p_Size);
+#ifdef TKIT_ENABLE_ASSERTS
     void setupMemoryLayout(const Description &p_Description, usize p_MaxAlignment);
+#else
+    void setupMemoryLayout(const Description &p_Description);
+#endif
 
     StaticArray<Tier, TKIT_TIER_ALLOCATOR_MAX_TIERS> m_Tiers{};
     std::byte *m_Buffer;

@@ -92,10 +92,18 @@ TierAllocator::TierAllocator(const Description &p_Description, const usize p_Max
                 p_Description.BufferSize, p_MaxAlignment);
     m_BufferSize = p_Description.BufferSize;
 
+#ifdef TKIT_ENABLE_ASSERTS
     setupMemoryLayout(p_Description, p_MaxAlignment);
+#else
+    setupMemoryLayout(p_Description);
+#endif
 }
 
+#ifdef TKIT_ENABLE_ASSERTS
 void TierAllocator::setupMemoryLayout(const Description &p_Description, const usize p_MaxAlignment)
+#else
+void TierAllocator::setupMemoryLayout(const Description &p_Description)
+#endif
 {
     usize size = 0;
     for (const TierInfo &tinfo : p_Description.Tiers)
