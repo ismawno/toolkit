@@ -24,7 +24,7 @@ namespace TKit
 template <typename T, u64 Capacity> class ChaseLevDeque
 {
     static_assert((Capacity & (Capacity - 1)) == 0,
-                  "[TOOLKIT][CHASE-LEV] Chase Lev Deque capacity must be a multiple of 2");
+                  "[TOOLKIT][CHASE-LEV] Chase Lev Deque capacity must be a power of 2");
 
     TKIT_NON_COPYABLE(ChaseLevDeque)
   public:
