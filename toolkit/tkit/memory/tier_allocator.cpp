@@ -219,11 +219,14 @@ static usize getTierIndex(const usize p_Size, const usize p_MinAllocation, const
     if (p_Size <= p_MinAllocation)
         return p_LastIndex;
 
+    const usize grIndex = bitIndex(p_Granularity);
+
     const usize np2 = NextPowerOfTwo(p_Size);
-    const usize increment = np2 / p_Granularity;
+    const usize increment = np2 >> grIndex;
+    const usize incIndex = bitIndex(increment);
+
     const usize factor = p_Granularity >> 1;
     const usize reference = np2 - p_Size;
-    const usize incIndex = bitIndex(increment);
 
     // Signed code for a bit more correctness, but as final result is guaranteed to not exceed uint max, it is not
     // strictly needed constexpr auto cast = [](const usize p_Value) { return static_cast<ssize>(p_Value); };
@@ -232,9 +235,9 @@ static usize getTierIndex(const usize p_Size, const usize p_MinAllocation, const
     //
     // const ssize idx = cast(p_LastIndex) + cast(factor) * (offset - cast(incIndex)) + cast(reference / increment);
     // return static_cast<usize>(idx);
-    const usize offset = bitIndex(p_MinAllocation) - bitIndex(p_Granularity);
+    const usize offset = bitIndex(p_MinAllocation) - grIndex;
 
-    return p_LastIndex + factor * (offset - incIndex) + reference / increment;
+    return p_LastIndex + factor * (offset - incIndex) + (reference >> incIndex);
 }
 
 usize TierAllocator::Description::GetTierIndex(const usize p_Size)
