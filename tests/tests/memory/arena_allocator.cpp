@@ -106,7 +106,7 @@ TEST_CASE("Allocate until full and Reset", "[ArenaAllocator]")
 
     // consume all with 1-byte allocs, aligned to 1 byte
     std::vector<void *> ptrs;
-    while (true)
+    for (;;)
     {
         void *p = arena.Allocate(1, 1);
         if (!p)

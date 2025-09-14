@@ -43,7 +43,7 @@ TierAllocator::Description TierAllocator::CreateDescription(const usize p_MaxAll
         return static_cast<usize>(p_TierSlotDecay * currentSlots) >= prevSlots;
     };
 
-    while (true)
+    for (;;)
     {
         const usize psize = size;
         const usize alignment = PrevPowerOfTwo(currentAlloc);

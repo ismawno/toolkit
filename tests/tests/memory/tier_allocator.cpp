@@ -109,7 +109,7 @@ TEST_CASE("Exhaust smallest tier and recover", "[TierAllocator]")
     // Repeatedly allocate the smallest request until it returns nullptr.
     // This validates exhaustion returns nullptr and that deallocation restores capacity.
     std::vector<void *> ptrs;
-    while (true)
+    for (;;)
     {
         void *p = alloc.Allocate(1); // should map to the smallest tier (>= minAlloc)
         if (!p)
