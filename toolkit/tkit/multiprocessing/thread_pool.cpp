@@ -83,7 +83,7 @@ ThreadPool::ThreadPool(const usize p_WorkerCount) : ITaskManager(p_WorkerCount)
         const u32 nworkers = m_Workers.GetSize();
 
         shuffleVictim(workerIndex, nworkers);
-        u64 epoch = 0;
+        u32 epoch = 0;
         for (;;)
         {
             myself.Epochs.wait(epoch, std::memory_order_acquire);
