@@ -56,14 +56,14 @@ class TKIT_API ITaskManager
      *
      * @param p_Tasks The tasks to submit.
      */
-    template <typename T> void SubmitTasks(const Span<Task<T> *const> p_Tasks)
+    template <typename T> void SubmitTasks(const Span<Task<T>> p_Tasks)
     {
         const usize size = sizeof(ITask *) * p_Tasks.GetSize();
         TKIT_MEMORY_STACK_CHECK(size);
         ITask **tasks = static_cast<ITask **>(TKIT_MEMORY_STACK_ALLOCATE(size));
 
         for (u32 i = 0; i < p_Tasks.GetSize(); ++i)
-            tasks[i] = p_Tasks[i];
+            tasks[i] = &p_Tasks[i];
 
         SubmitTasks(Span<ITask *const>{tasks, p_Tasks.GetSize()});
         TKIT_MEMORY_STACK_DEALLOCATE(tasks);
