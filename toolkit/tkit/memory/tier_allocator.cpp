@@ -219,11 +219,10 @@ static usize getTierIndex(const usize p_Size, const usize p_MinAllocation, const
     if (p_Size <= p_MinAllocation)
         return p_LastIndex;
 
-    const usize grIndex = bitIndex(p_Granularity);
-
     const usize np2 = NextPowerOfTwo(p_Size);
-    const usize increment = np2 >> grIndex;
-    const usize incIndex = bitIndex(increment);
+
+    const usize grIndex = bitIndex(p_Granularity);
+    const usize incIndex = bitIndex(np2 >> grIndex);
 
     const usize factor = p_Granularity >> 1;
     const usize reference = np2 - p_Size;
