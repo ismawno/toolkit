@@ -32,8 +32,8 @@ void TaskManager::SubmitTasks(const Span<ITask *const> p_Tasks)
     for (ITask *task : p_Tasks)
         (*task)();
 }
-void TaskManager::WaitUntilFinished(ITask *p_Task)
+void TaskManager::WaitUntilFinished(const ITask &p_Task)
 {
-    p_Task->WaitUntilFinished();
+    p_Task.WaitUntilFinished();
 }
 } // namespace TKit

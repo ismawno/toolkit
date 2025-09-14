@@ -29,7 +29,7 @@ template <typename T> class MpmcStack
     {
         template <typename... Args>
             requires std::constructible_from<T, Args...>
-        Node(Args &&...p_Args) : Value(std::forward<Args>(p_Args)...)
+        constexpr Node(Args &&...p_Args) : Value(std::forward<Args>(p_Args)...)
         {
         }
 

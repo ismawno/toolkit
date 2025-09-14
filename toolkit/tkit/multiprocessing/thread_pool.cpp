@@ -199,18 +199,18 @@ void ThreadPool::SubmitTasks(const Span<ITask *const> p_Tasks)
     }
 }
 
-void ThreadPool::WaitUntilFinished(ITask *p_Task)
+void ThreadPool::WaitUntilFinished(const ITask &p_Task)
 {
     if (t_ThreadIndex == 0)
     {
-        p_Task->WaitUntilFinished();
+        p_Task.WaitUntilFinished();
         return;
     }
 
     const u32 workerIndex = GetWorkerIndex();
     const u32 nworkers = m_Workers.GetSize();
 
-    while (!p_Task->IsFinished(std::memory_order_acquire))
+    while (!p_Task.IsFinished(std::memory_order_acquire))
         drainTasks(workerIndex, nworkers);
 }
 

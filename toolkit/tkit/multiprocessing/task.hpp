@@ -5,7 +5,8 @@
         "[TOOLKIT][MULTIPROC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_MULTIPROCESSING"
 #endif
 
-#include "tkit/memory/block_allocator.hpp"
+#include "tkit/preprocessor/system.hpp"
+#include "tkit/utils/concepts.hpp"
 #include <functional>
 #include <atomic>
 
@@ -15,8 +16,6 @@
 
 namespace TKit
 {
-// TODO: Align/add padding to 64 bytes to avoid false sharing? Profile first.
-
 /**
  * @brief A simple task interface that allows the user to create tasks that can be executed by any task manager that
  * inherits from `ITaskManager`.
@@ -34,9 +33,6 @@ namespace TKit
  */
 class TKIT_API ITask
 {
-    // Having the overloads does grant us some asserts in case something goes terribly wrong or user forgets to use
-    // their/our overriden new/delete, but it is not worth the cost.
-    TKIT_NON_COPYABLE(ITask)
   public:
     ITask() = default;
     virtual ~ITask() = default;
@@ -74,12 +70,20 @@ class TKIT_API ITask
      */
     void notifyCompleted();
 
+  protected:
+    template <typename Callable, typename... Args>
+        requires std::invocable<Callable, Args...>
+    static constexpr auto bind(Callable &&p_Callable, Args &&...p_Args)
+    {
+        if constexpr (sizeof...(Args) == 0)
+            return p_Callable;
+        else
+            return std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
+    }
+
   private:
     std::atomic_flag m_Finished = ATOMIC_FLAG_INIT;
 };
-
-// The generic and the specialized could be merged by moving the specialized bit to a base class that is empty when T is
-// void, however this use case is simple enough to not warrant the extra complexity.
 
 /**
  * @brief A task object that can be used directly by the user to create tasks that return (or not) a value.
@@ -95,6 +99,30 @@ class TKIT_API ITask
 template <typename T = void> class Task final : public ITask
 {
   public:
+    Task() = default;
+
+    template <typename Callable, typename... Args>
+        requires(std::invocable<Callable, Args...> && !std::is_same_v<NoCVRef<Callable>, Task>)
+    constexpr Task(Callable &&p_Callable, Args &&...p_Args)
+        : m_Function(bind(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
+    {
+    }
+
+    template <typename Callable>
+        requires(!std::is_same_v<NoCVRef<Callable>, Task>)
+    constexpr Task &operator=(Callable &&p_Callable)
+    {
+        m_Function = std::forward<Callable>(p_Callable);
+        return *this;
+    }
+
+    template <typename Callable, typename... Args>
+        requires std::invocable<Callable, Args...>
+    constexpr void Set(Callable &&p_Callable, Args &&...p_Args)
+    {
+        m_Function = std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
+    }
+
     void operator()() override
     {
         m_Result = m_Function();
@@ -129,55 +157,9 @@ template <typename T = void> class Task final : public ITask
         return m_Result;
     }
 
-    /**
-     * @brief Create a task allocated with a thread-dedicated allocator.
-     *
-     * The created task must be deallocated by the same thread it was allocated with.
-     *
-     * @return A task pointer.
-     */
-    template <typename Callable, typename... Args>
-        requires std::invocable<Callable, Args...>
-    static Task *Create(Callable &&p_Callable, Args &&...p_Args)
-    {
-        return t_Allocator.Create<Task>(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
-    }
-
-    static void Destroy(Task *p_Task)
-    {
-        t_Allocator.Destroy(p_Task);
-    }
-
-    /**
-     * @brief Destroy a task, deallocating it with the calling thread's dedicated allocator.
-     *
-     * The calling thread must be the one that allocated the task in the first place.
-     *
-     */
-    template <typename Callable, typename... Args>
-        requires std::invocable<Callable, Args...>
-    Task(Callable &&p_Callable, Args &&...p_Args)
-        : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
-    {
-#ifdef TKIT_ENABLE_ASSERTS
-        if constexpr (sizeof...(Args) == 0)
-        {
-            TKIT_ERROR("Wrong constructor used for Task<T>");
-        }
-#endif
-    }
-
-    template <typename Callable>
-        requires(!std::is_same_v<Callable, Task>)
-    Task(Callable &&p_Callable) : m_Function(std::forward<Callable>(p_Callable))
-    {
-    }
-
   private:
     std::function<T()> m_Function = nullptr;
     T m_Result{};
-    static inline thread_local BlockAllocator t_Allocator =
-        BlockAllocator::CreateFromType<Task>(TKIT_TASK_ALLOCATOR_CAPACITY);
 };
 
 /**
@@ -189,58 +171,33 @@ template <typename T = void> class Task final : public ITask
 template <> class TKIT_API Task<void> final : public ITask
 {
   public:
-    void operator()() override;
-
-    /**
-     * @brief Create a task allocated with a thread-dedicated allocator.
-     *
-     * The created task must be deallocated by the same thread it was allocated with.
-     *
-     * @param p_Callable The callable object to execute.
-     * @param p_Args Extra arguments to pass to the callable object.
-     * @return A new task object.
-     */
-    template <typename Callable, typename... Args>
-        requires std::invocable<Callable, Args...>
-    static Task *Create(Callable &&p_Callable, Args &&...p_Args)
-    {
-        return t_Allocator.Create<Task>(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
-    }
-
-    /**
-     * @brief Destroy a task, deallocating it with the calling thread's dedicated allocator.
-     *
-     * The calling thread must be the one that allocated the task in the first place.
-     *
-     * @param p_Task The task to be destroyed.
-     */
-    static void Destroy(Task *p_Task)
-    {
-        t_Allocator.Destroy(p_Task);
-    }
+    Task() = default;
 
     template <typename Callable, typename... Args>
-        requires std::invocable<Callable, Args...>
-    Task(Callable &&p_Callable, Args &&...p_Args)
-        : m_Function(std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
+        requires(std::invocable<Callable, Args...> && !std::is_same_v<NoCVRef<Callable>, Task>)
+    constexpr Task(Callable &&p_Callable, Args &&...p_Args)
+        : m_Function(bind(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
-        if constexpr (sizeof...(Args) == 0)
-        {
-            TKIT_ERROR("Wrong constructor used for Task<void>");
-        }
     }
 
     template <typename Callable>
-        requires(!std::is_same_v<Callable, Task>)
-    Task(Callable &&p_Callable) : m_Function(std::forward<Callable>(p_Callable))
+        requires(!std::is_same_v<NoCVRef<Callable>, Task>)
+    constexpr Task &operator=(Callable &&p_Callable)
     {
+        m_Function = std::forward<Callable>(p_Callable);
+        return *this;
     }
 
-    static BlockAllocator &getAllocator();
+    template <typename Callable, typename... Args>
+        requires std::invocable<Callable, Args...>
+    constexpr void Set(Callable &&p_Callable, Args &&...p_Args)
+    {
+        m_Function = std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
+    }
+
+    void operator()() override;
 
   private:
     std::function<void()> m_Function = nullptr;
-    static inline thread_local BlockAllocator t_Allocator =
-        BlockAllocator::CreateFromType<Task>(TKIT_TASK_ALLOCATOR_CAPACITY);
 };
 } // namespace TKit

@@ -1,4 +1,3 @@
-#include "tkit/memory/ptr.hpp"
 #include "tkit/multiprocessing/task.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <thread>
@@ -43,10 +42,11 @@ TEST_CASE("Task<void> basic behavior", "[Task]")
 TEST_CASE("Task::WaitUntilFinished blocks from another thread", "[Task]")
 {
     // Create a task that sleeps then returns its index
-    Task<u32> task{[] {
+    Task<u32> task;
+    task = [] {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         return 32u;
-    }};
+    };
 
     std::thread runner([&] { task(); });
 

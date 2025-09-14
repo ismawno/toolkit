@@ -2,7 +2,6 @@
 
 #include "tkit/multiprocessing/task_manager.hpp"
 #include "tkit/container/span.hpp"
-#include "tkit/utils/concepts.hpp"
 
 namespace TKit
 {
@@ -14,21 +13,21 @@ namespace TKit
 
 namespace Detail
 {
-template <typename It> usize Distance(const It p_First, const It p_Last)
+template <typename It> constexpr usize Distance(const It p_First, const It p_Last)
 {
     if constexpr (std::integral<It>)
         return static_cast<usize>(p_Last - p_First);
     else
         return static_cast<usize>(std::distance(p_First, p_Last));
 }
-template <typename It> auto CreateSpan(const It p_First, const usize p_Size)
-{
-    using T = NoCVRef<decltype(*p_First)>;
-    if constexpr (std::is_pointer_v<It>)
-        return Span<const T>{p_First, p_Size};
-    else
-        return Span<const T>{&*p_First, p_Size};
-}
+// template <typename It> constexpr auto CreateSpan(const It p_First, const usize p_Size)
+// {
+//     using T = NoCVRef<decltype(*p_First)>;
+//     if constexpr (std::is_pointer_v<It>)
+//         return Span<const T>{p_First, p_Size};
+//     else
+//         return Span<const T>{&*p_First, p_Size};
+// }
 } // namespace Detail
 
 /**
@@ -49,7 +48,7 @@ template <typename It> auto CreateSpan(const It p_First, const usize p_Size)
  * @param p_Partitions The number of partitions to create.
  * @param p_Callable The callable object to execute. It must be a function object that takes two iterators as arguments
  * (and the mandatory thread index argument at the end as well). It will be called for each element in the range
- * [`p_First`, `p_Last`). The function is called as: `p_Callable(YouArgs..., p_Start, p_End, p_ThreadIndex)`
+ * [`p_First`, `p_Last`). The function is called as: `p_Callable(p_Start, p_End, YouArgs...)`
  * @param p_Args Extra arguments to pass to the callable object. These arguments go before the iterators and thread
  * index.
  */
@@ -60,18 +59,26 @@ void NonBlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last
     const usize size = Detail::Distance(p_First, p_Last);
     usize start = 0;
 
-    const auto tasks = Detail::CreateSpan(p_Dest, p_Partitions);
+    // const auto tasks = Detail::CreateSpan(p_Dest, p_Partitions);
+    const usize tsize = p_Partitions * sizeof(ITask *);
+    TKIT_MEMORY_STACK_CHECK(tsize);
+    ITask **tasks = static_cast<ITask **>(TKIT_MEMORY_STACK_ALLOCATE(tsize));
 
     for (usize i = 0; i < p_Partitions; ++i)
     {
         const usize end = (i + 1) * size / p_Partitions;
         TKIT_ASSERT(end <= size, "[TOOLKIT][FOR-EACH] Partition exceeds container size");
-        *p_Dest = p_Manager.CreateTask(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...,
-                                       p_First + start, p_First + end);
-        ++p_Dest;
+        p_Dest->Set(std::forward<Callable>(p_Callable), p_First + start, p_First + end, std::forward<Args>(p_Args)...);
+
+        if constexpr (std::is_pointer_v<It2>)
+            tasks[i] = p_Dest++;
+        else
+            tasks[i] = &*(p_Dest++);
+
         start = end;
     }
-    p_Manager.SubmitTasks(tasks);
+    p_Manager.SubmitTasks(Span<ITask *const>{tasks, p_Partitions});
+    TKIT_MEMORY_STACK_DEALLOCATE(tasks);
 }
 
 /**
@@ -92,7 +99,7 @@ void NonBlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last
  * @param p_Partitions The number of partitions to create. This number takes into account the main thread.
  * @param p_Callable The callable object to execute. It must be a function object that takes two iterators as arguments
  * (and the mandatory thread index argument at the end as well). It will be called for each element in the range
- * [`p_First`, `p_Last`). The function is called as: `p_Callable(YouArgs..., p_Start, p_End, p_ThreadIndex)`
+ * [`p_First`, `p_Last`). The function is called as: `p_Callable(p_Start, p_End, YouArgs...)`
  * @param p_Args Extra arguments to pass to the callable object. These arguments go before the iterators and thread
  * index.
  */
@@ -103,22 +110,30 @@ auto BlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last, I
     const usize size = Detail::Distance(p_First, p_Last);
     usize start = size / p_Partitions;
     if (p_Partitions == 1)
-        return p_Callable(std::forward<Args>(p_Args)..., p_First, p_First + start);
+        return p_Callable(p_First, p_First + start, std::forward<Args>(p_Args)...);
 
-    const auto tasks = Detail::CreateSpan(p_Dest, p_Partitions - 1);
+    // const auto tasks = Detail::CreateSpan(p_Dest, p_Partitions - 1);
+    const usize tsize = (p_Partitions - 1) * sizeof(ITask *);
+    TKIT_MEMORY_STACK_CHECK(tsize);
+    ITask **tasks = static_cast<ITask **>(TKIT_MEMORY_STACK_ALLOCATE(tsize));
+
     for (usize i = 1; i < p_Partitions; ++i)
     {
         const usize end = (i + 1) * size / p_Partitions;
         TKIT_ASSERT(end <= size, "[TOOLKIT][FOR-EACH] Partition exceeds container size");
 
-        *p_Dest = p_Manager.CreateTask(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...,
-                                       p_First + start, p_First + end);
-        ++p_Dest;
+        p_Dest->Set(std::forward<Callable>(p_Callable), p_First + start, p_First + end, std::forward<Args>(p_Args)...);
+        if constexpr (std::is_pointer_v<It2>)
+            tasks[i - 1] = p_Dest++;
+        else
+            tasks[i - 1] = &*(p_Dest++);
+
         start = end;
     }
-    p_Manager.SubmitTasks(tasks);
+    p_Manager.SubmitTasks(Span<ITask *const>{tasks, p_Partitions - 1});
+    TKIT_MEMORY_STACK_DEALLOCATE(tasks);
 
     const usize end = size / p_Partitions;
-    return p_Callable(std::forward<Args>(p_Args)..., p_First, p_First + end);
+    return p_Callable(p_First, p_First + end, std::forward<Args>(p_Args)...);
 }
 } // namespace TKit

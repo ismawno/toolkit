@@ -2,6 +2,7 @@
 #include "tkit/multiprocessing/thread_pool.hpp"
 #include "tkit/multiprocessing/for_each.hpp"
 #include "tkit/container/dynamic_array.hpp"
+#include "tkit/container/static_array.hpp"
 #include "tkit/profiling/clock.hpp"
 #include <fstream>
 
@@ -19,7 +20,7 @@ void RecordThreadPoolSum(const ThreadPoolSettings &p_Settings)
     file << "threads,sum (ns),result\n";
 
     ThreadPool threadPool(p_Settings.MaxThreads);
-    DynamicArray<Task<u32> *> tasks(p_Settings.MaxThreads);
+    StaticArray128<Task<u32>> tasks(p_Settings.MaxThreads);
     DynamicArray<u32> values(p_Settings.SumCount);
 
     for (u32 i = 0; i < p_Settings.SumCount; i++)
@@ -39,10 +40,7 @@ void RecordThreadPoolSum(const ThreadPoolSettings &p_Settings)
         Clock clock;
         u32 sum = 0;
         for (usize i = 0; i < nthreads; i++)
-        {
-            sum += tasks[i]->WaitForResult();
-            threadPool.DestroyTask(tasks[i]);
-        }
+            sum += tasks[i].WaitForResult();
 
         const Timespan mtTime = clock.GetElapsed();
         file << nthreads << ',' << mtTime.AsNanoseconds() << ',' << sum << '\n';

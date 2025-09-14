@@ -1,9 +1,6 @@
 #include "tkit/core/pch.hpp"
+#include "tkit/utils/logging.hpp"
 #include "tkit/multiprocessing/task.hpp"
-
-#ifndef TKIT_TASK_ALLOCATOR_CAPACITY
-#    define TKIT_TASK_ALLOCATOR_CAPACITY 1024
-#endif
 
 namespace TKit
 {

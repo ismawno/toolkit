@@ -30,7 +30,6 @@
 
 namespace TKit
 {
-// TODO: Implement a lock-free queue
 // TODO: Consider adding task dependencies
 
 /**
@@ -61,7 +60,7 @@ class TKIT_API ThreadPool final : public ITaskManager
         std::thread Thread;
         ChaseLevDeque<ITask *, TKIT_THREAD_POOL_MAX_TASKS> Queue{};
         MpmcStack<ITask *> Inbox{};
-        std::atomic<u64> Epochs{0};
+        std::atomic<u32> Epochs{0};
         std::atomic<u32> TaskCount{0}; // Speculative
         std::atomic_flag TerminateSignal = ATOMIC_FLAG_INIT;
     };
@@ -72,7 +71,7 @@ class TKIT_API ThreadPool final : public ITaskManager
     void SubmitTask(ITask *p_Task) override;
     void SubmitTasks(Span<ITask *const> p_Tasks) override;
 
-    void WaitUntilFinished(ITask *p_Task) override;
+    void WaitUntilFinished(const ITask &p_Task) override;
 
     using ITaskManager::SubmitTasks;
 

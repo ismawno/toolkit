@@ -5,6 +5,30 @@
 #include "tkit/utils/logging.hpp"
 #include <algorithm>
 
+#ifndef TKIT_MEMORY_MAX_STACK_ALLOCATION
+#    define TKIT_MEMORY_MAX_STACK_ALLOCATION 1024
+#endif
+
+#ifdef TKIT_COMPILER_MSVC
+#    define TKIT_MEMORY_STACK_ALLOCATE(p_Size) _alloca(p_Size)
+#    define TKIT_MEMORY_STACK_DEALLOCATE(p_Ptr)
+#    define TKIT_MEMORY_STACK_CHECK(p_Size)                                                                            \
+        TKIT_ASSERT(p_Size <= TKIT_MEMORY_MAX_STACK_ALLOCATION,                                                        \
+                    "[TOOLKIT][MEMORY] Stack allocation size exceeded. Requested size was {}, but maximum is {}",      \
+                    p_Size, TKIT_MEMORY_MAX_STACK_ALLOCATION)
+#elif defined(TKIT_COMPILER_GCC) || defined(TKIT_COMPILER_CLANG)
+#    define TKIT_MEMORY_STACK_ALLOCATE(p_Size) alloca(p_Size)
+#    define TKIT_MEMORY_STACK_DEALLOCATE(p_Ptr)
+#    define TKIT_MEMORY_STACK_CHECK(p_Size)                                                                            \
+        TKIT_ASSERT(p_Size <= TKIT_MEMORY_MAX_STACK_ALLOCATION,                                                        \
+                    "[TOOLKIT][MEMORY] Stack allocation size exceeded. Requested size was {}, but maximum is {}",      \
+                    p_Size, TKIT_MEMORY_MAX_STACK_ALLOCATION)
+#else
+#    define TKIT_MEMORY_STACK_ALLOCATE(p_Size) TKit::Memory::Allocate(p_Size)
+#    define TKIT_MEMORY_STACK_DEALLOCATE(p_Ptr) TKit::Memory::Deallocate(p_Ptr)
+#    define TKIT_MEMORY_STACK_CHECK(p_Size)
+#endif
+
 namespace TKit::Memory
 {
 // Could abstract this in some way (by defining those as function pointers) to allow for custom allocators
@@ -13,7 +37,7 @@ namespace TKit::Memory
 /**
  * @brief Allocate a chunk of memory of a given size.
  *
- * Uses default `::operator new()`. It is here as a placeholder for future custom global allocators.
+ * Uses default `std::malloc`. It is here as a placeholder for future custom global allocators.
  *
  * @param p_Size The size of the memory to allocate.
  * @return A pointer to the allocated memory.
@@ -23,7 +47,7 @@ TKIT_API void *Allocate(size_t p_Size);
 /**
  * @brief Deallocate a chunk of memory
  *
- * Uses default `::operator delete()`. It is here as a placeholder for future custom global allocators.
+ * Uses default `std::free`. It is here as a placeholder for future custom global allocators.
  *
  * @param p_Ptr A pointer to the memory to deallocate.
  */

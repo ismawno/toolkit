@@ -7,12 +7,7 @@
 
 #include "tkit/multiprocessing/task.hpp"
 #include "tkit/container/span.hpp"
-#include "tkit/container/array.hpp"
 #include <type_traits>
-
-#ifndef TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION
-#    define TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION (32 * 4)
-#endif
 
 namespace TKit
 {
@@ -37,13 +32,12 @@ class TKIT_API ITaskManager
      */
     virtual void SubmitTask(ITask *p_Task) = 0;
 
-    virtual void WaitUntilFinished(ITask *p_Task) = 0;
+    virtual void WaitUntilFinished(const ITask &p_Task) = 0;
 
-    template <typename T> T WaitForResult(Task<T> *p_Task)
+    template <typename T> T WaitForResult(const Task<T> &p_Task)
     {
-        ITask *task = static_cast<ITask *>(p_Task);
-        WaitUntilFinished(task);
-        return p_Task->GetResult();
+        WaitUntilFinished(p_Task);
+        return p_Task.GetResult();
     }
 
     /**
@@ -64,60 +58,29 @@ class TKIT_API ITaskManager
      */
     template <typename T> void SubmitTasks(const Span<Task<T> *const> p_Tasks)
     {
-        Array<ITask *, TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION> tasks{};
-        TKIT_ASSERT(p_Tasks.GetSize() <= TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION,
-                    "[ONYX][MULTIPROC] Amount of tasks submitted exceeds maximum");
+        const usize size = sizeof(ITask *) * p_Tasks.GetSize();
+        TKIT_MEMORY_STACK_CHECK(size);
+        ITask **tasks = static_cast<ITask **>(TKIT_MEMORY_STACK_ALLOCATE(size));
 
-        const u32 size = p_Tasks.GetSize() < TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION
-                             ? p_Tasks.GetSize()
-                             : TKIT_TASK_MANAGER_MAX_TASK_SUBMISSION;
-        for (u32 i = 0; i < size; ++i)
+        for (u32 i = 0; i < p_Tasks.GetSize(); ++i)
             tasks[i] = p_Tasks[i];
-        SubmitTasks(Span<ITask *const>{tasks.GetData(), size});
+
+        SubmitTasks(Span<ITask *const>{tasks, p_Tasks.GetSize()});
+        TKIT_MEMORY_STACK_DEALLOCATE(tasks);
     }
 
     /**
-     * @brief Create a task allocated with a thread-dedicated allocator.
-     *
-     * The created task must be deallocated by the same thread it was allocated with.
+     * @brief Create a task inferred from the return type of the lambda.
      *
      * @param p_Callable The callable object to execute.
      * @param p_Args Extra arguments to pass to the callable object.
      * @return A new task object.
      */
     template <typename Callable, typename... Args>
-    static auto CreateTask(Callable &&p_Callable, Args &&...p_Args) -> Task<std::invoke_result_t<Callable, Args...>> *
+    static auto CreateTask(Callable &&p_Callable, Args &&...p_Args) -> Task<std::invoke_result_t<Callable, Args...>>
     {
         using RType = std::invoke_result_t<Callable, Args...>;
-        return Task<RType>::Create(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
-    }
-
-    /**
-     * @brief Destroy a task, deallocating it with the calling thread's dedicated allocator.
-     *
-     * The calling thread must be the one that allocated the task in the first place.
-     *
-     * @param p_Task The task to be destroyed.
-     */
-    template <typename T> static void DestroyTask(Task<T> *p_Task)
-    {
-        Task<T>::Destroy(p_Task);
-    }
-
-    /**
-     * @brief Create a new task that can be submitted to the task manager and submit it immediately.
-     *
-     * @param p_Callable The callable object to execute.
-     * @param p_Args Extra arguments to pass to the callable object.
-     * @return A new task object.
-     */
-    template <typename Callable, typename... Args>
-    auto CreateAndSubmit(Callable &&p_Callable, Args &&...p_Args) -> Task<std::invoke_result_t<Callable, Args...>> *
-    {
-        using RType = std::invoke_result_t<Callable, Args...>;
-        Task<RType> *task = CreateTask(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
-        SubmitTask(task);
-        return task;
+        return Task<RType>{std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...};
     }
 
     /**
@@ -155,6 +118,6 @@ class TKIT_API TaskManager final : public ITaskManager
     void SubmitTask(ITask *p_Task) override;
     void SubmitTasks(Span<ITask *const> p_Tasks) override;
 
-    void WaitUntilFinished(ITask *p_Task) override;
+    void WaitUntilFinished(const ITask &p_Task) override;
 };
 } // namespace TKit
