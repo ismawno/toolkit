@@ -3,25 +3,25 @@
 
 namespace TKit
 {
-thread_local u32 t_Victim;
-static u32 cheapRand(const u32 p_Workers)
+thread_local usize t_Victim;
+static usize cheapRand(const usize p_Workers)
 {
-    thread_local u32 seed = 0x9e3779b9u ^ ITaskManager::GetThreadIndex();
+    thread_local usize seed = 0x9e3779b9u ^ ITaskManager::GetThreadIndex();
     seed ^= seed << 13;
     seed ^= seed >> 17;
     seed ^= seed << 5;
 
-    return static_cast<u32>((u64(seed) * u64(p_Workers)) >> 32);
+    return static_cast<usize>((u64(seed) * u64(p_Workers)) >> 32);
 }
-static void shuffleVictim(const u32 p_WorkerIndex, const u32 p_Workers)
+static void shuffleVictim(const usize p_WorkerIndex, const usize p_Workers)
 {
-    u32 victim = cheapRand(p_Workers);
+    usize victim = cheapRand(p_Workers);
     while (victim == p_WorkerIndex)
         victim = cheapRand(p_Workers);
     t_Victim = victim;
 }
 
-void ThreadPool::drainTasks(const u32 p_WorkerIndex, const u32 p_Workers)
+void ThreadPool::drainTasks(const usize p_WorkerIndex, const usize p_Workers)
 {
     Worker &myself = m_Workers[p_WorkerIndex];
 
@@ -51,7 +51,7 @@ void ThreadPool::drainTasks(const u32 p_WorkerIndex, const u32 p_Workers)
         myself.TaskCount.fetch_sub(1, std::memory_order_relaxed);
     }
 
-    const u32 victim = t_Victim;
+    const usize victim = t_Victim;
     if (const auto stolen = m_Workers[victim].Queue.PopFront())
     {
         m_Workers[victim].TaskCount.fetch_sub(1, std::memory_order_relaxed);
@@ -75,12 +75,12 @@ ThreadPool::ThreadPool(const usize p_WorkerCount) : ITaskManager(p_WorkerCount)
         Topology::SetThreadName(p_ThreadIndex);
 
         t_ThreadIndex = p_ThreadIndex;
-        const u32 workerIndex = p_ThreadIndex - 1;
+        const usize workerIndex = p_ThreadIndex - 1;
 
         m_ReadySignal.wait(false, std::memory_order_acquire);
 
         Worker &myself = m_Workers[workerIndex];
-        const u32 nworkers = m_Workers.GetSize();
+        const usize nworkers = m_Workers.GetSize();
 
         shuffleVictim(workerIndex, nworkers);
         u32 epoch = 0;
@@ -115,7 +115,7 @@ ThreadPool::~ThreadPool()
     Topology::Terminate(m_Handle);
 }
 
-static void assignTask(const u32 p_WorkerIndex, ThreadPool::Worker &p_Worker, ITask *p_Task)
+static void assignTask(const usize p_WorkerIndex, ThreadPool::Worker &p_Worker, ITask *p_Task)
 {
     if (p_WorkerIndex == ThreadPool::GetWorkerIndex())
         p_Worker.Queue.PushBack(p_Task);
@@ -127,75 +127,43 @@ static void assignTask(const u32 p_WorkerIndex, ThreadPool::Worker &p_Worker, IT
     p_Worker.Epochs.notify_one();
 }
 
+void ThreadPool::BeginSubmission()
+{
+    TKIT_ASSERT(m_TaskCounts.IsEmpty(),
+                "[TOOLKIT][MULTIPROC] Cannot begin submission when another submission is currently active");
+    const usize wcount = m_Workers.GetSize();
+
+    for (usize i = 0; i < wcount; ++i)
+        m_TaskCounts.Append(m_Workers[i].TaskCount.load(std::memory_order_relaxed));
+    m_NextWorker = 0;
+    m_MaxCount = 0;
+}
+void ThreadPool::EndSubmission()
+{
+    TKIT_ASSERT(!m_TaskCounts.IsEmpty(),
+                "[TOOLKIT][MULTIPROC] Cannot end submission when no submission is currently active");
+    m_TaskCounts.Clear();
+}
+
 void ThreadPool::SubmitTask(ITask *p_Task)
 {
-    u32 minCount = Limits<u32>::max();
-    u32 index = 0;
-    const u32 size = m_Workers.GetSize();
-    for (u32 i = 0; i < size; ++i)
-    {
-        Worker &worker = m_Workers[i];
-        const u32 count = worker.TaskCount.load(std::memory_order_relaxed);
-        if (count == 0)
-        {
-            assignTask(i, worker, p_Task);
-            return;
-        }
-        if (minCount > count)
-        {
-            minCount = count;
-            index = i;
-        }
-    }
-    assignTask(index, m_Workers[index], p_Task);
-}
-void ThreadPool::SubmitTasks(const Span<ITask *const> p_Tasks)
-{
-    u32 stride = 0;
-    const u32 size = p_Tasks.GetSize();
-
-    const u32 wcount = m_Workers.GetSize();
-    constexpr u32 workers = TKIT_THREAD_POOL_MAX_WORKERS;
-
-    Array<u32, workers> counts{};
-    for (u32 i = 0; i < wcount; ++i)
-        counts[i] = m_Workers[i].TaskCount.load(std::memory_order_relaxed);
-
-    ITask *task = p_Tasks[stride];
-    u32 minCount = Limits<u32>::max();
-
-    for (u32 i = 0; i < wcount; ++i)
-    {
-        Worker &worker = m_Workers[i];
-        u32 &count = counts[i];
-        if (count == 0)
-        {
-            assignTask(i, worker, task);
-            ++count;
-            if (++stride == size)
-                return;
-            task = p_Tasks[stride];
-        }
-        if (minCount > count)
-            minCount = count;
-    }
-
+    TKIT_ASSERT(!m_TaskCounts.IsEmpty(), "[TOOLKIT][MULTIPROC] Must begin a submission before submitting tasks in this "
+                                         "thread pool. Use Begin/EndSubmission() before calling SubmitTask()");
+    const usize wcount = m_Workers.GetSize();
     for (;;)
     {
-        for (u32 i = 0; i < wcount; ++i)
+        for (usize i = m_NextWorker; i < wcount; ++i)
         {
-            Worker &worker = m_Workers[i];
-            u32 &count = counts[i];
-            if (count <= minCount)
+            const u32 count = m_TaskCounts[i];
+            if (count <= m_MaxCount)
             {
-                assignTask(i, worker, task);
-                ++count;
-                if (++stride == size)
-                    return;
-                task = p_Tasks[stride];
+                assignTask(i, m_Workers[i], p_Task);
+                m_NextWorker = (i + 1) % wcount;
+                return;
             }
         }
-        ++minCount;
+        m_NextWorker = 0;
+        ++m_MaxCount;
     }
 }
 
@@ -207,8 +175,8 @@ void ThreadPool::WaitUntilFinished(const ITask &p_Task)
         return;
     }
 
-    const u32 workerIndex = GetWorkerIndex();
-    const u32 nworkers = m_Workers.GetSize();
+    const usize workerIndex = GetWorkerIndex();
+    const usize nworkers = m_Workers.GetSize();
 
     while (!p_Task.IsFinished(std::memory_order_acquire))
         drainTasks(workerIndex, nworkers);

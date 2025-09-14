@@ -32,41 +32,34 @@ class TKIT_API ITaskManager
      */
     virtual void SubmitTask(ITask *p_Task) = 0;
 
+    /**
+     * @brief A possible start of a control block implementation that may speed up task submission.
+     *
+     * It may be required by some implementations, so its best to alway call it before submitting tasks.
+     *
+     * @param p_Task The task to submit.
+     */
+    virtual void BeginSubmission()
+    {
+    }
+
+    /**
+     * @brief A possible end of a control block implementation that may speed up task submission.
+     *
+     * It may be required by some implementations, so its best to alway call it before submitting tasks.
+     *
+     * @param p_Task The task to submit.
+     */
+    virtual void EndSubmission()
+    {
+    }
+
     virtual void WaitUntilFinished(const ITask &p_Task) = 0;
 
     template <typename T> T WaitForResult(const Task<T> &p_Task)
     {
         WaitUntilFinished(p_Task);
         return p_Task.GetResult();
-    }
-
-    /**
-     * @brief Submit a group of tasks to be executed by the task manager.
-     *
-     * It may provide a speedup compared to calling `SubmitTask()` multiple times.
-     *
-     * @param p_Tasks The tasks to submit.
-     */
-    virtual void SubmitTasks(Span<ITask *const> p_Tasks) = 0;
-
-    /**
-     * @brief Submit a group of tasks to be executed by the task manager.
-     *
-     * It may provide a speedup compared to calling `SubmitTask()` multiple times.
-     *
-     * @param p_Tasks The tasks to submit.
-     */
-    template <typename T> void SubmitTasks(const Span<Task<T>> p_Tasks)
-    {
-        const usize size = sizeof(ITask *) * p_Tasks.GetSize();
-        TKIT_MEMORY_STACK_CHECK(size);
-        ITask **tasks = static_cast<ITask **>(TKIT_MEMORY_STACK_ALLOCATE(size));
-
-        for (u32 i = 0; i < p_Tasks.GetSize(); ++i)
-            tasks[i] = &p_Tasks[i];
-
-        SubmitTasks(Span<ITask *const>{tasks, p_Tasks.GetSize()});
-        TKIT_MEMORY_STACK_DEALLOCATE(tasks);
     }
 
     /**
@@ -116,7 +109,6 @@ class TKIT_API TaskManager final : public ITaskManager
     TaskManager();
 
     void SubmitTask(ITask *p_Task) override;
-    void SubmitTasks(Span<ITask *const> p_Tasks) override;
 
     void WaitUntilFinished(const ITask &p_Task) override;
 };

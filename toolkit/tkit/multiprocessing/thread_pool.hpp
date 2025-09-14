@@ -68,20 +68,24 @@ class TKIT_API ThreadPool final : public ITaskManager
     ThreadPool(usize p_WokerCount);
     ~ThreadPool() override;
 
+    void BeginSubmission() override;
+    void EndSubmission() override;
+
     void SubmitTask(ITask *p_Task) override;
-    void SubmitTasks(Span<ITask *const> p_Tasks) override;
 
     void WaitUntilFinished(const ITask &p_Task) override;
-
-    using ITaskManager::SubmitTasks;
 
     static usize GetWorkerIndex();
 
   private:
-    void drainTasks(u32 p_WorkerIndex, u32 p_Workers);
+    void drainTasks(usize p_WorkerIndex, usize p_Workers);
 
     StaticArray<Worker, TKIT_THREAD_POOL_MAX_WORKERS> m_Workers;
-    std::atomic_flag m_ReadySignal = ATOMIC_FLAG_INIT;
+
+    alignas(TKIT_CACHE_LINE_SIZE) std::atomic_flag m_ReadySignal = ATOMIC_FLAG_INIT;
     const Topology::Handle *m_Handle;
+    StaticArray<u32, TKIT_THREAD_POOL_MAX_WORKERS> m_TaskCounts;
+    usize m_NextWorker;
+    usize m_MaxCount;
 };
 } // namespace TKit

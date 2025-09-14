@@ -1,7 +1,6 @@
 #pragma once
 
 #include "tkit/multiprocessing/task_manager.hpp"
-#include "tkit/container/span.hpp"
 
 namespace TKit
 {
@@ -20,14 +19,6 @@ template <typename It> constexpr usize Distance(const It p_First, const It p_Las
     else
         return static_cast<usize>(std::distance(p_First, p_Last));
 }
-// template <typename It> constexpr auto CreateSpan(const It p_First, const usize p_Size)
-// {
-//     using T = NoCVRef<decltype(*p_First)>;
-//     if constexpr (std::is_pointer_v<It>)
-//         return Span<const T>{p_First, p_Size};
-//     else
-//         return Span<const T>{&*p_First, p_Size};
-// }
 } // namespace Detail
 
 /**
@@ -59,26 +50,18 @@ void NonBlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last
     const usize size = Detail::Distance(p_First, p_Last);
     usize start = 0;
 
-    // const auto tasks = Detail::CreateSpan(p_Dest, p_Partitions);
-    const usize tsize = p_Partitions * sizeof(ITask *);
-    TKIT_MEMORY_STACK_CHECK(tsize);
-    ITask **tasks = static_cast<ITask **>(TKIT_MEMORY_STACK_ALLOCATE(tsize));
-
+    p_Manager.BeginSubmission();
     for (usize i = 0; i < p_Partitions; ++i)
     {
         const usize end = (i + 1) * size / p_Partitions;
         TKIT_ASSERT(end <= size, "[TOOLKIT][FOR-EACH] Partition exceeds container size");
-        p_Dest->Set(std::forward<Callable>(p_Callable), p_First + start, p_First + end, std::forward<Args>(p_Args)...);
+        auto &task = *(p_Dest++);
+        task.Set(std::forward<Callable>(p_Callable), p_First + start, p_First + end, std::forward<Args>(p_Args)...);
 
-        if constexpr (std::is_pointer_v<It2>)
-            tasks[i] = p_Dest++;
-        else
-            tasks[i] = &*(p_Dest++);
-
+        p_Manager.SubmitTask(&task);
         start = end;
     }
-    p_Manager.SubmitTasks(Span<ITask *const>{tasks, p_Partitions});
-    TKIT_MEMORY_STACK_DEALLOCATE(tasks);
+    p_Manager.EndSubmission();
 }
 
 /**
@@ -112,26 +95,19 @@ auto BlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last, I
     if (p_Partitions == 1)
         return p_Callable(p_First, p_First + start, std::forward<Args>(p_Args)...);
 
-    // const auto tasks = Detail::CreateSpan(p_Dest, p_Partitions - 1);
-    const usize tsize = (p_Partitions - 1) * sizeof(ITask *);
-    TKIT_MEMORY_STACK_CHECK(tsize);
-    ITask **tasks = static_cast<ITask **>(TKIT_MEMORY_STACK_ALLOCATE(tsize));
-
+    p_Manager.BeginSubmission();
     for (usize i = 1; i < p_Partitions; ++i)
     {
         const usize end = (i + 1) * size / p_Partitions;
         TKIT_ASSERT(end <= size, "[TOOLKIT][FOR-EACH] Partition exceeds container size");
 
-        p_Dest->Set(std::forward<Callable>(p_Callable), p_First + start, p_First + end, std::forward<Args>(p_Args)...);
-        if constexpr (std::is_pointer_v<It2>)
-            tasks[i - 1] = p_Dest++;
-        else
-            tasks[i - 1] = &*(p_Dest++);
+        auto &task = *(p_Dest++);
+        task.Set(std::forward<Callable>(p_Callable), p_First + start, p_First + end, std::forward<Args>(p_Args)...);
+        p_Manager.SubmitTask(&task);
 
         start = end;
     }
-    p_Manager.SubmitTasks(Span<ITask *const>{tasks, p_Partitions - 1});
-    TKIT_MEMORY_STACK_DEALLOCATE(tasks);
+    p_Manager.EndSubmission();
 
     const usize end = size / p_Partitions;
     return p_Callable(p_First, p_First + end, std::forward<Args>(p_Args)...);

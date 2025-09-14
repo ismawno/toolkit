@@ -16,11 +16,13 @@ TEST_CASE("ThreadPool executes Task<void>s", "[ThreadPool]")
     std::array<Task<>, taskCount> tasks;
 
     // Submit several void tasks
+    pool.BeginSubmission();
     for (usize i = 0; i < taskCount; ++i)
     {
         tasks[i] = [&] { counter.fetch_add(1, std::memory_order_relaxed); };
         pool.SubmitTask(&tasks[i]); // implicitly converts to Ref<ITask>
     }
+    pool.EndSubmission();
 
     for (usize i = 0; i < taskCount; ++i)
         tasks[i].WaitUntilFinished();
@@ -37,6 +39,7 @@ TEST_CASE("ThreadPool executes Task<usize>s and preserves results", "[ThreadPool
     std::array<Task<usize>, taskCount> tasks;
 
     // Submit tasks that encode (taskIndex * 10 + threadIndex)
+    pool.BeginSubmission();
     for (usize i = 0; i < taskCount; ++i)
     {
         tasks[i] = [i] {
@@ -45,6 +48,7 @@ TEST_CASE("ThreadPool executes Task<usize>s and preserves results", "[ThreadPool
         };
         pool.SubmitTask(&tasks[i]);
     }
+    pool.EndSubmission();
 
     for (usize i = 0; i < taskCount; ++i)
     {
