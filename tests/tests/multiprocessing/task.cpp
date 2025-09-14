@@ -28,7 +28,7 @@ TEST_CASE("Task<void> basic behavior", "[Task]")
 {
     usize counter = 0;
     // Create a Task<void> that adds the thread index to counter
-    Task task{[&](const u32 p_Index) { counter += p_Index; }, 5u};
+    Task<> task{[&](const u32 p_Index) { counter += p_Index; }, 5u};
     REQUIRE(!task.IsFinished());
 
     task();
