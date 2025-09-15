@@ -23,9 +23,10 @@ TaskManager::TaskManager() : ITaskManager(1)
 {
 }
 
-void TaskManager::SubmitTask(ITask *p_Task)
+usize TaskManager::SubmitTask(ITask *p_Task, const usize)
 {
     (*p_Task)();
+    return 0;
 }
 void TaskManager::WaitUntilFinished(const ITask &p_Task)
 {

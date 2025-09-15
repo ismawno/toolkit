@@ -127,43 +127,23 @@ static void assignTask(const usize p_WorkerIndex, ThreadPool::Worker &p_Worker, 
     p_Worker.Epochs.notify_one();
 }
 
-void ThreadPool::BeginSubmission()
+usize ThreadPool::SubmitTask(ITask *p_Task, usize p_SubmissionIndex)
 {
-    TKIT_ASSERT(m_TaskCounts.IsEmpty(),
-                "[TOOLKIT][MULTIPROC] Cannot begin submission when another submission is currently active");
     const usize wcount = m_Workers.GetSize();
-
-    for (usize i = 0; i < wcount; ++i)
-        m_TaskCounts.Append(m_Workers[i].TaskCount.load(std::memory_order_relaxed));
-    m_NextWorker = 0;
-    m_MaxCount = 0;
-}
-void ThreadPool::EndSubmission()
-{
-    TKIT_ASSERT(!m_TaskCounts.IsEmpty(),
-                "[TOOLKIT][MULTIPROC] Cannot end submission when no submission is currently active");
-    m_TaskCounts.Clear();
-}
-
-void ThreadPool::SubmitTask(ITask *p_Task)
-{
-    TKIT_ASSERT(!m_TaskCounts.IsEmpty(), "[TOOLKIT][MULTIPROC] Must begin a submission before submitting tasks in this "
-                                         "thread pool. Use Begin/EndSubmission() before calling SubmitTask()");
-    const usize wcount = m_Workers.GetSize();
+    u32 maxCount = 0;
     for (;;)
     {
-        for (usize i = m_NextWorker; i < wcount; ++i)
+        for (usize i = p_SubmissionIndex; i < wcount; ++i)
         {
-            const u32 count = m_TaskCounts[i];
-            if (count <= m_MaxCount)
+            const u32 count = m_Workers[i].TaskCount.load(std::memory_order_relaxed);
+            if (count <= maxCount)
             {
                 assignTask(i, m_Workers[i], p_Task);
-                m_NextWorker = (i + 1) % wcount;
-                return;
+                return (i + 1) % wcount;
             }
         }
-        m_NextWorker = 0;
-        ++m_MaxCount;
+        p_SubmissionIndex = 0;
+        ++maxCount;
     }
 }
 

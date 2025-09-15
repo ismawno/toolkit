@@ -68,10 +68,7 @@ class TKIT_API ThreadPool final : public ITaskManager
     ThreadPool(usize p_WokerCount);
     ~ThreadPool() override;
 
-    void BeginSubmission() override;
-    void EndSubmission() override;
-
-    void SubmitTask(ITask *p_Task) override;
+    usize SubmitTask(ITask *p_Task, usize p_SubmissionIndex = 0) override;
 
     void WaitUntilFinished(const ITask &p_Task) override;
 
@@ -84,8 +81,5 @@ class TKIT_API ThreadPool final : public ITaskManager
 
     alignas(TKIT_CACHE_LINE_SIZE) std::atomic_flag m_ReadySignal = ATOMIC_FLAG_INIT;
     const Topology::Handle *m_Handle;
-    StaticArray<u32, TKIT_THREAD_POOL_MAX_WORKERS> m_TaskCounts;
-    usize m_NextWorker;
-    usize m_MaxCount;
 };
 } // namespace TKit

@@ -49,8 +49,8 @@ void NonBlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last
 {
     const usize size = Detail::Distance(p_First, p_Last);
     usize start = 0;
+    usize sindex = 0;
 
-    p_Manager.BeginSubmission();
     for (usize i = 0; i < p_Partitions; ++i)
     {
         const usize end = (i + 1) * size / p_Partitions;
@@ -58,10 +58,9 @@ void NonBlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last
         auto &task = *(p_Dest++);
         task.Set(std::forward<Callable>(p_Callable), p_First + start, p_First + end, std::forward<Args>(p_Args)...);
 
-        p_Manager.SubmitTask(&task);
+        sindex = p_Manager.SubmitTask(&task, sindex);
         start = end;
     }
-    p_Manager.EndSubmission();
 }
 
 /**
@@ -95,7 +94,7 @@ auto BlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last, I
     if (p_Partitions == 1)
         return p_Callable(p_First, p_First + start, std::forward<Args>(p_Args)...);
 
-    p_Manager.BeginSubmission();
+    usize sindex = 0;
     for (usize i = 1; i < p_Partitions; ++i)
     {
         const usize end = (i + 1) * size / p_Partitions;
@@ -103,11 +102,10 @@ auto BlockingForEach(TManager &p_Manager, const It1 p_First, const It1 p_Last, I
 
         auto &task = *(p_Dest++);
         task.Set(std::forward<Callable>(p_Callable), p_First + start, p_First + end, std::forward<Args>(p_Args)...);
-        p_Manager.SubmitTask(&task);
+        sindex = p_Manager.SubmitTask(&task, sindex);
 
         start = end;
     }
-    p_Manager.EndSubmission();
 
     const usize end = size / p_Partitions;
     return p_Callable(p_First, p_First + end, std::forward<Args>(p_Args)...);

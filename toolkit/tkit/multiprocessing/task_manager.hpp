@@ -29,30 +29,12 @@ class TKIT_API ITaskManager
      * The task will be executed as soon as possible.
      *
      * @param p_Task The task to submit.
+     * @param p_SubmissionIndex An optional submission index to potentially speed up submission process when submitting
+     * many tasks in a short period of time (which will certainly almost always be the case). It is completely optional
+     * and can be ignored. It should always start at 0 when a new batch of tasks is going to be submitted.
+     * @return The next submission index that should be fed to the next task submission while in the same batch.
      */
-    virtual void SubmitTask(ITask *p_Task) = 0;
-
-    /**
-     * @brief A possible start of a control block implementation that may speed up task submission.
-     *
-     * It may be required by some implementations, so its best to alway call it before submitting tasks.
-     *
-     * @param p_Task The task to submit.
-     */
-    virtual void BeginSubmission()
-    {
-    }
-
-    /**
-     * @brief A possible end of a control block implementation that may speed up task submission.
-     *
-     * It may be required by some implementations, so its best to alway call it before submitting tasks.
-     *
-     * @param p_Task The task to submit.
-     */
-    virtual void EndSubmission()
-    {
-    }
+    virtual usize SubmitTask(ITask *p_Task, usize p_SubmissionIndex = 0) = 0;
 
     virtual void WaitUntilFinished(const ITask &p_Task) = 0;
 
@@ -108,7 +90,7 @@ class TKIT_API TaskManager final : public ITaskManager
   public:
     TaskManager();
 
-    void SubmitTask(ITask *p_Task) override;
+    usize SubmitTask(ITask *p_Task, usize) override;
 
     void WaitUntilFinished(const ITask &p_Task) override;
 };
