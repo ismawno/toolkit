@@ -102,31 +102,6 @@ if(UNIX AND NOT APPLE)
   target_link_libraries(toolkit PUBLIC fmt::fmt)
 endif()
 
-function(configure_tracy target)
-  if(MSVC)
-    tkit_configure_compile_link_options(${target} COMPILER_FLAGS /wd4996 CONFIG
-                                        Dist)
-  elseif(APPLE)
-    tkit_configure_compile_link_options(
-      ${target}
-      COMPILER_FLAGS
-      -Wno-format
-      -Wno-deprecated-declarations
-      -Wno-deprecated-anon-enum-enum-conversion
-      CONFIG
-      Dist)
-  else()
-    tkit_configure_compile_link_options(
-      ${target}
-      COMPILER_FLAGS
-      -Wno-format
-      -Wno-deprecated-declarations
-      -Wno-deprecated-enum-enum-conversion
-      CONFIG
-      Dist)
-  endif()
-endfunction()
-
 if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
   if(TOOLKIT_ENABLE_INSTRUMENTATION)
     target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_INSTRUMENTATION)
@@ -160,27 +135,6 @@ if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
   set(NO_STATISTICS
       OFF
       CACHE BOOL "I hate cmake" FORCE)
-  if(NOT EXISTS ${CMAKE_BINARY_DIR}/profiler/gui AND TOOLKIT_BUILD_PROFILER
-                                                     STREQUAL "gui")
-    add_subdirectory(${tracy_SOURCE_DIR}/profiler
-                     ${CMAKE_BINARY_DIR}/profiler/gui)
-    configure_tracy(tracy-profiler)
-    configure_tracy(TracyServer)
-  endif()
-  if(NOT EXISTS ${CMAKE_BINARY_DIR}/profiler/cli AND TOOLKIT_BUILD_PROFILER
-                                                     STREQUAL "cli")
-    add_subdirectory(${tracy_SOURCE_DIR}/capture
-                     ${CMAKE_BINARY_DIR}/profiler/cli)
-    configure_tracy(tracy-capture)
-    configure_tracy(TracyServer)
-  endif()
-  if(NOT EXISTS ${CMAKE_BINARY_DIR}/profiler/csv AND TOOLKIT_BUILD_PROFILER
-                                                     STREQUAL "csv")
-    add_subdirectory(${tracy_SOURCE_DIR}/csvexport
-                     ${CMAKE_BINARY_DIR}/profiler/csv)
-    configure_tracy(tracy-csvexport)
-    configure_tracy(TracyServer)
-  endif()
 
   if(MSVC)
     target_compile_options(TracyClient PRIVATE /wd4996)

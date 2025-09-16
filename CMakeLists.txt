@@ -19,8 +19,6 @@ endfunction()
 define_option(CMAKE_BUILD_TYPE "Debug" "Toolkit - Build")
 define_option(TOOLKIT_BUILD_TESTS OFF "Toolkit - Build")
 define_option(TOOLKIT_BUILD_PERFORMANCE OFF "Toolkit - Build")
-# none, gui, cli or csv
-define_option(TOOLKIT_BUILD_PROFILER "none" "Toolkit - Build")
 # none, address, leak, thread, undefined
 define_option(TOOLKIT_ENABLE_SYMBOLS OFF "Toolkit - Build")
 define_option(TOOLKIT_SANITIZERS "none" "Toolkit - Build")
@@ -109,12 +107,6 @@ if(TOOLKIT_BUILD_PERFORMANCE AND (TOOLKIT_ENABLE_WARNING_LOGS
   )
 endif()
 
-if(NOT TOOLKIT_ENABLE_INSTRUMENTATION AND NOT TOOLKIT_BUILD_PROFILER STREQUAL
-                                          "none")
-  message(
-    WARNING "TOOLKIT: To build the profiler, instrumentation must be enabled")
-endif()
-
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   if(NOT TOOLKIT_ENABLE_INFO_LOGS)
     message(
@@ -141,10 +133,6 @@ message(STATUS "TOOLKIT:  Build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "TOOLKIT:  Build tests: ${TOOLKIT_BUILD_TESTS}")
 message(
   STATUS "TOOLKIT:  Build performance tests: ${TOOLKIT_BUILD_PERFORMANCE}")
-message(
-  STATUS
-    "TOOLKIT:  Build profiler: ${TOOLKIT_BUILD_PROFILER} (can be none, gui, cli or csv)"
-)
 message(
   STATUS
     "TOOLKIT:  Sanitizer(s): ${TOOLKIT_SANITIZERS} (can be none, address, leak, thread, undefined)"
