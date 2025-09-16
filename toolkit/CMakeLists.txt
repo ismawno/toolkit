@@ -90,9 +90,10 @@ if(TOOLKIT_ENABLE_MULTIPROCESSING)
 endif()
 
 if(UNIX AND NOT APPLE)
-  # find_package(fmt)
+  find_package(fmt)
 
   if(NOT TARGET fmt::fmt)
+    message(STATUS "TOOLKIT: FMT not found. Fetching source...")
     FetchContent_Declare(
       fmt
       GIT_REPOSITORY https://github.com/fmtlib/fmt.git
@@ -103,7 +104,8 @@ if(UNIX AND NOT APPLE)
     FetchContent_MakeAvailable(fmt)
     tkit_configure_compile_link_options(fmt)
   else()
-    tkit_configure_compile_link_options(fmt::fmt)
+    message(STATUS "TOOLKIT: FMT found")
+    # tkit_configure_compile_link_options(fmt::fmt)
   endif()
 
   target_link_libraries(toolkit PUBLIC fmt::fmt)
