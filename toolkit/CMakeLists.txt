@@ -40,6 +40,13 @@ endif()
 include(FetchContent)
 if(TOOLKIT_ENABLE_YAML_SERIALIZATION)
 
+  FetchContent_Declare(
+    yaml-cpp
+    GIT_REPOSITORY https://github.com/ismawno/yaml-cpp.git
+    GIT_TAG 0.8.x
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE)
+
   set(YAML_CPP_BUILD_TESTS
       OFF
       CACHE BOOL "" FORCE)
@@ -49,12 +56,6 @@ if(TOOLKIT_ENABLE_YAML_SERIALIZATION)
   set(YAML_CPP_BUILD_CONTRIB
       OFF
       CACHE BOOL "" FORCE)
-  FetchContent_Declare(
-    yaml-cpp
-    GIT_REPOSITORY https://github.com/ismawno/yaml-cpp.git
-    GIT_TAG 0.8.x
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE)
 
   FetchContent_MakeAvailable(yaml-cpp)
 
@@ -89,16 +90,22 @@ if(TOOLKIT_ENABLE_MULTIPROCESSING)
 endif()
 
 if(UNIX AND NOT APPLE)
-  FetchContent_Declare(
-    fmt
-    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-    GIT_TAG 11.0.2
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE)
+  # find_package(fmt)
 
-  FetchContent_MakeAvailable(fmt)
+  if(NOT TARGET fmt::fmt)
+    FetchContent_Declare(
+      fmt
+      GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+      GIT_TAG 11.0.2
+      GIT_SHALLOW TRUE
+      GIT_PROGRESS TRUE)
 
-  tkit_configure_compile_link_options(fmt)
+    FetchContent_MakeAvailable(fmt)
+    tkit_configure_compile_link_options(fmt)
+  else()
+    tkit_configure_compile_link_options(fmt::fmt)
+  endif()
+
   target_link_libraries(toolkit PUBLIC fmt::fmt)
 endif()
 
@@ -115,17 +122,25 @@ if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
     endif()
   endif()
 
-  FetchContent_Declare(
-    tracy
-    GIT_REPOSITORY https://github.com/wolfpld/tracy.git
-    GIT_TAG v0.12.2
-    GIT_SHALLOW TRUE
-    GIT_PROGRESS TRUE)
+  find_package(Tracy CONFIG QUIET)
 
-  FetchContent_MakeAvailable(tracy)
-  target_link_libraries(toolkit PUBLIC TracyClient)
+  if(NOT TARGET Tracy::TracyClient)
+    set(TRACY_TARGET TracyClient)
+
+    FetchContent_Declare(
+      tracy
+      GIT_REPOSITORY https://github.com/wolfpld/tracy.git
+      GIT_TAG v0.12.2
+      GIT_SHALLOW TRUE
+      GIT_PROGRESS TRUE)
+
+    FetchContent_MakeAvailable(tracy)
+  else()
+    set(TRACY_TARGET Tracy::TracyClient)
+  endif()
+  target_link_libraries(toolkit PUBLIC ${TRACY_TARGET})
   target_compile_definitions(toolkit PUBLIC TRACY_ENABLE)
-  target_compile_definitions(TracyClient
+  target_compile_definitions(${TRACY_TARGET}
                              PUBLIC TRACY_SAMPLING_HZ=${TOOLKIT_SAMPLING_RATE})
 
   # Because of this check, the profiler binaries will always persist and will
@@ -137,14 +152,14 @@ if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
       CACHE BOOL "I hate cmake" FORCE)
 
   if(MSVC)
-    target_compile_options(TracyClient PRIVATE /wd4996)
+    target_compile_options(${TRACY_TARGET} PRIVATE /wd4996)
   else()
-    target_compile_options(TracyClient PRIVATE -Wno-deprecated-declarations)
-    target_compile_options(TracyClient
+    target_compile_options(${TRACY_TARGET} PRIVATE -Wno-deprecated-declarations)
+    target_compile_options(${TRACY_TARGET}
                            PRIVATE -Wno-deprecated-anon-enum-enum-conversion)
   endif()
   if(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION)
-    target_compile_definitions(TracyClient PUBLIC TRACY_VK_USE_SYMBOL_TABLE)
+    target_compile_definitions(${TRACY_TARGET} PUBLIC TRACY_VK_USE_SYMBOL_TABLE)
     target_compile_definitions(toolkit
                                PUBLIC TKIT_ENABLE_VULKAN_INSTRUMENTATION)
   endif()
