@@ -124,7 +124,7 @@ if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
     endif()
   endif()
 
-  find_package(Tracy CONFIG QUIET)
+  find_package(Tracy QUIET)
 
   if(NOT TARGET Tracy::TracyClient)
     set(TRACY_TARGET TracyClient)
