@@ -128,52 +128,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   endif()
 endif()
 
-message(STATUS "TOOLKIT: Build settings")
-message(STATUS "TOOLKIT:  Build type: ${CMAKE_BUILD_TYPE}")
-message(STATUS "TOOLKIT:  Build tests: ${TOOLKIT_BUILD_TESTS}")
-message(
-  STATUS "TOOLKIT:  Build performance tests: ${TOOLKIT_BUILD_PERFORMANCE}")
-message(
-  STATUS
-    "TOOLKIT:  Sanitizer(s): ${TOOLKIT_SANITIZERS} (can be none, address, leak, thread, undefined)"
-)
-
-message(STATUS "TOOLKIT: Feature settings")
-message(STATUS "TOOLKIT:  Enable info logs: ${TOOLKIT_ENABLE_INFO_LOGS}")
-message(STATUS "TOOLKIT:  Enable warning logs: ${TOOLKIT_ENABLE_WARNING_LOGS}")
-message(STATUS "TOOLKIT:  Enable asserts: ${TOOLKIT_ENABLE_ASSERTS}")
-
-message(
-  STATUS "TOOLKIT:  Enable arena allocator: ${TOOLKIT_ENABLE_ARENA_ALLOCATOR}")
-message(
-  STATUS "TOOLKIT:  Enable block allocator: ${TOOLKIT_ENABLE_BLOCK_ALLOCATOR}")
-message(
-  STATUS "TOOLKIT:  Enable stack allocator: ${TOOLKIT_ENABLE_STACK_ALLOCATOR}")
-
-message(
-  STATUS "TOOLKIT:  Enable multiprocessing: ${TOOLKIT_ENABLE_MULTIPROCESSING}")
-message(
-  STATUS
-    "TOOLKIT:  Enable profiling: ${TOOLKIT_ENABLE_PROFILING} (This only enables features located under the 'profiling' directory. To enable the instrumentation profiling macros, set TOOLKIT_ENABLE_INSTRUMENTATION to ON)"
-)
-
-message(STATUS "TOOLKIT: Code generation settings")
-message(
-  STATUS
-    "TOOLKIT:  Enable yaml serialization: ${TOOLKIT_ENABLE_YAML_SERIALIZATION}")
-message(STATUS "TOOLKIT:  Enable reflection: ${TOOLKIT_ENABLE_REFLECTION}")
-
-message(STATUS "TOOLKIT: Profiling settings")
-message(STATUS "TOOLKIT:  Instrumentation: ${TOOLKIT_ENABLE_INSTRUMENTATION}")
-message(
-  STATUS
-    "TOOLKIT:  Vulkan instrumentation: ${TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION}"
-)
-message(STATUS "TOOLKIT:  Enable sampling: ${TOOLKIT_ENABLE_SAMPLING}")
-message(STATUS "TOOLKIT:  Enable callstacks: ${TOOLKIT_ENABLE_CALLSTACK}")
-
-message(
-  STATUS "TOOLKIT: The toolkit root path is set to ${CMAKE_CURRENT_SOURCE_DIR}")
 set(TOOLKIT_ROOT_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}
     CACHE STRING "I hate cmake" FORCE)
