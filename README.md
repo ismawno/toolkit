@@ -2,49 +2,80 @@
 
 # Toolkit
 
-Toolkit is a small library with C++ utilities I have developed and find useful in almost every project I start. It is meant for personal use only, although I have tried my best to make it as user-friendly as possible.
-
-The main features of the library revolve around additional data structures, memory management, multithreading, and small utilities I find handy.
+Toolkit is a small library with C++ utilities I have developed and find essential in every project I start. The main additions of the library revolve around additional data structures, memory management, multithreading, and small utilities I find handy. Some of the presented functionality is already available in the STL but is re-implemented here for style, performance and control reasons.
 
 ## Features
 
-The features of this library are divided into the following six categories. Specific documentation for each of them can be found in the source code. The documentation can also be built with Doxygen.
+The features of this library are divided into the following categories. Specific documentation for each of them can be found in the source code. The documentation can also be built with Doxygen.
 
-- [tkit/utils](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/utils): General-purpose utilities, such as aliases, C++20 concepts, literals, and a simple logging system with macros.
+All features that require explicit compilation can be disabled (and are by default) so you can choose any subset of this library you are going to use without having to build the whole project.
 
-- [tkit/container](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/container): Handy data structures, such as a resizable array with an internal buffer of fixed capacity, a weak, non owning array, and a storage class that allows deferring the construction of objects (a nice alternative to a unique pointer in some cases).
+### Data structures
 
-- [tkit/memory](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/memory): Two different memory allocators, general allocation functions, `new`/`delete` overloads to track global memory usage, and a custom reference counting system.
+Located under the [container](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/container) folder, these are handy data-structures centered around minimizing the need for heap allocations (except for `TKit::DynamicArray`/`TKit::DynamicQueue`, which are just a re-implementation of their STL counterparts that fit my style better), including but not limited to:
 
-- [tkit/multiprocessing](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/multiprocessing): A task manager interface that works with the task class, representing small units of work, along with a specific implementation of a thread pool that complies with this interface. A small `for_each` helper function is also provided, which uses the task manager interface to divide chunks of a `for` loop into different tasks.
+- [array.hpp](https://github.com/ismawno/toolkit/blob/main/toolkit/tkit/container/array.hpp): A fixed size array implementation very similar to `std::array` that plays nicely with the style of the library and implements bound checking that can be easily stripped from distribution or release builds.
 
-- [tkit/profiling](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/profiling): A wrapper around the Tracy profiler macros to instrument and profile an application, along with some very simple classes to manage timespans.
+- [dynamic_array.hpp](https://github.com/ismawno/toolkit/blob/main/toolkit/tkit/container/dynamic_array.hpp): A dynamic size array implementation very similar to `std::vector` that plays nicely with the style of the library and implements bound checking that can be easily stripped from distribution or release builds.
 
-Toolkit also features some small code generation scripts that can scan `.hpp` or `.cpp` files of your choosing, and generate reflection code for every marked `class` or `struct` they see. The script [reflect.py](https://github.com/ismawno/toolkit/blob/main/codegen/reflect.py) is a command line script that is in charge of this functionality. Use the `-h` or `--help` flag to learn more about its capabilities.
-All of the required build setup is done through `CMake`, where I have also added some functions to help with compiler and linker flags setup that I find very useful, especially when controlling such flags for third-party libraries (which may not be very "best practicey" but makes my life easier).
+- [static_array.hpp](https://github.com/ismawno/toolkit/blob/main/toolkit/tkit/container/static_array.hpp): A hybrid between `TKit::Array` and `TKit::DynamicArray`, it inherits almost all of the functionality of the later, but uses a fixed size buffer, meaning the array can be resized up to its fixed capacity. This is very handy as the memory usage of the array is very predictable and local, but provides an API that allows object emplacement, just like a dynamic array would.
+
+- [storage.hpp](https://github.com/ismawno/toolkit/blob/main/toolkit/tkit/container/storage.hpp): A small storage unit that reserves enough memory locally for a specific type and allows its deferred construction and destruction. It shares the versatility `std::unique_ptr` offers when an object cannot be constructed immediately because of previous requirements or needs to be re-created constantly, but the memory access pattern is the same as if the object was allocated in-place instead of through a heap allocation.
+
+### Memory
+
+Located under the [memory](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/memory) folder, this set of features revolve around allocation strategies and centralization of the functions that perform heap allocations. The bulk of it are the 4 different memory allocators, implementing 3 different allocation strategies and a general-purpose allocator:
+
+- [arena_allocator.hpp](https://github.com/ismawno/toolkit/blob/main/toolkit/tkit/memory/arena_allocator.hpp): Allocates a single contiguous memory block on creation and allows the user to perform very fast allocations up to the size of the main buffer. Deallocation is done globally, freeing all memory at once.
+
+- [stack_allocator.hpp](https://github.com/ismawno/toolkit/blob/main/toolkit/tkit/memory/stack_allocator.hpp): Very similar to the `TKit::ArenaAllocator` but individual allocations can (and must) be deallocated in the reverse order they were allocated, at the cost of a small bookeeping overhead.
+
+- [block_allocator.hpp](https://github.com/ismawno/toolkit/blob/main/toolkit/tkit/memory/block_allocator.hpp): Provides very fast allocation and deallocation of chunks of memory of a fixed size with no ordering constraints. Useful when repeated allocation for the same type of object is needed.
+
+- [tier_allocator.hpp](https://github.com/ismawno/toolkit/blob/main/toolkit/tkit/memory/tier_allocator.hpp): General purpose allocator implemented as an extension of the `TKit::BlockAllocator` by providing different tiers that correspond to an allocation size at the cost of a very small indirection that involves inferring the tier of an allocation through the provided size.
+
+### Multiprocessing
+
+Located under the [multiprocessing](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/multiprocessing) folder, it provides many utilities regarding multithreading and parallel execution. Some of these features are the following:
+
+- [task.hpp](https://github.com/ismawno/toolkit/blob/main/toolkit/tkit/multiprocessing/task.hpp): An object that wraps a general callable and provides a very simple and thread safe way to signal task completion.
+
+- [task_manager.hpp](https://github.com/ismawno/toolkit/blob/main/toolkit/tkit/multiprocessing/task_manager.hpp): An abstract class providing an interface for a user-implemented system that handles task execution and management using the `TKit::ITask` interface. There is also a basic implementation that features sequential execution.
+
+- [thread_pool.hpp](https://github.com/ismawno/toolkit/blob/main/toolkit/tkit/multiprocessing/thread_pool.hpp): An implementation of `TKit::ITaskManager` that features an efficient lock-free work-stealing thread pool.
+
+- [for_each.hpp](https://github.com/ismawno/toolkit/blob/main/toolkit/tkit/multiprocessing/for_each.hpp): A utility function that partitions a for-loop into different tasks to be executed by a task manager, potentially in parallel.
+
+### Preprocessor
+
+Located under the [preprocessor](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/preprocessor) folder, it features some preprocessor utilities and readable macros to identify compiler and operating system.
+
+### Profiling
+
+Located under the [profiling](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/profiling) folder, it contains ways to measure code performance and elapsed time in between operations. It also features instrumentation through the tracy profiler, which can be optionally pulled as a dependency through cmake in case instrumentation is enabled.
+
+### Code generation
+
+Located under the [reflection](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/reflection) and [serialization](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/serialization) folders, these two modules contain special macros that allow the user to mark classes, structs or enums for reflection or serialization code generation. The C++ code is generated through special python scripts developed in the [convoy](https://github.com/ismawno/convoy) project that are triggered at build time through `CMake`. For marked object definitions to be visible, the files that contain the reflection or serialization marks must be listed in special `CMake` functions, such as `tkit_register_for_reflection` and `tkit_register_for_yaml_serialization`. The generated code will be located in the [tkit/reflection](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/reflection) and [tkit/serialization](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/serialization) folders following the user's directory structure.
+
+### General utilities
+
+Located under the [utils](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/utils) folder, these are general purpose utilities, such as logging and assert macros that can be stripped away on non-debug builds, math utilities, concepts, literals etc.
 
 ## Dependencies and Third-Party Libraries
 
-I have tried to keep dependencies to a minimum, many of them being platform-specific or entirely optional. All dependencies should download and set up automatically with the `CMake` setup. These dependencies are as follows:
-
-- [fmt](https://github.com/fmtlib/fmt): Since Linux compilers lack the `std::format()` functionality, this library is required on that platform. The formatting in the logging system is sparse enough that I can use `std::format()` on Windows and macOS.
-
-- [tracy](https://github.com/wolfpld/tracy): This is the profiling library used under the hood with the profiling interface. It will only be downloaded if the proper `CMake` options are toggled. If you are not interested in profiling, this library will not be embedded in your build.
-
-- [yaml-cpp](https://github.com/jbeder/yaml-cpp): This library is used to parse configuration files and help with serialization. It will only be embedded if the proper `CMake` options are toggled.
-
-- [catch2](https://github.com/catchorg/Catch2.git): This library is used for testing. It will only be used if building the tests.
-
-**Note:** `CMake` is required to be manually installed in your system.
+All dependencies are always pulled conditionally on features or operating systems. If your use case do not enable features that require dependencies, none will be downloaded.
 
 ## Building
 
-The building process is very straightforward (or so I hope). Because of how much I hate how the `CMake` cache works, I have left some python building scripts in the [setup](https://github.com/ismawno/toolkit/tree/main/setup) folder.
+The building process is straightforward. Using `CMake`:
 
-The reason behind this is that `CMake` sometimes stores some variables in cache that you may not want to persist. This results in some default values for variables being only relevant if the variable itself is not already stored in cache. The problem with this is that I feel it is very easy to lose track of what configuration is being built unless I type in all my `CMake` flags explicitly every time I build the project, and that is just unbearable. Hence, these python scripts provide flags with reliable defaults stored in a `build.ini` file that are always applied unless explicitly changed with a command line argument.
+```sh
+mkdir build
+cmake .. # specify build options here
 
-Specifically, the [build.py](https://github.com/ismawno/toolkit/blob/main/setup/build.py) file, when executed from the root folder, will handle the entire `CMake` execution process for you. You can enter `python setup/build.py -h` to see the available options.
+make -j 8 # compile
+```
 
-If you prefer using `CMake` directly, that's perfectly fine as well. Create a `build` folder, `cd` into it, and run `cmake ..`. All available Toolkit options will be printed out, and they are self-explanatory. If an inconsistent combination of these options is entered, a warning or error message should appear (or so I hope).
+I heavily dislike `CMake` cache system and how options are displayed, and so under the [setup](https://github.com/ismawno/toolkit/tree/main/setup) folder I have also left a `build.ini` configuration file where build options can be tweaked and then their values used through the [build.py](https://github.com/ismawno/toolkit/blob/main/setup/build.py) script (use `-h` or `--help` for help).
 
-Then compile the project with your editor/IDE of choice, and run the tests to make sure everything works as expected. If that is the case, you are done!
