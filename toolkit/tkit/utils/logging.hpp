@@ -9,13 +9,13 @@
 
 // We dont use enough formatting features to justify the overhead of fmtlib, but linux doesnt have std::format, so I
 // am forced to use it in that case
-// #ifdef TKIT_OS_LINUX
-// #    include <fmt/format.h>
-// #    define TKIT_FORMAT(...) fmt::format(__VA_ARGS__)
-// #else
-#include <format>
-#define TKIT_FORMAT(...) std::format(__VA_ARGS__)
-// #endif
+#ifdef TKIT_OS_LINUX
+#    include <fmt/format.h>
+#    define TKIT_FORMAT(...) fmt::format(__VA_ARGS__)
+#else
+#    include <format>
+#    define TKIT_FORMAT(...) std::format(__VA_ARGS__)
+#endif
 
 #define TKIT_LOG_COLOR_RESET "\033[0m"
 #define TKIT_LOG_COLOR_RED "\033[31m"
@@ -50,17 +50,17 @@ namespace TKit::Detail
 TKIT_API void LogMessage(const char *p_Level, std::string_view p_File, const i32 p_Line, const char *p_Color,
                          const bool p_Crash, std::string_view p_Message);
 
-// #    ifdef TKIT_OS_LINUX
-// template <typename... Args> auto Format(const fmt::format_string<Args...> p_Format, Args &&...p_Args)
-// {
-//     return TKIT_FORMAT(p_Format, std::forward<Args>(p_Args)...);
-// }
-// #    else
+#    ifdef TKIT_OS_LINUX
+template <typename... Args> auto Format(const fmt::format_string<Args...> p_Format, Args &&...p_Args)
+{
+    return TKIT_FORMAT(p_Format, std::forward<Args>(p_Args)...);
+}
+#    else
 template <typename... Args> auto Format(const std::format_string<Args...> p_Format, Args &&...p_Args)
 {
     return TKIT_FORMAT(p_Format, std::forward<Args>(p_Args)...);
 }
-// #    endif
+#    endif
 
 constexpr const char *Format()
 {
