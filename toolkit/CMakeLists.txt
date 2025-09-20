@@ -59,7 +59,7 @@ if(TOOLKIT_ENABLE_YAML_SERIALIZATION)
 
   FetchContent_MakeAvailable(yaml-cpp)
 
-  tkit_configure_compile_link_options(yaml-cpp)
+  tkit_configure_compile_link_options(yaml-cpp NO_EXCEPTIONS)
   list(APPEND SOURCES tkit/serialization/yaml/codec.cpp)
 endif()
 
