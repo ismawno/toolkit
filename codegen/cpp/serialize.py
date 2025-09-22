@@ -235,9 +235,7 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                     hpp.param("p_Node", "A node with serialization information.")
                     hpp.param("p_Instance", f"An instance of type `{clsinfo.id.identifier}`.")
 
-                with hpp.scope(
-                    f"static bool Decode(const Node &p_Node, {clsinfo.id.identifier} &p_Instance)"
-                ):
+                with hpp.scope(f"static bool Decode(const Node &p_Node, {clsinfo.id.identifier} &p_Instance)"):
                     with hpp.scope("if (!p_Node.IsMap())", delimiters=False):
                         hpp("return false;")
 
