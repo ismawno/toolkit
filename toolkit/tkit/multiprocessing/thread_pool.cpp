@@ -162,9 +162,4 @@ void ThreadPool::WaitUntilFinished(const ITask &p_Task)
         drainTasks(workerIndex, nworkers);
 }
 
-usize ThreadPool::GetWorkerIndex()
-{
-    return t_ThreadIndex - 1;
-}
-
 } // namespace TKit

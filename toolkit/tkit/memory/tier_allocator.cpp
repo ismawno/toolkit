@@ -197,17 +197,6 @@ void TierAllocator::Deallocate(void *p_Ptr, const usize p_Size)
     tier.FreeList = alloc;
 }
 
-bool TierAllocator::Belongs(const void *p_Ptr) const
-{
-    const std::byte *ptr = static_cast<const std::byte *>(p_Ptr);
-    return ptr >= m_Buffer && ptr < m_Buffer + m_BufferSize;
-}
-
-usize TierAllocator::GetBufferSize() const
-{
-    return m_BufferSize;
-}
-
 static usize bitIndex(const usize p_Value)
 {
     return static_cast<usize>(std::countr_zero(p_Value));

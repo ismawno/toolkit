@@ -4,17 +4,9 @@
 
 namespace TKit
 {
-bool ITask::IsFinished(const std::memory_order p_Order) const
-{
-    return m_Finished.test(p_Order);
-}
 void ITask::WaitUntilFinished() const
 {
     m_Finished.wait(false, std::memory_order_acquire);
-}
-void ITask::Reset()
-{
-    m_Finished.clear(std::memory_order_relaxed);
 }
 
 void ITask::notifyCompleted()

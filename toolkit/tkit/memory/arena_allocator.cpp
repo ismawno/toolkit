@@ -74,35 +74,6 @@ void ArenaAllocator::Reset()
     m_Remaining = m_Size;
 }
 
-usize ArenaAllocator::GetSize() const
-{
-    return m_Size;
-}
-usize ArenaAllocator::GetAllocated() const
-{
-    return m_Size - m_Remaining;
-}
-usize ArenaAllocator::GetRemaining() const
-{
-    return m_Remaining;
-}
-
-bool ArenaAllocator::Belongs(const void *p_Ptr) const
-{
-    const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
-    return ptr >= m_Buffer && ptr < m_Buffer + (m_Size - m_Remaining);
-}
-
-bool ArenaAllocator::IsEmpty() const
-{
-    return m_Remaining == m_Size;
-}
-
-bool ArenaAllocator::IsFull() const
-{
-    return m_Remaining == 0;
-}
-
 void ArenaAllocator::deallocateBuffer()
 {
     if (!m_Buffer || m_Provided)

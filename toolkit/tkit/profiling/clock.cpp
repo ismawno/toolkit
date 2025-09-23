@@ -3,28 +3,9 @@
 
 namespace TKit
 {
-static u64 timePointToU64(const Clock::TimePoint p_TimePoint)
+u64 Clock::timePointToU64(const TimePoint p_TimePoint)
 {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(p_TimePoint.time_since_epoch()).count();
-}
-
-Clock::Clock() : m_Start(GetCurrentTimePoint())
-{
-}
-
-u64 Clock::GetStartTime() const
-{
-    return timePointToU64(m_Start);
-}
-
-Clock::TimePoint Clock::GetStartTimePoint() const
-{
-    return m_Start;
-}
-
-Timespan Clock::GetElapsed() const
-{
-    return Timespan(GetCurrentTimePoint() - m_Start);
 }
 
 Timespan Clock::Restart()
@@ -35,13 +16,4 @@ Timespan Clock::Restart()
     return Timespan(elapsed);
 }
 
-u64 Clock::GetCurrentTime()
-{
-    return timePointToU64(GetCurrentTimePoint());
-}
-
-Clock::TimePoint Clock::GetCurrentTimePoint()
-{
-    return std::chrono::high_resolution_clock::now();
-}
 } // namespace TKit

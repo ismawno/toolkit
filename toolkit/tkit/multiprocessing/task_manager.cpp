@@ -9,16 +9,6 @@ ITaskManager::ITaskManager(const usize p_WorkerCount) : m_WorkerCount(p_WorkerCo
     TKIT_ASSERT(p_WorkerCount != 0, "[TOOLKIT][MULTIPROC] The worker count must be greater than 0.");
 }
 
-usize ITaskManager::GetWorkerCount() const
-{
-    return m_WorkerCount;
-}
-
-usize ITaskManager::GetThreadIndex()
-{
-    return t_ThreadIndex;
-}
-
 TaskManager::TaskManager() : ITaskManager(1)
 {
 }

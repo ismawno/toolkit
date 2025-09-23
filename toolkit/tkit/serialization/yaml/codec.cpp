@@ -2,6 +2,7 @@
 #include "tkit/serialization/yaml/codec.hpp"
 #include "tkit/utils/logging.hpp"
 #include <filesystem>
+#include <fstream>
 
 namespace TKit::Yaml
 {

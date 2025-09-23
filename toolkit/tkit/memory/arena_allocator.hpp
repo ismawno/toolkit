@@ -113,14 +113,34 @@ class TKIT_API ArenaAllocator
      * @param p_Ptr The pointer to check.
      * @return Whether the pointer belongs to the arena allocator.
      */
-    bool Belongs(const void *p_Ptr) const;
+    bool Belongs(const void *p_Ptr) const
+    {
+        const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
+        return ptr >= m_Buffer && ptr < m_Buffer + (m_Size - m_Remaining);
+    }
 
-    bool IsEmpty() const;
-    bool IsFull() const;
+    bool IsEmpty() const
+    {
+        return m_Remaining == m_Size;
+    }
 
-    usize GetSize() const;
-    usize GetAllocated() const;
-    usize GetRemaining() const;
+    bool IsFull() const
+    {
+        return m_Remaining == 0;
+    }
+
+    usize GetSize() const
+    {
+        return m_Size;
+    }
+    usize GetAllocated() const
+    {
+        return m_Size - m_Remaining;
+    }
+    usize GetRemaining() const
+    {
+        return m_Remaining;
+    }
 
   private:
     void deallocateBuffer();

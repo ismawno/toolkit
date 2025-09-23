@@ -162,7 +162,11 @@ class TKIT_API StackAllocator
      * @brief Get the top entry of the stack allocator.
      *
      */
-    const Entry &Top() const;
+    const Entry &Top() const
+    {
+        TKIT_ASSERT(!m_Entries.IsEmpty(), "[TOOLKIT][STACK-ALLOC] No elements in the stack allocator");
+        return m_Entries.GetBack();
+    }
 
     /**
      * @brief Get the top entry of the stack allocator.
@@ -179,14 +183,36 @@ class TKIT_API StackAllocator
      * @param p_Ptr The pointer to check.
      * @return Whether the pointer belongs to the stack allocator.
      */
-    bool Belongs(const void *p_Ptr) const;
+    bool Belongs(const void *p_Ptr) const
+    {
+        if (m_Entries.IsEmpty())
+            return false;
+        const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
+        return ptr >= m_Buffer && ptr < m_Entries.GetBack().Ptr + m_Entries.GetBack().Size;
+    }
 
-    bool IsEmpty() const;
-    bool IsFull() const;
+    bool IsEmpty() const
+    {
+        return m_Remaining == m_Size;
+    }
 
-    usize GetSize() const;
-    usize GetAllocated() const;
-    usize GetRemaining() const;
+    bool IsFull() const
+    {
+        return m_Remaining == 0;
+    }
+
+    usize GetSize() const
+    {
+        return m_Size;
+    }
+    usize GetAllocated() const
+    {
+        return m_Size - m_Remaining;
+    }
+    usize GetRemaining() const
+    {
+        return m_Remaining;
+    }
 
   private:
     void deallocateBuffer();

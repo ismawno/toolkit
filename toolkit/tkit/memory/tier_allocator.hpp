@@ -144,9 +144,16 @@ class TKIT_API TierAllocator
      * @param p_Ptr The pointer to check.
      * @return Whether the pointer belongs to the tier allocator.
      */
-    bool Belongs(const void *p_Ptr) const;
+    bool Belongs(const void *p_Ptr) const
+    {
+        const std::byte *ptr = static_cast<const std::byte *>(p_Ptr);
+        return ptr >= m_Buffer && ptr < m_Buffer + m_BufferSize;
+    }
 
-    usize GetBufferSize() const;
+    usize GetBufferSize() const
+    {
+        return m_BufferSize;
+    }
 
   private:
     struct Allocation

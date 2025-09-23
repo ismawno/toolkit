@@ -96,30 +96,6 @@ void BlockAllocator::Reset()
     setupMemoryLayout();
 }
 
-bool BlockAllocator::Belongs(const void *p_Ptr) const
-{
-    const std::byte *ptr = static_cast<const std::byte *>(p_Ptr);
-    return ptr >= m_Buffer && ptr < m_Buffer + m_BufferSize;
-}
-bool BlockAllocator::IsFull() const
-{
-    return !m_FreeList;
-}
-
-usize BlockAllocator::GetBufferSize() const
-{
-    return m_BufferSize;
-}
-usize BlockAllocator::GetAllocationSize() const
-{
-    return m_AllocationSize;
-}
-
-usize BlockAllocator::GetAllocationCapacityCount() const
-{
-    return m_BufferSize / m_AllocationSize;
-}
-
 void BlockAllocator::setupMemoryLayout()
 {
     const usize count = GetAllocationCapacityCount();

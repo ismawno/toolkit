@@ -95,43 +95,6 @@ void StackAllocator::Deallocate()
     m_Entries.Pop();
 }
 
-const StackAllocator::Entry &StackAllocator::Top() const
-{
-    TKIT_ASSERT(!m_Entries.IsEmpty(), "[TOOLKIT][STACK-ALLOC] No elements in the stack allocator");
-    return m_Entries.GetBack();
-}
-
-usize StackAllocator::GetSize() const
-{
-    return m_Size;
-}
-usize StackAllocator::GetAllocated() const
-{
-    return m_Size - m_Remaining;
-}
-usize StackAllocator::GetRemaining() const
-{
-    return m_Remaining;
-}
-
-bool StackAllocator::Belongs(const void *p_Ptr) const
-{
-    if (m_Entries.IsEmpty())
-        return false;
-    const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
-    return ptr >= m_Buffer && ptr < m_Entries.GetBack().Ptr + m_Entries.GetBack().Size;
-}
-
-bool StackAllocator::IsEmpty() const
-{
-    return m_Remaining == m_Size;
-}
-
-bool StackAllocator::IsFull() const
-{
-    return m_Remaining == 0;
-}
-
 void StackAllocator::deallocateBuffer()
 {
     if (!m_Buffer || m_Provided)

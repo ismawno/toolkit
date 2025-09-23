@@ -19,7 +19,9 @@ class TKIT_API Timespan
     using Milliseconds = std::chrono::milliseconds;
     using Seconds = std::chrono::seconds;
 
-    Timespan(Nanoseconds p_Elapsed = Nanoseconds::zero());
+    Timespan(const Nanoseconds p_Elapsed) : m_Elapsed(p_Elapsed)
+    {
+    }
 
     template <typename TimeUnit, Numeric T = f32> T As() const
     {
@@ -85,8 +87,17 @@ class TKIT_API Timespan
         return Timespan(std::chrono::round<Timespan::Nanoseconds>(p_Timespan.m_Elapsed / p_Scalar));
     }
 
-    Timespan &operator+=(const Timespan &p_Other);
-    Timespan &operator-=(const Timespan &p_Other);
+    Timespan &operator+=(const Timespan &p_Other)
+    {
+        m_Elapsed += p_Other.m_Elapsed;
+        return *this;
+    }
+
+    Timespan &operator-=(const Timespan &p_Other)
+    {
+        m_Elapsed -= p_Other.m_Elapsed;
+        return *this;
+    }
 
     template <Numeric T> Timespan &operator*=(const T p_Scalar)
     {

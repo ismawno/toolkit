@@ -72,7 +72,10 @@ class TKIT_API ThreadPool final : public ITaskManager
 
     void WaitUntilFinished(const ITask &p_Task) override;
 
-    static usize GetWorkerIndex();
+    static usize GetWorkerIndex()
+    {
+        return t_ThreadIndex - 1;
+    }
 
   private:
     void drainTasks(usize p_WorkerIndex, usize p_Workers);

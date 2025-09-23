@@ -45,7 +45,10 @@ class TKIT_API ITask
      * @param p_Order The memory order of the operation.
      *
      */
-    bool IsFinished(std::memory_order p_Order = std::memory_order_relaxed) const;
+    bool IsFinished(const std::memory_order p_Order = std::memory_order_relaxed) const
+    {
+        return m_Finished.test(p_Order);
+    }
 
     /**
      * @brief Block the calling thread until the task has finished executing.
@@ -61,7 +64,10 @@ class TKIT_API ITask
      * @brief Reset the task so that it can be submitted again.
      *
      */
-    void Reset();
+    void Reset()
+    {
+        m_Finished.clear(std::memory_order_relaxed);
+    }
 
   protected:
     /**

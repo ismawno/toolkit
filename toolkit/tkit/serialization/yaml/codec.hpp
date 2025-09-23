@@ -16,8 +16,6 @@ TKIT_MSVC_WARNING_IGNORE(4100)
 #include <yaml-cpp/yaml.h>
 TKIT_COMPILER_WARNING_IGNORE_POP()
 
-#include <fstream>
-
 namespace TKit::Yaml
 {
 using Node = YAML::Node;

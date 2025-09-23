@@ -145,14 +145,30 @@ class TKIT_API BlockAllocator
      * @param p_Ptr The pointer to check.
      * @return Whether the pointer belongs to the block allocator.
      */
-    bool Belongs(const void *p_Ptr) const;
+    bool Belongs(const void *p_Ptr) const
+    {
+        const std::byte *ptr = static_cast<const std::byte *>(p_Ptr);
+        return ptr >= m_Buffer && ptr < m_Buffer + m_BufferSize;
+    }
 
-    bool IsFull() const;
+    bool IsFull() const
+    {
+        return !m_FreeList;
+    }
 
-    usize GetBufferSize() const;
-    usize GetAllocationSize() const;
+    usize GetBufferSize() const
+    {
+        return m_BufferSize;
+    }
+    usize GetAllocationSize() const
+    {
+        return m_AllocationSize;
+    }
 
-    usize GetAllocationCapacityCount() const;
+    usize GetAllocationCapacityCount() const
+    {
+        return m_BufferSize / m_AllocationSize;
+    }
 
   private:
     struct Allocation
