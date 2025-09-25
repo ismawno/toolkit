@@ -54,7 +54,8 @@ class TKIT_API ITask
      * @brief Block the calling thread until the task has finished executing.
      *
      * This method may not be safe to use if the thread calling it belongs to the task manager the task was submitted,
-     * as deadlocks may happen under heavy load. It is recommended to always wait for tasks using the `ITaskManager`
+     * as deadlocks may happen under heavy load. Even if called from the main thread, if the task it is waiting on gets
+     * stranded, it may cause a deadlock as well. It is recommended to always wait for tasks using the `ITaskManager`
      * method `WaitUntilFinished()` instead of this one.
      *
      */

@@ -6,7 +6,6 @@
 #endif
 
 #include "tkit/multiprocessing/task.hpp"
-#include "tkit/container/span.hpp"
 #include <type_traits>
 
 namespace TKit
@@ -36,8 +35,28 @@ class TKIT_API ITaskManager
      */
     virtual usize SubmitTask(ITask *p_Task, usize p_SubmissionIndex = 0) = 0;
 
+    /**
+     * @brief Block the calling thread until the task has finished executing.
+     *
+     * This method should always be preferred to the `WaitUntilFinished()` task method. The latter will blindly wait and
+     * may lead to deadlocks if the task it is waiting on submits a task to the waiting thread and requires it to be
+     * completed before moving on. However, this task manager implementation may let the waiting thread to complete
+     * other tasks in the meantime, avoiding the above issue and make better use of the thread's resources.
+     *
+     */
     virtual void WaitUntilFinished(const ITask &p_Task) = 0;
 
+    /**
+     * @brief Block the calling thread until the task has finished executing and return the task's result.
+     *
+     * This method should always be preferred to the `WaitForResult()` task method. The latter will blindly wait and
+     * may lead to deadlocks if the task it is waiting on submits a task to the waiting thread and requires it to be
+     * completed before moving on. However, this task manager implementation may let the waiting thread to complete
+     * other tasks in the meantime, avoiding the above issue and make better use of the thread's resources.
+     *
+     * @return The task result.
+     *
+     */
     template <typename T> T WaitForResult(const Task<T> &p_Task)
     {
         WaitUntilFinished(p_Task);

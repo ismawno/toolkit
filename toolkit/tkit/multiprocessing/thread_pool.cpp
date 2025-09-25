@@ -50,16 +50,21 @@ void ThreadPool::drainTasks(const usize p_WorkerIndex, const usize p_Workers)
         (*task)();
         myself.TaskCount.fetch_sub(1, std::memory_order_relaxed);
     }
+    if (!trySteal(t_Victim))
+        shuffleVictim(p_WorkerIndex, p_Workers);
+}
 
-    const usize victim = t_Victim;
-    if (const auto stolen = m_Workers[victim].Queue.PopFront())
+bool ThreadPool::trySteal(const usize p_Victim)
+{
+    Worker &victim = m_Workers[p_Victim];
+    if (const auto stolen = victim.Queue.PopFront())
     {
-        m_Workers[victim].TaskCount.fetch_sub(1, std::memory_order_relaxed);
+        victim.TaskCount.fetch_sub(1, std::memory_order_relaxed);
         ITask *task = *stolen;
         (*task)();
+        return true;
     }
-    else
-        shuffleVictim(p_WorkerIndex, p_Workers);
+    return false;
 }
 
 ThreadPool::ThreadPool(const usize p_WorkerCount) : ITaskManager(p_WorkerCount)
@@ -149,17 +154,26 @@ usize ThreadPool::SubmitTask(ITask *p_Task, usize p_SubmissionIndex)
 
 void ThreadPool::WaitUntilFinished(const ITask &p_Task)
 {
+    const usize nworkers = m_Workers.GetSize();
     if (t_ThreadIndex == 0)
     {
-        p_Task.WaitUntilFinished();
-        return;
+        usize index = 0;
+        while (!p_Task.IsFinished(std::memory_order_acquire))
+        {
+            trySteal(index);
+            index = (index + 1) % nworkers;
+            std::this_thread::yield();
+        }
     }
-
-    const usize workerIndex = GetWorkerIndex();
-    const usize nworkers = m_Workers.GetSize();
-
-    while (!p_Task.IsFinished(std::memory_order_acquire))
-        drainTasks(workerIndex, nworkers);
+    else
+    {
+        const usize workerIndex = GetWorkerIndex();
+        while (!p_Task.IsFinished(std::memory_order_acquire))
+        {
+            drainTasks(workerIndex, nworkers);
+            std::this_thread::yield();
+        }
+    }
 }
 
 } // namespace TKit

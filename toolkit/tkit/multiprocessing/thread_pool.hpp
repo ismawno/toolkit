@@ -68,8 +68,30 @@ class TKIT_API ThreadPool final : public ITaskManager
     ThreadPool(usize p_WokerCount);
     ~ThreadPool() override;
 
+    /**
+     * @brief Submit a task to be executed by the thread pool.
+     *
+     * The task will be scheduled and executed as soon as possible.
+     *
+     * @param p_Task The task to submit.
+     * @param p_SubmissionIndex An optional submission index to potentially speed up submission process when submitting
+     * many tasks in a short period of time (which will certainly almost always be the case). It is completely optional
+     * and can be ignored. It should always start at 0 when a new batch of tasks is going to be submitted.
+     * @return The next submission index that should be fed to the next task submission while in the same batch.
+     */
     usize SubmitTask(ITask *p_Task, usize p_SubmissionIndex = 0) override;
 
+    /**
+     * @brief Block the calling thread until the task has finished executing.
+     *
+     * The calling thread will not be idle. While waiting, it will attempt to drain other tasks in the thread pool,
+     * while also yielding and ensuring not too much processing power is wasted in case no other tasks are available.
+     *
+     * This method should always be preferred to the `WaitUntilFinished()` task method. The latter will truly wait and
+     * may lead to deadlocks if the task it is waiting on submits a task to the waiting thread and requires it to be
+     * completed before moving on.
+     *
+     */
     void WaitUntilFinished(const ITask &p_Task) override;
 
     static usize GetWorkerIndex()
@@ -79,6 +101,7 @@ class TKIT_API ThreadPool final : public ITaskManager
 
   private:
     void drainTasks(usize p_WorkerIndex, usize p_Workers);
+    bool trySteal(usize p_Victim);
 
     StaticArray<Worker, TKIT_THREAD_POOL_MAX_WORKERS> m_Workers;
 

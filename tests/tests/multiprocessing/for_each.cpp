@@ -50,7 +50,7 @@ TEST_CASE("NonBlockingForEach with output iterator collects and executes all", "
 
     // wait for each task to finish
     for (const Task<> &task : tasks)
-        task.WaitUntilFinished();
+        pool.WaitUntilFinished(task);
 
     REQUIRE(totalSum.load(std::memory_order_relaxed) == lastIndex - firstIndex);
 }
@@ -107,7 +107,7 @@ TEST_CASE("BlockingForEach without output iterator executes all partitions", "[B
     BlockingForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount, callable);
 
     for (const Task<> &task : tasks)
-        task.WaitUntilFinished();
+        pool.WaitUntilFinished(task);
 
     // entire range length = lastIndex - firstIndex
     REQUIRE(totalSum.load(std::memory_order_relaxed) == lastIndex - firstIndex);
