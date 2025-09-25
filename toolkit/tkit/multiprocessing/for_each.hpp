@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tkit/multiprocessing/task_manager.hpp"
+#include "tkit/utils/logging.hpp"
 
 namespace TKit
 {
