@@ -163,6 +163,11 @@ template <typename T = void> class Task final : public ITask
         return m_Result;
     }
 
+    operator bool() const
+    {
+        return m_Function != nullptr;
+    }
+
   private:
     std::function<T()> m_Function = nullptr;
     T m_Result{};
@@ -202,6 +207,11 @@ template <> class TKIT_API Task<void> final : public ITask
     }
 
     void operator()() override;
+
+    operator bool() const
+    {
+        return m_Function != nullptr;
+    }
 
   private:
     std::function<void()> m_Function = nullptr;
