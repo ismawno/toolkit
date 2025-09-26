@@ -157,7 +157,7 @@ void ThreadPool::WaitUntilFinished(const ITask &p_Task)
     const usize nworkers = m_Workers.GetSize();
     if (t_ThreadIndex == 0)
     {
-        usize index = 0;
+        usize index = cheapRand(nworkers);
         while (!p_Task.IsFinished(std::memory_order_acquire))
         {
             trySteal(index);
