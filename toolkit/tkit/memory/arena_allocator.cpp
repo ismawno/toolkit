@@ -1,6 +1,7 @@
 #include "tkit/core/pch.hpp"
 #include "tkit/memory/arena_allocator.hpp"
 #include "tkit/utils/logging.hpp"
+#include "tkit/utils/bit.hpp"
 
 namespace TKit
 {
@@ -49,14 +50,18 @@ ArenaAllocator &ArenaAllocator::operator=(ArenaAllocator &&p_Other)
 
 void *ArenaAllocator::Allocate(const usize p_Size, const usize p_Alignment)
 {
-    void *ptr = m_Buffer + (m_Size - m_Remaining);
-    size_t remaining = static_cast<size_t>(m_Remaining);
+    TKIT_ASSERT(IsPowerOfTwo(p_Alignment), "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2");
 
-    std::byte *alignedPtr = static_cast<std::byte *>(std::align(p_Alignment, p_Size, ptr, remaining));
-    TKIT_LOG_WARNING_IF(!alignedPtr, "[TOOLKIT][ARENA-ALLOC] Arena allocator cannot fit {} bytes with {} alignment!",
-                        p_Size, p_Alignment);
-    if (!alignedPtr)
+    std::byte *ptr = m_Buffer + (m_Size - m_Remaining);
+    const uptr address = reinterpret_cast<uptr>(ptr);
+    const usize offset = static_cast<usize>((-address) & (p_Alignment - 1));
+    const usize size = p_Size + offset;
+
+    if (size > m_Remaining)
         return nullptr;
+
+    std::byte *alignedPtr = reinterpret_cast<std::byte *>(address + offset);
+
     TKIT_ASSERT(alignedPtr + p_Size <= m_Buffer + m_Size,
                 "[TOOLKIT][ARENA-ALLOC] Arena allocator failed to fit {} bytes with {} alignment! This is should not "
                 "have triggered",
@@ -65,7 +70,7 @@ void *ArenaAllocator::Allocate(const usize p_Size, const usize p_Alignment)
     TKIT_ASSERT(Memory::IsAligned(alignedPtr, p_Alignment),
                 "[TOOLKIT][ARENA-ALLOC] Aligned pointer is not aligned to the requested alignment");
 
-    m_Remaining = static_cast<usize>(remaining) - p_Size;
+    m_Remaining -= size;
     return alignedPtr;
 }
 

@@ -39,13 +39,11 @@ class TKIT_API StackAllocator
   public:
     struct Entry
     {
-        Entry(std::byte *p_Ptr, const usize p_Size, const usize p_AlignmentOffset)
-            : Ptr(p_Ptr), Size(p_Size), AlignmentOffset(p_AlignmentOffset)
+        Entry(std::byte *p_Ptr, const usize p_Size) : Ptr(p_Ptr), Size(p_Size)
         {
         }
         std::byte *Ptr;
         usize Size;
-        usize AlignmentOffset;
     };
 
     // The alignment parameter specifies the starting alignment of the whole memory buffer so that your first allocation
