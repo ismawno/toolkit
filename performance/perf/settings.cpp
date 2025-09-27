@@ -2,6 +2,7 @@
 #include "tkit/serialization/yaml/perf/settings.hpp"
 #include "tkit/reflection/perf/settings.hpp"
 #include <argparse/argparse.hpp>
+#include <filesystem>
 
 namespace TKit::Perf
 {
@@ -45,6 +46,8 @@ void LogSettings(const Settings &p_Settings)
 
 Settings CreateSettings(int argc, char **argv)
 {
+    std::filesystem::create_directories(TKIT_ROOT_PATH "/performance/results");
+
     argparse::ArgumentParser parser{"toolkit-performance", TKIT_VERSION, argparse::default_arguments::all};
     parser.add_description("A small performance test playground for some of the toolkit utilities.");
     parser.add_epilog("For similar projects, visit my GitHub at https://github.com/ismawno");
