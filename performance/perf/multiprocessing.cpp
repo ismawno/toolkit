@@ -40,7 +40,10 @@ void RecordThreadPoolSum(const ThreadPoolSettings &p_Settings)
         Clock clock;
         u32 sum = 0;
         for (usize i = 0; i < nthreads; i++)
+        {
             sum += tasks[i].WaitForResult();
+            tasks[i].Reset();
+        }
 
         const Timespan mtTime = clock.GetElapsed();
         file << nthreads << ',' << mtTime.AsNanoseconds() << ',' << sum << '\n';
