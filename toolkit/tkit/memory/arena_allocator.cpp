@@ -54,7 +54,10 @@ void *ArenaAllocator::Allocate(const usize p_Size, const usize p_Alignment)
 
     std::byte *ptr = m_Buffer + (m_Size - m_Remaining);
     const uptr address = reinterpret_cast<uptr>(ptr);
+    TKIT_COMPILER_WARNING_IGNORE_PUSH()
+    TKIT_MSVC_WARNING_IGNORE(4146)
     const usize offset = static_cast<usize>((-address) & (p_Alignment - 1));
+    TKIT_COMPILER_WARNING_IGNORE_POP()
     const usize size = p_Size + offset;
 
     if (size > m_Remaining)
