@@ -39,30 +39,8 @@
       }
     },
     {
-      "name": "unix",
-      "hidden": true,
-      "inherits": "base",
-      "generator": "Unix Makefiles",
-      "condition": {
-        "type": "notEquals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      }
-    },
-    {
-      "name": "windows",
-      "hidden": true,
-      "inherits": "base",
-      "generator": "Visual Studio 17 2022",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Windows"
-      }
-    },
-    {
       "name": "debug",
-      "hidden": true,
+      "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "TOOLKIT_ENABLE_SYMBOLS": "ON",
@@ -76,7 +54,7 @@
     },
     {
       "name": "release",
-      "hidden": true,
+      "inherits": "base",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "TOOLKIT_ENABLE_SYMBOLS": "OFF",
@@ -87,22 +65,6 @@
         "TOOLKIT_ENABLE_WARNING_LOGS": "OFF",
         "TOOLKIT_ENABLE_ASSERTS": "OFF"
       }
-    },
-    {
-      "name": "unix-debug",
-      "inherits": ["unix", "debug"]
-    },
-    {
-      "name": "unix-release",
-      "inherits": ["unix", "release"]
-    },
-    {
-      "name": "windows-debug",
-      "inherits": ["windows", "debug"]
-    },
-    {
-      "name": "windows-release",
-      "inherits": ["windows", "release"]
     }
   ],
 
@@ -113,51 +75,27 @@
       "jobs": 8
     },
     {
-      "name": "unix-debug",
+      "name": "debug",
       "inherits": "base",
-      "configurePreset": "unix-debug"
+      "configurePreset": "debug"
     },
     {
-      "name": "unix-release",
+      "name": "release",
       "inherits": "base",
-      "configurePreset": "unix-release"
-    },
-    {
-      "name": "windows-debug",
-      "inherits": "base",
-      "configurePreset": "windows-debug"
-    },
-    {
-      "name": "windows-release",
-      "inherits": "base",
-      "configurePreset": "windows-release"
+      "configurePreset": "release"
     }
   ],
   "testPresets": [
     {
-      "name": "unix-debug",
-      "configurePreset": "unix-debug",
+      "name": "debug",
+      "configurePreset": "debug",
       "output": {
         "outputOnFailure": true
       }
     },
     {
-      "name": "unix-release",
-      "configurePreset": "unix-release",
-      "output": {
-        "outputOnFailure": true
-      }
-    },
-    {
-      "name": "windows-debug",
-      "configurePreset": "windows-debug",
-      "output": {
-        "outputOnFailure": true
-      }
-    },
-    {
-      "name": "windows-release",
-      "configurePreset": "windows-release",
+      "name": "release",
+      "configurePreset": "release",
       "output": {
         "outputOnFailure": true
       }
