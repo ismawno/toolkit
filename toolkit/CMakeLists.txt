@@ -151,7 +151,7 @@ if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
 
   set(NO_STATISTICS
       OFF
-      CACHE BOOL "I hate cmake" FORCE)
+      CACHE BOOL "Super useful doc" FORCE)
 
   if(MSVC)
     target_compile_options(${TRACY_TARGET} PRIVATE /wd4996)

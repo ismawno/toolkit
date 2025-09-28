@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16...3.31)
+cmake_minimum_required(VERSION 3.23...4.1.1)
 project(toolkit-root)
 
 set(NAME toolkit-root)
@@ -8,82 +8,123 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;Dist")
 
-function(define_option varname default unused_opt_type)
-  if(NOT DEFINED ${varname})
-    set(${varname}
-        ${default}
-        PARENT_SCOPE)
-  endif()
-endfunction()
-
-define_option(CMAKE_BUILD_TYPE "Debug" "Toolkit - Build")
-define_option(TOOLKIT_BUILD_TESTS OFF "Toolkit - Build")
-define_option(TOOLKIT_BUILD_PERFORMANCE OFF "Toolkit - Build")
-# none, address, leak, thread, undefined
-define_option(TOOLKIT_ENABLE_SYMBOLS OFF "Toolkit - Build")
-define_option(TOOLKIT_SANITIZERS "none" "Toolkit - Build")
+set(CMAKE_BUILD_TYPE
+    "Debug"
+    CACHE STRING "")
+set(TOOLKIT_BUILD_TESTS
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_BUILD_PERFORMANCE
+    OFF
+    CACHE BOOL "")
+# NONE, ADDRESS, LEAK, THREAD, UNDEFINED
+set(TOOLKIT_ENABLE_SYMBOLS
+    OFF
+    CACHE BOOL "")
+# NONE, LOW, MEDIUM, HIGH
+set(TOOLKIT_OPTIMIZATIONS
+    "NONE"
+    CACHE STRING "")
+set(TOOLKIT_ENABLE_LTO
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_SANITIZERS
+    "NONE"
+    CACHE BOOL "")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_C_FLAGS_RELEASE
     ""
-    CACHE STRING "I hate cmake" FORCE)
+    CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_RELEASE
     ""
-    CACHE STRING "I hate cmake" FORCE)
+    CACHE STRING "" FORCE)
 set(CMAKE_EXE_LINKER_FLAGS_RELEASE
     ""
-    CACHE STRING "I hate cmake" FORCE)
+    CACHE STRING "" FORCE)
 set(CMAKE_SHARED_LINKER_FLAGS_RELEASE
     ""
-    CACHE STRING "I hate cmake" FORCE)
+    CACHE STRING "" FORCE)
 
 set(CMAKE_C_FLAGS_DEBUG
     ""
-    CACHE STRING "I hate cmake" FORCE)
+    CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_DEBUG
     ""
-    CACHE STRING "I hate cmake" FORCE)
+    CACHE STRING "" FORCE)
 set(CMAKE_EXE_LINKER_FLAGS_DEBUG
     ""
-    CACHE STRING "I hate cmake" FORCE)
+    CACHE STRING "" FORCE)
 set(CMAKE_SHARED_LINKER_FLAGS_DEBUG
     ""
-    CACHE STRING "I hate cmake" FORCE)
+    CACHE STRING "" FORCE)
 
 set(CMAKE_C_FLAGS_DIST
     ""
-    CACHE STRING "I hate cmake" FORCE)
+    CACHE STRING "" FORCE)
 set(CMAKE_CXX_FLAGS_DIST
     ""
-    CACHE STRING "I hate cmake" FORCE)
+    CACHE STRING "" FORCE)
 set(CMAKE_EXE_LINKER_FLAGS_DIST
     ""
-    CACHE STRING "I hate cmake" FORCE)
+    CACHE STRING "" FORCE)
 set(CMAKE_SHARED_LINKER_FLAGS_DIST
     ""
-    CACHE STRING "I hate cmake" FORCE)
+    CACHE STRING "" FORCE)
 
-define_option(TOOLKIT_ENABLE_INFO_LOGS OFF "Toolkit - Feature")
-define_option(TOOLKIT_ENABLE_WARNING_LOGS OFF "Toolkit - Feature")
-define_option(TOOLKIT_ENABLE_ASSERTS OFF "Toolkit - Feature")
+set(TOOLKIT_ENABLE_INFO_LOGS
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_ENABLE_WARNING_LOGS
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_ENABLE_ASSERTS
+    OFF
+    CACHE BOOL "")
 
-define_option(TOOLKIT_ENABLE_ARENA_ALLOCATOR OFF "Toolkit - Feature")
-define_option(TOOLKIT_ENABLE_BLOCK_ALLOCATOR OFF "Toolkit - Feature")
-define_option(TOOLKIT_ENABLE_STACK_ALLOCATOR OFF "Toolkit - Feature")
-define_option(TOOLKIT_ENABLE_TIER_ALLOCATOR OFF "Toolkit - Feature")
+set(TOOLKIT_ENABLE_ARENA_ALLOCATOR
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_ENABLE_BLOCK_ALLOCATOR
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_ENABLE_STACK_ALLOCATOR
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_ENABLE_TIER_ALLOCATOR
+    OFF
+    CACHE BOOL "")
 
-define_option(TOOLKIT_ENABLE_MULTIPROCESSING OFF "Toolkit - Feature")
-define_option(TOOLKIT_ENABLE_PROFILING OFF "Toolkit - Feature")
+set(TOOLKIT_ENABLE_MULTIPROCESSING
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_ENABLE_PROFILING
+    OFF
+    CACHE BOOL "")
 
-define_option(TOOLKIT_ENABLE_REFLECTION OFF "Toolkit - Code generation")
-define_option(TOOLKIT_ENABLE_YAML_SERIALIZATION OFF "Toolkit - Code generation")
+set(TOOLKIT_ENABLE_REFLECTION
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_ENABLE_YAML_SERIALIZATION
+    OFF
+    CACHE BOOL "")
 
-define_option(TOOLKIT_ENABLE_INSTRUMENTATION OFF "Toolkit - Profiling")
-define_option(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION OFF "Toolkit - Profiling")
-define_option(TOOLKIT_ENABLE_SAMPLING OFF "Toolkit - Profiling")
-define_option(TOOLKIT_ENABLE_CALLSTACK OFF "Toolkit - Profiling")
-define_option(TOOLKIT_SAMPLING_RATE 10000 "Toolkit - Profiling")
+set(TOOLKIT_ENABLE_INSTRUMENTATION
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_ENABLE_SAMPLING
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_ENABLE_CALLSTACK
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_SAMPLING_RATE
+    "10000"
+    CACHE STRING "")
 
 if(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION AND NOT TOOLKIT_ENABLE_INSTRUMENTATION)
   message(
@@ -130,10 +171,10 @@ endif()
 
 set(TOOLKIT_ROOT_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}
-    CACHE STRING "I hate cmake" FORCE)
+    CACHE STRING "" FORCE)
 set(TOOLKIT_PYTHON_EXECUTABLE
     python
-    CACHE STRING "I hate cmake" FORCE)
+    CACHE STRING "" FORCE)
 
 function(
   tkit_register_code_generation_target
@@ -213,14 +254,11 @@ endfunction()
 function(tkit_configure_compile_link_options target)
   set(options FORBID_SANITIZERS NO_EXCEPTIONS)
   set(multi_value_args COMPILER_FLAGS LINKER_FLAGS)
-  set(one_value_args CONFIG VISIBILITY)
+  set(one_value_args VISIBILITY)
 
   cmake_parse_arguments(PARSE_ARGV 1 ARG "${options}" "${one_value_args}"
                         "${multi_value_args}")
 
-  if(NOT DEFINED ARG_CONFIG)
-    set(ARG_CONFIG ${CMAKE_BUILD_TYPE})
-  endif()
   if(NOT DEFINED ARG_FORBID_SANITIZERS)
     set(ARG_FORBID_SANITIZERS FALSE)
   endif()
@@ -238,7 +276,6 @@ function(tkit_configure_compile_link_options target)
   endif()
 
   message(STATUS "TOOLKIT: Configuring ${target}...")
-  message(STATUS "TOOLKIT:  Configuration: ${ARG_CONFIG}")
   if(ARG_FORBID_SANITIZERS)
     message(STATUS "TOOLKIT:  Sanitizers: Forbidden")
   else()
@@ -253,29 +290,57 @@ function(tkit_configure_compile_link_options target)
   message(STATUS "TOOLKIT:  Provided compiler flags: ${ARG_COMPILER_FLAGS}")
   message(STATUS "TOOLKIT:  Provided linker flags: ${ARG_LINKER_FLAGS}")
 
-  if(ARG_CONFIG STREQUAL "Debug")
-    if(MSVC)
-      set(compiler_flags /ZI /0d /0y- /MP)
-      set(linker_flags /DEBUG /INCREMENTAL:NO)
-    else()
-      set(compiler_flags -g -O0 -fno-omit-frame-pointer)
-    endif()
+  set(compiler_flags "")
+  set(linker_flags "")
+  if(MSVC)
+    list(APPEND compiler_flags /MP)
+    list(APPEND linker_flags /INCREMENTAL:NO)
+  endif()
 
-  elseif(ARG_CONFIG STREQUAL "Release")
+  if(TOOLKIT_OPTIMIZATIONS STREQUAL "NONE")
     if(MSVC)
-      set(compiler_flags /ZI /O2 /0y- /MP)
-      set(linker_flags /DEBUG /INCREMENTAL:NO)
+      list(APPEND compiler_flags /Od)
     else()
-      set(compiler_flags -g -O2 -fno-omit-frame-pointer)
+      list(APPEND compiler_flags -O0)
     endif()
-
-  elseif(ARG_CONFIG STREQUAL "Dist")
+  elseif(TOOLKIT_OPTIMIZATIONS STREQUAL "LOW")
     if(MSVC)
-      set(compiler_flags /Ox /GL /MP)
-      set(linker_flags /LTCG /INCREMENTAL:NO)
+      list(APPEND compiler_flags /O1)
     else()
-      set(compiler_flags -O3 -flto)
-      set(linker_flags -flto)
+      list(APPEND compiler_flags -O1)
+    endif()
+  elseif(TOOLKIT_OPTIMIZATIONS STREQUAL "MEDIUM")
+    if(MSVC)
+      list(APPEND compiler_flags /O2)
+    else()
+      list(APPEND compiler_flags -O2)
+    endif()
+  elseif(TOOLKIT_OPTIMIZATIONS STREQUAL "HIGH")
+    if(MSVC)
+      list(APPEND compiler_flags /Ox)
+    else()
+      list(APPEND compiler_flags -O3)
+    endif()
+  endif()
+
+  if(TOOLKIT_ENABLE_SYMBOLS)
+    if(MSVC)
+      list(APPEND compiler_flags /ZI /Oy-)
+      list(APPEND linker_flags /DEBUG)
+    else()
+      list(APPEND compiler_flags -g -fno-omit-frame-pointer)
+    endif()
+  elseif(MSVC)
+    list(APPEND compiler_flags /Oy)
+  endif()
+
+  if(TOOLKIT_ENABLE_LTO)
+    if(MSVC)
+      list(APPEND compiler_flags /GL)
+      list(APPEND linker_flags /LTCG)
+    else()
+      list(APPEND compiler_flags -flto)
+      list(APPEND linker_flags -flto)
     endif()
   endif()
 
@@ -284,7 +349,7 @@ function(tkit_configure_compile_link_options target)
   endif()
 
   if(DEFINED TOOLKIT_SANITIZERS
-     AND NOT TOOLKIT_SANITIZERS STREQUAL "none"
+     AND NOT TOOLKIT_SANITIZERS STREQUAL "NONE"
      AND NOT ARG_FORBID_SANITIZERS)
     if(MSVC)
       list(APPEND compiler_flags /fsanitize=${TOOLKIT_SANITIZERS} /ZI)
@@ -305,7 +370,7 @@ function(tkit_configure_compile_link_options target)
     endif()
   endif()
 
-  if(TOOLKIT_ENABLE_SAMPLING OR TOOLKIT_ENABLE_SYMBOLS)
+  if(TOOLKIT_ENABLE_SAMPLING)
     if(MSVC)
       list(APPEND compiler_flags /ZI)
     else()
