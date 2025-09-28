@@ -6,6 +6,7 @@ performance/reports
 performance/perf-settings.yaml
 toolkit/tkit/reflection/
 .venv/
+.cache/
 .DS_Store
 docs/html/
 docs/latex/
