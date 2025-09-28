@@ -24,7 +24,7 @@ jobs:
       # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
         os: [ubuntu-22.04, windows-2022, macos-14]
-        preset: [debug, release]
+        preset: [unix-debug, unix-release, windows-debug, windows-release]
         c_compiler: [gcc, clang, cl]
         include:
           - os: windows-2022
@@ -42,6 +42,18 @@ jobs:
         exclude:
           - os: windows-2022
             c_compiler: gcc
+          - os: windows-2022
+            preset: unix-debug
+          - os: windows-2022
+            preset: unix-release
+          - os: ubuntu-22.04
+            preset: windows-debug
+          - os: ubuntu-22.04
+            preset: windows-release
+          - os: macos-14
+            preset: windows-debug
+          - os: macos-14
+            preset: windows-release
           - os: windows-2022
             c_compiler: clang
           - os: ubuntu-22.04
@@ -84,7 +96,7 @@ jobs:
       - name: Run tests with Catch2 (Linux and MacOS)
         if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macos')
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
-        run: ./{{ matrix.preset }}/tests/toolkit-tests
+        run: ./${{ matrix.preset }}/tests/toolkit-tests
 
       - name: Run tests with ctest
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
@@ -95,4 +107,4 @@ jobs:
       - name: Run tests with Catch2 (Windows)
         if: startsWith(matrix.os, 'windows')
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
-        run: .\{{ matrix.preset }}\tests\${{ matrix.build_type }}\toolkit-tests.exe
+        run: .\${{ matrix.preset }}\tests\toolkit-tests.exe

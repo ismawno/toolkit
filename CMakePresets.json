@@ -2,7 +2,7 @@
   "version": 3,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 23,
+    "minor": 24,
     "patch": 0
   },
   "configurePresets": [
@@ -44,12 +44,9 @@
       "inherits": "base",
       "generator": "Unix Makefiles",
       "condition": {
-        "type": "not",
-        "condition": {
-          "type": "equals",
-          "lhs": "${hostSystemName}",
-          "rhs": "Windows"
-        }
+        "type": "notEquals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
       }
     },
     {
@@ -65,7 +62,7 @@
     },
     {
       "name": "debug",
-      "inherits": ["unix", "windows"],
+      "hidden": true,
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "TOOLKIT_ENABLE_SYMBOLS": "ON",
@@ -79,7 +76,7 @@
     },
     {
       "name": "release",
-      "inherits": ["unix", "windows"],
+      "hidden": true,
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "TOOLKIT_ENABLE_SYMBOLS": "OFF",
@@ -90,6 +87,22 @@
         "TOOLKIT_ENABLE_WARNING_LOGS": "OFF",
         "TOOLKIT_ENABLE_ASSERTS": "OFF"
       }
+    },
+    {
+      "name": "unix-debug",
+      "inherits": ["unix", "debug"]
+    },
+    {
+      "name": "unix-release",
+      "inherits": ["unix", "release"]
+    },
+    {
+      "name": "windows-debug",
+      "inherits": ["windows", "debug"]
+    },
+    {
+      "name": "windows-release",
+      "inherits": ["windows", "release"]
     }
   ],
 
@@ -100,27 +113,51 @@
       "jobs": 8
     },
     {
-      "name": "debug",
+      "name": "unix-debug",
       "inherits": "base",
-      "configurePreset": "debug"
+      "configurePreset": "unix-debug"
     },
     {
-      "name": "release",
+      "name": "unix-release",
       "inherits": "base",
-      "configurePreset": "release"
+      "configurePreset": "unix-release"
+    },
+    {
+      "name": "windows-debug",
+      "inherits": "base",
+      "configurePreset": "windows-debug"
+    },
+    {
+      "name": "windows-release",
+      "inherits": "base",
+      "configurePreset": "windows-release"
     }
   ],
   "testPresets": [
     {
-      "name": "debug",
-      "configurePreset": "debug",
+      "name": "unix-debug",
+      "configurePreset": "unix-debug",
       "output": {
         "outputOnFailure": true
       }
     },
     {
-      "name": "release",
-      "configurePreset": "release",
+      "name": "unix-release",
+      "configurePreset": "unix-release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "windows-debug",
+      "configurePreset": "windows-debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "windows-release",
+      "configurePreset": "windows-release",
       "output": {
         "outputOnFailure": true
       }
