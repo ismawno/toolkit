@@ -73,4 +73,4 @@ The building process is straightforward. Using `CMake`:
 ```sh
 cmake --preset release
 cmake --build --preset release
-
+```
