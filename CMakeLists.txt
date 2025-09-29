@@ -351,12 +351,13 @@ function(tkit_configure_compile_link_options target)
   if(DEFINED TOOLKIT_SANITIZERS
      AND NOT TOOLKIT_SANITIZERS STREQUAL "NONE"
      AND NOT ARG_FORBID_SANITIZERS)
+    string(TOLOWER ${TOOLKIT_SANITIZERS} sanitizers)
     if(MSVC)
-      list(APPEND compiler_flags /fsanitize=${TOOLKIT_SANITIZERS} /ZI)
+      list(APPEND compiler_flags /fsanitize=${sanitizers} /ZI)
     else()
-      list(APPEND compiler_flags -fsanitize=${TOOLKIT_SANITIZERS} -g
+      list(APPEND compiler_flags -fsanitize=${sanitizers} -g
            -fno-omit-frame-pointer)
-      list(APPEND linker_flags -fsanitize=${TOOLKIT_SANITIZERS} -g
+      list(APPEND linker_flags -fsanitize=${sanitizers} -g
            -fno-omit-frame-pointer)
     endif()
 
