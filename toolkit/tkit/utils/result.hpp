@@ -20,6 +20,13 @@ namespace TKit
  */
 template <typename T = void, typename ErrorType = const char *> class Result
 {
+    using Flags = u8;
+    enum FlagBits : Flags
+    {
+        Flag_Ok = 1 << 0,
+        Flag_Engaged = 1 << 1
+    };
+
   public:
     /**
      * @brief Construct a `Result` object with a value of type `T`.
@@ -29,7 +36,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
     template <typename... ValueArgs> static Result Ok(ValueArgs &&...p_Args)
     {
         Result result{};
-        result.m_Ok = true;
+        result.m_Flags = Flag_Engaged | Flag_Ok;
         result.m_Value.Construct(std::forward<ValueArgs>(p_Args)...);
         return result;
     }
@@ -42,25 +49,29 @@ template <typename T = void, typename ErrorType = const char *> class Result
     template <typename... ErrorArgs> static Result Error(ErrorArgs &&...p_Args)
     {
         Result result{};
-        result.m_Ok = false;
+        result.m_Flags = Flag_Engaged;
         result.m_Error.Construct(std::forward<ErrorArgs>(p_Args)...);
         return result;
     }
 
     Result(const Result &p_Other)
         requires(std::copy_constructible<T> && std::copy_constructible<ErrorType>)
-        : m_Ok(p_Other.m_Ok)
+        : m_Flags(p_Other.m_Flags)
     {
-        if (m_Ok)
+        if (!checkFlag(Flag_Engaged))
+            return;
+        if (checkFlag(Flag_Ok))
             m_Value.Construct(*p_Other.m_Value.Get());
         else
             m_Error.Construct(*p_Other.m_Error.Get());
     }
     Result(Result &&p_Other)
         requires(std::move_constructible<T> && std::move_constructible<ErrorType>)
-        : m_Ok(p_Other.m_Ok)
+        : m_Flags(p_Other.m_Flags)
     {
-        if (m_Ok)
+        if (!checkFlag(Flag_Engaged))
+            return;
+        if (checkFlag(Flag_Ok))
             m_Value.Construct(std::move(*p_Other.m_Value.Get()));
         else
             m_Error.Construct(std::move(*p_Other.m_Error.Get()));
@@ -72,8 +83,10 @@ template <typename T = void, typename ErrorType = const char *> class Result
         if (this == &p_Other)
             return *this;
         destroy();
-        m_Ok = p_Other.m_Ok;
-        if (m_Ok)
+        m_Flags = p_Other.m_Flags;
+        if (!checkFlag(Flag_Engaged))
+            return *this;
+        if (checkFlag(Flag_Ok))
             m_Value.Construct(*p_Other.m_Value.Get());
         else
             m_Error.Construct(*p_Other.m_Error.Get());
@@ -85,9 +98,12 @@ template <typename T = void, typename ErrorType = const char *> class Result
     {
         if (this == &p_Other)
             return *this;
+
         destroy();
-        m_Ok = p_Other.m_Ok;
-        if (m_Ok)
+        m_Flags = p_Other.m_Flags;
+        if (!checkFlag(Flag_Engaged))
+            return *this;
+        if (checkFlag(Flag_Ok))
             m_Value.Construct(std::move(*p_Other.m_Value.Get()));
         else
             m_Error.Construct(std::move(*p_Other.m_Error.Get()));
@@ -106,7 +122,12 @@ template <typename T = void, typename ErrorType = const char *> class Result
      */
     bool IsOk() const
     {
-        return m_Ok;
+        return checkFlag(Flag_Engaged) && checkFlag(Flag_Ok);
+    }
+
+    bool IsError() const
+    {
+        return checkFlag(Flag_Engaged) && !checkFlag(Flag_Ok);
     }
 
     /**
@@ -117,7 +138,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
      */
     const T &GetValue() const
     {
-        TKIT_ASSERT(m_Ok, "[TOOLKIT][RESULT] Result is not Ok");
+        TKIT_ASSERT(IsOk(), "[TOOLKIT][RESULT] Result is not Ok");
         return *m_Value.Get();
     }
 
@@ -129,7 +150,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
      */
     T &GetValue()
     {
-        TKIT_ASSERT(m_Ok, "[TOOLKIT][RESULT] Result is not Ok");
+        TKIT_ASSERT(IsOk(), "[TOOLKIT][RESULT] Result is not Ok");
         return *m_Value.Get();
     }
 
@@ -141,7 +162,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
      */
     const ErrorType &GetError() const
     {
-        TKIT_ASSERT(!m_Ok, "[TOOLKIT][RESULT] Result is Ok");
+        TKIT_ASSERT(IsError(), "[TOOLKIT][RESULT] Result is not an error");
         return *m_Error.Get();
     }
 
@@ -165,15 +186,22 @@ template <typename T = void, typename ErrorType = const char *> class Result
 
     operator bool() const
     {
-        return m_Ok;
+        return IsOk();
     }
 
   private:
     Result() = default;
 
+    bool checkFlag(const FlagBits p_Flag) const
+    {
+        return m_Flags & p_Flag;
+    }
     void destroy()
     {
-        if (m_Ok)
+        if (!checkFlag(Flag_Engaged))
+            return;
+
+        if (checkFlag(Flag_Ok))
             m_Value.Destruct();
         else
             m_Error.Destruct();
@@ -183,7 +211,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
         Storage<T> m_Value;
         Storage<ErrorType> m_Error;
     };
-    bool m_Ok;
+    Flags m_Flags = 0;
 };
 
 /**
@@ -200,6 +228,13 @@ template <typename T = void, typename ErrorType = const char *> class Result
  */
 template <typename ErrorType> class Result<void, ErrorType>
 {
+    using Flags = u8;
+    enum FlagBits : Flags
+    {
+        Flag_Ok = 1 << 0,
+        Flag_Engaged = 1 << 1
+    };
+
   public:
     /**
      * @brief Construct a `Result` object with no error.
@@ -208,7 +243,7 @@ template <typename ErrorType> class Result<void, ErrorType>
     static Result Ok()
     {
         Result result{};
-        result.m_Ok = true;
+        result.m_Flags = Flag_Engaged | Flag_Ok;
         return result;
     }
 
@@ -220,23 +255,23 @@ template <typename ErrorType> class Result<void, ErrorType>
     template <typename... ErrorArgs> static Result Error(ErrorArgs &&...p_Args)
     {
         Result result{};
-        result.m_Ok = false;
+        result.m_Flags = Flag_Engaged;
         result.m_Error.Construct(std::forward<ErrorArgs>(p_Args)...);
         return result;
     }
 
     Result(const Result &p_Other)
         requires(std::copy_constructible<ErrorType>)
-        : m_Ok(p_Other.m_Ok)
+        : m_Flags(p_Other.m_Flags)
     {
-        if (!m_Ok)
+        if (IsError())
             m_Error.Construct(*p_Other.m_Error.Get());
     }
     Result(Result &&p_Other)
         requires(std::move_constructible<ErrorType>)
-        : m_Ok(p_Other.m_Ok)
+        : m_Flags(p_Other.m_Flags)
     {
-        if (!m_Ok)
+        if (IsError())
             m_Error.Construct(std::move(*p_Other.m_Error.Get()));
     }
 
@@ -246,8 +281,8 @@ template <typename ErrorType> class Result<void, ErrorType>
         if (this == &p_Other)
             return *this;
         destroy();
-        m_Ok = p_Other.m_Ok;
-        if (!m_Ok)
+        m_Flags = p_Other.m_Flags;
+        if (IsError())
             m_Error.Construct(*p_Other.m_Error.Get());
 
         return *this;
@@ -258,8 +293,8 @@ template <typename ErrorType> class Result<void, ErrorType>
         if (this == &p_Other)
             return *this;
         destroy();
-        m_Ok = p_Other.m_Ok;
-        if (!m_Ok)
+        m_Flags = p_Other.m_Flags;
+        if (IsError())
             m_Error.Construct(std::move(*p_Other.m_Error.Get()));
 
         return *this;
@@ -276,7 +311,12 @@ template <typename ErrorType> class Result<void, ErrorType>
      */
     bool IsOk() const
     {
-        return m_Ok;
+        return checkFlag(Flag_Engaged) && checkFlag(Flag_Ok);
+    }
+
+    bool IsError() const
+    {
+        return checkFlag(Flag_Engaged) && !checkFlag(Flag_Ok);
     }
 
     /**
@@ -287,25 +327,29 @@ template <typename ErrorType> class Result<void, ErrorType>
      */
     const ErrorType &GetError() const
     {
-        TKIT_ASSERT(!m_Ok, "[TOOLKIT][RESULT] Result is Ok");
+        TKIT_ASSERT(IsError(), "[TOOLKIT][RESULT] Result is not an error");
         return *m_Error.Get();
     }
 
     operator bool() const
     {
-        return m_Ok;
+        return IsOk();
     }
 
   private:
     Result() = default;
 
+    bool checkFlag(const FlagBits p_Flag) const
+    {
+        return m_Flags & p_Flag;
+    }
     void destroy()
     {
-        if (!m_Ok)
+        if (IsError())
             m_Error.Destruct();
     }
     Storage<ErrorType> m_Error;
-    bool m_Ok;
+    Flags m_Flags = 0;
 };
 
 } // namespace TKit
