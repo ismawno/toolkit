@@ -102,3 +102,130 @@
 #ifndef TKIT_CACHE_LINE_SIZE
 #    define TKIT_CACHE_LINE_SIZE 64
 #endif
+
+// Size is in bytes
+// x86
+#ifdef __AVX512F__
+#    define TKIT_SIMD_AVX512F
+#    define TKIT_SIMD_AVX512F_SIZE 64
+#    ifndef TKIT_SIMD_SIZE
+#        define TKIT_SIMD_SIZE TKIT_SIMD_AVX512F_SIZE
+#    endif
+#endif
+#ifdef __AVX2__
+#    define TKIT_SIMD_AVX2
+#    define TKIT_SIMD_AVX2_SIZE 32
+#    ifndef TKIT_SIMD_SIZE
+#        define TKIT_SIMD_SIZE TKIT_SIMD_AVX2_SIZE
+#    endif
+#endif
+#ifdef __AVX__
+#    define TKIT_SIMD_AVX
+#    define TKIT_SIMD_AVX_SIZE 32
+#    ifndef TKIT_SIMD_SIZE
+#        define TKIT_SIMD_SIZE TKIT_SIMD_AVX_SIZE
+#    endif
+#endif
+#ifdef __SSE4_1__
+#    define TKIT_SIMD_SSE4_1
+#    define TKIT_SIMD_SSE4_1_SIZE 16
+#    ifndef TKIT_SIMD_SIZE
+#        define TKIT_SIMD_SIZE TKIT_SIMD_SSE4_1_SIZE
+#    endif
+#endif
+#ifdef __SSE4_2__
+#    define TKIT_SIMD_SSE4_2
+#    define TKIT_SIMD_SSE4_2_SIZE 16
+#    ifndef TKIT_SIMD_SIZE
+#        define TKIT_SIMD_SIZE TKIT_SIMD_SSE4_2_SIZE
+#    endif
+#endif
+#ifdef __SSE2__
+#    define TKIT_SIMD_SSE2
+#    define TKIT_SIMD_SSE2_SIZE 16
+#    ifndef TKIT_SIMD_SIZE
+#        define TKIT_SIMD_SIZE TKIT_SIMD_SSE2_SIZE
+#    endif
+#endif
+#ifdef __SSE3__
+#    define TKIT_SIMD_SSE3
+#    define TKIT_SIMD_SSE3_SIZE 16
+#    ifndef TKIT_SIMD_SIZE
+#        define TKIT_SIMD_SIZE TKIT_SIMD_SSE3_SIZE
+#    endif
+#endif
+#ifdef __SSSE3__
+#    define TKIT_SIMD_SSSE3
+#    define TKIT_SIMD_SSSE3_SIZE 16
+#    ifndef TKIT_SIMD_SIZE
+#        define TKIT_SIMD_SIZE TKIT_SIMD_SSSE3_SIZE
+#    endif
+#endif
+
+// ARM
+#ifdef __ARM_FEATURE_SVE2
+#    define TKIT_SIMD_SVE2
+#endif
+#ifdef __ARM_FEATURE_SVE
+#    define TKIT_SIMD_SVE
+#endif
+#if defined(TKIT_SIMD_SVE2) || defined(TKIT_SIMD_SVE)
+#    ifdef __ARM_FEATURE_SVE_BITS
+#        define TKIT_SIMD_SVE_SIZE (__ARM_FEATURE_SVE_BITS >> 3)
+#    else
+#        define TKIT_SIMD_SVE_SIZE 16 // a bit made up
+#    endif
+#    ifndef TKIT_SIMD_SIZE
+#        define TKIT_SIMD_SIZE TKIT_SIMD_SVE_SIZE
+#    endif
+#endif
+#if defined(__ARM_NEON) || defined(__ARM_NEON__)
+#    define TKIT_SIMD_NEON
+#    define TKIT_SIMD_NEON_SIZE 16
+#    ifndef TKIT_SIMD_SIZE
+#        define TKIT_SIMD_SIZE TKIT_SIMD_NEON_SIZE
+#    endif
+#endif
+
+// PowerPC
+#ifdef __VSX__
+#    define TKIT_SIMD_VSX
+#    define TKIT_SIMD_VSX_SIZE 16
+#    ifndef TKIT_SIMD_SIZE
+#        define TKIT_SIMD_SIZE TKIT_SIMD_VSX_SIZE
+#    endif
+#endif
+#ifdef __ALTIVEC__
+#    define TKIT_SIMD_ALTIVEC
+#    define TKIT_SIMD_ALTIVEC_SIZE 16
+#    ifndef TKIT_SIMD_SIZE
+#        define TKIT_SIMD_SIZE TKIT_SIMD_ALTIVEC_SIZE
+#    endif
+#endif
+
+// RISC-V
+#ifdef __riscv_vector
+#    define TKIT_SIMD_RISCV_V
+#    define TKIT_SIMD_RISCV_V_SIZE 16 // a bit made up
+// #ifndef TKIT_SIMD_SIZE
+// #define TKIT_SIMD_SIZE TKIT_SIMD_RISCV_V_SIZE
+// #endif
+#endif
+
+// WebAssembly
+#ifdef __wasm_simd128__
+#    define TKIT_SIMD_WASM_SIMD128
+#    define TKIT_SIMD_WASM_SIMD128_SIZE 16
+#    ifndef TKIT_SIMD_SIZE
+#        define TKIT_SIMD_SIZE TKIT_SIMD_WASM_SIMD128_SIZE
+#    endif
+#endif
+
+// MIPS
+#ifdef __mips_msa
+#    define TKIT_SIMD_MIPS_MSA
+#    define TKIT_SIMD_MIPS_MSA_SIZE 16
+#    ifndef TKIT_SIMD_SIZE
+#        define TKIT_SIMD_SIZE TKIT_SIMD_MIPS_MSA_SIZE
+#    endif
+#endif
