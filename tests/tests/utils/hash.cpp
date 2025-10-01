@@ -5,6 +5,19 @@
 
 using namespace TKit;
 
+template <typename T> class Test
+{
+    T v1;
+};
+
+template <typename T>
+concept Int = std::same_as<T, int>;
+
+template <Int T> class Test<T>
+{
+    T v2;
+};
+
 TEST_CASE("Hash single values", "[Hash]")
 {
     SECTION("integers")

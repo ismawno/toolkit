@@ -5,12 +5,6 @@
 
 namespace TKit
 {
-// template <typename T>
-// concept RandomIterOrIndex = std::integral<T> || std::random_access_iterator<T>;
-
-// template <typename T, typename U>
-// concept OutputIterOrIndex = std::integral<T> || std::output_iterator<T, U>;
-
 namespace Detail
 {
 template <typename It> constexpr usize Distance(const It p_First, const It p_Last)

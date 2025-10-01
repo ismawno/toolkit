@@ -14,7 +14,7 @@ namespace TKit
  * @tparam T The type of the elements in the array.
  * @tparam Capacity The capacity of the array.
  */
-template <typename T, usize Capacity = Limits<usize>::max(), typename Traits = Container::ArrayTraits<NoCVRef<T>>>
+template <typename T, usize Capacity = Limits<usize>::max(), typename Traits = Container::ArrayTraits<std::remove_cvref_t<T>>>
 class WeakArray
 {
     static_assert(Capacity > 0, "[TOOLKIT][WEAK-ARRAY] Capacity must be greater than 0");
@@ -57,7 +57,7 @@ class WeakArray
     }
 
     template <typename U>
-        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
+        requires(std::convertible_to<U *, T *> && std::same_as<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
     constexpr WeakArray(WeakArray<U, Capacity, Traits> &&p_Other)
         : m_Data(p_Other.GetData()), m_Size(p_Other.GetSize())
     {
@@ -66,7 +66,7 @@ class WeakArray
     }
 
     template <typename U>
-        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
+        requires(std::convertible_to<U *, T *> && std::same_as<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
     constexpr WeakArray &operator=(WeakArray<U, Capacity, Traits> &&p_Other)
     {
         m_Data = p_Other.GetData();
@@ -132,7 +132,7 @@ class WeakArray
      * @param p_Value The value to insert.
      */
     template <typename U>
-        requires(std::is_convertible_v<NoCVRef<ValueType>, NoCVRef<U>>)
+        requires(std::is_convertible_v<std::remove_cvref_t<ValueType>, std::remove_cvref_t<U>>)
     constexpr void Insert(const Iterator p_Pos, U &&p_Value)
     {
         TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Container is already full");
@@ -374,7 +374,7 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
     }
 
     template <typename U, SizeType Capacity>
-        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
+        requires(std::convertible_to<U *, T *> && std::same_as<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
     constexpr WeakArray(WeakArray<U, Capacity, Traits> &&p_Other)
         : m_Data(p_Other.GetData()), m_Size(p_Other.GetSize()), m_Capacity(p_Other.GetCapacity())
     {
@@ -385,7 +385,7 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
     }
 
     template <typename U, SizeType Capacity>
-        requires(std::convertible_to<U *, T *> && std::same_as<NoCVRef<U>, NoCVRef<T>>)
+        requires(std::convertible_to<U *, T *> && std::same_as<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
     constexpr WeakArray &operator=(WeakArray<U, Capacity, Traits> &&p_Other)
     {
         m_Data = p_Other.GetData();
@@ -458,7 +458,7 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
      * @param p_Value The value to insert.
      */
     template <typename U>
-        requires(std::is_convertible_v<NoCVRef<ValueType>, NoCVRef<U>>)
+        requires(std::is_convertible_v<std::remove_cvref_t<ValueType>, std::remove_cvref_t<U>>)
     constexpr void Insert(const Iterator p_Pos, U &&p_Value)
     {
         TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Container is already full");

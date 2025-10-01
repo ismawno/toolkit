@@ -50,6 +50,43 @@ template <typename T> using Limits = std::numeric_limits<T>;
 
 } // namespace Alias
 
-//... and use them immediately in the toolkit namespace
+//... and use it immediately in the toolkit namespace
 using namespace Alias;
+
+namespace Detail
+{
+template <usize Size> struct Primitive;
+
+template <> struct Primitive<8>
+{
+    using Unsigned = u8;
+    using Signed = i8;
+};
+template <> struct Primitive<16>
+{
+    using Unsigned = u16;
+    using Signed = i16;
+};
+template <> struct Primitive<32>
+{
+    using Unsigned = u32;
+    using Signed = i32;
+    using Float = f32;
+};
+template <> struct Primitive<64>
+{
+    using Unsigned = u64;
+    using Signed = i64;
+    using Float = f64;
+};
+
+} // namespace Detail
+
+namespace Alias
+{
+template <usize Size> using u = Detail::Primitive<Size>::Unsigned;
+template <usize Size> using i = Detail::Primitive<Size>::Signed;
+template <usize Size> using f = Detail::Primitive<Size>::Float;
+} // namespace Alias
+
 } // namespace TKit

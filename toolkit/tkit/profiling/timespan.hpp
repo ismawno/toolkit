@@ -5,12 +5,19 @@
         "[TOOLKIT][PROFILING] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_PROFILING"
 #endif
 
+#include "tkit/utils/alias.hpp"
 #include "tkit/preprocessor/system.hpp"
-#include "tkit/utils/concepts.hpp"
 #include <chrono>
 
 namespace TKit
 {
+namespace Detail
+{
+template <typename T>
+concept Numeric = std::is_arithmetic_v<T>;
+
+} // namespace Detail
+
 class TKIT_API Timespan
 {
   public:
@@ -23,9 +30,9 @@ class TKIT_API Timespan
     {
     }
 
-    template <typename TimeUnit, Numeric T = f32> T As() const
+    template <typename TimeUnit, Detail::Numeric T = f32> T As() const
     {
-        if constexpr (Float<T>)
+        if constexpr (std::is_floating_point_v<T>)
             return std::chrono::duration<T, typename TimeUnit::period>(m_Elapsed).count();
         else
         {
@@ -34,24 +41,24 @@ class TKIT_API Timespan
         }
     }
 
-    template <Numeric T = u64> T AsNanoseconds() const
+    template <Detail::Numeric T = u64> T AsNanoseconds() const
     {
         return As<Nanoseconds, T>();
     }
-    template <Numeric T = f32> T AsMicroseconds() const
+    template <Detail::Numeric T = f32> T AsMicroseconds() const
     {
         return As<Microseconds, T>();
     }
-    template <Numeric T = f32> T AsMilliseconds() const
+    template <Detail::Numeric T = f32> T AsMilliseconds() const
     {
         return As<Milliseconds, T>();
     }
-    template <Numeric T = f32> T AsSeconds() const
+    template <Detail::Numeric T = f32> T AsSeconds() const
     {
         return As<Seconds, T>();
     }
 
-    template <typename TimeUnit, Numeric T> static Timespan From(const T p_Elapsed)
+    template <typename TimeUnit, Detail::Numeric T> static Timespan From(const T p_Elapsed)
     {
         return Timespan(std::chrono::duration<T, typename TimeUnit::period>(p_Elapsed));
     }
@@ -69,20 +76,20 @@ class TKIT_API Timespan
         return Timespan(p_Left.m_Elapsed - p_Right.m_Elapsed);
     }
 
-    template <Numeric T> friend Timespan operator*(const T p_Scalar, const Timespan &p_Timespan)
+    template <Detail::Numeric T> friend Timespan operator*(const T p_Scalar, const Timespan &p_Timespan)
     {
         return Timespan(std::chrono::round<Timespan::Nanoseconds>(p_Timespan.m_Elapsed * p_Scalar));
     }
-    template <Numeric T> friend Timespan operator/(const T p_Scalar, const Timespan &p_Timespan)
+    template <Detail::Numeric T> friend Timespan operator/(const T p_Scalar, const Timespan &p_Timespan)
     {
         return Timespan(std::chrono::round<Timespan::Nanoseconds>(p_Scalar / p_Timespan.m_Elapsed));
     }
 
-    template <Numeric T> friend Timespan operator*(const Timespan &p_Timespan, const T p_Scalar)
+    template <Detail::Numeric T> friend Timespan operator*(const Timespan &p_Timespan, const T p_Scalar)
     {
         return Timespan(std::chrono::round<Timespan::Nanoseconds>(p_Timespan.m_Elapsed * p_Scalar));
     }
-    template <Numeric T> friend Timespan operator/(const Timespan &p_Timespan, const T p_Scalar)
+    template <Detail::Numeric T> friend Timespan operator/(const Timespan &p_Timespan, const T p_Scalar)
     {
         return Timespan(std::chrono::round<Timespan::Nanoseconds>(p_Timespan.m_Elapsed / p_Scalar));
     }
@@ -99,12 +106,12 @@ class TKIT_API Timespan
         return *this;
     }
 
-    template <Numeric T> Timespan &operator*=(const T p_Scalar)
+    template <Detail::Numeric T> Timespan &operator*=(const T p_Scalar)
     {
         m_Elapsed *= p_Scalar;
         return *this;
     }
-    template <Numeric T> Timespan &operator/=(const T p_Scalar)
+    template <Detail::Numeric T> Timespan &operator/=(const T p_Scalar)
     {
         m_Elapsed /= p_Scalar;
         return *this;

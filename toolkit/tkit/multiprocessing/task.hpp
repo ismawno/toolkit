@@ -6,7 +6,6 @@
 #endif
 
 #include "tkit/preprocessor/system.hpp"
-#include "tkit/utils/concepts.hpp"
 #include <functional>
 #include <atomic>
 
@@ -109,14 +108,14 @@ template <typename T = void> class Task final : public ITask
     Task() = default;
 
     template <typename Callable, typename... Args>
-        requires(std::invocable<Callable, Args...> && !std::is_same_v<NoCVRef<Callable>, Task>)
+        requires(std::invocable<Callable, Args...> && !std::is_same_v<std::remove_cvref_t<Callable>, Task>)
     constexpr Task(Callable &&p_Callable, Args &&...p_Args)
         : m_Function(bind(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
     }
 
     template <typename Callable>
-        requires(!std::is_same_v<NoCVRef<Callable>, Task>)
+        requires(!std::is_same_v<std::remove_cvref_t<Callable>, Task>)
     constexpr Task &operator=(Callable &&p_Callable)
     {
         m_Function = std::forward<Callable>(p_Callable);
@@ -186,14 +185,14 @@ template <> class TKIT_API Task<void> final : public ITask
     Task() = default;
 
     template <typename Callable, typename... Args>
-        requires(std::invocable<Callable, Args...> && !std::is_same_v<NoCVRef<Callable>, Task>)
+        requires(std::invocable<Callable, Args...> && !std::is_same_v<std::remove_cvref_t<Callable>, Task>)
     constexpr Task(Callable &&p_Callable, Args &&...p_Args)
         : m_Function(bind(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
     }
 
     template <typename Callable>
-        requires(!std::is_same_v<NoCVRef<Callable>, Task>)
+        requires(!std::is_same_v<std::remove_cvref_t<Callable>, Task>)
     constexpr Task &operator=(Callable &&p_Callable)
     {
         m_Function = std::forward<Callable>(p_Callable);

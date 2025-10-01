@@ -1,7 +1,6 @@
 #pragma once
 
 #include "tkit/container/container.hpp"
-#include "tkit/utils/concepts.hpp"
 #include "tkit/utils/logging.hpp"
 
 namespace TKit
@@ -141,7 +140,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
      * @param p_Value The value to insert.
      */
     template <typename U>
-        requires(std::is_convertible_v<NoCVRef<ValueType>, NoCVRef<U>>)
+        requires(std::is_convertible_v<std::remove_cvref_t<ValueType>, std::remove_cvref_t<U>>)
     constexpr void Insert(Iterator p_Pos, U &&p_Value)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][DYN-ARRAY] Iterator is out of bounds");

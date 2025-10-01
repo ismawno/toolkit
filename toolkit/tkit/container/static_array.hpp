@@ -2,7 +2,6 @@
 
 #include "tkit/container/container.hpp"
 #include "tkit/container/array.hpp"
-#include "tkit/utils/concepts.hpp"
 #include "tkit/utils/logging.hpp"
 
 namespace TKit
@@ -30,8 +29,7 @@ class StaticArray
 
     constexpr StaticArray() = default;
 
-    template <typename... Args>
-    constexpr StaticArray(const SizeType p_Size, const Args &...p_Args) : m_Size(p_Size)
+    template <typename... Args> constexpr StaticArray(const SizeType p_Size, const Args &...p_Args) : m_Size(p_Size)
     {
         TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size is bigger than capacity");
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
@@ -45,8 +43,7 @@ class StaticArray
         Tools::CopyConstructFromRange(begin(), p_Begin, p_End);
     }
 
-    constexpr StaticArray(const std::initializer_list<ValueType> p_List)
-        : m_Size(static_cast<SizeType>(p_List.size()))
+    constexpr StaticArray(const std::initializer_list<ValueType> p_List) : m_Size(static_cast<SizeType>(p_List.size()))
     {
         TKIT_ASSERT(p_List.size() <= Capacity, "[TOOLKIT][STAT-ARRAY] Size is bigger than capacity");
         Tools::CopyConstructFromRange(begin(), p_List.begin(), p_List.end());
@@ -54,8 +51,7 @@ class StaticArray
 
     // This constructor WONT include the case M == Capacity (ie, copy constructor)
     template <SizeType M>
-    constexpr StaticArray(const StaticArray<ValueType, M, Traits> &p_Other)
-        : m_Size(p_Other.GetSize())
+    constexpr StaticArray(const StaticArray<ValueType, M, Traits> &p_Other) : m_Size(p_Other.GetSize())
     {
         if constexpr (M > Capacity)
         {
@@ -65,9 +61,7 @@ class StaticArray
     }
 
     // This constructor WONT include the case M == Capacity (ie, move constructor)
-    template <SizeType M>
-    constexpr StaticArray(StaticArray<ValueType, M, Traits> &&p_Other)
-        : m_Size(p_Other.GetSize())
+    template <SizeType M> constexpr StaticArray(StaticArray<ValueType, M, Traits> &&p_Other) : m_Size(p_Other.GetSize())
     {
         if constexpr (M > Capacity)
         {
@@ -183,7 +177,7 @@ class StaticArray
      * @param p_Value The value to insert.
      */
     template <typename U>
-        requires(std::is_convertible_v<NoCVRef<ValueType>, NoCVRef<U>>)
+        requires(std::is_convertible_v<std::remove_cvref_t<ValueType>, std::remove_cvref_t<U>>)
     constexpr void Insert(const Iterator p_Pos, U &&p_Value)
     {
         TKIT_ASSERT(!IsFull(), "[TOOLKIT][STAT-ARRAY] Container is already full");

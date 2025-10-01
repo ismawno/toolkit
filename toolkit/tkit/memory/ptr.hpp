@@ -6,9 +6,6 @@
 
 namespace TKit
 {
-// I really tried to use this concept, but msvc wont fucking let me
-// concept RCounted = std::is_base_of_v<RC<typename T::CountedType>, T>;
-
 // This is a small homemade implementation of a reference counter to avoid the shared_ptr's allocations overhead.
 // This way, the reference counter is stored in the object itself. Any object that wishes to be reference counted
 // should inherit from this class

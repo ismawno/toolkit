@@ -6,6 +6,7 @@
 #endif
 
 #include "tkit/multiprocessing/task.hpp"
+#include "tkit/utils/alias.hpp"
 #include <type_traits>
 
 namespace TKit

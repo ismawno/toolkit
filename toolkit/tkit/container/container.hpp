@@ -2,10 +2,16 @@
 
 #include "tkit/memory/memory.hpp"
 #include "tkit/utils/logging.hpp"
-#include "tkit/utils/concepts.hpp"
 
 namespace TKit::Container
 {
+
+template <typename T>
+concept Iterable = requires(T a) {
+    { a.begin() } -> std::input_iterator;
+    { a.end() } -> std::input_iterator;
+};
+
 template <typename T, typename SType = usize> struct ArrayTraits
 {
     using ValueType = T;
@@ -22,22 +28,21 @@ template <typename Traits> struct ArrayTools
     using ConstIterator = typename Traits::ConstIterator;
 
     template <typename It>
-    static constexpr void CopyConstructFromRange(const Iterator p_DstBegin, const It p_SrcBegin,
-                                                 const It p_SrcEnd)
+    static constexpr void CopyConstructFromRange(const Iterator p_DstBegin, const It p_SrcBegin, const It p_SrcEnd)
     {
         using T = decltype(*p_SrcBegin);
-        if constexpr (std::is_trivially_copyable_v<ValueType> && std::is_same_v<NoCVRef<T>, NoCVRef<ValueType>>)
+        if constexpr (std::is_trivially_copyable_v<ValueType> &&
+                      std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<ValueType>>)
             Memory::ForwardCopy(p_DstBegin, p_SrcBegin, p_SrcEnd);
         else
             Memory::ConstructRangeCopy(p_DstBegin, p_SrcBegin, p_SrcEnd);
     }
     template <typename It>
-    static constexpr void MoveConstructFromRange(const Iterator p_DstBegin, const It p_SrcBegin,
-                                                 const It p_SrcEnd)
+    static constexpr void MoveConstructFromRange(const Iterator p_DstBegin, const It p_SrcBegin, const It p_SrcEnd)
     {
         using T = decltype(*p_SrcBegin);
         if constexpr (std::is_trivially_copyable_v<ValueType> && std::is_trivially_move_constructible_v<ValueType> &&
-                      std::is_same_v<NoCVRef<T>, NoCVRef<ValueType>>)
+                      std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<ValueType>>)
             Memory::ForwardMove(p_DstBegin, p_SrcBegin, p_SrcEnd);
         else
             Memory::ConstructRangeMove(p_DstBegin, p_SrcBegin, p_SrcEnd);
@@ -51,7 +56,8 @@ template <typename Traits> struct ArrayTools
         const SizeType srcSize = static_cast<SizeType>(std::distance(p_SrcBegin, p_SrcEnd));
 
         using T = decltype(*p_SrcBegin);
-        if constexpr (std::is_trivially_copyable_v<ValueType> && std::is_same_v<NoCVRef<T>, NoCVRef<ValueType>>)
+        if constexpr (std::is_trivially_copyable_v<ValueType> &&
+                      std::is_same_v<std::remove_cvref_t<T>, std::remove_cvref_t<ValueType>>)
         {
             Memory::ForwardCopy(p_DstBegin, p_SrcBegin, p_SrcEnd);
             if constexpr (!std::is_trivially_destructible_v<ValueType>)
@@ -136,8 +142,7 @@ template <typename Traits> struct ArrayTools
      * @return The amount of elements inserted.
      */
     template <typename It>
-    static constexpr SizeType Insert(const Iterator p_End, const Iterator p_Pos, const It p_SrcBegin,
-                                     const It p_SrcEnd)
+    static constexpr SizeType Insert(const Iterator p_End, const Iterator p_Pos, const It p_SrcBegin, const It p_SrcEnd)
     {
         TKIT_ASSERT(p_SrcBegin <= p_SrcEnd, "[TOOLKIT][CONTAINER] Begin iterator is greater than end iterator");
         if (p_Pos == p_End)
@@ -201,8 +206,7 @@ template <typename Traits> struct ArrayTools
             Memory::DestructFromIterator(p_End - 1);
     }
 
-    static constexpr SizeType RemoveOrdered(const Iterator p_End, const Iterator p_RemBegin,
-                                            const Iterator p_RemEnd)
+    static constexpr SizeType RemoveOrdered(const Iterator p_End, const Iterator p_RemBegin, const Iterator p_RemEnd)
     {
         TKIT_ASSERT(p_RemBegin <= p_RemEnd, "[TOOLKIT][CONTAINER] Begin iterator is greater than end iterator");
         // Copy/move the elements after the erased ones

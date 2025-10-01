@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tkit/utils/concepts.hpp"
+#include "tkit/utils/hash.hpp"
 
 namespace TKit
 {
