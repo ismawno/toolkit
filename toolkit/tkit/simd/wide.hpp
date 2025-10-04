@@ -3,23 +3,9 @@
 #include "tkit/container/array.hpp"
 #include <algorithm>
 
-namespace TKit
+namespace TKit::Detail
 {
-namespace Detail
-{
-template <typename T>
-concept Float = std::same_as<T, f32> || std::same_as<T, f64>;
-
-template <typename T>
-concept UnsignedInteger = std::same_as<T, u8> || std::same_as<T, u16> || std::same_as<T, u32> || std::same_as<T, u64>;
-template <typename T>
-concept SignedInteger = std::same_as<T, i8> || std::same_as<T, i16> || std::same_as<T, i32> || std::same_as<T, i64>;
-
-template <typename T>
-concept Integer = UnsignedInteger<T> || SignedInteger<T>;
-
-} // namespace Detail
-template <typename T, usize L = TKIT_SIMD_SIZE / sizeof(T), typename Traits = Container::ArrayTraits<T>> class Wide
+template <typename T, usize L, typename Traits = Container::ArrayTraits<T>> class Wide
 {
     static_assert(L > 0, "[TOOLKIT][SIMD] The amount of lanes must be greater than zero");
 
@@ -64,20 +50,19 @@ template <typename T, usize L = TKIT_SIMD_SIZE / sizeof(T), typename Traits = Co
         Memory::ForwardCopy(p_Data, m_Data.begin(), m_Data.end());
     }
 
-    friend constexpr Wide Min(const Wide &p_Left, const Wide &p_Right)
-    {
-        Wide wide;
-        for (SizeType i = 0; i < Lanes; ++i)
-            wide.m_Data[i] = std::min(p_Left.m_Data[i], p_Right.m_Data[i]);
-        return wide;
+#define CREATE_MIN_MAX(p_Name, p_Fun)                                                                                  \
+    friend constexpr Wide p_Name(const Wide &p_Left, const Wide &p_Right)                                              \
+    {                                                                                                                  \
+        Wide wide;                                                                                                     \
+        for (SizeType i = 0; i < Lanes; ++i)                                                                           \
+            wide.m_Data[i] = p_Fun(p_Left.m_Data[i], p_Right.m_Data[i]);                                               \
+        return wide;                                                                                                   \
     }
-    friend constexpr Wide Max(const Wide &p_Left, const Wide &p_Right)
-    {
-        Wide wide;
-        for (SizeType i = 0; i < Lanes; ++i)
-            wide.m_Data[i] = std::max(p_Left.m_Data[i], p_Right.m_Data[i]);
-        return wide;
-    }
+
+    CREATE_MIN_MAX(Min, std::min)
+    CREATE_MIN_MAX(Max, std::max)
+
+#undef CREATE_MIN_MAX
 
     friend constexpr Wide Select(const Mask p_Mask, const Wide &p_Left, const Wide &p_Right)
     {
@@ -87,42 +72,20 @@ template <typename T, usize L = TKIT_SIMD_SIZE / sizeof(T), typename Traits = Co
         return wide;
     }
 
-    friend constexpr T ReduceAdd(const Wide &p_Wide)
-    {
-        T val{};
-        for (SizeType i = 0; i < Lanes; ++i)
-            val += p_Wide[i];
-        return val;
+#define CREATE_ARITHMETIC_OP(p_Op)                                                                                     \
+    friend constexpr Wide operator p_Op(const Wide &p_Left, const Wide &p_Right)                                       \
+    {                                                                                                                  \
+        Wide wide;                                                                                                     \
+        for (SizeType i = 0; i < Lanes; ++i)                                                                           \
+            wide.m_Data[i] = p_Left.m_Data[i] p_Op p_Right.m_Data[i];                                                  \
+        return wide;                                                                                                   \
     }
 
-    friend constexpr Wide operator+(const Wide &p_Left, const Wide &p_Right)
-    {
-        Wide wide;
-        for (SizeType i = 0; i < Lanes; ++i)
-            wide.m_Data[i] = p_Left.m_Data[i] + p_Right.m_Data[i];
-        return wide;
-    }
-    friend constexpr Wide operator-(const Wide &p_Left, const Wide &p_Right)
-    {
-        Wide wide;
-        for (SizeType i = 0; i < Lanes; ++i)
-            wide.m_Data[i] = p_Left.m_Data[i] - p_Right.m_Data[i];
-        return wide;
-    }
-    friend constexpr Wide operator*(const Wide &p_Left, const Wide &p_Right)
-    {
-        Wide wide;
-        for (SizeType i = 0; i < Lanes; ++i)
-            wide.m_Data[i] = p_Left.m_Data[i] * p_Right.m_Data[i];
-        return wide;
-    }
-    friend constexpr Wide operator/(const Wide &p_Left, const Wide &p_Right)
-    {
-        Wide wide;
-        for (SizeType i = 0; i < Lanes; ++i)
-            wide.m_Data[i] = p_Left.m_Data[i] / p_Right.m_Data[i];
-        return wide;
-    }
+    CREATE_ARITHMETIC_OP(+)
+    CREATE_ARITHMETIC_OP(-)
+    CREATE_ARITHMETIC_OP(*)
+    CREATE_ARITHMETIC_OP(/)
+
     friend constexpr Wide operator-(const Wide &p_Other)
     {
         Wide wide;
@@ -130,6 +93,8 @@ template <typename T, usize L = TKIT_SIMD_SIZE / sizeof(T), typename Traits = Co
             wide.m_Data[i] = -p_Other.m_Data[i];
         return wide;
     }
+
+#undef CREATE_ARITHMETIC_OP
 
 #define CREATE_CMP_OP(p_Op)                                                                                            \
     friend constexpr Mask operator p_Op(const Wide &p_Left, const Wide &p_Right)                                       \
@@ -152,7 +117,15 @@ template <typename T, usize L = TKIT_SIMD_SIZE / sizeof(T), typename Traits = Co
 
 #undef CREATE_CMP_OP
 
+    friend constexpr T Reduce(const Wide &p_Wide)
+    {
+        T val{};
+        for (SizeType i = 0; i < Lanes; ++i)
+            val += p_Wide[i];
+        return val;
+    }
+
   private:
     Array<T, Lanes, Traits> m_Data;
-}; // namespace TKit
-} // namespace TKit
+};
+} // namespace TKit::Detail
