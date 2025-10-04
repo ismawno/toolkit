@@ -1,8 +1,9 @@
 #pragma once
 
 #include "tkit/utils/alias.hpp"
+#include <concepts>
 
-namespace TKit
+namespace TKit::Detail
 {
 template <typename T>
 concept Float = std::same_as<T, f32> || std::same_as<T, f64>;
@@ -15,4 +16,11 @@ concept SignedInteger = std::same_as<T, i8> || std::same_as<T, i16> || std::same
 template <typename T>
 concept Integer = UnsignedInteger<T> || SignedInteger<T>;
 
-} // namespace TKit
+template <usize Lanes> constexpr usize MaskSize()
+{
+    if constexpr (Lanes < 8)
+        return 8;
+    return Lanes;
+}
+
+} // namespace TKit::Detail

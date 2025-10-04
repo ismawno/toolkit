@@ -1,4 +1,5 @@
 #include "tkit/multiprocessing/task.hpp"
+#include "tkit/utils/alias.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <thread>
 #include <chrono>

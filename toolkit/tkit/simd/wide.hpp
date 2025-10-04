@@ -1,14 +1,15 @@
 #pragma once
 
 #include "tkit/container/array.hpp"
+#include "tkit/simd/utils.hpp"
 #include <algorithm>
 
 namespace TKit::Detail
 {
-template <typename T, usize L, typename Traits = Container::ArrayTraits<T>> class Wide
+template <typename T, usize L, typename Traits = Container::ArrayTraits<T>>
+    requires(L > 0)
+class Wide
 {
-    static_assert(L > 0, "[TOOLKIT][SIMD] The amount of lanes must be greater than zero");
-
   public:
     using ValueType = typename Traits::ValueType;
     using SizeType = typename Traits::SizeType;
@@ -16,7 +17,17 @@ template <typename T, usize L, typename Traits = Container::ArrayTraits<T>> clas
     static constexpr SizeType Lanes = L;
     static constexpr SizeType Alignment = alignof(T);
 
-    using Mask = u<Lanes>;
+    using Mask = u<MaskSize<Lanes>()>;
+    using BitMask = Mask;
+
+    static constexpr BitMask PackMask(const Mask &p_Mask)
+    {
+        return p_Mask;
+    }
+    static constexpr BitMask WidenMask(const BitMask &p_Mask)
+    {
+        return p_Mask;
+    }
 
     constexpr Wide() = default;
     constexpr Wide(const T *p_Data)
@@ -45,13 +56,25 @@ template <typename T, usize L, typename Traits = Container::ArrayTraits<T>> clas
         return m_Data[p_Index];
     }
 
-    constexpr void Store(T *p_Data) const
+    constexpr void StoreAligned(T *p_Data) const
     {
         Memory::ForwardCopy(p_Data, m_Data.begin(), m_Data.end());
     }
+    constexpr void StoreUnaligned(T *p_Data) const
+    {
+        Memory::ForwardCopy(p_Data, m_Data.begin(), m_Data.end());
+    }
+    constexpr static Wide LoadAligned(const T *p_Data)
+    {
+        return Wide{p_Data};
+    }
+    constexpr static Wide LoadUnaligned(const T *p_Data)
+    {
+        return Wide{p_Data};
+    }
 
 #define CREATE_MIN_MAX(p_Name, p_Fun)                                                                                  \
-    friend constexpr Wide p_Name(const Wide &p_Left, const Wide &p_Right)                                              \
+    static constexpr Wide p_Name(const Wide &p_Left, const Wide &p_Right)                                              \
     {                                                                                                                  \
         Wide wide;                                                                                                     \
         for (SizeType i = 0; i < Lanes; ++i)                                                                           \
@@ -64,7 +87,7 @@ template <typename T, usize L, typename Traits = Container::ArrayTraits<T>> clas
 
 #undef CREATE_MIN_MAX
 
-    friend constexpr Wide Select(const Mask p_Mask, const Wide &p_Left, const Wide &p_Right)
+    static constexpr Wide Select(const Mask p_Mask, const Wide &p_Left, const Wide &p_Right)
     {
         Wide wide;
         for (SizeType i = 0; i < Lanes; ++i)
@@ -117,7 +140,7 @@ template <typename T, usize L, typename Traits = Container::ArrayTraits<T>> clas
 
 #undef CREATE_CMP_OP
 
-    friend constexpr T Reduce(const Wide &p_Wide)
+    static constexpr T Reduce(const Wide &p_Wide)
     {
         T val{};
         for (SizeType i = 0; i < Lanes; ++i)

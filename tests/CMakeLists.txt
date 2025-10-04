@@ -33,6 +33,7 @@ set(SOURCES
     tests/multiprocessing/for_each.cpp
     tests/multiprocessing/chase_lev_deque.cpp
     tests/multiprocessing/mpmc_stack.cpp
+    tests/simd/wide.cpp
     tests/utils/result.cpp
     tests/utils/hash.cpp)
 

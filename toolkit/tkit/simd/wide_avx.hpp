@@ -3,7 +3,7 @@
 #include "tkit/preprocessor/system.hpp"
 #if defined(TKIT_SIMD_AVX) || defined(TKIT_SIMD_AVX2)
 #    include "tkit/memory/memory.hpp"
-#    include "tkit/simd/concepts.hpp"
+#    include "tkit/simd/utils.hpp"
 #    include <immintrin.h>
 
 namespace TKit::Detail::AVX
@@ -35,13 +35,6 @@ template <Integer T> struct TypeSelector<T>
 };
 #    endif
 
-template <usize Lanes> usize MaskSize()
-{
-    if constexpr (Lanes < 8)
-        return 8;
-    return Lanes;
-}
-
 template <Arithmetic T, typename Traits> class Wide
 {
     using m256 = TypeSelector<T>::Type;
@@ -53,7 +46,63 @@ template <Arithmetic T, typename Traits> class Wide
 
     static constexpr SizeType Lanes = TKIT_SIMD_AVX_SIZE / sizeof(T);
     static constexpr SizeType Alignment = 32;
-    using Mask = u<MaskSize<Lanes>()>;
+
+    using Mask = m256;
+    using BitMask = u<MaskSize<Lanes>()>;
+
+#    define CREATE_BAD_BRANCH(...)                                                                                     \
+        else                                                                                                           \
+        {                                                                                                              \
+            TKIT_ERROR("[TOOLKIT][AVX] This should not happen...");                                                    \
+            return __VA_ARGS__;                                                                                        \
+        }
+
+    static constexpr BitMask PackMask(const Mask &p_Mask)
+    {
+        if constexpr (Equals<__m256>)
+        {
+            const u32 bits = static_cast<u32>(_mm256_movemask_ps(p_Mask));
+            return static_cast<BitMask>(bits & ((1u << Lanes) - 1u));
+        }
+        else if constexpr (Equals<__m256d>)
+        {
+            const u32 bits = static_cast<u32>(_mm256_movemask_pd(p_Mask));
+            return static_cast<BitMask>(bits & ((1u << Lanes) - 1u));
+        }
+#    ifdef TKIT_SIMD_AVX2
+        else if constexpr (Equals<__m256i>)
+        {
+            const u32 byteMask = static_cast<u32>(_mm256_movemask_epi8(p_Mask));
+
+            BitMask packed = 0;
+            for (SizeType i = 0; i < Lanes; ++i)
+                packed |= ((byteMask >> (i * sizeof(T))) & 1u) << i;
+
+            return packed;
+        }
+#    endif
+        CREATE_BAD_BRANCH(0)
+    }
+
+    static constexpr Mask WidenMask(const BitMask p_Bits)
+    {
+        using Integer = u<sizeof(T) * 8>;
+        alignas(Alignment) Integer tmp[Lanes];
+
+        for (SizeType i = 0; i < Lanes; ++i)
+            tmp[i] = (p_Bits & (BitMask{1} << i)) ? static_cast<Integer>(-1) : Integer{0};
+
+        if constexpr (Equals<__m256>)
+            return _mm256_castps_si256(_mm256_load_ps(reinterpret_cast<const f32 *>(tmp)));
+        else if constexpr (Equals<__m256d>)
+            return _mm256_castpd_si256(_mm256_load_pd(reinterpret_cast<const f64 *>(tmp)));
+#    ifdef TKIT_SIMD_AVX2
+        else if constexpr (Equals<__m256i>)
+            return _mm256_load_si256(reinterpret_cast<const __m256i *>(tmp));
+#    endif
+        else
+            return Mask{};
+    }
 
     constexpr Wide() = default;
     constexpr Wide(const m256 p_Data) : m_Data(p_Data)
@@ -76,13 +125,6 @@ template <Arithmetic T, typename Traits> class Wide
         m_Data = load(tmp);
     }
 
-#    define CREATE_BAD_BRANCH(...)                                                                                     \
-        else                                                                                                           \
-        {                                                                                                              \
-            TKIT_ERROR("[TOOLKIT][AVX] This should not happen...");                                                    \
-            return __VA_ARGS__;                                                                                        \
-        }
-
     constexpr static Wide LoadAligned(const T *p_Data)
     {
         return Wide{loadAligned(p_Data)};
@@ -92,7 +134,7 @@ template <Arithmetic T, typename Traits> class Wide
         return Wide{loadUnaligned(p_Data)};
     }
 
-    constexpr void Store(T *p_Data) const
+    constexpr void StoreAligned(T *p_Data) const
     {
         TKIT_ASSERT(Memory::IsAligned(p_Data, Alignment),
                     "[TOOLKIT][AVX] Data must be aligned to {} bytes to use the AVX SIMD set", Alignment);
@@ -107,10 +149,23 @@ template <Arithmetic T, typename Traits> class Wide
         CREATE_BAD_BRANCH()
     }
 
+    constexpr void StoreUnaligned(T *p_Data) const
+    {
+        if constexpr (Equals<__m256>)
+            _mm256_storeu_ps(p_Data, m_Data);
+        else if constexpr (Equals<__m256d>)
+            _mm256_storeu_pd(p_Data, m_Data);
+#    ifdef TKIT_SIMD_AVX2
+        else if constexpr (Equals<__m256i>)
+            _mm256_storeu_si256(reinterpret_cast<__m256i *>(p_Data), m_Data);
+#    endif
+        CREATE_BAD_BRANCH()
+    }
+
     constexpr const ValueType At(const SizeType p_Index) const
     {
         alignas(Alignment) T tmp[Lanes];
-        Store(tmp);
+        StoreAligned(tmp);
         return tmp[p_Index];
     }
     constexpr ValueType &At(const SizeType) = delete;
@@ -120,28 +175,15 @@ template <Arithmetic T, typename Traits> class Wide
     }
     constexpr ValueType &operator[](const SizeType) = delete;
 
-    friend constexpr Wide Select(const Mask p_Mask, const Wide &p_Left, const Wide &p_Right)
+    static constexpr Wide Select(const Mask &p_Mask, const Wide &p_Left, const Wide &p_Right)
     {
-        alignas(Alignment) u32 bits[Lanes];
-        for (SizeType i = 0; i < Lanes; ++i)
-            bits[i] = (p_Mask & (Mask{1} << i)) ? 0xFFFFFFFFu : 0u;
-
-        const __m256i wideBits = _mm256_load_si256(reinterpret_cast<const __m256i *>(bits));
-
         if constexpr (Equals<__m256>)
-        {
-            const __m256 mv = _mm256_castsi256_ps(wideBits);
-            return Wide{_mm256_or_ps(_mm256_and_ps(mv, p_Left.m_Data), _mm256_andnot_ps(mv, p_Right.m_Data))};
-        }
+            return Wide{_mm256_blendv_ps(p_Left, p_Right, p_Mask)};
         else if constexpr (Equals<__m256d>)
-        {
-            const __m256d mv = _mm256_castsi256_pd(wideBits);
-            return Wide{_mm256_or_pd(_mm256_and_pd(mv, p_Left.m_Data), _mm256_andnot_pd(mv, p_Right.m_Data))};
-        }
+            return Wide{_mm256_blendv_pd(p_Left, p_Right, p_Mask)};
 #    ifdef TKIT_SIMD_AVX2
         else if constexpr (Equals<__m256i>)
-            return Wide{_mm256_or_si256(_mm256_and_si256(wideBits, p_Left.m_Data),
-                                        _mm256_andnot_si256(wideBits, p_Right.m_Data))};
+            return Wide{_mm256_blendv_epi8(p_Left, p_Right, p_Mask)};
 #    endif
         CREATE_BAD_BRANCH(Wide{})
     }
@@ -165,7 +207,7 @@ template <Arithmetic T, typename Traits> class Wide
 #    endif
 
 #    define CREATE_MIN_MAX(p_Name, p_Op)                                                                               \
-        friend constexpr Wide p_Name(const Wide &p_Left, const Wide &p_Right)                                          \
+        static constexpr Wide p_Name(const Wide &p_Left, const Wide &p_Right)                                          \
         {                                                                                                              \
             if constexpr (Equals<__m256>)                                                                              \
                 return Wide{_mm256_##p_Op##_ps(p_Left.m_Data, p_Right.m_Data)};                                        \
@@ -294,25 +336,14 @@ template <Arithmetic T, typename Traits> class Wide
             else if constexpr (Equals<__m256i>)                                                                        \
             {                                                                                                          \
                 if constexpr (Lanes == 4)                                                                              \
-                {                                                                                                      \
-                    const __m256i cmp = _mm256_##p_Op##_epi64(p_Left.m_Data, p_Right.m_Data);                          \
-                    return static_cast<Mask>(_mm256_movemask_epi8(cmp));                                               \
-                }                                                                                                      \
+                    return _mm256_##p_Op##_epi64(p_Left.m_Data, p_Right.m_Data);                                       \
                 else if constexpr (Lanes == 8)                                                                         \
-                {                                                                                                      \
-                    const __m256i cmp = _mm256_##p_Op##_epi32(p_Left.m_Data, p_Right.m_Data);                          \
-                    return static_cast<Mask>(_mm256_movemask_epi8(cmp));                                               \
-                }                                                                                                      \
+                    return _mm256_##p_Op##_epi32(p_Left.m_Data, p_Right.m_Data);                                       \
                 else if constexpr (Lanes == 16)                                                                        \
-                {                                                                                                      \
-                    const __m256i cmp = _mm256_##p_Op##_epi16(p_Left.m_Data, p_Right.m_Data);                          \
-                    return static_cast<Mask>(_mm256_movemask_epi8(cmp));                                               \
-                }                                                                                                      \
+                    return _mm256_##p_Op##_epi16(p_Left.m_Data, p_Right.m_Data);                                       \
                 else if constexpr (Lanes == 32)                                                                        \
-                {                                                                                                      \
-                    const __m256i cmp = _mm256_##p_Op##_epi8(p_Left.m_Data, p_Right.m_Data);                           \
-                    return static_cast<Mask>(_mm256_movemask_epi8(cmp));                                               \
-                }                                                                                                      \
+                    return _mm256_##p_Op##_epi8(p_Left.m_Data, p_Right.m_Data);                                        \
+                CREATE_BAD_BRANCH(Mask{})                                                                              \
             }
 #    else
 #        define CREATE_CMP_OP_INT(p_Op)
@@ -322,19 +353,9 @@ template <Arithmetic T, typename Traits> class Wide
         friend constexpr Mask operator p_Op(const Wide &p_Left, const Wide &p_Right)                                   \
         {                                                                                                              \
             if constexpr (Equals<__m256>)                                                                              \
-            {                                                                                                          \
-                const __m256 cmp = _mm256_cmp_ps(p_Left.m_Data, p_Right.m_Data, p_Flag);                               \
-                const i32 lo = _mm_movemask_ps(_mm256_castps256_ps128(cmp));                                           \
-                const i32 hi = _mm_movemask_ps(_mm256_extractf128_ps(cmp, 1));                                         \
-                return static_cast<Mask>(static_cast<u32>(lo) | (static_cast<u32>(hi) << 4));                          \
-            }                                                                                                          \
+                return _mm256_cmp_ps(p_Left.m_Data, p_Right.m_Data, p_Flag);                                           \
             else if constexpr (Equals<__m256d>)                                                                        \
-            {                                                                                                          \
-                const __m256d cmp = _mm256_cmp_pd(p_Left.m_Data, p_Right.m_Data, p_Flag);                              \
-                const i32 lo = _mm_movemask_pd(_mm256_castpd256_pd128(cmp));                                           \
-                const i32 hi = _mm_movemask_pd(_mm256_extractf128_pd(cmp, 1));                                         \
-                return static_cast<Mask>(static_cast<u32>(lo) | (static_cast<u32>(hi) << 2));                          \
-            }                                                                                                          \
+                return _mm256_cmp_pd(p_Left.m_Data, p_Right.m_Data, p_Flag);                                           \
             CREATE_CMP_OP_INT(p_IntOpName)                                                                             \
         }
 
@@ -412,7 +433,7 @@ template <Arithmetic T, typename Traits> class Wide
             }                                                                                                          \
         }
 
-    friend constexpr T Reduce(const Wide &p_Wide)
+    static constexpr T Reduce(const Wide &p_Wide)
     {
         if constexpr (Equals<__m256>)
         {
@@ -553,6 +574,6 @@ template <Arithmetic T, typename Traits> class Wide
 #    undef CREATE_BAD_BRANCH
 
     m256 m_Data;
-};
+}; // namespace TKit::Detail::AVX
 } // namespace TKit::Detail::AVX
 #endif
