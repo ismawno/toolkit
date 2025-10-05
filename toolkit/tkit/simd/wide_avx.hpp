@@ -96,16 +96,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         for (SizeType i = 0; i < Lanes; ++i)
             tmp[i] = (p_Bits & (BitMask{1} << i)) ? static_cast<Integer>(-1) : Integer{0};
 
-        if constexpr (Equals<__m256>)
-            return _mm256_castps_si256(_mm256_load_ps(reinterpret_cast<const f32 *>(tmp)));
-        else if constexpr (Equals<__m256d>)
-            return _mm256_castpd_si256(_mm256_load_pd(reinterpret_cast<const f64 *>(tmp)));
-#    ifdef TKIT_SIMD_AVX2
-        else if constexpr (Equals<__m256i>)
-            return _mm256_load_si256(reinterpret_cast<const __m256i *>(tmp));
-#    endif
-        else
-            return Mask{};
+        return loadAligned(reinterpret_cast<const T *>(tmp));
     }
 
     constexpr Wide() = default;
@@ -189,12 +180,12 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     static constexpr Wide Select(const Wide &p_Left, const Wide &p_Right, const Mask &p_Mask)
     {
         if constexpr (Equals<__m256>)
-            return Wide{_mm256_blendv_ps(p_Left, p_Right, p_Mask)};
+            return Wide{_mm256_blendv_ps(p_Right.m_Data, p_Left.m_Data, p_Mask)};
         else if constexpr (Equals<__m256d>)
-            return Wide{_mm256_blendv_pd(p_Left, p_Right, p_Mask)};
+            return Wide{_mm256_blendv_pd(p_Right.m_Data, p_Left.m_Data, p_Mask)};
 #    ifdef TKIT_SIMD_AVX2
         else if constexpr (Equals<__m256i>)
-            return Wide{_mm256_blendv_epi8(p_Left, p_Right, p_Mask)};
+            return Wide{_mm256_blendv_epi8(p_Right.m_Data, p_Left.m_Data, p_Mask)};
 #    endif
         CREATE_BAD_BRANCH(Wide{})
     }
