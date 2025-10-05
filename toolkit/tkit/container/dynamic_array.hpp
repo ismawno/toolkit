@@ -140,7 +140,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
      * @param p_Value The value to insert.
      */
     template <typename U>
-        requires(std::is_convertible_v<std::remove_cvref_t<ValueType>, std::remove_cvref_t<U>>)
+        requires(std::convertible_to<std::remove_cvref_t<ValueType>, std::remove_cvref_t<U>>)
     constexpr void Insert(Iterator p_Pos, U &&p_Value)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][DYN-ARRAY] Iterator is out of bounds");

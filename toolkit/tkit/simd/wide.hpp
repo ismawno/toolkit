@@ -85,9 +85,7 @@ class Wide
     CREATE_MIN_MAX(Min, std::min)
     CREATE_MIN_MAX(Max, std::max)
 
-#undef CREATE_MIN_MAX
-
-    static constexpr Wide Select(const Mask p_Mask, const Wide &p_Left, const Wide &p_Right)
+    static constexpr Wide Select(const Wide &p_Left, const Wide &p_Right, const Mask p_Mask)
     {
         Wide wide;
         for (SizeType i = 0; i < Lanes; ++i)
@@ -101,6 +99,20 @@ class Wide
         Wide wide;                                                                                                     \
         for (SizeType i = 0; i < Lanes; ++i)                                                                           \
             wide.m_Data[i] = p_Left.m_Data[i] p_Op p_Right.m_Data[i];                                                  \
+        return wide;                                                                                                   \
+    }                                                                                                                  \
+    friend constexpr Wide operator p_Op(const Wide &p_Left, const T p_Right)                                           \
+    {                                                                                                                  \
+        Wide wide;                                                                                                     \
+        for (SizeType i = 0; i < Lanes; ++i)                                                                           \
+            wide.m_Data[i] = p_Left.m_Data[i] p_Op p_Right;                                                            \
+        return wide;                                                                                                   \
+    }                                                                                                                  \
+    friend constexpr Wide operator p_Op(const T p_Left, const Wide &p_Right)                                           \
+    {                                                                                                                  \
+        Wide wide;                                                                                                     \
+        for (SizeType i = 0; i < Lanes; ++i)                                                                           \
+            wide.m_Data[i] = p_Left p_Op p_Right.m_Data[i];                                                            \
         return wide;                                                                                                   \
     }
 
@@ -117,7 +129,18 @@ class Wide
         return wide;
     }
 
-#undef CREATE_ARITHMETIC_OP
+#define CREATE_BITSHIFT_OP(p_Op)                                                                                       \
+    friend constexpr Wide operator p_Op(const Wide &p_Left, const i32 p_Shift)                                         \
+        requires(Integer<T>)                                                                                           \
+    {                                                                                                                  \
+        Wide wide;                                                                                                     \
+        for (SizeType i = 0; i < Lanes; ++i)                                                                           \
+            wide.m_Data[i] = p_Left.m_Data[i] p_Op p_Shift;                                                            \
+        return wide;                                                                                                   \
+    }
+
+    CREATE_BITSHIFT_OP(<<)
+    CREATE_BITSHIFT_OP(>>)
 
 #define CREATE_CMP_OP(p_Op)                                                                                            \
     friend constexpr Mask operator p_Op(const Wide &p_Left, const Wide &p_Right)                                       \
@@ -138,8 +161,6 @@ class Wide
     CREATE_CMP_OP(<=)
     CREATE_CMP_OP(>=)
 
-#undef CREATE_CMP_OP
-
     static constexpr T Reduce(const Wide &p_Wide)
     {
         T val{};
@@ -150,5 +171,10 @@ class Wide
 
   private:
     Array<T, Lanes, Traits> m_Data;
-};
+}; // namespace TKit::Detail
 } // namespace TKit::Detail
+
+#undef CREATE_MIN_MAX
+#undef CREATE_CMP_OP
+#undef CREATE_ARITHMETIC_OP
+#undef CREATE_BITSHIFT_OP

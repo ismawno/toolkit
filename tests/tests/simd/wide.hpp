@@ -85,6 +85,24 @@ template <typename Wide> void RunWideTests()
             REQUIRE(neg[i] == static_cast<T>(-a[i]));
         }
     }
+    SECTION("Scalar operators")
+    {
+        const Wide a{[](const SizeType p_Index) { return p_Index + 1; }};
+        const T b{static_cast<T>(10)};
+
+        const Wide add = a + b;
+        const Wide sub = b - a;
+        const Wide mul = a * b;
+        const Wide div = b / a;
+
+        for (SizeType i = 0; i < Lanes; ++i)
+        {
+            REQUIRE(add[i] == a[i] + b);
+            REQUIRE(sub[i] == static_cast<T>(b - a[i]));
+            REQUIRE(mul[i] == static_cast<T>(a[i] * b));
+            REQUIRE(div[i] == Catch::Approx(b / a[i]));
+        }
+    }
 
     SECTION("Comparison operators")
     {
@@ -131,11 +149,11 @@ template <typename Wide> void RunWideTests()
 
         const BitMask bmask = static_cast<BitMask>(0b01010101010101);
         const Mask mask = Wide::WidenMask(bmask);
-        const Wide sel = Wide::Select(mask, a, b);
+        const Wide sel = Wide::Select(a, b, mask);
 
         for (SizeType i = 0; i < Lanes; ++i)
         {
-            const bool chooseA = (mask >> i) & 1u;
+            const bool chooseA = (bmask >> i) & 1u;
             REQUIRE(sel[i] == (chooseA ? a[i] : b[i]));
         }
     }
@@ -145,6 +163,25 @@ template <typename Wide> void RunWideTests()
         const Wide w{[](const SizeType p_Index) { return p_Index + 1; }};
         const T expected = static_cast<T>((Lanes * (Lanes + 1)) / 2); // sum(1..Lanes)
         REQUIRE(Wide::Reduce(w) == Catch::Approx(expected));
+    }
+    if constexpr (std::is_integral_v<T>)
+    {
+        SECTION("Bit shift operators")
+        {
+            const Wide base{[](const SizeType p_Index) { return static_cast<T>(1u << p_Index); }};
+
+            const T shiftLeft = 3;
+            const Wide shiftedLeft = base << shiftLeft;
+
+            for (SizeType i = 0; i < Lanes; ++i)
+                REQUIRE(shiftedLeft[i] == static_cast<T>(base[i] << shiftLeft));
+
+            const T shiftRight = 7;
+            const Wide shiftedRight = base >> shiftRight;
+
+            for (SizeType i = 0; i < Lanes; ++i)
+                REQUIRE(shiftedRight[i] == static_cast<T>(base[i] >> shiftRight));
+        }
     }
 }
 

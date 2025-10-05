@@ -4,6 +4,15 @@
 using namespace TKit;
 using namespace TKit::Detail;
 
+TEST_CASE("SIMD: Base Wide f32", "[SIMD][Base][Wide][f32]")
+{
+    RunWideTests<Wide<f32, 8>>();
+}
+TEST_CASE("SIMD: Base Wide f64", "[SIMD][Base][Wide][f64]")
+{
+    RunWideTests<Wide<f64, 8>>();
+}
+
 TEST_CASE("SIMD: Base Wide u8", "[SIMD][Base][Wide][u8]")
 {
     RunWideTests<Wide<u8, 32>>();
@@ -37,3 +46,7 @@ TEST_CASE("SIMD: Base Wide i64", "[SIMD][Base][Wide][i64]")
 {
     RunWideTests<Wide<i64, 4>>();
 }
+
+// #if defined(TKIT_SIMD_AVX2) || defined(TKIT_SIMD_AVX)
+// #    include "wide_avx.hpp" // should be .cpp but intellisense complains
+// #endif

@@ -4,6 +4,7 @@
 #if defined(TKIT_SIMD_AVX) || defined(TKIT_SIMD_AVX2)
 #    include "tkit/memory/memory.hpp"
 #    include "tkit/simd/utils.hpp"
+#    include "tkit/container/container.hpp"
 #    include <immintrin.h>
 
 namespace TKit::Detail::AVX
@@ -35,7 +36,10 @@ template <Integer T> struct TypeSelector<T>
 };
 #    endif
 
-template <Arithmetic T, typename Traits> class Wide
+TKIT_COMPILER_WARNING_IGNORE_PUSH()
+TKIT_GCC_WARNING_IGNORE("-Wignored-attributes")
+TKIT_CLANG_WARNING_IGNORE("-Wignored-attributes")
+template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 {
     using m256 = TypeSelector<T>::Type;
     template <typename E> static constexpr bool Equals = std::is_same_v<m256, E>;
@@ -122,7 +126,7 @@ template <Arithmetic T, typename Traits> class Wide
         alignas(Alignment) T tmp[Lanes];
         for (SizeType i = 0; i < Lanes; ++i)
             tmp[i] = static_cast<T>(p_Callable(i));
-        m_Data = load(tmp);
+        m_Data = loadAligned(tmp);
     }
 
     constexpr static Wide LoadAligned(const T *p_Data)
@@ -134,32 +138,41 @@ template <Arithmetic T, typename Traits> class Wide
         return Wide{loadUnaligned(p_Data)};
     }
 
-    constexpr void StoreAligned(T *p_Data) const
+    constexpr static void StoreAligned(T *p_Data, const Wide &p_Wide)
     {
         TKIT_ASSERT(Memory::IsAligned(p_Data, Alignment),
                     "[TOOLKIT][AVX] Data must be aligned to {} bytes to use the AVX SIMD set", Alignment);
         if constexpr (Equals<__m256>)
-            _mm256_store_ps(p_Data, m_Data);
+            _mm256_store_ps(p_Data, p_Wide.m_Data);
         else if constexpr (Equals<__m256d>)
-            _mm256_store_pd(p_Data, m_Data);
+            _mm256_store_pd(p_Data, p_Wide.m_Data);
 #    ifdef TKIT_SIMD_AVX2
         else if constexpr (Equals<__m256i>)
-            _mm256_store_si256(reinterpret_cast<__m256i *>(p_Data), m_Data);
+            _mm256_store_si256(reinterpret_cast<__m256i *>(p_Data), p_Wide.m_Data);
 #    endif
         CREATE_BAD_BRANCH()
     }
 
-    constexpr void StoreUnaligned(T *p_Data) const
+    constexpr static void StoreUnaligned(T *p_Data, const Wide &p_Wide)
     {
         if constexpr (Equals<__m256>)
-            _mm256_storeu_ps(p_Data, m_Data);
+            _mm256_storeu_ps(p_Data, p_Wide.m_Data);
         else if constexpr (Equals<__m256d>)
-            _mm256_storeu_pd(p_Data, m_Data);
+            _mm256_storeu_pd(p_Data, p_Wide.m_Data);
 #    ifdef TKIT_SIMD_AVX2
         else if constexpr (Equals<__m256i>)
-            _mm256_storeu_si256(reinterpret_cast<__m256i *>(p_Data), m_Data);
+            _mm256_storeu_si256(reinterpret_cast<__m256i *>(p_Data), p_Wide.m_Data);
 #    endif
         CREATE_BAD_BRANCH()
+    }
+
+    constexpr void StoreAligned(T *p_Data) const
+    {
+        StoreAligned(p_Data, *this);
+    }
+    constexpr void StoreUnaligned(T *p_Data) const
+    {
+        StoreUnaligned(p_Data, *this);
     }
 
     constexpr const ValueType At(const SizeType p_Index) const
@@ -168,14 +181,12 @@ template <Arithmetic T, typename Traits> class Wide
         StoreAligned(tmp);
         return tmp[p_Index];
     }
-    constexpr ValueType &At(const SizeType) = delete;
     constexpr const ValueType operator[](const SizeType p_Index) const
     {
         return At(p_Index);
     }
-    constexpr ValueType &operator[](const SizeType) = delete;
 
-    static constexpr Wide Select(const Mask &p_Mask, const Wide &p_Left, const Wide &p_Right)
+    static constexpr Wide Select(const Wide &p_Left, const Wide &p_Right, const Mask &p_Mask)
     {
         if constexpr (Equals<__m256>)
             return Wide{_mm256_blendv_ps(p_Left, p_Right, p_Mask)};
@@ -219,9 +230,6 @@ template <Arithmetic T, typename Traits> class Wide
 
     CREATE_MIN_MAX(Min, min)
     CREATE_MIN_MAX(Max, max)
-
-#    undef CREATE_MIN_MAX
-#    undef CREATE_MIN_MAX_INT
 
 #    ifdef TKIT_SIMD_AVX2
 #        define CREATE_ARITHMETIC_OP_INT(p_Op)                                                                         \
@@ -280,15 +288,6 @@ template <Arithmetic T, typename Traits> class Wide
                 }
                 else
                 {
-                    const auto srai_epi64_32 = [](const __m256i p_Data) {
-                        const __m256i shifted = _mm256_srli_epi64(p_Data, 32);
-
-                        __m256i sign = _mm256_srai_epi32(_mm256_shuffle_epi32(p_Data, _MM_SHUFFLE(3, 3, 1, 1)), 31);
-                        sign = _mm256_slli_epi64(sign, 32);
-
-                        return _mm256_or_si256(shifted, sign);
-                    };
-
                     lhi = srai_epi64_32(p_Left.m_Data, 32);
                     rhi = srai_epi64_32(p_Right.m_Data, 32);
                 }
@@ -328,21 +327,61 @@ template <Arithmetic T, typename Traits> class Wide
         CREATE_BAD_BRANCH(Wide{})
     }
 
-#    undef CREATE_ARITHMETIC_OP
-#    undef CREATE_ARITHMETIC_OP_INT
+    friend constexpr Wide operator/(const Wide &p_Left, const Wide &p_Right)
+    {
+        if constexpr (Equals<__m256>)
+            return Wide{_mm256_div_ps(p_Left.m_Data, p_Right.m_Data)};
+        else if constexpr (Equals<__m256d>)
+            return Wide{_mm256_div_pd(p_Left.m_Data, p_Right.m_Data)};
+#    ifdef TKIT_SIMD_AVX2
+        else if constexpr (Equals<__m256i>)
+        {
+            alignas(Alignment) T left[Lanes];
+            alignas(Alignment) T right[Lanes];
+            alignas(Alignment) T result[Lanes];
+
+            Wide::StoreAligned(left, p_Left);
+            Wide::StoreAligned(right, p_Right);
+            for (SizeType i = 0; i < Lanes; ++i)
+                result[i] = left[i] / right[i];
+
+            return Wide{result};
+        }
+#    endif
+    }
+
+    friend constexpr Wide operator-(const Wide &p_Other)
+    {
+        return p_Other * static_cast<T>(-1);
+    }
+
+#    define CREATE_SCALAR_OP(p_Op)                                                                                     \
+        friend constexpr Wide operator p_Op(const Wide &p_Left, const T p_Right)                                       \
+        {                                                                                                              \
+            return p_Left p_Op Wide{p_Right};                                                                          \
+        }                                                                                                              \
+        friend constexpr Wide operator p_Op(const T p_Left, const Wide &p_Right)                                       \
+        {                                                                                                              \
+            return Wide{p_Left} p_Op p_Right;                                                                          \
+        }
+
+    CREATE_SCALAR_OP(+)
+    CREATE_SCALAR_OP(-)
+    CREATE_SCALAR_OP(*)
+    CREATE_SCALAR_OP(/)
 
 #    ifdef TKIT_SIMD_AVX2
 #        define CREATE_CMP_OP_INT(p_Op)                                                                                \
             else if constexpr (Equals<__m256i>)                                                                        \
             {                                                                                                          \
                 if constexpr (Lanes == 4)                                                                              \
-                    return _mm256_##p_Op##_epi64(p_Left.m_Data, p_Right.m_Data);                                       \
+                    return _mm256_cmp##p_Op##_epi64(p_Left.m_Data, p_Right.m_Data);                                    \
                 else if constexpr (Lanes == 8)                                                                         \
-                    return _mm256_##p_Op##_epi32(p_Left.m_Data, p_Right.m_Data);                                       \
+                    return _mm256_cmp##p_Op##_epi32(p_Left.m_Data, p_Right.m_Data);                                    \
                 else if constexpr (Lanes == 16)                                                                        \
-                    return _mm256_##p_Op##_epi16(p_Left.m_Data, p_Right.m_Data);                                       \
+                    return _mm256_cmp##p_Op##_epi16(p_Left.m_Data, p_Right.m_Data);                                    \
                 else if constexpr (Lanes == 32)                                                                        \
-                    return _mm256_##p_Op##_epi8(p_Left.m_Data, p_Right.m_Data);                                        \
+                    return _mm256_cmp##p_Op##_epi8(p_Left.m_Data, p_Right.m_Data);                                     \
                 CREATE_BAD_BRANCH(Mask{})                                                                              \
             }
 #    else
@@ -366,8 +405,52 @@ template <Arithmetic T, typename Traits> class Wide
     CREATE_CMP_OP(<=, _CMP_LE_OQ, le)
     CREATE_CMP_OP(>=, _CMP_GE_OQ, ge)
 
-#    undef CREATE_CMP_OP
-#    undef CREATE_CMP_OP_INT
+#    ifdef TKIT_SIMD_AVX2
+    friend constexpr Wide operator>>(const Wide &p_Left, const i32 p_Shift)
+        requires(Integer<T>)
+    {
+        if constexpr (Lanes == 4)
+        {
+            if constexpr (std::is_signed_v<T>)
+                return Wide{sra_epi64(p_Left.m_Data, p_Shift)};
+            else
+                return Wide{_mm256_srl_epi64(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
+        }
+        else if constexpr (Lanes == 8)
+        {
+            if constexpr (std::is_signed_v<T>)
+                return Wide{_mm256_sra_epi32(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
+            else
+                return Wide{_mm256_srl_epi32(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
+        }
+        else if constexpr (Lanes == 16)
+        {
+            if constexpr (std::is_signed_v<T>)
+                return Wide{_mm256_sra_epi16(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
+            else
+                return Wide{_mm256_srl_epi16(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
+        }
+        else if constexpr (Lanes == 32)
+        {
+            if constexpr (std::is_signed_v<T>)
+                return Wide{sra_epi8(p_Left.m_Data, p_Shift)};
+            else
+                return Wide{srl_epi8(p_Left.m_Data, p_Shift)};
+        }
+    }
+    friend constexpr Wide operator<<(const Wide &p_Left, const i32 p_Shift)
+        requires(Integer<T>)
+    {
+        if constexpr (Lanes == 4)
+            return Wide{_mm256_sll_epi64(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
+        else if constexpr (Lanes == 8)
+            return Wide{_mm256_sll_epi32(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
+        else if constexpr (Lanes == 16)
+            return Wide{_mm256_sll_epi16(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
+        else if constexpr (Lanes == 32)
+            return Wide{sll_epi8(p_Left.m_Data, p_Shift)};
+    }
+#    endif
 
 #    define CREATE_REDUCE_INT(p_Op)                                                                                    \
         else if constexpr (Equals<__m256i>)                                                                            \
@@ -571,9 +654,59 @@ template <Arithmetic T, typename Traits> class Wide
         CREATE_BAD_BRANCH(m256{})
     }
 
-#    undef CREATE_BAD_BRANCH
+#    ifdef TKIT_SIMD_AVX2
+    static constexpr __m256i srai_epi64_32(const __m256i p_Data)
+    {
+        const __m256i shifted = _mm256_srli_epi64(p_Data, 32);
+
+        __m256i sign = _mm256_srai_epi32(_mm256_shuffle_epi32(p_Data, _MM_SHUFFLE(3, 3, 1, 1)), 31);
+        sign = _mm256_slli_epi64(sign, 32);
+
+        return _mm256_or_si256(shifted, sign);
+    };
+    static constexpr __m256i sra_epi64(const __m256i p_Data, const i32 p_Shift)
+    {
+        const __m256i shifted = _mm256_srl_epi64(p_Data, _mm_cvtsi32_si128(p_Shift));
+
+        __m256i sign = _mm256_srai_epi32(_mm256_shuffle_epi32(p_Data, _MM_SHUFFLE(3, 3, 1, 1)), 31);
+        sign = _mm256_sll_epi64(sign, _mm_cvtsi32_si128(64 - p_Shift));
+
+        return _mm256_or_si256(shifted, sign);
+    };
+    static constexpr __m256i srl_epi8(const __m256i p_Data, const i32 p_Shift)
+    {
+        const __m256i shifted = _mm256_srl_epi16(p_Data, _mm_cvtsi32_si128(p_Shift));
+        const __m256i mask = _mm256_set1_epi16(static_cast<short>(0x00FF >> p_Shift));
+
+        return _mm256_and_si256(shifted, mask);
+    }
+    static constexpr __m256i sll_epi8(const __m256i p_Data, const i32 p_Shift)
+    {
+        const __m256i shifted = _mm256_sll_epi16(p_Data, _mm_cvtsi32_si128(p_Shift));
+        const __m256i mask = _mm256_set1_epi16(static_cast<short>(0x00FF << p_Shift));
+
+        return _mm256_and_si256(shifted, mask);
+    }
+    static constexpr __m256i sra_epi8(const __m256i p_Data, const i32 p_Shift)
+    {
+        const __m256i shifted = srl_epi8(p_Data, p_Shift);
+        const __m256i signmask = _mm256_cmpgt_epi8(_mm256_setzero_si256(), p_Data);
+        const __m256i mask = sll_epi8(signmask, 8 - p_Shift);
+
+        return _mm256_or_si256(shifted, mask);
+    }
+#    endif
 
     m256 m_Data;
 }; // namespace TKit::Detail::AVX
 } // namespace TKit::Detail::AVX
+TKIT_COMPILER_WARNING_IGNORE_POP()
 #endif
+
+#undef CREATE_ARITHMETIC_OP
+#undef CREATE_ARITHMETIC_OP_INT
+#undef CREATE_CMP_OP
+#undef CREATE_CMP_OP_INT
+#undef CREATE_MIN_MAX
+#undef CREATE_MIN_MAX_INT
+#undef CREATE_BAD_BRANCH

@@ -177,7 +177,7 @@ class StaticArray
      * @param p_Value The value to insert.
      */
     template <typename U>
-        requires(std::is_convertible_v<std::remove_cvref_t<ValueType>, std::remove_cvref_t<U>>)
+        requires(std::convertible_to<std::remove_cvref_t<ValueType>, std::remove_cvref_t<U>>)
     constexpr void Insert(const Iterator p_Pos, U &&p_Value)
     {
         TKIT_ASSERT(!IsFull(), "[TOOLKIT][STAT-ARRAY] Container is already full");
