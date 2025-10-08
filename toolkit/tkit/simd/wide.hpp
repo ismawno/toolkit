@@ -120,6 +120,8 @@ class Wide
     CREATE_ARITHMETIC_OP(-)
     CREATE_ARITHMETIC_OP(*)
     CREATE_ARITHMETIC_OP(/)
+    CREATE_ARITHMETIC_OP(&)
+    CREATE_ARITHMETIC_OP(|)
 
     friend constexpr Wide operator-(const Wide &p_Other)
     {

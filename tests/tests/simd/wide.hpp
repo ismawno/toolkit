@@ -161,14 +161,17 @@ template <typename Wide> void RunWideTests()
     SECTION("Reduce()")
     {
         const Wide w{[](const SizeType p_Index) { return p_Index + 1; }};
-        const T expected = static_cast<T>((Lanes * (Lanes + 1)) / 2); // sum(1..Lanes)
-        REQUIRE(Wide::Reduce(w) == Catch::Approx(expected));
+        T expected = static_cast<T>(0);
+        for (SizeType i = 0; i < Lanes; ++i)
+            expected += w[i];
+        const T result = Wide::Reduce(w);
+        REQUIRE(result == Catch::Approx(expected));
     }
     if constexpr (std::is_integral_v<T>)
     {
         SECTION("Bit shift operators")
         {
-            const Wide base{[](const SizeType p_Index) { return static_cast<T>(1u << p_Index); }};
+            const Wide base{[](const SizeType p_Index) { return 255 - p_Index; }};
 
             const T shiftLeft = 3;
             const Wide shiftedLeft = base << shiftLeft;
@@ -181,6 +184,20 @@ template <typename Wide> void RunWideTests()
 
             for (SizeType i = 0; i < Lanes; ++i)
                 REQUIRE(shiftedRight[i] == static_cast<T>(base[i] >> shiftRight));
+        }
+        SECTION("Bitwise AND and OR operators")
+        {
+            const Wide a{[](const SizeType p_Index) { return static_cast<T>((p_Index % 2) ? 0xFF : 0x0F); }};
+            const Wide b{[](const SizeType p_Index) { return static_cast<T>((p_Index % 2) ? 0xF0 : 0x0F); }};
+
+            const Wide band = a & b;
+            const Wide bor = a | b;
+
+            for (SizeType i = 0; i < Lanes; ++i)
+            {
+                REQUIRE(band[i] == static_cast<T>(a[i] & b[i]));
+                REQUIRE(bor[i] == static_cast<T>(a[i] | b[i]));
+            }
         }
     }
 }

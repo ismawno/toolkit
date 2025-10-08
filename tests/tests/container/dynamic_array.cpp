@@ -73,7 +73,7 @@ TEST_CASE("DynamicArray: constructor from size+fill args", "[DynamicArray]")
     const DynamicArray<DTrackable> arr2(2, 42u);
     REQUIRE(arr2.GetSize() == 2);
     REQUIRE(g_Constructions == 2);
-    for (u32 i = 0; i < 2; ++i)
+    for (usize i = 0; i < 2; ++i)
         REQUIRE(arr2[i].Value == 42u);
 }
 
@@ -156,7 +156,7 @@ TEST_CASE("DynamicArray: Resize, Clear, Shrink, iteration", "[DynamicArray]")
 
     arr1.Resize(4, 99u);
     REQUIRE(arr1.GetSize() == 4);
-    for (u32 i = 1; i < 4; ++i)
+    for (usize i = 1; i < 4; ++i)
         REQUIRE(arr1[i].Value == 99u);
 
     arr1.Clear();

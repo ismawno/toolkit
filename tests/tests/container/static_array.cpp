@@ -205,7 +205,7 @@ TEST_CASE("StaticArray: Resize", "[StaticArray]")
     arr.Resize(4, 99u);
     REQUIRE(arr.GetSize() == 4);
     REQUIRE(g_Constructions == 3 + 3); // two phases: initial 3, +3 new (from 1→4)
-    for (u32 i = 1; i < 4; ++i)
+    for (usize i = 1; i < 4; ++i)
         REQUIRE(arr[i].Value == 99u);
 }
 

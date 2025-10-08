@@ -274,7 +274,7 @@ TEST_CASE("StaticDeque: iteration using indices", "[StaticDeque]")
     dq.PushBack(3);
 
     u32 sum = 0;
-    for (u32 i = dq.GetFrontIndex(); i != dq.GetBackEnd(); i = dq.NextIndex(i))
+    for (usize i = dq.GetFrontIndex(); i != dq.GetBackEnd(); i = dq.NextIndex(i))
         sum += dq.At(i);
     REQUIRE(sum == 6);
 }

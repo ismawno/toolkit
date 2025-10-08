@@ -99,6 +99,14 @@
 #    define TKIT_CONSTEVAL constexpr
 #endif
 
+#if defined(TKIT_COMPILER_GCC) || defined(TKIT_COMPILER_CLANG)
+#    define TKIT_UNREACHABLE() __builtin_unreachable()
+#elif defined(TKIT_COMPILER_MSVC)
+#    define TKIT_UNREACHABLE() __assume(false)
+#else
+#    define TKIT_UNREACHABLE()
+#endif
+
 #ifndef TKIT_CACHE_LINE_SIZE
 #    define TKIT_CACHE_LINE_SIZE 64
 #endif
@@ -228,4 +236,12 @@
 #    ifndef TKIT_SIMD_SIZE
 #        define TKIT_SIMD_SIZE TKIT_SIMD_MIPS_MSA_SIZE
 #    endif
+#endif
+
+#ifdef __BMI2__
+#    define TKIT_BMI2
+#endif
+
+#ifdef __BMI__
+#    define TKIT_BMI
 #endif

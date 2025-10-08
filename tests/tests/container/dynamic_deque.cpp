@@ -60,7 +60,7 @@ TEST_CASE("DynamicDeque: constructors", "[DynamicDeque][constructors]")
     {
         DynamicDeque<u32> dq(3u, 42u);
         REQUIRE(dq.GetSize() == 3);
-        for (u32 i = 0; i < dq.GetSize(); ++i)
+        for (usize i = 0; i < dq.GetSize(); ++i)
             REQUIRE(dq[i] == 42u);
 
         dq.PushBack(6u);
@@ -75,7 +75,7 @@ TEST_CASE("DynamicDeque: constructors", "[DynamicDeque][constructors]")
         std::vector<u32> values = {1u, 2u, 3u, 4u};
         DynamicDeque<u32> dq(values.begin(), values.end());
         REQUIRE(dq.GetSize() == values.size());
-        for (u32 i = 0; i < dq.GetSize(); ++i)
+        for (usize i = 0; i < dq.GetSize(); ++i)
             REQUIRE(dq[i] == values[i]);
 
         dq.PushBack(6u);
@@ -208,11 +208,11 @@ TEST_CASE("DynamicDeque: wrapping around behavior", "[DynamicDeque]")
 TEST_CASE("DynamicDeque: growth beyond initial capacity", "[DynamicDeque]")
 {
     DynamicDeque<u32> dq;
-    for (u32 i = 0u; i < 20u; ++i)
+    for (usize i = 0; i < 20; ++i)
         dq.PushBack(i);
 
     REQUIRE(dq.GetSize() == 20u);
-    for (u32 i = 0u; i < 20u; ++i)
+    for (usize i = 0; i < 20; ++i)
         REQUIRE(dq[i] == i);
 }
 
@@ -243,7 +243,7 @@ TEST_CASE("DynamicDeque: iteration using indices", "[DynamicDeque]")
     dq.PushBack(30u);
 
     u32 sum = 0u;
-    for (u32 i = dq.GetFrontIndex(), count = 0u; count < dq.GetSize(); i = dq.NextIndex(i), ++count)
+    for (usize i = dq.GetFrontIndex(), count = 0; count < dq.GetSize(); i = dq.NextIndex(i), ++count)
         sum += dq.At(i);
 
     REQUIRE(sum == 60u);
@@ -253,12 +253,12 @@ TEST_CASE("DynamicDeque: large number of Push/Pop operations", "[DynamicDeque]")
 {
     DynamicDeque<u32> dq;
 
-    for (u32 i = 0u; i < 1000u; ++i)
+    for (usize i = 0; i < 1000; ++i)
         dq.PushBack(i);
 
     REQUIRE(dq.GetSize() == 1000u);
 
-    for (u32 i = 0u; i < 500u; ++i)
+    for (usize i = 0; i < 500; ++i)
         dq.PopFront();
 
     REQUIRE(dq.GetSize() == 500u);
