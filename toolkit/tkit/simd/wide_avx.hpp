@@ -192,13 +192,24 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
             {                                                                                                          \
                 if constexpr (Lanes == 4)                                                                              \
                     return Wide{_mm256_##p_Op##_epi64(p_Left.m_Data, p_Right.m_Data)};                                 \
-                else if constexpr (Lanes == 8)                                                                         \
-                    return Wide{_mm256_##p_Op##_epi32(p_Left.m_Data, p_Right.m_Data)};                                 \
-                else if constexpr (Lanes == 16)                                                                        \
-                    return Wide{_mm256_##p_Op##_epi16(p_Left.m_Data, p_Right.m_Data)};                                 \
-                else if constexpr (Lanes == 32)                                                                        \
-                    return Wide{_mm256_##p_Op##_epi8(p_Left.m_Data, p_Right.m_Data)};                                  \
-                CREATE_BAD_BRANCH()                                                                                    \
+                else if constexpr (std::is_signed_v<T>)                                                                \
+                {                                                                                                      \
+                    if constexpr (Lanes == 8)                                                                          \
+                        return Wide{_mm256_##p_Op##_epi32(p_Left.m_Data, p_Right.m_Data)};                             \
+                    else if constexpr (Lanes == 16)                                                                    \
+                        return Wide{_mm256_##p_Op##_epi16(p_Left.m_Data, p_Right.m_Data)};                             \
+                    else if constexpr (Lanes == 32)                                                                    \
+                        return Wide{_mm256_##p_Op##_epi8(p_Left.m_Data, p_Right.m_Data)};                              \
+                }                                                                                                      \
+                else                                                                                                   \
+                {                                                                                                      \
+                    if constexpr (Lanes == 8)                                                                          \
+                        return Wide{_mm256_##p_Op##_epu32(p_Left.m_Data, p_Right.m_Data)};                             \
+                    else if constexpr (Lanes == 16)                                                                    \
+                        return Wide{_mm256_##p_Op##_epu16(p_Left.m_Data, p_Right.m_Data)};                             \
+                    else if constexpr (Lanes == 32)                                                                    \
+                        return Wide{_mm256_##p_Op##_epu8(p_Left.m_Data, p_Right.m_Data)};                              \
+                }                                                                                                      \
             }
 #    else
 #        define CREATE_MIN_MAX_INT(p_Op)
@@ -729,6 +740,16 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
             return _mm256_inserti128_si256(_mm256_castsi128_si256(reslo), reshi, 1);
         }
+    }
+    static constexpr __m256i _mm256_min_epi64(const __m256i p_Left, const __m256i p_Right)
+    {
+        const __m256i cmp = _mm256_cmpgt_epi64(p_Left, p_Right);
+        return _mm256_blendv_epi8(p_Left, p_Right, cmp);
+    }
+    static constexpr __m256i _mm256_max_epi64(const __m256i p_Left, const __m256i p_Right)
+    {
+        const __m256i cmp = _mm256_cmpgt_epi64(p_Left, p_Right);
+        return _mm256_blendv_epi8(p_Right, p_Left, cmp);
     }
 
     static constexpr __m256i _mm256_cmpgt_epi32(const __m256i p_Left, const __m256i p_Right)

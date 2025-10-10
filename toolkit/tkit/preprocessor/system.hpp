@@ -101,10 +101,16 @@
 
 #if defined(TKIT_COMPILER_GCC) || defined(TKIT_COMPILER_CLANG)
 #    define TKIT_UNREACHABLE() __builtin_unreachable()
+#    define TKIT_FORCE_INLINE inline __attribute__((always_inline))
+#    define TKIT_NO_INLINE __attribute__((noinline))
 #elif defined(TKIT_COMPILER_MSVC)
 #    define TKIT_UNREACHABLE() __assume(false)
+#    define TKIT_FORCE_INLINE __forceinline
+#    define TKIT_NO_INLINE __declspec(noinline)
 #else
 #    define TKIT_UNREACHABLE()
+#    define TKIT_FORCE_INLINE
+#    define TKIT_NO_INLINE
 #endif
 
 #ifndef TKIT_CACHE_LINE_SIZE
