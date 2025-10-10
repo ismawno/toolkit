@@ -122,58 +122,38 @@
 #ifdef __AVX512F__
 #    define TKIT_SIMD_AVX512F
 #    define TKIT_SIMD_AVX512F_SIZE 64
-#    ifndef TKIT_SIMD_SIZE
-#        define TKIT_SIMD_SIZE TKIT_SIMD_AVX512F_SIZE
-#    endif
 #endif
 #ifdef __AVX2__
 #    define TKIT_SIMD_AVX2
-#    define TKIT_SIMD_AVX2_SIZE 32
-#    ifndef TKIT_SIMD_SIZE
-#        define TKIT_SIMD_SIZE TKIT_SIMD_AVX2_SIZE
-#    endif
 #endif
 #ifdef __AVX__
 #    define TKIT_SIMD_AVX
+#endif
+#if defined(TKIT_SIMD_AVX) || defined(TKIT_SIMD_AVX2)
 #    define TKIT_SIMD_AVX_SIZE 32
-#    ifndef TKIT_SIMD_SIZE
-#        define TKIT_SIMD_SIZE TKIT_SIMD_AVX_SIZE
-#    endif
+#endif
+
+#ifdef __SSE4_2__
+#    define TKIT_SIMD_SSE4_2
 #endif
 #ifdef __SSE4_1__
 #    define TKIT_SIMD_SSE4_1
-#    define TKIT_SIMD_SSE4_1_SIZE 16
-#    ifndef TKIT_SIMD_SIZE
-#        define TKIT_SIMD_SIZE TKIT_SIMD_SSE4_1_SIZE
-#    endif
-#endif
-#ifdef __SSE4_2__
-#    define TKIT_SIMD_SSE4_2
-#    define TKIT_SIMD_SSE4_2_SIZE 16
-#    ifndef TKIT_SIMD_SIZE
-#        define TKIT_SIMD_SIZE TKIT_SIMD_SSE4_2_SIZE
-#    endif
-#endif
-#ifdef __SSE2__
-#    define TKIT_SIMD_SSE2
-#    define TKIT_SIMD_SSE2_SIZE 16
-#    ifndef TKIT_SIMD_SIZE
-#        define TKIT_SIMD_SIZE TKIT_SIMD_SSE2_SIZE
-#    endif
-#endif
-#ifdef __SSE3__
-#    define TKIT_SIMD_SSE3
-#    define TKIT_SIMD_SSE3_SIZE 16
-#    ifndef TKIT_SIMD_SIZE
-#        define TKIT_SIMD_SIZE TKIT_SIMD_SSE3_SIZE
-#    endif
 #endif
 #ifdef __SSSE3__
 #    define TKIT_SIMD_SSSE3
-#    define TKIT_SIMD_SSSE3_SIZE 16
-#    ifndef TKIT_SIMD_SIZE
-#        define TKIT_SIMD_SIZE TKIT_SIMD_SSSE3_SIZE
-#    endif
+#endif
+#ifdef __SSE3__
+#    define TKIT_SIMD_SSE3
+#endif
+#ifdef __SSE2__
+#    define TKIT_SIMD_SSE2
+#endif
+#ifdef __SSE__
+#    define TKIT_SIMD_SSE
+#endif
+#if defined(TKIT_SIMD_SSE) || defined(TKIT_SIMD_SSE2) || defined(TKIT_SIMD_SSE3) || defined(TKIT_SIMD_SSSE3) ||        \
+    defined(TKIT_SIMD_SSE4_1) || defined(TKIT_SIMD_SSE4_2)
+#    define TKIT_SIMD_SSE_SIZE 16
 #endif
 
 // ARM
@@ -193,12 +173,10 @@
 #        define TKIT_SIMD_SIZE TKIT_SIMD_SVE_SIZE
 #    endif
 #endif
+
 #if defined(__ARM_NEON) || defined(__ARM_NEON__)
 #    define TKIT_SIMD_NEON
 #    define TKIT_SIMD_NEON_SIZE 16
-#    ifndef TKIT_SIMD_SIZE
-#        define TKIT_SIMD_SIZE TKIT_SIMD_NEON_SIZE
-#    endif
 #endif
 
 // PowerPC
