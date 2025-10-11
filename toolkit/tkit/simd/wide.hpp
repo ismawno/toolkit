@@ -191,13 +191,25 @@ class Wide
         return val;
     }
 
-    static constexpr BitMask PackMask(const Mask &p_Mask)
+    static constexpr BitMask PackMask(const Mask p_Mask)
     {
         return p_Mask;
     }
-    static constexpr BitMask WidenMask(const BitMask &p_Mask)
+    static constexpr BitMask WidenMask(const BitMask p_Mask)
     {
         return p_Mask;
+    }
+    static constexpr bool AllOf(const BitMask p_Mask)
+    {
+        return p_Mask == Limits<BitMask>::max();
+    }
+    static constexpr bool NoneOf(const BitMask p_Mask)
+    {
+        return p_Mask == 0;
+    }
+    static constexpr bool AnyOf(const BitMask p_Mask)
+    {
+        return p_Mask != 0;
     }
 
   private:

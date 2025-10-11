@@ -516,6 +516,32 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         return loadAligned(reinterpret_cast<const T *>(tmp));
     }
 
+    static constexpr bool AllOf(const Mask &p_Mask)
+    {
+        return AllOf(PackMask(p_Mask));
+    }
+    static constexpr bool NoneOf(const Mask &p_Mask)
+    {
+        return NoneOf(PackMask(p_Mask));
+    }
+    static constexpr bool AnyOf(const Mask &p_Mask)
+    {
+        return AnyOf(PackMask(p_Mask));
+    }
+
+    static constexpr bool AllOf(const BitMask p_Mask)
+    {
+        return p_Mask == Limits<BitMask>::max();
+    }
+    static constexpr bool NoneOf(const BitMask p_Mask)
+    {
+        return p_Mask == 0;
+    }
+    static constexpr bool AnyOf(const BitMask p_Mask)
+    {
+        return p_Mask != 0;
+    }
+
   private:
     static m256 loadAligned(const T *p_Data)
     {
