@@ -581,32 +581,11 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 #    ifndef TKIT_SIMD_SSE4_1
     static constexpr __m128i _mm_mullo_epi32(const __m128i p_Left, const __m128i p_Right)
     {
-        const __m128i mask16 = _mm_set1_epi32(0xFFFF);
+        const __m128i tmp1 = _mm_mul_epu32(p_Left, p_Right);
+        const __m128i tmp2 = _mm_mul_epu32(_mm_srli_si128(p_Left, 4), _mm_srli_si128(p_Right, 4));
 
-        const __m128i llo = _mm_and_si128(p_Left, mask16);
-        const __m128i rlo = _mm_and_si128(p_Right, mask16);
-
-        __m128i lhi;
-        __m128i rhi;
-        if constexpr (!std::is_signed_v<T>)
-        {
-            lhi = _mm_srli_epi32(p_Left, 16);
-            rhi = _mm_srli_epi32(p_Right, 16);
-        }
-        else
-        {
-            lhi = _mm_srai_epi32(p_Left, 16);
-            rhi = _mm_srai_epi32(p_Right, 16);
-        }
-
-        const __m128i lo = _mm_mullo_epi16(llo, rlo);
-        const __m128i mid1 = _mm_mullo_epi16(lhi, rlo);
-        const __m128i mid2 = _mm_mullo_epi16(llo, rhi);
-
-        __m128i mid = _mm_add_epi32(mid1, mid2);
-        mid = _mm_slli_epi32(mid, 16);
-
-        return _mm_add_epi32(lo, mid);
+        return _mm_unpacklo_epi32(_mm_shuffle_epi32(tmp1, _MM_SHUFFLE(0, 0, 2, 0)),
+                                  _mm_shuffle_epi32(tmp2, _MM_SHUFFLE(0, 0, 2, 0)));
     }
 #    endif
     static constexpr __m128i _mm_mullo_epi8(const __m128i p_Left, const __m128i p_Right)
