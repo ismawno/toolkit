@@ -1,4 +1,3 @@
-#define TKIT_ALLOW_SCALAR_SIMD_FALLBACKS
 #include "tests/simd/wide.hpp"
 #include "tkit/simd/wide_avx.hpp"
 

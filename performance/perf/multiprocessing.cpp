@@ -23,7 +23,7 @@ void RecordThreadPoolSum(const ThreadPoolSettings &p_Settings)
     StaticArray128<Task<u32>> tasks(p_Settings.MaxThreads);
     DynamicArray<u32> values(p_Settings.SumCount);
 
-    for (u32 i = 0; i < p_Settings.SumCount; i++)
+    for (u32 i = 0; i < p_Settings.SumCount; ++i)
         values[i] = i;
 
     usize nthreads = 1;
@@ -39,7 +39,7 @@ void RecordThreadPoolSum(const ThreadPoolSettings &p_Settings)
 
         Clock clock;
         u32 sum = 0;
-        for (usize i = 0; i < nthreads; i++)
+        for (usize i = 0; i < nthreads; ++i)
         {
             sum += tasks[i].WaitForResult();
             tasks[i].Reset();
@@ -60,14 +60,14 @@ void RecordParallelSum(const ThreadPoolSettings &p_Settings)
     DynamicArray<u32> sums(p_Settings.MaxThreads);
     DynamicArray<u32> values(p_Settings.SumCount);
 
-    for (u32 i = 0; i < p_Settings.SumCount; i++)
+    for (u32 i = 0; i < p_Settings.SumCount; ++i)
         values[i] = i;
 
     usize nthreads = 1;
     while (nthreads <= p_Settings.MaxThreads)
     {
 
-        for (usize i = 0; i < nthreads; i++)
+        for (usize i = 0; i < nthreads; ++i)
         {
             const usize start = i * p_Settings.SumCount / nthreads;
             const usize end = (i + 1) * p_Settings.SumCount / nthreads;
@@ -80,7 +80,7 @@ void RecordParallelSum(const ThreadPoolSettings &p_Settings)
         }
         Clock clock;
         u32 sum = 0;
-        for (usize i = 0; i < nthreads; i++)
+        for (usize i = 0; i < nthreads; ++i)
         {
             threads[i].join();
             sum += sums[i];

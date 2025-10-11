@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tkit/utils/alias.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
@@ -63,6 +64,34 @@ template <typename Wide> void RunWideTests()
         w.StoreUnaligned(dst2);
         for (SizeType i = 0; i < Lanes; ++i)
             REQUIRE(dst2[i] == src[i]);
+    }
+
+    struct Spread
+    {
+        T Relevant;
+        u8 Garbage1;
+        u16 Garbage2;
+    };
+
+    SECTION("Gather()")
+    {
+        Spread spread[Lanes];
+        for (SizeType i = 0; i < Lanes; ++i)
+            spread[i] = {static_cast<T>(i + 1), static_cast<u8>(i + 100), static_cast<u16>(i + 200)};
+
+        const Wide w{&spread[0].Relevant, sizeof(Spread)};
+        for (SizeType i = 0; i < Lanes; ++i)
+            REQUIRE(w[i] == spread[i].Relevant);
+    }
+
+    SECTION("Scatter()")
+    {
+        const Wide w{[](const SizeType p_Index) { return p_Index + 1; }};
+
+        Spread spread[Lanes];
+        w.Scatter(&spread[0].Relevant, sizeof(Spread));
+        for (SizeType i = 0; i < Lanes; ++i)
+            REQUIRE(w[i] == spread[i].Relevant);
     }
 
     SECTION("Arithmetic operators")

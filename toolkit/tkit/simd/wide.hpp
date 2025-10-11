@@ -7,7 +7,7 @@
 namespace TKit::Detail
 {
 template <typename T, usize L, typename Traits = Container::ArrayTraits<T>>
-    requires(L > 0)
+    requires(L > 0 && (Float<T> || Integer<T>))
 class Wide
 {
   public:
@@ -34,6 +34,12 @@ class Wide
     {
         Memory::ForwardCopy(m_Data.begin(), p_Data, p_Data + Lanes);
     }
+    constexpr Wide(const T *p_Data, const SizeType p_Stride)
+    {
+        const std::byte *data = reinterpret_cast<const std::byte *>(p_Data);
+        for (SizeType i = 0; i < Lanes; ++i)
+            Memory::ForwardCopy(&m_Data[i], data + i * p_Stride, sizeof(T));
+    }
     template <typename Callable>
         requires std::invocable<Callable, SizeType>
     constexpr Wide(Callable &&p_Callable)
@@ -56,6 +62,19 @@ class Wide
         return m_Data[p_Index];
     }
 
+    static constexpr Wide LoadAligned(const T *p_Data)
+    {
+        return Wide{p_Data};
+    }
+    static constexpr Wide LoadUnaligned(const T *p_Data)
+    {
+        return Wide{p_Data};
+    }
+    static constexpr Wide Gather(const T *p_Data, const SizeType p_Stride)
+    {
+        return Wide{p_Data, p_Stride};
+    }
+
     constexpr void StoreAligned(T *p_Data) const
     {
         Memory::ForwardCopy(p_Data, m_Data.begin(), m_Data.end());
@@ -64,13 +83,11 @@ class Wide
     {
         Memory::ForwardCopy(p_Data, m_Data.begin(), m_Data.end());
     }
-    constexpr static Wide LoadAligned(const T *p_Data)
+    constexpr void Scatter(T *p_Data, const SizeType p_Stride) const
     {
-        return Wide{p_Data};
-    }
-    constexpr static Wide LoadUnaligned(const T *p_Data)
-    {
-        return Wide{p_Data};
+        std::byte *data = reinterpret_cast<std::byte *>(p_Data);
+        for (SizeType i = 0; i < Lanes; ++i)
+            Memory::ForwardCopy(data + i * p_Stride, &m_Data[i], sizeof(T));
     }
 
 #define CREATE_MIN_MAX(p_Name, p_Fun)                                                                                  \

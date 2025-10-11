@@ -116,6 +116,9 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     constexpr Wide(const T *p_Data) : m_Data(loadAligned(p_Data))
     {
     }
+    constexpr Wide(const T *p_Data, const SizeType p_Stride) : m_Data(gather(p_Data, p_Stride))
+    {
+    }
 
     template <typename Callable>
         requires std::invocable<Callable, SizeType>
@@ -124,13 +127,17 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     {
     }
 
-    constexpr static Wide LoadAligned(const T *p_Data)
+    static constexpr Wide LoadAligned(const T *p_Data)
     {
         return Wide{loadAligned(p_Data)};
     }
-    constexpr static Wide LoadUnaligned(const T *p_Data)
+    static constexpr Wide LoadUnaligned(const T *p_Data)
     {
         return Wide{loadUnaligned(p_Data)};
+    }
+    static constexpr Wide Gather(const T *p_Data, const SizeType p_Stride)
+    {
+        return Wide{p_Data, p_Stride};
     }
 
     constexpr void StoreAligned(T *p_Data) const
@@ -147,7 +154,6 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 #    endif
         CREATE_BAD_BRANCH()
     }
-
     constexpr void StoreUnaligned(T *p_Data) const
     {
         if constexpr (s_Equals<__m256>)
@@ -159,6 +165,15 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
             _mm256_storeu_si256(reinterpret_cast<__m256i *>(p_Data), m_Data);
 #    endif
         CREATE_BAD_BRANCH()
+    }
+    constexpr void Scatter(T *p_Data, const SizeType p_Stride) const
+    {
+        alignas(Alignment) T src[Lanes];
+        StoreAligned(src);
+
+        std::byte *dst = reinterpret_cast<std::byte *>(p_Data);
+        for (SizeType i = 0; i < Lanes; ++i)
+            Memory::ForwardCopy(dst + i * p_Stride, &src[i], sizeof(T));
     }
 
     constexpr const ValueType At(const SizeType p_Index) const
@@ -500,6 +515,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 #    endif
         CREATE_BAD_BRANCH()
     }
+
     static m256 loadUnaligned(const T *p_Data)
     {
         if constexpr (s_Equals<__m256>)
@@ -534,6 +550,53 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         }
 #    endif
         CREATE_BAD_BRANCH()
+    }
+
+    static m256 gather(const T *p_Data, const SizeType p_Stride)
+    {
+#    ifndef TKIT_SIMD_AVX2
+        alignas(Alignment) T dst[Lanes];
+        const std::byte *src = reinterpret_cast<const std::byte *>(p_Data);
+
+        for (SizeType i = 0; i < Lanes; ++i)
+            Memory::ForwardCopy(dst + i, src + i * p_Stride, sizeof(T));
+        return loadAligned(dst);
+#    else
+        const i32 idx = static_cast<i32>(p_Stride);
+        if constexpr (s_Equals<__m256>)
+        {
+            const __m256i indices = _mm256_setr_epi32(0, idx, 2 * idx, 3 * idx, 4 * idx, 5 * idx, 6 * idx, 7 * idx);
+            return _mm256_i32gather_ps(p_Data, indices, 1);
+        }
+        else if constexpr (s_Equals<__m256d>)
+        {
+            const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
+            return _mm256_i32gather_pd(p_Data, indices, 1);
+        }
+        else if constexpr (s_Equals<__m256i>)
+        {
+            if constexpr (s_IsSize<8>)
+            {
+                const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
+                return _mm256_i32gather_epi64(p_Data, indices, 1);
+            }
+            else if constexpr (s_IsSize<4>)
+            {
+                const __m256i indices = _mm256_setr_epi32(0, idx, 2 * idx, 3 * idx, 4 * idx, 5 * idx, 6 * idx, 7 * idx);
+                return _mm256_i32gather_epi32(p_Data, indices, 1);
+            }
+            else
+            {
+                alignas(Alignment) T dst[Lanes];
+                const std::byte *src = reinterpret_cast<const std::byte *>(p_Data);
+
+                for (SizeType i = 0; i < Lanes; ++i)
+                    Memory::ForwardCopy(dst + i, src + i * p_Stride, sizeof(T));
+                return loadAligned(dst);
+            }
+        }
+        CREATE_BAD_BRANCH()
+#    endif
     }
 
     template <typename Callable, std::size_t... I>
