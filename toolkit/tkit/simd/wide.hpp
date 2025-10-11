@@ -20,15 +20,6 @@ class Wide
     using Mask = u<MaskSize<Lanes>()>;
     using BitMask = Mask;
 
-    static constexpr BitMask PackMask(const Mask &p_Mask)
-    {
-        return p_Mask;
-    }
-    static constexpr BitMask WidenMask(const BitMask &p_Mask)
-    {
-        return p_Mask;
-    }
-
     constexpr Wide() = default;
     constexpr Wide(const T *p_Data)
     {
@@ -198,6 +189,15 @@ class Wide
         for (SizeType i = 0; i < Lanes; ++i)
             val += p_Wide[i];
         return val;
+    }
+
+    static constexpr BitMask PackMask(const Mask &p_Mask)
+    {
+        return p_Mask;
+    }
+    static constexpr BitMask WidenMask(const BitMask &p_Mask)
+    {
+        return p_Mask;
     }
 
   private:

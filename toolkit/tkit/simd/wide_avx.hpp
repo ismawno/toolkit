@@ -62,50 +62,6 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
             TKIT_UNREACHABLE();                                                                                        \
         }
 
-    static constexpr BitMask PackMask(const Mask &p_Mask)
-    {
-        if constexpr (s_Equals<__m256>)
-            return static_cast<BitMask>(_mm256_movemask_ps(p_Mask));
-        else if constexpr (s_Equals<__m256d>)
-            return static_cast<BitMask>(_mm256_movemask_pd(p_Mask));
-#    ifdef TKIT_SIMD_AVX2
-        else if constexpr (s_Equals<__m256i>)
-        {
-            const u32 byteMask = static_cast<u32>(_mm256_movemask_epi8(p_Mask));
-            if constexpr (s_IsSize<1>)
-                return static_cast<BitMask>(byteMask);
-#        ifdef TKIT_BMI2
-            else if constexpr (s_IsSize<2>)
-                return static_cast<BitMask>(_pext_u32(byteMask, 0x55555555u));
-            else if constexpr (s_IsSize<4>)
-                return static_cast<BitMask>(_pext_u32(byteMask, 0x11111111u));
-            else if constexpr (s_IsSize<8>)
-                return static_cast<BitMask>(_pext_u32(byteMask, 0x01010101u));
-#        endif
-            else
-            {
-                BitMask packed = 0;
-                for (SizeType i = 0; i < Lanes; ++i)
-                    packed |= ((byteMask >> (i * sizeof(T))) & 1u) << i;
-
-                return packed;
-            }
-        }
-#    endif
-        CREATE_BAD_BRANCH()
-    }
-
-    static constexpr Mask WidenMask(const BitMask p_Bits)
-    {
-        using Integer = u<sizeof(T) * 8>;
-        alignas(Alignment) Integer tmp[Lanes];
-
-        for (SizeType i = 0; i < Lanes; ++i)
-            tmp[i] = (p_Bits & (BitMask{1} << i)) ? static_cast<Integer>(-1) : Integer{0};
-
-        return loadAligned(reinterpret_cast<const T *>(tmp));
-    }
-
     constexpr Wide() = default;
     constexpr Wide(const m256 p_Data) : m_Data(p_Data)
     {
@@ -514,6 +470,50 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
                 return static_cast<T>(_mm_cvtsi128_si32(sum));
             }
         }
+    }
+
+    static constexpr BitMask PackMask(const Mask &p_Mask)
+    {
+        if constexpr (s_Equals<__m256>)
+            return static_cast<BitMask>(_mm256_movemask_ps(p_Mask));
+        else if constexpr (s_Equals<__m256d>)
+            return static_cast<BitMask>(_mm256_movemask_pd(p_Mask));
+#    ifdef TKIT_SIMD_AVX2
+        else if constexpr (s_Equals<__m256i>)
+        {
+            const u32 byteMask = static_cast<u32>(_mm256_movemask_epi8(p_Mask));
+            if constexpr (s_IsSize<1>)
+                return static_cast<BitMask>(byteMask);
+#        ifdef TKIT_BMI2
+            else if constexpr (s_IsSize<2>)
+                return static_cast<BitMask>(_pext_u32(byteMask, 0x55555555u));
+            else if constexpr (s_IsSize<4>)
+                return static_cast<BitMask>(_pext_u32(byteMask, 0x11111111u));
+            else if constexpr (s_IsSize<8>)
+                return static_cast<BitMask>(_pext_u32(byteMask, 0x01010101u));
+#        endif
+            else
+            {
+                BitMask packed = 0;
+                for (SizeType i = 0; i < Lanes; ++i)
+                    packed |= ((byteMask >> (i * sizeof(T))) & 1u) << i;
+
+                return packed;
+            }
+        }
+#    endif
+        CREATE_BAD_BRANCH()
+    }
+
+    static constexpr Mask WidenMask(const BitMask p_Bits)
+    {
+        using Integer = u<sizeof(T) * 8>;
+        alignas(Alignment) Integer tmp[Lanes];
+
+        for (SizeType i = 0; i < Lanes; ++i)
+            tmp[i] = (p_Bits & (BitMask{1} << i)) ? static_cast<Integer>(-1) : Integer{0};
+
+        return loadAligned(reinterpret_cast<const T *>(tmp));
     }
 
   private:
