@@ -119,6 +119,7 @@ class Wide
         return wide;                                                                                                   \
     }                                                                                                                  \
     friend constexpr Wide operator p_Op(const Wide &p_Left, const T p_Right)                                           \
+        requires(Integer<T>)                                                                                           \
     {                                                                                                                  \
         Wide wide;                                                                                                     \
         for (SizeType i = 0; i < Lanes; ++i)                                                                           \
@@ -126,11 +127,17 @@ class Wide
         return wide;                                                                                                   \
     }                                                                                                                  \
     friend constexpr Wide operator p_Op(const T p_Left, const Wide &p_Right)                                           \
+        requires(Integer<T>)                                                                                           \
     {                                                                                                                  \
         Wide wide;                                                                                                     \
         for (SizeType i = 0; i < Lanes; ++i)                                                                           \
             wide.m_Data[i] = p_Left p_Op p_Right.m_Data[i];                                                            \
         return wide;                                                                                                   \
+    }                                                                                                                  \
+    constexpr Wide &operator p_Op##=(const Wide & p_Other)                                                             \
+    {                                                                                                                  \
+        *this = *this p_Op p_Other;                                                                                    \
+        return *this;                                                                                                  \
     }
 
     CREATE_ARITHMETIC_OP(+)
@@ -156,6 +163,11 @@ class Wide
         for (SizeType i = 0; i < Lanes; ++i)                                                                           \
             wide.m_Data[i] = p_Left.m_Data[i] p_Op p_Shift;                                                            \
         return wide;                                                                                                   \
+    }                                                                                                                  \
+    constexpr Wide &operator p_Op##=(const Wide & p_Other)                                                             \
+    {                                                                                                                  \
+        *this = *this p_Op p_Other;                                                                                    \
+        return *this;                                                                                                  \
     }
 
     CREATE_BITSHIFT_OP(<<)

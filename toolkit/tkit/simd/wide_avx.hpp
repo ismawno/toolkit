@@ -311,6 +311,13 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         return p_Other * static_cast<T>(-1);
     }
 
+#    define CREATE_SELF_OP(p_Op)                                                                                       \
+        constexpr Wide &operator p_Op##=(const Wide & p_Other)                                                         \
+        {                                                                                                              \
+            *this = *this p_Op p_Other;                                                                                \
+            return *this;                                                                                              \
+        }
+
 #    define CREATE_SCALAR_OP(p_Op)                                                                                     \
         friend constexpr Wide operator p_Op(const Wide &p_Left, const T p_Right)                                       \
         {                                                                                                              \
@@ -326,40 +333,10 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     CREATE_SCALAR_OP(*)
     CREATE_SCALAR_OP(/)
 
-#    ifdef TKIT_SIMD_AVX2
-#        define CREATE_CMP_OP_INT(p_Op)                                                                                \
-            else if constexpr (s_Equals<__m256i>)                                                                      \
-            {                                                                                                          \
-                if constexpr (s_IsSize<8>)                                                                             \
-                    return _mm256_cmp##p_Op##_epi64(p_Left.m_Data, p_Right.m_Data);                                    \
-                else if constexpr (s_IsSize<4>)                                                                        \
-                    return _mm256_cmp##p_Op##_epi32(p_Left.m_Data, p_Right.m_Data);                                    \
-                else if constexpr (s_IsSize<2>)                                                                        \
-                    return _mm256_cmp##p_Op##_epi16(p_Left.m_Data, p_Right.m_Data);                                    \
-                else if constexpr (s_IsSize<1>)                                                                        \
-                    return _mm256_cmp##p_Op##_epi8(p_Left.m_Data, p_Right.m_Data);                                     \
-                CREATE_BAD_BRANCH()                                                                                    \
-            }
-#    else
-#        define CREATE_CMP_OP_INT(p_Op)
-#    endif
-
-#    define CREATE_CMP_OP(p_Op, p_Flag, p_IntOpName)                                                                   \
-        friend constexpr Mask operator p_Op(const Wide &p_Left, const Wide &p_Right)                                   \
-        {                                                                                                              \
-            if constexpr (s_Equals<__m256>)                                                                            \
-                return _mm256_cmp_ps(p_Left.m_Data, p_Right.m_Data, p_Flag);                                           \
-            else if constexpr (s_Equals<__m256d>)                                                                      \
-                return _mm256_cmp_pd(p_Left.m_Data, p_Right.m_Data, p_Flag);                                           \
-            CREATE_CMP_OP_INT(p_IntOpName)                                                                             \
-        }
-
-    CREATE_CMP_OP(==, _CMP_EQ_OQ, eq)
-    CREATE_CMP_OP(!=, _CMP_NEQ_UQ, neq)
-    CREATE_CMP_OP(<, _CMP_LT_OQ, lt)
-    CREATE_CMP_OP(>, _CMP_GT_OQ, gt)
-    CREATE_CMP_OP(<=, _CMP_LE_OQ, le)
-    CREATE_CMP_OP(>=, _CMP_GE_OQ, ge)
+    CREATE_SELF_OP(+)
+    CREATE_SELF_OP(-)
+    CREATE_SELF_OP(*)
+    CREATE_SELF_OP(/)
 
 #    ifdef TKIT_SIMD_AVX2
     friend constexpr Wide operator>>(const Wide &p_Left, const i32 p_Shift)
@@ -416,7 +393,47 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     {
         return Wide{_mm256_or_si256(p_Left.m_Data, p_Right.m_Data)};
     }
+
+    CREATE_SELF_OP(>>)
+    CREATE_SELF_OP(<<)
+    CREATE_SELF_OP(&)
+    CREATE_SELF_OP(|)
 #    endif
+
+#    ifdef TKIT_SIMD_AVX2
+#        define CREATE_CMP_OP_INT(p_Op)                                                                                \
+            else if constexpr (s_Equals<__m256i>)                                                                      \
+            {                                                                                                          \
+                if constexpr (s_IsSize<8>)                                                                             \
+                    return _mm256_cmp##p_Op##_epi64(p_Left.m_Data, p_Right.m_Data);                                    \
+                else if constexpr (s_IsSize<4>)                                                                        \
+                    return _mm256_cmp##p_Op##_epi32(p_Left.m_Data, p_Right.m_Data);                                    \
+                else if constexpr (s_IsSize<2>)                                                                        \
+                    return _mm256_cmp##p_Op##_epi16(p_Left.m_Data, p_Right.m_Data);                                    \
+                else if constexpr (s_IsSize<1>)                                                                        \
+                    return _mm256_cmp##p_Op##_epi8(p_Left.m_Data, p_Right.m_Data);                                     \
+                CREATE_BAD_BRANCH()                                                                                    \
+            }
+#    else
+#        define CREATE_CMP_OP_INT(p_Op)
+#    endif
+
+#    define CREATE_CMP_OP(p_Op, p_Flag, p_IntOpName)                                                                   \
+        friend constexpr Mask operator p_Op(const Wide &p_Left, const Wide &p_Right)                                   \
+        {                                                                                                              \
+            if constexpr (s_Equals<__m256>)                                                                            \
+                return _mm256_cmp_ps(p_Left.m_Data, p_Right.m_Data, p_Flag);                                           \
+            else if constexpr (s_Equals<__m256d>)                                                                      \
+                return _mm256_cmp_pd(p_Left.m_Data, p_Right.m_Data, p_Flag);                                           \
+            CREATE_CMP_OP_INT(p_IntOpName)                                                                             \
+        }
+
+    CREATE_CMP_OP(==, _CMP_EQ_OQ, eq)
+    CREATE_CMP_OP(!=, _CMP_NEQ_UQ, neq)
+    CREATE_CMP_OP(<, _CMP_LT_OQ, lt)
+    CREATE_CMP_OP(>, _CMP_GT_OQ, gt)
+    CREATE_CMP_OP(<=, _CMP_LE_OQ, le)
+    CREATE_CMP_OP(>=, _CMP_GE_OQ, ge)
 
     static T Reduce(const Wide &p_Wide)
     {
@@ -809,3 +826,4 @@ TKIT_COMPILER_WARNING_IGNORE_POP()
 #undef CREATE_BAD_BRANCH
 #undef CREATE_EQ_CMP
 #undef CREATE_INT_CMP
+#undef CREATE_SELF_OP
