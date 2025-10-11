@@ -2,7 +2,7 @@
 #include "tkit/simd/wide_sse.hpp"
 
 using namespace TKit;
-using namespace TKit::Detail;
+using namespace TKit::Simd;
 
 TEST_CASE("SIMD: SSE Wide f32", "[SIMD][SSE][Wide][f32]")
 {

@@ -4,7 +4,7 @@
 #include "tkit/simd/utils.hpp"
 #include <algorithm>
 
-namespace TKit::Detail
+namespace TKit::Simd
 {
 template <typename T, usize L, typename Traits = Container::ArrayTraits<T>>
     requires(L > 0 && (Float<T> || Integer<T>))
@@ -214,8 +214,8 @@ class Wide
 
   private:
     Array<T, Lanes, Traits> m_Data;
-}; // namespace TKit::Detail
-} // namespace TKit::Detail
+}; // namespace TKit::Simd
+} // namespace TKit::Simd
 
 #undef CREATE_MIN_MAX
 #undef CREATE_CMP_OP

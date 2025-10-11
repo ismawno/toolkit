@@ -117,7 +117,7 @@ TEST_CASE("DynamicArray: Insert single and range", "[DynamicArray]")
     arr.Insert(arr.begin() + 2, 3u);
     REQUIRE(arr.GetSize() == 5);
 
-    const std::array<u32, 2> extra = {7u, 8u};
+    const std::array<u32, 2> extra{7u, 8u};
     arr.Insert(arr.begin() + 5, extra.begin(), extra.end());
     REQUIRE(arr.GetSize() == 7);
     REQUIRE(arr[5] == 7u);

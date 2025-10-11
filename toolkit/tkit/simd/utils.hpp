@@ -3,7 +3,7 @@
 #include "tkit/utils/alias.hpp"
 #include <concepts>
 
-namespace TKit::Detail
+namespace TKit::Simd
 {
 template <typename T>
 concept Float = std::same_as<T, f32> || std::same_as<T, f64>;
@@ -23,4 +23,4 @@ template <usize Lanes> constexpr usize MaskSize()
     return Lanes;
 }
 
-} // namespace TKit::Detail
+} // namespace TKit::Simd

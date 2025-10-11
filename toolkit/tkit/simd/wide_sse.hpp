@@ -20,7 +20,7 @@
 #    if defined(TKIT_SIMD_AVX2) || defined(TKIT_BMI2)
 #        include <immintrin.h>
 #    endif
-namespace TKit::Detail::SSE
+namespace TKit::Simd::SSE
 {
 template <typename T>
 concept Arithmetic = Float<T> || Integer<T>;
@@ -335,33 +335,33 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     CREATE_SELF_OP(&)
     CREATE_SELF_OP(|)
 
-#    define CREATE_CMP_OP(p_Op, p_Flag, p_IntOpName)                                                                   \
+#    define CREATE_CMP_OP(p_Op, p_OpName)                                                                              \
         friend constexpr Mask operator p_Op(const Wide &p_Left, const Wide &p_Right)                                   \
         {                                                                                                              \
             if constexpr (s_Equals<__m128>)                                                                            \
-                return _mm_cmp_ps(p_Left.m_Data, p_Right.m_Data, p_Flag);                                              \
+                return _mm_cmp##p_OpName##_ps(p_Left.m_Data, p_Right.m_Data);                                          \
             else if constexpr (s_Equals<__m128d>)                                                                      \
-                return _mm_cmp_pd(p_Left.m_Data, p_Right.m_Data, p_Flag);                                              \
+                return _mm_cmp##p_OpName##_pd(p_Left.m_Data, p_Right.m_Data);                                          \
             else if constexpr (s_Equals<__m128i>)                                                                      \
             {                                                                                                          \
                 if constexpr (s_IsSize<8>)                                                                             \
-                    return _mm_cmp##p_IntOpName##_epi64(p_Left.m_Data, p_Right.m_Data);                                \
+                    return _mm_cmp##p_OpName##_epi64(p_Left.m_Data, p_Right.m_Data);                                   \
                 else if constexpr (s_IsSize<4>)                                                                        \
-                    return _mm_cmp##p_IntOpName##_epi32(p_Left.m_Data, p_Right.m_Data);                                \
+                    return _mm_cmp##p_OpName##_epi32(p_Left.m_Data, p_Right.m_Data);                                   \
                 else if constexpr (s_IsSize<2>)                                                                        \
-                    return _mm_cmp##p_IntOpName##_epi16(p_Left.m_Data, p_Right.m_Data);                                \
+                    return _mm_cmp##p_OpName##_epi16(p_Left.m_Data, p_Right.m_Data);                                   \
                 else if constexpr (s_IsSize<1>)                                                                        \
-                    return _mm_cmp##p_IntOpName##_epi8(p_Left.m_Data, p_Right.m_Data);                                 \
+                    return _mm_cmp##p_OpName##_epi8(p_Left.m_Data, p_Right.m_Data);                                    \
                 CREATE_BAD_BRANCH()                                                                                    \
             }                                                                                                          \
         }
 
-    CREATE_CMP_OP(==, _CMP_EQ_OQ, eq)
-    CREATE_CMP_OP(!=, _CMP_NEQ_UQ, neq)
-    CREATE_CMP_OP(<, _CMP_LT_OQ, lt)
-    CREATE_CMP_OP(>, _CMP_GT_OQ, gt)
-    CREATE_CMP_OP(<=, _CMP_LE_OQ, le)
-    CREATE_CMP_OP(>=, _CMP_GE_OQ, ge)
+    CREATE_CMP_OP(==, eq)
+    CREATE_CMP_OP(!=, neq)
+    CREATE_CMP_OP(<, lt)
+    CREATE_CMP_OP(>, gt)
+    CREATE_CMP_OP(<=, le)
+    CREATE_CMP_OP(>=, ge)
 
     static T Reduce(const Wide &p_Wide)
     {
@@ -718,9 +718,30 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         return _mm_blendv_epi8(p_Right, p_Left, cmp);
     }
 
+#    ifndef TKIT_SIMD_SSE4_1
+    static constexpr __m128 _mm_blendv_ps(const __m128 p_Left, const __m128 p_Right, const __m128 p_Mask)
+    {
+        return _mm_or_ps(_mm_andnot_ps(p_Mask, p_Left), _mm_and_ps(p_Mask, p_Right));
+    }
+    static constexpr __m128d _mm_blendv_pd(const __m128d p_Left, const __m128d p_Right, const __m128d p_Mask)
+    {
+        return _mm_or_pd(_mm_andnot_pd(p_Mask, p_Left), _mm_and_pd(p_Mask, p_Right));
+    }
+    static constexpr __m128i _mm_blendv_epi8(const __m128i p_Left, const __m128i p_Right, const __m128i p_Mask)
+    {
+        return _mm_or_si128(_mm_andnot_si128(p_Mask, p_Left), _mm_and_si128(p_Mask, p_Right));
+    }
+    static constexpr __m128i _mm_cmpeq_epi64(const __m128i p_Left, const __m128i p_Right)
+    {
+        const __m128i cmp1 = _mm_cmpeq_epi32(p_Left, p_Right);
+        const __m128i cmp2 = _mm_shuffle_epi32(cmp1, _MM_SHUFFLE(2, 3, 0, 1));
+        return _mm_and_si128(cmp1, cmp2);
+    }
+#    endif
+
     static constexpr __m128i _mm_cmpgt_epi64(__m128i p_Left, __m128i p_Right)
     {
-#    ifdef TKIT_SIMD_SSE4_2
+#    ifndef TKIT_SIMD_SSE4_2
         __m128i sign;
         if constexpr (!std::is_signed_v<T>)
             sign = _mm_set1_epi64x(static_cast<i64>(1ull << 63 | 1ull << 31));
@@ -834,7 +855,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
     m128 m_Data;
 };
-} // namespace TKit::Detail::SSE
+} // namespace TKit::Simd::SSE
 TKIT_COMPILER_WARNING_IGNORE_POP()
 #endif
 

@@ -2,7 +2,7 @@
 #include "tkit/simd/wide_avx.hpp"
 
 using namespace TKit;
-using namespace TKit::Detail;
+using namespace TKit::Simd;
 
 TEST_CASE("SIMD: AVX Wide f32", "[SIMD][AVX][Wide][f32]")
 {

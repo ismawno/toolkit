@@ -7,7 +7,7 @@
 #    include "tkit/container/container.hpp"
 #    include <immintrin.h>
 
-namespace TKit::Detail::AVX
+namespace TKit::Simd::AVX
 {
 #    ifdef TKIT_SIMD_AVX2
 template <typename T>
@@ -839,7 +839,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
     m256 m_Data;
 };
-} // namespace TKit::Detail::AVX
+} // namespace TKit::Simd::AVX
 TKIT_COMPILER_WARNING_IGNORE_POP()
 #endif
 

@@ -2,7 +2,7 @@
 #include "tkit/simd/wide.hpp"
 
 using namespace TKit;
-using namespace TKit::Detail;
+using namespace TKit::Simd;
 
 TEST_CASE("SIMD: Base Wide f32", "[SIMD][Base][Wide][f32]")
 {

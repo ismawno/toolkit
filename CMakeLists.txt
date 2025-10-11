@@ -104,7 +104,7 @@ set(TOOLKIT_ENABLE_PROFILING
     CACHE BOOL "")
 
 # NONE or whatever architecture. native will use AVX2 on windows
-set(TOOLKIT_SIMD
+set(TOOLKIT_ARCH
     "NONE"
     CACHE STRING "")
 
@@ -349,17 +349,17 @@ function(tkit_configure_compile_link_options target)
     endif()
   endif()
 
-  if(NOT TOOLKIT_SIMD STREQUAL "NONE")
-    string(TOLOWER ${TOOLKIT_SIMD} simd)
-    string(TOUPPER ${TOOLKIT_SIMD} SIMD)
+  if(NOT TOOLKIT_ARCH STREQUAL "NONE")
+    string(TOLOWER ${TOOLKIT_ARCH} arch)
+    string(TOUPPER ${TOOLKIT_ARCH} ARCH)
     if(MSVC)
-      if(TOOLKIT_SIMD STREQUAL "NATIVE")
+      if(TOOLKIT_ARCH STREQUAL "NATIVE")
         list(APPEND compiler_flags /arch:AVX2)
       else()
-        list(APPEND compiler_flags /arch:${SIMD})
+        list(APPEND compiler_flags /arch:${ARCH})
       endif()
     else()
-      list(APPEND compiler_flags -march=${simd})
+      list(APPEND compiler_flags -march=${arch})
     endif()
   endif()
 
