@@ -595,12 +595,12 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
             if constexpr (s_IsSize<8>)
             {
                 const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
-                return _mm256_i32gather_epi64(p_Data, indices, 1);
+                return _mm256_i32gather_epi64(reinterpret_cast<const long long int *>(p_Data), indices, 1);
             }
             else if constexpr (s_IsSize<4>)
             {
                 const __m256i indices = _mm256_setr_epi32(0, idx, 2 * idx, 3 * idx, 4 * idx, 5 * idx, 6 * idx, 7 * idx);
-                return _mm256_i32gather_epi32(p_Data, indices, 1);
+                return _mm256_i32gather_epi32(reinterpret_cast<const i32 *>(p_Data), indices, 1);
             }
             else
             {
