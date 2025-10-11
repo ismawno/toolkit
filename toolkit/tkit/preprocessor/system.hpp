@@ -127,10 +127,8 @@
 #    define TKIT_SIMD_AVX2
 #endif
 #ifdef __AVX__
-#    define TKIT_SIMD_AVX
-#endif
-#if defined(TKIT_SIMD_AVX) || defined(TKIT_SIMD_AVX2)
 #    define TKIT_SIMD_AVX_SIZE 32
+#    define TKIT_SIMD_AVX
 #endif
 
 #ifdef __SSE4_2__
@@ -147,12 +145,6 @@
 #endif
 #ifdef __SSE2__
 #    define TKIT_SIMD_SSE2
-#endif
-#ifdef __SSE__
-#    define TKIT_SIMD_SSE
-#endif
-#if defined(TKIT_SIMD_SSE) || defined(TKIT_SIMD_SSE2) || defined(TKIT_SIMD_SSE3) || defined(TKIT_SIMD_SSSE3) ||        \
-    defined(TKIT_SIMD_SSE4_1) || defined(TKIT_SIMD_SSE4_2)
 #    define TKIT_SIMD_SSE_SIZE 16
 #endif
 
@@ -163,6 +155,7 @@
 #ifdef __ARM_FEATURE_SVE
 #    define TKIT_SIMD_SVE
 #endif
+
 #if defined(TKIT_SIMD_SVE2) || defined(TKIT_SIMD_SVE)
 #    ifdef __ARM_FEATURE_SVE_BITS
 #        define TKIT_SIMD_SVE_SIZE (__ARM_FEATURE_SVE_BITS >> 3)

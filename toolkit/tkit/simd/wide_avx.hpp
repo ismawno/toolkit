@@ -1,7 +1,7 @@
 #pragma once
 
 #include "tkit/preprocessor/system.hpp"
-#if defined(TKIT_SIMD_AVX) || defined(TKIT_SIMD_AVX2)
+#ifdef TKIT_SIMD_AVX
 #    include "tkit/memory/memory.hpp"
 #    include "tkit/simd/utils.hpp"
 #    include "tkit/container/container.hpp"
@@ -12,9 +12,6 @@ namespace TKit::Detail::AVX
 #    ifdef TKIT_SIMD_AVX2
 template <typename T>
 concept Arithmetic = Float<T> || Integer<T>;
-
-template <typename T>
-concept HasGreaterThan64 = requires(T p_Left, T p_Right) { _mm256_cmpgt_epi64(p_Left, p_Right); };
 
 #    else
 template <typename T>
@@ -45,7 +42,8 @@ TKIT_CLANG_WARNING_IGNORE("-Wignored-attributes")
 template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 {
     using m256 = TypeSelector<T>::Type;
-    template <typename E> static constexpr bool Equals = std::is_same_v<m256, E>;
+    template <typename E> static constexpr bool s_Equals = std::is_same_v<m256, E>;
+    template <usize Size> static constexpr bool s_IsSize = Size == sizeof(T);
 
   public:
     using ValueType = T;
@@ -57,6 +55,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     using Mask = m256;
     using BitMask = u<MaskSize<Lanes>()>;
 
+  public:
 #    define CREATE_BAD_BRANCH()                                                                                        \
         else                                                                                                           \
         {                                                                                                              \
@@ -65,22 +64,22 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
     static constexpr BitMask PackMask(const Mask &p_Mask)
     {
-        if constexpr (Equals<__m256>)
+        if constexpr (s_Equals<__m256>)
             return static_cast<BitMask>(_mm256_movemask_ps(p_Mask));
-        else if constexpr (Equals<__m256d>)
+        else if constexpr (s_Equals<__m256d>)
             return static_cast<BitMask>(_mm256_movemask_pd(p_Mask));
 #    ifdef TKIT_SIMD_AVX2
-        else if constexpr (Equals<__m256i>)
+        else if constexpr (s_Equals<__m256i>)
         {
             const u32 byteMask = static_cast<u32>(_mm256_movemask_epi8(p_Mask));
-            if constexpr (Lanes == 32)
+            if constexpr (s_IsSize<1>)
                 return static_cast<BitMask>(byteMask);
 #        ifdef TKIT_BMI2
-            else if constexpr (Lanes == 16)
+            else if constexpr (s_IsSize<2>)
                 return static_cast<BitMask>(_pext_u32(byteMask, 0x55555555u));
-            else if constexpr (Lanes == 8)
+            else if constexpr (s_IsSize<4>)
                 return static_cast<BitMask>(_pext_u32(byteMask, 0x11111111u));
-            else if constexpr (Lanes == 4)
+            else if constexpr (s_IsSize<8>)
                 return static_cast<BitMask>(_pext_u32(byteMask, 0x01010101u));
 #        endif
             else
@@ -138,12 +137,12 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     {
         TKIT_ASSERT(Memory::IsAligned(p_Data, Alignment),
                     "[TOOLKIT][AVX] Data must be aligned to {} bytes to use the AVX SIMD set", Alignment);
-        if constexpr (Equals<__m256>)
+        if constexpr (s_Equals<__m256>)
             _mm256_store_ps(p_Data, m_Data);
-        else if constexpr (Equals<__m256d>)
+        else if constexpr (s_Equals<__m256d>)
             _mm256_store_pd(p_Data, m_Data);
 #    ifdef TKIT_SIMD_AVX2
-        else if constexpr (Equals<__m256i>)
+        else if constexpr (s_Equals<__m256i>)
             _mm256_store_si256(reinterpret_cast<__m256i *>(p_Data), m_Data);
 #    endif
         CREATE_BAD_BRANCH()
@@ -151,12 +150,12 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
     constexpr void StoreUnaligned(T *p_Data) const
     {
-        if constexpr (Equals<__m256>)
+        if constexpr (s_Equals<__m256>)
             _mm256_storeu_ps(p_Data, m_Data);
-        else if constexpr (Equals<__m256d>)
+        else if constexpr (s_Equals<__m256d>)
             _mm256_storeu_pd(p_Data, m_Data);
 #    ifdef TKIT_SIMD_AVX2
-        else if constexpr (Equals<__m256i>)
+        else if constexpr (s_Equals<__m256i>)
             _mm256_storeu_si256(reinterpret_cast<__m256i *>(p_Data), m_Data);
 #    endif
         CREATE_BAD_BRANCH()
@@ -175,12 +174,12 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
     static constexpr Wide Select(const Wide &p_Left, const Wide &p_Right, const Mask &p_Mask)
     {
-        if constexpr (Equals<__m256>)
+        if constexpr (s_Equals<__m256>)
             return Wide{_mm256_blendv_ps(p_Right.m_Data, p_Left.m_Data, p_Mask)};
-        else if constexpr (Equals<__m256d>)
+        else if constexpr (s_Equals<__m256d>)
             return Wide{_mm256_blendv_pd(p_Right.m_Data, p_Left.m_Data, p_Mask)};
 #    ifdef TKIT_SIMD_AVX2
-        else if constexpr (Equals<__m256i>)
+        else if constexpr (s_Equals<__m256i>)
             return Wide{_mm256_blendv_epi8(p_Right.m_Data, p_Left.m_Data, p_Mask)};
 #    endif
         CREATE_BAD_BRANCH()
@@ -188,26 +187,26 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
 #    ifdef TKIT_SIMD_AVX2
 #        define CREATE_MIN_MAX_INT(p_Op)                                                                               \
-            else if constexpr (Equals<__m256i>)                                                                        \
+            else if constexpr (s_Equals<__m256i>)                                                                      \
             {                                                                                                          \
-                if constexpr (Lanes == 4)                                                                              \
+                if constexpr (s_IsSize<8>)                                                                             \
                     return Wide{_mm256_##p_Op##_epi64(p_Left.m_Data, p_Right.m_Data)};                                 \
                 else if constexpr (std::is_signed_v<T>)                                                                \
                 {                                                                                                      \
-                    if constexpr (Lanes == 8)                                                                          \
+                    if constexpr (s_IsSize<4>)                                                                         \
                         return Wide{_mm256_##p_Op##_epi32(p_Left.m_Data, p_Right.m_Data)};                             \
-                    else if constexpr (Lanes == 16)                                                                    \
+                    else if constexpr (s_IsSize<2>)                                                                    \
                         return Wide{_mm256_##p_Op##_epi16(p_Left.m_Data, p_Right.m_Data)};                             \
-                    else if constexpr (Lanes == 32)                                                                    \
+                    else if constexpr (s_IsSize<1>)                                                                    \
                         return Wide{_mm256_##p_Op##_epi8(p_Left.m_Data, p_Right.m_Data)};                              \
                 }                                                                                                      \
                 else                                                                                                   \
                 {                                                                                                      \
-                    if constexpr (Lanes == 8)                                                                          \
+                    if constexpr (s_IsSize<4>)                                                                         \
                         return Wide{_mm256_##p_Op##_epu32(p_Left.m_Data, p_Right.m_Data)};                             \
-                    else if constexpr (Lanes == 16)                                                                    \
+                    else if constexpr (s_IsSize<2>)                                                                    \
                         return Wide{_mm256_##p_Op##_epu16(p_Left.m_Data, p_Right.m_Data)};                             \
-                    else if constexpr (Lanes == 32)                                                                    \
+                    else if constexpr (s_IsSize<1>)                                                                    \
                         return Wide{_mm256_##p_Op##_epu8(p_Left.m_Data, p_Right.m_Data)};                              \
                 }                                                                                                      \
             }
@@ -218,9 +217,9 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 #    define CREATE_MIN_MAX(p_Name, p_Op)                                                                               \
         static constexpr Wide p_Name(const Wide &p_Left, const Wide &p_Right)                                          \
         {                                                                                                              \
-            if constexpr (Equals<__m256>)                                                                              \
+            if constexpr (s_Equals<__m256>)                                                                            \
                 return Wide{_mm256_##p_Op##_ps(p_Left.m_Data, p_Right.m_Data)};                                        \
-            else if constexpr (Equals<__m256d>)                                                                        \
+            else if constexpr (s_Equals<__m256d>)                                                                      \
                 return Wide{_mm256_##p_Op##_pd(p_Left.m_Data, p_Right.m_Data)};                                        \
             CREATE_MIN_MAX_INT(p_Op)                                                                                   \
             CREATE_BAD_BRANCH()                                                                                        \
@@ -231,15 +230,15 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
 #    ifdef TKIT_SIMD_AVX2
 #        define CREATE_ARITHMETIC_OP_INT(p_Op)                                                                         \
-            else if constexpr (Equals<__m256i>)                                                                        \
+            else if constexpr (s_Equals<__m256i>)                                                                      \
             {                                                                                                          \
-                if constexpr (Lanes == 4)                                                                              \
+                if constexpr (s_IsSize<8>)                                                                             \
                     return Wide{_mm256_##p_Op##_epi64(p_Left.m_Data, p_Right.m_Data)};                                 \
-                else if constexpr (Lanes == 8)                                                                         \
+                else if constexpr (s_IsSize<4>)                                                                        \
                     return Wide{_mm256_##p_Op##_epi32(p_Left.m_Data, p_Right.m_Data)};                                 \
-                else if constexpr (Lanes == 16)                                                                        \
+                else if constexpr (s_IsSize<2>)                                                                        \
                     return Wide{_mm256_##p_Op##_epi16(p_Left.m_Data, p_Right.m_Data)};                                 \
-                else if constexpr (Lanes == 32)                                                                        \
+                else if constexpr (s_IsSize<1>)                                                                        \
                     return Wide{_mm256_##p_Op##_epi8(p_Left.m_Data, p_Right.m_Data)};                                  \
                 CREATE_BAD_BRANCH()                                                                                    \
             }
@@ -250,9 +249,9 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 #    define CREATE_ARITHMETIC_OP(p_Op, p_FloatOp, p_IntOp)                                                             \
         friend constexpr Wide operator p_Op(const Wide &p_Left, const Wide &p_Right)                                   \
         {                                                                                                              \
-            if constexpr (Equals<__m256>)                                                                              \
+            if constexpr (s_Equals<__m256>)                                                                            \
                 return Wide{_mm256_##p_FloatOp##_ps(p_Left.m_Data, p_Right.m_Data)};                                   \
-            else if constexpr (Equals<__m256d>)                                                                        \
+            else if constexpr (s_Equals<__m256d>)                                                                      \
                 return Wide{_mm256_##p_FloatOp##_pd(p_Left.m_Data, p_Right.m_Data)};                                   \
             CREATE_ARITHMETIC_OP_INT(p_IntOp)                                                                          \
             CREATE_BAD_BRANCH()                                                                                        \
@@ -264,12 +263,12 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
     friend constexpr Wide operator/(const Wide &p_Left, const Wide &p_Right)
     {
-        if constexpr (Equals<__m256>)
+        if constexpr (s_Equals<__m256>)
             return Wide{_mm256_div_ps(p_Left.m_Data, p_Right.m_Data)};
-        else if constexpr (Equals<__m256d>)
+        else if constexpr (s_Equals<__m256d>)
             return Wide{_mm256_div_pd(p_Left.m_Data, p_Right.m_Data)};
 #    ifdef TKIT_SIMD_AVX2
-        else if constexpr (Equals<__m256i>)
+        else if constexpr (s_Equals<__m256i>)
         {
 #        ifdef TKIT_ALLOW_SCALAR_SIMD_FALLBACKS
             alignas(Alignment) T left[Lanes];
@@ -284,8 +283,8 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
             return Wide{result};
 #        else
             static_assert(
-                !Equals<__m256i>,
-                "[TOOLKIT][SIMD] AVX/AVX2 does not support integer division. Scalar fallback is disabled by default. "
+                !s_Equals<__m256i>,
+                "[TOOLKIT][SIMD] AVX does not support integer division. Scalar fallback is disabled by default. "
                 "If you really need it, enable TKIT_ALLOW_SCALAR_SIMD_FALLBACKS.");
 #        endif
         }
@@ -314,15 +313,15 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
 #    ifdef TKIT_SIMD_AVX2
 #        define CREATE_CMP_OP_INT(p_Op)                                                                                \
-            else if constexpr (Equals<__m256i>)                                                                        \
+            else if constexpr (s_Equals<__m256i>)                                                                      \
             {                                                                                                          \
-                if constexpr (Lanes == 4)                                                                              \
+                if constexpr (s_IsSize<8>)                                                                             \
                     return _mm256_cmp##p_Op##_epi64(p_Left.m_Data, p_Right.m_Data);                                    \
-                else if constexpr (Lanes == 8)                                                                         \
+                else if constexpr (s_IsSize<4>)                                                                        \
                     return _mm256_cmp##p_Op##_epi32(p_Left.m_Data, p_Right.m_Data);                                    \
-                else if constexpr (Lanes == 16)                                                                        \
+                else if constexpr (s_IsSize<2>)                                                                        \
                     return _mm256_cmp##p_Op##_epi16(p_Left.m_Data, p_Right.m_Data);                                    \
-                else if constexpr (Lanes == 32)                                                                        \
+                else if constexpr (s_IsSize<1>)                                                                        \
                     return _mm256_cmp##p_Op##_epi8(p_Left.m_Data, p_Right.m_Data);                                     \
                 CREATE_BAD_BRANCH()                                                                                    \
             }
@@ -333,9 +332,9 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 #    define CREATE_CMP_OP(p_Op, p_Flag, p_IntOpName)                                                                   \
         friend constexpr Mask operator p_Op(const Wide &p_Left, const Wide &p_Right)                                   \
         {                                                                                                              \
-            if constexpr (Equals<__m256>)                                                                              \
+            if constexpr (s_Equals<__m256>)                                                                            \
                 return _mm256_cmp_ps(p_Left.m_Data, p_Right.m_Data, p_Flag);                                           \
-            else if constexpr (Equals<__m256d>)                                                                        \
+            else if constexpr (s_Equals<__m256d>)                                                                      \
                 return _mm256_cmp_pd(p_Left.m_Data, p_Right.m_Data, p_Flag);                                           \
             CREATE_CMP_OP_INT(p_IntOpName)                                                                             \
         }
@@ -351,28 +350,28 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     friend constexpr Wide operator>>(const Wide &p_Left, const i32 p_Shift)
         requires(Integer<T>)
     {
-        if constexpr (Lanes == 4)
+        if constexpr (s_IsSize<8>)
         {
             if constexpr (std::is_signed_v<T>)
                 return Wide{_mm256_sra_epi64(p_Left.m_Data, p_Shift)};
             else
                 return Wide{_mm256_srl_epi64(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
         }
-        else if constexpr (Lanes == 8)
+        else if constexpr (s_IsSize<4>)
         {
             if constexpr (std::is_signed_v<T>)
                 return Wide{_mm256_sra_epi32(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
             else
                 return Wide{_mm256_srl_epi32(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
         }
-        else if constexpr (Lanes == 16)
+        else if constexpr (s_IsSize<2>)
         {
             if constexpr (std::is_signed_v<T>)
                 return Wide{_mm256_sra_epi16(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
             else
                 return Wide{_mm256_srl_epi16(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
         }
-        else if constexpr (Lanes == 32)
+        else if constexpr (s_IsSize<1>)
         {
             if constexpr (std::is_signed_v<T>)
                 return Wide{_mm256_sra_epi8(p_Left.m_Data, p_Shift)};
@@ -383,13 +382,13 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     friend constexpr Wide operator<<(const Wide &p_Left, const i32 p_Shift)
         requires(Integer<T>)
     {
-        if constexpr (Lanes == 4)
+        if constexpr (s_IsSize<8>)
             return Wide{_mm256_sll_epi64(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
-        else if constexpr (Lanes == 8)
+        else if constexpr (s_IsSize<4>)
             return Wide{_mm256_sll_epi32(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
-        else if constexpr (Lanes == 16)
+        else if constexpr (s_IsSize<2>)
             return Wide{_mm256_sll_epi16(p_Left.m_Data, _mm_cvtsi32_si128(p_Shift))};
-        else if constexpr (Lanes == 32)
+        else if constexpr (s_IsSize<1>)
             return Wide{_mm256_sll_epi8(p_Left.m_Data, p_Shift)};
     }
     friend constexpr Wide operator&(const Wide &p_Left, const Wide &p_Right)
@@ -404,73 +403,9 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     }
 #    endif
 
-#    define CREATE_REDUCE_INT(p_Op)                                                                                    \
-        else if constexpr (Equals<__m256i>)                                                                            \
-        {                                                                                                              \
-            if constexpr (Lanes == 4)                                                                                  \
-            {                                                                                                          \
-                const __m128i lo = _mm256_castsi256_si128(p_Wide.m_Data);                                              \
-                const __m128i hi = _mm256_extracti128_si256(p_Wide.m_Data, 1);                                         \
-                __m128i sum = _mm_##p_Op##_epi64(lo, hi);                                                              \
-                __m128i shift = _mm_unpackhi_epi64(sum, sum);                                                          \
-                sum = _mm_##p_Op##_epi64(sum, shift);                                                                  \
-                return static_cast<T>(_mm_cvtsi128_si64(sum));                                                         \
-            }                                                                                                          \
-            else if constexpr (Lanes == 8)                                                                             \
-            {                                                                                                          \
-                const __m128i lo = _mm256_castsi256_si128(p_Wide.m_Data);                                              \
-                const __m128i hi = _mm256_extracti128_si256(p_Wide.m_Data, 1);                                         \
-                __m128i sum = _mm_##p_Op##_epi32(lo, hi);                                                              \
-                __m128i shift = _mm_unpackhi_epi32(sum, sum);                                                          \
-                                                                                                                       \
-                sum = _mm_##p_Op##_epi32(sum, shift);                                                                  \
-                shift = _mm_shuffle_epi32(sum, _MM_SHUFFLE(2, 3, 0, 1));                                               \
-                sum = _mm_##p_Op##_epi32(sum, shift);                                                                  \
-                                                                                                                       \
-                return static_cast<T>(_mm_cvtsi128_si32(sum));                                                         \
-            }                                                                                                          \
-            else if constexpr (Lanes == 16)                                                                            \
-            {                                                                                                          \
-                const __m128i lo = _mm256_castsi256_si128(p_Wide.m_Data);                                              \
-                const __m128i hi = _mm256_extracti128_si256(p_Wide.m_Data, 1);                                         \
-                __m128i sum = _mm_##p_Op##_epi16(lo, hi);                                                              \
-                                                                                                                       \
-                __m128i shift = _mm_unpackhi_epi16(sum, sum);                                                          \
-                sum = _mm_##p_Op##_epi16(sum, shift);                                                                  \
-                                                                                                                       \
-                shift = _mm_shuffle_epi32(sum, _MM_SHUFFLE(2, 3, 0, 1));                                               \
-                sum = _mm_##p_Op##_epi16(sum, shift);                                                                  \
-                                                                                                                       \
-                shift = _mm_shufflelo_epi16(sum, _MM_SHUFFLE(2, 3, 0, 1));                                             \
-                sum = _mm_##p_Op##_epi16(sum, shift);                                                                  \
-                                                                                                                       \
-                return static_cast<T>(_mm_cvtsi128_si16(sum));                                                         \
-            }                                                                                                          \
-            else if constexpr (Lanes == 32)                                                                            \
-            {                                                                                                          \
-                const __m128i lo = _mm256_castsi256_si128(p_Wide.m_Data);                                              \
-                const __m128i hi = _mm256_extracti128_si256(p_Wide.m_Data, 1);                                         \
-                __m128i sum = _mm_##p_Op##_epi8(lo, hi);                                                               \
-                                                                                                                       \
-                __m128i shift = _mm_unpackhi_epi8(sum, sum);                                                           \
-                sum = _mm_##p_Op##_epi8(sum, shift);                                                                   \
-                                                                                                                       \
-                shift = _mm_shuffle_epi32(sum, _MM_SHUFFLE(2, 3, 0, 1));                                               \
-                sum = _mm_##p_Op##_epi8(sum, shift);                                                                   \
-                                                                                                                       \
-                shift = _mm_shufflelo_epi16(sum, _MM_SHUFFLE(2, 3, 0, 1));                                             \
-                sum = _mm_##p_Op##_epi8(sum, shift);                                                                   \
-                                                                                                                       \
-                shift = _mm_srli_si128(sum, 1);                                                                        \
-                sum = _mm_##p_Op##_epi8(sum, shift);                                                                   \
-                                                                                                                       \
-                return static_cast<T>(_mm_cvtsi128_si16(sum));                                                         \
-            }                                                                                                          \
-        }
-
     static T Reduce(const Wide &p_Wide)
     {
-        if constexpr (Equals<__m256>)
+        if constexpr (s_Equals<__m256>)
         {
             const __m128 lo = _mm256_castps256_ps128(p_Wide.m_Data);
             const __m128 hi = _mm256_extractf128_ps(p_Wide.m_Data, 1);
@@ -481,7 +416,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
             sum = _mm_add_ss(sum, shift);
             return _mm_cvtss_f32(sum);
         }
-        else if constexpr (Equals<__m256d>)
+        else if constexpr (s_Equals<__m256d>)
         {
             const __m128d lo = _mm256_castpd256_pd128(p_Wide.m_Data);
             const __m128d hi = _mm256_extractf128_pd(p_Wide.m_Data, 1);
@@ -490,9 +425,9 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
             sum = _mm_add_sd(sum, shift);
             return _mm_cvtsd_f64(sum);
         }
-        else if constexpr (Equals<__m256i>)
+        else if constexpr (s_Equals<__m256i>)
         {
-            if constexpr (Lanes == 4)
+            if constexpr (s_IsSize<8>)
             {
                 const __m128i lo = _mm256_castsi256_si128(p_Wide.m_Data);
                 const __m128i hi = _mm256_extracti128_si256(p_Wide.m_Data, 1);
@@ -501,9 +436,9 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
                 const __m128i tmp = _mm_srli_si128(sum, 8);
                 sum = _mm_add_epi64(sum, tmp);
 
-                return static_cast<T>(_mm_extract_epi64(sum, 0));
+                return _mm_cvtsi128_si64(sum);
             }
-            else if constexpr (Lanes == 8)
+            else if constexpr (s_IsSize<4>)
             {
                 const __m128i lo = _mm256_castsi256_si128(p_Wide.m_Data);
                 const __m128i hi = _mm256_extracti128_si256(p_Wide.m_Data, 1);
@@ -513,9 +448,9 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
                 tmp = _mm_srli_si128(sum, 8);
                 sum = _mm_add_epi32(sum, tmp);
 
-                return static_cast<T>(_mm_extract_epi32(sum, 0));
+                return _mm_cvtsi128_si32(sum);
             }
-            else if constexpr (Lanes == 16)
+            else if constexpr (s_IsSize<2>)
             {
                 const __m128i lo = _mm256_castsi256_si128(p_Wide.m_Data);
                 const __m128i hi = _mm256_extracti128_si256(p_Wide.m_Data, 1);
@@ -527,9 +462,9 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
                 tmp = _mm_srli_si128(sum, 8);
                 sum = _mm_add_epi16(sum, tmp);
 
-                return static_cast<T>(_mm_extract_epi16(sum, 0));
+                return static_cast<T>(_mm_cvtsi128_si32(sum));
             }
-            else if constexpr (Lanes == 32)
+            else if constexpr (s_IsSize<1>)
             {
                 const __m128i lo = _mm256_castsi256_si128(p_Wide.m_Data);
                 const __m128i hi = _mm256_extracti128_si256(p_Wide.m_Data, 1);
@@ -544,7 +479,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
                 tmp = _mm_srli_si128(sum, 8);
                 sum = _mm_add_epi8(sum, tmp);
 
-                return static_cast<T>(_mm_extract_epi8(sum, 0));
+                return static_cast<T>(_mm_cvtsi128_si32(sum));
             }
         }
     }
@@ -555,24 +490,24 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         TKIT_ASSERT(Memory::IsAligned(p_Data, Alignment),
                     "[TOOLKIT][AVX] Data must be aligned to {} bytes to use the AVX SIMD set", Alignment);
 
-        if constexpr (Equals<__m256>)
+        if constexpr (s_Equals<__m256>)
             return _mm256_load_ps(p_Data);
-        else if constexpr (Equals<__m256d>)
+        else if constexpr (s_Equals<__m256d>)
             return _mm256_load_pd(p_Data);
 #    ifdef TKIT_SIMD_AVX2
-        else if constexpr (Equals<__m256i>)
+        else if constexpr (s_Equals<__m256i>)
             return _mm256_load_si256(reinterpret_cast<const __m256i *>(p_Data));
 #    endif
         CREATE_BAD_BRANCH()
     }
     static m256 loadUnaligned(const T *p_Data)
     {
-        if constexpr (Equals<__m256>)
+        if constexpr (s_Equals<__m256>)
             return _mm256_loadu_ps(p_Data);
-        else if constexpr (Equals<__m256d>)
+        else if constexpr (s_Equals<__m256d>)
             return _mm256_loadu_pd(p_Data);
 #    ifdef TKIT_SIMD_AVX2
-        else if constexpr (Equals<__m256i>)
+        else if constexpr (s_Equals<__m256i>)
             return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(p_Data));
 #    endif
         CREATE_BAD_BRANCH()
@@ -580,20 +515,20 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
     static m256 set(const T p_Data)
     {
-        if constexpr (Equals<__m256>)
+        if constexpr (s_Equals<__m256>)
             return _mm256_set1_ps(p_Data);
-        else if constexpr (Equals<__m256d>)
+        else if constexpr (s_Equals<__m256d>)
             return _mm256_set1_pd(p_Data);
 #    ifdef TKIT_SIMD_AVX2
-        else if constexpr (Equals<__m256i>)
+        else if constexpr (s_Equals<__m256i>)
         {
-            if constexpr (Lanes == 4)
+            if constexpr (s_IsSize<8>)
                 return _mm256_set1_epi64x(p_Data);
-            else if constexpr (Lanes == 8)
+            else if constexpr (s_IsSize<4>)
                 return _mm256_set1_epi32(p_Data);
-            else if constexpr (Lanes == 16)
+            else if constexpr (s_IsSize<2>)
                 return _mm256_set1_epi16(p_Data);
-            else if constexpr (Lanes == 32)
+            else if constexpr (s_IsSize<1>)
                 return _mm256_set1_epi8(p_Data);
             CREATE_BAD_BRANCH()
         }
@@ -604,20 +539,20 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     template <typename Callable, std::size_t... I>
     static constexpr m256 makeIntrinsic(Callable &&p_Callable, std::index_sequence<I...>) noexcept
     {
-        if constexpr (Equals<__m256>)
+        if constexpr (s_Equals<__m256>)
             return _mm256_setr_ps(static_cast<T>(p_Callable(I))...);
-        else if constexpr (Equals<__m256d>)
+        else if constexpr (s_Equals<__m256d>)
             return _mm256_setr_pd(static_cast<T>(p_Callable(I))...);
 #    ifdef TKIT_SIMD_AVX2
-        else if constexpr (Equals<__m256i>)
+        else if constexpr (s_Equals<__m256i>)
         {
-            if constexpr (Lanes == 4)
+            if constexpr (s_IsSize<8>)
                 return _mm256_setr_epi64x(static_cast<T>(p_Callable(I))...);
-            else if constexpr (Lanes == 8)
+            else if constexpr (s_IsSize<4>)
                 return _mm256_setr_epi32(static_cast<T>(p_Callable(I))...);
-            else if constexpr (Lanes == 16)
+            else if constexpr (s_IsSize<2>)
                 return _mm256_setr_epi16(static_cast<T>(p_Callable(I))...);
-            else if constexpr (Lanes == 32)
+            else if constexpr (s_IsSize<1>)
                 return _mm256_setr_epi8(static_cast<T>(p_Callable(I))...);
         }
 #    endif
@@ -717,30 +652,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         const __m256i mask = _mm256_set1_epi16(0x00FF);
         return _mm256_packus_epi16(_mm256_and_si256(plo, mask), _mm256_and_si256(phi, mask));
     }
-    static constexpr __m256i _mm256_cmpgt_epi64(__m256i p_Left, __m256i p_Right)
-    {
-        if constexpr (!std::is_signed_v<T>)
-        {
-            const __m256i offset = _mm256_set1_epi64x(static_cast<i64>(1ull << 63));
-            p_Left = _mm256_xor_si256(p_Left, offset);
-            p_Right = _mm256_xor_si256(p_Right, offset);
-        }
-        if constexpr (HasGreaterThan64<__m256i>)
-            return ::_mm256_cmpgt_epi64(p_Left, p_Right);
-        else
-        {
-            const __m128i llo = _mm256_castsi256_si128(p_Left);
-            const __m128i rlo = _mm256_castsi256_si128(p_Right);
 
-            const __m128i lhi = _mm256_extracti128_si256(p_Left, 1);
-            const __m128i rhi = _mm256_extracti128_si256(p_Right, 1);
-
-            const __m128i reslo = _mm_cmpgt_epi64(llo, rlo);
-            const __m128i reshi = _mm_cmpgt_epi64(lhi, rhi);
-
-            return _mm256_inserti128_si256(_mm256_castsi128_si256(reslo), reshi, 1);
-        }
-    }
     static constexpr __m256i _mm256_min_epi64(const __m256i p_Left, const __m256i p_Right)
     {
         const __m256i cmp = _mm256_cmpgt_epi64(p_Left, p_Right);
@@ -752,6 +664,16 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         return _mm256_blendv_epi8(p_Right, p_Left, cmp);
     }
 
+    static constexpr __m256i _mm256_cmpgt_epi64(__m256i p_Left, __m256i p_Right)
+    {
+        if constexpr (!std::is_signed_v<T>)
+        {
+            const __m256i offset = _mm256_set1_epi64x(static_cast<i64>(1ull << 63));
+            p_Left = _mm256_xor_si256(p_Left, offset);
+            p_Right = _mm256_xor_si256(p_Right, offset);
+        }
+        return ::_mm256_cmpgt_epi64(p_Left, p_Right);
+    }
     static constexpr __m256i _mm256_cmpgt_epi32(const __m256i p_Left, const __m256i p_Right)
     {
         if constexpr (std::is_signed_v<T>)
@@ -810,7 +732,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 #    endif
 
     m256 m_Data;
-}; // namespace TKit::Detail::AVX
+};
 } // namespace TKit::Detail::AVX
 TKIT_COMPILER_WARNING_IGNORE_POP()
 #endif
@@ -823,3 +745,4 @@ TKIT_COMPILER_WARNING_IGNORE_POP()
 #undef CREATE_MIN_MAX_INT
 #undef CREATE_BAD_BRANCH
 #undef CREATE_EQ_CMP
+#undef CREATE_INT_CMP

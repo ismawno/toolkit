@@ -47,6 +47,11 @@ TEST_CASE("SIMD: Base Wide i64", "[SIMD][Base][Wide][i64]")
     RunWideTests<Wide<i64, 4>>();
 }
 
-#if defined(TKIT_SIMD_AVX2) || defined(TKIT_SIMD_AVX)
-#    include "wide_avx.hpp" // should be .cpp but intellisense complains
+// should be .cpp but intellisense complains
+#define TKIT_ALLOW_SCALAR_SIMD_FALLBACKS
+#ifdef TKIT_SIMD_AVX
+#    include "wide_avx.hpp"
+#endif
+#ifdef TKIT_SIMD_SSE2
+#    include "wide_sse.hpp"
 #endif
