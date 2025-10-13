@@ -164,64 +164,64 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
             Memory::ForwardCopy(dst + i * p_Stride, &tmp[i], sizeof(T));
     }
 
-    template <SizeType NWides, SizeType Stride = NWides * sizeof(T)>
-    static constexpr Array<Wide, NWides> Gather(const T *p_Data)
+    template <SizeType Count, SizeType Stride = Count * sizeof(T)>
+    static constexpr Array<Wide, Count> Gather(const T *p_Data)
     {
-        Array<Wide, NWides> result;
-        if constexpr (NWides != Stride / sizeof(T) || NWides > 4)
+        Array<Wide, Count> result;
+        if constexpr (Count != Stride / sizeof(T) || Count > 4)
         {
-            for (SizeType i = 0; i < NWides; ++i)
+            for (SizeType i = 0; i < Count; ++i)
                 result[i] = Gather(p_Data + i, Stride);
             return result;
         }
-        else if constexpr (NWides == 1)
+        else if constexpr (Count == 1)
             return {Wide{load1(p_Data)}};
-        else if constexpr (NWides == 2)
+        else if constexpr (Count == 2)
         {
-            const auto packed = load2(p_Data);
-            return {Wide{packed[0]}, Wide{packed[1]}};
+            const wide2_t packed = load2(p_Data);
+            return {Wide{packed.val[0]}, Wide{packed.val[1]}};
         }
-        else if constexpr (NWides == 3)
+        else if constexpr (Count == 3)
         {
-            const auto packed = load3(p_Data);
-            return {Wide{packed[0]}, Wide{packed[1]}, Wide{packed[2]}};
+            const wide3_t packed = load3(p_Data);
+            return {Wide{packed.val[0]}, Wide{packed.val[1]}, Wide{packed.val[2]}};
         }
         else
         {
-            const auto packed = load4(p_Data);
-            return {Wide{packed[0]}, Wide{packed[1]}, Wide{packed[2]}, Wide{packed[3]}};
+            const wide4_t packed = load4(p_Data);
+            return {Wide{packed.val[0]}, Wide{packed.val[1]}, Wide{packed.val[2]}, Wide{packed.val[3]}};
         }
     }
-    template <SizeType NWides, SizeType Stride = NWides * sizeof(T)>
-    static constexpr void Scatter(T *p_Data, const Array<Wide, NWides> &p_Wides)
+    template <SizeType Count, SizeType Stride = Count * sizeof(T)>
+    static constexpr void Scatter(T *p_Data, const Array<Wide, Count> &p_Wides)
     {
-        if constexpr (NWides != Stride / sizeof(T) || NWides > 4)
-            for (SizeType i = 0; i < NWides; ++i)
+        if constexpr (Count != Stride / sizeof(T) || Count > 4)
+            for (SizeType i = 0; i < Count; ++i)
                 p_Wides[i].Scatter(p_Data, Stride);
-        else if constexpr (NWides == 1)
+        else if constexpr (Count == 1)
             store1(p_Data, p_Wides[0].m_Data);
-        else if constexpr (NWides == 2)
+        else if constexpr (Count == 2)
         {
             wide2_t wide;
-            wide[0] = p_Wides[0].m_Data;
-            wide[1] = p_Wides[1].m_Data;
+            wide.val[0] = p_Wides[0].m_Data;
+            wide.val[1] = p_Wides[1].m_Data;
             store2(p_Data, wide);
         }
-        else if constexpr (NWides == 3)
+        else if constexpr (Count == 3)
         {
             wide3_t wide;
-            wide[0] = p_Wides[0].m_Data;
-            wide[1] = p_Wides[1].m_Data;
-            wide[2] = p_Wides[2].m_Data;
+            wide.val[0] = p_Wides[0].m_Data;
+            wide.val[1] = p_Wides[1].m_Data;
+            wide.val[2] = p_Wides[2].m_Data;
             store3(p_Data, wide);
         }
         else
         {
-            wide3_t wide;
-            wide[0] = p_Wides[0].m_Data;
-            wide[1] = p_Wides[1].m_Data;
-            wide[2] = p_Wides[2].m_Data;
-            wide[3] = p_Wides[3].m_Data;
+            wide4_t wide;
+            wide.val[0] = p_Wides[0].m_Data;
+            wide.val[1] = p_Wides[1].m_Data;
+            wide.val[2] = p_Wides[2].m_Data;
+            wide.val[3] = p_Wides[3].m_Data;
             store4(p_Data, wide);
         }
     }

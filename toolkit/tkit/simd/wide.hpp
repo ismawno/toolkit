@@ -75,6 +75,21 @@ class Wide
             Memory::ForwardCopy(data + i * p_Stride, &m_Data[i], sizeof(T));
     }
 
+    template <SizeType Count, SizeType Stride = Count * sizeof(T)>
+    static constexpr Array<Wide, Count> Gather(const T *p_Data)
+    {
+        Array<Wide, Count> result;
+        for (SizeType i = 0; i < Count; ++i)
+            result[i] = Gather(p_Data + i, Stride);
+        return result;
+    }
+    template <SizeType Count, SizeType Stride = Count * sizeof(T)>
+    static constexpr void Scatter(T *p_Data, const Array<Wide, Count> &p_Wides)
+    {
+        for (SizeType i = 0; i < Count; ++i)
+            p_Wides[i].Scatter(p_Data + i, Stride);
+    }
+
     constexpr void StoreAligned(T *p_Data) const
     {
         Memory::ForwardCopy(p_Data, m_Data.begin(), m_Data.end());

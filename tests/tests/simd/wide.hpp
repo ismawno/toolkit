@@ -3,9 +3,30 @@
 #include "tkit/utils/alias.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
+#include <array>
 
 namespace TKit
 {
+template <typename Wide, usize N, usize Lanes> void TestGatherScatter()
+{
+    using T = typename Wide::ValueType;
+    std::array<T, N> scattered[Lanes];
+
+    for (usize i = 0; i < Lanes; ++i)
+        for (usize j = 0; j < N; ++j)
+            scattered[i][j] = i * N + j;
+
+    const auto w = Wide::template Gather<N>(&scattered[0][0]);
+    for (usize i = 0; i < Lanes; ++i)
+        for (usize j = 0; j < N; ++j)
+            REQUIRE(w[j][i] == scattered[i][j]);
+
+    std::array<T, N> recovered[Lanes];
+    Wide::template Scatter<N>(&recovered[0][0], w);
+    for (usize i = 0; i < Lanes; ++i)
+        for (usize j = 0; j < N; ++j)
+            REQUIRE(recovered[i][j] == scattered[i][j]);
+}
 template <typename Wide> void RunWideTests()
 {
     using T = typename Wide::ValueType;
@@ -92,6 +113,13 @@ template <typename Wide> void RunWideTests()
         w.Scatter(&spread[0].Relevant, sizeof(Spread));
         for (SizeType i = 0; i < Lanes; ++i)
             REQUIRE(w[i] == spread[i].Relevant);
+    }
+
+    SECTION("Gather() and Scatter() uniform")
+    {
+        TestGatherScatter<Wide, 2, Lanes>();
+        TestGatherScatter<Wide, 3, Lanes>();
+        TestGatherScatter<Wide, 4, Lanes>();
     }
 
     SECTION("Arithmetic operators")
