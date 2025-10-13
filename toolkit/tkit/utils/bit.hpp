@@ -18,4 +18,16 @@ template <typename T> constexpr T PrevPowerOfTwo(const T p_Val)
 {
     return p_Val == 0 ? 0 : static_cast<T>(std::bit_floor(static_cast<std::make_unsigned_t<T>>(p_Val)));
 }
+template <typename T> constexpr T NoneOf(const T p_Val)
+{
+    return p_Val == 0;
+}
+template <typename T> constexpr T AnyOf(const T p_Val)
+{
+    return p_Val != 0;
+}
+template <typename T> constexpr T AllOf(const T p_Val)
+{
+    return p_Val == static_cast<T>(-1);
+}
 } // namespace TKit

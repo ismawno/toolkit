@@ -55,3 +55,6 @@ TEST_CASE("SIMD: Base Wide i64", "[SIMD][Base][Wide][i64]")
 #ifdef TKIT_SIMD_SSE2
 #    include "wide_sse.hpp"
 #endif
+#ifdef TKIT_SIMD_NEON
+#    include "wide_neon.hpp"
+#endif

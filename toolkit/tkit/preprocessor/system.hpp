@@ -172,6 +172,10 @@
 #    define TKIT_SIMD_NEON_SIZE 16
 #endif
 
+#if defined(__aarch64__) || defined(__arm64ec__)
+#    define TKIT_AARCH64
+#endif
+
 // PowerPC
 #ifdef __VSX__
 #    define TKIT_SIMD_VSX

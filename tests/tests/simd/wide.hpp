@@ -79,7 +79,7 @@ template <typename Wide> void RunWideTests()
         for (SizeType i = 0; i < Lanes; ++i)
             spread[i] = {static_cast<T>(i + 1), static_cast<u8>(i + 100), static_cast<u16>(i + 200)};
 
-        const Wide w{&spread[0].Relevant, sizeof(Spread)};
+        const Wide w = Wide::Gather(&spread[0].Relevant, sizeof(Spread));
         for (SizeType i = 0; i < Lanes; ++i)
             REQUIRE(w[i] == spread[i].Relevant);
     }

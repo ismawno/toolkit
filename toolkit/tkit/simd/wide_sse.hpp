@@ -6,6 +6,7 @@
 #    include "tkit/memory/memory.hpp"
 #    include "tkit/simd/utils.hpp"
 #    include "tkit/container/container.hpp"
+#    include "tkit/utils/bit.hpp"
 #    ifdef TKIT_SIMD_SSE4_2
 #        include <nmmintrin.h>
 #    elif defined(TKIT_SIMD_SSE4_1)
@@ -29,16 +30,16 @@ template <Arithmetic T> struct TypeSelector;
 
 template <> struct TypeSelector<f32>
 {
-    using Type = __m128;
+    using m128 = __m128;
 };
 template <> struct TypeSelector<f64>
 {
-    using Type = __m128d;
+    using m128 = __m128d;
 };
 
 template <Integer T> struct TypeSelector<T>
 {
-    using Type = __m128i;
+    using m128 = __m128i;
 };
 
 TKIT_COMPILER_WARNING_IGNORE_PUSH()
@@ -46,7 +47,7 @@ TKIT_GCC_WARNING_IGNORE("-Wignored-attributes")
 TKIT_CLANG_WARNING_IGNORE("-Wignored-attributes")
 template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 {
-    using m128 = TypeSelector<T>::Type;
+    using m128 = typename TypeSelector<T>::m128;
 
     template <typename E> static constexpr bool s_Equals = std::is_same_v<m128, E>;
     template <usize Size> static constexpr bool s_IsSize = Size == sizeof(T);
@@ -77,9 +78,6 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     constexpr Wide(const T *p_Data) : m_Data(loadAligned(p_Data))
     {
     }
-    constexpr Wide(const T *p_Data, const SizeType p_Stride) : m_Data(gather(p_Data, p_Stride))
-    {
-    }
 
     template <typename Callable>
         requires std::invocable<Callable, SizeType>
@@ -98,7 +96,58 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     }
     static constexpr Wide Gather(const T *p_Data, const SizeType p_Stride)
     {
-        return Wide{p_Data, p_Stride};
+#    ifndef TKIT_SIMD_AVX2
+        alignas(Alignment) T dst[Lanes];
+        const std::byte *src = reinterpret_cast<const std::byte *>(p_Data);
+
+        for (SizeType i = 0; i < Lanes; ++i)
+            Memory::ForwardCopy(dst + i, src + i * p_Stride, sizeof(T));
+        return Wide{loadAligned(dst)};
+#    else
+        const i32 idx = static_cast<i32>(p_Stride);
+        if constexpr (s_Equals<__m128>)
+        {
+            const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
+            return Wide{_mm_i32gather_ps(p_Data, indices, 1)};
+        }
+        else if constexpr (s_Equals<__m128d>)
+        {
+            const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
+            return Wide{_mm_i32gather_pd(p_Data, indices, 1)};
+        }
+        else if constexpr (s_Equals<__m128i>)
+        {
+            if constexpr (s_IsSize<8>)
+            {
+                const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
+                return Wide{_mm_i32gather_epi64(reinterpret_cast<const long long int *>(p_Data), indices, 1)};
+            }
+            else if constexpr (s_IsSize<4>)
+            {
+                const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
+                return Wide{_mm_i32gather_epi32(reinterpret_cast<const i32 *>(p_Data), indices, 1)};
+            }
+            else
+            {
+                alignas(Alignment) T dst[Lanes];
+                const std::byte *src = reinterpret_cast<const std::byte *>(p_Data);
+
+                for (SizeType i = 0; i < Lanes; ++i)
+                    Memory::ForwardCopy(dst + i, src + i * p_Stride, sizeof(T));
+                return Wide{loadAligned(dst)};
+            }
+        }
+        CREATE_BAD_BRANCH()
+#    endif
+    }
+    constexpr void Scatter(T *p_Data, const SizeType p_Stride) const
+    {
+        alignas(Alignment) T src[Lanes];
+        StoreAligned(src);
+
+        std::byte *dst = reinterpret_cast<std::byte *>(p_Data);
+        for (SizeType i = 0; i < Lanes; ++i)
+            Memory::ForwardCopy(dst + i * p_Stride, &src[i], sizeof(T));
     }
 
     constexpr void StoreAligned(T *p_Data) const
@@ -123,18 +172,10 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
             _mm_storeu_si128(reinterpret_cast<__m128i *>(p_Data), m_Data);
         CREATE_BAD_BRANCH()
     }
-    constexpr void Scatter(T *p_Data, const SizeType p_Stride) const
-    {
-        alignas(Alignment) T src[Lanes];
-        StoreAligned(src);
-
-        std::byte *dst = reinterpret_cast<std::byte *>(p_Data);
-        for (SizeType i = 0; i < Lanes; ++i)
-            Memory::ForwardCopy(dst + i * p_Stride, &src[i], sizeof(T));
-    }
 
     constexpr const ValueType At(const SizeType p_Index) const
     {
+        TKIT_ASSERT(p_Index < Lanes, "[TOOLKIT][SSE] Index exceeds lane count");
         alignas(Alignment) T tmp[Lanes];
         StoreAligned(tmp);
         return tmp[p_Index];
@@ -270,7 +311,10 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     CREATE_SCALAR_OP(*)
     CREATE_SCALAR_OP(/)
 
-    friend constexpr Wide operator>>(const Wide &p_Left, const i32 p_Shift)
+    CREATE_SCALAR_OP(&)
+    CREATE_SCALAR_OP(|)
+
+    friend constexpr Wide operator>>(const Wide &p_Left, const T p_Shift)
         requires(Integer<T>)
     {
         if constexpr (s_IsSize<8>)
@@ -302,7 +346,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
                 return Wide{_mm_srl_epi8(p_Left.m_Data, p_Shift)};
         }
     }
-    friend constexpr Wide operator<<(const Wide &p_Left, const i32 p_Shift)
+    friend constexpr Wide operator<<(const Wide &p_Left, const T p_Shift)
         requires(Integer<T>)
     {
         if constexpr (s_IsSize<8>)
@@ -455,41 +499,28 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         CREATE_BAD_BRANCH()
     }
 
-    static constexpr Mask WidenMask(const BitMask p_Bits)
+    static constexpr Mask WidenMask(const BitMask p_Mask)
     {
         using Integer = u<sizeof(T) * 8>;
         alignas(Alignment) Integer tmp[Lanes];
 
         for (SizeType i = 0; i < Lanes; ++i)
-            tmp[i] = (p_Bits & (BitMask{1} << i)) ? static_cast<Integer>(-1) : Integer{0};
+            tmp[i] = (p_Mask & (BitMask{1} << i)) ? static_cast<Integer>(-1) : Integer{0};
 
         return loadAligned(reinterpret_cast<const T *>(tmp));
     }
 
-    static constexpr bool AllOf(const Mask &p_Mask)
-    {
-        return AllOf(PackMask(p_Mask));
-    }
     static constexpr bool NoneOf(const Mask &p_Mask)
     {
-        return NoneOf(PackMask(p_Mask));
+        return TKit::NoneOf(PackMask(p_Mask));
     }
     static constexpr bool AnyOf(const Mask &p_Mask)
     {
-        return AnyOf(PackMask(p_Mask));
+        return TKit::AnyOf(PackMask(p_Mask));
     }
-
-    static constexpr bool AllOf(const BitMask p_Mask)
+    static constexpr bool AllOf(const Mask &p_Mask)
     {
-        return p_Mask == Limits<BitMask>::max();
-    }
-    static constexpr bool NoneOf(const BitMask p_Mask)
-    {
-        return p_Mask == 0;
-    }
-    static constexpr bool AnyOf(const BitMask p_Mask)
-    {
-        return p_Mask != 0;
+        return TKit::AllOf(PackMask(p_Mask));
     }
 
   private:
@@ -539,53 +570,10 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     }
     static m128 gather(const T *p_Data, const SizeType p_Stride)
     {
-#    ifndef TKIT_SIMD_AVX2
-        alignas(Alignment) T dst[Lanes];
-        const std::byte *src = reinterpret_cast<const std::byte *>(p_Data);
-
-        for (SizeType i = 0; i < Lanes; ++i)
-            Memory::ForwardCopy(dst + i, src + i * p_Stride, sizeof(T));
-        return loadAligned(dst);
-#    else
-        const i32 idx = static_cast<i32>(p_Stride);
-        if constexpr (s_Equals<__m128>)
-        {
-            const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
-            return _mm_i32gather_ps(p_Data, indices, 1);
-        }
-        else if constexpr (s_Equals<__m128d>)
-        {
-            const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
-            return _mm_i32gather_pd(p_Data, indices, 1);
-        }
-        else if constexpr (s_Equals<__m128i>)
-        {
-            if constexpr (s_IsSize<8>)
-            {
-                const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
-                return _mm_i32gather_epi64(reinterpret_cast<const long long int *>(p_Data), indices, 1);
-            }
-            else if constexpr (s_IsSize<4>)
-            {
-                const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
-                return _mm_i32gather_epi32(reinterpret_cast<const i32 *>(p_Data), indices, 1);
-            }
-            else
-            {
-                alignas(Alignment) T dst[Lanes];
-                const std::byte *src = reinterpret_cast<const std::byte *>(p_Data);
-
-                for (SizeType i = 0; i < Lanes; ++i)
-                    Memory::ForwardCopy(dst + i, src + i * p_Stride, sizeof(T));
-                return loadAligned(dst);
-            }
-        }
-        CREATE_BAD_BRANCH()
-#    endif
     }
 
     template <typename Callable, std::size_t... I>
-    static constexpr m128 makeIntrinsic(Callable &&p_Callable, std::index_sequence<I...>) noexcept
+    static constexpr m128 makeIntrinsic(Callable &&p_Callable, std::index_sequence<I...>)
     {
         if constexpr (s_Equals<__m128>)
             return _mm_setr_ps(static_cast<T>(p_Callable(I))...);
@@ -857,12 +845,11 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 };
 } // namespace TKit::Simd::SSE
 TKIT_COMPILER_WARNING_IGNORE_POP()
+#    undef CREATE_ARITHMETIC_OP
+#    undef CREATE_CMP_OP
+#    undef CREATE_MIN_MAX
+#    undef CREATE_BAD_BRANCH
+#    undef CREATE_EQ_CMP
+#    undef CREATE_INT_CMP
+#    undef CREATE_SELF_OP
 #endif
-
-#undef CREATE_ARITHMETIC_OP
-#undef CREATE_CMP_OP
-#undef CREATE_MIN_MAX
-#undef CREATE_BAD_BRANCH
-#undef CREATE_EQ_CMP
-#undef CREATE_INT_CMP
-#undef CREATE_SELF_OP

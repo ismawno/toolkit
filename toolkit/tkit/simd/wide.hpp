@@ -25,12 +25,6 @@ class Wide
     {
         Memory::ForwardCopy(m_Data.begin(), p_Data, p_Data + Lanes);
     }
-    constexpr Wide(const T *p_Data, const SizeType p_Stride)
-    {
-        const std::byte *data = reinterpret_cast<const std::byte *>(p_Data);
-        for (SizeType i = 0; i < Lanes; ++i)
-            Memory::ForwardCopy(&m_Data[i], data + i * p_Stride, sizeof(T));
-    }
     template <typename Callable>
         requires std::invocable<Callable, SizeType>
     constexpr Wide(Callable &&p_Callable)
@@ -44,11 +38,16 @@ class Wide
             m_Data[i] = p_Data;
     }
 
-    constexpr ValueType At(const SizeType p_Index) const
+    constexpr T At(const SizeType p_Index) const
     {
         return m_Data[p_Index];
     }
-    constexpr ValueType operator[](const SizeType p_Index) const
+    template <SizeType Index> constexpr T At() const
+    {
+        static_assert(Index < Lanes, "[TOOLKIT][SIMD] Index exceeds lane count");
+        return m_Data[Index];
+    }
+    constexpr T operator[](const SizeType p_Index) const
     {
         return m_Data[p_Index];
     }
@@ -63,7 +62,17 @@ class Wide
     }
     static constexpr Wide Gather(const T *p_Data, const SizeType p_Stride)
     {
-        return Wide{p_Data, p_Stride};
+        Wide wide;
+        const std::byte *data = reinterpret_cast<const std::byte *>(p_Data);
+        for (SizeType i = 0; i < Lanes; ++i)
+            Memory::ForwardCopy(&wide.m_Data[i], data + i * p_Stride, sizeof(T));
+        return wide;
+    }
+    constexpr void Scatter(T *p_Data, const SizeType p_Stride) const
+    {
+        std::byte *data = reinterpret_cast<std::byte *>(p_Data);
+        for (SizeType i = 0; i < Lanes; ++i)
+            Memory::ForwardCopy(data + i * p_Stride, &m_Data[i], sizeof(T));
     }
 
     constexpr void StoreAligned(T *p_Data) const
@@ -73,12 +82,6 @@ class Wide
     constexpr void StoreUnaligned(T *p_Data) const
     {
         Memory::ForwardCopy(p_Data, m_Data.begin(), m_Data.end());
-    }
-    constexpr void Scatter(T *p_Data, const SizeType p_Stride) const
-    {
-        std::byte *data = reinterpret_cast<std::byte *>(p_Data);
-        for (SizeType i = 0; i < Lanes; ++i)
-            Memory::ForwardCopy(data + i * p_Stride, &m_Data[i], sizeof(T));
     }
 
 #define CREATE_MIN_MAX(p_Name, p_Fun)                                                                                  \
@@ -147,7 +150,7 @@ class Wide
     }
 
 #define CREATE_BITSHIFT_OP(p_Op)                                                                                       \
-    friend constexpr Wide operator p_Op(const Wide &p_Left, const i32 p_Shift)                                         \
+    friend constexpr Wide operator p_Op(const Wide &p_Left, const T p_Shift)                                           \
         requires(Integer<T>)                                                                                           \
     {                                                                                                                  \
         Wide wide;                                                                                                     \
@@ -199,10 +202,7 @@ class Wide
     {
         return p_Mask;
     }
-    static constexpr bool AllOf(const BitMask p_Mask)
-    {
-        return p_Mask == Limits<BitMask>::max();
-    }
+
     static constexpr bool NoneOf(const BitMask p_Mask)
     {
         return p_Mask == 0;
@@ -210,6 +210,10 @@ class Wide
     static constexpr bool AnyOf(const BitMask p_Mask)
     {
         return p_Mask != 0;
+    }
+    static constexpr bool AllOf(const BitMask p_Mask)
+    {
+        return p_Mask == Limits<BitMask>::max();
     }
 
   private:

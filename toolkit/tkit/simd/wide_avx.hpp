@@ -5,6 +5,7 @@
 #    include "tkit/memory/memory.hpp"
 #    include "tkit/simd/utils.hpp"
 #    include "tkit/container/container.hpp"
+#    include "tkit/utils/bit.hpp"
 #    include <immintrin.h>
 
 namespace TKit::Simd::AVX
@@ -22,17 +23,17 @@ template <Arithmetic T> struct TypeSelector;
 
 template <> struct TypeSelector<f32>
 {
-    using Type = __m256;
+    using m256 = __m256;
 };
 template <> struct TypeSelector<f64>
 {
-    using Type = __m256d;
+    using m256 = __m256d;
 };
 
 #    ifdef TKIT_SIMD_AVX2
 template <Integer T> struct TypeSelector<T>
 {
-    using Type = __m256i;
+    using m256 = __m256i;
 };
 #    endif
 
@@ -41,7 +42,7 @@ TKIT_GCC_WARNING_IGNORE("-Wignored-attributes")
 TKIT_CLANG_WARNING_IGNORE("-Wignored-attributes")
 template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 {
-    using m256 = TypeSelector<T>::Type;
+    using m256 = typename TypeSelector<T>::m256;
     template <typename E> static constexpr bool s_Equals = std::is_same_v<m256, E>;
     template <usize Size> static constexpr bool s_IsSize = Size == sizeof(T);
 
@@ -72,9 +73,6 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     constexpr Wide(const T *p_Data) : m_Data(loadAligned(p_Data))
     {
     }
-    constexpr Wide(const T *p_Data, const SizeType p_Stride) : m_Data(gather(p_Data, p_Stride))
-    {
-    }
 
     template <typename Callable>
         requires std::invocable<Callable, SizeType>
@@ -93,7 +91,58 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     }
     static constexpr Wide Gather(const T *p_Data, const SizeType p_Stride)
     {
-        return Wide{p_Data, p_Stride};
+#    ifndef TKIT_SIMD_AVX2
+        alignas(Alignment) T dst[Lanes];
+        const std::byte *src = reinterpret_cast<const std::byte *>(p_Data);
+
+        for (SizeType i = 0; i < Lanes; ++i)
+            Memory::ForwardCopy(dst + i, src + i * p_Stride, sizeof(T));
+        return Wide{loadAligned(dst)};
+#    else
+        const i32 idx = static_cast<i32>(p_Stride);
+        if constexpr (s_Equals<__m256>)
+        {
+            const __m256i indices = _mm256_setr_epi32(0, idx, 2 * idx, 3 * idx, 4 * idx, 5 * idx, 6 * idx, 7 * idx);
+            return Wide{_mm256_i32gather_ps(p_Data, indices, 1)};
+        }
+        else if constexpr (s_Equals<__m256d>)
+        {
+            const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
+            return Wide{_mm256_i32gather_pd(p_Data, indices, 1)};
+        }
+        else if constexpr (s_Equals<__m256i>)
+        {
+            if constexpr (s_IsSize<8>)
+            {
+                const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
+                return Wide{_mm256_i32gather_epi64(reinterpret_cast<const long long int *>(p_Data), indices, 1)};
+            }
+            else if constexpr (s_IsSize<4>)
+            {
+                const __m256i indices = _mm256_setr_epi32(0, idx, 2 * idx, 3 * idx, 4 * idx, 5 * idx, 6 * idx, 7 * idx);
+                return Wide{_mm256_i32gather_epi32(reinterpret_cast<const i32 *>(p_Data), indices, 1)};
+            }
+            else
+            {
+                alignas(Alignment) T dst[Lanes];
+                const std::byte *src = reinterpret_cast<const std::byte *>(p_Data);
+
+                for (SizeType i = 0; i < Lanes; ++i)
+                    Memory::ForwardCopy(dst + i, src + i * p_Stride, sizeof(T));
+                return Wide{loadAligned(dst)};
+            }
+        }
+        CREATE_BAD_BRANCH()
+#    endif
+    }
+    constexpr void Scatter(T *p_Data, const SizeType p_Stride) const
+    {
+        alignas(Alignment) T src[Lanes];
+        StoreAligned(src);
+
+        std::byte *dst = reinterpret_cast<std::byte *>(p_Data);
+        for (SizeType i = 0; i < Lanes; ++i)
+            Memory::ForwardCopy(dst + i * p_Stride, &src[i], sizeof(T));
     }
 
     constexpr void StoreAligned(T *p_Data) const
@@ -122,18 +171,10 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 #    endif
         CREATE_BAD_BRANCH()
     }
-    constexpr void Scatter(T *p_Data, const SizeType p_Stride) const
-    {
-        alignas(Alignment) T src[Lanes];
-        StoreAligned(src);
-
-        std::byte *dst = reinterpret_cast<std::byte *>(p_Data);
-        for (SizeType i = 0; i < Lanes; ++i)
-            Memory::ForwardCopy(dst + i * p_Stride, &src[i], sizeof(T));
-    }
 
     constexpr const ValueType At(const SizeType p_Index) const
     {
+        TKIT_ASSERT(p_Index < Lanes, "[TOOLKIT][AVX] Index exceeds lane count");
         alignas(Alignment) T tmp[Lanes];
         StoreAligned(tmp);
         return tmp[p_Index];
@@ -295,7 +336,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     CREATE_SELF_OP(/)
 
 #    ifdef TKIT_SIMD_AVX2
-    friend constexpr Wide operator>>(const Wide &p_Left, const i32 p_Shift)
+    friend constexpr Wide operator>>(const Wide &p_Left, const T p_Shift)
         requires(Integer<T>)
     {
         if constexpr (s_IsSize<8>)
@@ -327,7 +368,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
                 return Wide{_mm256_srl_epi8(p_Left.m_Data, p_Shift)};
         }
     }
-    friend constexpr Wide operator<<(const Wide &p_Left, const i32 p_Shift)
+    friend constexpr Wide operator<<(const Wide &p_Left, const T p_Shift)
         requires(Integer<T>)
     {
         if constexpr (s_IsSize<8>)
@@ -349,6 +390,9 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     {
         return Wide{_mm256_or_si256(p_Left.m_Data, p_Right.m_Data)};
     }
+
+    CREATE_SCALAR_OP(&)
+    CREATE_SCALAR_OP(|)
 
     CREATE_SELF_OP(>>)
     CREATE_SELF_OP(<<)
@@ -505,41 +549,28 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         CREATE_BAD_BRANCH()
     }
 
-    static constexpr Mask WidenMask(const BitMask p_Bits)
+    static constexpr Mask WidenMask(const BitMask p_Mask)
     {
         using Integer = u<sizeof(T) * 8>;
         alignas(Alignment) Integer tmp[Lanes];
 
         for (SizeType i = 0; i < Lanes; ++i)
-            tmp[i] = (p_Bits & (BitMask{1} << i)) ? static_cast<Integer>(-1) : Integer{0};
+            tmp[i] = (p_Mask & (BitMask{1} << i)) ? static_cast<Integer>(-1) : Integer{0};
 
         return loadAligned(reinterpret_cast<const T *>(tmp));
     }
 
     static constexpr bool AllOf(const Mask &p_Mask)
     {
-        return AllOf(PackMask(p_Mask));
+        return TKit::AllOf(PackMask(p_Mask));
     }
     static constexpr bool NoneOf(const Mask &p_Mask)
     {
-        return NoneOf(PackMask(p_Mask));
+        return TKit::NoneOf(PackMask(p_Mask));
     }
     static constexpr bool AnyOf(const Mask &p_Mask)
     {
-        return AnyOf(PackMask(p_Mask));
-    }
-
-    static constexpr bool AllOf(const BitMask p_Mask)
-    {
-        return p_Mask == Limits<BitMask>::max();
-    }
-    static constexpr bool NoneOf(const BitMask p_Mask)
-    {
-        return p_Mask == 0;
-    }
-    static constexpr bool AnyOf(const BitMask p_Mask)
-    {
-        return p_Mask != 0;
+        return TKit::AnyOf(PackMask(p_Mask));
     }
 
   private:
@@ -595,55 +626,8 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         CREATE_BAD_BRANCH()
     }
 
-    static m256 gather(const T *p_Data, const SizeType p_Stride)
-    {
-#    ifndef TKIT_SIMD_AVX2
-        alignas(Alignment) T dst[Lanes];
-        const std::byte *src = reinterpret_cast<const std::byte *>(p_Data);
-
-        for (SizeType i = 0; i < Lanes; ++i)
-            Memory::ForwardCopy(dst + i, src + i * p_Stride, sizeof(T));
-        return loadAligned(dst);
-#    else
-        const i32 idx = static_cast<i32>(p_Stride);
-        if constexpr (s_Equals<__m256>)
-        {
-            const __m256i indices = _mm256_setr_epi32(0, idx, 2 * idx, 3 * idx, 4 * idx, 5 * idx, 6 * idx, 7 * idx);
-            return _mm256_i32gather_ps(p_Data, indices, 1);
-        }
-        else if constexpr (s_Equals<__m256d>)
-        {
-            const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
-            return _mm256_i32gather_pd(p_Data, indices, 1);
-        }
-        else if constexpr (s_Equals<__m256i>)
-        {
-            if constexpr (s_IsSize<8>)
-            {
-                const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
-                return _mm256_i32gather_epi64(reinterpret_cast<const long long int *>(p_Data), indices, 1);
-            }
-            else if constexpr (s_IsSize<4>)
-            {
-                const __m256i indices = _mm256_setr_epi32(0, idx, 2 * idx, 3 * idx, 4 * idx, 5 * idx, 6 * idx, 7 * idx);
-                return _mm256_i32gather_epi32(reinterpret_cast<const i32 *>(p_Data), indices, 1);
-            }
-            else
-            {
-                alignas(Alignment) T dst[Lanes];
-                const std::byte *src = reinterpret_cast<const std::byte *>(p_Data);
-
-                for (SizeType i = 0; i < Lanes; ++i)
-                    Memory::ForwardCopy(dst + i, src + i * p_Stride, sizeof(T));
-                return loadAligned(dst);
-            }
-        }
-        CREATE_BAD_BRANCH()
-#    endif
-    }
-
     template <typename Callable, std::size_t... I>
-    static constexpr m256 makeIntrinsic(Callable &&p_Callable, std::index_sequence<I...>) noexcept
+    static constexpr m256 makeIntrinsic(Callable &&p_Callable, std::index_sequence<I...>)
     {
         if constexpr (s_Equals<__m256>)
             return _mm256_setr_ps(static_cast<T>(p_Callable(I))...);
@@ -841,15 +825,14 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 };
 } // namespace TKit::Simd::AVX
 TKIT_COMPILER_WARNING_IGNORE_POP()
+#    undef CREATE_ARITHMETIC_OP
+#    undef CREATE_ARITHMETIC_OP_INT
+#    undef CREATE_CMP_OP
+#    undef CREATE_CMP_OP_INT
+#    undef CREATE_MIN_MAX
+#    undef CREATE_MIN_MAX_INT
+#    undef CREATE_BAD_BRANCH
+#    undef CREATE_EQ_CMP
+#    undef CREATE_INT_CMP
+#    undef CREATE_SELF_OP
 #endif
-
-#undef CREATE_ARITHMETIC_OP
-#undef CREATE_ARITHMETIC_OP_INT
-#undef CREATE_CMP_OP
-#undef CREATE_CMP_OP_INT
-#undef CREATE_MIN_MAX
-#undef CREATE_MIN_MAX_INT
-#undef CREATE_BAD_BRANCH
-#undef CREATE_EQ_CMP
-#undef CREATE_INT_CMP
-#undef CREATE_SELF_OP
