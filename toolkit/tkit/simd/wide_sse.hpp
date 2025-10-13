@@ -5,7 +5,7 @@
 
 #    include "tkit/memory/memory.hpp"
 #    include "tkit/simd/utils.hpp"
-#    include "tkit/container/container.hpp"
+#    include "tkit/container/array.hpp"
 #    include "tkit/utils/bit.hpp"
 #    ifdef TKIT_SIMD_SSE4_2
 #        include <nmmintrin.h>
@@ -150,6 +150,21 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
             Memory::ForwardCopy(dst + i * p_Stride, &src[i], sizeof(T));
     }
 
+    template <SizeType Count, SizeType Stride = Count * sizeof(T)>
+    static constexpr Array<Wide, Count> Gather(const T *p_Data)
+    {
+        Array<Wide, Count> result;
+        for (SizeType i = 0; i < Count; ++i)
+            result[i] = Gather(p_Data + i, Stride);
+        return result;
+    }
+    template <SizeType Count, SizeType Stride = Count * sizeof(T)>
+    static constexpr void Scatter(T *p_Data, const Array<Wide, Count> &p_Wides)
+    {
+        for (SizeType i = 0; i < Count; ++i)
+            p_Wides[i].Scatter(p_Data + i, Stride);
+    }
+
     constexpr void StoreAligned(T *p_Data) const
     {
         TKIT_ASSERT(Memory::IsAligned(p_Data, Alignment),
@@ -173,14 +188,19 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         CREATE_BAD_BRANCH()
     }
 
-    constexpr const ValueType At(const SizeType p_Index) const
+    constexpr const T At(const SizeType p_Index) const
     {
         TKIT_ASSERT(p_Index < Lanes, "[TOOLKIT][SSE] Index exceeds lane count");
         alignas(Alignment) T tmp[Lanes];
         StoreAligned(tmp);
         return tmp[p_Index];
     }
-    constexpr const ValueType operator[](const SizeType p_Index) const
+    template <SizeType Index> T At() const
+    {
+        static_assert(Index < Lanes, "[TOOLKIT][SSE] Index exceeds lane count");
+        return At(Index);
+    }
+    constexpr const T operator[](const SizeType p_Index) const
     {
         return At(p_Index);
     }
