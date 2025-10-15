@@ -14,9 +14,8 @@ namespace TKit
  * @tparam T The type of the elements.
  * @tparam Size The number of elements in the array.
  */
-template <typename T, usize Size, typename Traits = Container::ArrayTraits<T>> class Array
+template <typename T, usize Size, typename Traits = Container::ArrayTraits<T>> struct Array
 {
-  public:
     using ValueType = typename Traits::ValueType;
     using SizeType = typename Traits::SizeType;
     using Iterator = typename Traits::Iterator;
@@ -31,6 +30,14 @@ template <typename T, usize Size, typename Traits = Container::ArrayTraits<T>> c
         Tools::CopyConstructFromRange(begin(), p_Elements.begin(), p_Elements.end());
     }
 
+    template <usize OtherSize>
+        requires(OtherSize == Size - 1)
+    constexpr Array(const Array<T, OtherSize> &p_Other, const T &p_Value)
+    {
+        Tools::CopyConstructFromRange(begin(), p_Other.begin(), p_Other.end());
+        Elements[Size - 1] = p_Value;
+    }
+
     constexpr const ValueType &operator[](const SizeType p_Index) const
     {
         return At(p_Index);
@@ -43,12 +50,12 @@ template <typename T, usize Size, typename Traits = Container::ArrayTraits<T>> c
     constexpr const ValueType &At(const SizeType p_Index) const
     {
         TKIT_ASSERT(p_Index < Size, "[TOOLKIT][ARRAY] Index is out of bounds");
-        return *(begin() + p_Index);
+        return Elements[p_Index];
     }
     constexpr ValueType &At(const SizeType p_Index)
     {
         TKIT_ASSERT(p_Index < Size, "[TOOLKIT][ARRAY] Index is out of bounds");
-        return *(begin() + p_Index);
+        return Elements[p_Index];
     }
 
     constexpr SizeType GetSize() const
@@ -58,33 +65,32 @@ template <typename T, usize Size, typename Traits = Container::ArrayTraits<T>> c
 
     constexpr const ValueType *GetData() const
     {
-        return m_Data;
+        return Elements;
     }
     constexpr ValueType *GetData()
     {
-        return m_Data;
+        return Elements;
     }
 
     constexpr Iterator begin()
     {
-        return m_Data;
+        return Elements;
     }
     constexpr Iterator end()
     {
-        return m_Data + Size;
+        return Elements + Size;
     }
 
     constexpr ConstIterator begin() const
     {
-        return m_Data;
+        return Elements;
     }
     constexpr ConstIterator end() const
     {
-        return m_Data + Size;
+        return Elements + Size;
     }
 
-  private:
-    ValueType m_Data[Size];
+    ValueType Elements[Size];
 };
 
 template <typename T> using Array4 = Array<T, 4>;
@@ -99,5 +105,8 @@ template <typename T> using Array384 = Array<T, 384>;
 template <typename T> using Array512 = Array<T, 512>;
 template <typename T> using Array768 = Array<T, 768>;
 template <typename T> using Array1024 = Array<T, 1024>;
+
+#undef CREATE_ARITHMETIC_OP
+#undef CREATE_BITSHIFT_OP
 
 } // namespace TKit

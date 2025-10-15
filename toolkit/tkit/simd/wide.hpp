@@ -7,7 +7,7 @@
 namespace TKit::Simd
 {
 template <typename T, usize L, typename Traits = Container::ArrayTraits<T>>
-    requires(L > 0 && (Float<T> || Integer<T>))
+    requires(L > 0 && Arithmetic<T>)
 class Wide
 {
   public:

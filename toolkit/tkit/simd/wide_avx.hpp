@@ -12,14 +12,14 @@ namespace TKit::Simd::AVX
 {
 #    ifdef TKIT_SIMD_AVX2
 template <typename T>
-concept Arithmetic = Float<T> || Integer<T>;
+concept Valid = Float<T> || Integer<T>;
 
 #    else
 template <typename T>
-concept Arithmetic = Float<T>;
+concept Valid = Float<T>;
 #    endif
 
-template <Arithmetic T> struct TypeSelector;
+template <Valid T> struct TypeSelector;
 
 template <> struct TypeSelector<f32>
 {
@@ -40,7 +40,7 @@ template <Integer T> struct TypeSelector<T>
 TKIT_COMPILER_WARNING_IGNORE_PUSH()
 TKIT_GCC_WARNING_IGNORE("-Wignored-attributes")
 TKIT_CLANG_WARNING_IGNORE("-Wignored-attributes")
-template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
+template <Valid T, typename Traits = Container::ArrayTraits<T>> class Wide
 {
     using m256 = typename TypeSelector<T>::m256;
     template <typename E> static constexpr bool s_Equals = std::is_same_v<m256, E>;
@@ -577,15 +577,15 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
     static constexpr bool AllOf(const Mask &p_Mask)
     {
-        return TKit::AllOf(PackMask(p_Mask));
+        return Bit::AllOf(PackMask(p_Mask));
     }
     static constexpr bool NoneOf(const Mask &p_Mask)
     {
-        return TKit::NoneOf(PackMask(p_Mask));
+        return Bit::NoneOf(PackMask(p_Mask));
     }
     static constexpr bool AnyOf(const Mask &p_Mask)
     {
-        return TKit::AnyOf(PackMask(p_Mask));
+        return Bit::AnyOf(PackMask(p_Mask));
     }
 
   private:

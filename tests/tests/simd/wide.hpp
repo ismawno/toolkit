@@ -230,13 +230,13 @@ template <typename Wide> void RunWideTests()
         {
             const Wide base{[](const SizeType p_Index) { return 255 - p_Index; }};
 
-            const T shiftLeft = 3;
+            const u32 shiftLeft = 3;
             const Wide shiftedLeft = base << shiftLeft;
 
             for (SizeType i = 0; i < Lanes; ++i)
                 REQUIRE(shiftedLeft[i] == static_cast<T>(base[i] << shiftLeft));
 
-            const T shiftRight = 7;
+            const u32 shiftRight = 7;
             const Wide shiftedRight = base >> shiftRight;
 
             for (SizeType i = 0; i < Lanes; ++i)

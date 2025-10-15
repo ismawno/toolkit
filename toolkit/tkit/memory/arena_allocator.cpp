@@ -50,7 +50,7 @@ ArenaAllocator &ArenaAllocator::operator=(ArenaAllocator &&p_Other)
 
 void *ArenaAllocator::Allocate(const usize p_Size, const usize p_Alignment)
 {
-    TKIT_ASSERT(IsPowerOfTwo(p_Alignment), "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2");
+    TKIT_ASSERT(Bit::IsPowerOfTwo(p_Alignment), "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2");
 
     std::byte *ptr = m_Buffer + (m_Size - m_Remaining);
     const uptr address = reinterpret_cast<uptr>(ptr);

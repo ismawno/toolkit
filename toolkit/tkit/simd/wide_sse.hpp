@@ -23,9 +23,6 @@
 #    endif
 namespace TKit::Simd::SSE
 {
-template <typename T>
-concept Arithmetic = Float<T> || Integer<T>;
-
 template <Arithmetic T> struct TypeSelector;
 
 template <> struct TypeSelector<f32>
@@ -532,15 +529,15 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
     static constexpr bool NoneOf(const Mask &p_Mask)
     {
-        return TKit::NoneOf(PackMask(p_Mask));
+        return Bit::NoneOf(PackMask(p_Mask));
     }
     static constexpr bool AnyOf(const Mask &p_Mask)
     {
-        return TKit::AnyOf(PackMask(p_Mask));
+        return Bit::AnyOf(PackMask(p_Mask));
     }
     static constexpr bool AllOf(const Mask &p_Mask)
     {
-        return TKit::AllOf(PackMask(p_Mask));
+        return Bit::AllOf(PackMask(p_Mask));
     }
 
   private:

@@ -2,7 +2,7 @@
 
 #include <bit>
 
-namespace TKit
+namespace TKit::Bit
 {
 template <typename T> constexpr bool IsPowerOfTwo(const T p_Val)
 {
@@ -30,4 +30,4 @@ template <typename T> constexpr T AllOf(const T p_Val)
 {
     return p_Val == static_cast<T>(-1);
 }
-} // namespace TKit
+} // namespace TKit::Bit

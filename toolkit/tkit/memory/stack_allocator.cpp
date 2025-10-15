@@ -56,7 +56,7 @@ StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other)
 
 void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment)
 {
-    TKIT_ASSERT(IsPowerOfTwo(p_Alignment), "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2");
+    TKIT_ASSERT(Bit::IsPowerOfTwo(p_Alignment), "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2");
     std::byte *ptr = m_Entries.IsEmpty() ? m_Buffer : m_Entries.GetBack().Ptr + m_Entries.GetBack().Size;
     const uptr address = reinterpret_cast<uptr>(ptr);
     TKIT_COMPILER_WARNING_IGNORE_PUSH()

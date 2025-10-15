@@ -8,10 +8,7 @@
 
 namespace TKit::Simd::NEON
 {
-template <typename T>
-concept Arithmetic = Float<T> || Integer<T>;
-
-template <typename T> struct TypeSelector;
+template <Arithmetic T> struct TypeSelector;
 
 template <> struct TypeSelector<f32>
 {
@@ -634,5 +631,11 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
 #    undef CREATE_BAD_BRANCH
 #    undef CREATE_METHOD
+#    undef CREATE_METHOD_INT
+#    undef CREATE_ARITHMETIC_OP
+#    undef CREATE_ARITHMETIC_OP_INT
+#    undef CREATE_BITSHIFT_OP
+#    undef CREATE_SCALAR_OP
+#    undef CREATE_CMP_OP
 
 #endif
