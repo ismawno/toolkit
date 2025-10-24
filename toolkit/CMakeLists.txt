@@ -105,7 +105,6 @@ if(UNIX AND NOT APPLE)
     tkit_configure_compile_link_options(fmt)
   else()
     message(STATUS "TOOLKIT: FMT found")
-    # tkit_configure_compile_link_options(fmt::fmt)
   endif()
 
   target_link_libraries(toolkit PUBLIC fmt::fmt)

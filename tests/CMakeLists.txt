@@ -5,15 +5,6 @@ set(NAME toolkit-tests)
 
 include(FetchContent)
 
-FetchContent_Declare(
-  Catch2
-  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG v3.6.0
-  GIT_SHALLOW TRUE
-  GIT_PROGRESS TRUE)
-
-FetchContent_MakeAvailable(Catch2)
-
 set(SOURCES
     tests/memory/block_allocator.cpp
     tests/memory/stack_allocator.cpp
@@ -37,6 +28,22 @@ set(SOURCES
     tests/utils/result.cpp
     tests/utils/hash.cpp)
 
+find_package(Catch2 3 QUIET)
+
+if(NOT Catch2_FOUND)
+  message(STATUS "TOOLKIT: Catch2 not found. Fetching source...")
+  include(FetchContent)
+  FetchContent_Declare(
+    Catch2
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG v3.6.0
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE)
+  FetchContent_MakeAvailable(Catch2)
+else()
+  message(STATUS "TOOLKIT: Catch2 found")
+endif()
+
 add_executable(toolkit-tests ${SOURCES})
 
 target_link_libraries(toolkit-tests PRIVATE Catch2::Catch2WithMain toolkit)
@@ -47,3 +54,4 @@ tkit_default_configure(toolkit-tests)
 include(CTest)
 include(Catch)
 catch_discover_tests(toolkit-tests)
+enable_testing()

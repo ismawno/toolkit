@@ -21,7 +21,7 @@ set(TOOLKIT_BUILD_PERFORMANCE
 set(TOOLKIT_ENABLE_SYMBOLS
     OFF
     CACHE BOOL "")
-# NONE, LOW, MEDIUM, HIGH
+# NONE, FORTIFY, LOW, MEDIUM, HIGH
 set(TOOLKIT_OPTIMIZATIONS
     "NONE"
     CACHE STRING "")
@@ -307,6 +307,12 @@ function(tkit_configure_compile_link_options target)
       list(APPEND compiler_flags /Od)
     else()
       list(APPEND compiler_flags -O0)
+    endif()
+  elseif(TOOLKIT_OPTIMIZATIONS STREQUAL "FORTIFY")
+    if(MSVC)
+      list(APPEND compiler_flags /Od)
+    else()
+      list(APPEND compiler_flags -Og)
     endif()
   elseif(TOOLKIT_OPTIMIZATIONS STREQUAL "LOW")
     if(MSVC)
