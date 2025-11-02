@@ -20,7 +20,11 @@
           clang-tools
           clang
           fmt
+          pkg-config
           hwloc
+          linuxPackages.perf
+          gnumake
+          python313
         ];
         shellHook = ''
           export SHELL=${pkgs.zsh}/bin/zsh
