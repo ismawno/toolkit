@@ -19,6 +19,8 @@
           cmake
           clang-tools
           clang
+          lld
+          llvmPackages_19.llvm
           fmt
           pkg-config
           hwloc
@@ -28,6 +30,8 @@
         ];
         shellHook = ''
           export SHELL=${pkgs.zsh}/bin/zsh
+          export CC=clang
+          export CXX=clang++
         '';
       };
     };
