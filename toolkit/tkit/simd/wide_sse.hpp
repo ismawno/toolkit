@@ -585,9 +585,6 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         }
         CREATE_BAD_BRANCH()
     }
-    static m128 gather(const T *p_Data, const SizeType p_Stride)
-    {
-    }
 
     template <typename Callable, std::size_t... I>
     static constexpr m128 makeIntrinsic(Callable &&p_Callable, std::index_sequence<I...>)
