@@ -79,7 +79,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     template <typename Callable>
         requires std::invocable<Callable, SizeType>
     constexpr Wide(Callable &&p_Callable)
-        : m_Data(makeIntrinsic(std::forward<Callable>(p_Callable), std::make_index_sequence<Lanes>{}))
+        : m_Data(makeIntrinsic(std::forward<Callable>(p_Callable), std::make_integer_sequence<SizeType, Lanes>{}))
     {
     }
 
@@ -586,8 +586,8 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         CREATE_BAD_BRANCH()
     }
 
-    template <typename Callable, std::size_t... I>
-    static constexpr m128 makeIntrinsic(Callable &&p_Callable, std::index_sequence<I...>)
+    template <typename Callable, SizeType... I>
+    static constexpr m128 makeIntrinsic(Callable &&p_Callable, std::integer_sequence<SizeType, I...>)
     {
         if constexpr (s_Equals<__m128>)
             return _mm_setr_ps(static_cast<T>(p_Callable(I))...);

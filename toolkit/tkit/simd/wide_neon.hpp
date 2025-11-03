@@ -131,7 +131,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     template <typename Callable>
         requires std::invocable<Callable, SizeType>
     constexpr Wide(Callable &&p_Callable)
-        : m_Data(makeIntrinsic(std::forward<Callable>(p_Callable), std::make_index_sequence<Lanes>{}))
+        : m_Data(makeIntrinsic(std::forward<Callable>(p_Callable), std::make_integer_sequence<SizeType, Lanes>{}))
     {
     }
 
@@ -469,10 +469,10 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
     static constexpr BitMask PackMask(const Mask &p_Mask)
     {
-        const auto eval = [&p_Mask]<std::size_t... I>(std::index_sequence<I...>) constexpr {
+        const auto eval = [&p_Mask]<SizeType... I>(std::integer_sequence<SizeType, I...>) constexpr {
             return (((getMaskLane<I>(p_Mask) & 1ull) << I) | ...);
         };
-        return eval(std::make_index_sequence<Lanes>{});
+        return eval(std::make_integer_sequence<SizeType, Lanes>{});
     }
 
     static constexpr Mask WidenMask(const BitMask p_Mask)
@@ -587,8 +587,8 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
             return vmvnq_u8(p_Mask);
         CREATE_BAD_BRANCH()
     }
-    template <typename Callable, std::size_t... I>
-    static constexpr wide1_t makeIntrinsic(Callable &&p_Callable, std::index_sequence<I...>)
+    template <typename Callable, SizeType... I>
+    static constexpr wide1_t makeIntrinsic(Callable &&p_Callable, std::integer_sequence<SizeType, I...>)
     {
         alignas(Alignment) const T data[Lanes] = {static_cast<T>(p_Callable(I))...};
         return load1(data);
