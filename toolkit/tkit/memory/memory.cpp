@@ -78,11 +78,11 @@ void operator delete[](void *p_Ptr) noexcept
 {
     TKit::Memory::Deallocate(p_Ptr);
 }
-void operator delete(void *p_Ptr, const std::align_val_t) noexcept
+void operator delete(void *p_Ptr, std::align_val_t) noexcept
 {
     TKit::Memory::DeallocateAligned(p_Ptr);
 }
-void operator delete[](void *p_Ptr, const std::align_val_t) noexcept
+void operator delete[](void *p_Ptr, std::align_val_t) noexcept
 {
     TKit::Memory::DeallocateAligned(p_Ptr);
 }
@@ -95,27 +95,27 @@ void operator delete[](void *p_Ptr, const std::nothrow_t &) noexcept
     TKit::Memory::Deallocate(p_Ptr);
 }
 
-void operator delete(void *p_Ptr, const size_t) noexcept
+void operator delete(void *p_Ptr, size_t) noexcept
 {
     TKit::Memory::Deallocate(p_Ptr);
 }
-void operator delete[](void *p_Ptr, const size_t) noexcept
+void operator delete[](void *p_Ptr, size_t) noexcept
 {
     TKit::Memory::Deallocate(p_Ptr);
 }
-void operator delete(void *p_Ptr, const size_t, const std::align_val_t) noexcept
+void operator delete(void *p_Ptr, size_t, std::align_val_t) noexcept
 {
     TKit::Memory::DeallocateAligned(p_Ptr);
 }
-void operator delete[](void *p_Ptr, const size_t, const std::align_val_t) noexcept
+void operator delete[](void *p_Ptr, size_t, std::align_val_t) noexcept
 {
     TKit::Memory::DeallocateAligned(p_Ptr);
 }
-void operator delete(void *p_Ptr, const size_t, const std::nothrow_t &) noexcept
+void operator delete(void *p_Ptr, size_t, const std::nothrow_t &) noexcept
 {
     TKit::Memory::Deallocate(p_Ptr);
 }
-void operator delete[](void *p_Ptr, const size_t, const std::nothrow_t &) noexcept
+void operator delete[](void *p_Ptr, size_t, const std::nothrow_t &) noexcept
 {
     TKit::Memory::Deallocate(p_Ptr);
 }
