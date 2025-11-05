@@ -2,13 +2,15 @@
 
 #include "tkit/utils/alias.hpp"
 #include "tkit/utils/logging.hpp"
+#include "tkit/container/array.hpp"
+#include <math.h>
 
 namespace TKit
 {
 namespace Math
 {
 template <typename T, usize N0, usize... N>
-    requires((N0 > 0) && ((N > 0) && ...))
+// requires((N0 > 0) && ((N > 0) && ... && true))
 struct Tensor;
 
 namespace Detail
@@ -21,323 +23,345 @@ template <usize I, usize N0, usize... N> constexpr usize GetAxis()
     else
         return GetAxis<I - 1, N...>();
 }
-
-template <usize I, typename T, usize N0, usize... N>
-constexpr const auto &At(const Tensor<T, N0, N...> &p_Tensor, const usize p_Index)
+template <typename T, usize... N> struct Child
 {
-    static_assert(I < sizeof...(N) + 1, "[TOOLKIT][TENSOR] Axis index exceeds rank of tensor");
-    if constexpr (I == 0)
-    {
-        TKIT_ASSERT(p_Index < N0, "[TOOLKIT][TENSOR] Index is out of bounds")
-        return p_Tensor.Ranked[p_Index];
-    }
-    else
-        return At<I - 1>(p_Tensor.Ranked[0], p_Index);
-}
-template <usize I, typename T, usize N0, usize... N>
-constexpr auto &At(Tensor<T, N0, N...> &p_Tensor, const usize p_Index)
-{
-    static_assert(I < sizeof...(N) + 1, "[TOOLKIT][TENSOR] Axis index exceeds rank of tensor");
-    if constexpr (I == 0)
-    {
-        TKIT_ASSERT(p_Index < N0, "[TOOLKIT][TENSOR] Index is out of bounds")
-        return p_Tensor.Ranked[p_Index];
-    }
-    else
-        return At<I - 1>(p_Tensor.Ranked[0], p_Index);
-}
-
-template <typename T, usize N0, usize N1, usize... N> struct Permutations
-{
-    template <usize I0, usize I1, usize... I>
-        requires(sizeof...(I) == sizeof...(N))
-    using Permute = Tensor<T, GetAxis<I0, N0, N1, N...>, GetAxis<I1, N0, N1, N...>, GetAxis<I, N0, N1, N...>...>;
+    using Type = Tensor<T, N...>;
 };
+template <typename T> struct Child<T>
+{
+    using Type = T;
+};
+
 } // namespace Detail
 
-template <typename T, usize N> struct Tensor<T, N>
+template <typename T, usize N0, usize... N>
+// requires((N0 > 0) && ((N > 0) && ... && true))
+struct Tensor
 {
     using ValueType = T;
-    using ChildType = T;
-    static constexpr usize Length = N;
-    static constexpr usize Rank = 1;
+    using ChildType = Detail::Child<T, N...>::Type;
 
-    constexpr Tensor() = default;
-    template <std::convertible_to<T> U> Tensor(const Tensor<T, N - 1> &p_Small, U &&p_Value)
-    {
-    }
+    static constexpr usize Length = N0 * (N * ... * 1);
+    static constexpr usize Rank = sizeof...(N) + 1;
+    template <usize I> static constexpr usize Axis = Detail::GetAxis<I, N0, N...>();
 
-    template <std::convertible_to<T> U> constexpr Tensor(U &&p_Value)
-    {
-        for (usize i = 0; i < N; ++i)
-            Ranked[i] = p_Value;
-    }
-
-    template <typename... Args>
-    constexpr Tensor(Args &&...p_Args)
-        requires(sizeof...(Args) == N && (std::convertible_to<Args, T> && ...))
-        : Ranked{static_cast<T>(std::forward<Args>(p_Args))...}
-    {
-    }
-
-    template <usize I> static constexpr usize GetAxis()
-    {
-        return Detail::GetAxis<I, N>();
-    }
-
-    template <usize I = 0> constexpr const ChildType &At(const usize p_Index) const
-    {
-        return Detail::At<I>(*this, p_Index);
-    }
-    template <usize I = 0> constexpr ChildType &At(const usize p_Index)
-    {
-        return Detail::At<I>(*this, p_Index);
-    }
-
-    constexpr const ChildType &operator[](const usize p_Index) const
-    {
-        return At(p_Index);
-    }
-    constexpr ChildType &operator[](const usize p_Index)
-    {
-        return At(p_Index);
-    }
-
-#define CREATE_ARITHMETIC_OP(p_Op)                                                                                     \
-    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const Tensor &p_Right)                                 \
-    {                                                                                                                  \
-        Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < N; ++i)                                                                                  \
-            tensor.Ranked[i] = p_Left.Ranked[i] p_Op p_Right.Ranked[i];                                                \
-        return tensor;                                                                                                 \
-    }                                                                                                                  \
-    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const T &p_Right)                                      \
-    {                                                                                                                  \
-        Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < N; ++i)                                                                                  \
-            tensor.Ranked[i] = p_Left.Ranked[i] p_Op p_Right;                                                          \
-        return tensor;                                                                                                 \
-    }                                                                                                                  \
-    friend constexpr Tensor operator p_Op(const T &p_Left, const Tensor &p_Right)                                      \
-    {                                                                                                                  \
-        Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < N; ++i)                                                                                  \
-            tensor.Ranked[i] = p_Left p_Op p_Right.Ranked[i];                                                          \
-        return tensor;                                                                                                 \
-    }                                                                                                                  \
-    constexpr Tensor &operator p_Op##=(const Tensor & p_Other)                                                         \
-    {                                                                                                                  \
-        *this = *this p_Op p_Other;                                                                                    \
-        return *this;                                                                                                  \
-    }
-
-#define CREATE_BITSHIFT_OP(p_Op)                                                                                       \
-    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const T &p_Shift)                                      \
-    {                                                                                                                  \
-        Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < N; ++i)                                                                                  \
-            tensor.Ranked[i] = p_Left.Ranked[i] p_Op p_Shift;                                                          \
-        return tensor;                                                                                                 \
-    }                                                                                                                  \
-    constexpr Tensor &operator p_Op##=(const Tensor & p_Other)                                                         \
-    {                                                                                                                  \
-        *this = *this p_Op p_Other;                                                                                    \
-        return *this;                                                                                                  \
-    }
-
-    CREATE_ARITHMETIC_OP(+)
-    CREATE_ARITHMETIC_OP(-)
-    CREATE_ARITHMETIC_OP(*)
-    CREATE_ARITHMETIC_OP(/)
-    CREATE_ARITHMETIC_OP(&)
-    CREATE_ARITHMETIC_OP(|)
-
-    CREATE_BITSHIFT_OP(<<)
-    CREATE_BITSHIFT_OP(>>)
-
-    friend constexpr Tensor operator-(const Tensor &p_Other)
-    {
-        Tensor tensor;
-        for (usize i = 0; i < N; ++i)
-            tensor.Ranked[i] = -p_Other.Ranked[i];
-        return tensor;
-    }
-
-    T Ranked[N];
-};
-#undef CREATE_ARITHMETIC_OP
-#undef CREATE_BITSHIFT_OP
-
-template <typename T, usize C, usize R> struct Tensor<T, C, R>
-{
-    using ValueType = T;
-    using ChildType = Tensor<T, R>;
-
-    template <usize I0, usize I1> using Permute = typename Detail::Permutations<T, C, R>::template Permute<I0, I1>;
-
-    static constexpr usize Columns = C;
-    static constexpr usize Rows = R;
-    static constexpr usize Length = C * R;
-    static constexpr usize Rank = 2;
+    template <usize I0, usize... I>
+        requires(sizeof...(I) == sizeof...(N) && I0 < N0 && ((I < N) && ... && true))
+    using Permuted = Tensor<T, Axis<I0>, Axis<I>...>;
 
     constexpr Tensor() = default;
 
-    template <std::convertible_to<T> U> constexpr Tensor(U &&p_Value)
+    template <std::convertible_to<T> U> explicit constexpr Tensor(U &&p_Value)
     {
-        for (usize i = 0; i < C; ++i)
-            Ranked[i] = ChildType{p_Value};
+        for (usize i = 0; i < Length; ++i)
+            Flat[i] = static_cast<T>(std::forward<U>(p_Value));
     }
 
     template <typename... Args>
-    constexpr Tensor(Args &&...p_Args)
-        requires(sizeof...(Args) == C && (std::convertible_to<Args, ChildType> && ...))
+        requires(sizeof...(Args) == Length && (std::convertible_to<Args, T> && ...))
+    explicit constexpr Tensor(Args &&...p_Args) : Flat{static_cast<T>(std::forward<Args>(p_Args))...}
+    {
+    }
+    template <typename... Args>
+    explicit constexpr Tensor(Args &&...p_Args)
+        requires(!std::same_as<ChildType, T> && sizeof...(Args) == N0 && (std::convertible_to<Args, ChildType> && ...))
         : Ranked{static_cast<ChildType>(std::forward<Args>(p_Args))...}
     {
     }
 
-    template <usize I> static constexpr usize GetAxis()
+    template <typename U>
+        requires(std::convertible_to<U, ChildType>)
+    constexpr Tensor(const Tensor<T, N0 - 1, N...> &p_Tensor, U &&p_Value)
+        requires(N0 > 1)
     {
-        return Detail::GetAxis<I, C, R>();
+        for (usize i = 0; i < N0 - 1; ++i)
+            Ranked[i] = p_Tensor[i];
+        Ranked[N0 - 1] = p_Value;
     }
 
-    template <usize I = 0> constexpr const ChildType &At(const usize p_Index) const
+    constexpr T Dot(const Tensor &p_Left, const Tensor &p_Right)
     {
-        return Detail::At<I>(*this, p_Index);
+        T result{static_cast<T>(0)};
+
+        constexpr usize length = N0 * (N * ...);
+        for (usize i = 0; i < length; ++i)
+            result += p_Left.Flat[i] * p_Right.Flat[i];
+        return result;
     }
-    template <usize I = 0> constexpr ChildType &At(const usize p_Index)
+
+    constexpr T NormSquared(const Tensor &p_Tensor)
     {
-        return Detail::At<I>(*this, p_Index);
+        return Dot(p_Tensor, p_Tensor);
     }
-
-    constexpr const ChildType &operator[](const usize p_Index) const
+    constexpr T Norm(const Tensor &p_Tensor)
     {
-        return At(p_Index);
+        return std::sqrt(Dot(p_Tensor, p_Tensor));
     }
-    constexpr ChildType &operator[](const usize p_Index)
+
+    constexpr T DistanceSquared(const Tensor &p_Left, const Tensor &p_Right)
     {
-        return At(p_Index);
+        const Tensor diff = p_Right - p_Left;
+        return Dot(diff, diff);
     }
 
-#define CREATE_BINARY_OP(p_Op)                                                                                         \
-    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const Tensor &p_Right)                                 \
-    {                                                                                                                  \
-        Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < C; ++i)                                                                                  \
-            tensor.Ranked[i] = p_Left.Ranked[i] p_Op p_Right.Ranked[i];                                                \
-        return tensor;                                                                                                 \
-    }
-
-#define CREATE_ARITHMETIC_OP(p_Op)                                                                                     \
-    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const T &p_Right)                                      \
-    {                                                                                                                  \
-        Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < C; ++i)                                                                                  \
-            tensor.Ranked[i] = p_Left.Ranked[i] p_Op p_Right;                                                          \
-        return tensor;                                                                                                 \
-    }                                                                                                                  \
-    friend constexpr Tensor operator p_Op(const T &p_Left, const Tensor &p_Right)                                      \
-    {                                                                                                                  \
-        Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < C; ++i)                                                                                  \
-            tensor.Ranked[i] = p_Left p_Op p_Right.Ranked[i];                                                          \
-        return tensor;                                                                                                 \
-    }                                                                                                                  \
-    constexpr Tensor &operator p_Op##=(const Tensor & p_Other)                                                         \
-    {                                                                                                                  \
-        *this = *this p_Op p_Other;                                                                                    \
-        return *this;                                                                                                  \
-    }
-
-#define CREATE_BITSHIFT_OP(p_Op)                                                                                       \
-    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const T &p_Shift)                                      \
-    {                                                                                                                  \
-        Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < C; ++i)                                                                                  \
-            tensor.Ranked[i] = p_Left.Ranked[i] p_Op p_Shift;                                                          \
-        return tensor;                                                                                                 \
-    }                                                                                                                  \
-    constexpr Tensor &operator p_Op##=(const Tensor & p_Other)                                                         \
-    {                                                                                                                  \
-        *this = *this p_Op p_Other;                                                                                    \
-        return *this;                                                                                                  \
-    }
-    CREATE_BINARY_OP(+)
-    CREATE_BINARY_OP(-)
-    CREATE_BINARY_OP(/)
-    CREATE_BINARY_OP(&)
-    CREATE_BINARY_OP(|)
-
-    CREATE_ARITHMETIC_OP(+)
-    CREATE_ARITHMETIC_OP(-)
-    CREATE_ARITHMETIC_OP(*)
-    CREATE_ARITHMETIC_OP(/)
-    CREATE_ARITHMETIC_OP(&)
-    CREATE_ARITHMETIC_OP(|)
-
-    CREATE_BITSHIFT_OP(<<)
-    CREATE_BITSHIFT_OP(>>)
-
-    template <usize N, usize C2, usize R1>
-    friend constexpr Tensor<T, C2, R1> operator*(const Tensor<T, N, R1> &p_Left, const Tensor<T, C2, N> &p_Right)
+    constexpr T Distance(const Tensor &p_Left, const Tensor &p_Right)
     {
-        Tensor<T, C2, R1> tensor;
-        for (usize i = 0; i < C2; ++i)
-            for (usize j = 0; j < R1; ++j)
+        return std::sqrt(DistanceSquared(p_Left, p_Right));
+    }
+
+    constexpr Tensor Normalize(const Tensor &p_Tensor)
+    {
+        return p_Tensor / Norm(p_Tensor);
+    }
+
+    template <usize R0, usize... R>
+        requires(R0 *(R *... * 1) == Length)
+    constexpr Tensor<T, R0, R...> Reshape() const
+    {
+        Tensor<T, R0, R...> reshaped;
+        for (usize i = 0; i < Length; ++i)
+            reshaped.Flat[i] = Flat[i];
+        return reshaped;
+    }
+
+    template <typename I0, typename... I>
+        requires(sizeof...(I) == sizeof...(N) && std::convertible_to<I0, usize> &&
+                 (std::convertible_to<I, usize> && ... && true))
+    constexpr Tensor<T, N0 - 1, (N - 1)...> SubTensor(I0 &&p_First, I &&...p_Rest)
+        requires(N0 > 1 && ((N0 == N) && ... && true))
+    {
+        TKIT_ASSERT(p_First < N0, "[TOOLKIT][TENSOR] Index is out of bounds");
+        Tensor<T, N0 - 1, (N - 1)...> minor;
+        for (usize i = 0, j = 0; i < N0; ++i)
+            if (i != p_First)
             {
-                T sum{0};
-                for (usize k = 0; k < N; ++k)
-                    sum += p_Left[k][j] * p_Right[i][k];
-                tensor[i][j] = sum;
+                if constexpr (sizeof...(I) == 0)
+                    minor.Flat[j] = Flat[i];
+                else
+                    minor.Ranked[j] = Ranked[i].SubTensor(std::forward<I>(p_Rest)...);
+                ++j;
             }
-        return tensor;
+        return minor;
     }
-    union {
-        ChildType Ranked[C];
-        T Flat[Length];
-    };
-};
-#undef CREATE_BINARY_OP
-#undef CREATE_ARITHMETIC_OP
-#undef CREATE_BITSHIFT_OP
 
-template <typename T, usize N0, usize N1, usize N2, usize... N> struct Tensor<T, N0, N1, N2, N...>
-{
-    using ValueType = T;
-    using ChildType = Tensor<T, N1, N2, N...>;
-
-    template <usize I0, usize I1, usize I2, usize... I>
-    using Permute = typename Detail::Permutations<T, N0, N1, N2, N...>::template Permute<I0, I1, I2, I...>;
-
-    static constexpr usize Length = N0 * N1 * N2 * (N * ...);
-    static constexpr usize Rank = sizeof...(N) + 3;
-
-    constexpr Tensor() = default;
-
-    template <std::convertible_to<T> U> constexpr Tensor(U &&p_Value)
+    constexpr Tensor<T, N0, N...> Cofactors()
+        requires(Rank == 2 && ((N0 == N) && ...))
     {
+        Tensor<T, N0, N...> cofactors;
+        i32 sign = 1;
         for (usize i = 0; i < N0; ++i)
-            Ranked[i] = ChildType{p_Value};
+            for (usize j = 0; j < Tensor<T, N...>::Length; ++j)
+            {
+                cofactors.Ranked[i][j] = sign * SubTensor(i, j).Determinant();
+                sign *= -1;
+            }
+        return cofactors;
     }
 
-    template <typename... Args>
-    constexpr Tensor(Args &&...p_Args)
-        requires(sizeof...(Args) == N0 && (std::convertible_to<Args, ChildType> && ...))
-        : Ranked{static_cast<ChildType>(std::forward<Args>(p_Args))...}
+    constexpr T Determinant()
+        requires(Rank == 2 && ((N0 == N) && ...))
     {
+        if constexpr (N0 == 1)
+            return Flat[0];
+        else if constexpr (N0 == 2)
+            return Flat[0] * Flat[3] - Flat[1] * Flat[2];
+        else if constexpr (N0 == 3)
+            return Flat[0] * Flat[4] * Flat[8] + Flat[3] * Flat[7] * Flat[2] + Flat[1] * Flat[5] * Flat[6] -
+                   Flat[6] * Flat[4] * Flat[2] - Flat[1] * Flat[3] * Flat[8] - Flat[0] * Flat[7] * Flat[5];
+        else if constexpr (N0 == 4)
+        {
+            const T factor0 = Ranked[2][2] * Ranked[3][3] - Ranked[3][2] * Ranked[2][3];
+            const T factor1 = Ranked[2][1] * Ranked[3][3] - Ranked[3][1] * Ranked[2][3];
+            const T factor2 = Ranked[2][1] * Ranked[3][2] - Ranked[3][1] * Ranked[2][2];
+            const T factor3 = Ranked[2][0] * Ranked[3][3] - Ranked[3][0] * Ranked[2][3];
+            const T factor4 = Ranked[2][0] * Ranked[3][2] - Ranked[3][0] * Ranked[2][2];
+            const T factor5 = Ranked[2][0] * Ranked[3][1] - Ranked[3][0] * Ranked[2][1];
+
+            const Tensor<T, 4> coef(+(Ranked[1][1] * factor0 - Ranked[1][2] * factor1 + Ranked[1][3] * factor2),
+                                    -(Ranked[1][0] * factor0 - Ranked[1][2] * factor3 + Ranked[1][3] * factor4),
+                                    +(Ranked[1][0] * factor1 - Ranked[1][1] * factor3 + Ranked[1][3] * factor5),
+                                    -(Ranked[1][0] * factor2 - Ranked[1][1] * factor4 + Ranked[1][2] * factor5));
+
+            return Ranked[0][0] * coef[0] + Ranked[0][1] * coef[1] + Ranked[0][2] * coef[2] + Ranked[0][3] * coef[3];
+        }
+        else
+        {
+            T determinant{static_cast<T>(0)};
+            for (usize i = 0; i < N0; i += 2)
+                determinant += Ranked[0][i] * SubTensor(0, i).Determinant();
+            for (usize i = 1; i < N0; i += 2)
+                determinant -= Ranked[0][i] * SubTensor(0, i).Determinant();
+            return determinant;
+        }
     }
 
-    template <usize I> static constexpr usize GetAxis()
+    constexpr Tensor Inverse()
+        requires(Rank == 2 && ((N0 == N) && ...))
     {
-        return Detail::GetAxis<I, N0, N1, N2, N...>();
+        if constexpr (N0 == 1)
+            return 1.f / Flat[0];
+        else if constexpr (N0 == 2)
+        {
+            const T idet = static_cast<T>(1) / Determinant();
+            Tensor<T, 4, 4> inverse;
+            inverse.Flat[0] = idet * Flat[3];
+            inverse.Flat[1] = -idet * Flat[1];
+            inverse.Flat[2] = -idet * Flat[2];
+            inverse.Flat[3] = idet * Flat[0];
+            return inverse;
+        }
+        else if constexpr (N0 == 3)
+        {
+            const T idet = static_cast<T>(1) / Determinant();
+            Tensor<T, 4, 4> inverse;
+
+            inverse.Ranked[0][0] = (Ranked[1][1] * Ranked[2][2] - Ranked[2][1] * Ranked[1][2]) * idet;
+            inverse.Ranked[1][0] = -(Ranked[1][0] * Ranked[2][2] - Ranked[2][0] * Ranked[1][2]) * idet;
+            inverse.Ranked[2][0] = (Ranked[1][0] * Ranked[2][1] - Ranked[2][0] * Ranked[1][1]) * idet;
+            inverse.Ranked[0][1] = -(Ranked[0][1] * Ranked[2][2] - Ranked[2][1] * Ranked[0][2]) * idet;
+            inverse.Ranked[1][1] = (Ranked[0][0] * Ranked[2][2] - Ranked[2][0] * Ranked[0][2]) * idet;
+            inverse.Ranked[2][1] = -(Ranked[0][0] * Ranked[2][1] - Ranked[2][0] * Ranked[0][1]) * idet;
+            inverse.Ranked[0][2] = (Ranked[0][1] * Ranked[1][2] - Ranked[1][1] * Ranked[0][2]) * idet;
+            inverse.Ranked[1][2] = -(Ranked[0][0] * Ranked[1][2] - Ranked[1][0] * Ranked[0][2]) * idet;
+            inverse.Ranked[2][2] = (Ranked[0][0] * Ranked[1][1] - Ranked[1][0] * Ranked[0][1]) * idet;
+            return inverse;
+        }
+        else if constexpr (N0 == 4)
+        {
+            const T coef00 = Ranked[2][2] * Ranked[3][3] - Ranked[3][2] * Ranked[2][3];
+            const T coef02 = Ranked[1][2] * Ranked[3][3] - Ranked[3][2] * Ranked[1][3];
+            const T coef03 = Ranked[1][2] * Ranked[2][3] - Ranked[2][2] * Ranked[1][3];
+
+            const T coef04 = Ranked[2][1] * Ranked[3][3] - Ranked[3][1] * Ranked[2][3];
+            const T coef06 = Ranked[1][1] * Ranked[3][3] - Ranked[3][1] * Ranked[1][3];
+            const T coef07 = Ranked[1][1] * Ranked[2][3] - Ranked[2][1] * Ranked[1][3];
+
+            const T coef08 = Ranked[2][1] * Ranked[3][2] - Ranked[3][1] * Ranked[2][2];
+            const T coef10 = Ranked[1][1] * Ranked[3][2] - Ranked[3][1] * Ranked[1][2];
+            const T coef11 = Ranked[1][1] * Ranked[2][2] - Ranked[2][1] * Ranked[1][2];
+
+            const T coef12 = Ranked[2][0] * Ranked[3][3] - Ranked[3][0] * Ranked[2][3];
+            const T coef14 = Ranked[1][0] * Ranked[3][3] - Ranked[3][0] * Ranked[1][3];
+            const T coef15 = Ranked[1][0] * Ranked[2][3] - Ranked[2][0] * Ranked[1][3];
+
+            const T coef16 = Ranked[2][0] * Ranked[3][2] - Ranked[3][0] * Ranked[2][2];
+            const T coef18 = Ranked[1][0] * Ranked[3][2] - Ranked[3][0] * Ranked[1][2];
+            const T coef19 = Ranked[1][0] * Ranked[2][2] - Ranked[2][0] * Ranked[1][2];
+
+            const T coef20 = Ranked[2][0] * Ranked[3][1] - Ranked[3][0] * Ranked[2][1];
+            const T coef22 = Ranked[1][0] * Ranked[3][1] - Ranked[3][0] * Ranked[1][1];
+            const T coef23 = Ranked[1][0] * Ranked[2][1] - Ranked[2][0] * Ranked[1][1];
+
+            const Tensor<T, 4> fac0(coef00, coef00, coef02, coef03);
+            const Tensor<T, 4> fac1(coef04, coef04, coef06, coef07);
+            const Tensor<T, 4> fac2(coef08, coef08, coef10, coef11);
+            const Tensor<T, 4> fac3(coef12, coef12, coef14, coef15);
+            const Tensor<T, 4> fac4(coef16, coef16, coef18, coef19);
+            const Tensor<T, 4> fac5(coef20, coef20, coef22, coef23);
+
+            const Tensor<T, 4> vec0(Ranked[1][0], Ranked[0][0], Ranked[0][0], Ranked[0][0]);
+            const Tensor<T, 4> vec1(Ranked[1][1], Ranked[0][1], Ranked[0][1], Ranked[0][1]);
+            const Tensor<T, 4> vec2(Ranked[1][2], Ranked[0][2], Ranked[0][2], Ranked[0][2]);
+            const Tensor<T, 4> vec3(Ranked[1][3], Ranked[0][3], Ranked[0][3], Ranked[0][3]);
+
+            const Tensor<T, 4> inv0(vec1 * fac0 - vec2 * fac1 + vec3 * fac2);
+            const Tensor<T, 4> inv1(vec0 * fac0 - vec2 * fac3 + vec3 * fac4);
+            const Tensor<T, 4> inv2(vec0 * fac1 - vec1 * fac3 + vec3 * fac5);
+            const Tensor<T, 4> inv3(vec0 * fac2 - vec1 * fac4 + vec2 * fac5);
+
+            const Tensor<T, 4> SignA(+1, -1, +1, -1);
+            const Tensor<T, 4> SignB(-1, +1, -1, +1);
+
+            const Tensor<T, 4, 4> inverse{inv0 * SignA, inv1 * SignB, inv2 * SignA, inv3 * SignB};
+
+            const Tensor<T, 4> row0(inverse[0][0], inverse[1][0], inverse[2][0], inverse[3][0]);
+
+            const Tensor<T, 4> dot0{Ranked[0] * row0};
+            T Dot1 = (dot0.Flat[0] + dot0.Flat[1]) + (dot0.Flat[2] + dot0.Flat[3]);
+
+            const T idet = static_cast<T>(1) / Dot1;
+
+            return inverse * idet;
+        }
+        else
+        {
+            const T idet = static_cast<T>(1) / Determinant();
+            return Cofactors().Transpose() * idet;
+        }
+    }
+
+    constexpr Tensor<T, N..., N0> Transpose()
+        requires(Rank == 2)
+    {
+        Tensor<T, N..., N0> transposed;
+        for (usize i = 0; i < Tensor<T, N...>::Length; ++i)
+            for (usize j = 0; j < N0; ++j)
+                transposed[i][j] = Ranked[j][i];
+        return transposed;
+    }
+
+    template <usize I0, usize... I> constexpr Permuted<I0, I...> Permute()
+    {
+        Permuted<I0, I...> permuted;
+        constexpr Array<usize, Rank> dims = {N0, N...};
+        constexpr Array<usize, Rank> pdims = {Axis<I0>, Axis<I>...};
+        constexpr Array<usize, Rank> perm = {I0, I...};
+
+        Array<usize, Rank> stride;
+        Array<usize, Rank> pstride;
+        stride[Rank - 1] = 1;
+        pstride[Rank - 1] = 1;
+        for (usize i = Rank - 1; i > 0; --i)
+        {
+            stride[i - 1] = stride[i] * dims[i];
+            pstride[i - 1] = pstride[i] * pdims[i];
+        }
+
+        for (usize i = 0; i < Length; ++i)
+        {
+            Array<usize, Rank> pindices;
+            for (usize j = 0; j < Rank; ++j)
+                pindices[j] = (i / pstride[j]) % pdims[j];
+
+            usize index = 0;
+            for (usize j = 0; j < Rank; ++j)
+                index += pindices[perm[j]] * stride[j];
+
+            permuted.Flat[i] = Flat[index];
+        }
+        return permuted;
+    }
+
+    const T *GetData() const
+    {
+        return &Flat[0];
+    }
+    T *GetData()
+    {
+        return &Flat[0];
     }
 
     template <usize I = 0> constexpr const ChildType &At(const usize p_Index) const
     {
-        return Detail::At<I>(*this, p_Index);
+        static_assert(I < sizeof...(N) + 1, "[TOOLKIT][TENSOR] Axis index exceeds rank of tensor");
+        if constexpr (I == 0)
+        {
+            TKIT_ASSERT(p_Index < N0, "[TOOLKIT][TENSOR] Index is out of bounds");
+            return Ranked[p_Index];
+        }
+        else
+            return At<I - 1>(Ranked[0], p_Index);
     }
     template <usize I = 0> constexpr ChildType &At(const usize p_Index)
     {
-        return Detail::At<I>(*this, p_Index);
+        static_assert(I < sizeof...(N) + 1, "[TOOLKIT][TENSOR] Axis index exceeds rank of tensor");
+        if constexpr (I == 0)
+        {
+            TKIT_ASSERT(p_Index < N0, "[TOOLKIT][TENSOR] Index is out of bounds");
+            return Ranked[p_Index];
+        }
+        else
+            return At<I - 1>(Ranked[0], p_Index);
     }
 
     constexpr const ChildType &operator[](const usize p_Index) const
@@ -349,82 +373,117 @@ template <typename T, usize N0, usize N1, usize N2, usize... N> struct Tensor<T,
         return At(p_Index);
     }
 
-#define CREATE_ARITHMETIC_OP(p_Op)                                                                                     \
-    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const Tensor &p_Right)                                 \
-    {                                                                                                                  \
-        Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < N0; ++i)                                                                                 \
-            tensor.Ranked[i] = p_Left.Ranked[i] p_Op p_Right.Ranked[i];                                                \
-        return tensor;                                                                                                 \
-    }                                                                                                                  \
-    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const T &p_Right)                                      \
-    {                                                                                                                  \
-        Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < N0; ++i)                                                                                 \
-            tensor.Ranked[i] = p_Left.Ranked[i] p_Op p_Right;                                                          \
-        return tensor;                                                                                                 \
-    }                                                                                                                  \
-    friend constexpr Tensor operator p_Op(const T &p_Left, const Tensor &p_Right)                                      \
-    {                                                                                                                  \
-        Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < N0; ++i)                                                                                 \
-            tensor.Ranked[i] = p_Left p_Op p_Right.Ranked[i];                                                          \
-        return tensor;                                                                                                 \
-    }                                                                                                                  \
-    constexpr Tensor &operator p_Op##=(const Tensor & p_Other)                                                         \
-    {                                                                                                                  \
-        *this = *this p_Op p_Other;                                                                                    \
-        return *this;                                                                                                  \
+    friend constexpr Tensor operator*(const Tensor &p_Left, const Tensor &p_Right)
+        requires(sizeof...(N) != 1)
+    {
+        Tensor tensor;
+        for (usize i = 0; i < N0; ++i)
+            tensor.Ranked[i] = p_Left.Ranked[i] * p_Right.Ranked[i];
     }
-
-#define CREATE_BITSHIFT_OP(p_Op)                                                                                       \
-    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const T &p_Shift)                                      \
-    {                                                                                                                  \
-        Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < N0; ++i)                                                                                 \
-            tensor.Ranked[i] = p_Left.Ranked[i] p_Op p_Shift;                                                          \
-        return tensor;                                                                                                 \
-    }                                                                                                                  \
-    constexpr Tensor &operator p_Op##=(const Tensor & p_Other)                                                         \
-    {                                                                                                                  \
-        *this = *this p_Op p_Other;                                                                                    \
-        return *this;                                                                                                  \
-    }
-
-    CREATE_ARITHMETIC_OP(+)
-    CREATE_ARITHMETIC_OP(-)
-    CREATE_ARITHMETIC_OP(*)
-    CREATE_ARITHMETIC_OP(/)
-    CREATE_ARITHMETIC_OP(&)
-    CREATE_ARITHMETIC_OP(|)
-
-    CREATE_BITSHIFT_OP(<<)
-    CREATE_BITSHIFT_OP(>>)
 
     friend constexpr Tensor operator-(const Tensor &p_Other)
     {
         Tensor tensor;
-        for (usize i = 0; i < N0; ++i)
-            tensor.Ranked[i] = -p_Other.Ranked[i];
+        for (usize i = 0; i < Length; ++i)
+            tensor.Flat[i] = -p_Other.Flat[i];
         return tensor;
     }
+
+#define CREATE_ARITHMETIC_OP(p_Op)                                                                                     \
+    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const Tensor &p_Right)                                 \
+    {                                                                                                                  \
+        Tensor tensor;                                                                                                 \
+        for (usize i = 0; i < Length; ++i)                                                                             \
+            tensor.Flat[i] = p_Left.Flat[i] p_Op p_Right.Flat[i];                                                      \
+        return tensor;                                                                                                 \
+    }
+
+    CREATE_ARITHMETIC_OP(+)
+    CREATE_ARITHMETIC_OP(-)
+    CREATE_ARITHMETIC_OP(/)
+    CREATE_ARITHMETIC_OP(&)
+    CREATE_ARITHMETIC_OP(|)
+
+#define CREATE_SCALAR_OP(p_Op)                                                                                         \
+    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const T p_Right)                                       \
+    {                                                                                                                  \
+        Tensor tensor;                                                                                                 \
+        for (usize i = 0; i < Length; ++i)                                                                             \
+            tensor.Flat[i] = p_Left.Flat[i] p_Op p_Right;                                                              \
+        return tensor;                                                                                                 \
+    }                                                                                                                  \
+    friend constexpr Tensor operator p_Op(const T p_Left, const Tensor &p_Right)                                       \
+    {                                                                                                                  \
+        Tensor tensor;                                                                                                 \
+        for (usize i = 0; i < Length; ++i)                                                                             \
+            tensor.Flat[i] = p_Left p_Op p_Right.Flat[i];                                                              \
+        return tensor;                                                                                                 \
+    }
+
+    CREATE_SCALAR_OP(+)
+    CREATE_SCALAR_OP(-)
+    CREATE_SCALAR_OP(*)
+    CREATE_SCALAR_OP(/)
+    CREATE_SCALAR_OP(&)
+    CREATE_SCALAR_OP(|)
+
+#define CREATE_BITSHIFT_OP(p_Op)                                                                                       \
+    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const T p_Shift)                                       \
+    {                                                                                                                  \
+        Tensor tensor;                                                                                                 \
+        for (usize i = 0; i < Length; ++i)                                                                             \
+            tensor.Flat[i] = p_Left.Flat[i] p_Op p_Shift;                                                              \
+        return tensor;                                                                                                 \
+    }
+
+    CREATE_BITSHIFT_OP(>>)
+    CREATE_BITSHIFT_OP(<<)
+
+#define CREATE_SELF_OP(p_Op)                                                                                           \
+    constexpr Tensor &operator p_Op##=(const Tensor & p_Other)                                                         \
+    {                                                                                                                  \
+        *this = *this p_Op p_Other;                                                                                    \
+        return *this;                                                                                                  \
+    }
+
+    CREATE_SELF_OP(+)
+    CREATE_SELF_OP(-)
+    CREATE_SELF_OP(*)
+    CREATE_SELF_OP(/)
+    CREATE_SELF_OP(&)
+    CREATE_SELF_OP(|)
+    CREATE_SELF_OP(>>)
+    CREATE_SELF_OP(<<)
 
     union {
         ChildType Ranked[N0];
         T Flat[Length];
     };
 };
+
+#undef CREATE_ARITHMETIC_OP
+#undef CREATE_SCALAR_OP
+#undef CREATE_BITSHIFT_OP
+#undef CREATE_SELF_OP
+
+template <typename T, usize N, usize C2, usize R1>
+constexpr Tensor<T, C2, R1> operator*(const Tensor<T, N, R1> &p_Left, const Tensor<T, C2, N> &p_Right)
+{
+    Tensor<T, C2, R1> tensor;
+    for (usize i = 0; i < C2; ++i)
+        for (usize j = 0; j < R1; ++j)
+        {
+            T sum{0};
+            for (usize k = 0; k < N; ++k)
+                sum += p_Left[k][j] * p_Right[i][k];
+            tensor[i][j] = sum;
+        }
+    return tensor;
+}
+
+#undef CREATE_BINARY_OP
 #undef CREATE_ARITHMETIC_OP
 #undef CREATE_BITSHIFT_OP
-
-// TODO: Add concept here as well
-template <typename T, usize N0, usize... N> T *GetData(const Tensor<T, N0, N...> &p_Tensor)
-{
-    if constexpr (sizeof...(N) == 0)
-        return &p_Tensor.Ranked[0];
-    else
-        return GetData(p_Tensor.Ranked[0]);
-}
 
 } // namespace Math
 namespace Alias
