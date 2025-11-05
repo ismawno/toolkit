@@ -1,9 +1,12 @@
 #pragma once
 
 #include "tkit/utils/alias.hpp"
+#include "tkit/preprocessor/system.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 #include <array>
+TKIT_COMPILER_WARNING_IGNORE_PUSH()
+TKIT_MSVC_WARNING_IGNORE(4146)
 
 namespace TKit
 {
@@ -39,7 +42,7 @@ template <typename Wide> void RunWideTests()
 
     alignas(Alignment) T src[Lanes];
     for (SizeType i = 0; i < Lanes; ++i)
-        src[i] = i + 1;
+        src[i] = static_cast<T>(i + 1);
 
     SECTION("Construction from pointer")
     {
@@ -260,3 +263,4 @@ template <typename Wide> void RunWideTests()
 }
 
 } // namespace TKit
+TKIT_COMPILER_WARNING_IGNORE_POP()
