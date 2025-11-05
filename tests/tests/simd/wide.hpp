@@ -17,7 +17,7 @@ template <typename Wide, usize N, usize Lanes> void TestGatherScatter()
 
     for (usize i = 0; i < Lanes; ++i)
         for (usize j = 0; j < N; ++j)
-            scattered[i][j] = i * N + j;
+            scattered[i][j] = static_cast<T>(i * N + j);
 
     const auto w = Wide::template Gather<N>(&scattered[0][0]);
     for (usize i = 0; i < Lanes; ++i)
