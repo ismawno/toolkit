@@ -4,6 +4,8 @@
 #include "tkit/simd/utils.hpp"
 #include <algorithm>
 
+TKIT_COMPILER_WARNING_IGNORE_PUSH()
+TKIT_MSVC_WARNING_IGNORE(4146)
 namespace TKit::Simd
 {
 template <typename T, usize L, typename Traits = Container::ArrayTraits<T>>
@@ -30,7 +32,7 @@ class Wide
     constexpr Wide(Callable &&p_Callable)
     {
         for (SizeType i = 0; i < Lanes; ++i)
-            m_Data[i] = static_cast<f32>(p_Callable(i));
+            m_Data[i] = static_cast<T>(p_Callable(i));
     }
     constexpr Wide(const T p_Data)
     {
@@ -235,6 +237,7 @@ class Wide
     Array<T, Lanes, Traits> m_Data;
 }; // namespace TKit::Simd
 } // namespace TKit::Simd
+TKIT_COMPILER_WARNING_IGNORE_POP()
 
 #undef CREATE_MIN_MAX
 #undef CREATE_CMP_OP

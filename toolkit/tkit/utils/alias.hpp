@@ -99,9 +99,9 @@ template <> struct Primitive<64>
 
 namespace Alias
 {
-template <usize Size> using u = Detail::Primitive<Size>::Unsigned;
-template <usize Size> using i = Detail::Primitive<Size>::Signed;
-template <usize Size> using f = Detail::Primitive<Size>::Float;
+template <usize Size> using u = typename Detail::Primitive<Size>::Unsigned;
+template <usize Size> using i = typename Detail::Primitive<Size>::Signed;
+template <usize Size> using f = typename Detail::Primitive<Size>::Float;
 } // namespace Alias
 
 } // namespace TKit
