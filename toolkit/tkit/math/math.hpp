@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tkit/math/tensor.hpp"
+#include <concepts>
 
 namespace TKit::Math
 {
@@ -100,13 +101,14 @@ constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &p_Tensor, const ten<T, 
         result.Flat[i] = Clamp(p_Tensor.Flat[i], p_Min.Flat[i], p_Max.Flat[i]);
     return result;
 }
-template <typename T, usize N0, usize... N>
-constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &p_Tensor, const T p_Min, const T p_Max)
+template <typename T, std::convertible_to<T> U, usize N0, usize... N>
+constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &p_Tensor, U &&p_Min, U &&p_Max)
 {
     ten<T, N0, N...> result;
     constexpr usize length = N0 * (N * ... * 1);
     for (usize i = 0; i < length; ++i)
-        result.Flat[i] = Clamp(p_Tensor.Flat[i], p_Min, p_Max);
+        result.Flat[i] =
+            Clamp(p_Tensor.Flat[i], static_cast<T>(std::forward<U>(p_Min)), static_cast<T>(std::forward<U>(p_Max)));
     return result;
 }
 

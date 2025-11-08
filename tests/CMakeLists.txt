@@ -25,6 +25,8 @@ set(SOURCES
     tests/multiprocessing/chase_lev_deque.cpp
     tests/multiprocessing/mpmc_stack.cpp
     tests/simd/wide.cpp
+    tests/math/tensor.cpp
+    tests/math/math.cpp
     tests/utils/result.cpp
     tests/utils/hash.cpp)
 

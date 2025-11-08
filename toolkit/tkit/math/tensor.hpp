@@ -17,7 +17,7 @@ namespace Detail
 {
 template <usize I, usize N0, usize... N> constexpr usize GetAxis()
 {
-    static_assert(I < sizeof...(N) + 1, "[TOOLKIT][TENSOR] Axis index exceeds rank of tensor");
+    static_assert(I <= sizeof...(N), "[TOOLKIT][TENSOR] Axis index exceeds rank of tensor");
     if constexpr (I == 0)
         return N0;
     else
@@ -31,6 +31,10 @@ template <typename T> struct Child<T>
 {
     using Type = T;
 };
+template <typename T, usize N0, usize... N> struct Parent
+{
+    using Type = Tensor<T, N0, N...>;
+};
 
 } // namespace Detail
 
@@ -39,14 +43,18 @@ template <typename T, usize N0, usize... N>
 struct Tensor
 {
     using ValueType = T;
-    using ChildType = Detail::Child<T, N...>::Type;
+    using ChildType = typename Detail::Child<T, N...>::Type;
+    template <usize NP> using ParentType = typename Detail::Parent<T, NP, N0, N...>::Type;
 
     static constexpr usize Length = N0 * (N * ... * 1);
     static constexpr usize Rank = sizeof...(N) + 1;
-    template <usize I> static constexpr usize Axis = Detail::GetAxis<I, N0, N...>();
+
+    template <usize I>
+        requires(I < Rank)
+    static constexpr usize Axis = Detail::GetAxis<I, N0, N...>();
 
     template <usize I0, usize... I>
-        requires(sizeof...(I) == sizeof...(N) && I0 < N0 && ((I < N) && ... && true))
+        requires(sizeof...(I) == sizeof...(N) && I0 < Rank && ((I < Rank) && ... && true))
     using Permuted = Tensor<T, Axis<I0>, Axis<I>...>;
 
     constexpr Tensor() = default;
@@ -79,72 +87,72 @@ struct Tensor
         Ranked[N0 - 1] = p_Value;
     }
 
-    constexpr T Dot(const Tensor &p_Left, const Tensor &p_Right)
+    friend constexpr T Dot(const Tensor &p_Left, const Tensor &p_Right)
     {
         T result{static_cast<T>(0)};
 
-        constexpr usize length = N0 * (N * ...);
-        for (usize i = 0; i < length; ++i)
+        for (usize i = 0; i < Length; ++i)
             result += p_Left.Flat[i] * p_Right.Flat[i];
         return result;
     }
 
-    constexpr T NormSquared(const Tensor &p_Tensor)
+    friend constexpr T NormSquared(const Tensor &p_Tensor)
     {
         return Dot(p_Tensor, p_Tensor);
     }
-    constexpr T Norm(const Tensor &p_Tensor)
+    friend constexpr T Norm(const Tensor &p_Tensor)
     {
         return std::sqrt(Dot(p_Tensor, p_Tensor));
     }
 
-    constexpr T DistanceSquared(const Tensor &p_Left, const Tensor &p_Right)
+    friend constexpr T DistanceSquared(const Tensor &p_Left, const Tensor &p_Right)
     {
         const Tensor diff = p_Right - p_Left;
         return Dot(diff, diff);
     }
 
-    constexpr T Distance(const Tensor &p_Left, const Tensor &p_Right)
+    friend constexpr T Distance(const Tensor &p_Left, const Tensor &p_Right)
     {
         return std::sqrt(DistanceSquared(p_Left, p_Right));
     }
 
-    constexpr Tensor Normalize(const Tensor &p_Tensor)
+    friend constexpr Tensor Normalize(const Tensor &p_Tensor)
     {
         return p_Tensor / Norm(p_Tensor);
     }
 
     template <usize R0, usize... R>
         requires(R0 *(R *... * 1) == Length)
-    constexpr Tensor<T, R0, R...> Reshape() const
+    friend constexpr Tensor<T, R0, R...> Reshape(const Tensor &p_Tensor)
     {
         Tensor<T, R0, R...> reshaped;
         for (usize i = 0; i < Length; ++i)
-            reshaped.Flat[i] = Flat[i];
+            reshaped.Flat[i] = p_Tensor.Flat[i];
         return reshaped;
     }
 
     template <typename I0, typename... I>
         requires(sizeof...(I) == sizeof...(N) && std::convertible_to<I0, usize> &&
                  (std::convertible_to<I, usize> && ... && true))
-    constexpr Tensor<T, N0 - 1, (N - 1)...> SubTensor(I0 &&p_First, I &&...p_Rest)
+    friend constexpr Tensor<T, N0 - 1, (N - 1)...> SubTensor(const Tensor &p_Tensor, I0 &&p_First, I &&...p_Rest)
         requires(N0 > 1 && ((N0 == N) && ... && true))
     {
-        TKIT_ASSERT(p_First < N0, "[TOOLKIT][TENSOR] Index is out of bounds");
+        const usize first = static_cast<usize>(p_First);
+        TKIT_ASSERT(first < N0, "[TOOLKIT][TENSOR] Index is out of bounds");
         Tensor<T, N0 - 1, (N - 1)...> minor;
         for (usize i = 0, j = 0; i < N0; ++i)
-            if (i != p_First)
+            if (i != first)
             {
                 if constexpr (sizeof...(I) == 0)
-                    minor.Flat[j] = Flat[i];
+                    minor.Flat[j] = p_Tensor.Flat[i];
                 else
-                    minor.Ranked[j] = Ranked[i].SubTensor(std::forward<I>(p_Rest)...);
+                    minor.Ranked[j] = SubTensor(p_Tensor.Ranked[i], std::forward<I>(p_Rest)...);
                 ++j;
             }
         return minor;
     }
 
-    constexpr Tensor<T, N0, N...> Cofactors()
+    friend constexpr Tensor<T, N0, N...> Cofactors(const Tensor &p_Tensor)
         requires(Rank == 2 && ((N0 == N) && ...))
     {
         Tensor<T, N0, N...> cofactors;
@@ -152,105 +160,144 @@ struct Tensor
         for (usize i = 0; i < N0; ++i)
             for (usize j = 0; j < Tensor<T, N...>::Length; ++j)
             {
-                cofactors.Ranked[i][j] = sign * SubTensor(i, j).Determinant();
+                cofactors.Ranked[i][j] = sign * Determinant((SubTensor(p_Tensor, i, j)));
                 sign *= -1;
             }
         return cofactors;
     }
 
-    constexpr T Determinant()
+    friend constexpr T Determinant(const Tensor &p_Tensor)
         requires(Rank == 2 && ((N0 == N) && ...))
     {
         if constexpr (N0 == 1)
-            return Flat[0];
+            return p_Tensor.Flat[0];
         else if constexpr (N0 == 2)
-            return Flat[0] * Flat[3] - Flat[1] * Flat[2];
+            return p_Tensor.Flat[0] * p_Tensor.Flat[3] - p_Tensor.Flat[1] * p_Tensor.Flat[2];
         else if constexpr (N0 == 3)
-            return Flat[0] * Flat[4] * Flat[8] + Flat[3] * Flat[7] * Flat[2] + Flat[1] * Flat[5] * Flat[6] -
-                   Flat[6] * Flat[4] * Flat[2] - Flat[1] * Flat[3] * Flat[8] - Flat[0] * Flat[7] * Flat[5];
+            return p_Tensor.Flat[0] * p_Tensor.Flat[4] * p_Tensor.Flat[8] +
+                   p_Tensor.Flat[3] * p_Tensor.Flat[7] * p_Tensor.Flat[2] +
+                   p_Tensor.Flat[1] * p_Tensor.Flat[5] * p_Tensor.Flat[6] -
+                   p_Tensor.Flat[6] * p_Tensor.Flat[4] * p_Tensor.Flat[2] -
+                   p_Tensor.Flat[1] * p_Tensor.Flat[3] * p_Tensor.Flat[8] -
+                   p_Tensor.Flat[0] * p_Tensor.Flat[7] * p_Tensor.Flat[5];
         else if constexpr (N0 == 4)
         {
-            const T factor0 = Ranked[2][2] * Ranked[3][3] - Ranked[3][2] * Ranked[2][3];
-            const T factor1 = Ranked[2][1] * Ranked[3][3] - Ranked[3][1] * Ranked[2][3];
-            const T factor2 = Ranked[2][1] * Ranked[3][2] - Ranked[3][1] * Ranked[2][2];
-            const T factor3 = Ranked[2][0] * Ranked[3][3] - Ranked[3][0] * Ranked[2][3];
-            const T factor4 = Ranked[2][0] * Ranked[3][2] - Ranked[3][0] * Ranked[2][2];
-            const T factor5 = Ranked[2][0] * Ranked[3][1] - Ranked[3][0] * Ranked[2][1];
+            const T factor0 =
+                p_Tensor.Ranked[2][2] * p_Tensor.Ranked[3][3] - p_Tensor.Ranked[3][2] * p_Tensor.Ranked[2][3];
+            const T factor1 =
+                p_Tensor.Ranked[2][1] * p_Tensor.Ranked[3][3] - p_Tensor.Ranked[3][1] * p_Tensor.Ranked[2][3];
+            const T factor2 =
+                p_Tensor.Ranked[2][1] * p_Tensor.Ranked[3][2] - p_Tensor.Ranked[3][1] * p_Tensor.Ranked[2][2];
+            const T factor3 =
+                p_Tensor.Ranked[2][0] * p_Tensor.Ranked[3][3] - p_Tensor.Ranked[3][0] * p_Tensor.Ranked[2][3];
+            const T factor4 =
+                p_Tensor.Ranked[2][0] * p_Tensor.Ranked[3][2] - p_Tensor.Ranked[3][0] * p_Tensor.Ranked[2][2];
+            const T factor5 =
+                p_Tensor.Ranked[2][0] * p_Tensor.Ranked[3][1] - p_Tensor.Ranked[3][0] * p_Tensor.Ranked[2][1];
 
-            const Tensor<T, 4> coef(+(Ranked[1][1] * factor0 - Ranked[1][2] * factor1 + Ranked[1][3] * factor2),
-                                    -(Ranked[1][0] * factor0 - Ranked[1][2] * factor3 + Ranked[1][3] * factor4),
-                                    +(Ranked[1][0] * factor1 - Ranked[1][1] * factor3 + Ranked[1][3] * factor5),
-                                    -(Ranked[1][0] * factor2 - Ranked[1][1] * factor4 + Ranked[1][2] * factor5));
+            const Tensor<T, 4> coef(
+                +(p_Tensor.Ranked[1][1] * factor0 - p_Tensor.Ranked[1][2] * factor1 + p_Tensor.Ranked[1][3] * factor2),
+                -(p_Tensor.Ranked[1][0] * factor0 - p_Tensor.Ranked[1][2] * factor3 + p_Tensor.Ranked[1][3] * factor4),
+                +(p_Tensor.Ranked[1][0] * factor1 - p_Tensor.Ranked[1][1] * factor3 + p_Tensor.Ranked[1][3] * factor5),
+                -(p_Tensor.Ranked[1][0] * factor2 - p_Tensor.Ranked[1][1] * factor4 + p_Tensor.Ranked[1][2] * factor5));
 
-            return Ranked[0][0] * coef[0] + Ranked[0][1] * coef[1] + Ranked[0][2] * coef[2] + Ranked[0][3] * coef[3];
+            return p_Tensor.Ranked[0][0] * coef[0] + p_Tensor.Ranked[0][1] * coef[1] + p_Tensor.Ranked[0][2] * coef[2] +
+                   p_Tensor.Ranked[0][3] * coef[3];
         }
         else
         {
             T determinant{static_cast<T>(0)};
             for (usize i = 0; i < N0; i += 2)
-                determinant += Ranked[0][i] * SubTensor(0, i).Determinant();
+                determinant += p_Tensor.Ranked[0][i] * Determinant(SubTensor(p_Tensor, 0, i));
             for (usize i = 1; i < N0; i += 2)
-                determinant -= Ranked[0][i] * SubTensor(0, i).Determinant();
+                determinant -= p_Tensor.Ranked[0][i] * Determinant(SubTensor(p_Tensor, 0, i));
             return determinant;
         }
     }
 
-    constexpr Tensor Inverse()
+    friend constexpr Tensor Inverse(const Tensor &p_Tensor)
         requires(Rank == 2 && ((N0 == N) && ...))
     {
         if constexpr (N0 == 1)
-            return 1.f / Flat[0];
+            return 1.f / p_Tensor.Flat[0];
         else if constexpr (N0 == 2)
         {
-            const T idet = static_cast<T>(1) / Determinant();
+            const T idet = static_cast<T>(1) / Determinant(p_Tensor);
             Tensor<T, 4, 4> inverse;
-            inverse.Flat[0] = idet * Flat[3];
-            inverse.Flat[1] = -idet * Flat[1];
-            inverse.Flat[2] = -idet * Flat[2];
-            inverse.Flat[3] = idet * Flat[0];
+            inverse.Flat[0] = idet * p_Tensor.Flat[3];
+            inverse.Flat[1] = -idet * p_Tensor.Flat[1];
+            inverse.Flat[2] = -idet * p_Tensor.Flat[2];
+            inverse.Flat[3] = idet * p_Tensor.Flat[0];
             return inverse;
         }
         else if constexpr (N0 == 3)
         {
-            const T idet = static_cast<T>(1) / Determinant();
+            const T idet = static_cast<T>(1) / Determinant(p_Tensor);
             Tensor<T, 4, 4> inverse;
 
-            inverse.Ranked[0][0] = (Ranked[1][1] * Ranked[2][2] - Ranked[2][1] * Ranked[1][2]) * idet;
-            inverse.Ranked[1][0] = -(Ranked[1][0] * Ranked[2][2] - Ranked[2][0] * Ranked[1][2]) * idet;
-            inverse.Ranked[2][0] = (Ranked[1][0] * Ranked[2][1] - Ranked[2][0] * Ranked[1][1]) * idet;
-            inverse.Ranked[0][1] = -(Ranked[0][1] * Ranked[2][2] - Ranked[2][1] * Ranked[0][2]) * idet;
-            inverse.Ranked[1][1] = (Ranked[0][0] * Ranked[2][2] - Ranked[2][0] * Ranked[0][2]) * idet;
-            inverse.Ranked[2][1] = -(Ranked[0][0] * Ranked[2][1] - Ranked[2][0] * Ranked[0][1]) * idet;
-            inverse.Ranked[0][2] = (Ranked[0][1] * Ranked[1][2] - Ranked[1][1] * Ranked[0][2]) * idet;
-            inverse.Ranked[1][2] = -(Ranked[0][0] * Ranked[1][2] - Ranked[1][0] * Ranked[0][2]) * idet;
-            inverse.Ranked[2][2] = (Ranked[0][0] * Ranked[1][1] - Ranked[1][0] * Ranked[0][1]) * idet;
+            inverse.Ranked[0][0] =
+                (p_Tensor.Ranked[1][1] * p_Tensor.Ranked[2][2] - p_Tensor.Ranked[2][1] * p_Tensor.Ranked[1][2]) * idet;
+            inverse.Ranked[1][0] =
+                -(p_Tensor.Ranked[1][0] * p_Tensor.Ranked[2][2] - p_Tensor.Ranked[2][0] * p_Tensor.Ranked[1][2]) * idet;
+            inverse.Ranked[2][0] =
+                (p_Tensor.Ranked[1][0] * p_Tensor.Ranked[2][1] - p_Tensor.Ranked[2][0] * p_Tensor.Ranked[1][1]) * idet;
+            inverse.Ranked[0][1] =
+                -(p_Tensor.Ranked[0][1] * p_Tensor.Ranked[2][2] - p_Tensor.Ranked[2][1] * p_Tensor.Ranked[0][2]) * idet;
+            inverse.Ranked[1][1] =
+                (p_Tensor.Ranked[0][0] * p_Tensor.Ranked[2][2] - p_Tensor.Ranked[2][0] * p_Tensor.Ranked[0][2]) * idet;
+            inverse.Ranked[2][1] =
+                -(p_Tensor.Ranked[0][0] * p_Tensor.Ranked[2][1] - p_Tensor.Ranked[2][0] * p_Tensor.Ranked[0][1]) * idet;
+            inverse.Ranked[0][2] =
+                (p_Tensor.Ranked[0][1] * p_Tensor.Ranked[1][2] - p_Tensor.Ranked[1][1] * p_Tensor.Ranked[0][2]) * idet;
+            inverse.Ranked[1][2] =
+                -(p_Tensor.Ranked[0][0] * p_Tensor.Ranked[1][2] - p_Tensor.Ranked[1][0] * p_Tensor.Ranked[0][2]) * idet;
+            inverse.Ranked[2][2] =
+                (p_Tensor.Ranked[0][0] * p_Tensor.Ranked[1][1] - p_Tensor.Ranked[1][0] * p_Tensor.Ranked[0][1]) * idet;
             return inverse;
         }
         else if constexpr (N0 == 4)
         {
-            const T coef00 = Ranked[2][2] * Ranked[3][3] - Ranked[3][2] * Ranked[2][3];
-            const T coef02 = Ranked[1][2] * Ranked[3][3] - Ranked[3][2] * Ranked[1][3];
-            const T coef03 = Ranked[1][2] * Ranked[2][3] - Ranked[2][2] * Ranked[1][3];
+            const T coef00 =
+                p_Tensor.Ranked[2][2] * p_Tensor.Ranked[3][3] - p_Tensor.Ranked[3][2] * p_Tensor.Ranked[2][3];
+            const T coef02 =
+                p_Tensor.Ranked[1][2] * p_Tensor.Ranked[3][3] - p_Tensor.Ranked[3][2] * p_Tensor.Ranked[1][3];
+            const T coef03 =
+                p_Tensor.Ranked[1][2] * p_Tensor.Ranked[2][3] - p_Tensor.Ranked[2][2] * p_Tensor.Ranked[1][3];
 
-            const T coef04 = Ranked[2][1] * Ranked[3][3] - Ranked[3][1] * Ranked[2][3];
-            const T coef06 = Ranked[1][1] * Ranked[3][3] - Ranked[3][1] * Ranked[1][3];
-            const T coef07 = Ranked[1][1] * Ranked[2][3] - Ranked[2][1] * Ranked[1][3];
+            const T coef04 =
+                p_Tensor.Ranked[2][1] * p_Tensor.Ranked[3][3] - p_Tensor.Ranked[3][1] * p_Tensor.Ranked[2][3];
+            const T coef06 =
+                p_Tensor.Ranked[1][1] * p_Tensor.Ranked[3][3] - p_Tensor.Ranked[3][1] * p_Tensor.Ranked[1][3];
+            const T coef07 =
+                p_Tensor.Ranked[1][1] * p_Tensor.Ranked[2][3] - p_Tensor.Ranked[2][1] * p_Tensor.Ranked[1][3];
 
-            const T coef08 = Ranked[2][1] * Ranked[3][2] - Ranked[3][1] * Ranked[2][2];
-            const T coef10 = Ranked[1][1] * Ranked[3][2] - Ranked[3][1] * Ranked[1][2];
-            const T coef11 = Ranked[1][1] * Ranked[2][2] - Ranked[2][1] * Ranked[1][2];
+            const T coef08 =
+                p_Tensor.Ranked[2][1] * p_Tensor.Ranked[3][2] - p_Tensor.Ranked[3][1] * p_Tensor.Ranked[2][2];
+            const T coef10 =
+                p_Tensor.Ranked[1][1] * p_Tensor.Ranked[3][2] - p_Tensor.Ranked[3][1] * p_Tensor.Ranked[1][2];
+            const T coef11 =
+                p_Tensor.Ranked[1][1] * p_Tensor.Ranked[2][2] - p_Tensor.Ranked[2][1] * p_Tensor.Ranked[1][2];
 
-            const T coef12 = Ranked[2][0] * Ranked[3][3] - Ranked[3][0] * Ranked[2][3];
-            const T coef14 = Ranked[1][0] * Ranked[3][3] - Ranked[3][0] * Ranked[1][3];
-            const T coef15 = Ranked[1][0] * Ranked[2][3] - Ranked[2][0] * Ranked[1][3];
+            const T coef12 =
+                p_Tensor.Ranked[2][0] * p_Tensor.Ranked[3][3] - p_Tensor.Ranked[3][0] * p_Tensor.Ranked[2][3];
+            const T coef14 =
+                p_Tensor.Ranked[1][0] * p_Tensor.Ranked[3][3] - p_Tensor.Ranked[3][0] * p_Tensor.Ranked[1][3];
+            const T coef15 =
+                p_Tensor.Ranked[1][0] * p_Tensor.Ranked[2][3] - p_Tensor.Ranked[2][0] * p_Tensor.Ranked[1][3];
 
-            const T coef16 = Ranked[2][0] * Ranked[3][2] - Ranked[3][0] * Ranked[2][2];
-            const T coef18 = Ranked[1][0] * Ranked[3][2] - Ranked[3][0] * Ranked[1][2];
-            const T coef19 = Ranked[1][0] * Ranked[2][2] - Ranked[2][0] * Ranked[1][2];
+            const T coef16 =
+                p_Tensor.Ranked[2][0] * p_Tensor.Ranked[3][2] - p_Tensor.Ranked[3][0] * p_Tensor.Ranked[2][2];
+            const T coef18 =
+                p_Tensor.Ranked[1][0] * p_Tensor.Ranked[3][2] - p_Tensor.Ranked[3][0] * p_Tensor.Ranked[1][2];
+            const T coef19 =
+                p_Tensor.Ranked[1][0] * p_Tensor.Ranked[2][2] - p_Tensor.Ranked[2][0] * p_Tensor.Ranked[1][2];
 
-            const T coef20 = Ranked[2][0] * Ranked[3][1] - Ranked[3][0] * Ranked[2][1];
-            const T coef22 = Ranked[1][0] * Ranked[3][1] - Ranked[3][0] * Ranked[1][1];
-            const T coef23 = Ranked[1][0] * Ranked[2][1] - Ranked[2][0] * Ranked[1][1];
+            const T coef20 =
+                p_Tensor.Ranked[2][0] * p_Tensor.Ranked[3][1] - p_Tensor.Ranked[3][0] * p_Tensor.Ranked[2][1];
+            const T coef22 =
+                p_Tensor.Ranked[1][0] * p_Tensor.Ranked[3][1] - p_Tensor.Ranked[3][0] * p_Tensor.Ranked[1][1];
+            const T coef23 =
+                p_Tensor.Ranked[1][0] * p_Tensor.Ranked[2][1] - p_Tensor.Ranked[2][0] * p_Tensor.Ranked[1][1];
 
             const Tensor<T, 4> fac0(coef00, coef00, coef02, coef03);
             const Tensor<T, 4> fac1(coef04, coef04, coef06, coef07);
@@ -259,10 +306,14 @@ struct Tensor
             const Tensor<T, 4> fac4(coef16, coef16, coef18, coef19);
             const Tensor<T, 4> fac5(coef20, coef20, coef22, coef23);
 
-            const Tensor<T, 4> vec0(Ranked[1][0], Ranked[0][0], Ranked[0][0], Ranked[0][0]);
-            const Tensor<T, 4> vec1(Ranked[1][1], Ranked[0][1], Ranked[0][1], Ranked[0][1]);
-            const Tensor<T, 4> vec2(Ranked[1][2], Ranked[0][2], Ranked[0][2], Ranked[0][2]);
-            const Tensor<T, 4> vec3(Ranked[1][3], Ranked[0][3], Ranked[0][3], Ranked[0][3]);
+            const Tensor<T, 4> vec0(p_Tensor.Ranked[1][0], p_Tensor.Ranked[0][0], p_Tensor.Ranked[0][0],
+                                    p_Tensor.Ranked[0][0]);
+            const Tensor<T, 4> vec1(p_Tensor.Ranked[1][1], p_Tensor.Ranked[0][1], p_Tensor.Ranked[0][1],
+                                    p_Tensor.Ranked[0][1]);
+            const Tensor<T, 4> vec2(p_Tensor.Ranked[1][2], p_Tensor.Ranked[0][2], p_Tensor.Ranked[0][2],
+                                    p_Tensor.Ranked[0][2]);
+            const Tensor<T, 4> vec3(p_Tensor.Ranked[1][3], p_Tensor.Ranked[0][3], p_Tensor.Ranked[0][3],
+                                    p_Tensor.Ranked[0][3]);
 
             const Tensor<T, 4> inv0(vec1 * fac0 - vec2 * fac1 + vec3 * fac2);
             const Tensor<T, 4> inv1(vec0 * fac0 - vec2 * fac3 + vec3 * fac4);
@@ -276,7 +327,7 @@ struct Tensor
 
             const Tensor<T, 4> row0(inverse[0][0], inverse[1][0], inverse[2][0], inverse[3][0]);
 
-            const Tensor<T, 4> dot0{Ranked[0] * row0};
+            const Tensor<T, 4> dot0{p_Tensor.Ranked[0] * row0};
             T Dot1 = (dot0.Flat[0] + dot0.Flat[1]) + (dot0.Flat[2] + dot0.Flat[3]);
 
             const T idet = static_cast<T>(1) / Dot1;
@@ -285,22 +336,22 @@ struct Tensor
         }
         else
         {
-            const T idet = static_cast<T>(1) / Determinant();
-            return Cofactors().Transpose() * idet;
+            const T idet = static_cast<T>(1) / Determinant(p_Tensor);
+            return Transpose(Cofactors(p_Tensor)) * idet;
         }
     }
 
-    constexpr Tensor<T, N..., N0> Transpose()
+    friend constexpr Tensor<T, N..., N0> Transpose(const Tensor &p_Tensor)
         requires(Rank == 2)
     {
         Tensor<T, N..., N0> transposed;
         for (usize i = 0; i < Tensor<T, N...>::Length; ++i)
             for (usize j = 0; j < N0; ++j)
-                transposed[i][j] = Ranked[j][i];
+                transposed[i][j] = p_Tensor.Ranked[j][i];
         return transposed;
     }
 
-    template <usize I0, usize... I> constexpr Permuted<I0, I...> Permute()
+    template <usize I0, usize... I> friend constexpr Permuted<I0, I...> Permute(const Tensor &p_Tensor)
     {
         Permuted<I0, I...> permuted;
         constexpr Array<usize, Rank> dims = {N0, N...};
@@ -319,15 +370,15 @@ struct Tensor
 
         for (usize i = 0; i < Length; ++i)
         {
-            Array<usize, Rank> pindices;
+            Array<usize, Rank> indices;
             for (usize j = 0; j < Rank; ++j)
-                pindices[j] = (i / pstride[j]) % pdims[j];
+                indices[j] = (i / stride[j]) % dims[j];
 
-            usize index = 0;
+            usize pindex = 0;
             for (usize j = 0; j < Rank; ++j)
-                index += pindices[perm[j]] * stride[j];
+                pindex += indices[perm[j]] * pstride[j];
 
-            permuted.Flat[i] = Flat[index];
+            permuted.Flat[pindex] = p_Tensor.Flat[i];
         }
         return permuted;
     }
@@ -371,14 +422,6 @@ struct Tensor
     constexpr ChildType &operator[](const usize p_Index)
     {
         return At(p_Index);
-    }
-
-    friend constexpr Tensor operator*(const Tensor &p_Left, const Tensor &p_Right)
-        requires(sizeof...(N) != 1)
-    {
-        Tensor tensor;
-        for (usize i = 0; i < N0; ++i)
-            tensor.Ranked[i] = p_Left.Ranked[i] * p_Right.Ranked[i];
     }
 
     friend constexpr Tensor operator-(const Tensor &p_Other)
@@ -466,8 +509,10 @@ struct Tensor
 #undef CREATE_BITSHIFT_OP
 #undef CREATE_SELF_OP
 
+namespace Detail
+{
 template <typename T, usize N, usize C2, usize R1>
-constexpr Tensor<T, C2, R1> operator*(const Tensor<T, N, R1> &p_Left, const Tensor<T, C2, N> &p_Right)
+constexpr Tensor<T, C2, R1> MatMulImpl(const Tensor<T, N, R1> &p_Left, const Tensor<T, C2, N> &p_Right)
 {
     Tensor<T, C2, R1> tensor;
     for (usize i = 0; i < C2; ++i)
@@ -480,10 +525,41 @@ constexpr Tensor<T, C2, R1> operator*(const Tensor<T, N, R1> &p_Left, const Tens
         }
     return tensor;
 }
+template <typename T, usize NL0, usize... NL, usize NR0, usize... NR>
+    requires(sizeof...(NL) == sizeof...(NR))
+constexpr auto MatMul(const Tensor<T, NL0, NL...> &p_Left, const Tensor<T, NR0, NR...> &p_Right)
+{
+    if constexpr (sizeof...(NL) == 0)
+    {
+        static_assert(NL0 == NR0, "[TOOLKIT][TENSOR] Cannot multiply to vectors with different lengths");
+        Tensor<T, NL0> result;
+        for (usize i = 0; i < NL0; ++i)
+            result.Flat[i] = p_Left.Flat[i] * p_Right.Flat[i];
+        return result;
+    }
+    else if constexpr (sizeof...(NL) == 1)
+        return MatMulImpl(p_Left, p_Right);
+    else
+    {
+        static_assert(NL0 == NR0, "[TOOLKIT][TENSOR] Cannot multiply to tensors with different high-order axis size");
+        using ReturnChildType =
+            decltype(MatMul(std::declval<decltype(p_Left[0])>(), std::declval<decltype(p_Right[0])>()));
+        using ReturnType = typename ReturnChildType::template ParentType<NL0>;
 
-#undef CREATE_BINARY_OP
-#undef CREATE_ARITHMETIC_OP
-#undef CREATE_BITSHIFT_OP
+        ReturnType result;
+        for (usize i = 0; i < NL0; ++i)
+            result[i] = MatMul(p_Left[i], p_Right[i]);
+        return result;
+    }
+}
+} // namespace Detail
+
+template <typename T, usize NL0, usize... NL, usize NR0, usize... NR>
+    requires(sizeof...(NL) == sizeof...(NR))
+constexpr auto operator*(const Tensor<T, NL0, NL...> &p_Left, const Tensor<T, NR0, NR...> &p_Right)
+{
+    return Detail::MatMul(p_Left, p_Right);
+}
 
 } // namespace Math
 namespace Alias
