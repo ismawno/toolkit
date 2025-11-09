@@ -110,7 +110,7 @@ def get_fields_with_options(clsinfo: Class, /) -> list[tuple[Field, list[str]]]:
 def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> None:
     hpp.include(f"tkit/serialization/{backend}/codec.hpp", quotes=True)
     if classes.enums:
-        hpp.include(f"tkit/utils/logging.hpp", quotes=True)
+        hpp.include(f"tkit/utils/debug.hpp", quotes=True)
         hpp.include("string")
 
     with hpp.scope(f"namespace TKit::{backend.capitalize()}", indent=0):
@@ -141,7 +141,7 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                             with hpp.scope(f"case {enum.id.name}::{entry}:", delimiters=False):
                                 hpp(f'return Node{{"{entry}"}};')
                         with hpp.scope(f"default:", delimiters=False):
-                            hpp('TKIT_ERROR("[TOOLKIT][YAML] Unknown enum value");')
+                            hpp('TKIT_FATAL("[TOOLKIT][YAML] Unknown enum value");')
                             hpp('return Node{"[TOOLKIT][YAML] Error - Unknown enum value."};')
 
                 with hpp.doc():

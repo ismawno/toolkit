@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tkit/utils/logging.hpp"
+#include "tkit/utils/debug.hpp"
 #include "tkit/container/storage.hpp"
 
 namespace TKit

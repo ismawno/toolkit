@@ -7,7 +7,7 @@
 
 #include "tkit/utils/non_copyable.hpp"
 #include "tkit/memory/memory.hpp"
-#include "tkit/utils/logging.hpp"
+#include "tkit/utils/debug.hpp"
 
 namespace TKit
 {

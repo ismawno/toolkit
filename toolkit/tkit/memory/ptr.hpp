@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tkit/utils/logging.hpp"
+#include "tkit/utils/debug.hpp"
 #include "tkit/utils/non_copyable.hpp"
 #include <atomic>
 

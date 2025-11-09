@@ -1,6 +1,6 @@
 #include "tkit/core/pch.hpp"
 #include "tkit/memory/arena_allocator.hpp"
-#include "tkit/utils/logging.hpp"
+#include "tkit/utils/debug.hpp"
 #include "tkit/utils/bit.hpp"
 
 namespace TKit

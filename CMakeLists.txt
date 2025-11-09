@@ -73,15 +73,28 @@ set(CMAKE_SHARED_LINKER_FLAGS_DIST
     ""
     CACHE STRING "" FORCE)
 
-set(TOOLKIT_ENABLE_INFO_LOGS
+set(TOOLKIT_ENABLE_LOGGING
     OFF
     CACHE BOOL "")
-set(TOOLKIT_ENABLE_WARNING_LOGS
+set(TOOLKIT_ENABLE_INFO_MACROS
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_ENABLE_WARNING_MACROS
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_ENABLE_ERROR_MACROS
     OFF
     CACHE BOOL "")
 set(TOOLKIT_ENABLE_ASSERTS
     OFF
     CACHE BOOL "")
+
+if(TOOLKIT_ENABLE_INFO_MACROS
+   OR TOOLKIT_ENABLE_ERROR_MACROS
+   OR TOOLKIT_ENABLE_ERROR_MACROS
+   OR TOOLKIT_ENABLE_ASSERTS)
+  set(TOOLKIT_ENABLE_DEBUG_MACROS ON)
+endif()
 
 set(TOOLKIT_ENABLE_ARENA_ALLOCATOR
     OFF
@@ -131,6 +144,13 @@ set(TOOLKIT_SAMPLING_RATE
     "10000"
     CACHE STRING "")
 
+if(TOOLKIT_ENABLE_DEBUG_MACROS AND NOT TOOLKIT_ENABLE_LOGGING)
+  message(
+    FATAL_ERROR
+      "TOOLKIT: Enabling debug macros requires logging features. Enable logging with -DTOOLKIT_ENABLE_LOGGING=ON to fix this error"
+  )
+endif()
+
 if(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION AND NOT TOOLKIT_ENABLE_INSTRUMENTATION)
   message(
     WARNING
@@ -138,40 +158,11 @@ if(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION AND NOT TOOLKIT_ENABLE_INSTRUMENTATION)
   )
 endif()
 
-if(TOOLKIT_BUILD_PERFORMANCE AND (NOT CMAKE_BUILD_TYPE STREQUAL "Dist"))
+if(TOOLKIT_BUILD_PERFORMANCE AND TOOLKIT_ENABLE_DEBUG_MACROS)
   message(
     WARNING
-      "TOOLKIT: Building benchmarks in a non-distribution configuration! Results may not be representative"
+      "TOOLKIT: Building benchmarks with debug macros enabled! Results may not be representative"
   )
-endif()
-
-if(TOOLKIT_BUILD_PERFORMANCE AND (TOOLKIT_ENABLE_WARNING_LOGS
-                                  OR TOOLKIT_ENABLE_ASSERTS))
-  message(
-    WARNING
-      "TOOLKIT: Building benchmarks with asserts/logs enabled! Results may not be representative"
-  )
-endif()
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  if(NOT TOOLKIT_ENABLE_INFO_LOGS)
-    message(
-      WARNING
-        "TOOLKIT: Info logs are disabled in a debug build. This is not recommended"
-    )
-  endif()
-  if(NOT TOOLKIT_ENABLE_WARNING_LOGS)
-    message(
-      WARNING
-        "TOOLKIT: Warning logs are disabled in a debug build. This is not recommended"
-    )
-  endif()
-  if(NOT TOOLKIT_ENABLE_ASSERTS)
-    message(
-      WARNING
-        "TOOLKIT: Asserts are disabled in a debug build. This is not recommended"
-    )
-  endif()
 endif()
 
 set(TOOLKIT_ROOT_PATH

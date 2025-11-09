@@ -102,7 +102,7 @@ static KindInfo getKindInfo(const hwloc_topology_t p_Topology, const u32 PuIndex
     return kinfo;
 }
 
-#    ifdef TKIT_ENABLE_INFO_LOGS
+#    ifdef TKIT_ENABLE_INFO_MACROS
 static std::string toString(const u32 p_Value)
 {
     if (p_Value == Unknown)
@@ -259,7 +259,6 @@ void BuildAffinityOrder(const Handle *p_Handle)
         s_BuildOrder = buildOrder(p_Handle->Topology);
         return;
     }
-    TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY] A build order has already been created. Using that instead");
 }
 
 void PinThread(const Handle *p_Handle, const u32 p_ThreadIndex)

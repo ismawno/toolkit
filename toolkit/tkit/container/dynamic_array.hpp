@@ -1,7 +1,7 @@
 #pragma once
 
 #include "tkit/container/container.hpp"
-#include "tkit/utils/logging.hpp"
+#include "tkit/utils/debug.hpp"
 
 namespace TKit
 {

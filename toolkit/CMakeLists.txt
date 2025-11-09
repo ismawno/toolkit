@@ -5,9 +5,7 @@ set(NAME toolkit)
 
 set(SOURCES tkit/core/pch.cpp tkit/memory/memory.cpp)
 
-if(TOOLKIT_ENABLE_INFO_LOGS
-   OR TOOLKIT_ENABLE_WARNING_LOGS
-   OR TOOLKIT_ENABLE_ASSERTS)
+if(TOOLKIT_ENABLE_LOGGING)
   list(APPEND SOURCES tkit/utils/logging.cpp)
 endif()
 
@@ -89,26 +87,24 @@ if(TOOLKIT_ENABLE_MULTIPROCESSING)
   endif()
 endif()
 
-if(UNIX AND NOT APPLE)
-  find_package(fmt)
+find_package(fmt)
 
-  if(NOT TARGET fmt::fmt)
-    message(STATUS "TOOLKIT: FMT not found. Fetching source...")
-    FetchContent_Declare(
-      fmt
-      GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-      GIT_TAG 11.0.2
-      GIT_SHALLOW TRUE
-      GIT_PROGRESS TRUE)
+if(NOT TARGET fmt::fmt)
+  message(STATUS "TOOLKIT: FMT not found. Fetching source...")
+  FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG 11.0.2
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE)
 
-    FetchContent_MakeAvailable(fmt)
-    tkit_configure_compile_link_options(fmt)
-  else()
-    message(STATUS "TOOLKIT: FMT found")
-  endif()
-
-  target_link_libraries(toolkit PUBLIC fmt::fmt)
+  FetchContent_MakeAvailable(fmt)
+  tkit_configure_compile_link_options(fmt)
+else()
+  message(STATUS "TOOLKIT: FMT found")
 endif()
+
+target_link_libraries(toolkit PUBLIC fmt::fmt)
 
 if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
   if(TOOLKIT_ENABLE_INSTRUMENTATION)
@@ -185,6 +181,10 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Dist")
   target_compile_definitions(toolkit PUBLIC TKIT_DIST)
 endif()
 
+if(TOOLKIT_ENABLE_LOGGING)
+  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_LOGGING)
+endif()
+
 if(TOOLKIT_ENABLE_ARENA_ALLOCATOR)
   target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ARENA_ALLOCATOR)
 endif()
@@ -209,12 +209,16 @@ if(TOOLKIT_ENABLE_PROFILING)
   target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_PROFILING)
 endif()
 
-if(TOOLKIT_ENABLE_INFO_LOGS)
-  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_INFO_LOGS)
+if(TOOLKIT_ENABLE_INFO_MACROS)
+  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_INFO_MACROS)
 endif()
 
-if(TOOLKIT_ENABLE_WARNING_LOGS)
-  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_WARNING_LOGS)
+if(TOOLKIT_ENABLE_WARNING_MACROS)
+  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_WARNING_MACROS)
+endif()
+
+if(TOOLKIT_ENABLE_ERROR_MACROS)
+  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ERROR_MACROS)
 endif()
 
 if(TOOLKIT_ENABLE_ASSERTS)

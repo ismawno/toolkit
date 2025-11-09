@@ -1,5 +1,5 @@
 #include "tkit/core/pch.hpp"
-#include "tkit/utils/logging.hpp"
+#include "tkit/utils/debug.hpp"
 #include "tkit/multiprocessing/task.hpp"
 
 namespace TKit

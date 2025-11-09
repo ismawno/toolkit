@@ -8,7 +8,7 @@
 #include "tkit/container/static_array.hpp"
 #include "tkit/memory/memory.hpp"
 #include "tkit/utils/non_copyable.hpp"
-#include "tkit/utils/logging.hpp"
+#include "tkit/utils/debug.hpp"
 
 #define TKIT_TIER_ALLOCATOR_MAX_TIERS 128
 

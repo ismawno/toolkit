@@ -37,7 +37,7 @@ struct Settings
     ContainerSettings Container{};
 };
 
-#ifdef TKIT_ENABLE_INFO_LOGS
+#ifdef TKIT_ENABLE_INFO_MACROS
 void LogSettings(const Settings &p_Settings);
 #endif
 Settings CreateSettings(int argc, char **argv);

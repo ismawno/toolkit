@@ -2,7 +2,7 @@
 
 #include "tkit/preprocessor/system.hpp"
 #include "tkit/utils/alias.hpp"
-#include "tkit/utils/logging.hpp"
+#include "tkit/utils/debug.hpp"
 #include <algorithm>
 
 #ifndef TKIT_MEMORY_MAX_STACK_ALLOCATION

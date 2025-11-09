@@ -1,7 +1,7 @@
 #include "tkit/core/pch.hpp"
 #include "tkit/memory/block_allocator.hpp"
 #include "block_allocator.hpp"
-#include "tkit/utils/logging.hpp"
+#include "tkit/utils/debug.hpp"
 
 namespace TKit
 {
