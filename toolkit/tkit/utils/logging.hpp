@@ -1,5 +1,10 @@
 #pragma once
 
+#ifndef TKIT_ENABLE_LOGGING
+#    error                                                                                                             \
+        "[TOOLKIT][LOGGING] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_LOGGING"
+#endif
+
 #include "tkit/preprocessor/system.hpp"
 #include "tkit/utils/alias.hpp"
 #include <string_view>
