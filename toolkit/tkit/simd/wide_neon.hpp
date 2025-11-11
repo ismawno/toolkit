@@ -89,6 +89,8 @@ template <> struct TypeSelector<i64>
     using wide4_t = int64x2x4_t;
 };
 
+TKIT_COMPILER_WARNING_IGNORE_PUSH()
+TKIT_GCC_WARNING_IGNORE("-Wmaybe-uninitialized")
 template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 {
     using wide1_t = typename TypeSelector<T>::wide1_t;
@@ -626,6 +628,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
     wide1_t m_Data;
 };
+TKIT_COMPILER_WARNING_IGNORE_POP()
 
 } // namespace TKit::Simd::NEON
 

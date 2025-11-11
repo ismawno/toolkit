@@ -39,6 +39,7 @@ template <Integer T> struct TypeSelector<T>
 
 TKIT_COMPILER_WARNING_IGNORE_PUSH()
 TKIT_GCC_WARNING_IGNORE("-Wignored-attributes")
+TKIT_GCC_WARNING_IGNORE("-Wmaybe-uninitialized")
 TKIT_CLANG_WARNING_IGNORE("-Wignored-attributes")
 template <Valid T, typename Traits = Container::ArrayTraits<T>> class Wide
 {
