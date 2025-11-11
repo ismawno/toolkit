@@ -1,6 +1,8 @@
 #pragma once
 
-#include "tkit/utils/logging.hpp"
+#ifdef TKIT_ENABLE_LOGGING
+#    include "tkit/utils/logging.hpp"
+#endif
 
 #ifdef TKIT_COMPILER_CLANG
 #    define TKIT_DEBUG_BREAK() __builtin_debugtrap()
@@ -43,6 +45,34 @@ inline void LogAndBreak(const std::string_view p_Message, const char *p_Level, c
 }
 #endif
 } // namespace TKit::Detail
+
+#ifdef TKIT_ENABLE_DEBUG_MACROS
+#    define TKIT_LOG_DEBUG(...)                                                                                        \
+        if (!TKit::Detail::t_DisabledInfoMacros)                                                                       \
+        TKit::Log(TKit::Format(__VA_ARGS__), "DEBUG", TKIT_LOG_COLOR_DEBUG)
+
+#    define TKIT_LOG_DEBUG_IF(p_Condition, ...)                                                                        \
+        if ((p_Condition) && !TKit::Detail::t_DisabledInfoMacros)                                                      \
+        TKit::Log(TKit::Format(__VA_ARGS__), "DEBUG", TKIT_LOG_COLOR_DEBUG)
+
+#    define TKIT_LOG_DEBUG_IF_RETURNS(expression, expected, ...)                                                       \
+        TKIT_LOG_DEBUG_IF((expression) == (expected), __VA_ARGS__)
+#    define TKIT_LOG_DEBUG_IF_NOT_RETURNS(expression, expected, ...)                                                   \
+        TKIT_LOG_DEBUG_IF((expression) != (expected), __VA_ARGS__)
+
+#    define TKIT_IGNORE_DEBUG_MACROS_PUSH() TKit::Detail::t_DisabledInfoMacros = true
+#    define TKIT_IGNORE_DEBUG_MACROS_POP() TKit::Detail::t_DisabledInfoMacros = false
+
+#else
+#    define TKIT_LOG_DEBUG(p_Message, ...)
+#    define TKIT_LOG_DEBUG_IF(p_Condition, p_Message, ...)
+
+#    define TKIT_LOG_DEBUG_IF_RETURNS(expression, expected, ...) expression
+#    define TKIT_LOG_DEBUG_IF_NOT_RETURNS(expression, expected, ...) expression
+
+#    define TKIT_IGNORE_DEBUG_MACROS_PUSH()
+#    define TKIT_IGNORE_DEBUG_MACROS_POP()
+#endif
 
 #ifdef TKIT_ENABLE_INFO_MACROS
 #    define TKIT_LOG_INFO(...)                                                                                         \

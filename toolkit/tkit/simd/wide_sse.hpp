@@ -2,7 +2,6 @@
 
 #include "tkit/preprocessor/system.hpp"
 #ifdef TKIT_SIMD_SSE2
-
 #    include "tkit/memory/memory.hpp"
 #    include "tkit/simd/utils.hpp"
 #    include "tkit/container/array.hpp"
