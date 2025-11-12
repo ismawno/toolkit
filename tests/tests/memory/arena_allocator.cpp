@@ -1,5 +1,5 @@
 #include "tkit/memory/arena_allocator.hpp"
-#include "tkit/utils/debug.hpp"
+#include "tkit/utils/logging.hpp"
 TKIT_COMPILER_WARNING_IGNORE_PUSH()
 TKIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
 TKIT_GCC_WARNING_IGNORE("-Wunused-parameter")
@@ -16,12 +16,12 @@ struct WarningShutter : Catch::EventListenerBase
 
     void testCaseStarting(const Catch::TestCaseInfo &) override
     {
-        TKIT_IGNORE_WARNING_MACROS_PUSH();
+        TKIT_IGNORE_WARNING_LOGS_PUSH();
     }
 
     void testCaseEnded(const Catch::TestCaseStats &) override
     {
-        TKIT_IGNORE_WARNING_MACROS_POP();
+        TKIT_IGNORE_WARNING_LOGS_POP();
     }
 };
 

@@ -25,22 +25,24 @@ static std::string cliName(std::string p_Name)
     return result;
 }
 
+#ifdef TKIT_ENABLE_INFO_LOGS
 void LogSettings(const Settings &p_Settings)
 {
     TKit::Reflect<Settings>::ForEachMemberField([&p_Settings](const auto &p_Field1) {
         using Type1 = TKIT_REFLECT_FIELD_TYPE(p_Field1);
         const std::string name = p_Field1.Name;
-        Info("{}: ", name);
+        TKIT_LOG_INFO("{}: ", name);
         const auto &setting = p_Field1.Get(p_Settings);
 
         TKit::Reflect<Type1>::ForEachMemberField([&setting](const auto &p_Field2) {
             using Type2 = TKIT_REFLECT_FIELD_TYPE(p_Field2);
             const std::string name = p_Field2.Name;
             const std::string value = std::to_string(p_Field2.Get(setting));
-            Info("     {}: {}", name, value);
+            TKIT_LOG_INFO("     {}: {}", name, value);
         });
     });
 }
+#endif
 
 Settings CreateSettings(int argc, char **argv)
 {

@@ -3,11 +3,7 @@ project(toolkit)
 
 set(NAME toolkit)
 
-set(SOURCES tkit/core/pch.cpp tkit/memory/memory.cpp)
-
-if(TOOLKIT_ENABLE_LOGGING)
-  list(APPEND SOURCES tkit/utils/logging.cpp)
-endif()
+set(SOURCES tkit/core/pch.cpp tkit/memory/memory.cpp tkit/utils/logging.cpp)
 
 if(TOOLKIT_ENABLE_ARENA_ALLOCATOR)
   list(APPEND SOURCES tkit/memory/arena_allocator.cpp)
@@ -181,10 +177,6 @@ elseif(CMAKE_BUILD_TYPE STREQUAL "Dist")
   target_compile_definitions(toolkit PUBLIC TKIT_DIST)
 endif()
 
-if(TOOLKIT_ENABLE_LOGGING)
-  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_LOGGING)
-endif()
-
 if(TOOLKIT_ENABLE_ARENA_ALLOCATOR)
   target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ARENA_ALLOCATOR)
 endif()
@@ -209,16 +201,20 @@ if(TOOLKIT_ENABLE_PROFILING)
   target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_PROFILING)
 endif()
 
-if(TOOLKIT_ENABLE_INFO_MACROS)
-  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_INFO_MACROS)
+if(TOOLKIT_ENABLE_DEBUG_LOGS)
+  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_DEBUG_LOGS)
 endif()
 
-if(TOOLKIT_ENABLE_WARNING_MACROS)
-  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_WARNING_MACROS)
+if(TOOLKIT_ENABLE_INFO_LOGS)
+  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_INFO_LOGS)
 endif()
 
-if(TOOLKIT_ENABLE_ERROR_MACROS)
-  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ERROR_MACROS)
+if(TOOLKIT_ENABLE_WARNING_LOGS)
+  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_WARNING_LOGS)
+endif()
+
+if(TOOLKIT_ENABLE_ERROR_LOGS)
+  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ERROR_LOGS)
 endif()
 
 if(TOOLKIT_ENABLE_ASSERTS)

@@ -1,10 +1,5 @@
 #pragma once
 
-#ifndef TKIT_ENABLE_LOGGING
-#    error                                                                                                             \
-        "[TOOLKIT][LOGGING] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_LOGGING"
-#endif
-
 #include "tkit/preprocessor/system.hpp"
 #include "tkit/utils/alias.hpp"
 #include <string_view>
@@ -16,61 +11,174 @@
 #define TKIT_LOG_COLOR_WARNING "\033[33m"
 #define TKIT_LOG_COLOR_ERROR "\033[31m"
 
-namespace TKit
-{
-TKIT_API void Log(std::string_view p_Message, const char *p_Level, const char *p_Color);
-TKIT_API void Log(std::string_view p_Message, const char *p_Level, const char *p_Color, const char *p_File, i32 p_Line);
-
-#define CREATE_FORMAT_LOGGING_FUNCTIONS(p_Type)                                                                        \
-    template <typename... Args> constexpr auto Format(const p_Type<Args...> p_String, Args &&...p_Args)                \
-    {                                                                                                                  \
-        return fmt::format(p_String, std::forward<Args>(p_Args)...);                                                   \
-    }                                                                                                                  \
-    template <typename... Args> void Print(const p_Type<Args...> p_String, Args &&...p_Args)                           \
+#define CREATE_LOGGING_FUNCTIONS(p_Type)                                                                               \
+    template <typename... Args> void Print(const p_Type p_String, Args &&...p_Args)                                    \
     {                                                                                                                  \
         fmt::print(p_String, std::forward<Args>(p_Args)...);                                                           \
     }                                                                                                                  \
-    template <typename... Args> void PrintLine(const p_Type<Args...> p_String, Args &&...p_Args)                       \
+    template <typename... Args> void PrintLine(const p_Type p_String, Args &&...p_Args)                                \
     {                                                                                                                  \
         fmt::println(p_String, std::forward<Args>(p_Args)...);                                                         \
     }                                                                                                                  \
-                                                                                                                       \
+    template <typename... Args> constexpr auto Format(const p_Type p_String, Args &&...p_Args)                         \
+    {                                                                                                                  \
+        return fmt::format(p_String, std::forward<Args>(p_Args)...);                                                   \
+    }
+
+#define CREATE_DETAIL_LOGGING_FUNCTIONS(p_Type)                                                                        \
     template <typename... Args>                                                                                        \
-    void Log(const p_Type<Args...> p_String, const char *p_Level, const char *p_Color, Args &&...p_Args)               \
+    void Log(const p_Type p_String, const char *p_Level, const char *p_Color, Args &&...p_Args)                        \
     {                                                                                                                  \
         Log(fmt::format(p_String, std::forward<Args>(p_Args)...), p_Level, p_Color);                                   \
     }                                                                                                                  \
     template <typename... Args>                                                                                        \
-    void Log(const p_Type<Args...> p_String, const char *p_Level, const char *p_Color, const char *p_File,             \
-             const i32 p_Line, Args &&...p_Args)                                                                       \
+    void Log(const p_Type p_String, const char *p_Level, const char *p_Color, const char *p_File, const i32 p_Line,    \
+             Args &&...p_Args)                                                                                         \
     {                                                                                                                  \
         Log(fmt::format(p_String, std::forward<Args>(p_Args)...), p_Level, p_Color, p_File, p_Line);                   \
-    }                                                                                                                  \
-                                                                                                                       \
-    template <typename... Args>                                                                                        \
-    TKIT_API void Log(std::string_view p_Message, const char *p_Level, const char *p_Color, const char *p_File,        \
-                      i32 p_Line);                                                                                     \
-                                                                                                                       \
-    template <typename... Args> void Debug(const p_Type<Args...> p_String, Args &&...p_Args)                           \
-    {                                                                                                                  \
-        Log(p_String, "DEBUG", TKIT_LOG_COLOR_DEBUG, std::forward<Args>(p_Args)...);                                   \
-    }                                                                                                                  \
-    template <typename... Args> void Info(const p_Type<Args...> p_String, Args &&...p_Args)                            \
-    {                                                                                                                  \
-        Log(p_String, "INFO", TKIT_LOG_COLOR_INFO, std::forward<Args>(p_Args)...);                                     \
-    }                                                                                                                  \
-    template <typename... Args> void Warning(const p_Type<Args...> p_String, Args &&...p_Args)                         \
-    {                                                                                                                  \
-        Log(p_String, "WARNING", TKIT_LOG_COLOR_INFO, std::forward<Args>(p_Args)...);                                  \
-    }                                                                                                                  \
-    template <typename... Args> void Error(const p_Type<Args...> p_String, Args &&...p_Args)                           \
-    {                                                                                                                  \
-        Log(p_String, "ERROR", TKIT_LOG_COLOR_INFO, std::forward<Args>(p_Args)...);                                    \
     }
 
-CREATE_FORMAT_LOGGING_FUNCTIONS(fmt::format_string)
-CREATE_FORMAT_LOGGING_FUNCTIONS(fmt::runtime_format_string)
+namespace TKit
+{
+TKIT_API fmt::runtime_format_string<> RuntimeString(std::string_view p_String);
 
-#undef CREATE_FORMAT_LOGGING_FUNCTIONS
+CREATE_LOGGING_FUNCTIONS(fmt::format_string<Args...>)
+CREATE_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)
+
+namespace Detail
+{
+#ifdef TKIT_ENABLE_INFO_LOGS
+inline thread_local bool t_DisabledInfoLogs = false;
+#endif
+
+#ifdef TKIT_ENABLE_WARNING_LOGS
+inline thread_local bool t_DisabledWarningLogs = false;
+#endif
+
+#ifdef TKIT_ENABLE_ERROR_LOGS
+inline thread_local bool t_DisabledErrorLogs = false;
+#endif
+
+TKIT_API void Log(std::string_view p_Message, const char *p_Level, const char *p_Color);
+TKIT_API void Log(std::string_view p_Message, const char *p_Level, const char *p_Color, const char *p_File, i32 p_Line);
+
+CREATE_DETAIL_LOGGING_FUNCTIONS(fmt::format_string<Args...>)
+CREATE_DETAIL_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)
+
+#undef CREATE_LOGGING_FUNCTIONS
+#undef CREATE_DETAIL_LOGGING_FUNCTIONS
+} // namespace Detail
+
+#ifdef TKIT_ENABLE_DEBUG_LOGS
+#    define TKIT_LOG_DEBUG(...)                                                                                        \
+        if (!TKit::Detail::t_DisabledInfoLogs)                                                                         \
+        TKit::Detail::Log(TKit::Format(__VA_ARGS__), "DEBUG", TKIT_LOG_COLOR_DEBUG)
+
+#    define TKIT_LOG_DEBUG_IF(p_Condition, ...)                                                                        \
+        if ((p_Condition) && !TKit::Detail::t_DisabledInfoLogs)                                                        \
+        TKit::Detail::Log(TKit::Format(__VA_ARGS__), "DEBUG", TKIT_LOG_COLOR_DEBUG)
+
+#    define TKIT_LOG_DEBUG_IF_RETURNS(expression, expected, ...)                                                       \
+        TKIT_LOG_DEBUG_IF((expression) == (expected), __VA_ARGS__)
+#    define TKIT_LOG_DEBUG_IF_NOT_RETURNS(expression, expected, ...)                                                   \
+        TKIT_LOG_DEBUG_IF((expression) != (expected), __VA_ARGS__)
+
+#    define TKIT_IGNORE_DEBUG_LOGS_PUSH() TKit::Detail::t_DisabledInfoLogs = true
+#    define TKIT_IGNORE_DEBUG_LOGS_POP() TKit::Detail::t_DisabledInfoLogs = false
+
+#else
+#    define TKIT_LOG_DEBUG(p_Message, ...)
+#    define TKIT_LOG_DEBUG_IF(p_Condition, p_Message, ...)
+
+#    define TKIT_LOG_DEBUG_IF_RETURNS(expression, expected, ...) expression
+#    define TKIT_LOG_DEBUG_IF_NOT_RETURNS(expression, expected, ...) expression
+
+#    define TKIT_IGNORE_DEBUG_LOGS_PUSH()
+#    define TKIT_IGNORE_DEBUG_LOGS_POP()
+#endif
+
+#ifdef TKIT_ENABLE_INFO_LOGS
+#    define TKIT_LOG_INFO(...)                                                                                         \
+        if (!TKit::Detail::t_DisabledInfoLogs)                                                                         \
+        TKit::Detail::Log(TKit::Format(__VA_ARGS__), "INFO", TKIT_LOG_COLOR_INFO)
+
+#    define TKIT_LOG_INFO_IF(p_Condition, ...)                                                                         \
+        if ((p_Condition) && !TKit::Detail::t_DisabledInfoLogs)                                                        \
+        TKit::Detail::Log(TKit::Format(__VA_ARGS__), "INFO", TKIT_LOG_COLOR_INFO)
+
+#    define TKIT_LOG_INFO_IF_RETURNS(expression, expected, ...)                                                        \
+        TKIT_LOG_INFO_IF((expression) == (expected), __VA_ARGS__)
+#    define TKIT_LOG_INFO_IF_NOT_RETURNS(expression, expected, ...)                                                    \
+        TKIT_LOG_INFO_IF((expression) != (expected), __VA_ARGS__)
+
+#    define TKIT_IGNORE_INFO_LOGS_PUSH() TKit::Detail::t_DisabledInfoLogs = true
+#    define TKIT_IGNORE_INFO_LOGS_POP() TKit::Detail::t_DisabledInfoLogs = false
+
+#else
+#    define TKIT_LOG_INFO(p_Message, ...)
+#    define TKIT_LOG_INFO_IF(p_Condition, p_Message, ...)
+
+#    define TKIT_LOG_INFO_IF_RETURNS(expression, expected, ...) expression
+#    define TKIT_LOG_INFO_IF_NOT_RETURNS(expression, expected, ...) expression
+
+#    define TKIT_IGNORE_INFO_LOGS_PUSH()
+#    define TKIT_IGNORE_INFO_LOGS_POP()
+#endif
+
+#ifdef TKIT_ENABLE_WARNING_LOGS
+#    define TKIT_LOG_WARNING(...)                                                                                      \
+        if (!TKit::Detail::t_DisabledWarningLogs)                                                                      \
+        TKit::Detail::Log(TKit::Format(__VA_ARGS__), "WARNING", TKIT_LOG_COLOR_WARNING)
+
+#    define TKIT_LOG_WARNING_IF(p_Condition, ...)                                                                      \
+        if ((p_Condition) && !TKit::Detail::t_DisabledWarningLogs)                                                     \
+        TKit::Detail::Log(TKit::Format(__VA_ARGS__), "WARNING", TKIT_LOG_COLOR_WARNING)
+
+#    define TKIT_LOG_WARNING_IF_RETURNS(expression, expected, ...)                                                     \
+        TKIT_LOG_WARNING_IF((expression) == (expected), __VA_ARGS__)
+#    define TKIT_LOG_WARNING_IF_NOT_RETURNS(expression, expected, ...)                                                 \
+        TKIT_LOG_WARNING_IF((expression) != (expected), __VA_ARGS__)
+
+#    define TKIT_IGNORE_WARNING_LOGS_PUSH() TKit::Detail::t_DisabledWarningLogs = true
+#    define TKIT_IGNORE_WARNING_LOGS_POP() TKit::Detail::t_DisabledWarningLogs = false
+
+#else
+#    define TKIT_LOG_WARNING(p_Message, ...)
+#    define TKIT_LOG_WARNING_IF(p_Condition, p_Message, ...)
+
+#    define TKIT_LOG_WARNING_IF_RETURNS(expression, expected, ...) expression
+#    define TKIT_LOG_WARNING_IF_NOT_RETURNS(expression, expected, ...) expression
+
+#    define TKIT_IGNORE_WARNING_LOGS_PUSH()
+#    define TKIT_IGNORE_WARNING_LOGS_POP()
+#endif
+
+#ifdef TKIT_ENABLE_ERROR_LOGS
+#    define TKIT_LOG_ERROR(...)                                                                                        \
+        if (!TKit::Detail::t_DisabledErrorLogs)                                                                        \
+        TKit::Detail::Log(TKit::Format(__VA_ARGS__), "ERROR", TKIT_LOG_COLOR_ERROR)
+
+#    define TKIT_LOG_ERROR_IF(p_Condition, ...)                                                                        \
+        if ((p_Condition) && !TKit::Detail::t_DisabledErrorLogs)                                                       \
+        TKit::Detail::Log(TKit::Format(__VA_ARGS__), "ERROR", TKIT_LOG_COLOR_ERROR)
+
+#    define TKIT_LOG_ERROR_IF_RETURNS(expression, expected, ...)                                                       \
+        TKIT_LOG_ERROR_IF((expression) == (expected), __VA_ARGS__)
+#    define TKIT_LOG_ERROR_IF_NOT_RETURNS(expression, expected, ...)                                                   \
+        TKIT_LOG_ERROR_IF((expression) != (expected), __VA_ARGS__)
+
+#    define TKIT_IGNORE_ERROR_LOGS_PUSH() TKit::Detail::t_DisabledErrorLogs = true
+#    define TKIT_IGNORE_ERROR_LOGS_POP() TKit::Detail::t_DisabledErrorLogs = false
+
+#else
+#    define TKIT_LOG_ERROR(p_Message, ...)
+#    define TKIT_LOG_ERROR_IF(p_Condition, p_Message, ...)
+
+#    define TKIT_LOG_ERROR_IF_RETURNS(expression, expected, ...) expression
+#    define TKIT_LOG_ERROR_IF_NOT_RETURNS(expression, expected, ...) expression
+
+#    define TKIT_IGNORE_ERROR_LOGS_PUSH()
+#    define TKIT_IGNORE_ERROR_LOGS_POP()
+#endif
 
 } // namespace TKit

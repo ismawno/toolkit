@@ -9,45 +9,47 @@ using namespace TKit::Alias;
 int main(int argc, char **argv)
 {
     const TKit::Perf::Settings settings = TKit::Perf::CreateSettings(argc, argv);
+#ifdef TKIT_ENABLE_INFO_LOGS
     TKit::Perf::LogSettings(settings);
+#endif
 
     TKit::Clock clock;
-    TKit::Info("[TOOLKIT][PERF] Running thread pool sum...");
+    TKIT_LOG_INFO("[TOOLKIT][PERF] Running thread pool sum...");
     RecordThreadPoolSum(settings.ThreadPoolSum);
 
-    TKit::Info("[TOOLKIT][PERF] Running parallel sum...");
+    TKIT_LOG_INFO("[TOOLKIT][PERF] Running parallel sum...");
     RecordParallelSum(settings.ThreadPoolSum);
 
-    TKit::Info("[TOOLKIT][PERF] Running malloc/free...");
+    TKIT_LOG_INFO("[TOOLKIT][PERF] Running malloc/free...");
     RecordMallocFree(settings.Allocation);
 
-    TKit::Info("[TOOLKIT][PERF] Running block allocator...");
+    TKIT_LOG_INFO("[TOOLKIT][PERF] Running block allocator...");
     RecordBlockAllocator(settings.Allocation);
 
-    TKit::Info("[TOOLKIT][PERF] Running stack allocator...");
+    TKIT_LOG_INFO("[TOOLKIT][PERF] Running stack allocator...");
     RecordStackAllocator(settings.Allocation);
 
-    TKit::Info("[TOOLKIT][PERF] Running arena allocator...");
+    TKIT_LOG_INFO("[TOOLKIT][PERF] Running arena allocator...");
     RecordArenaAllocator(settings.Allocation);
 
-    TKit::Info("[TOOLKIT][PERF] Running vector...");
+    TKIT_LOG_INFO("[TOOLKIT][PERF] Running vector...");
     RecordVector(settings.Container);
 
-    TKit::Info("[TOOLKIT][PERF] Running dynamic array...");
+    TKIT_LOG_INFO("[TOOLKIT][PERF] Running dynamic array...");
     RecordDynamicArray(settings.Container);
 
-    TKit::Info("[TOOLKIT][PERF] Running static array...");
+    TKIT_LOG_INFO("[TOOLKIT][PERF] Running static array...");
     RecordStaticArray(settings.Container);
 
-    TKit::Info("[TOOLKIT][PERF] Running deque...");
+    TKIT_LOG_INFO("[TOOLKIT][PERF] Running deque...");
     RecordDeque(settings.Container);
 
-    TKit::Info("[TOOLKIT][PERF] Running dynamic deque...");
+    TKIT_LOG_INFO("[TOOLKIT][PERF] Running dynamic deque...");
     RecordDynamicDeque(settings.Container);
 
-    TKit::Info("[TOOLKIT][PERF] Running static deque...");
+    TKIT_LOG_INFO("[TOOLKIT][PERF] Running static deque...");
     RecordStaticDeque(settings.Container);
 
-    TKit::Info("[TOOLKIT][PERF] Done! ({:.1f} seconds) Results have been written to 'performance/results'",
-               clock.GetElapsed().AsSeconds());
+    TKIT_LOG_INFO("[TOOLKIT][PERF] Done! ({:.1f} seconds) Results have been written to 'performance/results'",
+                  clock.GetElapsed().AsSeconds());
 }

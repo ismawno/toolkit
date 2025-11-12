@@ -73,28 +73,21 @@ set(CMAKE_SHARED_LINKER_FLAGS_DIST
     ""
     CACHE STRING "" FORCE)
 
-set(TOOLKIT_ENABLE_LOGGING
+set(TOOLKIT_ENABLE_DEBUG_LOGS
     OFF
     CACHE BOOL "")
-set(TOOLKIT_ENABLE_INFO_MACROS
+set(TOOLKIT_ENABLE_INFO_LOGS
     OFF
     CACHE BOOL "")
-set(TOOLKIT_ENABLE_WARNING_MACROS
+set(TOOLKIT_ENABLE_WARNING_LOGS
     OFF
     CACHE BOOL "")
-set(TOOLKIT_ENABLE_ERROR_MACROS
+set(TOOLKIT_ENABLE_ERROR_LOGS
     OFF
     CACHE BOOL "")
 set(TOOLKIT_ENABLE_ASSERTS
     OFF
     CACHE BOOL "")
-
-if(TOOLKIT_ENABLE_INFO_MACROS
-   OR TOOLKIT_ENABLE_ERROR_MACROS
-   OR TOOLKIT_ENABLE_ERROR_MACROS
-   OR TOOLKIT_ENABLE_ASSERTS)
-  set(TOOLKIT_ENABLE_DEBUG_MACROS ON)
-endif()
 
 set(TOOLKIT_ENABLE_ARENA_ALLOCATOR
     OFF
@@ -144,24 +137,10 @@ set(TOOLKIT_SAMPLING_RATE
     "10000"
     CACHE STRING "")
 
-if(TOOLKIT_ENABLE_DEBUG_MACROS AND NOT TOOLKIT_ENABLE_LOGGING)
-  message(
-    FATAL_ERROR
-      "TOOLKIT: Enabling debug macros requires logging features. Enable logging with -DTOOLKIT_ENABLE_LOGGING=ON to fix this error"
-  )
-endif()
-
 if(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION AND NOT TOOLKIT_ENABLE_INSTRUMENTATION)
   message(
-    WARNING
-      "TOOLKIT: Vulkan instrumentation is enabled but general instrumentation is not. This option will have no effect"
-  )
-endif()
-
-if(TOOLKIT_BUILD_PERFORMANCE AND TOOLKIT_ENABLE_DEBUG_MACROS)
-  message(
-    WARNING
-      "TOOLKIT: Building benchmarks with debug macros enabled! Results may not be representative"
+    FATAL_ERROR
+      "TOOLKIT: General purpose instrumentation is required for vulkan instrumentation to work. Disable the latter or enable the former to fix this error"
   )
 endif()
 

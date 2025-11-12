@@ -102,7 +102,7 @@ static KindInfo getKindInfo(const hwloc_topology_t p_Topology, const u32 PuIndex
     return kinfo;
 }
 
-#    ifdef TKIT_ENABLE_INFO_MACROS
+#    ifdef TKIT_ENABLE_DEBUG_LOGS
 static std::string toString(const u32 p_Value)
 {
     if (p_Value == Unknown)
@@ -140,12 +140,12 @@ static hwloc_obj_t ancestor(const hwloc_topology_t p_Topology, const hwloc_obj_t
 
 static DynamicArray<u32> buildOrder(const hwloc_topology_t p_Topology)
 {
-    TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY] Building affinity order...");
+    TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY] Building affinity order...");
 
     DynamicArray<u32> order{};
 
     const u32 nbpus = static_cast<u32>(hwloc_get_nbobjs_by_type(p_Topology, HWLOC_OBJ_PU));
-    TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY] Found {} PUs", nbpus);
+    TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY] Found {} PUs", nbpus);
     if (nbpus == 0)
         return order;
 
@@ -184,10 +184,10 @@ static DynamicArray<u32> buildOrder(const hwloc_topology_t p_Topology)
         p.SmtRank = rank;
         p.KInfo = getKindInfo(p_Topology, p.Pu);
 
-        // TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    PU {} SMT rank: {}", i, toString(p.SmtRank));
-        // TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    PU {} Kind rank: {}", i, toString(p.KInfo.Rank));
-        // TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    PU {} Efficiency rank: {}", i, toString(p.KInfo.Efficiency));
-        // TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    PU {} Core type: {}", i, toString(p.KInfo.CType));
+        // TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY]    PU {} SMT rank: {}", i, toString(p.SmtRank));
+        // TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY]    PU {} Kind rank: {}", i, toString(p.KInfo.Rank));
+        // TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY]    PU {} Efficiency rank: {}", i, toString(p.KInfo.Efficiency));
+        // TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY]    PU {} Core type: {}", i, toString(p.KInfo.CType));
 
         infos.Append(p);
     }
@@ -217,18 +217,18 @@ static DynamicArray<u32> buildOrder(const hwloc_topology_t p_Topology)
         return p_Node1.Pu < p_Node2.Pu;
     });
 
-    TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY] Gathered all PUs. Sorting by desirability...");
+    TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY] Gathered all PUs. Sorting by desirability...");
     for (u32 i = 0; i < infos.GetSize(); ++i)
     {
         const PuInfo &p = infos[i];
-        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY] Pu reserved to thread with index {}:", i);
-        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    Pu: {}", toString(p.Pu));
-        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    Core: {}", toString(p.Core));
-        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    Numa: {}", toString(p.Numa));
-        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    SMT rank: {}", toString(p.SmtRank));
-        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    Kind score: {}", toString(p.KInfo.Rank));
-        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    Efficiency score: {}", toString(p.KInfo.Efficiency));
-        TKIT_LOG_INFO("[TOOLKIT][TOPOLOGY]    Core type: {}", toString(p.KInfo.CType));
+        TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY] Pu reserved to thread with index {}:", i);
+        TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY]    Pu: {}", toString(p.Pu));
+        TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY]    Core: {}", toString(p.Core));
+        TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY]    Numa: {}", toString(p.Numa));
+        TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY]    SMT rank: {}", toString(p.SmtRank));
+        TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY]    Kind score: {}", toString(p.KInfo.Rank));
+        TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY]    Efficiency score: {}", toString(p.KInfo.Efficiency));
+        TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY]    Core type: {}", toString(p.KInfo.CType));
         order.Append(p.Pu);
     }
 
