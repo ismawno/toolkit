@@ -87,6 +87,16 @@ struct Tensor
         Ranked[N0 - 1] = p_Value;
     }
 
+    template <typename U>
+        requires(std::convertible_to<U, ChildType>)
+    constexpr Tensor(U &&p_Value, const Tensor<T, N0 - 1, N...> &p_Tensor)
+        requires(N0 > 1)
+    {
+        Ranked[0] = p_Value;
+        for (usize i = 0; i < N0 - 1; ++i)
+            Ranked[i + 1] = p_Tensor[i];
+    }
+
     friend constexpr T Dot(const Tensor &p_Left, const Tensor &p_Right)
     {
         T result{static_cast<T>(0)};
@@ -569,6 +579,23 @@ template <typename T, usize N0, usize... N> using ten = Math::Tensor<T, N0, N...
 template <typename T, usize C, usize R> using mat = Math::Tensor<T, C, R>;
 template <typename T, usize N> using vec = Math::Tensor<T, N>;
 
+template <typename T> using vec2 = ten<T, 2>;
+template <typename T> using vec3 = ten<T, 3>;
+template <typename T> using vec4 = ten<T, 4>;
+
+template <typename T> using mat2 = ten<T, 2, 2>;
+template <typename T> using mat3 = ten<T, 3, 3>;
+template <typename T> using mat4 = ten<T, 4, 4>;
+
+template <typename T> using mat2x3 = ten<T, 2, 3>;
+template <typename T> using mat2x4 = ten<T, 2, 4>;
+
+template <typename T> using mat3x2 = ten<T, 3, 2>;
+template <typename T> using mat3x4 = ten<T, 3, 4>;
+
+template <typename T> using mat4x2 = ten<T, 4, 2>;
+template <typename T> using mat4x3 = ten<T, 4, 3>;
+
 // tensor
 template <usize N0, usize... N> using f32t = ten<f32, N0, N...>;
 template <usize N0, usize... N> using f64t = ten<f64, N0, N...>;
@@ -777,4 +804,5 @@ using i32v4 = i32t<4>;
 using i64v4 = i64t<4>;
 
 } // namespace Alias
+using namespace Alias;
 } // namespace TKit
