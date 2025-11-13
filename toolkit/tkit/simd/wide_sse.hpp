@@ -83,6 +83,11 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     {
     }
 
+    constexpr Wide &operator=(const T p_Data)
+    {
+        m_Data = set(p_Data);
+    }
+
     static constexpr Wide LoadAligned(const T *p_Data)
     {
         return Wide{loadAligned(p_Data)};

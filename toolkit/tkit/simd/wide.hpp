@@ -40,6 +40,12 @@ class Wide
             m_Data[i] = p_Data;
     }
 
+    constexpr Wide &operator=(const T p_Data)
+    {
+        for (SizeType i = 0; i < Lanes; ++i)
+            m_Data[i] = p_Data;
+    }
+
     constexpr T At(const SizeType p_Index) const
     {
         return m_Data[p_Index];
