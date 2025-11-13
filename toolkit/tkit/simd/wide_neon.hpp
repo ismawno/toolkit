@@ -420,37 +420,37 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         return p_Other * static_cast<T>(-1);
     }
 
-#    define CREATE_SELF_OP(p_Op)                                                                                       \
-        constexpr Wide &operator p_Op##=(const Wide & p_Other)                                                         \
+#    define CREATE_SELF_OP(p_Op, p_Requires)                                                                           \
+        constexpr Wide &operator p_Op##=(const Wide & p_Other) p_Requires                                              \
         {                                                                                                              \
             *this = *this p_Op p_Other;                                                                                \
             return *this;                                                                                              \
         }
 
-#    define CREATE_SCALAR_OP(p_Op)                                                                                     \
-        friend constexpr Wide operator p_Op(const Wide &p_Left, const T p_Right)                                       \
+#    define CREATE_SCALAR_OP(p_Op, p_Requires)                                                                         \
+        friend constexpr Wide operator p_Op(const Wide &p_Left, const T p_Right) p_Requires                            \
         {                                                                                                              \
             return p_Left p_Op Wide{p_Right};                                                                          \
         }                                                                                                              \
-        friend constexpr Wide operator p_Op(const T p_Left, const Wide &p_Right)                                       \
+        friend constexpr Wide operator p_Op(const T p_Left, const Wide &p_Right) p_Requires                            \
         {                                                                                                              \
             return Wide{p_Left} p_Op p_Right;                                                                          \
         }
 
-    CREATE_SCALAR_OP(+)
-    CREATE_SCALAR_OP(-)
-    CREATE_SCALAR_OP(*)
-    CREATE_SCALAR_OP(/)
+    CREATE_SCALAR_OP(+, )
+    CREATE_SCALAR_OP(-, )
+    CREATE_SCALAR_OP(*, )
+    CREATE_SCALAR_OP(/, )
 
-    CREATE_SELF_OP(+)
-    CREATE_SELF_OP(-)
-    CREATE_SELF_OP(*)
-    CREATE_SELF_OP(/)
+    CREATE_SELF_OP(+, )
+    CREATE_SELF_OP(-, )
+    CREATE_SELF_OP(*, )
+    CREATE_SELF_OP(/, )
 
-    CREATE_SELF_OP(>>)
-    CREATE_SELF_OP(<<)
-    CREATE_SELF_OP(&)
-    CREATE_SELF_OP(|)
+    CREATE_SELF_OP(>>, requires(Integer<T>))
+    CREATE_SELF_OP(<<, requires(Integer<T>))
+    CREATE_SELF_OP(&, requires(Integer<T>))
+    CREATE_SELF_OP(|, requires(Integer<T>))
 
 #    define CREATE_CMP_OP(p_Op, p_OpName)                                                                              \
         friend constexpr Mask operator p_Op(const Wide &p_Left, const Wide &p_Right)                                   \

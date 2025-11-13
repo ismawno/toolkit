@@ -121,42 +121,40 @@ class Wide
         return wide;
     }
 
-#define CREATE_ARITHMETIC_OP(p_Op)                                                                                     \
-    friend constexpr Wide operator p_Op(const Wide &p_Left, const Wide &p_Right)                                       \
+#define CREATE_ARITHMETIC_OP(p_Op, p_Requires)                                                                         \
+    friend constexpr Wide operator p_Op(const Wide &p_Left, const Wide &p_Right) p_Requires                            \
     {                                                                                                                  \
         Wide wide;                                                                                                     \
         for (SizeType i = 0; i < Lanes; ++i)                                                                           \
             wide.m_Data[i] = p_Left.m_Data[i] p_Op p_Right.m_Data[i];                                                  \
         return wide;                                                                                                   \
     }                                                                                                                  \
-    friend constexpr Wide operator p_Op(const Wide &p_Left, const T p_Right)                                           \
-        requires(Integer<T>)                                                                                           \
+    friend constexpr Wide operator p_Op(const Wide &p_Left, const T p_Right) p_Requires                                \
     {                                                                                                                  \
         Wide wide;                                                                                                     \
         for (SizeType i = 0; i < Lanes; ++i)                                                                           \
             wide.m_Data[i] = p_Left.m_Data[i] p_Op p_Right;                                                            \
         return wide;                                                                                                   \
     }                                                                                                                  \
-    friend constexpr Wide operator p_Op(const T p_Left, const Wide &p_Right)                                           \
-        requires(Integer<T>)                                                                                           \
+    friend constexpr Wide operator p_Op(const T p_Left, const Wide &p_Right) p_Requires                                \
     {                                                                                                                  \
         Wide wide;                                                                                                     \
         for (SizeType i = 0; i < Lanes; ++i)                                                                           \
             wide.m_Data[i] = p_Left p_Op p_Right.m_Data[i];                                                            \
         return wide;                                                                                                   \
     }                                                                                                                  \
-    constexpr Wide &operator p_Op##=(const Wide & p_Other)                                                             \
+    constexpr Wide &operator p_Op##=(const Wide & p_Other) p_Requires                                                  \
     {                                                                                                                  \
         *this = *this p_Op p_Other;                                                                                    \
         return *this;                                                                                                  \
     }
 
-    CREATE_ARITHMETIC_OP(+)
-    CREATE_ARITHMETIC_OP(-)
-    CREATE_ARITHMETIC_OP(*)
-    CREATE_ARITHMETIC_OP(/)
-    CREATE_ARITHMETIC_OP(&)
-    CREATE_ARITHMETIC_OP(|)
+    CREATE_ARITHMETIC_OP(+, )
+    CREATE_ARITHMETIC_OP(-, )
+    CREATE_ARITHMETIC_OP(*, )
+    CREATE_ARITHMETIC_OP(/, )
+    CREATE_ARITHMETIC_OP(&, requires(Integer<T>))
+    CREATE_ARITHMETIC_OP(|, requires(Integer<T>))
 
     friend constexpr Wide operator-(const Wide &p_Other)
     {

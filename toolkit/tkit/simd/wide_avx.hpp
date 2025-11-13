@@ -78,7 +78,7 @@ template <Valid T, typename Traits = Container::ArrayTraits<T>> class Wide
     template <typename Callable>
         requires std::invocable<Callable, SizeType>
     constexpr Wide(Callable &&p_Callable)
-        : m_Data(makeIntrinsic(std::forward<Callable>(p_Callable), std::make_integer_sequence<Sizeype, Lanes>{}))
+        : m_Data(makeIntrinsic(std::forward<Callable>(p_Callable), std::make_integer_sequence<SizeType, Lanes>{}))
     {
     }
 
@@ -324,32 +324,32 @@ template <Valid T, typename Traits = Container::ArrayTraits<T>> class Wide
         return p_Other * static_cast<T>(-1);
     }
 
-#    define CREATE_SELF_OP(p_Op)                                                                                       \
-        constexpr Wide &operator p_Op##=(const Wide & p_Other)                                                         \
+#    define CREATE_SELF_OP(p_Op, p_Requires)                                                                           \
+        constexpr Wide &operator p_Op##=(const Wide & p_Other) p_Requires                                              \
         {                                                                                                              \
             *this = *this p_Op p_Other;                                                                                \
             return *this;                                                                                              \
         }
 
-#    define CREATE_SCALAR_OP(p_Op)                                                                                     \
-        friend constexpr Wide operator p_Op(const Wide &p_Left, const T p_Right)                                       \
+#    define CREATE_SCALAR_OP(p_Op, p_Requires)                                                                         \
+        friend constexpr Wide operator p_Op(const Wide &p_Left, const T p_Right) p_Requires                            \
         {                                                                                                              \
             return p_Left p_Op Wide{p_Right};                                                                          \
         }                                                                                                              \
-        friend constexpr Wide operator p_Op(const T p_Left, const Wide &p_Right)                                       \
+        friend constexpr Wide operator p_Op(const T p_Left, const Wide &p_Right) p_Requires                            \
         {                                                                                                              \
             return Wide{p_Left} p_Op p_Right;                                                                          \
         }
 
-    CREATE_SCALAR_OP(+)
-    CREATE_SCALAR_OP(-)
-    CREATE_SCALAR_OP(*)
-    CREATE_SCALAR_OP(/)
+    CREATE_SCALAR_OP(+, )
+    CREATE_SCALAR_OP(-, )
+    CREATE_SCALAR_OP(*, )
+    CREATE_SCALAR_OP(/, )
 
-    CREATE_SELF_OP(+)
-    CREATE_SELF_OP(-)
-    CREATE_SELF_OP(*)
-    CREATE_SELF_OP(/)
+    CREATE_SELF_OP(+, )
+    CREATE_SELF_OP(-, )
+    CREATE_SELF_OP(*, )
+    CREATE_SELF_OP(/, )
 
 #    ifdef TKIT_SIMD_AVX2
     friend constexpr Wide operator>>(const Wide &p_Left, const T p_Shift)
@@ -407,13 +407,13 @@ template <Valid T, typename Traits = Container::ArrayTraits<T>> class Wide
         return Wide{_mm256_or_si256(p_Left.m_Data, p_Right.m_Data)};
     }
 
-    CREATE_SCALAR_OP(&)
-    CREATE_SCALAR_OP(|)
+    CREATE_SCALAR_OP(&, requires(Integer<T>))
+    CREATE_SCALAR_OP(|, requires(Integer<T>))
 
-    CREATE_SELF_OP(>>)
-    CREATE_SELF_OP(<<)
-    CREATE_SELF_OP(&)
-    CREATE_SELF_OP(|)
+    CREATE_SELF_OP(>>, requires(Integer<T>))
+    CREATE_SELF_OP(<<, requires(Integer<T>))
+    CREATE_SELF_OP(&, requires(Integer<T>))
+    CREATE_SELF_OP(|, requires(Integer<T>))
 #    endif
 
 #    ifdef TKIT_SIMD_AVX2
