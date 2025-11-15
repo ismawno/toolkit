@@ -2,6 +2,7 @@
 
 #include "tkit/container/array.hpp"
 #include "tkit/simd/utils.hpp"
+#include "tkit/utils/limits.hpp"
 #include <algorithm>
 
 TKIT_COMPILER_WARNING_IGNORE_PUSH()
@@ -228,7 +229,7 @@ class Wide
     }
     static constexpr bool AllOf(const BitMask p_Mask)
     {
-        return p_Mask == Limits<BitMask>::max();
+        return p_Mask == Limits<BitMask>::Max();
     }
 
   private:

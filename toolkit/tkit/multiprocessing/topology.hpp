@@ -1,12 +1,13 @@
 #pragma once
 
 #include "tkit/utils/alias.hpp"
+#include "tkit/utils/limits.hpp"
 
 namespace TKit::Topology
 {
 struct Handle;
 
-constexpr u32 Unknown = Limits<u32>::max();
+constexpr u32 Unknown = Limits<u32>::Max();
 const Handle *Initialize();
 
 void BuildAffinityOrder(const Handle *p_Handle);

@@ -47,8 +47,6 @@ using ssize = TKIT_SSIZE_TYPE;
 using uptr = std::uintptr_t;
 using idiff = TKIT_DIFFERENCE_TYPE;
 
-template <typename T> using Limits = std::numeric_limits<T>;
-
 template <typename T>
 concept Float = std::same_as<T, f32> || std::same_as<T, f64>;
 

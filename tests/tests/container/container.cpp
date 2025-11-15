@@ -1,9 +1,9 @@
 #include "tkit/container/container.hpp"
 #include "tkit/container/array.hpp"
+#include "tkit/utils/limits.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <algorithm>
 #include <cstring>
-#include <utility>
 
 using namespace TKit::Container;
 using namespace TKit::Alias;
@@ -50,12 +50,12 @@ struct MoveOnly
     MoveOnly &operator=(const MoveOnly &) = delete;
     MoveOnly(MoveOnly &&p_Other) : Value(p_Other.Value)
     {
-        p_Other.Value = Limits<u32>::max();
+        p_Other.Value = TKit::Limits<u32>::Max();
     }
     MoveOnly &operator=(MoveOnly &&p_Other)
     {
         Value = p_Other.Value;
-        p_Other.Value = Limits<u32>::max();
+        p_Other.Value = TKit::Limits<u32>::Max();
         return *this;
     }
 };
@@ -113,10 +113,10 @@ TEST_CASE("MoveConstructFromRange", "[MoveConstructFromRange]")
         REQUIRE(dst[0].Value == 7);
         REQUIRE(dst[1].Value == 14);
         REQUIRE(dst[2].Value == 21);
-        // moved‑from source should be Limits<u32>::max()
-        REQUIRE(src[0].Value == Limits<u32>::max());
-        REQUIRE(src[1].Value == Limits<u32>::max());
-        REQUIRE(src[2].Value == Limits<u32>::max());
+        // moved‑from source should be TKit::Limits<u32>::Max()
+        REQUIRE(src[0].Value == TKit::Limits<u32>::Max());
+        REQUIRE(src[1].Value == TKit::Limits<u32>::Max());
+        REQUIRE(src[2].Value == TKit::Limits<u32>::Max());
 
         for (u32 i = 0; i < 3; ++i)
             dst[i].~MoveOnly();
@@ -202,10 +202,10 @@ TEST_CASE("MoveAssignFromRange", "[MoveAssignFromRange]")
         REQUIRE(buf[2].Value == 33);
         REQUIRE(buf[3].Value == 44);
         // moved‑from
-        REQUIRE(src[0].Value == Limits<u32>::max());
-        REQUIRE(src[1].Value == Limits<u32>::max());
-        REQUIRE(src[2].Value == Limits<u32>::max());
-        REQUIRE(src[3].Value == Limits<u32>::max());
+        REQUIRE(src[0].Value == TKit::Limits<u32>::Max());
+        REQUIRE(src[1].Value == TKit::Limits<u32>::Max());
+        REQUIRE(src[2].Value == TKit::Limits<u32>::Max());
+        REQUIRE(src[3].Value == TKit::Limits<u32>::Max());
     }
 }
 

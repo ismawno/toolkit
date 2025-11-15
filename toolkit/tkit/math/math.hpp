@@ -5,15 +5,6 @@
 
 namespace TKit::Math
 {
-template <std::floating_point Float> constexpr bool ApproachesZero(const Float p_Value)
-{
-    return std::abs(p_Value) <= std::numeric_limits<Float>::epsilon();
-}
-
-template <std::floating_point Float> constexpr bool Approximately(const Float p_Left, const Float p_Right)
-{
-    return ApproachesZero(p_Left - p_Right);
-}
 
 template <typename T> constexpr T SquareRoot(const T p_Value)
 {

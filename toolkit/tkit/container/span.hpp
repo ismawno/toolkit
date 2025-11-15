@@ -14,7 +14,7 @@ namespace TKit
  * @tparam T The type of the elements in the span.
  * @tparam Extent The extent of the span.
  */
-template <typename T, usize Extent = Limits<usize>::max(),
+template <typename T, usize Extent = Limits<usize>::Max(),
           typename Traits = Container::ArrayTraits<std::remove_cvref_t<T>>> // Consider adding allocator traits
     requires(Extent > 0)
 class Span
@@ -100,7 +100,7 @@ class Span
  *
  * @tparam T The type of the elements in the span.
  */
-template <typename T, typename Traits> class Span<T, Limits<usize>::max(), Traits>
+template <typename T, typename Traits> class Span<T, Limits<usize>::Max(), Traits>
 {
   public:
     using ElementType = T;
@@ -116,13 +116,11 @@ template <typename T, typename Traits> class Span<T, Limits<usize>::max(), Trait
     }
 
     template <SizeType Extent>
-    constexpr Span(const Array<ValueType, Extent, Traits> &p_Array)
-        : m_Data(p_Array.GetData()), m_Size(Extent)
+    constexpr Span(const Array<ValueType, Extent, Traits> &p_Array) : m_Data(p_Array.GetData()), m_Size(Extent)
     {
     }
     template <SizeType Extent>
-    constexpr Span(Array<ValueType, Extent, Traits> &p_Array)
-        : m_Data(p_Array.GetData()), m_Size(Extent)
+    constexpr Span(Array<ValueType, Extent, Traits> &p_Array) : m_Data(p_Array.GetData()), m_Size(Extent)
     {
     }
 
@@ -139,14 +137,12 @@ template <typename T, typename Traits> class Span<T, Limits<usize>::max(), Trait
 
     template <typename U, SizeType Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
-    constexpr Span(const WeakArray<U, Capacity, Traits> &p_Array)
-        : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
+    constexpr Span(const WeakArray<U, Capacity, Traits> &p_Array) : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
     template <typename U, SizeType Capacity>
         requires(std::convertible_to<U *, T *> && std::same_as<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
-    constexpr Span(WeakArray<U, Capacity, Traits> &p_Array)
-        : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
+    constexpr Span(WeakArray<U, Capacity, Traits> &p_Array) : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
 
@@ -154,15 +150,13 @@ template <typename T, typename Traits> class Span<T, Limits<usize>::max(), Trait
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
-    constexpr Span(DynamicArray<ValueType, Traits> &p_Array)
-        : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
+    constexpr Span(DynamicArray<ValueType, Traits> &p_Array) : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
 
     template <typename U, SizeType Extent>
         requires(std::convertible_to<U *, T *> && std::same_as<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
-    constexpr Span(const Span<U, Extent, Traits> &p_Other)
-        : m_Data(p_Other.GetData()), m_Size(p_Other.GetSize())
+    constexpr Span(const Span<U, Extent, Traits> &p_Other) : m_Data(p_Other.GetData()), m_Size(p_Other.GetSize())
     {
     }
 

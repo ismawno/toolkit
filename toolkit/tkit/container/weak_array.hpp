@@ -3,6 +3,7 @@
 #include "tkit/container/static_array.hpp"
 #include "tkit/container/dynamic_array.hpp"
 #include "tkit/utils/non_copyable.hpp"
+#include "tkit/utils/limits.hpp"
 
 namespace TKit
 {
@@ -14,7 +15,7 @@ namespace TKit
  * @tparam T The type of the elements in the array.
  * @tparam Capacity The capacity of the array.
  */
-template <typename T, usize Capacity = Limits<usize>::max(),
+template <typename T, usize Capacity = Limits<usize>::Max(),
           typename Traits = Container::ArrayTraits<std::remove_cvref_t<T>>>
 class WeakArray
 {
@@ -321,7 +322,7 @@ class WeakArray
  *
  * @tparam T The type of the elements in the array.
  */
-template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), Traits>
+template <typename T, typename Traits> class WeakArray<T, Limits<usize>::Max(), Traits>
 {
     TKIT_NON_COPYABLE(WeakArray)
 
@@ -378,7 +379,7 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
     {
         p_Other.m_Data = nullptr;
         p_Other.m_Size = 0;
-        if constexpr (Capacity == Limits<usize>::max())
+        if constexpr (Capacity == Limits<usize>::Max())
             p_Other.m_Capacity = 0;
     }
 
@@ -392,7 +393,7 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::max(), 
 
         p_Other.m_Data = nullptr;
         p_Other.m_Size = 0;
-        if constexpr (Capacity == Limits<usize>::max())
+        if constexpr (Capacity == Limits<usize>::Max())
             p_Other.m_Capacity = 0;
         return *this;
     }
