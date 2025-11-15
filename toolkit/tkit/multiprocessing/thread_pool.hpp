@@ -65,7 +65,7 @@ class TKIT_API ThreadPool final : public ITaskManager
         std::atomic_flag TerminateSignal = ATOMIC_FLAG_INIT;
     };
 
-    ThreadPool(usize p_WokerCount);
+    explicit ThreadPool(usize p_WokerCount);
     ~ThreadPool() override;
 
     /**

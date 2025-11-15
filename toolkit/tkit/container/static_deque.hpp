@@ -29,7 +29,7 @@ class StaticDeque
     constexpr StaticDeque() = default;
 
     template <typename... Args>
-    constexpr StaticDeque(const SizeType p_Size, const Args &...p_Args) : m_Size(p_Size)
+    constexpr explicit StaticDeque(const SizeType p_Size, const Args &...p_Args) : m_Size(p_Size)
     {
         TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT][STAT-DEQUE] Size is bigger than capacity");
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
@@ -46,8 +46,7 @@ class StaticDeque
         m_Back = m_Size;
     }
 
-    constexpr StaticDeque(const std::initializer_list<ValueType> p_List)
-        : m_Size(static_cast<SizeType>(p_List.size()))
+    constexpr StaticDeque(const std::initializer_list<ValueType> p_List) : m_Size(static_cast<SizeType>(p_List.size()))
     {
         TKIT_ASSERT(p_List.size() <= Capacity, "[TOOLKIT][STAT-DEQUE] Size is bigger than capacity");
         Tools::CopyConstructFromRange(GetData(), p_List.begin(), p_List.end());
@@ -55,8 +54,7 @@ class StaticDeque
     }
 
     // This constructor WONT include the case M == Capacity (ie, copy constructor)
-    template <SizeType M>
-    constexpr StaticDeque(const StaticDeque<ValueType, M, Traits> &p_Other)
+    template <SizeType M> constexpr StaticDeque(const StaticDeque<ValueType, M, Traits> &p_Other)
     {
         if constexpr (M > Capacity)
         {

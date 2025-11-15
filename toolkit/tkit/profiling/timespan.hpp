@@ -26,7 +26,7 @@ class TKIT_API Timespan
     using Milliseconds = std::chrono::milliseconds;
     using Seconds = std::chrono::seconds;
 
-    Timespan(const Nanoseconds p_Elapsed = Nanoseconds::zero()) : m_Elapsed(p_Elapsed)
+    explicit Timespan(const Nanoseconds p_Elapsed = Nanoseconds::zero()) : m_Elapsed(p_Elapsed)
     {
     }
 

@@ -23,24 +23,18 @@ class Wide
     using BitMask = Mask;
 
     constexpr Wide() = default;
-    constexpr Wide(const T *p_Data)
+    constexpr explicit Wide(const T *p_Data)
     {
         Memory::ForwardCopy(m_Data.begin(), p_Data, p_Data + Lanes);
     }
     template <typename Callable>
         requires std::invocable<Callable, SizeType>
-    constexpr Wide(Callable &&p_Callable)
+    constexpr explicit Wide(Callable &&p_Callable)
     {
         for (SizeType i = 0; i < Lanes; ++i)
             m_Data[i] = static_cast<T>(p_Callable(i));
     }
-    constexpr Wide(const T p_Data)
-    {
-        for (SizeType i = 0; i < Lanes; ++i)
-            m_Data[i] = p_Data;
-    }
-
-    constexpr Wide &operator=(const T p_Data)
+    constexpr explicit Wide(const T p_Data)
     {
         for (SizeType i = 0; i < Lanes; ++i)
             m_Data[i] = p_Data;

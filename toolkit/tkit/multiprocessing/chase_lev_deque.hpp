@@ -30,7 +30,7 @@ template <typename T, u64 Capacity> class ChaseLevDeque
   public:
     static constexpr u64 Mask = Capacity - 1;
 
-    ChaseLevDeque() = default;
+    constexpr ChaseLevDeque() = default;
 
     /**
      * @brief Push a new element into the back of the queue.

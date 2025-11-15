@@ -51,7 +51,7 @@ class TKIT_API StackAllocator
     // alignment of the individual allocations at all. You can still specify alignments of, say, 64 if you want when
     // allocating
 
-    StackAllocator(usize p_Size, usize p_Alignment = alignof(std::max_align_t));
+    explicit StackAllocator(usize p_Size, usize p_Alignment = alignof(std::max_align_t));
 
     // This constructor is NOT owning the buffer, so it will not deallocate it. Up to the user to manage the memory
     StackAllocator(void *p_Buffer, usize p_Size);

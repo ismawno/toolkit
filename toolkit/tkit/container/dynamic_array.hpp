@@ -25,7 +25,8 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
 
     constexpr DynamicArray() = default;
 
-    template <typename... Args> constexpr DynamicArray(const SizeType p_Size, const Args &...p_Args) : m_Size(p_Size)
+    template <typename... Args>
+    constexpr explicit DynamicArray(const SizeType p_Size, const Args &...p_Args) : m_Size(p_Size)
     {
         if (m_Size > 0)
             growCapacity(m_Size);

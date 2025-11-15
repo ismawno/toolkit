@@ -33,7 +33,7 @@ namespace TKit
 class TKIT_API ITask
 {
   public:
-    ITask() = default;
+    constexpr ITask() = default;
     virtual ~ITask() = default;
 
     virtual void operator()() = 0;
@@ -109,7 +109,7 @@ template <typename T = void> class Task final : public ITask
 
     template <typename Callable, typename... Args>
         requires(std::invocable<Callable, Args...> && !std::is_same_v<std::remove_cvref_t<Callable>, Task>)
-    constexpr Task(Callable &&p_Callable, Args &&...p_Args)
+    constexpr explicit Task(Callable &&p_Callable, Args &&...p_Args)
         : m_Function(bind(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
     }
@@ -182,11 +182,11 @@ template <typename T = void> class Task final : public ITask
 template <> class TKIT_API Task<void> final : public ITask
 {
   public:
-    Task() = default;
+    constexpr Task() = default;
 
     template <typename Callable, typename... Args>
         requires(std::invocable<Callable, Args...> && !std::is_same_v<std::remove_cvref_t<Callable>, Task>)
-    constexpr Task(Callable &&p_Callable, Args &&...p_Args)
+    constexpr explicit Task(Callable &&p_Callable, Args &&...p_Args)
         : m_Function(bind(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
     {
     }

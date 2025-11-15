@@ -25,7 +25,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
     constexpr DynamicDeque() = default;
 
     template <typename... Args>
-    constexpr DynamicDeque(const SizeType p_Size, const Args &...p_Args) : m_Size(p_Size)
+    constexpr explicit DynamicDeque(const SizeType p_Size, const Args &...p_Args) : m_Size(p_Size)
     {
         if (m_Size > 0)
             growCapacity(m_Size);
@@ -41,8 +41,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
         Tools::CopyConstructFromRange(GetData(), p_Begin, p_End);
     }
 
-    constexpr DynamicDeque(const std::initializer_list<ValueType> p_List)
-        : m_Size(static_cast<SizeType>(p_List.size()))
+    constexpr DynamicDeque(const std::initializer_list<ValueType> p_List) : m_Size(static_cast<SizeType>(p_List.size()))
     {
         if (m_Size > 0)
             growCapacity(m_Size);

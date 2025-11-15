@@ -33,7 +33,7 @@ class TKIT_API ArenaAllocator
     // alignment of the individual allocations at all. You can still specify alignments of, say, 64 if you want when
     // allocating
 
-    ArenaAllocator(usize p_Size, usize p_Alignment = alignof(std::max_align_t));
+    explicit ArenaAllocator(usize p_Size, usize p_Alignment = alignof(std::max_align_t));
 
     // This constructor is NOT owning the buffer, so it will not deallocate it. Up to the user to manage the memory
     ArenaAllocator(void *p_Buffer, usize p_Size);

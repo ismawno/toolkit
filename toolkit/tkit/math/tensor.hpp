@@ -1,7 +1,7 @@
 #pragma once
 
 #include "tkit/utils/alias.hpp"
-#include "tkit/utils/logging.hpp"
+#include "tkit/utils/debug.hpp"
 #include "tkit/container/array.hpp"
 #include <math.h>
 
@@ -10,7 +10,7 @@ namespace TKit
 namespace Math
 {
 template <typename T, usize N0, usize... N>
-// requires((N0 > 0) && ((N > 0) && ... && true))
+// requires((N0 > 0) && ... && (N > 0))
 struct Tensor;
 
 namespace Detail
@@ -39,14 +39,14 @@ template <typename T, usize N0, usize... N> struct Parent
 } // namespace Detail
 
 template <typename T, usize N0, usize... N>
-// requires((N0 > 0) && ((N > 0) && ... && true))
+// requires((N0 > 0) && ... && (N > 0))
 struct Tensor
 {
     using ValueType = T;
     using ChildType = typename Detail::Child<T, N...>::Type;
     template <usize NP> using ParentType = typename Detail::Parent<T, NP, N0, N...>::Type;
 
-    static constexpr usize Length = N0 * (N * ... * 1);
+    static constexpr usize Length = (N0 * ... * N);
     static constexpr usize Rank = sizeof...(N) + 1;
 
     template <usize I>
@@ -54,10 +54,17 @@ struct Tensor
     static constexpr usize Axis = Detail::GetAxis<I, N0, N...>();
 
     template <usize I0, usize... I>
-        requires(sizeof...(I) == sizeof...(N) && I0 < Rank && ((I < Rank) && ... && true))
+        requires(sizeof...(I) == sizeof...(N) && ((I0 < Rank) && ... && (I < Rank)))
     using Permuted = Tensor<T, Axis<I0>, Axis<I>...>;
 
     constexpr Tensor() = default;
+    constexpr Tensor(const Tensor &) = default;
+
+    template <std::convertible_to<T> U> constexpr Tensor(const Tensor<U, N0, N...> &p_Tensor)
+    {
+        for (usize i = 0; i < Length; ++i)
+            Flat[i] = static_cast<T>(p_Tensor.Flat[i]);
+    }
 
     template <std::convertible_to<T> U> explicit constexpr Tensor(U &&p_Value)
     {
@@ -66,7 +73,7 @@ struct Tensor
     }
 
     template <typename... Args>
-        requires(sizeof...(Args) == Length && (std::convertible_to<Args, T> && ...))
+        requires((sizeof...(Args) == Length) && ... && std::convertible_to<Args, T>)
     explicit constexpr Tensor(Args &&...p_Args) : Flat{static_cast<T>(std::forward<Args>(p_Args))...}
     {
     }
@@ -77,14 +84,20 @@ struct Tensor
     {
     }
 
+    constexpr Tensor(const Tensor<T, N0 + 1, N...> &p_Tensor)
+    {
+        for (usize i = 0; i < N0; ++i)
+            Ranked[i] = p_Tensor.Ranked[i];
+    }
+
     template <typename U>
         requires(std::convertible_to<U, ChildType>)
     constexpr Tensor(const Tensor<T, N0 - 1, N...> &p_Tensor, U &&p_Value)
         requires(N0 > 1)
     {
         for (usize i = 0; i < N0 - 1; ++i)
-            Ranked[i] = p_Tensor[i];
-        Ranked[N0 - 1] = p_Value;
+            Ranked[i] = p_Tensor.Ranked[i];
+        Ranked[N0 - 1] = static_cast<T>(std::forward<U>(p_Value));
     }
 
     template <typename U>
@@ -92,9 +105,31 @@ struct Tensor
     constexpr Tensor(U &&p_Value, const Tensor<T, N0 - 1, N...> &p_Tensor)
         requires(N0 > 1)
     {
-        Ranked[0] = p_Value;
+        Ranked[0] = static_cast<T>(std::forward<U>(p_Value));
         for (usize i = 0; i < N0 - 1; ++i)
-            Ranked[i + 1] = p_Tensor[i];
+            Ranked[i + 1] = p_Tensor.Ranked[i];
+    }
+
+    constexpr Tensor &operator=(const Tensor &) = default;
+
+    template <std::convertible_to<T> U> constexpr Tensor &operator=(const Tensor<U, N0, N...> &p_Tensor)
+    {
+        for (usize i = 0; i < Length; ++i)
+            Flat[i] = static_cast<T>(p_Tensor.Flat[i]);
+    }
+
+    template <typename U> static constexpr Tensor Identity(U &&p_Value)
+    {
+        Tensor tensor;
+        for (usize i = 0; i < Length; i += N0)
+            tensor.Flat[i] = static_cast<T>(std::forward<U>(p_Value));
+        return tensor;
+    }
+
+    static constexpr Tensor Identity()
+        requires((Rank > 1) && ... && (N0 == N))
+    {
+        return Identity(1);
     }
 
     friend constexpr T Dot(const Tensor &p_Left, const Tensor &p_Right)
@@ -132,7 +167,7 @@ struct Tensor
     }
 
     template <usize R0, usize... R>
-        requires(R0 *(R *... * 1) == Length)
+        requires((R0 * ... * R) == Length)
     friend constexpr Tensor<T, R0, R...> Reshape(const Tensor &p_Tensor)
     {
         Tensor<T, R0, R...> reshaped;
@@ -142,10 +177,10 @@ struct Tensor
     }
 
     template <typename I0, typename... I>
-        requires(sizeof...(I) == sizeof...(N) && std::convertible_to<I0, usize> &&
-                 (std::convertible_to<I, usize> && ... && true))
+        requires(sizeof...(I) == sizeof...(N) &&
+                 (std::convertible_to<I0, usize> && ... && std::convertible_to<I, usize>))
     friend constexpr Tensor<T, N0 - 1, (N - 1)...> SubTensor(const Tensor &p_Tensor, I0 &&p_First, I &&...p_Rest)
-        requires(N0 > 1 && ((N0 == N) && ... && true))
+        requires((N0 > 1) && ... && (N0 == N))
     {
         const usize first = static_cast<usize>(p_First);
         TKIT_ASSERT(first < N0, "[TOOLKIT][TENSOR] Index is out of bounds");
@@ -163,7 +198,7 @@ struct Tensor
     }
 
     friend constexpr Tensor<T, N0, N...> Cofactors(const Tensor &p_Tensor)
-        requires(Rank == 2 && ((N0 == N) && ...))
+        requires((Rank == 2) && ... && (N0 == N))
     {
         Tensor<T, N0, N...> cofactors;
         i32 sign = 1;
@@ -177,7 +212,7 @@ struct Tensor
     }
 
     friend constexpr T Determinant(const Tensor &p_Tensor)
-        requires(Rank == 2 && ((N0 == N) && ...))
+        requires((Rank == 2) && ... && (N0 == N))
     {
         if constexpr (N0 == 1)
             return p_Tensor.Flat[0];
@@ -226,7 +261,7 @@ struct Tensor
     }
 
     friend constexpr Tensor Inverse(const Tensor &p_Tensor)
-        requires(Rank == 2 && ((N0 == N) && ...))
+        requires((Rank == 2) && ... && (N0 == N))
     {
         if constexpr (N0 == 1)
             return 1.f / p_Tensor.Flat[0];
@@ -393,11 +428,11 @@ struct Tensor
         return permuted;
     }
 
-    const T *GetData() const
+    constexpr const T *GetData() const
     {
         return &Flat[0];
     }
-    T *GetData()
+    constexpr T *GetData()
     {
         return &Flat[0];
     }

@@ -20,7 +20,7 @@ namespace TKit
 class TKIT_API ITaskManager
 {
   public:
-    ITaskManager(usize p_WorkerCount);
+    explicit ITaskManager(usize p_WorkerCount);
     virtual ~ITaskManager() = default;
 
     /**

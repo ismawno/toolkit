@@ -37,7 +37,7 @@ template <typename T> class MpmcStack
         Node *Next = nullptr;
     };
 
-    MpmcStack() = default;
+    constexpr MpmcStack() = default;
     ~MpmcStack()
     {
         DestroyNodes(m_Head.load(std::memory_order_relaxed));

@@ -29,7 +29,8 @@ class StaticArray
 
     constexpr StaticArray() = default;
 
-    template <typename... Args> constexpr StaticArray(const SizeType p_Size, const Args &...p_Args) : m_Size(p_Size)
+    template <typename... Args>
+    constexpr explicit StaticArray(const SizeType p_Size, const Args &...p_Args) : m_Size(p_Size)
     {
         TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size is bigger than capacity");
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)

@@ -66,13 +66,13 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         }
 
     constexpr Wide() = default;
-    constexpr Wide(const m128 p_Data) : m_Data(p_Data)
+    constexpr explicit Wide(const m128 p_Data) : m_Data(p_Data)
     {
     }
-    constexpr Wide(const T p_Data) : m_Data(set(p_Data))
+    constexpr explicit Wide(const T p_Data) : m_Data(set(p_Data))
     {
     }
-    constexpr Wide(const T *p_Data) : m_Data(loadAligned(p_Data))
+    constexpr explicit Wide(const T *p_Data) : m_Data(loadAligned(p_Data))
     {
     }
 
@@ -81,11 +81,6 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     constexpr Wide(Callable &&p_Callable)
         : m_Data(makeIntrinsic(std::forward<Callable>(p_Callable), std::make_integer_sequence<SizeType, Lanes>{}))
     {
-    }
-
-    constexpr Wide &operator=(const T p_Data)
-    {
-        m_Data = set(p_Data);
     }
 
     static constexpr Wide LoadAligned(const T *p_Data)

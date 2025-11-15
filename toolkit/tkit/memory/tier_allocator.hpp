@@ -85,9 +85,9 @@ class TKIT_API TierAllocator
     static Description CreateDescription(usize p_MaxAllocation, usize p_MinAllocation = sizeof(void *),
                                          usize p_Granularity = 4, f32 p_TierSlotDecay = 0.9f);
 
-    TierAllocator(usize p_MaxAllocation, usize p_MinAllocation = sizeof(void *), usize p_Granularity = 4,
-                  f32 p_TierSlotDecay = 0.9f, usize p_MaxAlignment = 64);
-    TierAllocator(const Description &p_Description, usize p_MaxAlignment = 64);
+    explicit TierAllocator(usize p_MaxAllocation, usize p_MinAllocation = sizeof(void *), usize p_Granularity = 4,
+                           f32 p_TierSlotDecay = 0.9f, usize p_MaxAlignment = 64);
+    explicit TierAllocator(const Description &p_Description, usize p_MaxAlignment = 64);
 
     ~TierAllocator();
 
