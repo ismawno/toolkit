@@ -5,6 +5,9 @@
 #include "tkit/container/array.hpp"
 #include <math.h>
 
+TKIT_COMPILER_WARNING_IGNORE_PUSH()
+TKIT_MSVC_WARNING_IGNORE(4146)
+
 namespace TKit
 {
 namespace Math
@@ -36,6 +39,19 @@ template <typename T, usize N0, usize... N> struct Parent
     using Type = Tensor<T, N0, N...>;
 };
 
+template <typename T> constexpr T SquareRoot(const T p_Value)
+{
+#ifdef TKIT_COMPILER_MSVC
+    if constexpr (std::same_as<T, f32>)
+        return std::sqrtf(p_Value);
+    else if constexpr (std::same_as<T, f64>)
+        return std::sqrt(p_Value);
+    else
+        return std::sqrtf(static_cast<f32>(p_Value));
+#else
+    return std::sqrt(p_Value);
+#endif
+}
 } // namespace Detail
 
 template <typename T, usize N0, usize... N>
@@ -835,3 +851,4 @@ template <typename T, usize C, usize R> constexpr mat<T, R, C> Transpose(const m
 }
 } // namespace Math
 } // namespace TKit
+TKIT_COMPILER_WARNING_IGNORE_POP()

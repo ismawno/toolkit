@@ -20,23 +20,24 @@ TEST_CASE("Math utilities: Min, Max, Clamp, Radians, Degrees", "[Math]")
 
 TEST_CASE("Tensor-wise math utilities", "[Math][Tensor]")
 {
-    const u32v3 v(1, 4, 9);
-    const u32v3 sq = SquareRoot(v);
+    const f32v3 v(1.f, 4.f, 9.f);
+    const f32v3 sq = SquareRoot(v);
     REQUIRE(sq[0] == Catch::Approx(1));
     REQUIRE(sq[1] == Catch::Approx(2));
     REQUIRE(sq[2] == Catch::Approx(3));
 
-    const u32v3 vmin = Min(v, u32v3(2, 2, 2));
+    const u32v3 v2(1, 4, 9);
+    const u32v3 vmin = Min(v2, u32v3(2, 2, 2));
     REQUIRE(vmin[0] == 1);
     REQUIRE(vmin[1] == 2);
     REQUIRE(vmin[2] == 2);
 
-    const u32v3 vmax = Max(v, u32v3(2, 2, 2));
+    const u32v3 vmax = Max(v2, u32v3(2, 2, 2));
     REQUIRE(vmax[0] == 2);
     REQUIRE(vmax[1] == 4);
     REQUIRE(vmax[2] == 9);
 
-    const u32v3 vclamp = Clamp(v, 2, 4);
+    const u32v3 vclamp = Clamp(v2, 2, 4);
     REQUIRE(vclamp[0] == 2);
     REQUIRE(vclamp[1] == 4);
     REQUIRE(vclamp[2] == 4);

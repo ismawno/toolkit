@@ -5,11 +5,7 @@
 
 namespace TKit::Math
 {
-
-template <typename T> constexpr T SquareRoot(const T p_Value)
-{
-    return std::sqrt(p_Value);
-}
+using Detail::SquareRoot;
 
 // TODO: Adapt so SIMD
 template <typename T, usize N0, usize... N> constexpr ten<T, N0, N...> SquareRoot(const ten<T, N0, N...> &p_Tensor)
