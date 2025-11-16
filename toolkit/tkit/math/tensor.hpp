@@ -254,6 +254,15 @@ struct Tensor
         return &Flat[0];
     }
 
+    friend constexpr const T *AsPointer(const Tensor &p_Tensor)
+    {
+        return &p_Tensor.Flat[0];
+    }
+    friend constexpr T *AsPointer(Tensor &p_Tensor)
+    {
+        return &p_Tensor.Flat[0];
+    }
+
     template <usize I = 0> constexpr const ChildType &At(const usize p_Index) const
     {
         static_assert(I < sizeof...(N) + 1, "[TOOLKIT][TENSOR] Axis index exceeds rank of tensor");
