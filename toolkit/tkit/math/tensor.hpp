@@ -26,6 +26,13 @@ template <usize I, usize N0, usize... N> constexpr usize GetAxis()
     else
         return GetAxis<I - 1, N...>();
 }
+template <usize N0, usize... N> constexpr usize GetDiagonalStride()
+{
+    if constexpr (sizeof...(N) == 0)
+        return 1;
+    else
+        return (N * ... * 1) + GetDiagonalStride<N...>();
+}
 template <typename T, usize... N> struct Child
 {
     using Type = Tensor<T, N...>;
@@ -76,52 +83,47 @@ struct Tensor
     constexpr Tensor() = default;
     constexpr Tensor(const Tensor &) = default;
 
-    template <std::convertible_to<T> U> constexpr Tensor(const Tensor<U, N0, N...> &p_Tensor)
+    template <std::convertible_to<T> U, usize M0, usize... M>
+        requires(sizeof...(M) == sizeof...(N) && ((M0 >= N0) && ... && (M >= N)))
+    explicit constexpr Tensor(const Tensor<U, M0, M...> &p_Tensor)
     {
-        for (usize i = 0; i < Length; ++i)
-            Flat[i] = static_cast<T>(p_Tensor.Flat[i]);
+        *this = Slice<T, N0, N...>(p_Tensor);
     }
 
-    template <std::convertible_to<T> U> explicit constexpr Tensor(U &&p_Value)
+    template <std::convertible_to<T> U> explicit constexpr Tensor(const U p_Value)
     {
         for (usize i = 0; i < Length; ++i)
-            Flat[i] = static_cast<T>(std::forward<U>(p_Value));
+            Flat[i] = static_cast<T>(p_Value);
     }
 
     template <typename... Args>
         requires((sizeof...(Args) == Length) && ... && std::convertible_to<Args, T>)
-    explicit constexpr Tensor(Args &&...p_Args) : Flat{static_cast<T>(std::forward<Args>(p_Args))...}
+    explicit constexpr Tensor(const Args... p_Args) : Flat{static_cast<T>(p_Args)...}
     {
     }
     template <typename... Args>
-    explicit constexpr Tensor(Args &&...p_Args)
+    explicit constexpr Tensor(const Args... p_Args)
         requires(!std::same_as<ChildType, T> && sizeof...(Args) == N0 && (std::convertible_to<Args, ChildType> && ...))
-        : Ranked{static_cast<ChildType>(std::forward<Args>(p_Args))...}
+        : Ranked{static_cast<ChildType>(p_Args)...}
     {
-    }
-
-    constexpr Tensor(const Tensor<T, N0 + 1, N...> &p_Tensor)
-    {
-        for (usize i = 0; i < N0; ++i)
-            Ranked[i] = p_Tensor.Ranked[i];
     }
 
     template <typename U>
         requires(std::convertible_to<U, ChildType>)
-    constexpr Tensor(const Tensor<T, N0 - 1, N...> &p_Tensor, U &&p_Value)
+    constexpr Tensor(const Tensor<T, N0 - 1, N...> &p_Tensor, const U p_Value)
         requires(N0 > 1)
     {
         for (usize i = 0; i < N0 - 1; ++i)
             Ranked[i] = p_Tensor.Ranked[i];
-        Ranked[N0 - 1] = static_cast<T>(std::forward<U>(p_Value));
+        Ranked[N0 - 1] = static_cast<T>(p_Value);
     }
 
     template <typename U>
         requires(std::convertible_to<U, ChildType>)
-    constexpr Tensor(U &&p_Value, const Tensor<T, N0 - 1, N...> &p_Tensor)
+    constexpr Tensor(const U p_Value, const Tensor<T, N0 - 1, N...> &p_Tensor)
         requires(N0 > 1)
     {
-        Ranked[0] = static_cast<T>(std::forward<U>(p_Value));
+        Ranked[0] = static_cast<T>(p_Value);
         for (usize i = 0; i < N0 - 1; ++i)
             Ranked[i + 1] = p_Tensor.Ranked[i];
     }
@@ -134,16 +136,16 @@ struct Tensor
             Flat[i] = static_cast<T>(p_Tensor.Flat[i]);
     }
 
-    template <typename U> static constexpr Tensor Identity(U &&p_Value)
+    template <std::convertible_to<T> U> static constexpr Tensor Identity(const U p_Value)
     {
-        Tensor tensor;
-        for (usize i = 0; i < Length; i += N0)
-            tensor.Flat[i] = static_cast<T>(std::forward<U>(p_Value));
+        Tensor tensor{static_cast<T>(0)};
+        constexpr usize stride = Detail::GetDiagonalStride<N0, N...>();
+        for (usize i = 0; i < Length; i += stride)
+            tensor.Flat[i] = static_cast<T>(p_Value);
         return tensor;
     }
 
     static constexpr Tensor Identity()
-        requires((Rank > 1) && ... && (N0 == N))
     {
         return Identity(1);
     }
@@ -195,21 +197,32 @@ struct Tensor
     template <typename I0, typename... I>
         requires(sizeof...(I) == sizeof...(N) &&
                  (std::convertible_to<I0, usize> && ... && std::convertible_to<I, usize>))
-    friend constexpr Tensor<T, N0 - 1, (N - 1)...> SubTensor(const Tensor &p_Tensor, I0 &&p_First, I &&...p_Rest)
+    friend constexpr void SubTensorImpl(const Tensor &p_Tensor, Tensor<T, N0 - 1, (N - 1)...> &p_Minor,
+                                        const I0 p_First, const I... p_Rest)
         requires((N0 > 1) && ... && (N0 == N))
     {
         const usize first = static_cast<usize>(p_First);
         TKIT_ASSERT(first < N0, "[TOOLKIT][TENSOR] Index is out of bounds");
-        Tensor<T, N0 - 1, (N - 1)...> minor;
         for (usize i = 0, j = 0; i < N0; ++i)
             if (i != first)
             {
                 if constexpr (sizeof...(I) == 0)
-                    minor.Flat[j] = p_Tensor.Flat[i];
+                    p_Minor.Flat[j] = p_Tensor.Flat[i];
                 else
-                    minor.Ranked[j] = SubTensor(p_Tensor.Ranked[i], std::forward<I>(p_Rest)...);
+                    SubTensorImpl(p_Tensor.Ranked[i], p_Minor.Ranked[j], p_Rest...);
                 ++j;
             }
+    }
+
+    template <typename I0, typename... I>
+        requires(sizeof...(I) == sizeof...(N) &&
+                 (std::convertible_to<I0, usize> && ... && std::convertible_to<I, usize>))
+    friend constexpr Tensor<T, N0 - 1, (N - 1)...> SubTensor(const Tensor &p_Tensor, const I0 p_First,
+                                                             const I... p_Rest)
+        requires((N0 > 1) && ... && (N0 == N))
+    {
+        Tensor<T, N0 - 1, (N - 1)...> minor;
+        SubTensorImpl(p_Tensor, minor, p_First, p_Rest...);
         return minor;
     }
 
@@ -243,6 +256,27 @@ struct Tensor
             permuted.Flat[pindex] = p_Tensor.Flat[i];
         }
         return permuted;
+    }
+
+    template <typename U, usize M0, usize... M>
+        requires(std::convertible_to<T, U> && sizeof...(M) == sizeof...(N) && ((N0 >= M0) && ... && (N >= M)))
+    friend constexpr void SliceImpl(const Tensor &p_Tensor, Tensor<U, M0, M...> &p_Sliced)
+    {
+        constexpr usize smallest = M0 < N0 ? M0 : N0;
+        for (usize i = 0; i < smallest; ++i)
+            if constexpr (sizeof...(M) == 0)
+                p_Sliced.Flat[i] = static_cast<U>(p_Tensor.Flat[i]);
+            else
+                SliceImpl(p_Tensor[i], p_Sliced[i]);
+    }
+
+    template <std::convertible_to<T> U, usize M0, usize... M>
+        requires(std::convertible_to<T, U> && sizeof...(M) == sizeof...(N) && ((N0 >= M0) && ... && (N >= M)))
+    friend constexpr Tensor<U, M0, M...> Slice(const Tensor &p_Tensor)
+    {
+        Tensor<U, M0, M...> sliced;
+        SliceImpl(p_Tensor, sliced);
+        return sliced;
     }
 
     constexpr const T *GetData() const

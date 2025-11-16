@@ -15,9 +15,8 @@ template <typename T> struct Quaternion
     constexpr Quaternion(const Quaternion &) = default;
 
     template <std::convertible_to<T> U>
-    constexpr Quaternion(U &&p_W, U &&p_X, U &&p_Y, U &&p_Z)
-        : w(static_cast<T>(std::forward<U>(p_W))), x(static_cast<T>(std::forward<U>(p_X))),
-          y(static_cast<T>(std::forward<U>(p_Y))), z(static_cast<T>(std::forward<U>(p_Z)))
+    constexpr Quaternion(const U p_W, const U p_X, const U p_Y, const U p_Z)
+        : w(static_cast<T>(p_W)), x(static_cast<T>(p_X)), y(static_cast<T>(p_Y)), z(static_cast<T>(p_Z))
     {
     }
     constexpr Quaternion(const T p_W, const T p_X, const T p_Y, const T p_Z) : w(p_W), x(p_X), y(p_Y), z(p_Z)
@@ -51,14 +50,14 @@ template <typename T> struct Quaternion
     }
 
     template <std::convertible_to<T> U>
-    constexpr Quaternion(const vec3<T> &p_Vector, U &&p_Value)
-        : w(p_Vector[0]), x(p_Vector[1]), y(p_Vector[2]), z(static_cast<T>(std::forward<U>(p_Value)))
+    constexpr Quaternion(const vec3<T> &p_Vector, const U p_Value)
+        : w(p_Vector[0]), x(p_Vector[1]), y(p_Vector[2]), z(static_cast<T>(p_Value))
     {
     }
 
     template <std::convertible_to<T> U>
-    constexpr Quaternion(U &&p_Value, const vec3<T> &p_Vector)
-        : w(static_cast<T>(std::forward<U>(p_Value))), x(p_Vector[0]), y(p_Vector[1]), z(p_Vector[2])
+    constexpr Quaternion(const U p_Value, const vec3<T> &p_Vector)
+        : w(static_cast<T>(p_Value)), x(p_Vector[0]), y(p_Vector[1]), z(p_Vector[2])
     {
     }
 
