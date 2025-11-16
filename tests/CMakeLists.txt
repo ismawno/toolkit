@@ -27,6 +27,7 @@ set(SOURCES
     tests/simd/wide.cpp
     tests/math/tensor.cpp
     tests/math/math.cpp
+    tests/math/quaternion.cpp
     tests/utils/result.cpp
     tests/utils/hash.cpp)
 
