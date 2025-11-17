@@ -427,58 +427,6 @@ struct Tensor
 #undef CREATE_CMP_OP
 #undef CREATE_SELF_OP
 
-namespace Detail
-{
-template <typename T, usize N, usize C2, usize R1>
-constexpr Tensor<T, C2, R1> MatMulImpl(const Tensor<T, N, R1> &p_Left, const Tensor<T, C2, N> &p_Right)
-{
-    Tensor<T, C2, R1> tensor;
-    for (usize i = 0; i < C2; ++i)
-        for (usize j = 0; j < R1; ++j)
-        {
-            T sum{0};
-            for (usize k = 0; k < N; ++k)
-                sum += p_Left[k][j] * p_Right[i][k];
-            tensor[i][j] = sum;
-        }
-    return tensor;
-}
-template <typename T, usize NL0, usize... NL, usize NR0, usize... NR>
-    requires(sizeof...(NL) == sizeof...(NR))
-constexpr auto MatMul(const Tensor<T, NL0, NL...> &p_Left, const Tensor<T, NR0, NR...> &p_Right)
-{
-    if constexpr (sizeof...(NL) == 0)
-    {
-        static_assert(NL0 == NR0, "[TOOLKIT][TENSOR] Cannot multiply to vectors with different lengths");
-        Tensor<T, NL0> result;
-        for (usize i = 0; i < NL0; ++i)
-            result.Flat[i] = p_Left.Flat[i] * p_Right.Flat[i];
-        return result;
-    }
-    else if constexpr (sizeof...(NL) == 1)
-        return MatMulImpl(p_Left, p_Right);
-    else
-    {
-        static_assert(NL0 == NR0, "[TOOLKIT][TENSOR] Cannot multiply to tensors with different high-order axis size");
-        using ReturnChildType =
-            decltype(MatMul(std::declval<decltype(p_Left[0])>(), std::declval<decltype(p_Right[0])>()));
-        using ReturnType = typename ReturnChildType::template ParentType<NL0>;
-
-        ReturnType result;
-        for (usize i = 0; i < NL0; ++i)
-            result[i] = MatMul(p_Left[i], p_Right[i]);
-        return result;
-    }
-}
-} // namespace Detail
-
-template <typename T, usize NL0, usize... NL, usize NR0, usize... NR>
-    requires(sizeof...(NL) == sizeof...(NR))
-constexpr auto operator*(const Tensor<T, NL0, NL...> &p_Left, const Tensor<T, NR0, NR...> &p_Right)
-{
-    return Detail::MatMul(p_Left, p_Right);
-}
-
 } // namespace Math
 namespace Alias
 {
@@ -716,6 +664,35 @@ using namespace Alias;
 
 namespace Math
 {
+template <typename T, usize N, usize C2, usize R1>
+constexpr mat<T, C2, R1> operator*(const mat<T, N, R1> &p_Left, const mat<T, C2, N> &p_Right)
+{
+    mat<T, C2, R1> result;
+    for (usize i = 0; i < C2; ++i)
+        for (usize j = 0; j < R1; ++j)
+        {
+            T sum{static_cast<T>(0)};
+            for (usize k = 0; k < N; ++k)
+                sum += p_Left[k][j] * p_Right[i][k];
+            result[i][j] = sum;
+        }
+    return result;
+}
+
+template <typename T, usize N, usize R>
+constexpr vec<T, R> operator*(const mat<T, N, R> &p_Left, const vec<T, N> &p_Right)
+{
+    vec<T, R> result;
+    for (usize i = 0; i < R; ++i)
+    {
+        T sum{static_cast<T>(0)};
+        for (usize j = 0; j < N; ++j)
+            sum += p_Left[j][i] * p_Right[j];
+        result[i] = sum;
+    }
+    return result;
+}
+
 template <typename T, usize N>
     requires(N == 2 || N == 3)
 constexpr auto Cross(const vec<T, N> &p_Left, const vec<T, N> &p_Right)

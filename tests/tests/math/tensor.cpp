@@ -98,17 +98,11 @@ TEST_CASE("Matrix multiplication", "[Tensor][Matrix]")
     const u32m2 a(1, 2, 3, 4);
     const u32m2 b(2, 0, 1, 2);
 
-    const u32t<2, 2, 2> t1{a, a};
-    const u32t<2, 2, 2> t2{b, b};
-
-    const u32t<2, 2, 2> c = t1 * t2;
-    for (usize i = 0; i < 2; ++i)
-    {
-        REQUIRE(c[i][0][0] == 1 * 2 + 3 * 0);
-        REQUIRE(c[i][1][0] == 1 * 1 + 3 * 2);
-        REQUIRE(c[i][0][1] == 2 * 2 + 4 * 0);
-        REQUIRE(c[i][1][1] == 2 * 1 + 4 * 2);
-    }
+    const u32m2 c = a * b;
+    REQUIRE(c[0][0] == 1 * 2 + 3 * 0);
+    REQUIRE(c[1][0] == 1 * 1 + 3 * 2);
+    REQUIRE(c[0][1] == 2 * 2 + 4 * 0);
+    REQUIRE(c[1][1] == 2 * 1 + 4 * 2);
 }
 
 TEST_CASE("Tensor reshape and data access", "[Tensor]")
