@@ -105,6 +105,28 @@ TEST_CASE("Matrix multiplication", "[Tensor][Matrix]")
     REQUIRE(c[1][1] == 2 * 1 + 4 * 2);
 }
 
+template <usize N, typename... Args> void CreateInverseTest(const Args... p_Args)
+{
+    const f32m<N> mat{p_Args...};
+    const f32m<N> inv = Inverse(mat);
+    const f32m<N> id = inv * mat;
+    for (usize i = 0; i < N; ++i)
+        for (usize j = 0; j < N; ++j)
+            if (i == j)
+                REQUIRE(id[i][j] == Catch::Approx(1.f).margin(0.00001f));
+            else
+                REQUIRE(id[i][j] == Catch::Approx(0.f).margin(0.00001f));
+}
+
+TEST_CASE("Matrix inverse", "[Tensor][Matrix]")
+{
+    CreateInverseTest<2>(1.f, 2.f, 5.f, 7.f);
+    CreateInverseTest<3>(1.f, 2.f, 5.f, 7.f, 1.f, 3.f, 6.f, 1.f, 1.f);
+    CreateInverseTest<4>(1.f, 2.f, 5.f, 7.f, 1.f, 3.f, 6.f, 1.f, 1.f, 0.f, 0.f, 1.f, 2.f, 7.f, 1.f, 3.f);
+    CreateInverseTest<6>(1.f, 2.f, 3.f, 4.f, 5.f, 6.f, 0.f, 2.f, 3.f, 4.f, 5.f, 6.f, 0.f, 0.f, 3.f, 4.f, 5.f, 6.f, 0.f,
+                         0.f, 0.f, 4.f, 5.f, 6.f, 0.f, 0.f, 0.f, 0.f, 5.f, 6.f, 0.f, 0.f, 0.f, 0.f, 0.f, 6.f);
+}
+
 TEST_CASE("Tensor reshape and data access", "[Tensor]")
 {
     const u32v4 v(1, 2, 3, 4);
@@ -135,16 +157,16 @@ TEST_CASE("High-order matrix transpose and double-transpose identity", "[Tensor]
     REQUIRE(tr[4][2] == a[2][4]);
 }
 
-// TEST_CASE("Tensor permutation (axes swap)", "[Tensor][Permutation]")
-// {
-//     const u32t<2, 3> m(1, 2, 3, 4, 5, 6);
-//
-//     const u32t<3, 2> permuted = Permute<1, 0>(m);
-//
-//     for (usize i = 0; i < 2; ++i)
-//         for (usize j = 0; j < 3; ++j)
-//             REQUIRE(m[i][j] == permuted[j][i]);
-// }
+TEST_CASE("Tensor permutation (axes swap)", "[Tensor][Permutation]")
+{
+    const u32t<2, 3> m(1, 2, 3, 4, 5, 6);
+
+    const u32t<3, 2> permuted = Permute<1, 0>(m);
+
+    for (usize i = 0; i < 2; ++i)
+        for (usize j = 0; j < 3; ++j)
+            REQUIRE(m[i][j] == permuted[j][i]);
+}
 
 TEST_CASE("Tensor permutation with higher-rank tensors", "[Tensor][Permutation]")
 {
