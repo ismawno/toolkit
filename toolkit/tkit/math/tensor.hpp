@@ -102,20 +102,21 @@ struct Tensor
     {
     }
     template <typename... Args>
-    explicit constexpr Tensor(const Args... p_Args)
+    explicit constexpr Tensor(const Args &...p_Args)
         requires(!std::same_as<ChildType, T> && sizeof...(Args) == N0 && (std::convertible_to<Args, ChildType> && ...))
         : Ranked{static_cast<ChildType>(p_Args)...}
     {
     }
 
-    template <typename U>
-        requires(std::convertible_to<U, ChildType>)
-    constexpr Tensor(const Tensor<T, N0 - 1, N...> &p_Tensor, const U p_Value)
+    template <typename... Args>
+        requires((sizeof...(Args) > 0 && sizeof...(Args) < N0) && ... && std::convertible_to<Args, ChildType>)
+    constexpr Tensor(const Tensor<T, N0 - sizeof...(Args), N...> &p_Tensor, const Args &...p_Args)
         requires(N0 > 1)
     {
-        for (usize i = 0; i < N0 - 1; ++i)
+        usize i = 0;
+        for (; i < N0 - sizeof...(Args); ++i)
             Ranked[i] = p_Tensor[i];
-        Ranked[N0 - 1] = static_cast<T>(p_Value);
+        ((Ranked[i++] = static_cast<T>(p_Args)), ...);
     }
 
     template <typename U>
