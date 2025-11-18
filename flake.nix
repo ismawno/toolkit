@@ -2,7 +2,7 @@
   description = "Dev shell for toolkit";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
   outputs =
@@ -16,15 +16,16 @@
         name = "toolkit";
 
         buildInputs = with pkgs; [
-          cmake
-          clang-tools
           clang
+          clang-tools
           lld
-          llvmPackages_19.llvm
+          libcxx
+
+          cmake
           fmt
           pkg-config
           hwloc
-          linuxPackages.perf
+          perf
           gnumake
           python313
         ];
@@ -32,6 +33,7 @@
           export SHELL=${pkgs.zsh}/bin/zsh
           export CC=clang
           export CXX=clang++
+          export CLANGD_FLAGS="$CLANGD_FLAGS --query-driver=/nix/store/*-clang-wrapper-*/bin/clang++"
         '';
       };
     };
