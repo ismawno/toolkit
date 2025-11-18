@@ -389,7 +389,7 @@ struct Tensor
     CREATE_CMP_OP(!=)
 
 #define CREATE_SELF_OP(p_Op)                                                                                           \
-    constexpr Tensor &operator p_Op##=(const Tensor & p_Other)                                                         \
+    constexpr Tensor &operator p_Op## = (const Tensor &p_Other)                                                        \
     {                                                                                                                  \
         *this = *this p_Op p_Other;                                                                                    \
         return *this;                                                                                                  \
