@@ -36,7 +36,7 @@ TEST_CASE("Constructor and initial state", "[BlockAllocator]")
     REQUIRE(alloc.GetAllocationSize() == allocSize);
     REQUIRE(alloc.GetAllocationCapacityCount() == bufSize / allocSize);
 
-    u32 dummy;
+    u32 dummy = 0;
     REQUIRE(!alloc.Belongs(&dummy));
 }
 

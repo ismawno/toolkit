@@ -59,7 +59,7 @@ TEST_CASE("Constructor and initial state", "[ArenaAllocator]")
     REQUIRE(arena.GetAllocated() == 0);
     REQUIRE(arena.GetRemaining() == size);
     // nothing has been allocated → no pointer should belong
-    u32 dummy;
+    u32 dummy = 0;
     REQUIRE(!arena.Belongs(&dummy));
 }
 
