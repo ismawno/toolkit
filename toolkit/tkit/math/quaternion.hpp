@@ -145,104 +145,6 @@ template <typename T> struct Quaternion
         return Quaternion{Cosine(p_Angle * half), p_Axis * s};
     }
 
-    friend constexpr T GetAngle(const Quaternion &p_Quaternion)
-    {
-        constexpr T cosOneOverTwo = static_cast<T>(0.877582561890372716130286068203503191);
-        constexpr T zero = static_cast<T>(0);
-        constexpr T two = static_cast<T>(2);
-        if (Absolute(p_Quaternion.w) > cosOneOverTwo)
-        {
-            T const a = AntiSine(SquareRoot(p_Quaternion.x * p_Quaternion.x + p_Quaternion.y * p_Quaternion.y +
-                                            p_Quaternion.z * p_Quaternion.z)) *
-                        two;
-            if (p_Quaternion.w < zero)
-                return Pi<T>() * two - a;
-            return a;
-        }
-
-        return AntiCosine(p_Quaternion.w) * two;
-    }
-
-    friend constexpr vec3<T> GetAxis(const Quaternion &p_Quaternion)
-    {
-        constexpr T zero = static_cast<T>(0);
-        constexpr T one = static_cast<T>(1);
-        const T tmp1 = one - p_Quaternion.w * p_Quaternion.w;
-        if (tmp1 <= zero)
-            return vec3<T>{zero, zero, one};
-        const T tmp2 = one / SquareRoot(tmp1);
-        return vec3<T>{p_Quaternion.x * tmp2, p_Quaternion.y * tmp2, p_Quaternion.z * tmp2};
-    }
-
-    friend constexpr T Pitch(const Quaternion &p_Quaternion)
-    {
-        constexpr T two = static_cast<T>(2);
-        const T y = two * (p_Quaternion.y * p_Quaternion.z + p_Quaternion.w * p_Quaternion.x);
-        const T x = p_Quaternion.w * p_Quaternion.w - p_Quaternion.x * p_Quaternion.x -
-                    p_Quaternion.y * p_Quaternion.y + p_Quaternion.z * p_Quaternion.z;
-
-        if (ApproachesZero(x) && ApproachesZero(y))
-            return two * AntiTangent(p_Quaternion.x, p_Quaternion.w);
-        return AntiTangent(y, x);
-    }
-    friend constexpr T Yaw(const Quaternion &p_Quaternion)
-    {
-        return AntiSine(Clamp(static_cast<T>(-2) * (p_Quaternion.x * p_Quaternion.z - p_Quaternion.w * p_Quaternion.y),
-                              static_cast<T>(-1), static_cast<T>(1)));
-    }
-    friend constexpr T Roll(const Quaternion &p_Quaternion)
-    {
-        constexpr T two = static_cast<T>(2);
-        const T y = two * (p_Quaternion.x * p_Quaternion.y + p_Quaternion.w * p_Quaternion.z);
-        const T x = p_Quaternion.w * p_Quaternion.w + p_Quaternion.x * p_Quaternion.x -
-                    p_Quaternion.y * p_Quaternion.y - p_Quaternion.z * p_Quaternion.z;
-
-        if (ApproachesZero(x) && ApproachesZero(y))
-            return static_cast<T>(0);
-        return AntiTangent(y, x);
-    }
-
-    friend constexpr vec3<T> ToEulerAngles(const Quaternion &p_Quaternion)
-    {
-        return vec3<T>{Pitch(p_Quaternion), Yaw(p_Quaternion), Roll(p_Quaternion)};
-    }
-
-    friend constexpr mat3<T> ToMat3(const Quaternion &p_Quaternion)
-    {
-        mat3<T> result = mat3<T>::Identity();
-        const T qxx(p_Quaternion.x * p_Quaternion.x);
-        const T qyy(p_Quaternion.y * p_Quaternion.y);
-        const T qzz(p_Quaternion.z * p_Quaternion.z);
-        const T qxz(p_Quaternion.x * p_Quaternion.z);
-        const T qxy(p_Quaternion.x * p_Quaternion.y);
-        const T qyz(p_Quaternion.y * p_Quaternion.z);
-        const T qwx(p_Quaternion.w * p_Quaternion.x);
-        const T qwy(p_Quaternion.w * p_Quaternion.y);
-        const T qwz(p_Quaternion.w * p_Quaternion.z);
-
-        constexpr T one = static_cast<T>(1);
-        constexpr T two = static_cast<T>(2);
-
-        result[0][0] = one - two * (qyy + qzz);
-        result[0][1] = two * (qxy + qwz);
-        result[0][2] = two * (qxz - qwy);
-
-        result[1][0] = two * (qxy - qwz);
-        result[1][1] = one - two * (qxx + qzz);
-        result[1][2] = two * (qyz + qwx);
-
-        result[2][0] = two * (qxz + qwy);
-        result[2][1] = two * (qyz - qwx);
-        result[2][2] = one - two * (qxx + qyy);
-        return result;
-    }
-
-    friend constexpr mat4<T> ToMat4(const Quaternion &p_Quaternion)
-    {
-        const mat3<T> m3 = ToMat3(p_Quaternion);
-        return mat4<T>{vec4<T>{m3[0], 0.f}, vec4<T>{m3[1], 0.f}, vec4<T>{m3[2], 0.f}, vec4<T>{0.f, 0.f, 0.f, 1.f}};
-    }
-
     constexpr const T *GetData() const
     {
         return &x;
@@ -410,6 +312,102 @@ template <typename T> constexpr T Cross(const Quaternion<T> &p_Left, const Quate
                          p_Left.w * p_Right.x + p_Left.x * p_Right.w + p_Left.y * p_Right.z - p_Left.z * p_Right.y,
                          p_Left.w * p_Right.y + p_Left.y * p_Right.w + p_Left.z * p_Right.x - p_Left.x * p_Right.z,
                          p_Left.w * p_Right.z + p_Left.z * p_Right.w + p_Left.x * p_Right.y - p_Left.y * p_Right.x);
+}
+template <typename T> constexpr T GetAngle(const Quaternion<T> &p_Quaternion)
+{
+    constexpr T cosOneOverTwo = static_cast<T>(0.877582561890372716130286068203503191);
+    constexpr T zero = static_cast<T>(0);
+    constexpr T two = static_cast<T>(2);
+    if (Absolute(p_Quaternion.w) > cosOneOverTwo)
+    {
+        T const a = AntiSine(SquareRoot(p_Quaternion.x * p_Quaternion.x + p_Quaternion.y * p_Quaternion.y +
+                                        p_Quaternion.z * p_Quaternion.z)) *
+                    two;
+        if (p_Quaternion.w < zero)
+            return Pi<T>() * two - a;
+        return a;
+    }
+
+    return AntiCosine(p_Quaternion.w) * two;
+}
+
+template <typename T> constexpr vec3<T> GetAxis(const Quaternion<T> &p_Quaternion)
+{
+    constexpr T zero = static_cast<T>(0);
+    constexpr T one = static_cast<T>(1);
+    const T tmp1 = one - p_Quaternion.w * p_Quaternion.w;
+    if (tmp1 <= zero)
+        return vec3<T>{zero, zero, one};
+    const T tmp2 = one / SquareRoot(tmp1);
+    return vec3<T>{p_Quaternion.x * tmp2, p_Quaternion.y * tmp2, p_Quaternion.z * tmp2};
+}
+
+template <typename T> constexpr T Pitch(const Quaternion<T> &p_Quaternion)
+{
+    constexpr T two = static_cast<T>(2);
+    const T y = two * (p_Quaternion.y * p_Quaternion.z + p_Quaternion.w * p_Quaternion.x);
+    const T x = p_Quaternion.w * p_Quaternion.w - p_Quaternion.x * p_Quaternion.x - p_Quaternion.y * p_Quaternion.y +
+                p_Quaternion.z * p_Quaternion.z;
+
+    if (ApproachesZero(x) && ApproachesZero(y))
+        return two * AntiTangent(p_Quaternion.x, p_Quaternion.w);
+    return AntiTangent(y, x);
+}
+template <typename T> constexpr T Yaw(const Quaternion<T> &p_Quaternion)
+{
+    return AntiSine(Clamp(static_cast<T>(-2) * (p_Quaternion.x * p_Quaternion.z - p_Quaternion.w * p_Quaternion.y),
+                          static_cast<T>(-1), static_cast<T>(1)));
+}
+template <typename T> constexpr T Roll(const Quaternion<T> &p_Quaternion)
+{
+    constexpr T two = static_cast<T>(2);
+    const T y = two * (p_Quaternion.x * p_Quaternion.y + p_Quaternion.w * p_Quaternion.z);
+    const T x = p_Quaternion.w * p_Quaternion.w + p_Quaternion.x * p_Quaternion.x - p_Quaternion.y * p_Quaternion.y -
+                p_Quaternion.z * p_Quaternion.z;
+
+    if (ApproachesZero(x) && ApproachesZero(y))
+        return static_cast<T>(0);
+    return AntiTangent(y, x);
+}
+
+template <typename T> constexpr vec3<T> ToEulerAngles(const Quaternion<T> &p_Quaternion)
+{
+    return vec3<T>{Pitch(p_Quaternion), Yaw(p_Quaternion), Roll(p_Quaternion)};
+}
+
+template <typename T> constexpr mat3<T> ToMat3(const Quaternion<T> &p_Quaternion)
+{
+    mat3<T> result = mat3<T>::Identity();
+    const T qxx(p_Quaternion.x * p_Quaternion.x);
+    const T qyy(p_Quaternion.y * p_Quaternion.y);
+    const T qzz(p_Quaternion.z * p_Quaternion.z);
+    const T qxz(p_Quaternion.x * p_Quaternion.z);
+    const T qxy(p_Quaternion.x * p_Quaternion.y);
+    const T qyz(p_Quaternion.y * p_Quaternion.z);
+    const T qwx(p_Quaternion.w * p_Quaternion.x);
+    const T qwy(p_Quaternion.w * p_Quaternion.y);
+    const T qwz(p_Quaternion.w * p_Quaternion.z);
+
+    constexpr T one = static_cast<T>(1);
+    constexpr T two = static_cast<T>(2);
+
+    result[0][0] = one - two * (qyy + qzz);
+    result[0][1] = two * (qxy + qwz);
+    result[0][2] = two * (qxz - qwy);
+
+    result[1][0] = two * (qxy - qwz);
+    result[1][1] = one - two * (qxx + qzz);
+    result[1][2] = two * (qyz + qwx);
+
+    result[2][0] = two * (qxz + qwy);
+    result[2][1] = two * (qyz - qwx);
+    result[2][2] = one - two * (qxx + qyy);
+    return result;
+}
+template <typename T> constexpr mat4<T> ToMat4(const Quaternion<T> &p_Quaternion)
+{
+    const mat3<T> m3 = ToMat3(p_Quaternion);
+    return mat4<T>{vec4<T>{m3[0], 0.f}, vec4<T>{m3[1], 0.f}, vec4<T>{m3[2], 0.f}, vec4<T>{0.f, 0.f, 0.f, 1.f}};
 }
 
 } // namespace Math
