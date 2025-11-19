@@ -325,7 +325,7 @@ template <Valid T, typename Traits = Container::ArrayTraits<T>> class Wide
     }
 
 #    define CREATE_SELF_OP(p_Op, p_Requires)                                                                           \
-        constexpr Wide &operator p_Op##=(const Wide & p_Other) p_Requires                                              \
+        constexpr Wide &operator p_Op## = (const Wide &p_Other)p_Requires                                              \
         {                                                                                                              \
             *this = *this p_Op p_Other;                                                                                \
             return *this;                                                                                              \
@@ -646,20 +646,20 @@ template <Valid T, typename Traits = Container::ArrayTraits<T>> class Wide
     static constexpr m256 makeIntrinsic(Callable &&p_Callable, std::integer_sequence<SizeType, I...>)
     {
         if constexpr (s_Equals<__m256>)
-            return _mm256_setr_ps(static_cast<T>(p_Callable(I))...);
+            return _mm256_setr_ps(static_cast<T>(std::forward<Callable>(p_Callable)(I))...);
         else if constexpr (s_Equals<__m256d>)
-            return _mm256_setr_pd(static_cast<T>(p_Callable(I))...);
+            return _mm256_setr_pd(static_cast<T>(std::forward<Callable>(p_Callable)(I))...);
 #    ifdef TKIT_SIMD_AVX2
         else if constexpr (s_Equals<__m256i>)
         {
             if constexpr (s_IsSize<8>)
-                return _mm256_setr_epi64x(static_cast<T>(p_Callable(I))...);
+                return _mm256_setr_epi64x(static_cast<T>(std::forward<Callable>(p_Callable)(I))...);
             else if constexpr (s_IsSize<4>)
-                return _mm256_setr_epi32(static_cast<T>(p_Callable(I))...);
+                return _mm256_setr_epi32(static_cast<T>(std::forward<Callable>(p_Callable)(I))...);
             else if constexpr (s_IsSize<2>)
-                return _mm256_setr_epi16(static_cast<T>(p_Callable(I))...);
+                return _mm256_setr_epi16(static_cast<T>(std::forward<Callable>(p_Callable)(I))...);
             else if constexpr (s_IsSize<1>)
-                return _mm256_setr_epi8(static_cast<T>(p_Callable(I))...);
+                return _mm256_setr_epi8(static_cast<T>(std::forward<Callable>(p_Callable)(I))...);
         }
 #    endif
         CREATE_BAD_BRANCH()

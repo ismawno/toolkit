@@ -421,7 +421,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     }
 
 #    define CREATE_SELF_OP(p_Op, p_Requires)                                                                           \
-        constexpr Wide &operator p_Op##=(const Wide & p_Other) p_Requires                                              \
+        constexpr Wide &operator p_Op## = (const Wide &p_Other)p_Requires                                              \
         {                                                                                                              \
             *this = *this p_Op p_Other;                                                                                \
             return *this;                                                                                              \
@@ -592,7 +592,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     template <typename Callable, SizeType... I>
     static constexpr wide1_t makeIntrinsic(Callable &&p_Callable, std::integer_sequence<SizeType, I...>)
     {
-        alignas(Alignment) const T data[Lanes] = {static_cast<T>(p_Callable(I))...};
+        alignas(Alignment) const T data[Lanes] = {static_cast<T>(std::forward<Callable>(p_Callable)(I))...};
         return load1(data);
     }
 
