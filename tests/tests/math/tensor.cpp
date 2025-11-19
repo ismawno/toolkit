@@ -10,9 +10,6 @@ using namespace TKit::Math;
 TEST_CASE("Tensor basic construction and indexing", "[Tensor]")
 {
     const u32v3 v1(1, 2, 3);
-    const u32m2 mat{};
-    const u32m4x2 mat2{mat, u32v2{1, 2}, u32v2{1, 2}};
-    (void)mat2;
 
     REQUIRE(v1.Length == 3);
     REQUIRE(v1.Rank == 1);

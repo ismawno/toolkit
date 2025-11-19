@@ -141,10 +141,11 @@ struct Tensor
     constexpr Tensor &operator=(const Tensor<U, M0, M...> &p_Tensor)
     {
         *this = Slice<T, N0, N...>(p_Tensor);
+        return *this;
     }
 
     template <std::convertible_to<T> U, usize M0, usize... M>
-        requires(sizeof...(M) == sizeof...(N) && ((M0 >= N0) && ... && (M >= N)))
+        requires(sizeof...(M) == sizeof...(N) && ((N0 >= M0) && ... && (N >= M)))
     constexpr operator Tensor<U, M0, M...>()
     {
         return Slice<U, M0, M...>(*this);
