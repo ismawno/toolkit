@@ -18,18 +18,13 @@ struct Tensor;
 
 namespace Detail
 {
-// this is because msvc is buggy
-template <usize N, usize M> constexpr usize Subtract()
-{
-    return N - M;
-}
-template <usize I, usize N0, usize... N> constexpr usize GetAxis()
+template <usize I, usize N0, usize... N> constexpr usize GetAxisSize()
 {
     static_assert(I <= sizeof...(N), "[TOOLKIT][TENSOR] Axis index exceeds rank of tensor");
     if constexpr (I == 0)
         return N0;
     else
-        return GetAxis<I - 1, N...>();
+        return GetAxisSize<I - 1, N...>();
 }
 template <usize N0, usize... N> constexpr usize GetDiagonalStride()
 {
@@ -75,16 +70,17 @@ struct Tensor
 
     template <usize NP> using ParentType = typename Detail::Parent<T, NP, N0, N...>::Type;
 
-    static constexpr usize Length = (N0 * ... * N);
+    static constexpr usize ChildSize = N0;
+    static constexpr usize Size = (N0 * ... * N);
     static constexpr usize Rank = sizeof...(N) + 1;
 
     template <usize I>
         requires(I < Rank)
-    static constexpr usize Axis = Detail::GetAxis<I, N0, N...>();
+    static constexpr usize AxisSize = Detail::GetAxisSize<I, N0, N...>();
 
     template <usize I0, usize... I>
         requires(sizeof...(I) == sizeof...(N) && ((I0 < Rank) && ... && (I < Rank)))
-    using Permuted = Tensor<T, Axis<I0>, Axis<I>...>;
+    using Permuted = Tensor<T, AxisSize<I0>, AxisSize<I>...>;
 
     constexpr Tensor() = default;
     constexpr Tensor(const Tensor &) = default;
@@ -98,12 +94,12 @@ struct Tensor
 
     template <std::convertible_to<T> U> explicit constexpr Tensor(const U p_Value)
     {
-        for (usize i = 0; i < Length; ++i)
+        for (usize i = 0; i < Size; ++i)
             Flat[i] = static_cast<T>(p_Value);
     }
 
     template <typename... Args>
-        requires((sizeof...(Args) == Length) && ... && std::convertible_to<Args, T>)
+        requires((sizeof...(Args) == Size) && ... && std::convertible_to<Args, T>)
     explicit constexpr Tensor(const Args... p_Args) : Flat{static_cast<T>(p_Args)...}
     {
     }
@@ -114,9 +110,10 @@ struct Tensor
     {
     }
 
+#ifndef TKIT_COMPILER_MSVC
     template <std::convertible_to<T> U, typename... Args>
         requires((sizeof...(Args) > 0 && sizeof...(Args) < N0) && ... && std::convertible_to<Args, ChildType>)
-    constexpr Tensor(const Tensor<U, Detail::Subtract<N0, sizeof...(Args)>(), N...> &p_Tensor, const Args &...p_Args)
+    constexpr Tensor(const Tensor<U, N0 - sizeof...(Args), N...> &p_Tensor, const Args &...p_Args)
         requires(N0 > 1)
     {
         usize i = 0;
@@ -124,9 +121,22 @@ struct Tensor
             Ranked[i] = static_cast<ChildType>(p_Tensor[i]);
         ((Ranked[i++] = static_cast<ChildType>(p_Args)), ...);
     }
+#else
+    template <typename Ten, typename... Args>
+        requires((sizeof...(Args) > 0 && sizeof...(Args) < N0 && Ten::ChildSize == N0 - sizeof...(Args)) && ... &&
+                 std::convertible_to<Args, ChildType>)
+    constexpr Tensor(const Ten &p_Tensor, const Args &...p_Args)
+        requires(N0 > 1)
+    {
+        usize i = 0;
+        for (; i < N0 - sizeof...(Args); ++i)
+            Ranked[i] = static_cast<ChildType>(p_Tensor[i]);
+        ((Ranked[i++] = static_cast<ChildType>(p_Args)), ...);
+    }
+#endif
 
-    template <std::convertible_to<ChildType> U>
-    constexpr Tensor(const U p_Value, const Tensor<T, N0 - 1, N...> &p_Tensor)
+    template <std::convertible_to<T> U, std::convertible_to<ChildType> C>
+    constexpr Tensor(const C &p_Value, const Tensor<U, N0 - 1, N...> &p_Tensor)
         requires(N0 > 1)
     {
         Ranked[0] = static_cast<ChildType>(p_Value);
@@ -155,7 +165,7 @@ struct Tensor
     {
         Tensor tensor{static_cast<T>(0)};
         constexpr usize stride = Detail::GetDiagonalStride<N0, N...>();
-        for (usize i = 0; i < Length; i += stride)
+        for (usize i = 0; i < Size; i += stride)
             tensor.Flat[i] = static_cast<T>(p_Value);
         return tensor;
     }
@@ -197,55 +207,59 @@ struct Tensor
     friend constexpr Tensor operator-(const Tensor &p_Tensor)
     {
         Tensor tensor;
-        for (usize i = 0; i < Length; ++i)
+        for (usize i = 0; i < Size; ++i)
             tensor.Flat[i] = -p_Tensor.Flat[i];
         return tensor;
     }
 
-#define CREATE_ARITHMETIC_OP(p_Op)                                                                                     \
-    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const Tensor &p_Right)                                 \
+#define CREATE_ARITHMETIC_OP(p_Op, p_Requires)                                                                         \
+    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const Tensor &p_Right) p_Requires                      \
     {                                                                                                                  \
         Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < Length; ++i)                                                                             \
+        for (usize i = 0; i < Size; ++i)                                                                               \
             tensor.Flat[i] = p_Left.Flat[i] p_Op p_Right.Flat[i];                                                      \
         return tensor;                                                                                                 \
     }
 
-    CREATE_ARITHMETIC_OP(+)
-    CREATE_ARITHMETIC_OP(-)
-    CREATE_ARITHMETIC_OP(/)
-    CREATE_ARITHMETIC_OP(&)
-    CREATE_ARITHMETIC_OP(|)
+    CREATE_ARITHMETIC_OP(+, )
+    CREATE_ARITHMETIC_OP(-, )
+    CREATE_ARITHMETIC_OP(/, )
+    CREATE_ARITHMETIC_OP(&, requires(Integer<T>))
+    CREATE_ARITHMETIC_OP(|, requires(Integer<T>))
 
-#define CREATE_SCALAR_OP(p_Op)                                                                                         \
-    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const T p_Right)                                       \
+#define CREATE_SCALAR_OP(p_Op, p_Requires)                                                                             \
+    template <std::convertible_to<T> U>                                                                                \
+    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const U p_Right) p_Requires                            \
     {                                                                                                                  \
         Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < Length; ++i)                                                                             \
-            tensor.Flat[i] = p_Left.Flat[i] p_Op p_Right;                                                              \
+        for (usize i = 0; i < Size; ++i)                                                                               \
+            tensor.Flat[i] = p_Left.Flat[i] p_Op static_cast<T>(p_Right);                                              \
         return tensor;                                                                                                 \
     }                                                                                                                  \
-    friend constexpr Tensor operator p_Op(const T p_Left, const Tensor &p_Right)                                       \
+    template <std::convertible_to<T> U>                                                                                \
+    friend constexpr Tensor operator p_Op(const U p_Left, const Tensor &p_Right) p_Requires                            \
     {                                                                                                                  \
         Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < Length; ++i)                                                                             \
-            tensor.Flat[i] = p_Left p_Op p_Right.Flat[i];                                                              \
+        for (usize i = 0; i < Size; ++i)                                                                               \
+            tensor.Flat[i] = static_cast<T>(p_Left) p_Op p_Right.Flat[i];                                              \
         return tensor;                                                                                                 \
     }
 
-    CREATE_SCALAR_OP(+)
-    CREATE_SCALAR_OP(-)
-    CREATE_SCALAR_OP(*)
-    CREATE_SCALAR_OP(/)
-    CREATE_SCALAR_OP(&)
-    CREATE_SCALAR_OP(|)
+    CREATE_SCALAR_OP(+, )
+    CREATE_SCALAR_OP(-, )
+    CREATE_SCALAR_OP(*, )
+    CREATE_SCALAR_OP(/, )
+    CREATE_SCALAR_OP(&, requires(Integer<T>))
+    CREATE_SCALAR_OP(|, requires(Integer<T>))
 
 #define CREATE_BITSHIFT_OP(p_Op)                                                                                       \
-    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const T p_Shift)                                       \
+    template <std::convertible_to<T> U>                                                                                \
+    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const U p_Shift)                                       \
+        requires(Integer<T>)                                                                                           \
     {                                                                                                                  \
         Tensor tensor;                                                                                                 \
-        for (usize i = 0; i < Length; ++i)                                                                             \
-            tensor.Flat[i] = p_Left.Flat[i] p_Op p_Shift;                                                              \
+        for (usize i = 0; i < Size; ++i)                                                                               \
+            tensor.Flat[i] = p_Left.Flat[i] p_Op static_cast<T>(p_Shift);                                              \
         return tensor;                                                                                                 \
     }
 
@@ -256,7 +270,7 @@ struct Tensor
     friend constexpr Tensor operator p_Op(const Tensor &p_Left, const Tensor &p_Right)                                 \
     {                                                                                                                  \
         bool result = true;                                                                                            \
-        for (usize i = 0; i < Length; ++i)                                                                             \
+        for (usize i = 0; i < Size; ++i)                                                                               \
             result &= p_Left.Flat[i] p_Op p_Right.Flat[i];                                                             \
         return result;                                                                                                 \
     }
@@ -264,25 +278,30 @@ struct Tensor
     CREATE_CMP_OP(==)
     CREATE_CMP_OP(!=)
 
-#define CREATE_SELF_OP(p_Op)                                                                                           \
-    constexpr Tensor &operator p_Op## = (const Tensor &p_Other)                                                        \
+#define CREATE_SELF_OP(p_Op, p_Requires)                                                                               \
+    constexpr Tensor &operator p_Op## = (const Tensor &p_Other)p_Requires                                              \
     {                                                                                                                  \
         *this = *this p_Op p_Other;                                                                                    \
         return *this;                                                                                                  \
+    }                                                                                                                  \
+    template <std::convertible_to<T> U> constexpr Tensor &operator p_Op## = (const U p_Value)p_Requires                \
+    {                                                                                                                  \
+        *this = *this p_Op p_Value;                                                                                    \
+        return *this;                                                                                                  \
     }
 
-    CREATE_SELF_OP(+)
-    CREATE_SELF_OP(-)
-    CREATE_SELF_OP(*)
-    CREATE_SELF_OP(/)
-    CREATE_SELF_OP(&)
-    CREATE_SELF_OP(|)
-    CREATE_SELF_OP(>>)
-    CREATE_SELF_OP(<<)
+    CREATE_SELF_OP(+, )
+    CREATE_SELF_OP(-, )
+    CREATE_SELF_OP(*, )
+    CREATE_SELF_OP(/, )
+    CREATE_SELF_OP(&, requires(Integer<T>))
+    CREATE_SELF_OP(|, requires(Integer<T>))
+    CREATE_SELF_OP(>>, requires(Integer<T>))
+    CREATE_SELF_OP(<<, requires(Integer<T>))
 
     union {
         ChildType Ranked[N0];
-        T Flat[Length];
+        T Flat[Size];
     };
 };
 
@@ -292,7 +311,7 @@ struct Tensor
 #undef CREATE_CMP_OP
 #undef CREATE_SELF_OP
 
-#define LENGTH Tensor<T, N0, N...>::Length
+#define SIZE Tensor<T, N0, N...>::Size
 #define RANK Tensor<T, N0, N...>::Rank
 
 template <typename T, usize N0, usize... N>
@@ -300,7 +319,7 @@ constexpr T Dot(const Tensor<T, N0, N...> &p_Left, const Tensor<T, N0, N...> &p_
 {
     T result{static_cast<T>(0)};
 
-    for (usize i = 0; i < LENGTH; ++i)
+    for (usize i = 0; i < SIZE; ++i)
         result += p_Left.Flat[i] * p_Right.Flat[i];
     return result;
 }
@@ -335,7 +354,7 @@ template <usize R0, usize... R, typename T, usize N0, usize... N>
 constexpr Tensor<T, R0, R...> Reshape(const Tensor<T, N0, N...> &p_Tensor)
 {
     Tensor<T, R0, R...> reshaped;
-    for (usize i = 0; i < LENGTH; ++i)
+    for (usize i = 0; i < SIZE; ++i)
         reshaped.Flat[i] = p_Tensor.Flat[i];
     return reshaped;
 }
@@ -375,7 +394,7 @@ constexpr typename Tensor<T, N0, N...>::template Permuted<I0, I...> Permute(cons
 {
     typename Tensor<T, N0, N...>::template Permuted<I0, I...> permuted;
     constexpr Array<usize, RANK> dims = {N0, N...};
-    constexpr Array<usize, RANK> pdims = {Detail::GetAxis<I0, N0, N...>(), Detail::GetAxis<I, N0, N...>()...};
+    constexpr Array<usize, RANK> pdims = {Detail::GetAxisSize<I0, N0, N...>(), Detail::GetAxisSize<I, N0, N...>()...};
     constexpr Array<usize, RANK> perm = {I0, I...};
 
     Array<usize, RANK> stride;
@@ -388,7 +407,7 @@ constexpr typename Tensor<T, N0, N...>::template Permuted<I0, I...> Permute(cons
         pstride[i - 1] = pstride[i] * pdims[i];
     }
 
-    for (usize i = 0; i < LENGTH; ++i)
+    for (usize i = 0; i < SIZE; ++i)
     {
         Array<usize, RANK> indices;
         for (usize j = 0; j < RANK; ++j)
@@ -433,7 +452,7 @@ template <typename T, usize N0, usize... N> constexpr T *AsPointer(Tensor<T, N0,
 
 } // namespace Math
 
-#undef LENGTH
+#undef SIZE
 #undef RANK
 
 namespace Alias

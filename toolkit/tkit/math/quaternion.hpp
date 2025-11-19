@@ -5,11 +5,11 @@
 
 namespace TKit::Math
 {
-template <typename T> struct Quaternion
+template <Float T> struct Quaternion
 {
     using ValueType = T;
 
-    static constexpr usize Length = 4;
+    static constexpr usize Size = 4;
 
     constexpr Quaternion() = default;
     constexpr Quaternion(const Quaternion &) = default;
@@ -156,12 +156,12 @@ template <typename T> struct Quaternion
 
     constexpr const T &At(const usize p_Index) const
     {
-        TKIT_ASSERT(p_Index < 4, "[TOOLKIT][QUAT] Index is out of bounds");
+        TKIT_ASSERT(p_Index < Size, "[TOOLKIT][QUAT] Index is out of bounds");
         return (&w)[p_Index];
     }
     constexpr T &At(const usize p_Index)
     {
-        TKIT_ASSERT(p_Index < 4, "[TOOLKIT][QUAT] Index is out of bounds");
+        TKIT_ASSERT(p_Index < Size, "[TOOLKIT][QUAT] Index is out of bounds");
         return (&w)[p_Index];
     }
 
@@ -260,6 +260,11 @@ template <typename T> struct Quaternion
     constexpr Quaternion &operator p_Op## = (const Quaternion &p_Other)                                                \
     {                                                                                                                  \
         *this = *this p_Op p_Other;                                                                                    \
+        return *this;                                                                                                  \
+    }                                                                                                                  \
+    template <std::convertible_to<T> U> constexpr Quaternion &operator p_Op## = (const U p_Value)                      \
+    {                                                                                                                  \
+        *this = *this p_Op p_Value;                                                                                    \
         return *this;                                                                                                  \
     }
 

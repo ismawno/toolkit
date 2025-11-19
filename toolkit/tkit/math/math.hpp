@@ -11,8 +11,8 @@ using Detail::SquareRoot;
 template <typename T, usize N0, usize... N> constexpr ten<T, N0, N...> SquareRoot(const ten<T, N0, N...> &p_Tensor)
 {
     ten<T, N0, N...> result;
-    constexpr usize length = (N0 * ... * N);
-    for (usize i = 0; i < length; ++i)
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
         result.Flat[i] = SquareRoot(p_Tensor.Flat[i]);
 
     return result;
@@ -44,8 +44,8 @@ template <typename T> constexpr T Clamp(const T p_Value, const T p_Min, const T 
 template <typename T, usize N0, usize... N> constexpr T Min(const ten<T, N0, N...> &p_Tensor)
 {
     T mn{std::numeric_limits<T>::max()};
-    constexpr usize length = (N0 * ... * N);
-    for (usize i = 0; i < length; ++i)
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
         if (mn > p_Tensor.Flat[i])
             mn = p_Tensor.Flat[i];
     return mn;
@@ -53,8 +53,8 @@ template <typename T, usize N0, usize... N> constexpr T Min(const ten<T, N0, N..
 template <typename T, usize N0, usize... N> constexpr T Max(const ten<T, N0, N...> &p_Tensor)
 {
     T mx{static_cast<T>(0)};
-    constexpr usize length = (N0 * ... * N);
-    for (usize i = 0; i < length; ++i)
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
         if (mx < p_Tensor.Flat[i])
             mx = p_Tensor.Flat[i];
     return mx;
@@ -64,8 +64,8 @@ template <typename T, usize N0, usize... N>
 constexpr ten<T, N0, N...> Min(const ten<T, N0, N...> &p_Left, const ten<T, N0, N...> &p_Right)
 {
     ten<T, N0, N...> mn;
-    constexpr usize length = (N0 * ... * N);
-    for (usize i = 0; i < length; ++i)
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
         mn.Flat[i] = Min(p_Left.Flat[i], p_Right.Flat[i]);
     return mn;
 }
@@ -73,8 +73,8 @@ template <typename T, usize N0, usize... N>
 constexpr ten<T, N0, N...> Max(const ten<T, N0, N...> &p_Left, const ten<T, N0, N...> &p_Right)
 {
     ten<T, N0, N...> mx;
-    constexpr usize length = (N0 * ... * N);
-    for (usize i = 0; i < length; ++i)
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
         mx.Flat[i] = Max(p_Left.Flat[i], p_Right.Flat[i]);
     return mx;
 }
@@ -83,8 +83,8 @@ constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &p_Tensor, const ten<T, 
                                  const ten<T, N0, N...> &p_Max)
 {
     ten<T, N0, N...> result;
-    constexpr usize length = (N0 * ... * N);
-    for (usize i = 0; i < length; ++i)
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
         result.Flat[i] = Clamp(p_Tensor.Flat[i], p_Min.Flat[i], p_Max.Flat[i]);
     return result;
 }
@@ -92,8 +92,8 @@ template <typename T, std::convertible_to<T> U, usize N0, usize... N>
 constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &p_Tensor, U &&p_Min, U &&p_Max)
 {
     ten<T, N0, N...> result;
-    constexpr usize length = (N0 * ... * N);
-    for (usize i = 0; i < length; ++i)
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
         result.Flat[i] =
             Clamp(p_Tensor.Flat[i], static_cast<T>(std::forward<U>(p_Min)), static_cast<T>(std::forward<U>(p_Max)));
     return result;
@@ -148,8 +148,8 @@ template <typename T> constexpr T AntiTangent(const T p_Y, const T p_X)
     template <typename T, usize N0, usize... N> constexpr ten<T, N0, N...> p_Name(const ten<T, N0, N...> &p_Tensor)    \
     {                                                                                                                  \
         ten<T, N0, N...> result;                                                                                       \
-        constexpr usize length = N0 * (N * ... * 1);                                                                   \
-        for (usize i = 0; i < length; ++i)                                                                             \
+        constexpr usize size = N0 * (N * ... * 1);                                                                     \
+        for (usize i = 0; i < size; ++i)                                                                               \
             result.Flat[i] = p_Name(p_Tensor.Flat[i]);                                                                 \
         return result;                                                                                                 \
     }
@@ -168,8 +168,8 @@ template <typename T, usize N0, usize... N>
 constexpr ten<T, N0, N...> AntiTangent(const ten<T, N0, N...> &p_Y, const ten<T, N0, N...> &p_X)
 {
     ten<T, N0, N...> sn;
-    constexpr usize length = (N0 * ... * N);
-    for (usize i = 0; i < length; ++i)
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
         sn.Flat[i] = AntiTangent(p_Y.Flat[i], p_X.Flat[i]);
     return sn;
 }

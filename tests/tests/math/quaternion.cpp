@@ -11,7 +11,7 @@ TEST_CASE("Quaternion basic construction and indexing", "[Quaternion]")
 {
     const f32q q(1.0f, 2.0f, 3.0f, 4.0f);
 
-    REQUIRE(q.Length == 4);
+    REQUIRE(q.Size == 4);
     REQUIRE(q[0] == 1.0f);
     REQUIRE(q[1] == 2.0f);
     REQUIRE(q[2] == 3.0f);

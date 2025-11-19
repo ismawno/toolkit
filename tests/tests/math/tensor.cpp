@@ -11,7 +11,7 @@ TEST_CASE("Tensor basic construction and indexing", "[Tensor]")
 {
     const u32v3 v1(1, 2, 3);
 
-    REQUIRE(v1.Length == 3);
+    REQUIRE(v1.Size == 3);
     REQUIRE(v1.Rank == 1);
     REQUIRE(v1[0] == 1);
     REQUIRE(v1[1] == 2);
