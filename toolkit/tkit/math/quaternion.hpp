@@ -71,41 +71,6 @@ template <typename T> struct Quaternion
         z = static_cast<T>(p_Quaternion.z);
     }
 
-    constexpr friend T Dot(const Quaternion &p_Left, const Quaternion &p_Right)
-    {
-        return p_Left.w * p_Right.w + p_Left.x * p_Right.x + p_Left.y * p_Right.y + p_Left.z * p_Right.z;
-    }
-
-    friend constexpr T NormSquared(const Quaternion &p_Quaternion)
-    {
-        return Dot(p_Quaternion, p_Quaternion);
-    }
-    friend constexpr T Norm(const Quaternion &p_Quaternion)
-    {
-        return SquareRoot(Dot(p_Quaternion, p_Quaternion));
-    }
-    friend constexpr Quaternion Normalize(const Quaternion &p_Quaternion)
-    {
-        return p_Quaternion / Norm(p_Quaternion);
-    }
-
-    constexpr friend Quaternion Conjugate(const Quaternion &p_Quaternion)
-    {
-        return Quaternion{p_Quaternion.w, -p_Quaternion.x, -p_Quaternion.y, -p_Quaternion.z};
-    }
-    constexpr friend Quaternion Inverse(const Quaternion &p_Quaternion)
-    {
-        return Conjugate(p_Quaternion) / NormSquared(p_Quaternion);
-    }
-
-    constexpr friend T Cross(const Quaternion &p_Left, const Quaternion &p_Right)
-    {
-        return Quaternion(p_Left.w * p_Right.w - p_Left.x * p_Right.x - p_Left.y * p_Right.y - p_Left.z * p_Right.z,
-                          p_Left.w * p_Right.x + p_Left.x * p_Right.w + p_Left.y * p_Right.z - p_Left.z * p_Right.y,
-                          p_Left.w * p_Right.y + p_Left.y * p_Right.w + p_Left.z * p_Right.x - p_Left.x * p_Right.z,
-                          p_Left.w * p_Right.z + p_Left.z * p_Right.w + p_Left.x * p_Right.y - p_Left.y * p_Right.x);
-    }
-
     static constexpr Quaternion FromEulerAngles(const vec3<T> &p_EulerAngles)
     {
         Quaternion q;
@@ -390,7 +355,7 @@ template <typename T> struct Quaternion
     CREATE_CMP_OP(!=)
 
 #define CREATE_SELF_OP(p_Op)                                                                                           \
-    constexpr Quaternion &operator p_Op##=(const Quaternion & p_Other)                                                 \
+    constexpr Quaternion &operator p_Op## = (const Quaternion &p_Other)                                                \
     {                                                                                                                  \
         *this = *this p_Op p_Other;                                                                                    \
         return *this;                                                                                                  \
@@ -410,6 +375,44 @@ template <typename T> struct Quaternion
 } // namespace TKit::Math
 namespace TKit
 {
+namespace Math
+{
+template <typename T> constexpr T Dot(const Quaternion<T> &p_Left, const Quaternion<T> &p_Right)
+{
+    return p_Left.w * p_Right.w + p_Left.x * p_Right.x + p_Left.y * p_Right.y + p_Left.z * p_Right.z;
+}
+
+template <typename T> constexpr T NormSquared(const Quaternion<T> &p_Quaternion)
+{
+    return Dot(p_Quaternion, p_Quaternion);
+}
+template <typename T> constexpr T Norm(const Quaternion<T> &p_Quaternion)
+{
+    return SquareRoot(Dot(p_Quaternion, p_Quaternion));
+}
+template <typename T> constexpr Quaternion<T> Normalize(const Quaternion<T> &p_Quaternion)
+{
+    return p_Quaternion / Norm(p_Quaternion);
+}
+
+template <typename T> constexpr Quaternion<T> Conjugate(const Quaternion<T> &p_Quaternion)
+{
+    return Quaternion<T>{p_Quaternion.w, -p_Quaternion.x, -p_Quaternion.y, -p_Quaternion.z};
+}
+template <typename T> constexpr Quaternion<T> Inverse(const Quaternion<T> &p_Quaternion)
+{
+    return Conjugate(p_Quaternion) / NormSquared(p_Quaternion);
+}
+
+template <typename T> constexpr T Cross(const Quaternion<T> &p_Left, const Quaternion<T> &p_Right)
+{
+    return Quaternion<T>(p_Left.w * p_Right.w - p_Left.x * p_Right.x - p_Left.y * p_Right.y - p_Left.z * p_Right.z,
+                         p_Left.w * p_Right.x + p_Left.x * p_Right.w + p_Left.y * p_Right.z - p_Left.z * p_Right.y,
+                         p_Left.w * p_Right.y + p_Left.y * p_Right.w + p_Left.z * p_Right.x - p_Left.x * p_Right.z,
+                         p_Left.w * p_Right.z + p_Left.z * p_Right.w + p_Left.x * p_Right.y - p_Left.y * p_Right.x);
+}
+
+} // namespace Math
 namespace Alias
 {
 template <typename T> using qua = Math::Quaternion<T>;
