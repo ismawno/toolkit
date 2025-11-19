@@ -18,6 +18,11 @@ struct Tensor;
 
 namespace Detail
 {
+// this is because msvc is buggy
+template <usize N, usize M> constexpr usize Subtract()
+{
+    return N - M;
+}
 template <usize I, usize N0, usize... N> constexpr usize GetAxis()
 {
     static_assert(I <= sizeof...(N), "[TOOLKIT][TENSOR] Axis index exceeds rank of tensor");
@@ -67,6 +72,7 @@ struct Tensor
 {
     using ValueType = T;
     using ChildType = typename Detail::Child<T, N...>::Type;
+
     template <usize NP> using ParentType = typename Detail::Parent<T, NP, N0, N...>::Type;
 
     static constexpr usize Length = (N0 * ... * N);
@@ -110,7 +116,7 @@ struct Tensor
 
     template <std::convertible_to<T> U, typename... Args>
         requires((sizeof...(Args) > 0 && sizeof...(Args) < N0) && ... && std::convertible_to<Args, ChildType>)
-    constexpr Tensor(const Tensor<U, N0 - sizeof...(Args), N...> &p_Tensor, const Args &...p_Args)
+    constexpr Tensor(const Tensor<U, Detail::Subtract<N0, sizeof...(Args)>(), N...> &p_Tensor, const Args &...p_Args)
         requires(N0 > 1)
     {
         usize i = 0;
