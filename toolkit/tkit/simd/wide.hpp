@@ -65,6 +65,11 @@ class Wide
     }
     static constexpr Wide Gather(const T *p_Data, const usize p_Stride)
     {
+        TKIT_ASSERT(p_Stride >= sizeof(T), "[TOOLKIT][SIMD] The stride ({}) must be greater than sizeof(T) = {}",
+                    p_Stride, sizeof(T));
+        TKIT_LOG_WARNING_IF(
+            p_Stride == sizeof(T),
+            "[TOOLKIT][SIMD] Stride of {} is equal to sizeof(T), which might as well be a contiguous load", p_Stride);
         Wide wide;
         const std::byte *data = reinterpret_cast<const std::byte *>(p_Data);
         for (usize i = 0; i < Lanes; ++i)
@@ -73,24 +78,31 @@ class Wide
     }
     constexpr void Scatter(T *p_Data, const usize p_Stride) const
     {
+        TKIT_ASSERT(p_Stride >= sizeof(T), "[TOOLKIT][SIMD] The stride ({}) must be greater than sizeof(T) = {}",
+                    p_Stride, sizeof(T));
+        TKIT_LOG_WARNING_IF(
+            p_Stride == sizeof(T),
+            "[TOOLKIT][SIMD] Stride of {} is equal to sizeof(T), which might as well be a contiguous store", p_Stride);
         std::byte *data = reinterpret_cast<std::byte *>(p_Data);
         for (usize i = 0; i < Lanes; ++i)
             Memory::ForwardCopy(data + i * p_Stride, &m_Data[i], sizeof(T));
     }
 
     template <usize Count>
-    static constexpr Array<Wide, Count> Gather(const T *p_Data, const usize p_Stride = Count * sizeof(T))
+        requires(Count > 1)
+    static constexpr Array<Wide, Count> Gather(const T *p_Data)
     {
         Array<Wide, Count> result;
         for (usize i = 0; i < Count; ++i)
-            result[i] = Gather(p_Data + i, p_Stride);
+            result[i] = Gather(p_Data + i, Count * sizeof(T));
         return result;
     }
-    template <usize Count, usize Stride = Count * sizeof(T)>
+    template <usize Count>
+        requires(Count > 1)
     static constexpr void Scatter(T *p_Data, const Array<Wide, Count> &p_Wides)
     {
         for (usize i = 0; i < Count; ++i)
-            p_Wides[i].Scatter(p_Data + i, Stride);
+            p_Wides[i].Scatter(p_Data + i, Count * sizeof(T));
     }
 
     constexpr void StoreAligned(T *p_Data) const

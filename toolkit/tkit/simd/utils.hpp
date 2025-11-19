@@ -1,7 +1,6 @@
 #pragma once
 
 #include "tkit/utils/alias.hpp"
-#include <concepts>
 
 namespace TKit::Simd
 {

@@ -146,6 +146,12 @@ template <Arithmetic T> class Wide
     }
     static constexpr Wide Gather(const T *p_Data, const usize p_Stride)
     {
+        TKIT_ASSERT(p_Stride >= sizeof(T), "[TOOLKIT][SIMD] The stride ({}) must be greater than sizeof(T) = {}",
+                    p_Stride, sizeof(T));
+        TKIT_LOG_WARNING_IF(
+            p_Stride == sizeof(T),
+            "[TOOLKIT][SIMD] Stride of {} is equal to sizeof(T), which might as well be a contiguous load", p_Stride);
+
         alignas(Alignment) T dst[Lanes];
         const std::byte *src = reinterpret_cast<const std::byte *>(p_Data);
 
@@ -155,6 +161,11 @@ template <Arithmetic T> class Wide
     }
     constexpr void Scatter(T *p_Data, const usize p_Stride) const
     {
+        TKIT_ASSERT(p_Stride >= sizeof(T), "[TOOLKIT][SIMD] The stride ({}) must be greater than sizeof(T) = {}",
+                    p_Stride, sizeof(T));
+        TKIT_LOG_WARNING_IF(
+            p_Stride == sizeof(T),
+            "[TOOLKIT][SIMD] Stride of {} is equal to sizeof(T), which might as well be a contiguous store", p_Stride);
         alignas(Alignment) T tmp[Lanes];
         StoreAligned(tmp);
         std::byte *dst = reinterpret_cast<std::byte *>(p_Data);
@@ -162,13 +173,15 @@ template <Arithmetic T> class Wide
             Memory::ForwardCopy(dst + i * p_Stride, &tmp[i], sizeof(T));
     }
 
-    template <usize Count, usize Stride = Count * sizeof(T)> static constexpr Array<Wide, Count> Gather(const T *p_Data)
+    template <usize Count>
+        requires(Count > 1)
+    static constexpr Array<Wide, Count> Gather(const T *p_Data)
     {
         Array<Wide, Count> result;
-        if constexpr (Count != Stride / sizeof(T) || Count > 4)
+        if constexpr (Count > 4)
         {
             for (usize i = 0; i < Count; ++i)
-                result[i] = Gather(p_Data + i, Stride);
+                result[i] = Gather(p_Data + i, Count * sizeof(T));
             return result;
         }
         else if constexpr (Count == 1)
@@ -189,12 +202,13 @@ template <Arithmetic T> class Wide
             return {Wide{packed.val[0]}, Wide{packed.val[1]}, Wide{packed.val[2]}, Wide{packed.val[3]}};
         }
     }
-    template <usize Count, usize Stride = Count * sizeof(T)>
+    template <usize Count>
+        requires(Count > 1)
     static constexpr void Scatter(T *p_Data, const Array<Wide, Count> &p_Wides)
     {
-        if constexpr (Count != Stride / sizeof(T) || Count > 4)
+        if constexpr (Count > 4)
             for (usize i = 0; i < Count; ++i)
-                p_Wides[i].Scatter(p_Data, Stride);
+                p_Wides[i].Scatter(p_Data, Count * sizeof(T));
         else if constexpr (Count == 1)
             store1(p_Data, p_Wides[0].m_Data);
         else if constexpr (Count == 2)
