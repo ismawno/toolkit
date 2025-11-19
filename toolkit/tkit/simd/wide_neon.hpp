@@ -91,7 +91,7 @@ template <> struct TypeSelector<i64>
 
 TKIT_COMPILER_WARNING_IGNORE_PUSH()
 TKIT_GCC_WARNING_IGNORE("-Wmaybe-uninitialized")
-template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
+template <Arithmetic T> class Wide
 {
     using wide1_t = typename TypeSelector<T>::wide1_t;
     using wide2_t = typename TypeSelector<T>::wide2_t;
@@ -104,11 +104,10 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     template <typename E> static constexpr bool s_Equals = std::is_same_v<T, E>;
 
   public:
-    using ValueType = typename Traits::ValueType;
-    using SizeType = typename Traits::SizeType;
+    using ValueType = T;
 
-    static constexpr SizeType Lanes = TKIT_SIMD_NEON_SIZE / sizeof(T);
-    static constexpr SizeType Alignment = 16;
+    static constexpr usize Lanes = TKIT_SIMD_NEON_SIZE / sizeof(T);
+    static constexpr usize Alignment = 16;
 
     using Mask = typename TypeSelector<u<8 * sizeof(T)>>::wide1_t;
     using BitMask = u<MaskSize<Lanes>()>;
@@ -123,7 +122,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     constexpr explicit Wide(const wide1_t p_Data) : m_Data(p_Data)
     {
     }
-    constexpr explicit Wide(T p_Data) : m_Data(set(p_Data))
+    template <std::convertible_to<T> U> constexpr explicit Wide(const U p_Data) : m_Data(set(static_cast<T>(p_Data)))
     {
     }
     constexpr explicit Wide(const T *p_Data) : m_Data(load1(p_Data))
@@ -131,9 +130,9 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     }
 
     template <typename Callable>
-        requires std::invocable<Callable, SizeType>
+        requires std::invocable<Callable, usize>
     constexpr Wide(Callable &&p_Callable)
-        : m_Data(makeIntrinsic(std::forward<Callable>(p_Callable), std::make_integer_sequence<SizeType, Lanes>{}))
+        : m_Data(makeIntrinsic(std::forward<Callable>(p_Callable), std::make_integer_sequence<usize, Lanes>{}))
     {
     }
 
@@ -145,31 +144,30 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     {
         return Wide{load1(p_Data)};
     }
-    static constexpr Wide Gather(const T *p_Data, const SizeType p_Stride)
+    static constexpr Wide Gather(const T *p_Data, const usize p_Stride)
     {
         alignas(Alignment) T dst[Lanes];
         const std::byte *src = reinterpret_cast<const std::byte *>(p_Data);
 
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             Memory::ForwardCopy(dst + i, src + i * p_Stride, sizeof(T));
         return Wide{load1(dst)};
     }
-    constexpr void Scatter(T *p_Data, const SizeType p_Stride) const
+    constexpr void Scatter(T *p_Data, const usize p_Stride) const
     {
         alignas(Alignment) T tmp[Lanes];
         StoreAligned(tmp);
         std::byte *dst = reinterpret_cast<std::byte *>(p_Data);
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             Memory::ForwardCopy(dst + i * p_Stride, &tmp[i], sizeof(T));
     }
 
-    template <SizeType Count, SizeType Stride = Count * sizeof(T)>
-    static constexpr Array<Wide, Count> Gather(const T *p_Data)
+    template <usize Count, usize Stride = Count * sizeof(T)> static constexpr Array<Wide, Count> Gather(const T *p_Data)
     {
         Array<Wide, Count> result;
         if constexpr (Count != Stride / sizeof(T) || Count > 4)
         {
-            for (SizeType i = 0; i < Count; ++i)
+            for (usize i = 0; i < Count; ++i)
                 result[i] = Gather(p_Data + i, Stride);
             return result;
         }
@@ -191,11 +189,11 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
             return {Wide{packed.val[0]}, Wide{packed.val[1]}, Wide{packed.val[2]}, Wide{packed.val[3]}};
         }
     }
-    template <SizeType Count, SizeType Stride = Count * sizeof(T)>
+    template <usize Count, usize Stride = Count * sizeof(T)>
     static constexpr void Scatter(T *p_Data, const Array<Wide, Count> &p_Wides)
     {
         if constexpr (Count != Stride / sizeof(T) || Count > 4)
-            for (SizeType i = 0; i < Count; ++i)
+            for (usize i = 0; i < Count; ++i)
                 p_Wides[i].Scatter(p_Data, Stride);
         else if constexpr (Count == 1)
             store1(p_Data, p_Wides[0].m_Data);
@@ -236,18 +234,18 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         store1(p_Data, m_Data);
     }
 
-    constexpr T At(const SizeType p_Index) const
+    constexpr T At(const usize p_Index) const
     {
         TKIT_ASSERT(p_Index < Lanes, "[TOOLKIT][NEON] Index exceeds lane count");
         alignas(Alignment) T tmp[Lanes];
         StoreAligned(tmp);
         return tmp[p_Index];
     }
-    template <SizeType Index> constexpr T At() const
+    template <usize Index> constexpr T At() const
     {
         return getLane<Index>();
     }
-    constexpr T operator[](const SizeType p_Index) const
+    constexpr T operator[](const usize p_Index) const
     {
         return At(p_Index);
     }
@@ -370,14 +368,15 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
                               p_Left.m_Data, p_Right.m_Data);                                                          \
         }
 #    define CREATE_BITSHIFT_OP(p_Op, p_ArgName)                                                                        \
-        friend constexpr Wide operator p_Op(const Wide &p_Left, const T p_Shift)                                       \
+        template <std::convertible_to<T> U>                                                                            \
+        friend constexpr Wide operator p_Op(const Wide &p_Left, const U p_Shift)                                       \
             requires(Integer<T>)                                                                                       \
         {                                                                                                              \
             CREATE_METHOD_INT(vshlq,                                                                                   \
                               return Wide{                                                                             \
                                   ,                                                                                    \
                               },                                                                                       \
-                              p_Left.m_Data, set(p_ArgName));                                                          \
+                              p_Left.m_Data, set(static_cast<T>(p_ArgName)));                                          \
         }
 
     CREATE_ARITHMETIC_OP(+, add)
@@ -405,7 +404,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
             alignas(Alignment) T left[Lanes], right[Lanes], result[Lanes];
             p_Left.StoreAligned(left);
             p_Right.StoreAligned(right);
-            for (SizeType i = 0; i < Lanes; ++i)
+            for (usize i = 0; i < Lanes; ++i)
                 result[i] = left[i] / right[i];
             return Wide{loadAligned(result)};
 #    else
@@ -428,11 +427,13 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         }
 
 #    define CREATE_SCALAR_OP(p_Op, p_Requires)                                                                         \
-        friend constexpr Wide operator p_Op(const Wide &p_Left, const T p_Right) p_Requires                            \
+        template <std::convertible_to<T> U>                                                                            \
+        friend constexpr Wide operator p_Op(const Wide &p_Left, const U p_Right) p_Requires                            \
         {                                                                                                              \
             return p_Left p_Op Wide{p_Right};                                                                          \
         }                                                                                                              \
-        friend constexpr Wide operator p_Op(const T p_Left, const Wide &p_Right) p_Requires                            \
+        template <std::convertible_to<T> U>                                                                            \
+        friend constexpr Wide operator p_Op(const U p_Left, const Wide &p_Right) p_Requires                            \
         {                                                                                                              \
             return Wide{p_Left} p_Op p_Right;                                                                          \
         }
@@ -471,10 +472,10 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
 
     static constexpr BitMask PackMask(const Mask &p_Mask)
     {
-        const auto eval = [&p_Mask]<SizeType... I>(std::integer_sequence<SizeType, I...>) constexpr {
+        const auto eval = [&p_Mask]<usize... I>(std::integer_sequence<usize, I...>) constexpr {
             return (((getMaskLane<I>(p_Mask) & 1ull) << I) | ...);
         };
-        return eval(std::make_integer_sequence<SizeType, Lanes>{});
+        return eval(std::make_integer_sequence<usize, Lanes>{});
     }
 
     static constexpr Mask WidenMask(const BitMask p_Mask)
@@ -482,7 +483,7 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
         using Integer = u<sizeof(T) * 8>;
         alignas(Alignment) Integer tmp[Lanes];
 
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             tmp[i] = (p_Mask & (BitMask{1} << i)) ? static_cast<Integer>(-1) : Integer{0};
 
         return load1(reinterpret_cast<const T *>(tmp));
@@ -559,12 +560,12 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
     {
         CREATE_METHOD(vdupq_n, return, , p_Data);
     }
-    template <SizeType Index> static constexpr T getLane(const wide1_t &p_Wide)
+    template <usize Index> static constexpr T getLane(const wide1_t &p_Wide)
     {
         static_assert(Index < Lanes, "[TOOLKIT][NEON] Index exceeds lane count");
         CREATE_METHOD(vgetq_lane, return, , p_Wide, Index);
     }
-    template <SizeType Index> static constexpr u<8 * sizeof(T)> getMaskLane(const Mask &p_Mask)
+    template <usize Index> static constexpr u<8 * sizeof(T)> getMaskLane(const Mask &p_Mask)
     {
         static_assert(Index < Lanes, "[TOOLKIT][NEON] Index exceeds lane count");
         if constexpr (Lanes == 2)
@@ -589,8 +590,8 @@ template <Arithmetic T, typename Traits = Container::ArrayTraits<T>> class Wide
             return vmvnq_u8(p_Mask);
         CREATE_BAD_BRANCH()
     }
-    template <typename Callable, SizeType... I>
-    static constexpr wide1_t makeIntrinsic(Callable &&p_Callable, std::integer_sequence<SizeType, I...>)
+    template <typename Callable, usize... I>
+    static constexpr wide1_t makeIntrinsic(Callable &&p_Callable, std::integer_sequence<usize, I...>)
     {
         alignas(Alignment) const T data[Lanes] = {static_cast<T>(std::forward<Callable>(p_Callable)(I))...};
         return load1(data);

@@ -9,16 +9,15 @@ TKIT_COMPILER_WARNING_IGNORE_PUSH()
 TKIT_MSVC_WARNING_IGNORE(4146)
 namespace TKit::Simd
 {
-template <typename T, usize L, typename Traits = Container::ArrayTraits<T>>
+template <typename T, usize L>
     requires(L > 0 && Arithmetic<T>)
 class Wide
 {
   public:
-    using ValueType = typename Traits::ValueType;
-    using SizeType = typename Traits::SizeType;
+    using ValueType = T;
 
-    static constexpr SizeType Lanes = L;
-    static constexpr SizeType Alignment = alignof(T);
+    static constexpr usize Lanes = L;
+    static constexpr usize Alignment = alignof(T);
 
     using Mask = u<MaskSize<Lanes>()>;
     using BitMask = Mask;
@@ -29,28 +28,29 @@ class Wide
         Memory::ForwardCopy(m_Data.begin(), p_Data, p_Data + Lanes);
     }
     template <typename Callable>
-        requires std::invocable<Callable, SizeType>
+        requires std::invocable<Callable, usize>
     constexpr explicit Wide(Callable &&p_Callable)
     {
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             m_Data[i] = static_cast<T>(std::forward<Callable>(p_Callable)(i));
     }
-    constexpr explicit Wide(const T p_Data)
+
+    template <std::convertible_to<T> U> constexpr explicit Wide(const U p_Data)
     {
-        for (SizeType i = 0; i < Lanes; ++i)
-            m_Data[i] = p_Data;
+        for (usize i = 0; i < Lanes; ++i)
+            m_Data[i] = static_cast<T>(p_Data);
     }
 
-    constexpr T At(const SizeType p_Index) const
+    constexpr T At(const usize p_Index) const
     {
         return m_Data[p_Index];
     }
-    template <SizeType Index> constexpr T At() const
+    template <usize Index> constexpr T At() const
     {
         static_assert(Index < Lanes, "[TOOLKIT][SIMD] Index exceeds lane count");
         return m_Data[Index];
     }
-    constexpr T operator[](const SizeType p_Index) const
+    constexpr T operator[](const usize p_Index) const
     {
         return m_Data[p_Index];
     }
@@ -63,33 +63,33 @@ class Wide
     {
         return Wide{p_Data};
     }
-    static constexpr Wide Gather(const T *p_Data, const SizeType p_Stride)
+    static constexpr Wide Gather(const T *p_Data, const usize p_Stride)
     {
         Wide wide;
         const std::byte *data = reinterpret_cast<const std::byte *>(p_Data);
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             Memory::ForwardCopy(&wide.m_Data[i], data + i * p_Stride, sizeof(T));
         return wide;
     }
-    constexpr void Scatter(T *p_Data, const SizeType p_Stride) const
+    constexpr void Scatter(T *p_Data, const usize p_Stride) const
     {
         std::byte *data = reinterpret_cast<std::byte *>(p_Data);
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             Memory::ForwardCopy(data + i * p_Stride, &m_Data[i], sizeof(T));
     }
 
-    template <SizeType Count, SizeType Stride = Count * sizeof(T)>
-    static constexpr Array<Wide, Count> Gather(const T *p_Data)
+    template <usize Count>
+    static constexpr Array<Wide, Count> Gather(const T *p_Data, const usize p_Stride = Count * sizeof(T))
     {
         Array<Wide, Count> result;
-        for (SizeType i = 0; i < Count; ++i)
-            result[i] = Gather(p_Data + i, Stride);
+        for (usize i = 0; i < Count; ++i)
+            result[i] = Gather(p_Data + i, p_Stride);
         return result;
     }
-    template <SizeType Count, SizeType Stride = Count * sizeof(T)>
+    template <usize Count, usize Stride = Count * sizeof(T)>
     static constexpr void Scatter(T *p_Data, const Array<Wide, Count> &p_Wides)
     {
-        for (SizeType i = 0; i < Count; ++i)
+        for (usize i = 0; i < Count; ++i)
             p_Wides[i].Scatter(p_Data + i, Stride);
     }
 
@@ -106,7 +106,7 @@ class Wide
     static constexpr Wide p_Name(const Wide &p_Left, const Wide &p_Right)                                              \
     {                                                                                                                  \
         Wide wide;                                                                                                     \
-        for (SizeType i = 0; i < Lanes; ++i)                                                                           \
+        for (usize i = 0; i < Lanes; ++i)                                                                              \
             wide.m_Data[i] = p_Fun(p_Left.m_Data[i], p_Right.m_Data[i]);                                               \
         return wide;                                                                                                   \
     }
@@ -117,7 +117,7 @@ class Wide
     static constexpr Wide Select(const Wide &p_Left, const Wide &p_Right, const Mask p_Mask)
     {
         Wide wide;
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             wide.m_Data[i] = (p_Mask & (Mask{1} << i)) ? p_Left.m_Data[i] : p_Right.m_Data[i];
         return wide;
     }
@@ -126,22 +126,24 @@ class Wide
     friend constexpr Wide operator p_Op(const Wide &p_Left, const Wide &p_Right) p_Requires                            \
     {                                                                                                                  \
         Wide wide;                                                                                                     \
-        for (SizeType i = 0; i < Lanes; ++i)                                                                           \
+        for (usize i = 0; i < Lanes; ++i)                                                                              \
             wide.m_Data[i] = p_Left.m_Data[i] p_Op p_Right.m_Data[i];                                                  \
         return wide;                                                                                                   \
     }                                                                                                                  \
-    friend constexpr Wide operator p_Op(const Wide &p_Left, const T p_Right) p_Requires                                \
+    template <std::convertible_to<T> U>                                                                                \
+    friend constexpr Wide operator p_Op(const Wide &p_Left, const U p_Right) p_Requires                                \
     {                                                                                                                  \
         Wide wide;                                                                                                     \
-        for (SizeType i = 0; i < Lanes; ++i)                                                                           \
-            wide.m_Data[i] = p_Left.m_Data[i] p_Op p_Right;                                                            \
+        for (usize i = 0; i < Lanes; ++i)                                                                              \
+            wide.m_Data[i] = p_Left.m_Data[i] p_Op static_cast<T>(p_Right);                                            \
         return wide;                                                                                                   \
     }                                                                                                                  \
-    friend constexpr Wide operator p_Op(const T p_Left, const Wide &p_Right) p_Requires                                \
+    template <std::convertible_to<T> U>                                                                                \
+    friend constexpr Wide operator p_Op(const U p_Left, const Wide &p_Right) p_Requires                                \
     {                                                                                                                  \
         Wide wide;                                                                                                     \
-        for (SizeType i = 0; i < Lanes; ++i)                                                                           \
-            wide.m_Data[i] = p_Left p_Op p_Right.m_Data[i];                                                            \
+        for (usize i = 0; i < Lanes; ++i)                                                                              \
+            wide.m_Data[i] = static_cast<T>(p_Left) p_Op p_Right.m_Data[i];                                            \
         return wide;                                                                                                   \
     }                                                                                                                  \
     constexpr Wide &operator p_Op## = (const Wide &p_Other)p_Requires                                                  \
@@ -160,18 +162,19 @@ class Wide
     friend constexpr Wide operator-(const Wide &p_Other)
     {
         Wide wide;
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             wide.m_Data[i] = -p_Other.m_Data[i];
         return wide;
     }
 
 #define CREATE_BITSHIFT_OP(p_Op)                                                                                       \
-    friend constexpr Wide operator p_Op(const Wide &p_Left, const T p_Shift)                                           \
+    template <std::convertible_to<T> U>                                                                                \
+    friend constexpr Wide operator p_Op(const Wide &p_Left, const U p_Shift)                                           \
         requires(Integer<T>)                                                                                           \
     {                                                                                                                  \
         Wide wide;                                                                                                     \
-        for (SizeType i = 0; i < Lanes; ++i)                                                                           \
-            wide.m_Data[i] = p_Left.m_Data[i] p_Op p_Shift;                                                            \
+        for (usize i = 0; i < Lanes; ++i)                                                                              \
+            wide.m_Data[i] = p_Left.m_Data[i] p_Op static_cast<T>(p_Shift);                                            \
         return wide;                                                                                                   \
     }                                                                                                                  \
     constexpr Wide &operator p_Op## = (const Wide &p_Other)                                                            \
@@ -187,7 +190,7 @@ class Wide
     friend constexpr Mask operator p_Op(const Wide &p_Left, const Wide &p_Right)                                       \
     {                                                                                                                  \
         Mask m = 0;                                                                                                    \
-        for (SizeType i = 0; i < Lanes; ++i)                                                                           \
+        for (usize i = 0; i < Lanes; ++i)                                                                              \
         {                                                                                                              \
             const Mask mustSet = static_cast<Mask>(p_Left.m_Data[i] p_Op p_Right.m_Data[i]);                           \
             m |= mustSet << i;                                                                                         \
@@ -205,7 +208,7 @@ class Wide
     static constexpr T Reduce(const Wide &p_Wide)
     {
         T val{};
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             val += p_Wide[i];
         return val;
     }
@@ -233,7 +236,7 @@ class Wide
     }
 
   private:
-    Array<T, Lanes, Traits> m_Data;
+    Array<T, Lanes> m_Data;
 }; // namespace TKit::Simd
 } // namespace TKit::Simd
 TKIT_COMPILER_WARNING_IGNORE_POP()

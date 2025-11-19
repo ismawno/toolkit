@@ -33,21 +33,20 @@ template <typename Wide, usize N, usize Lanes> void TestGatherScatter()
 template <typename Wide> void RunWideTests()
 {
     using T = typename Wide::ValueType;
-    using SizeType = typename Wide::SizeType;
     using Mask = typename Wide::Mask;
     using BitMask = typename Wide::BitMask;
 
-    constexpr SizeType Lanes = Wide::Lanes;
-    constexpr SizeType Alignment = Wide::Alignment;
+    constexpr usize Lanes = Wide::Lanes;
+    constexpr usize Alignment = Wide::Alignment;
 
     alignas(Alignment) T src[Lanes];
-    for (SizeType i = 0; i < Lanes; ++i)
+    for (usize i = 0; i < Lanes; ++i)
         src[i] = static_cast<T>(i + 1);
 
     SECTION("Construction from pointer")
     {
         Wide w{src};
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             REQUIRE(w[i] == src[i]);
     }
 
@@ -55,21 +54,21 @@ template <typename Wide> void RunWideTests()
     {
         const T val = static_cast<T>(3.5);
         Wide w{val};
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             REQUIRE(w[i] == val);
     }
 
     SECTION("Construction from callable")
     {
-        Wide w{[](const SizeType p_Index) { return p_Index * 2; }};
-        for (SizeType i = 0; i < Lanes; ++i)
+        Wide w{[](const usize p_Index) { return p_Index * 2; }};
+        for (usize i = 0; i < Lanes; ++i)
             REQUIRE(w[i] == static_cast<T>(i * 2));
     }
 
     SECTION("Element access and At()")
     {
         Wide w{src};
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
         {
             REQUIRE(w[i] == src[i]);
             REQUIRE(w.At(i) == src[i]);
@@ -81,12 +80,12 @@ template <typename Wide> void RunWideTests()
         Wide w{src};
         alignas(Alignment) T dst1[Lanes]{};
         w.StoreAligned(dst1);
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             REQUIRE(dst1[i] == src[i]);
 
         T dst2[Lanes]{};
         w.StoreUnaligned(dst2);
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             REQUIRE(dst2[i] == src[i]);
     }
 
@@ -100,21 +99,21 @@ template <typename Wide> void RunWideTests()
     SECTION("Gather()")
     {
         Spread spread[Lanes];
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             spread[i] = {static_cast<T>(i + 1), static_cast<u8>(i + 100), static_cast<u16>(i + 200)};
 
         const Wide w = Wide::Gather(&spread[0].Relevant, sizeof(Spread));
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             REQUIRE(w[i] == spread[i].Relevant);
     }
 
     SECTION("Scatter()")
     {
-        const Wide w{[](const SizeType p_Index) { return p_Index + 1; }};
+        const Wide w{[](const usize p_Index) { return p_Index + 1; }};
 
         Spread spread[Lanes];
         w.Scatter(&spread[0].Relevant, sizeof(Spread));
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             REQUIRE(w[i] == spread[i].Relevant);
     }
 
@@ -127,8 +126,8 @@ template <typename Wide> void RunWideTests()
 
     SECTION("Arithmetic operators")
     {
-        const Wide a{[](const SizeType p_Index) { return p_Index + 1; }};
-        const Wide b{[](const SizeType p_Index) { return p_Index + 2; }};
+        const Wide a{[](const usize p_Index) { return p_Index + 1; }};
+        const Wide b{[](const usize p_Index) { return p_Index + 2; }};
 
         const Wide add = a + b;
         const Wide sub = b - a;
@@ -136,7 +135,7 @@ template <typename Wide> void RunWideTests()
         const Wide div = b / a;
         const Wide neg = -a;
 
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
         {
             REQUIRE(add[i] == a[i] + b[i]);
             REQUIRE(sub[i] == b[i] - a[i]);
@@ -147,7 +146,7 @@ template <typename Wide> void RunWideTests()
     }
     SECTION("Scalar operators")
     {
-        const Wide a{[](const SizeType p_Index) { return p_Index + 1; }};
+        const Wide a{[](const usize p_Index) { return p_Index + 1; }};
         const T b{static_cast<T>(10)};
 
         const Wide add = a + b;
@@ -155,7 +154,7 @@ template <typename Wide> void RunWideTests()
         const Wide mul = a * b;
         const Wide div = b / a;
 
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
         {
             REQUIRE(add[i] == a[i] + b);
             REQUIRE(sub[i] == static_cast<T>(b - a[i]));
@@ -166,8 +165,8 @@ template <typename Wide> void RunWideTests()
 
     SECTION("Comparison operators")
     {
-        const Wide a{[](const SizeType p_Index) { return p_Index; }};
-        const Wide b{[](const SizeType p_Index) { return p_Index + 1; }};
+        const Wide a{[](const usize p_Index) { return p_Index; }};
+        const Wide b{[](const usize p_Index) { return p_Index + 1; }};
 
         const BitMask eq = Wide::PackMask(a == a);
         const BitMask ne = Wide::PackMask(a != b);
@@ -176,7 +175,7 @@ template <typename Wide> void RunWideTests()
         const BitMask le = Wide::PackMask(a <= b);
         const BitMask ge = Wide::PackMask(b >= a);
 
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
         {
             REQUIRE(((eq >> i) & 1u) == 1u);
             REQUIRE(((ne >> i) & 1u) == 1u);
@@ -189,13 +188,13 @@ template <typename Wide> void RunWideTests()
 
     SECTION("Min and Max")
     {
-        const Wide a{[](const SizeType p_Index) { return p_Index + 2; }};
-        const Wide b{[](const SizeType p_Index) { return p_Index + 3; }};
+        const Wide a{[](const usize p_Index) { return p_Index + 2; }};
+        const Wide b{[](const usize p_Index) { return p_Index + 3; }};
 
         const Wide mn = Wide::Min(a, b);
         const Wide mx = Wide::Max(a, b);
 
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
         {
             REQUIRE(mn[i] == std::min(a[i], b[i]));
             REQUIRE(mx[i] == std::max(a[i], b[i]));
@@ -204,14 +203,14 @@ template <typename Wide> void RunWideTests()
 
     SECTION("Select()")
     {
-        const Wide a{[](const SizeType p_Index) { return p_Index + 1; }};
-        const Wide b{[](const SizeType p_Index) { return p_Index + 100; }};
+        const Wide a{[](const usize p_Index) { return p_Index + 1; }};
+        const Wide b{[](const usize p_Index) { return p_Index + 100; }};
 
         const BitMask bmask = static_cast<BitMask>(0b01010101010101);
         const Mask mask = Wide::WidenMask(bmask);
         const Wide sel = Wide::Select(a, b, mask);
 
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
         {
             const bool chooseA = (bmask >> i) & 1u;
             REQUIRE(sel[i] == (chooseA ? a[i] : b[i]));
@@ -220,9 +219,9 @@ template <typename Wide> void RunWideTests()
 
     SECTION("Reduce()")
     {
-        const Wide w{[](const SizeType p_Index) { return p_Index + 1; }};
+        const Wide w{[](const usize p_Index) { return p_Index + 1; }};
         T expected = static_cast<T>(0);
-        for (SizeType i = 0; i < Lanes; ++i)
+        for (usize i = 0; i < Lanes; ++i)
             expected += w[i];
         const T result = Wide::Reduce(w);
         REQUIRE(result == Catch::Approx(expected));
@@ -231,29 +230,29 @@ template <typename Wide> void RunWideTests()
     {
         SECTION("Bit shift operators")
         {
-            const Wide base{[](const SizeType p_Index) { return 255 - p_Index; }};
+            const Wide base{[](const usize p_Index) { return 255 - p_Index; }};
 
             const u32 shiftLeft = 3;
             const Wide shiftedLeft = base << shiftLeft;
 
-            for (SizeType i = 0; i < Lanes; ++i)
+            for (usize i = 0; i < Lanes; ++i)
                 REQUIRE(shiftedLeft[i] == static_cast<T>(base[i] << shiftLeft));
 
             const u32 shiftRight = 7;
             const Wide shiftedRight = base >> shiftRight;
 
-            for (SizeType i = 0; i < Lanes; ++i)
+            for (usize i = 0; i < Lanes; ++i)
                 REQUIRE(shiftedRight[i] == static_cast<T>(base[i] >> shiftRight));
         }
         SECTION("Bitwise AND and OR operators")
         {
-            const Wide a{[](const SizeType p_Index) { return static_cast<T>((p_Index % 2) ? 0xFF : 0x0F); }};
-            const Wide b{[](const SizeType p_Index) { return static_cast<T>((p_Index % 2) ? 0xF0 : 0x0F); }};
+            const Wide a{[](const usize p_Index) { return static_cast<T>((p_Index % 2) ? 0xFF : 0x0F); }};
+            const Wide b{[](const usize p_Index) { return static_cast<T>((p_Index % 2) ? 0xF0 : 0x0F); }};
 
             const Wide band = a & b;
             const Wide bor = a | b;
 
-            for (SizeType i = 0; i < Lanes; ++i)
+            for (usize i = 0; i < Lanes; ++i)
             {
                 REQUIRE(band[i] == static_cast<T>(a[i] & b[i]));
                 REQUIRE(bor[i] == static_cast<T>(a[i] | b[i]));
