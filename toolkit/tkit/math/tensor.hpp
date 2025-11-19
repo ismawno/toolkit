@@ -130,20 +130,18 @@ struct Tensor
 
     constexpr Tensor &operator=(const Tensor &) = default;
 
-    template <std::convertible_to<T> U> constexpr Tensor &operator=(const Tensor<U, N0, N...> &p_Tensor)
+    template <std::convertible_to<T> U, usize M0, usize... M>
+        requires(sizeof...(M) == sizeof...(N) && ((M0 >= N0) && ... && (M >= N)))
+    constexpr Tensor &operator=(const Tensor<U, M0, M...> &p_Tensor)
     {
-        for (usize i = 0; i < Length; ++i)
-            Flat[i] = static_cast<T>(p_Tensor.Flat[i]);
+        *this = Slice<T, N0, N...>(p_Tensor);
     }
 
-    template <typename U>
-        requires(std::convertible_to<T, U>)
-    constexpr operator Tensor<U, N0, N...>()
+    template <std::convertible_to<T> U, usize M0, usize... M>
+        requires(sizeof...(M) == sizeof...(N) && ((M0 >= N0) && ... && (M >= N)))
+    constexpr operator Tensor<U, M0, M...>()
     {
-        Tensor<U, N0, N...> tensor;
-        for (usize i = 0; i < Length; ++i)
-            tensor.Flat[i] = static_cast<U>(Flat[i]);
-        return tensor;
+        return Slice<U, M0, M...>(*this);
     }
 
     template <std::convertible_to<T> U> static constexpr Tensor Identity(const U p_Value)
@@ -402,8 +400,7 @@ template <typename U, usize M0, usize... M, typename T, usize N0, usize... N>
     requires(std::convertible_to<T, U> && sizeof...(M) == sizeof...(N) && ((N0 >= M0) && ... && (N >= M)))
 constexpr void SliceImpl(const Tensor<T, N0, N...> &p_Tensor, Tensor<U, M0, M...> &p_Sliced)
 {
-    constexpr usize smallest = M0 < N0 ? M0 : N0;
-    for (usize i = 0; i < smallest; ++i)
+    for (usize i = 0; i < M0; ++i)
         if constexpr (sizeof...(M) == 0)
             p_Sliced.Flat[i] = static_cast<U>(p_Tensor.Flat[i]);
         else
