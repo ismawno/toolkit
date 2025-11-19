@@ -775,18 +775,9 @@ template <typename T, usize N> constexpr T Determinant(const mat<T, N> &p_Matrix
 template <typename T, usize N> constexpr mat<T, N> Cofactors(const mat<T, N> &p_Matrix)
 {
     mat<T, N> cofactors;
-    i32 sign1 = 1;
-    i32 sign2 = 1;
     for (usize i = 0; i < N; ++i)
-    {
         for (usize j = 0; j < N; ++j)
-        {
-            cofactors[i][j] = sign1 * sign2 * Determinant(SubTensor(p_Matrix, i, j));
-            sign2 *= -1;
-        }
-        sign1 *= -1;
-        sign2 = 1;
-    }
+            cofactors[i][j] = (1 - 2 * (static_cast<i32>(i + j) & 1)) * Determinant(SubTensor(p_Matrix, i, j));
     return cofactors;
 }
 
