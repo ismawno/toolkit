@@ -266,17 +266,17 @@ struct Tensor
     CREATE_BITSHIFT_OP(>>)
     CREATE_BITSHIFT_OP(<<)
 
-#define CREATE_CMP_OP(p_Op)                                                                                            \
-    friend constexpr Tensor operator p_Op(const Tensor &p_Left, const Tensor &p_Right)                                 \
+#define CREATE_CMP_OP(p_Op, p_Cmp, p_Start)                                                                            \
+    friend constexpr bool operator p_Op(const Tensor &p_Left, const Tensor &p_Right)                                   \
     {                                                                                                                  \
-        bool result = true;                                                                                            \
+        bool result = p_Start;                                                                                         \
         for (usize i = 0; i < Size; ++i)                                                                               \
-            result &= p_Left.Flat[i] p_Op p_Right.Flat[i];                                                             \
+            result p_Cmp p_Left.Flat[i] p_Op p_Right.Flat[i];                                                          \
         return result;                                                                                                 \
     }
 
-    CREATE_CMP_OP(==)
-    CREATE_CMP_OP(!=)
+    CREATE_CMP_OP(==, &=, true)
+    CREATE_CMP_OP(!=, |=, false)
 
 #define CREATE_SELF_OP(p_Op, p_Requires)                                                                               \
     constexpr Tensor &operator p_Op## = (const Tensor &p_Other)p_Requires                                              \

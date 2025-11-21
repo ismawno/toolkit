@@ -246,15 +246,15 @@ template <Float T> struct Quaternion
     CREATE_SCALAR_OP(*)
     CREATE_SCALAR_OP(/)
 
-#define CREATE_CMP_OP(p_Op)                                                                                            \
-    friend constexpr Quaternion operator p_Op(const Quaternion &p_Left, const Quaternion &p_Right)                     \
+#define CREATE_CMP_OP(p_Op, p_Cmp)                                                                                     \
+    friend constexpr bool operator p_Op(const Quaternion &p_Left, const Quaternion &p_Right)                           \
     {                                                                                                                  \
-        return p_Left.w p_Op p_Right.w && p_Left.x p_Op p_Right.x && p_Left.y p_Op p_Right.y &&                        \
-               p_Left.z p_Op p_Right.z;                                                                                \
+        return p_Left.w p_Op p_Right.w p_Cmp p_Left.x p_Op p_Right.x p_Cmp p_Left.y p_Op p_Right.y p_Cmp               \
+            p_Left.z p_Op p_Right.z;                                                                                   \
     }
 
-    CREATE_CMP_OP(==)
-    CREATE_CMP_OP(!=)
+    CREATE_CMP_OP(==, &&)
+    CREATE_CMP_OP(!=, ||)
 
 #define CREATE_SELF_OP(p_Op)                                                                                           \
     constexpr Quaternion &operator p_Op## = (const Quaternion &p_Other)                                                \
