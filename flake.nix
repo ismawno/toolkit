@@ -20,6 +20,7 @@
           clang-tools
           lld
           libcxx
+          llvm
 
           cmake
           fmt

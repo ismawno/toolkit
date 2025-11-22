@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.23...4.1.1)
 project(toolkit-root)
 
+set(FETCHCONTENT_QUIET OFF)
+
 set(NAME toolkit-root)
 
 set(CMAKE_CXX_STANDARD 20)
