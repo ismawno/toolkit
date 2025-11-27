@@ -354,7 +354,7 @@ function(tkit_configure_compile_link_options target)
 
   if(ARG_NO_EXCEPTIONS)
     if(MSVC)
-      list(APPEND compiler_flags /EHsc-)
+      list(APPEND compiler_flags /EHs- /D_HAS_EXCEPTIONS=0)
     else()
       list(APPEND compiler_flags -fno-exceptions)
     endif()
