@@ -1,5 +1,11 @@
 #pragma once
 
+// i hate windows and i hate msvc
+#ifdef TKIT_OS_WINDOWS
+#    undef min
+#    undef max
+#endif
+
 #include "tkit/utils/alias.hpp"
 #include <limits>
 
