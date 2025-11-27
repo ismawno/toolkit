@@ -41,7 +41,6 @@ class Wide
             m_Data[i] = static_cast<T>(p_Data);
     }
 
-    constexpr Wide &operator=(const Wide &) = default;
     template <std::convertible_to<T> U> constexpr Wide &operator=(const U p_Data)
     {
         for (usize i = 0; i < Lanes; ++i)

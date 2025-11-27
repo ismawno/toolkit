@@ -136,7 +136,6 @@ template <Arithmetic T> class Wide
     {
     }
 
-    constexpr Wide &operator=(const Wide &) = default;
     template <std::convertible_to<T> U> constexpr Wide &operator=(const U p_Data)
     {
         m_Data = set(static_cast<T>(p_Data));
