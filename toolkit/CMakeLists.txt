@@ -173,8 +173,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_definitions(toolkit PUBLIC TKIT_DEBUG)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
   target_compile_definitions(toolkit PUBLIC TKIT_RELEASE)
-elseif(CMAKE_BUILD_TYPE STREQUAL "Dist")
-  target_compile_definitions(toolkit PUBLIC TKIT_DIST)
 endif()
 
 if(TOOLKIT_ENABLE_ARENA_ALLOCATOR)
