@@ -87,7 +87,7 @@ struct Tensor
 
     template <std::convertible_to<T> U, usize M0, usize... M>
         requires(sizeof...(M) == sizeof...(N) && ((M0 >= N0) && ... && (M >= N)))
-    explicit constexpr Tensor(const Tensor<U, M0, M...> &p_Tensor)
+    constexpr Tensor(const Tensor<U, M0, M...> &p_Tensor)
     {
         *this = Slice<T, N0, N...>(p_Tensor);
     }
@@ -100,11 +100,11 @@ struct Tensor
 
     template <typename... Args>
         requires((sizeof...(Args) == Size) && ... && std::convertible_to<Args, T>)
-    explicit constexpr Tensor(const Args... p_Args) : Flat{static_cast<T>(p_Args)...}
+    constexpr explicit Tensor(const Args... p_Args) : Flat{static_cast<T>(p_Args)...}
     {
     }
     template <typename... Args>
-    explicit constexpr Tensor(const Args &...p_Args)
+    constexpr explicit Tensor(const Args &...p_Args)
         requires(!std::same_as<ChildType, T> && sizeof...(Args) == N0 && (std::convertible_to<Args, ChildType> && ...))
         : Ranked{static_cast<ChildType>(p_Args)...}
     {
@@ -145,7 +145,6 @@ struct Tensor
     }
 
     constexpr Tensor &operator=(const Tensor &) = default;
-
     template <std::convertible_to<T> U, usize M0, usize... M>
         requires(sizeof...(M) == sizeof...(N) && ((M0 >= N0) && ... && (M >= N)))
     constexpr Tensor &operator=(const Tensor<U, M0, M...> &p_Tensor)

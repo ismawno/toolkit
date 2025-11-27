@@ -64,10 +64,10 @@ template <Valid T> class Wide
         }
 
     constexpr Wide() = default;
-    constexpr explicit Wide(const m256 p_Data) : m_Data(p_Data)
+    constexpr Wide(const m256 p_Data) : m_Data(p_Data)
     {
     }
-    template <std::convertible_to<T> U> constexpr explicit Wide(const U p_Data) : m_Data(set(static_cast<T>(p_Data)))
+    template <std::convertible_to<T> U> constexpr Wide(const U p_Data) : m_Data(set(static_cast<T>(p_Data)))
     {
     }
     constexpr explicit Wide(const T *p_Data) : m_Data(loadAligned(p_Data))
@@ -76,9 +76,15 @@ template <Valid T> class Wide
 
     template <typename Callable>
         requires std::invocable<Callable, usize>
-    constexpr Wide(Callable &&p_Callable)
+    constexpr explicit Wide(Callable &&p_Callable)
         : m_Data(makeIntrinsic(std::forward<Callable>(p_Callable), std::make_integer_sequence<usize, Lanes>{}))
     {
+    }
+
+    constexpr Wide &operator=(const Wide &) = default;
+    template <std::convertible_to<T> U> constexpr Wide &operator=(const U p_Data)
+    {
+        m_Data = set(static_cast<T>(p_Data));
     }
 
     static constexpr Wide LoadAligned(const T *p_Data)
