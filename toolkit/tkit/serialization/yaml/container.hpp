@@ -49,7 +49,7 @@ template <typename T, usize N, typename Traits> struct Codec<StaticArray<T, N, T
 
     static bool Decode(const Node &p_Node, StaticArray<T, N> &p_Instance)
     {
-        if (!p_Node.IsSequence() || p_Node.size() > p_Instance.GetSize())
+        if (!p_Node.IsSequence() || p_Node.size() > N)
             return false;
 
         for (const Node &element : p_Node)
@@ -70,7 +70,7 @@ template <typename T, typename Traits> struct Codec<DynamicArray<T, Traits>>
 
     static bool Decode(const Node &p_Node, DynamicArray<T> &p_Instance)
     {
-        if (!p_Node.IsSequence() || p_Node.size() > p_Instance.GetSize())
+        if (!p_Node.IsSequence())
             return false;
 
         for (const Node &element : p_Node)
