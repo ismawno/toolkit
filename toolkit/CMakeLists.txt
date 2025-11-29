@@ -115,10 +115,13 @@ if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
     endif()
   endif()
 
+  set(NO_STATISTICS
+      OFF
+      CACHE BOOL "Super useful doc" FORCE)
+
   find_package(Tracy QUIET)
 
   if(NOT TARGET Tracy::TracyClient)
-    set(TRACY_TARGET TracyClient)
 
     FetchContent_Declare(
       tracy
@@ -128,33 +131,31 @@ if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
       GIT_PROGRESS TRUE)
 
     FetchContent_MakeAvailable(tracy)
+    if(MSVC)
+      target_compile_options(TracyClient PRIVATE /wd4996)
+    else()
+      target_compile_options(TracyClient PRIVATE -Wno-deprecated-declarations)
+      target_compile_options(TracyClient
+                             PRIVATE -Wno-deprecated-anon-enum-enum-conversion)
+    endif()
+    if(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION)
+      target_compile_definitions(TracyClient PUBLIC TRACY_VK_USE_SYMBOL_TABLE)
+      target_compile_definitions(toolkit
+                                 PUBLIC TKIT_ENABLE_VULKAN_INSTRUMENTATION)
+    endif()
   else()
-    set(TRACY_TARGET Tracy::TracyClient)
-  endif()
-  target_link_libraries(toolkit PUBLIC ${TRACY_TARGET})
-  target_compile_definitions(toolkit PUBLIC TRACY_ENABLE)
-  target_compile_definitions(${TRACY_TARGET}
-                             PUBLIC TRACY_SAMPLING_HZ=${TOOLKIT_SAMPLING_RATE})
+    target_link_libraries(toolkit INTERFACE Tracy::TracyClient)
+    target_compile_definitions(toolkit PUBLIC TRACY_ENABLE)
+    target_compile_definitions(
+      Tracy::TracyClient INTERFACE TRACY_SAMPLING_HZ=${TOOLKIT_SAMPLING_RATE})
 
-  # Because of this check, the profiler binaries will always persist and will
-  # keep the first cmake options that were set. Recompile with other options by
-  # removing the profiler directory inside your build directory
+    if(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION)
+      target_compile_definitions(Tracy::TracyClient
+                                 INTERFACE TRACY_VK_USE_SYMBOL_TABLE)
 
-  set(NO_STATISTICS
-      OFF
-      CACHE BOOL "Super useful doc" FORCE)
-
-  if(MSVC)
-    target_compile_options(${TRACY_TARGET} PRIVATE /wd4996)
-  else()
-    target_compile_options(${TRACY_TARGET} PRIVATE -Wno-deprecated-declarations)
-    target_compile_options(${TRACY_TARGET}
-                           PRIVATE -Wno-deprecated-anon-enum-enum-conversion)
-  endif()
-  if(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION)
-    target_compile_definitions(${TRACY_TARGET} PUBLIC TRACY_VK_USE_SYMBOL_TABLE)
-    target_compile_definitions(toolkit
-                               PUBLIC TKIT_ENABLE_VULKAN_INSTRUMENTATION)
+      target_compile_definitions(toolkit
+                                 PUBLIC TKIT_ENABLE_VULKAN_INSTRUMENTATION)
+    endif()
   endif()
 
 endif()
