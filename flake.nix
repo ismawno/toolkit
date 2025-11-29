@@ -22,6 +22,7 @@
           libcxx
           llvm
 
+          tracy
           cmake
           fmt
           pkg-config
