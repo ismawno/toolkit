@@ -123,6 +123,7 @@ if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
 
   if(NOT TARGET Tracy::TracyClient)
 
+    message(STATUS "TOOLKIT - Tracy not found. Fetching source...")
     FetchContent_Declare(
       tracy
       GIT_REPOSITORY https://github.com/wolfpld/tracy.git
@@ -144,6 +145,7 @@ if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
                                  PUBLIC TKIT_ENABLE_VULKAN_INSTRUMENTATION)
     endif()
   else()
+    message(STATUS "TOOLKIT - Tracy found")
     target_link_libraries(toolkit INTERFACE Tracy::TracyClient)
     target_compile_definitions(toolkit PUBLIC TRACY_ENABLE)
     target_compile_definitions(
