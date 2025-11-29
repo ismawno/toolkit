@@ -140,7 +140,7 @@ set(TOOLKIT_SAMPLING_RATE
 if(TOOLKIT_ENABLE_VULKAN_INSTRUMENTATION AND NOT TOOLKIT_ENABLE_INSTRUMENTATION)
   message(
     FATAL_ERROR
-      "TOOLKIT: General purpose instrumentation is required for vulkan instrumentation to work. Disable the latter or enable the former to fix this error"
+      "TOOLKIT - General purpose instrumentation is required for vulkan instrumentation to work. Disable the latter or enable the former to fix this error"
   )
 endif()
 
@@ -182,7 +182,7 @@ function(tkit_register_for_reflection target)
   if(NOT TOOLKIT_ENABLE_REFLECTION)
     message(
       STATUS
-        "TOOLKIT: Reflection feature is not enabled. Code generation for it will be skipped."
+        "TOOLKIT - Reflection feature is not enabled. Code generation for it will be skipped."
     )
     return()
   endif()
@@ -201,7 +201,7 @@ function(tkit_register_for_yaml_serialization target)
   if(NOT TOOLKIT_ENABLE_YAML_SERIALIZATION)
     message(
       STATUS
-        "TOOLKIT: Yaml serialization feature is not enabled. Code generation for it will be skipped."
+        "TOOLKIT - Yaml serialization feature is not enabled. Code generation for it will be skipped."
     )
     return()
   endif()
@@ -250,20 +250,20 @@ function(tkit_configure_compile_link_options target)
     set(ARG_VISIBILITY "PRIVATE")
   endif()
 
-  message(STATUS "TOOLKIT: Configuring ${target}...")
+  message(STATUS "TOOLKIT - Configuring ${target}...")
   if(ARG_FORBID_SANITIZERS)
-    message(STATUS "TOOLKIT:  Sanitizers: Forbidden")
+    message(STATUS "TOOLKIT -  Sanitizers: Forbidden")
   else()
-    message(STATUS "TOOLKIT:  Sanitizers: ${TOOLKIT_SANITIZERS}")
+    message(STATUS "TOOLKIT -  Sanitizers: ${TOOLKIT_SANITIZERS}")
   endif()
   if(ARG_NO_EXCEPTIONS)
-    message(STATUS "TOOLKIT:  Exceptions: Disabled")
+    message(STATUS "TOOLKIT -  Exceptions: Disabled")
   else()
-    message(STATUS "TOOLKIT:  Sanitizers: Enabled")
+    message(STATUS "TOOLKIT -  Sanitizers: Enabled")
   endif()
-  message(STATUS "TOOLKIT:  Visibility: ${ARG_VISIBILITY}")
-  message(STATUS "TOOLKIT:  Provided compiler flags: ${ARG_COMPILER_FLAGS}")
-  message(STATUS "TOOLKIT:  Provided linker flags: ${ARG_LINKER_FLAGS}")
+  message(STATUS "TOOLKIT -  Visibility: ${ARG_VISIBILITY}")
+  message(STATUS "TOOLKIT -  Provided compiler flags: ${ARG_COMPILER_FLAGS}")
+  message(STATUS "TOOLKIT -  Provided linker flags: ${ARG_LINKER_FLAGS}")
 
   set(compiler_flags "")
   set(linker_flags "")
@@ -373,10 +373,10 @@ function(tkit_configure_compile_link_options target)
   remove_duplicates(linker_flags ulinker_flags)
   message(
     STATUS
-      "TOOLKIT:  Final compiler flags: ${ucompiler_flags} ${ARG_COMPILER_FLAGS}"
+      "TOOLKIT -  Final compiler flags: ${ucompiler_flags} ${ARG_COMPILER_FLAGS}"
   )
   message(
-    STATUS "TOOLKIT:  Final linker flags: ${ulinker_flags} ${ARG_LINKER_FLAGS}")
+    STATUS "TOOLKIT -  Final linker flags: ${ulinker_flags} ${ARG_LINKER_FLAGS}")
   target_compile_options(${target} ${ARG_VISIBILITY} ${ucompiler_flags}
                          ${ARG_COMPILER_FLAGS})
   target_link_options(${target} ${ARG_VISIBILITY} ${ulinker_flags}
@@ -421,7 +421,7 @@ endif()
 if(TOOLKIT_BUILD_PERFORMANCE)
   message(
     WARNING
-      "TOOLKIT: By building performance tests, the stack allocator maximum entries will be forced to 10000."
+      "TOOLKIT - By building performance tests, the stack allocator maximum entries will be forced to 10000."
   )
   target_compile_definitions(toolkit
                              PUBLIC TKIT_STACK_ALLOCATOR_MAX_ENTRIES=10000)

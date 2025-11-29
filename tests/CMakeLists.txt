@@ -34,7 +34,7 @@ set(SOURCES
 find_package(Catch2 3 QUIET)
 
 if(NOT Catch2_FOUND)
-  message(STATUS "TOOLKIT: Catch2 not found. Fetching source...")
+  message(STATUS "TOOLKIT - Catch2 not found. Fetching source...")
   include(FetchContent)
   FetchContent_Declare(
     Catch2
@@ -44,7 +44,7 @@ if(NOT Catch2_FOUND)
     GIT_PROGRESS TRUE)
   FetchContent_MakeAvailable(Catch2)
 else()
-  message(STATUS "TOOLKIT: Catch2 found")
+  message(STATUS "TOOLKIT - Catch2 found")
 endif()
 
 add_executable(toolkit-tests ${SOURCES})

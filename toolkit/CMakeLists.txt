@@ -74,19 +74,19 @@ if(TOOLKIT_ENABLE_MULTIPROCESSING)
 
   if(HWLOC_FOUND)
 
-    message(STATUS "TOOLKIT: HWLOC found")
+    message(STATUS "TOOLKIT - HWLOC found")
     target_link_libraries(toolkit PRIVATE PkgConfig::HWLOC)
     target_compile_definitions(toolkit PRIVATE TKIT_HWLOC_INSTALLED)
 
   else()
-    message(STATUS "TOOLKIT: HWLOC not found")
+    message(STATUS "TOOLKIT - HWLOC not found")
   endif()
 endif()
 
 find_package(fmt)
 
 if(NOT TARGET fmt::fmt)
-  message(STATUS "TOOLKIT: FMT not found. Fetching source...")
+  message(STATUS "TOOLKIT - FMT not found. Fetching source...")
   FetchContent_Declare(
     fmt
     GIT_REPOSITORY https://github.com/fmtlib/fmt.git
@@ -97,7 +97,7 @@ if(NOT TARGET fmt::fmt)
   FetchContent_MakeAvailable(fmt)
   tkit_configure_compile_link_options(fmt)
 else()
-  message(STATUS "TOOLKIT: FMT found")
+  message(STATUS "TOOLKIT - FMT found")
 endif()
 
 target_link_libraries(toolkit PUBLIC fmt::fmt)
