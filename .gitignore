@@ -2,7 +2,6 @@
 .vscode/
 .vs/
 *build*/
-setup/user-build.ini
 performance/results
 performance/reports
 performance/perf-settings.yaml
@@ -15,7 +14,6 @@ toolkit/tkit/serialization/yaml/tkit
 docs/html/
 docs/latex/
 __pycache__/
-reminders.txt
 
 # Prerequisites
 *.d
