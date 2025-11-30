@@ -376,7 +376,8 @@ function(tkit_configure_compile_link_options target)
       "TOOLKIT -  Final compiler flags: ${ucompiler_flags} ${ARG_COMPILER_FLAGS}"
   )
   message(
-    STATUS "TOOLKIT -  Final linker flags: ${ulinker_flags} ${ARG_LINKER_FLAGS}")
+    STATUS "TOOLKIT -  Final linker flags: ${ulinker_flags} ${ARG_LINKER_FLAGS}"
+  )
   target_compile_options(${target} ${ARG_VISIBILITY} ${ucompiler_flags}
                          ${ARG_COMPILER_FLAGS})
   target_link_options(${target} ${ARG_VISIBILITY} ${ulinker_flags}
@@ -410,7 +411,6 @@ function(tkit_default_configure target)
   endif()
 endfunction()
 
-# Add subdirectories
 add_subdirectory(toolkit)
 
 if(TOOLKIT_BUILD_TESTS)
