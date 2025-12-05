@@ -37,14 +37,18 @@ class StaticArray
             Memory::ConstructRange(begin(), end(), p_Args...);
     }
 
-    template <std::input_iterator It> constexpr StaticArray(const It p_Begin, const It p_End)
+    template <std::input_iterator It>
+    constexpr StaticArray(const It p_Begin, const It p_End)
+        requires(std::is_copy_constructible_v<T>)
     {
         m_Size = static_cast<SizeType>(std::distance(p_Begin, p_End));
         TKIT_ASSERT(m_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size is bigger than capacity");
         Tools::CopyConstructFromRange(begin(), p_Begin, p_End);
     }
 
-    constexpr StaticArray(const std::initializer_list<ValueType> p_List) : m_Size(static_cast<SizeType>(p_List.size()))
+    constexpr StaticArray(const std::initializer_list<ValueType> p_List)
+        requires(std::is_copy_constructible_v<T>)
+        : m_Size(static_cast<SizeType>(p_List.size()))
     {
         TKIT_ASSERT(p_List.size() <= Capacity, "[TOOLKIT][STAT-ARRAY] Size is bigger than capacity");
         Tools::CopyConstructFromRange(begin(), p_List.begin(), p_List.end());
@@ -52,7 +56,9 @@ class StaticArray
 
     // This constructor WONT include the case M == Capacity (ie, copy constructor)
     template <SizeType M>
-    constexpr StaticArray(const StaticArray<ValueType, M, Traits> &p_Other) : m_Size(p_Other.GetSize())
+    constexpr StaticArray(const StaticArray<ValueType, M, Traits> &p_Other)
+        requires(std::is_copy_constructible_v<T>)
+        : m_Size(p_Other.GetSize())
     {
         if constexpr (M > Capacity)
         {
@@ -62,7 +68,10 @@ class StaticArray
     }
 
     // This constructor WONT include the case M == Capacity (ie, move constructor)
-    template <SizeType M> constexpr StaticArray(StaticArray<ValueType, M, Traits> &&p_Other) : m_Size(p_Other.GetSize())
+    template <SizeType M>
+    constexpr StaticArray(StaticArray<ValueType, M, Traits> &&p_Other)
+        requires(std::is_move_constructible_v<T>)
+        : m_Size(p_Other.GetSize())
     {
         if constexpr (M > Capacity)
         {
@@ -71,12 +80,16 @@ class StaticArray
         Tools::MoveConstructFromRange(begin(), p_Other.begin(), p_Other.end());
     }
 
-    constexpr StaticArray(const StaticArray &p_Other) : m_Size(p_Other.GetSize())
+    constexpr StaticArray(const StaticArray &p_Other)
+        requires(std::is_copy_constructible_v<T>)
+        : m_Size(p_Other.GetSize())
     {
         Tools::CopyConstructFromRange(begin(), p_Other.begin(), p_Other.end());
     }
 
-    constexpr StaticArray(StaticArray &&p_Other) : m_Size(p_Other.GetSize())
+    constexpr StaticArray(StaticArray &&p_Other)
+        requires(std::is_move_constructible_v<T>)
+        : m_Size(p_Other.GetSize())
     {
         Tools::MoveConstructFromRange(begin(), p_Other.begin(), p_Other.end());
     }
@@ -87,7 +100,9 @@ class StaticArray
     }
 
     // Same goes for assignment. It wont include `M == Capacity`, and use the default assignment operator
-    template <SizeType M> constexpr StaticArray &operator=(const StaticArray<ValueType, M, Traits> &p_Other)
+    template <SizeType M>
+    constexpr StaticArray &operator=(const StaticArray<ValueType, M, Traits> &p_Other)
+        requires(std::is_copy_assignable_v<T>)
     {
         if constexpr (M == Capacity)
         {
@@ -104,7 +119,9 @@ class StaticArray
     }
 
     // Same goes for assignment. It wont include `M == Capacity`, and use the default assignment operator
-    template <SizeType M> constexpr StaticArray &operator=(StaticArray<ValueType, M, Traits> &&p_Other)
+    template <SizeType M>
+    constexpr StaticArray &operator=(StaticArray<ValueType, M, Traits> &&p_Other)
+        requires(std::is_move_assignable_v<T>)
     {
         if constexpr (M == Capacity)
         {

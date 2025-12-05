@@ -34,7 +34,9 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
             Memory::ConstructRange(begin(), end(), p_Args...);
     }
 
-    template <std::input_iterator It> constexpr DynamicArray(const It p_Begin, const It p_End)
+    template <std::input_iterator It>
+    constexpr DynamicArray(const It p_Begin, const It p_End)
+        requires(std::is_copy_constructible_v<T>)
     {
         m_Size = static_cast<SizeType>(std::distance(p_Begin, p_End));
         if (m_Size > 0)
@@ -42,14 +44,18 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
         Tools::CopyConstructFromRange(begin(), p_Begin, p_End);
     }
 
-    constexpr DynamicArray(const std::initializer_list<ValueType> p_List) : m_Size(static_cast<SizeType>(p_List.size()))
+    constexpr DynamicArray(const std::initializer_list<ValueType> p_List)
+        requires(std::is_copy_constructible_v<T>)
+        : m_Size(static_cast<SizeType>(p_List.size()))
     {
         if (m_Size > 0)
             growCapacity(m_Size);
         Tools::CopyConstructFromRange(begin(), p_List.begin(), p_List.end());
     }
 
-    constexpr DynamicArray(const DynamicArray &p_Other) : m_Size(p_Other.GetSize())
+    constexpr DynamicArray(const DynamicArray &p_Other)
+        requires(std::is_copy_constructible_v<T>)
+        : m_Size(p_Other.GetSize())
     {
         if (m_Size > 0)
             growCapacity(m_Size);
@@ -57,6 +63,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
     }
 
     constexpr DynamicArray(DynamicArray &&p_Other)
+        requires(std::is_move_constructible_v<T>)
         : m_Data(p_Other.m_Data), m_Size(p_Other.GetSize()), m_Capacity(p_Other.GetCapacity())
 
     {
@@ -72,6 +79,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
     }
 
     constexpr DynamicArray &operator=(const DynamicArray &p_Other)
+        requires(std::is_copy_assignable_v<T>)
     {
         if (this == &p_Other)
             return *this;
@@ -86,6 +94,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
     }
 
     constexpr DynamicArray &operator=(DynamicArray &&p_Other)
+        requires(std::is_move_assignable_v<T>)
     {
         if (this == &p_Other)
             return *this;

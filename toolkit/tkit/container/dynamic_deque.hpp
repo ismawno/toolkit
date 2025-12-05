@@ -33,7 +33,9 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
             Memory::ConstructRange(GetData(), GetData() + p_Size, p_Args...);
     }
 
-    template <std::input_iterator It> constexpr DynamicDeque(const It p_Begin, const It p_End)
+    template <std::input_iterator It>
+    constexpr DynamicDeque(const It p_Begin, const It p_End)
+        requires(std::is_copy_constructible_v<T>)
     {
         m_Size = static_cast<SizeType>(std::distance(p_Begin, p_End));
         if (m_Size > 0)
@@ -41,7 +43,9 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
         Tools::CopyConstructFromRange(GetData(), p_Begin, p_End);
     }
 
-    constexpr DynamicDeque(const std::initializer_list<ValueType> p_List) : m_Size(static_cast<SizeType>(p_List.size()))
+    constexpr DynamicDeque(const std::initializer_list<ValueType> p_List)
+        requires(std::is_copy_constructible_v<T>)
+        : m_Size(static_cast<SizeType>(p_List.size()))
     {
         if (m_Size > 0)
             growCapacity(m_Size);
