@@ -265,7 +265,7 @@ class StaticDeque
     constexpr const ValueType &At(const SizeType p_Index) const
     {
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][STAT-DEQUE] Cannot index into an empty queue");
-        TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT][STAT-DEQUE] Index is out of bounds");
+        TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT][STAT-DEQUE] Index is out of bounds: {} >= {}", p_Index, Capacity);
         return *(GetData() + p_Index);
     }
     /**
@@ -280,7 +280,7 @@ class StaticDeque
     constexpr ValueType &At(const SizeType p_Index)
     {
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][STAT-DEQUE] Cannot index into an empty queue");
-        TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT][STAT-DEQUE] Index is out of bounds");
+        TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT][STAT-DEQUE] Index is out of bounds: {} >= {}", p_Index, Capacity);
         return *(GetData() + p_Index);
     }
 

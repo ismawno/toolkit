@@ -156,12 +156,12 @@ template <Float T> struct Quaternion
 
     constexpr const T &At(const usize p_Index) const
     {
-        TKIT_ASSERT(p_Index < Size, "[TOOLKIT][QUAT] Index is out of bounds");
+        TKIT_ASSERT(p_Index < Size, "[TOOLKIT][QUAT] Index is out of bounds: {} >= {}", p_Index, Size);
         return (&w)[p_Index];
     }
     constexpr T &At(const usize p_Index)
     {
-        TKIT_ASSERT(p_Index < Size, "[TOOLKIT][QUAT] Index is out of bounds");
+        TKIT_ASSERT(p_Index < Size, "[TOOLKIT][QUAT] Index is out of bounds: {} >= {}", p_Index, Size);
         return (&w)[p_Index];
     }
 

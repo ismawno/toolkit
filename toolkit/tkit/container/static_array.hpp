@@ -318,12 +318,12 @@ class StaticArray
     }
     constexpr const ValueType &At(const SizeType p_Index) const
     {
-        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT][STAT-ARRAY] Index is out of bounds");
+        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT][STAT-ARRAY] Index is out of bounds: {} >= {}", p_Index, m_Size);
         return *(begin() + p_Index);
     }
     constexpr ValueType &At(const SizeType p_Index)
     {
-        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT][STAT-ARRAY] Index is out of bounds");
+        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT][STAT-ARRAY] Index is out of bounds: {} >= {}", p_Index, m_Size);
         return *(begin() + p_Index);
     }
 
