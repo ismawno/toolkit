@@ -58,6 +58,13 @@ Located under the [profiling](https://github.com/ismawno/toolkit/tree/main/toolk
 
 Located under the [reflection](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/reflection) and [serialization](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/serialization) folders, these two modules contain special macros that allow the user to mark classes, structs or enums for reflection or serialization code generation. The C++ code is generated through special python scripts developed in the [convoy](https://github.com/ismawno/convoy) project that are triggered at build time through `CMake`. For marked object definitions to be visible, the files that contain the reflection or serialization marks must be listed in special `CMake` functions, such as `tkit_register_for_reflection` and `tkit_register_for_yaml_serialization`. The generated code will be located in the [tkit/reflection](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/reflection) and [tkit/serialization](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/serialization) folders following the user's directory structure.
 
+#### Code generation scripts
+
+For me, one of the biggest missing features of C++ is reflection. This is a feature that allows you to inspect the structure of your code at runtime, and it is something that is available in many other languages. The code generation scripts are meant to help with this. They generate code that can be used to implement reflection in C++ by scanning `.hpp` or `.cpp` files of your choosing, and generating reflection code for every marked `class` or `struct` they see. The script [reflect.py](https://github.com/ismawno/toolkit/blob/main/codegen/cpp/reflect.py) is a command line script that is in charge of this functionality. Use the `-h` or `--help` flag to learn more about its capabilities.
+
+One other very important feature code generation grants is automatic serialization. It is true that this feature can be built on top of the generated reflection code, but some handy features will be missing or clanky to implement, such as marking fields to be deserialized optionally and overriding types. In my case, it was easier to generate the code directly with [serialize.py](https://github.com/ismawno/toolkit/blob/main/codegen/cpp/serialize.py). The only backend implemented for now is yaml, which uses [yaml-cpp](https://github.com/jbeder/yaml-cpp), so to use serialization it must be added as a dependency.
+
+
 ### General utilities
 
 Located under the [utils](https://github.com/ismawno/toolkit/tree/main/toolkit/tkit/utils) folder, these are general purpose utilities, such as logging and assert macros that can be stripped away on non-debug builds, math utilities, concepts, literals etc.
