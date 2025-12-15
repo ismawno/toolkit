@@ -360,6 +360,10 @@ function(tkit_configure_compile_link_options target)
 
   endif()
 
+  if(MSVC)
+    list(APPEND compiler_flags /wd9025)
+  endif()
+
   if(ARG_NO_EXCEPTIONS)
     if(MSVC)
       list(APPEND compiler_flags /EHs- /D_HAS_EXCEPTIONS=0)
