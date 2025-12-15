@@ -95,7 +95,7 @@ if(NOT TARGET fmt::fmt)
     GIT_PROGRESS TRUE)
 
   FetchContent_MakeAvailable(fmt)
-  tkit_configure_compile_link_options(fmt)
+  tkit_configure_compile_link_options(fmt NO_EXCEPTIONS)
 else()
   message(STATUS "TOOLKIT - FMT found")
 endif()
