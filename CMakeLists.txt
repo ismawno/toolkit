@@ -34,6 +34,12 @@ set(TOOLKIT_SANITIZERS
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+set(CMAKE_C_FLAGS
+    ""
+    CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS
+    ""
+    CACHE STRING "" FORCE)
 set(CMAKE_C_FLAGS_RELEASE
     ""
     CACHE STRING "" FORCE)
@@ -57,19 +63,6 @@ set(CMAKE_EXE_LINKER_FLAGS_DEBUG
     ""
     CACHE STRING "" FORCE)
 set(CMAKE_SHARED_LINKER_FLAGS_DEBUG
-    ""
-    CACHE STRING "" FORCE)
-
-set(CMAKE_C_FLAGS_DIST
-    ""
-    CACHE STRING "" FORCE)
-set(CMAKE_CXX_FLAGS_DIST
-    ""
-    CACHE STRING "" FORCE)
-set(CMAKE_EXE_LINKER_FLAGS_DIST
-    ""
-    CACHE STRING "" FORCE)
-set(CMAKE_SHARED_LINKER_FLAGS_DIST
     ""
     CACHE STRING "" FORCE)
 
@@ -358,10 +351,6 @@ function(tkit_configure_compile_link_options target)
            -fno-omit-frame-pointer)
     endif()
 
-  endif()
-
-  if(MSVC)
-    list(APPEND compiler_flags /wd9025)
   endif()
 
   if(ARG_NO_EXCEPTIONS)
