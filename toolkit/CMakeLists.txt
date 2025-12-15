@@ -96,6 +96,7 @@ if(NOT TARGET fmt::fmt)
 
   FetchContent_MakeAvailable(fmt)
   tkit_configure_compile_link_options(fmt NO_EXCEPTIONS)
+  target_compile_definitions(fmt FMT_EXCEPTIONS=0)
 else()
   message(STATUS "TOOLKIT - FMT found")
 endif()
