@@ -43,6 +43,7 @@ if(NOT Catch2_FOUND)
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE)
   FetchContent_MakeAvailable(Catch2)
+  tkit_configure_compile_link_options(Catch2 NO_EXCEPTIONS)
 else()
   message(STATUS "TOOLKIT - Catch2 found")
 endif()
