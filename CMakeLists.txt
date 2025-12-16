@@ -425,7 +425,7 @@ endfunction()
 function(tkit_default_configure target)
   if(MSVC)
     tkit_configure_compile_link_options(${target} COMPILER_FLAGS /W4 /WX
-                                        NO_EXCEPTIONS)
+                                        NO_EXCEPTIONS NO_RTTI)
   elseif((UNIX AND APPLE) OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     tkit_configure_compile_link_options(
       ${target}
@@ -434,7 +434,8 @@ function(tkit_default_configure target)
       -Wextra
       -Wpedantic
       -Werror
-      NO_EXCEPTIONS)
+      NO_EXCEPTIONS
+      NO_RTTI)
   else()
     tkit_configure_compile_link_options(
       ${target}
@@ -444,7 +445,8 @@ function(tkit_default_configure target)
       -Wpedantic
       -Werror
       -Wno-changes-meaning
-      NO_EXCEPTIONS)
+      NO_EXCEPTIONS
+      NO_RTTI)
   endif()
 endfunction()
 

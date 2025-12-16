@@ -43,7 +43,7 @@ if(NOT Catch2_FOUND)
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE)
   FetchContent_MakeAvailable(Catch2)
-  tkit_configure_compile_link_options(Catch2 NO_EXCEPTIONS)
+  tkit_configure_compile_link_options(Catch2 NO_EXCEPTIONS NO_RTTI)
 else()
   message(STATUS "TOOLKIT - Catch2 found")
 endif()
@@ -53,7 +53,7 @@ add_executable(toolkit-tests ${SOURCES})
 target_link_libraries(toolkit-tests PRIVATE Catch2::Catch2WithMain toolkit)
 target_include_directories(toolkit-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-tkit_default_configure(toolkit-tests)
+tkit_default_configure(toolkit-tests NO_RTTI)
 
 include(CTest)
 include(Catch)

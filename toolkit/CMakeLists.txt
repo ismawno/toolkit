@@ -53,7 +53,7 @@ if(TOOLKIT_ENABLE_YAML_SERIALIZATION)
 
   FetchContent_MakeAvailable(yaml-cpp)
 
-  tkit_configure_compile_link_options(yaml-cpp NO_EXCEPTIONS)
+  tkit_configure_compile_link_options(yaml-cpp NO_EXCEPTIONS NO_RTTI)
   list(APPEND SOURCES tkit/serialization/yaml/codec.cpp)
 endif()
 
@@ -95,7 +95,7 @@ if(NOT TARGET fmt::fmt)
     GIT_PROGRESS TRUE)
 
   FetchContent_MakeAvailable(fmt)
-  tkit_configure_compile_link_options(fmt NO_EXCEPTIONS)
+  tkit_configure_compile_link_options(fmt NO_EXCEPTIONS NO_RTTI)
   target_compile_definitions(fmt PUBLIC FMT_EXCEPTIONS=0)
   # add no rtti here
 else()
