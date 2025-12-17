@@ -28,7 +28,7 @@ if(TOOLKIT_ENABLE_MULTIPROCESSING)
 endif()
 
 if(TOOLKIT_ENABLE_PROFILING)
-  list(APPEND SOURCES tkit/profiling/clock.cpp tkit/profiling/timespan.cpp)
+  list(APPEND SOURCES tkit/profiling/clock.cpp)
 endif()
 
 include(FetchContent)
