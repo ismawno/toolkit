@@ -60,7 +60,8 @@ class TKIT_API Timespan
 
     template <typename TimeUnit, Detail::Numeric T> static Timespan From(const T p_Elapsed)
     {
-        return Timespan(std::chrono::duration<T, typename TimeUnit::period>(p_Elapsed));
+        using InputDuration = std::chrono::duration<T, typename TimeUnit::period>;
+        return Timespan(std::chrono::duration_cast<Nanoseconds>(InputDuration{p_Elapsed}));
     }
 
     template <Detail::Numeric T> static Timespan FromNanoseconds(const T p_Elapsed)
