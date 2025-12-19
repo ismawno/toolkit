@@ -63,6 +63,23 @@ class TKIT_API Timespan
         return Timespan(std::chrono::duration<T, typename TimeUnit::period>(p_Elapsed));
     }
 
+    template <Detail::Numeric T> static Timespan FromNanoseconds(const T p_Elapsed)
+    {
+        return From<Nanoseconds>(p_Elapsed);
+    }
+    template <Detail::Numeric T> static Timespan FromMicroseconds(const T p_Elapsed)
+    {
+        return From<Microseconds>(p_Elapsed);
+    }
+    template <Detail::Numeric T> static Timespan FromMilliseconds(const T p_Elapsed)
+    {
+        return From<Milliseconds>(p_Elapsed);
+    }
+    template <Detail::Numeric T> static Timespan FromSeconds(const T p_Elapsed)
+    {
+        return From<Seconds>(p_Elapsed);
+    }
+
     static void Sleep(const Timespan p_Duration)
     {
         std::this_thread::sleep_for(p_Duration.m_Elapsed);
