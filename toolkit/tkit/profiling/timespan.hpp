@@ -81,10 +81,7 @@ class TKIT_API Timespan
         return From<Seconds>(p_Elapsed);
     }
 
-    static void Sleep(const Timespan p_Duration)
-    {
-        std::this_thread::sleep_for(p_Duration.m_Elapsed);
-    }
+    static void Sleep(Timespan p_Duration);
 
     std::strong_ordering operator<=>(const Timespan &p_Other) const = default;
 
