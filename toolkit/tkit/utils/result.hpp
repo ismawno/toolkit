@@ -6,7 +6,7 @@
 namespace TKit
 {
 /**
- * @brief A result class that can hold either a value of type `T` or an error message of type ErrorType.
+ * @brief A result class that can hold either a value of type `T` or an error message of type E.
  *
  * This class is meant to be used in functions that can fail and return an error message, or succeed and return a value.
  * The main difference between this class and `std::optional` is that this class explicitly holds an error if the result
@@ -16,9 +16,9 @@ namespace TKit
  * `Error` before using it.
  *
  * @tparam T The type of the value that can be held.
- * @tparam ErrorType The type of the error message that can be held.
+ * @tparam E The type of the error message that can be held.
  */
-template <typename T = void, typename ErrorType = const char *> class Result
+template <typename T = void, typename E = const char *> class Result
 {
     using Flags = u8;
     enum FlagBits : Flags
@@ -42,9 +42,9 @@ template <typename T = void, typename ErrorType = const char *> class Result
     }
 
     /**
-     * @brief Construct a `Result` object with an error message of type `ErrorType`.
+     * @brief Construct a `Result` object with an error message of type `E`.
      *
-     * @param p_Args The arguments to pass to the constructor of `ErrorType`.
+     * @param p_Args The arguments to pass to the constructor of `E`.
      */
     template <typename... ErrorArgs> static Result Error(ErrorArgs &&...p_Args)
     {
@@ -54,8 +54,26 @@ template <typename T = void, typename ErrorType = const char *> class Result
         return result;
     }
 
+    Result(const T &p_Ok) : m_Flags(Flag_Engaged | Flag_Ok)
+    {
+        m_Value.Construct(p_Ok);
+    }
+    Result(T &&p_Ok) : m_Flags(Flag_Engaged | Flag_Ok)
+    {
+        m_Value.Construct(std::move(p_Ok));
+    }
+
+    Result(const E &p_Error) : m_Flags(Flag_Engaged)
+    {
+        m_Error.Construct(p_Error);
+    }
+    Result(E &&p_Error) : m_Flags(Flag_Engaged)
+    {
+        m_Error.Construct(std::move(p_Error));
+    }
+
     Result(const Result &p_Other)
-        requires(std::copy_constructible<T> && std::copy_constructible<ErrorType>)
+        requires(std::copy_constructible<T> && std::copy_constructible<E>)
         : m_Flags(p_Other.m_Flags)
     {
         if (!checkFlag(Flag_Engaged))
@@ -66,7 +84,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
             m_Error.Construct(*p_Other.m_Error.Get());
     }
     Result(Result &&p_Other)
-        requires(std::move_constructible<T> && std::move_constructible<ErrorType>)
+        requires(std::move_constructible<T> && std::move_constructible<E>)
         : m_Flags(p_Other.m_Flags)
     {
         if (!checkFlag(Flag_Engaged))
@@ -78,7 +96,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
     }
 
     Result &operator=(const Result &p_Other)
-        requires(std::is_copy_assignable_v<T> && std::is_copy_assignable_v<ErrorType>)
+        requires(std::is_copy_assignable_v<T> && std::is_copy_assignable_v<E>)
     {
         if (this == &p_Other)
             return *this;
@@ -94,7 +112,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
         return *this;
     }
     Result &operator=(Result &&p_Other)
-        requires(std::is_move_assignable_v<T> && std::is_move_assignable_v<ErrorType>)
+        requires(std::is_move_assignable_v<T> && std::is_move_assignable_v<E>)
     {
         if (this == &p_Other)
             return *this;
@@ -160,7 +178,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
      * If the result is valid, this will cause undefined behavior.
      *
      */
-    const ErrorType &GetError() const
+    const E &GetError() const
     {
         TKIT_ASSERT(IsError(), "[TOOLKIT][RESULT] Result is not an error");
         return *m_Error.Get();
@@ -209,7 +227,7 @@ template <typename T = void, typename ErrorType = const char *> class Result
 
     union {
         Storage<T> m_Value;
-        Storage<ErrorType> m_Error;
+        Storage<E> m_Error;
     };
     Flags m_Flags = 0;
 };
@@ -224,9 +242,9 @@ template <typename T = void, typename ErrorType = const char *> class Result
  * Using the default constructor will create an uninitialized `Result`. Make sure to instantiate it with either `Ok`
  * or `Error` before using it.
  *
- * @tparam ErrorType The type of the error message that can be held.
+ * @tparam E The type of the error message that can be held.
  */
-template <typename ErrorType> class Result<void, ErrorType>
+template <typename E> class Result<void, E>
 {
     using Flags = u8;
     enum FlagBits : Flags
@@ -248,9 +266,9 @@ template <typename ErrorType> class Result<void, ErrorType>
     }
 
     /**
-     * @brief Construct a `Result` object with an error message of type `ErrorType`.
+     * @brief Construct a `Result` object with an error message of type `E`.
      *
-     * @param p_Args The arguments to pass to the constructor of `ErrorType`.
+     * @param p_Args The arguments to pass to the constructor of `E`.
      */
     template <typename... ErrorArgs> static Result Error(ErrorArgs &&...p_Args)
     {
@@ -260,15 +278,24 @@ template <typename ErrorType> class Result<void, ErrorType>
         return result;
     }
 
+    Result(const E &p_Error) : m_Flags(Flag_Engaged)
+    {
+        m_Error.Construct(p_Error);
+    }
+    Result(E &&p_Error) : m_Flags(Flag_Engaged)
+    {
+        m_Error.Construct(std::move(p_Error));
+    }
+
     Result(const Result &p_Other)
-        requires(std::copy_constructible<ErrorType>)
+        requires(std::copy_constructible<E>)
         : m_Flags(p_Other.m_Flags)
     {
         if (IsError())
             m_Error.Construct(*p_Other.m_Error.Get());
     }
     Result(Result &&p_Other)
-        requires(std::move_constructible<ErrorType>)
+        requires(std::move_constructible<E>)
         : m_Flags(p_Other.m_Flags)
     {
         if (IsError())
@@ -276,7 +303,7 @@ template <typename ErrorType> class Result<void, ErrorType>
     }
 
     Result &operator=(const Result &p_Other)
-        requires(std::is_copy_assignable_v<ErrorType>)
+        requires(std::is_copy_assignable_v<E>)
     {
         if (this == &p_Other)
             return *this;
@@ -288,7 +315,7 @@ template <typename ErrorType> class Result<void, ErrorType>
         return *this;
     }
     Result &operator=(Result &&p_Other)
-        requires(std::is_move_assignable_v<ErrorType>)
+        requires(std::is_move_assignable_v<E>)
     {
         if (this == &p_Other)
             return *this;
@@ -325,7 +352,7 @@ template <typename ErrorType> class Result<void, ErrorType>
      * If the result is valid, this will cause undefined behavior.
      *
      */
-    const ErrorType &GetError() const
+    const E &GetError() const
     {
         TKIT_ASSERT(IsError(), "[TOOLKIT][RESULT] Result is not an error");
         return *m_Error.Get();
@@ -348,7 +375,7 @@ template <typename ErrorType> class Result<void, ErrorType>
         if (IsError())
             m_Error.Destruct();
     }
-    Storage<ErrorType> m_Error;
+    Storage<E> m_Error;
     Flags m_Flags = 0;
 };
 
