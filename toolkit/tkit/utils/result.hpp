@@ -72,12 +72,33 @@ template <typename T = void, typename E = const char *> class Result
         m_Error.Construct(std::move(p_Error));
     }
 
+    template <typename Error>
+    Result(const Result<T, Error> &p_Other)
+        requires(std::copy_constructible<T>)
+        : m_Flags(p_Other.m_Flags)
+    {
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different error types but same value types, "
+                                        "copy-from result must be a value");
+        m_Value.Construct(*p_Other.m_Value.Get());
+    }
+    template <typename Type>
+    Result(const Result<Type, E> &p_Other)
+        requires(std::copy_constructible<E>)
+        : m_Flags(p_Other.m_Flags)
+    {
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(!checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different value types but same error types, "
+                                         "copy-from result must be an error");
+
+        m_Error.Construct(*p_Other.m_Error.Get());
+    }
+
     Result(const Result &p_Other)
         requires(std::copy_constructible<T> && std::copy_constructible<E>)
         : m_Flags(p_Other.m_Flags)
     {
-        if (!checkFlag(Flag_Engaged))
-            return;
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
         if (checkFlag(Flag_Ok))
             m_Value.Construct(*p_Other.m_Value.Get());
         else
@@ -87,12 +108,68 @@ template <typename T = void, typename E = const char *> class Result
         requires(std::move_constructible<T> && std::move_constructible<E>)
         : m_Flags(p_Other.m_Flags)
     {
-        if (!checkFlag(Flag_Engaged))
-            return;
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
         if (checkFlag(Flag_Ok))
             m_Value.Construct(std::move(*p_Other.m_Value.Get()));
         else
             m_Error.Construct(std::move(*p_Other.m_Error.Get()));
+    }
+
+    Result &operator=(const T &p_Ok)
+    {
+        destroy();
+        m_Flags = Flag_Engaged | Flag_Ok;
+        m_Value.Construct(p_Ok);
+        return *this;
+    }
+    Result &operator=(T &&p_Ok)
+    {
+        destroy();
+        m_Flags = Flag_Engaged | Flag_Ok;
+        m_Value.Construct(std::move(p_Ok));
+        return *this;
+    }
+
+    Result &operator=(const E &p_Error)
+    {
+        destroy();
+        m_Flags = Flag_Engaged;
+        m_Error.Construct(p_Error);
+        return *this;
+    }
+    Result &operator=(E &&p_Error)
+    {
+        destroy();
+        m_Flags = Flag_Engaged;
+        m_Error.Construct(p_Error);
+        return *this;
+    }
+
+    template <typename Error>
+    Result &operator=(const Result<T, Error> &p_Other)
+        requires(std::copy_constructible<T>)
+    {
+        destroy();
+        m_Flags = p_Other.m_Flags;
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different error types but same value types, "
+                                        "copy-from result must be a value");
+        m_Value.Construct(*p_Other.m_Value.Get());
+        return *this;
+    }
+    template <typename Type>
+    Result &operator=(const Result<Type, E> &p_Other)
+        requires(std::copy_constructible<E>)
+
+    {
+        destroy();
+        m_Flags = p_Other.m_Flags;
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(!checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different value types but same error types, "
+                                         "copy-from result must be an error");
+
+        m_Error.Construct(*p_Other.m_Error.Get());
+        return *this;
     }
 
     Result &operator=(const Result &p_Other)
@@ -102,8 +179,8 @@ template <typename T = void, typename E = const char *> class Result
             return *this;
         destroy();
         m_Flags = p_Other.m_Flags;
-        if (!checkFlag(Flag_Engaged))
-            return *this;
+
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot assign from an undefined result");
         if (checkFlag(Flag_Ok))
             m_Value.Construct(*p_Other.m_Value.Get());
         else
@@ -119,8 +196,8 @@ template <typename T = void, typename E = const char *> class Result
 
         destroy();
         m_Flags = p_Other.m_Flags;
-        if (!checkFlag(Flag_Engaged))
-            return *this;
+
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot assign from an undefined result");
         if (checkFlag(Flag_Ok))
             m_Value.Construct(std::move(*p_Other.m_Value.Get()));
         else
