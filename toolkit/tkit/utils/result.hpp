@@ -73,6 +73,7 @@ template <typename T = void, typename E = const char *> class Result
     }
 
     template <typename Error>
+        requires(!std::same_as<E, Error>)
     Result(const Result<T, Error> &p_Other)
         requires(std::copy_constructible<T>)
         : m_Flags(p_Other.m_Flags)
@@ -83,6 +84,7 @@ template <typename T = void, typename E = const char *> class Result
         m_Value.Construct(*p_Other.m_Value.Get());
     }
     template <typename Type>
+        requires(!std::same_as<T, Type>)
     Result(const Result<Type, E> &p_Other)
         requires(std::copy_constructible<E>)
         : m_Flags(p_Other.m_Flags)
@@ -146,6 +148,7 @@ template <typename T = void, typename E = const char *> class Result
     }
 
     template <typename Error>
+        requires(!std::same_as<E, Error>)
     Result &operator=(const Result<T, Error> &p_Other)
         requires(std::copy_constructible<T>)
     {
@@ -158,6 +161,7 @@ template <typename T = void, typename E = const char *> class Result
         return *this;
     }
     template <typename Type>
+        requires(!std::same_as<T, Type>)
     Result &operator=(const Result<Type, E> &p_Other)
         requires(std::copy_constructible<E>)
 
@@ -364,6 +368,26 @@ template <typename E> class Result<void, E>
         m_Error.Construct(std::move(p_Error));
     }
 
+    template <typename Error>
+        requires(!std::same_as<E, Error>)
+    Result(const Result<void, Error> &p_Other) : m_Flags(p_Other.m_Flags)
+    {
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different error types but same value types, "
+                                        "copy-from result must be a value");
+    }
+    template <typename Type>
+        requires(!std::same_as<void, Type>)
+    Result(const Result<Type, E> &p_Other)
+        requires(std::copy_constructible<E>)
+        : m_Flags(p_Other.m_Flags)
+    {
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(!checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different value types but same error types, "
+                                         "copy-from result must be an error");
+        m_Error.Construct(*p_Other.m_Error.Get());
+    }
+
     Result(const Result &p_Other)
         requires(std::copy_constructible<E>)
         : m_Flags(p_Other.m_Flags)
@@ -377,6 +401,47 @@ template <typename E> class Result<void, E>
     {
         if (IsError())
             m_Error.Construct(std::move(*p_Other.m_Error.Get()));
+    }
+
+    Result &operator=(const E &p_Error)
+    {
+        destroy();
+        m_Flags = Flag_Engaged;
+        m_Error.Construct(p_Error);
+        return *this;
+    }
+    Result &operator=(E &&p_Error)
+    {
+        destroy();
+        m_Flags = Flag_Engaged;
+        m_Error.Construct(p_Error);
+        return *this;
+    }
+
+    template <typename Error>
+        requires(!std::same_as<E, Error>)
+    Result &operator=(const Result<void, Error> &p_Other)
+    {
+        destroy();
+        m_Flags = p_Other.m_Flags;
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different error types but same value types, "
+                                        "copy-from result must be a value");
+        return *this;
+    }
+    template <typename Type>
+        requires(!std::same_as<void, Type>)
+    Result &operator=(const Result<Type, E> &p_Other)
+        requires(std::copy_constructible<E>)
+
+    {
+        destroy();
+        m_Flags = p_Other.m_Flags;
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(!checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different value types but same error types, "
+                                         "copy-from result must be an error");
+        m_Error.Construct(*p_Other.m_Error.Get());
+        return *this;
     }
 
     Result &operator=(const Result &p_Other)
