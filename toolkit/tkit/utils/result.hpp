@@ -317,6 +317,8 @@ template <typename T = void, typename E = const char *> class Result
         Storage<E> m_Error;
     };
     Flags m_Flags = 0;
+
+    template <typename Type, typename Error> friend class Result;
 };
 
 /**
@@ -525,6 +527,8 @@ template <typename E> class Result<void, E>
     }
     Storage<E> m_Error;
     Flags m_Flags = 0;
+
+    template <typename Type, typename Error> friend class Result;
 };
 
 } // namespace TKit
