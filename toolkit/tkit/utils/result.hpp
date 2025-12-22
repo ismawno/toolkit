@@ -3,7 +3,7 @@
 #include "tkit/utils/debug.hpp"
 #include "tkit/container/storage.hpp"
 
-#define TKIT_OR_RETURN(p_Result)                                                                                       \
+#define TKIT_RETURN_ON_ERROR(p_Result)                                                                                 \
     if (!p_Result)                                                                                                     \
     return p_Result
 
