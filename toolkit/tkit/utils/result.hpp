@@ -3,6 +3,12 @@
 #include "tkit/utils/debug.hpp"
 #include "tkit/container/storage.hpp"
 
+#define TKIT_OR_RETURN(p_Result)                                                                                       \
+    if (!p_Result)                                                                                                     \
+    return p_Result
+
+#define TKIT_OR_ELSE(p_Result, p_Fallback) p_Result ? p_Result.GetValue() : p_Fallback
+
 namespace TKit
 {
 /**
