@@ -1,6 +1,7 @@
 #include "tkit/core/pch.hpp"
 #include "tkit/multiprocessing/topology.hpp"
 #include "tkit/container/dynamic_array.hpp"
+#include "tkit/memory/block_allocator.hpp"
 
 #ifdef TKIT_HWLOC_INSTALLED
 #    include <hwloc.h>
@@ -42,12 +43,18 @@ void SetThreadName(const u32 p_ThreadIndex, const char *p_Name)
 }
 
 #ifdef TKIT_HWLOC_INSTALLED
+
+#    ifndef TKIT_TOPOLOGY_MAX_HANDLES
+#        define TKIT_TOPOLOGY_MAX_HANDLES 64
+#    endif
+
 struct Handle
 {
     hwloc_topology_t Topology = nullptr;
 };
 
-DynamicArray<u32> s_BuildOrder{};
+static BlockAllocator s_HandleAllocator = BlockAllocator::CreateFromType<Handle>(TKIT_TOPOLOGY_MAX_HANDLES);
+static DynamicArray<u32> s_BuildOrder{};
 
 struct KindInfo
 {
@@ -272,17 +279,17 @@ void PinThread(const Handle *p_Handle, const u32 p_ThreadIndex)
 
 const Handle *Initialize()
 {
-    Handle *handle = new Handle;
+    Handle *handle = s_HandleAllocator.Allocate<Handle>();
     hwloc_topology_init(&handle->Topology);
     hwloc_topology_set_flags(handle->Topology, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM);
     hwloc_topology_load(handle->Topology);
     return handle;
 }
 
-void Terminate(const Handle *p_Handle)
+void Terminate(Handle *p_Handle)
 {
     hwloc_topology_destroy(p_Handle->Topology);
-    delete p_Handle;
+    s_HandleAllocator.Deallocate(p_Handle);
 }
 #else
 struct Handle

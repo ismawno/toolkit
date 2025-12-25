@@ -15,6 +15,6 @@ void PinThread(const Handle *p_Handle, u32 p_ThreadIndex);
 
 void SetThreadName(u32 p_ThreadIndex, const char *p_Name = nullptr);
 
-void Terminate(const Handle *p_Handle);
+void Terminate(Handle *p_Handle);
 
 } // namespace TKit::Topology
