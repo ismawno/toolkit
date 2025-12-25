@@ -8,7 +8,7 @@ namespace TKit::Topology
 struct Handle;
 
 constexpr u32 Unknown = Limits<u32>::Max();
-const Handle *Initialize();
+Handle *Initialize();
 
 void BuildAffinityOrder(const Handle *p_Handle);
 void PinThread(const Handle *p_Handle, u32 p_ThreadIndex);

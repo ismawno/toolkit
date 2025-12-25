@@ -106,6 +106,6 @@ class TKIT_API ThreadPool final : public ITaskManager
     StaticArray<Worker, TKIT_THREAD_POOL_MAX_WORKERS> m_Workers;
 
     alignas(TKIT_CACHE_LINE_SIZE) std::atomic_flag m_ReadySignal = ATOMIC_FLAG_INIT;
-    const Topology::Handle *m_Handle;
+    Topology::Handle *m_Handle;
 };
 } // namespace TKit

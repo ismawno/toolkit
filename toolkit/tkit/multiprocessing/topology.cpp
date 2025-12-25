@@ -277,7 +277,7 @@ void PinThread(const Handle *p_Handle, const u32 p_ThreadIndex)
     bindCurrentThread(p_Handle->Topology, pindex);
 }
 
-const Handle *Initialize()
+Handle *Initialize()
 {
     Handle *handle = s_HandleAllocator.Allocate<Handle>();
     hwloc_topology_init(&handle->Topology);
