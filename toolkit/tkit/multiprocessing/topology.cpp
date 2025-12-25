@@ -2,6 +2,7 @@
 #include "tkit/multiprocessing/topology.hpp"
 #include "tkit/container/dynamic_array.hpp"
 #include "tkit/memory/block_allocator.hpp"
+#include "tkit/utils/limits.hpp"
 
 #ifdef TKIT_HWLOC_INSTALLED
 #    include <hwloc.h>
@@ -16,6 +17,8 @@
 
 namespace TKit::Topology
 {
+
+constexpr u32 Unknown = Limits<u32>::Max();
 
 void SetThreadName(const u32 p_ThreadIndex, const char *p_Name)
 {
