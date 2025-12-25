@@ -226,11 +226,11 @@ static usize getTierIndex(const usize p_Size, const usize p_MinAllocation, const
     return p_LastIndex + ((offset - incIndex) << (grIndex - 1)) + (reference >> incIndex);
 }
 
-usize TierAllocator::Description::GetTierIndex(const usize p_Size)
+usize TierAllocator::Description::GetTierIndex(const usize p_Size) const
 {
     return TKit::getTierIndex(p_Size, MinAllocation, Granularity, Tiers.GetSize() - 1);
 }
-usize TierAllocator::getTierIndex(const usize p_Size)
+usize TierAllocator::getTierIndex(const usize p_Size) const
 {
     return TKit::getTierIndex(p_Size, m_MinAllocation, m_Granularity, m_Tiers.GetSize() - 1);
 }

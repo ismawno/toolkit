@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef TKIT_ENABLE_TIER_ALLOCATOR
 #    error                                                                                                             \
         "[TOOLKIT][TIER-ALLOC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_TIER_ALLOCATOR"
@@ -47,7 +45,7 @@ class TKIT_API TierAllocator
         usize Granularity;
         f32 TierSlotDecay;
 
-        usize GetTierIndex(usize p_Size);
+        usize GetTierIndex(usize p_Size) const;
     };
 
     /**
@@ -167,7 +165,7 @@ class TKIT_API TierAllocator
         Allocation *FreeList;
     };
 
-    usize getTierIndex(usize p_Size);
+    usize getTierIndex(usize p_Size) const;
 #ifdef TKIT_ENABLE_ASSERTS
     void setupMemoryLayout(const Description &p_Description, usize p_MaxAlignment);
 #else
