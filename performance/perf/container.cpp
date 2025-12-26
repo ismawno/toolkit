@@ -34,6 +34,8 @@ struct Example
     {
         if (this == &p_Other)
             return *this;
+
+        delete Element;
         *Element = *p_Other.Element;
         return *this;
     }
@@ -41,6 +43,7 @@ struct Example
     {
         if (this == &p_Other)
             return *this;
+        delete Element;
         Element = p_Other.Element;
         p_Other.Element = nullptr;
         return *this;

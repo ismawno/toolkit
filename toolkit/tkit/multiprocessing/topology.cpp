@@ -17,8 +17,17 @@
 
 namespace TKit::Topology
 {
-
 constexpr u32 Unknown = Limits<u32>::Max();
+
+static thread_local usize t_ThreadIndex = 0;
+usize GetThreadIndex()
+{
+    return t_ThreadIndex - 1;
+}
+void SetThreadIndex(const usize p_ThreadIndex)
+{
+    t_ThreadIndex = p_ThreadIndex + 1;
+}
 
 void SetThreadName(const u32 p_ThreadIndex, const char *p_Name)
 {

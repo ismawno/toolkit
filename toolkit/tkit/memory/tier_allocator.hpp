@@ -68,7 +68,7 @@ class TKIT_API TierAllocator
      * to `p_MinAllocation`. It can never be smaller than `sizeof(void *)`.
      *
      * @param p_Granularity It controls how the size difference between tiers evolves, such that the difference between
-     * the allocation sizes of tiers i and i + 1 is the next power of 2 from the allocation size i divided by the
+     * the allocation sizes of tiers i and i + 1 is the next power of 2 from the allocation size i, divided by the
      * granularity. A small granularity causes tier sizes to shrink (remember, tiers are built from biggest to smallest)
      * fast in between tiers, reaching `p_MinAllocation` from `p_MaxAllocation` quicker and thus resulting in a smaller
      * total buffer size, but fragmentation risk is higher. Bigger granularities prevent fragmentation but cause the

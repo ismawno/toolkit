@@ -40,7 +40,7 @@ TEST_CASE("ThreadPool executes Task<usize>s and preserves results", "[ThreadPool
     for (usize i = 0; i < taskCount; ++i)
     {
         tasks[i] = [i] {
-            thread_local const usize idx = ITaskManager::GetThreadIndex();
+            thread_local const usize idx = Topology::GetThreadIndex();
             return i * 10 + idx;
         };
         pool.SubmitTask(&tasks[i]);

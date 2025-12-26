@@ -13,7 +13,11 @@
 #include <thread>
 
 #ifndef TKIT_THREAD_POOL_MAX_WORKERS
-#    define TKIT_THREAD_POOL_MAX_WORKERS 16
+#    define TKIT_THREAD_POOL_MAX_WORKERS (TKIT_MAX_THREADS - 1)
+#endif
+
+#if TKIT_THREAD_POOL_MAX_WORKERS >= TKIT_MAX_THREADS
+#    error "TKIT_THREAD_POOL_MAX_WORKERS must not violate TKIT_MAX_THREADS. It must be at most the latter minus one"
 #endif
 
 #ifndef TKIT_THREAD_POOL_MAX_TASKS
@@ -96,7 +100,7 @@ class TKIT_API ThreadPool final : public ITaskManager
 
     static usize GetWorkerIndex()
     {
-        return t_ThreadIndex - 1;
+        return Topology::GetThreadIndex() - 1;
     }
 
   private:

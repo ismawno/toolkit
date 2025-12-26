@@ -6,7 +6,7 @@ namespace TKit
 thread_local usize t_Victim;
 static usize cheapRand(const usize p_Workers)
 {
-    thread_local usize seed = 0x9e3779b9u ^ ITaskManager::GetThreadIndex();
+    thread_local usize seed = 0x9e3779b9u ^ Topology::GetThreadIndex();
     seed ^= seed << 13;
     seed ^= seed >> 17;
     seed ^= seed << 5;
@@ -71,15 +71,16 @@ ThreadPool::ThreadPool(const usize p_WorkerCount) : ITaskManager(p_WorkerCount)
 {
     TKIT_ASSERT(p_WorkerCount > 1, "[TOOLKIT][MULTIPROC] At least 2 workers are required to create a thread pool");
     m_Handle = Topology::Initialize();
+    Topology::SetThreadIndex(0);
     Topology::BuildAffinityOrder(m_Handle);
     Topology::PinThread(m_Handle, 0);
     Topology::SetThreadName(0, "tkit-main");
 
     const auto worker = [this](const usize p_ThreadIndex) {
+        Topology::SetThreadIndex(p_ThreadIndex);
         Topology::PinThread(m_Handle, p_ThreadIndex);
         Topology::SetThreadName(p_ThreadIndex);
 
-        t_ThreadIndex = p_ThreadIndex;
         const usize workerIndex = p_ThreadIndex - 1;
 
         m_ReadySignal.wait(false, std::memory_order_acquire);
@@ -155,7 +156,7 @@ usize ThreadPool::SubmitTask(ITask *p_Task, usize p_SubmissionIndex)
 void ThreadPool::WaitUntilFinished(const ITask &p_Task)
 {
     const usize nworkers = m_Workers.GetSize();
-    if (t_ThreadIndex == 0)
+    if (Topology::GetThreadIndex() == 0)
     {
         usize index = cheapRand(nworkers);
         while (!p_Task.IsFinished(std::memory_order_acquire))

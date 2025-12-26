@@ -87,19 +87,6 @@ class TKIT_API ITaskManager
         return m_WorkerCount;
     }
 
-    /**
-     * @brief Ask for the thread index of the current thread.
-     *
-     * @return The index of the current thread.
-     */
-    static usize GetThreadIndex()
-    {
-        return t_ThreadIndex;
-    }
-
-  protected:
-    static inline thread_local usize t_ThreadIndex = 0;
-
   private:
     usize m_WorkerCount;
 };
