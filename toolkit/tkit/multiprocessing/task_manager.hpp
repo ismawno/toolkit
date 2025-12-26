@@ -16,6 +16,9 @@ namespace TKit
  *
  * It is an abstract class that must be implemented by the user to create a custom task system.
  *
+ * @note To be able to use it with an interface that accepts an `ITaskManager` base class, the threads owned by the task
+ * manager must have their indices set with `TKit::Topology::SetThreadIndex()`. Failing to do so will result in races.
+ *
  */
 class TKIT_API ITaskManager
 {
