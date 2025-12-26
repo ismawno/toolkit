@@ -32,6 +32,7 @@ if(TOOLKIT_ENABLE_PROFILING)
 endif()
 
 include(FetchContent)
+
 if(TOOLKIT_ENABLE_YAML_SERIALIZATION)
 
   FetchContent_Declare(
@@ -61,25 +62,56 @@ endif()
 add_library(toolkit STATIC ${SOURCES})
 target_compile_definitions(toolkit PUBLIC TKIT_VERSION=\"v0.6.0\")
 
+if(TOOLKIT_ENABLE_MIMALLOC)
+  find_package(mimalloc QUIET)
+  if(mimalloc_FOUND)
+    message(STATUS "TOOLKIT - MIMALLOC found")
+    target_link_libraries(toolkit PRIVATE mimalloc)
+
+  else()
+    message(STATUS "TOOLKIT - MIMALLOC not found. Fetching source...")
+    FetchContent_Declare(
+      mimalloc
+      GIT_REPOSITORY https://github.com/microsoft/mimalloc.git
+      GIT_TAG v3.1.5
+      GIT_SHALLOW TRUE
+      GIT_PROGRESS TRUE)
+
+    FetchContent_MakeAvailable(mimalloc)
+    tkit_configure_compile_link_options(mimalloc NO_EXCEPTIONS NO_RTTI)
+
+    target_link_libraries(toolkit PRIVATE mimalloc)
+  endif()
+  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_MIMALLOC)
+endif()
+
 if(TOOLKIT_ENABLE_YAML_SERIALIZATION)
   target_link_libraries(toolkit PUBLIC yaml-cpp)
 endif()
 
 if(TOOLKIT_ENABLE_MULTIPROCESSING)
-  find_package(PkgConfig QUIET)
-
-  if(PkgConfig_FOUND)
-    pkg_check_modules(HWLOC QUIET IMPORTED_TARGET hwloc)
-  endif()
-
-  if(HWLOC_FOUND)
-
+  find_package(hwloc QUIET)
+  if(hwloc_FOUND)
     message(STATUS "TOOLKIT - HWLOC found")
-    target_link_libraries(toolkit PRIVATE PkgConfig::HWLOC)
+    target_link_libraries(toolkit PRIVATE hwloc::hwloc)
     target_compile_definitions(toolkit PRIVATE TKIT_HWLOC_INSTALLED)
 
   else()
-    message(STATUS "TOOLKIT - HWLOC not found")
+    find_package(PkgConfig QUIET)
+
+    if(PkgConfig_FOUND)
+      pkg_check_modules(HWLOC QUIET IMPORTED_TARGET hwloc)
+    endif()
+
+    if(HWLOC_FOUND)
+
+      message(STATUS "TOOLKIT - HWLOC found with pkg-config")
+      target_link_libraries(toolkit PRIVATE PkgConfig::HWLOC)
+      target_compile_definitions(toolkit PRIVATE TKIT_HWLOC_INSTALLED)
+
+    else()
+      message(STATUS "TOOLKIT - HWLOC not found")
+    endif()
   endif()
 endif()
 

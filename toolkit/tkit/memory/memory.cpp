@@ -2,6 +2,10 @@
 #include "tkit/memory/memory.hpp"
 #include "tkit/profiling/macros.hpp"
 #include "tkit/preprocessor/utils.hpp"
+#ifdef TKIT_ENABLE_MIMALLOC
+#    include <mimalloc-new-delete.h>
+#    include <mimalloc-override.h>
+#endif
 #include <cstring>
 
 namespace TKit::Memory
@@ -19,7 +23,7 @@ bool IsAligned(const size_t p_Address, const size_t p_Alignment)
 
 void *Allocate(const size_t p_Size)
 {
-    void *ptr = std::malloc(p_Size);
+    void *ptr = malloc(p_Size);
     TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
     return ptr;
 }
@@ -27,7 +31,7 @@ void *Allocate(const size_t p_Size)
 void Deallocate(void *p_Ptr)
 {
     TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
-    std::free(p_Ptr);
+    free(p_Ptr);
 }
 
 void *AllocateAligned(const size_t p_Size, size_t p_Alignment)
@@ -50,7 +54,7 @@ void DeallocateAligned(void *p_Ptr)
 #ifdef TKIT_OS_WINDOWS
     _aligned_free(p_Ptr);
 #else
-    std::free(p_Ptr);
+    free(p_Ptr);
 #endif
 }
 
@@ -65,7 +69,7 @@ void *BackwardCopy(void *p_Dst, const void *p_Src, size_t p_Size)
 
 } // namespace TKit::Memory
 
-#ifndef TKIT_DISABLE_MEMORY_OVERRIDES
+#if !defined(TKIT_DISABLE_MEMORY_OVERRIDES) && !defined(TKIT_ENABLE_MIMALLOC)
 void *operator new(const size_t p_Size)
 {
     return TKit::Memory::Allocate(p_Size);

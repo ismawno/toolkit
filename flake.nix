@@ -23,6 +23,7 @@
           llvm
 
           tracy
+          mimalloc
           cmake
           fmt
           pkg-config

@@ -315,7 +315,7 @@ void PinThread(const Handle *, const u32)
 {
 }
 
-const Handle *Initialize()
+Handle *Initialize()
 {
     TKIT_LOG_WARNING(
         "[TOOLKIT][TOPOLOGY] The library HWLOC, required to pin threads to optimal cpu cores, has not been found. "
@@ -323,7 +323,7 @@ const Handle *Initialize()
     return nullptr;
 }
 
-void Terminate(const Handle *)
+void Terminate(Handle *)
 {
 }
 #endif

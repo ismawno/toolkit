@@ -37,7 +37,7 @@ namespace TKit::Memory
 /**
  * @brief Allocate a chunk of memory of a given size.
  *
- * Uses default `std::malloc`. It is here as a placeholder for future custom global allocators.
+ * Uses default `malloc`. It is here as a placeholder for future custom global allocators.
  *
  * @param p_Size The size of the memory to allocate.
  * @return A pointer to the allocated memory.
@@ -47,7 +47,7 @@ TKIT_API void *Allocate(size_t p_Size);
 /**
  * @brief Deallocate a chunk of memory
  *
- * Uses default `std::free`. It is here as a placeholder for future custom global allocators.
+ * Uses default `free`. It is here as a placeholder for future custom global allocators.
  *
  * @param p_Ptr A pointer to the memory to deallocate.
  */
@@ -350,33 +350,3 @@ template <typename It> void DestructRange(const It p_Begin, const It p_End)
 }
 
 } // namespace TKit::Memory
-
-#ifndef TKIT_DISABLE_MEMORY_OVERRIDES
-
-TKIT_COMPILER_WARNING_IGNORE_PUSH()
-TKIT_MSVC_WARNING_IGNORE(28251)
-
-TKIT_API void *operator new(size_t p_Size);
-TKIT_API void *operator new[](size_t p_Size);
-TKIT_API void *operator new(size_t p_Size, std::align_val_t p_Alignment);
-TKIT_API void *operator new[](size_t p_Size, std::align_val_t p_Alignment);
-TKIT_API void *operator new(size_t p_Size, const std::nothrow_t &) noexcept;
-TKIT_API void *operator new[](size_t p_Size, const std::nothrow_t &) noexcept;
-
-TKIT_COMPILER_WARNING_IGNORE_POP()
-
-TKIT_API void operator delete(void *p_Ptr) noexcept;
-TKIT_API void operator delete[](void *p_Ptr) noexcept;
-TKIT_API void operator delete(void *p_Ptr, std::align_val_t p_Alignment) noexcept;
-TKIT_API void operator delete[](void *p_Ptr, std::align_val_t p_Alignment) noexcept;
-TKIT_API void operator delete(void *p_Ptr, const std::nothrow_t &) noexcept;
-TKIT_API void operator delete[](void *p_Ptr, const std::nothrow_t &) noexcept;
-
-TKIT_API void operator delete(void *p_Ptr, size_t p_Size) noexcept;
-TKIT_API void operator delete[](void *p_Ptr, size_t p_Size) noexcept;
-TKIT_API void operator delete(void *p_Ptr, size_t p_Size, std::align_val_t p_Alignment) noexcept;
-TKIT_API void operator delete[](void *p_Ptr, size_t p_Size, std::align_val_t p_Alignment) noexcept;
-TKIT_API void operator delete(void *p_Ptr, size_t p_Size, const std::nothrow_t &) noexcept;
-TKIT_API void operator delete[](void *p_Ptr, size_t p_Size, const std::nothrow_t &) noexcept;
-
-#endif
