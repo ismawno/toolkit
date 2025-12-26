@@ -17,7 +17,6 @@
 
 namespace TKit::Topology
 {
-constexpr u32 Unknown = Limits<u32>::Max();
 
 static thread_local usize t_ThreadIndex = 0;
 usize GetThreadIndex()
@@ -55,6 +54,7 @@ void SetThreadName(const u32 p_ThreadIndex, const char *p_Name)
 }
 
 #ifdef TKIT_HWLOC_INSTALLED
+constexpr u32 Unknown = Limits<u32>::Max();
 
 #    ifndef TKIT_TOPOLOGY_MAX_HANDLES
 #        define TKIT_TOPOLOGY_MAX_HANDLES 64
