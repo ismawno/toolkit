@@ -351,6 +351,16 @@ template <typename It> void DestructRange(const It p_Begin, const It p_End)
 
 } // namespace TKit::Memory
 
+#ifdef TKIT_ENABLE_GLOBAL_ALLOCATOR
+#    define TKIT_GLOBAL_ALLOCATOR_READY() TKit::Detail::AllocatorReady()
+namespace TKit::Detail
+{
+void AllocatorReady();
+}
+#else
+#    define TKIT_GLOBAL_ALLOCATOR_READY()
+#endif
+
 #ifndef TKIT_DISABLE_MEMORY_OVERRIDES
 
 TKIT_COMPILER_WARNING_IGNORE_PUSH()
