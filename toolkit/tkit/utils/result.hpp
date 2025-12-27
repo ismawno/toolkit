@@ -12,9 +12,9 @@
 namespace TKit
 {
 /**
- * @brief A result class that can hold either a value of type `T` or an error message of type E.
+ * @brief A result class that can hold either a value of type `T` or an error of type E.
  *
- * This class is meant to be used in functions that can fail and return an error message, or succeed and return a value.
+ * This class is meant to be used in functions that can fail and return an error, or succeed and return a value.
  * The main difference between this class and `std::optional` is that this class explicitly holds an error if the result
  * could not be computed. It is meant to make my life easier to be honest.
  *
@@ -22,7 +22,7 @@ namespace TKit
  * `Error` before using it.
  *
  * @tparam T The type of the value that can be held.
- * @tparam E The type of the error message that can be held.
+ * @tparam E The type of the error that can be held.
  */
 template <typename T = void, typename E = const char *> class Result
 {
@@ -48,7 +48,7 @@ template <typename T = void, typename E = const char *> class Result
     }
 
     /**
-     * @brief Construct a `Result` object with an error message of type `E`.
+     * @brief Construct a `Result` object with an error of type `E`.
      *
      * @param p_Args The arguments to pass to the constructor of `E`.
      */
@@ -260,7 +260,7 @@ template <typename T = void, typename E = const char *> class Result
     }
 
     /**
-     * @brief Get the error message of the result.
+     * @brief Get the error of the result.
      *
      * If the result is valid, this will cause undefined behavior.
      *
@@ -324,14 +324,14 @@ template <typename T = void, typename E = const char *> class Result
 /**
  * @brief A specialization of `Result` that does not hold a value.
  *
- * This class is meant to be used in functions that can fail and return an error message, or succeed and return nothing.
+ * This class is meant to be used in functions that can fail and return an error, or succeed and return nothing.
  * The main difference between this class and `std::optional` is that this class explicitly holds an error if the result
  * could not be computed. It is meant to make my life easier to be honest.
  *
  * Using the default constructor will create an uninitialized `Result`. Make sure to instantiate it with either `Ok`
  * or `Error` before using it.
  *
- * @tparam E The type of the error message that can be held.
+ * @tparam E The type of the error that can be held.
  */
 template <typename E> class Result<void, E>
 {
@@ -355,7 +355,7 @@ template <typename E> class Result<void, E>
     }
 
     /**
-     * @brief Construct a `Result` object with an error message of type `E`.
+     * @brief Construct a `Result` object with an error of type `E`.
      *
      * @param p_Args The arguments to pass to the constructor of `E`.
      */
@@ -497,7 +497,7 @@ template <typename E> class Result<void, E>
     }
 
     /**
-     * @brief Get the error message of the result.
+     * @brief Get the error of the result.
      *
      * If the result is valid, this will cause undefined behavior.
      *
@@ -526,6 +526,195 @@ template <typename E> class Result<void, E>
             m_Error.Destruct();
     }
     Storage<E> m_Error;
+    Flags m_Flags = 0;
+
+    template <typename Type, typename Error> friend class Result;
+};
+
+/**
+ * @brief A specialization of `Result` that does not hold an error.
+ *
+ * This class is an implementation of an `Optional<T>` type essentially.
+ *
+ * Using the default constructor will create an uninitialized `Result`. Make sure to instantiate it with either `Ok`
+ * or `Error` before using it.
+ *
+ * @tparam E The type of the error that can be held.
+ */
+template <typename T> class Result<T, void>
+{
+    using Flags = u8;
+    enum FlagBits : Flags
+    {
+        Flag_Some = 1 << 0,
+        Flag_Engaged = 1 << 1
+    };
+
+  public:
+    template <typename... ValueArgs> static Result Some(ValueArgs &&...p_Args)
+    {
+        Result result{};
+        result.m_Flags = Flag_Engaged | Flag_Some;
+        result.m_Value.Construct(std::forward<ValueArgs>(p_Args)...);
+    }
+    static Result None()
+    {
+        Result result{};
+        result.m_Flags = Flag_Engaged;
+        return result;
+    }
+
+    Result(const T &p_Value) : m_Flags(Flag_Engaged | Flag_Some)
+    {
+        m_Value.Construct(p_Value);
+    }
+    Result(T &&p_Value) : m_Flags(Flag_Engaged | Flag_Some)
+    {
+        m_Value.Construct(std::move(p_Value));
+    }
+
+    template <typename Error>
+        requires(!std::same_as<void, Error>)
+    Result(const Result<T, Error> &p_Other)
+        requires(std::copy_constructible<T>)
+        : m_Flags(p_Other.m_Flags)
+    {
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(checkFlag(Flag_Some), "[TOOLKIT] To copy results with different error types but same value types, "
+                                          "copy-from result must be a value");
+
+        m_Value.Construct(*p_Other.m_Value.Get());
+    }
+    template <typename Type>
+        requires(!std::same_as<T, Type>)
+    Result(const Result<Type, void> &p_Other) : m_Flags(p_Other.m_Flags)
+    {
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(!checkFlag(Flag_Some), "[TOOLKIT] To copy results with different value types but same error types, "
+                                           "copy-from result must be an error");
+    }
+
+    Result(const Result &p_Other)
+        requires(std::copy_constructible<T>)
+        : m_Flags(p_Other.m_Flags)
+    {
+        if (IsSome())
+            m_Value.Construct(*p_Other.m_Value.Get());
+    }
+    Result(Result &&p_Other)
+        requires(std::move_constructible<T>)
+        : m_Flags(p_Other.m_Flags)
+    {
+        if (IsSome())
+            m_Value.Construct(std::move(*p_Other.m_Value.Get()));
+    }
+
+    Result &operator=(const T &p_Value)
+    {
+        destroy();
+        m_Flags = Flag_Engaged;
+        m_Value.Construct(p_Value);
+        return *this;
+    }
+    Result &operator=(T &&p_Value)
+    {
+        destroy();
+        m_Flags = Flag_Engaged;
+        m_Value.Construct(p_Value);
+        return *this;
+    }
+
+    template <typename Error>
+        requires(!std::same_as<void, Error>)
+    Result &operator=(const Result<T, Error> &p_Other)
+        requires(std::copy_constructible<T>)
+    {
+        destroy();
+        m_Flags = p_Other.m_Flags;
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(checkFlag(Flag_Some), "[TOOLKIT] To copy results with different error types but same value types, "
+                                          "copy-from result must be a value");
+        m_Value.Construct(*p_Other.m_Value.Get());
+        return *this;
+    }
+    template <typename Type>
+        requires(!std::same_as<T, Type>)
+    Result &operator=(const Result<Type, void> &p_Other)
+
+    {
+        destroy();
+        m_Flags = p_Other.m_Flags;
+        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(!checkFlag(Flag_Some), "[TOOLKIT] To copy results with different value types but same error types, "
+                                           "copy-from result must be an error");
+        return *this;
+    }
+
+    Result &operator=(const Result &p_Other)
+        requires(std::is_copy_assignable_v<T>)
+    {
+        if (this == &p_Other)
+            return *this;
+        destroy();
+        m_Flags = p_Other.m_Flags;
+        if (IsSome())
+            m_Value.Construct(*p_Other.m_Value.Get());
+
+        return *this;
+    }
+    Result &operator=(Result &&p_Other)
+        requires(std::is_move_assignable_v<T>)
+    {
+        if (this == &p_Other)
+            return *this;
+        destroy();
+        m_Flags = p_Other.m_Flags;
+        if (IsSome())
+            m_Value.Construct(std::move(*p_Other.m_Value.Get()));
+
+        return *this;
+    }
+
+    ~Result()
+    {
+        destroy();
+    }
+
+    bool IsSome() const
+    {
+        return checkFlag(Flag_Engaged) && checkFlag(Flag_Some);
+    }
+
+    /**
+     * @brief Get the value of the result.
+     *
+     * If the result is not valid, this will cause undefined behavior.
+     *
+     */
+    const T &GetValue() const
+    {
+        TKIT_ASSERT(IsSome(), "[TOOLKIT][RESULT] Result is not an error");
+        return *m_Value.Get();
+    }
+
+    operator bool() const
+    {
+        return IsSome();
+    }
+
+  private:
+    Result() = default;
+
+    bool checkFlag(const FlagBits p_Flag) const
+    {
+        return m_Flags & p_Flag;
+    }
+    void destroy()
+    {
+        if (IsSome())
+            m_Value.Destruct();
+    }
+    Storage<T> m_Value;
     Flags m_Flags = 0;
 
     template <typename Type, typename Error> friend class Result;
