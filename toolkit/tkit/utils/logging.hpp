@@ -38,14 +38,7 @@
         Log(fmt::format(p_String, std::forward<Args>(p_Args)...), p_Level, p_Color, p_File, p_Line);                   \
     }
 
-namespace TKit
-{
-TKIT_API fmt::runtime_format_string<> RuntimeString(std::string_view p_String);
-
-CREATE_LOGGING_FUNCTIONS(fmt::format_string<Args...>)
-CREATE_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)
-
-namespace Detail
+namespace TKit::Detail
 {
 #ifdef TKIT_ENABLE_INFO_LOGS
 inline thread_local bool t_DisabledInfoLogs = false;
@@ -65,9 +58,15 @@ TKIT_API void Log(std::string_view p_Message, const char *p_Level, const char *p
 CREATE_DETAIL_LOGGING_FUNCTIONS(fmt::format_string<Args...>)
 CREATE_DETAIL_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)
 
-#undef CREATE_LOGGING_FUNCTIONS
 #undef CREATE_DETAIL_LOGGING_FUNCTIONS
-} // namespace Detail
+} // namespace TKit::Detail
+
+namespace TKit
+{
+TKIT_API fmt::runtime_format_string<> RuntimeString(std::string_view p_String);
+
+CREATE_LOGGING_FUNCTIONS(fmt::format_string<Args...>)
+CREATE_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)
 
 #ifdef TKIT_ENABLE_DEBUG_LOGS
 #    define TKIT_LOG_DEBUG(...)                                                                                        \
@@ -180,5 +179,5 @@ CREATE_DETAIL_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)
 #    define TKIT_IGNORE_ERROR_LOGS_PUSH()
 #    define TKIT_IGNORE_ERROR_LOGS_POP()
 #endif
-
+#undef CREATE_LOGGING_FUNCTIONS
 } // namespace TKit

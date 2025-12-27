@@ -3,9 +3,7 @@
 #include "tkit/multiprocessing/task_manager.hpp"
 #include "tkit/utils/debug.hpp"
 
-namespace TKit
-{
-namespace Detail
+namespace TKit::Detail
 {
 template <typename It> constexpr usize Distance(const It p_First, const It p_Last)
 {
@@ -14,8 +12,10 @@ template <typename It> constexpr usize Distance(const It p_First, const It p_Las
     else
         return static_cast<usize>(std::distance(p_First, p_Last));
 }
-} // namespace Detail
+} // namespace TKit::Detail
 
+namespace TKit
+{
 /**
  * @brief A function that iterates over a range of elements and processes each of them using a task system.
  *

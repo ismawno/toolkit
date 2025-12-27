@@ -9,15 +9,15 @@
 #include "tkit/preprocessor/system.hpp"
 #include <chrono>
 
-namespace TKit
-{
-namespace Detail
+namespace TKit::Detail
 {
 template <typename T>
 concept Numeric = std::is_arithmetic_v<T>;
 
-} // namespace Detail
+} // namespace TKit::Detail
 
+namespace TKit
+{
 class TKIT_API Timespan
 {
   public:

@@ -2,14 +2,9 @@
 #include <fmt/chrono.h>
 #include <chrono>
 
-namespace TKit
-{
 namespace ch = std::chrono;
-TKIT_API fmt::runtime_format_string<> RuntimeString(const std::string_view p_String)
-{
-    return fmt::runtime(p_String);
-}
-namespace Detail
+
+namespace TKit::Detail
 {
 void Log(const std::string_view p_Message, const char *p_Level, const char *p_Color)
 {
@@ -23,5 +18,12 @@ void Log(const std::string_view p_Message, const char *p_Level, const char *p_Co
     fmt::println("[{:%Y-%m-%d %H:%M:%S}] [{}{}{}] [{}:{}] {}\n", tm, p_Color, p_Level, TKIT_LOG_COLOR_RESET, p_File,
                  p_Line, p_Message);
 }
-} // namespace Detail
+} // namespace TKit::Detail
+
+namespace TKit
+{
+fmt::runtime_format_string<> RuntimeString(const std::string_view p_String)
+{
+    return fmt::runtime(p_String);
+}
 } // namespace TKit

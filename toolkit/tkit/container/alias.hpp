@@ -8,9 +8,7 @@
 #include <string_view>
 #include <string>
 
-namespace TKit
-{
-namespace Detail
+namespace TKit::Detail
 {
 // This is a special hash overload for associative containers that uses transparent hashing and comparison (advised by
 // sonarlint)
@@ -42,8 +40,9 @@ template <> struct TKIT_API OpAlias<std::string>
 {
     using Type = std::equal_to<>;
 };
-} // namespace Detail
 
+namespace TKit
+{
 template <typename Key, typename Value, typename Hash = typename Detail::HashAlias<Key>::Type,
           typename OpEqual = typename Detail::OpAlias<Key>::Type,
           typename Allocator = Memory::STLAllocator<std::pair<const Key, Value>>>
@@ -59,5 +58,6 @@ using TreeMap = std::map<Key, Value, Compare, Allocator>;
 
 template <typename Value, typename Compare = std::less<Value>, typename Allocator = Memory::STLAllocator<Value>>
 using TreeSet = std::set<Value, Compare, Allocator>;
-
 } // namespace TKit
+
+} // namespace TKit::Detail

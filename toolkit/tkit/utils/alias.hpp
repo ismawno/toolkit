@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <limits>
 #include <concepts>
 
 #ifndef TKIT_USIZE_TYPE
@@ -15,11 +14,9 @@
 #    define TKIT_DIFFERENCE_TYPE TKit::Alias::i32 // std::ptrdiff_t
 #endif
 
-namespace TKit
+namespace TKit::Alias
 {
 // Add a namespace so that other libraries can adopt them...
-namespace Alias
-{
 // About aliases:
 // Regarding primitive types, I have always liked short and informative names such as u32, f32, etc. I havent seen
 // this convention in many c++ projects around, so Im not sure if its the best option, especially for the size_t
@@ -60,13 +57,15 @@ concept Integer = UnsignedInteger<T> || SignedInteger<T>;
 
 template <typename T>
 concept Arithmetic = Float<T> || Integer<T>;
-
-} // namespace Alias
+} // namespace TKit::Alias
 
 //... and use it immediately in the toolkit namespace
+namespace TKit
+{
 using namespace Alias;
+}
 
-namespace Detail
+namespace TKit::Detail
 {
 template <usize Size> struct Primitive;
 
@@ -93,13 +92,11 @@ template <> struct Primitive<64>
     using Float = f64;
 };
 
-} // namespace Detail
+} // namespace TKit::Detail
 
-namespace Alias
+namespace TKit::Alias
 {
 template <usize Size> using u = typename Detail::Primitive<Size>::Unsigned;
 template <usize Size> using i = typename Detail::Primitive<Size>::Signed;
 template <usize Size> using f = typename Detail::Primitive<Size>::Float;
-} // namespace Alias
-
-} // namespace TKit
+} // namespace TKit::Alias

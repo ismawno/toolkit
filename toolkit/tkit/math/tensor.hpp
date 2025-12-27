@@ -8,15 +8,14 @@
 TKIT_COMPILER_WARNING_IGNORE_PUSH()
 TKIT_MSVC_WARNING_IGNORE(4146)
 
-namespace TKit
-{
-namespace Math
+namespace TKit::Math
 {
 template <typename T, usize N0, usize... N>
 // requires((N0 > 0) && ... && (N > 0))
 struct Tensor;
+}
 
-namespace Detail
+namespace TKit::Detail
 {
 template <usize I, usize N0, usize... N> constexpr usize GetAxisSize()
 {
@@ -35,7 +34,7 @@ template <usize N0, usize... N> constexpr usize GetDiagonalStride()
 }
 template <typename T, usize... N> struct Child
 {
-    using Type = Tensor<T, N...>;
+    using Type = Math::Tensor<T, N...>;
 };
 template <typename T> struct Child<T>
 {
@@ -43,7 +42,7 @@ template <typename T> struct Child<T>
 };
 template <typename T, usize N0, usize... N> struct Parent
 {
-    using Type = Tensor<T, N0, N...>;
+    using Type = Math::Tensor<T, N0, N...>;
 };
 
 template <typename T> constexpr T SquareRoot(const T p_Value)
@@ -59,8 +58,11 @@ template <typename T> constexpr T SquareRoot(const T p_Value)
     return std::sqrt(p_Value);
 #endif
 }
-} // namespace Detail
 
+} // namespace TKit::Detail
+
+namespace TKit::Math
+{
 template <typename T, usize N0, usize... N>
 // requires((N0 > 0) && ... && (N > 0))
 struct Tensor
@@ -449,7 +451,9 @@ template <typename T, usize N0, usize... N> constexpr T *AsPointer(Tensor<T, N0,
     return &p_Tensor.Flat[0];
 }
 
-} // namespace Math
+} // namespace TKit::Math
+namespace TKit
+{
 
 #undef SIZE
 #undef RANK

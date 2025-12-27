@@ -10,21 +10,24 @@
 
 namespace TKit
 {
-
 template <typename T>
 concept Hashable = requires(T a) {
     { std::hash<std::remove_cvref_t<T>>()(a) } -> std::convertible_to<usize>;
 };
 
-namespace Detail
+} // namespace TKit
+
+namespace TKit::Detail
 {
 template <Hashable H> constexpr void CombineHashes(size_t &p_Seed, H &&p_Hashable)
 {
     const std::hash<std::remove_cvref_t<H>> hasher;
     p_Seed ^= hasher(std::forward<H>(p_Hashable)) + 0x9e3779b9 + (p_Seed << 6) + (p_Seed >> 2);
 }
-} // namespace Detail
+} // namespace TKit::Detail
 
+namespace TKit
+{
 template <Hashable H> constexpr size_t Hash(H &&p_Hashable)
 {
     return std::hash<std::remove_cvref_t<H>>()(std::forward<H>(p_Hashable));
