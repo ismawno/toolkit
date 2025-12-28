@@ -40,6 +40,7 @@ template <> struct TKIT_API OpAlias<std::string>
 {
     using Type = std::equal_to<>;
 };
+} // namespace TKit::Detail
 
 namespace TKit
 {
@@ -59,5 +60,3 @@ using TreeMap = std::map<Key, Value, Compare, Allocator>;
 template <typename Value, typename Compare = std::less<Value>, typename Allocator = Memory::STLAllocator<Value>>
 using TreeSet = std::set<Value, Compare, Allocator>;
 } // namespace TKit
-
-} // namespace TKit::Detail
