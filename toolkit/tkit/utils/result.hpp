@@ -84,9 +84,9 @@ template <typename T = void, typename E = const char *> class Result
         requires(std::copy_constructible<T>)
         : m_Flags(p_Other.m_Flags)
     {
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
-        TKIT_ASSERT(checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different error types but same value types, "
-                                        "copy-from result must be a value");
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(checkFlags(Flag_Ok), "[TOOLKIT] To copy results with different error types but same value types, "
+                                         "copy-from result must be a value");
         m_Value.Construct(*p_Other.m_Value.Get());
     }
     template <typename Type>
@@ -95,9 +95,9 @@ template <typename T = void, typename E = const char *> class Result
         requires(std::copy_constructible<E>)
         : m_Flags(p_Other.m_Flags)
     {
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
-        TKIT_ASSERT(!checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different value types but same error types, "
-                                         "copy-from result must be an error");
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(!checkFlags(Flag_Ok), "[TOOLKIT] To copy results with different value types but same error types, "
+                                          "copy-from result must be an error");
 
         m_Error.Construct(*p_Other.m_Error.Get());
     }
@@ -106,8 +106,8 @@ template <typename T = void, typename E = const char *> class Result
         requires(std::copy_constructible<T> && std::copy_constructible<E>)
         : m_Flags(p_Other.m_Flags)
     {
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
-        if (checkFlag(Flag_Ok))
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        if (checkFlags(Flag_Ok))
             m_Value.Construct(*p_Other.m_Value.Get());
         else
             m_Error.Construct(*p_Other.m_Error.Get());
@@ -116,8 +116,8 @@ template <typename T = void, typename E = const char *> class Result
         requires(std::move_constructible<T> && std::move_constructible<E>)
         : m_Flags(p_Other.m_Flags)
     {
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
-        if (checkFlag(Flag_Ok))
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        if (checkFlags(Flag_Ok))
             m_Value.Construct(std::move(*p_Other.m_Value.Get()));
         else
             m_Error.Construct(std::move(*p_Other.m_Error.Get()));
@@ -160,9 +160,9 @@ template <typename T = void, typename E = const char *> class Result
     {
         destroy();
         m_Flags = p_Other.m_Flags;
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
-        TKIT_ASSERT(checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different error types but same value types, "
-                                        "copy-from result must be a value");
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(checkFlags(Flag_Ok), "[TOOLKIT] To copy results with different error types but same value types, "
+                                         "copy-from result must be a value");
         m_Value.Construct(*p_Other.m_Value.Get());
         return *this;
     }
@@ -174,9 +174,9 @@ template <typename T = void, typename E = const char *> class Result
     {
         destroy();
         m_Flags = p_Other.m_Flags;
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
-        TKIT_ASSERT(!checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different value types but same error types, "
-                                         "copy-from result must be an error");
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(!checkFlags(Flag_Ok), "[TOOLKIT] To copy results with different value types but same error types, "
+                                          "copy-from result must be an error");
 
         m_Error.Construct(*p_Other.m_Error.Get());
         return *this;
@@ -190,8 +190,8 @@ template <typename T = void, typename E = const char *> class Result
         destroy();
         m_Flags = p_Other.m_Flags;
 
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot assign from an undefined result");
-        if (checkFlag(Flag_Ok))
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot assign from an undefined result");
+        if (checkFlags(Flag_Ok))
             m_Value.Construct(*p_Other.m_Value.Get());
         else
             m_Error.Construct(*p_Other.m_Error.Get());
@@ -207,8 +207,8 @@ template <typename T = void, typename E = const char *> class Result
         destroy();
         m_Flags = p_Other.m_Flags;
 
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot assign from an undefined result");
-        if (checkFlag(Flag_Ok))
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot assign from an undefined result");
+        if (checkFlags(Flag_Ok))
             m_Value.Construct(std::move(*p_Other.m_Value.Get()));
         else
             m_Error.Construct(std::move(*p_Other.m_Error.Get()));
@@ -227,12 +227,12 @@ template <typename T = void, typename E = const char *> class Result
      */
     bool IsOk() const
     {
-        return checkFlag(Flag_Engaged) && checkFlag(Flag_Ok);
+        return checkFlags(Flag_Engaged) && checkFlags(Flag_Ok);
     }
 
     bool IsError() const
     {
-        return checkFlag(Flag_Engaged) && !checkFlag(Flag_Ok);
+        return checkFlags(Flag_Engaged) && !checkFlags(Flag_Ok);
     }
 
     /**
@@ -297,16 +297,16 @@ template <typename T = void, typename E = const char *> class Result
   private:
     Result() = default;
 
-    bool checkFlag(const FlagBits p_Flag) const
+    bool checkFlags(const Flags p_Flags) const
     {
-        return m_Flags & p_Flag;
+        return m_Flags & p_Flags;
     }
     void destroy()
     {
-        if (!checkFlag(Flag_Engaged))
+        if (!checkFlags(Flag_Engaged))
             return;
 
-        if (checkFlag(Flag_Ok))
+        if (checkFlags(Flag_Ok))
             m_Value.Destruct();
         else
             m_Error.Destruct();
@@ -380,9 +380,9 @@ template <typename E> class Result<void, E>
         requires(!std::same_as<E, Error>)
     Result(const Result<void, Error> &p_Other) : m_Flags(p_Other.m_Flags)
     {
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
-        TKIT_ASSERT(checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different error types but same value types, "
-                                        "copy-from result must be a value");
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(checkFlags(Flag_Ok), "[TOOLKIT] To copy results with different error types but same value types, "
+                                         "copy-from result must be a value");
     }
     template <typename Type>
         requires(!std::same_as<void, Type>)
@@ -390,9 +390,9 @@ template <typename E> class Result<void, E>
         requires(std::copy_constructible<E>)
         : m_Flags(p_Other.m_Flags)
     {
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
-        TKIT_ASSERT(!checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different value types but same error types, "
-                                         "copy-from result must be an error");
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(!checkFlags(Flag_Ok), "[TOOLKIT] To copy results with different value types but same error types, "
+                                          "copy-from result must be an error");
         m_Error.Construct(*p_Other.m_Error.Get());
     }
 
@@ -432,9 +432,9 @@ template <typename E> class Result<void, E>
     {
         destroy();
         m_Flags = p_Other.m_Flags;
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
-        TKIT_ASSERT(checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different error types but same value types, "
-                                        "copy-from result must be a value");
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(checkFlags(Flag_Ok), "[TOOLKIT] To copy results with different error types but same value types, "
+                                         "copy-from result must be a value");
         return *this;
     }
     template <typename Type>
@@ -445,9 +445,9 @@ template <typename E> class Result<void, E>
     {
         destroy();
         m_Flags = p_Other.m_Flags;
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
-        TKIT_ASSERT(!checkFlag(Flag_Ok), "[TOOLKIT] To copy results with different value types but same error types, "
-                                         "copy-from result must be an error");
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(!checkFlags(Flag_Ok), "[TOOLKIT] To copy results with different value types but same error types, "
+                                          "copy-from result must be an error");
         m_Error.Construct(*p_Other.m_Error.Get());
         return *this;
     }
@@ -488,12 +488,12 @@ template <typename E> class Result<void, E>
      */
     bool IsOk() const
     {
-        return checkFlag(Flag_Engaged) && checkFlag(Flag_Ok);
+        return checkFlags(Flag_Engaged) && checkFlags(Flag_Ok);
     }
 
     bool IsError() const
     {
-        return checkFlag(Flag_Engaged) && !checkFlag(Flag_Ok);
+        return checkFlags(Flag_Engaged) && !checkFlags(Flag_Ok);
     }
 
     /**
@@ -516,7 +516,7 @@ template <typename E> class Result<void, E>
   private:
     Result() = default;
 
-    bool checkFlag(const FlagBits p_Flag) const
+    bool checkFlags(const FlagBits p_Flag) const
     {
         return m_Flags & p_Flag;
     }
@@ -579,9 +579,9 @@ template <typename T> class Result<T, void>
         requires(std::copy_constructible<T>)
         : m_Flags(p_Other.m_Flags)
     {
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
-        TKIT_ASSERT(checkFlag(Flag_Some), "[TOOLKIT] To copy results with different error types but same value types, "
-                                          "copy-from result must be a value");
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(checkFlags(Flag_Some), "[TOOLKIT] To copy results with different error types but same value types, "
+                                           "copy-from result must be a value");
 
         m_Value.Construct(*p_Other.m_Value.Get());
     }
@@ -589,9 +589,10 @@ template <typename T> class Result<T, void>
         requires(!std::same_as<T, Type>)
     Result(const Result<Type, void> &p_Other) : m_Flags(p_Other.m_Flags)
     {
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
-        TKIT_ASSERT(!checkFlag(Flag_Some), "[TOOLKIT] To copy results with different value types but same error types, "
-                                           "copy-from result must be an error");
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(!checkFlags(Flag_Some),
+                    "[TOOLKIT] To copy results with different value types but same error types, "
+                    "copy-from result must be an error");
     }
 
     Result(const Result &p_Other)
@@ -631,9 +632,9 @@ template <typename T> class Result<T, void>
     {
         destroy();
         m_Flags = p_Other.m_Flags;
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
-        TKIT_ASSERT(checkFlag(Flag_Some), "[TOOLKIT] To copy results with different error types but same value types, "
-                                          "copy-from result must be a value");
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(checkFlags(Flag_Some), "[TOOLKIT] To copy results with different error types but same value types, "
+                                           "copy-from result must be a value");
         m_Value.Construct(*p_Other.m_Value.Get());
         return *this;
     }
@@ -644,9 +645,10 @@ template <typename T> class Result<T, void>
     {
         destroy();
         m_Flags = p_Other.m_Flags;
-        TKIT_ASSERT(checkFlag(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
-        TKIT_ASSERT(!checkFlag(Flag_Some), "[TOOLKIT] To copy results with different value types but same error types, "
-                                           "copy-from result must be an error");
+        TKIT_ASSERT(checkFlags(Flag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
+        TKIT_ASSERT(!checkFlags(Flag_Some),
+                    "[TOOLKIT] To copy results with different value types but same error types, "
+                    "copy-from result must be an error");
         return *this;
     }
 
@@ -682,7 +684,7 @@ template <typename T> class Result<T, void>
 
     bool IsSome() const
     {
-        return checkFlag(Flag_Engaged) && checkFlag(Flag_Some);
+        return checkFlags(Flag_Engaged) && checkFlags(Flag_Some);
     }
 
     /**
@@ -705,7 +707,7 @@ template <typename T> class Result<T, void>
   private:
     Result() = default;
 
-    bool checkFlag(const FlagBits p_Flag) const
+    bool checkFlags(const FlagBits p_Flag) const
     {
         return m_Flags & p_Flag;
     }
