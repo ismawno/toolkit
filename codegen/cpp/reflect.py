@@ -121,10 +121,10 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
             ):
                 hpp("public:")
                 hpp("static constexpr bool Implemented = true;")
-                with hpp.scope("enum class FieldVisibility : u8", closer="};"):
-                    hpp("Private = 0,")
-                    hpp("Protected = 1,")
-                    hpp("Public = 2")
+                with hpp.scope("enum FieldVisibility : u8", closer="};"):
+                    hpp("FieldVisibility_Private = 0,")
+                    hpp("FieldVisibility_Protected = 1,")
+                    hpp("FieldVisibility_Public = 2")
 
                 memfields = FieldCollection()
                 statfields = FieldCollection()
@@ -148,9 +148,9 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                             )
                             hpp("Its values may be used as compile-time filters in certain functions.")
 
-                        with hpp.scope(f"enum class {modifier}Group : {dtype}", closer="};"):
+                        with hpp.scope(f"enum {modifier}Group : {dtype}", closer="};"):
                             for i, group in enumerate(fcollection.per_group):
-                                hpp(f"{group} = {i},")
+                                hpp(f"{modifier}Group_{group} = {i},")
 
                     with hpp.doc():
                         hpp.brief(
@@ -234,7 +234,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                         def replacer(vtype: str, /) -> str:
                             return vtype.replace('"', r"\"")
 
-                        return f'{modifier}Field<{field.vtype}>{{"{field.name}", "{replacer(field.vtype)}", &{clsinfo.id.identifier}::{field.name}, FieldVisibility::{field.visibility.capitalize()}}}'
+                        return f'{modifier}Field<{field.vtype}>{{"{field.name}", "{replacer(field.vtype)}", &{clsinfo.id.identifier}::{field.name}, FieldVisibility_{field.visibility.capitalize()}}}'
 
                     def create_cpp_fields_sequence(fields: list[Field], /, *, group: str | None = None) -> list[str]:
                         return [
@@ -381,7 +381,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                             cnd = "if"
                             for group in fcollection.per_group:
                                 with hpp.scope(
-                                    f"{cnd} constexpr (Ref_Group == {modifier}Group::{group})",
+                                    f"{cnd} constexpr (Ref_Group == {modifier}Group_{group})",
                                     delimiters=False,
                                 ):
                                     hpp(f"return Get{group}{modifier}Fields<Ref_Types...>();")
