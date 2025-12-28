@@ -9,6 +9,39 @@
 #include "tkit/utils/alias.hpp"
 #include <limits>
 
+#define TKIT_F32_MIN TKit::Limits<f32>::Min()
+#define TKIT_F64_MIN TKit::Limits<f64>::Min()
+
+#define TKIT_U8_MIN TKit::Limits<u8>::Min()
+#define TKIT_U16_MIN TKit::Limits<u16>::Min()
+#define TKIT_U32_MIN TKit::Limits<u32>::Min()
+#define TKIT_U64_MIN TKit::Limits<u64>::Min()
+#define TKIT_USIZE_MIN TKit::Limits<usize>::Min()
+
+#define TKIT_I8_MIN TKit::Limits<i8>::Min()
+#define TKIT_I16_MIN TKit::Limits<i16>::Min()
+#define TKIT_I32_MIN TKit::Limits<i32>::Min()
+#define TKIT_I64_MIN TKit::Limits<i64>::Min()
+#define TKIT_SSIZE_MIN TKit::Limits<ssize>::Min()
+
+#define TKIT_F32_MAX TKit::Limits<f32>::Max()
+#define TKIT_F64_MAX TKit::Limits<f64>::Max()
+
+#define TKIT_U8_MAX TKit::Limits<u8>::Max()
+#define TKIT_U16_MAX TKit::Limits<u16>::Max()
+#define TKIT_U32_MAX TKit::Limits<u32>::Max()
+#define TKIT_U64_MAX TKit::Limits<u64>::Max()
+#define TKIT_USIZE_MAX TKit::Limits<usize>::Max()
+
+#define TKIT_I8_MAX TKit::Limits<i8>::Max()
+#define TKIT_I16_MAX TKit::Limits<i16>::Max()
+#define TKIT_I32_MAX TKit::Limits<i32>::Max()
+#define TKIT_I64_MAX TKit::Limits<i64>::Max()
+#define TKIT_SSIZE_MAX TKit::Limits<ssize>::Max()
+
+#define TKIT_F32_EPSILON TKit::Limits<f32>::Epsilon()
+#define TKIT_F64_EPSILON TKit::Limits<f64>::Epsilon()
+
 namespace TKit
 {
 template <typename T> struct Limits

@@ -54,7 +54,7 @@ void SetThreadName(const u32 p_ThreadIndex, const char *p_Name)
 }
 
 #ifdef TKIT_HWLOC_INSTALLED
-constexpr u32 Unknown = Limits<u32>::Max();
+constexpr u32 Unknown = TKIT_U32_MAX;
 
 #    ifndef TKIT_TOPOLOGY_MAX_HANDLES
 #        define TKIT_TOPOLOGY_MAX_HANDLES 64

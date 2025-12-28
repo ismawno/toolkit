@@ -50,12 +50,12 @@ struct MoveOnly
     MoveOnly &operator=(const MoveOnly &) = delete;
     MoveOnly(MoveOnly &&p_Other) : Value(p_Other.Value)
     {
-        p_Other.Value = TKit::Limits<u32>::Max();
+        p_Other.Value = TKIT_U32_MAX;
     }
     MoveOnly &operator=(MoveOnly &&p_Other)
     {
         Value = p_Other.Value;
-        p_Other.Value = TKit::Limits<u32>::Max();
+        p_Other.Value = TKIT_U32_MAX;
         return *this;
     }
 };
@@ -113,10 +113,10 @@ TEST_CASE("MoveConstructFromRange", "[MoveConstructFromRange]")
         REQUIRE(dst[0].Value == 7);
         REQUIRE(dst[1].Value == 14);
         REQUIRE(dst[2].Value == 21);
-        // moved‑from source should be TKit::Limits<u32>::Max()
-        REQUIRE(src[0].Value == TKit::Limits<u32>::Max());
-        REQUIRE(src[1].Value == TKit::Limits<u32>::Max());
-        REQUIRE(src[2].Value == TKit::Limits<u32>::Max());
+        // moved‑from source should be TKIT_U32_MAX
+        REQUIRE(src[0].Value == TKIT_U32_MAX);
+        REQUIRE(src[1].Value == TKIT_U32_MAX);
+        REQUIRE(src[2].Value == TKIT_U32_MAX);
 
         for (u32 i = 0; i < 3; ++i)
             dst[i].~MoveOnly();
@@ -202,10 +202,10 @@ TEST_CASE("MoveAssignFromRange", "[MoveAssignFromRange]")
         REQUIRE(buf[2].Value == 33);
         REQUIRE(buf[3].Value == 44);
         // moved‑from
-        REQUIRE(src[0].Value == TKit::Limits<u32>::Max());
-        REQUIRE(src[1].Value == TKit::Limits<u32>::Max());
-        REQUIRE(src[2].Value == TKit::Limits<u32>::Max());
-        REQUIRE(src[3].Value == TKit::Limits<u32>::Max());
+        REQUIRE(src[0].Value == TKIT_U32_MAX);
+        REQUIRE(src[1].Value == TKIT_U32_MAX);
+        REQUIRE(src[2].Value == TKIT_U32_MAX);
+        REQUIRE(src[3].Value == TKIT_U32_MAX);
     }
 }
 

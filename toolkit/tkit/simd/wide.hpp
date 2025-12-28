@@ -164,7 +164,7 @@ class Wide
             wide.m_Data[i] = static_cast<T>(p_Left) p_Op p_Right.m_Data[i];                                            \
         return wide;                                                                                                   \
     }                                                                                                                  \
-    constexpr Wide &operator p_Op##=(const Wide & p_Other) p_Requires                                                  \
+    constexpr Wide &operator p_Op## = (const Wide &p_Other)p_Requires                                                  \
     {                                                                                                                  \
         *this = *this p_Op p_Other;                                                                                    \
         return *this;                                                                                                  \
@@ -195,7 +195,7 @@ class Wide
             wide.m_Data[i] = p_Left.m_Data[i] p_Op static_cast<T>(p_Shift);                                            \
         return wide;                                                                                                   \
     }                                                                                                                  \
-    constexpr Wide &operator p_Op##=(const Wide & p_Other)                                                             \
+    constexpr Wide &operator p_Op## = (const Wide &p_Other)                                                            \
     {                                                                                                                  \
         *this = *this p_Op p_Other;                                                                                    \
         return *this;                                                                                                  \

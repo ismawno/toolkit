@@ -15,8 +15,7 @@ namespace TKit
  * @tparam T The type of the elements in the array.
  * @tparam Capacity The capacity of the array.
  */
-template <typename T, usize Capacity = Limits<usize>::Max(),
-          typename Traits = Container::ArrayTraits<std::remove_cvref_t<T>>>
+template <typename T, usize Capacity = TKIT_USIZE_MAX, typename Traits = Container::ArrayTraits<std::remove_cvref_t<T>>>
 class WeakArray
 {
     static_assert(Capacity > 0, "[TOOLKIT][WEAK-ARRAY] Capacity must be greater than 0");
@@ -322,7 +321,7 @@ class WeakArray
  *
  * @tparam T The type of the elements in the array.
  */
-template <typename T, typename Traits> class WeakArray<T, Limits<usize>::Max(), Traits>
+template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits>
 {
     TKIT_NON_COPYABLE(WeakArray)
 
@@ -379,7 +378,7 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::Max(), 
     {
         p_Other.m_Data = nullptr;
         p_Other.m_Size = 0;
-        if constexpr (Capacity == Limits<usize>::Max())
+        if constexpr (Capacity == TKIT_USIZE_MAX)
             p_Other.m_Capacity = 0;
     }
 
@@ -393,7 +392,7 @@ template <typename T, typename Traits> class WeakArray<T, Limits<usize>::Max(), 
 
         p_Other.m_Data = nullptr;
         p_Other.m_Size = 0;
-        if constexpr (Capacity == Limits<usize>::Max())
+        if constexpr (Capacity == TKIT_USIZE_MAX)
             p_Other.m_Capacity = 0;
         return *this;
     }

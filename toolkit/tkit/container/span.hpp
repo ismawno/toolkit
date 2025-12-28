@@ -14,7 +14,7 @@ namespace TKit
  * @tparam T The type of the elements in the span.
  * @tparam Extent The extent of the span.
  */
-template <typename T, usize Extent = Limits<usize>::Max(),
+template <typename T, usize Extent = TKIT_USIZE_MAX,
           typename Traits = Container::ArrayTraits<std::remove_cvref_t<T>>> // Consider adding allocator traits
     requires(Extent > 0)
 class Span
@@ -100,7 +100,7 @@ class Span
  *
  * @tparam T The type of the elements in the span.
  */
-template <typename T, typename Traits> class Span<T, Limits<usize>::Max(), Traits>
+template <typename T, typename Traits> class Span<T, TKIT_USIZE_MAX, Traits>
 {
   public:
     using ElementType = T;
