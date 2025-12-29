@@ -41,7 +41,6 @@ class TKIT_API ThreadPool final : public ITaskManager
             : Thread(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...)
         {
         }
-
         std::thread Thread;
         ChaseLevDeque<ITask *, MaxPoolTasks> Queue{};
         MpmcStack<ITask *> Inbox{};
