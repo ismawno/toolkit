@@ -1,7 +1,7 @@
 #pragma once
 
 #include "tkit/container/container.hpp"
-#include "tkit/container/array.hpp"
+#include "tkit/container/fixed_array.hpp"
 #include "tkit/utils/debug.hpp"
 
 namespace TKit
@@ -427,7 +427,7 @@ class StaticDeque
     static_assert(sizeof(Element) == sizeof(ValueType), "Element size is not equal to T size");
     static_assert(alignof(Element) == alignof(ValueType), "Element alignment is not equal to T alignment");
 
-    Array<Element, Capacity> m_Data{};
+    FixedArray<Element, Capacity> m_Data{};
     SizeType m_Size = 0;
     SizeType m_Front = Capacity - 1;
     SizeType m_Back = 0;

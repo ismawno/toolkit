@@ -32,10 +32,10 @@ class Span
     {
     }
 
-    constexpr Span(const Array<ValueType, Extent, Traits> &p_Array) : m_Data(p_Array.GetData())
+    constexpr Span(const FixedArray<ValueType, Extent, Traits> &p_Array) : m_Data(p_Array.GetData())
     {
     }
-    constexpr Span(Array<ValueType, Extent, Traits> &p_Array) : m_Data(p_Array.GetData())
+    constexpr Span(FixedArray<ValueType, Extent, Traits> &p_Array) : m_Data(p_Array.GetData())
     {
     }
 
@@ -116,11 +116,11 @@ template <typename T, typename Traits> class Span<T, TKIT_USIZE_MAX, Traits>
     }
 
     template <SizeType Extent>
-    constexpr Span(const Array<ValueType, Extent, Traits> &p_Array) : m_Data(p_Array.GetData()), m_Size(Extent)
+    constexpr Span(const FixedArray<ValueType, Extent, Traits> &p_Array) : m_Data(p_Array.GetData()), m_Size(Extent)
     {
     }
     template <SizeType Extent>
-    constexpr Span(Array<ValueType, Extent, Traits> &p_Array) : m_Data(p_Array.GetData()), m_Size(Extent)
+    constexpr Span(FixedArray<ValueType, Extent, Traits> &p_Array) : m_Data(p_Array.GetData()), m_Size(Extent)
     {
     }
 

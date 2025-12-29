@@ -1,6 +1,6 @@
 #pragma once
 
-#include "tkit/container/array.hpp"
+#include "tkit/container/fixed_array.hpp"
 #include "tkit/simd/utils.hpp"
 #include "tkit/utils/limits.hpp"
 #include <algorithm>
@@ -96,16 +96,16 @@ class Wide
 
     template <usize Count>
         requires(Count > 1)
-    static constexpr Array<Wide, Count> Gather(const T *p_Data)
+    static constexpr FixedArray<Wide, Count> Gather(const T *p_Data)
     {
-        Array<Wide, Count> result;
+        FixedArray<Wide, Count> result;
         for (usize i = 0; i < Count; ++i)
             result[i] = Gather(p_Data + i, Count * sizeof(T));
         return result;
     }
     template <usize Count>
         requires(Count > 1)
-    static constexpr void Scatter(T *p_Data, const Array<Wide, Count> &p_Wides)
+    static constexpr void Scatter(T *p_Data, const FixedArray<Wide, Count> &p_Wides)
     {
         for (usize i = 0; i < Count; ++i)
             p_Wides[i].Scatter(p_Data + i, Count * sizeof(T));
@@ -254,7 +254,7 @@ class Wide
     }
 
   private:
-    Array<T, Lanes> m_Data;
+    FixedArray<T, Lanes> m_Data;
 }; // namespace TKit::Simd
 } // namespace TKit::Simd
 TKIT_COMPILER_WARNING_IGNORE_POP()

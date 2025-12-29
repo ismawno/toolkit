@@ -120,10 +120,10 @@ TEST_CASE("StaticArray: initializer_list & range constructors", "[StaticArray]")
     // initializer_list
     const StaticArray<u32, 4> arr{5u, 6u, 7u};
     REQUIRE(arr.GetSize() == 3);
-    REQUIRE(std::equal(arr.begin(), arr.end(), TKit::Array<u32, 3>{5, 6, 7}.begin()));
+    REQUIRE(std::equal(arr.begin(), arr.end(), FixedArray<u32, 3>{5, 6, 7}.begin()));
 
     // range constructor from another container
-    const TKit::Array<u32, 4> src = {10, 20, 30, 40};
+    const FixedArray<u32, 4> src = {10, 20, 30, 40};
     const StaticArray<u32, 4> rg(src.begin() + 1, src.begin() + 4);
     REQUIRE(rg.GetSize() == 3);
     REQUIRE(rg[0] == 20);
@@ -161,7 +161,7 @@ TEST_CASE("StaticArray: member Insert wrappers", "[StaticArray]")
     REQUIRE(arr.GetSize() == 5);
 
     // insert range
-    TKit::Array<u32, 2> extra = {7, 8};
+    FixedArray<u32, 2> extra = {7, 8};
     arr.Insert(arr.begin() + 5, extra.begin(), extra.end());
     REQUIRE(arr.GetSize() == 7); // capacity 5 => insertion of 2 at end should assert; skip if asserts disabled
 }
@@ -271,7 +271,7 @@ TEST_CASE("StaticArray<std::string>: basic operations", "[StaticArray][string]")
     REQUIRE(arr1[2] == "two");
 
     // Insert range
-    const Array<std::string, 3> extras{"x", "y", "z"};
+    const FixedArray<std::string, 3> extras{"x", "y", "z"};
     arr1.Insert(arr1.begin() + 4, extras.begin(), extras.end());
     REQUIRE(arr1.GetSize() == 7);
     REQUIRE(arr1[4] == "x");

@@ -2,7 +2,7 @@
 
 #include "tkit/utils/alias.hpp"
 #include "tkit/utils/debug.hpp"
-#include "tkit/container/array.hpp"
+#include "tkit/container/fixed_array.hpp"
 #include <math.h>
 
 TKIT_COMPILER_WARNING_IGNORE_PUSH()
@@ -394,12 +394,13 @@ template <usize I0, usize... I, typename T, usize N0, usize... N>
 constexpr typename Tensor<T, N0, N...>::template Permuted<I0, I...> Permute(const Tensor<T, N0, N...> &p_Tensor)
 {
     typename Tensor<T, N0, N...>::template Permuted<I0, I...> permuted;
-    constexpr Array<usize, RANK> dims = {N0, N...};
-    constexpr Array<usize, RANK> pdims = {Detail::GetAxisSize<I0, N0, N...>(), Detail::GetAxisSize<I, N0, N...>()...};
-    constexpr Array<usize, RANK> perm = {I0, I...};
+    constexpr FixedArray<usize, RANK> dims = {N0, N...};
+    constexpr FixedArray<usize, RANK> pdims = {Detail::GetAxisSize<I0, N0, N...>(),
+                                               Detail::GetAxisSize<I, N0, N...>()...};
+    constexpr FixedArray<usize, RANK> perm = {I0, I...};
 
-    Array<usize, RANK> stride;
-    Array<usize, RANK> pstride;
+    FixedArray<usize, RANK> stride;
+    FixedArray<usize, RANK> pstride;
     stride[RANK - 1] = 1;
     pstride[RANK - 1] = 1;
     for (usize i = RANK - 1; i > 0; --i)
@@ -410,7 +411,7 @@ constexpr typename Tensor<T, N0, N...>::template Permuted<I0, I...> Permute(cons
 
     for (usize i = 0; i < SIZE; ++i)
     {
-        Array<usize, RANK> indices;
+        FixedArray<usize, RANK> indices;
         for (usize j = 0; j < RANK; ++j)
             indices[j] = (i / stride[j]) % dims[j];
 

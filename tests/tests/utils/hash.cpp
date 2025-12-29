@@ -1,5 +1,5 @@
 #include "tkit/utils/hash.hpp"
-#include "tkit/container/array.hpp"
+#include "tkit/container/fixed_array.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <string>
 
@@ -61,7 +61,7 @@ TEST_CASE("Variadic Hash combines consistently", "[Hash][Variadic]")
 
 TEST_CASE("HashRange over iterators", "[HashRange]")
 {
-    const Array<u32, 4> v{4, 5, 6, 7};
+    const FixedArray<u32, 4> v{4, 5, 6, 7};
     const size_t hr = HashRange(v.begin(), v.end());
 
     // manual equivalent
@@ -101,7 +101,7 @@ TEST_CASE("Mixed types hashing", "[Hash]")
 
 TEST_CASE("Hash of different types in range", "[HashRange]")
 {
-    const Array<std::string, 3> vs{"a", "b", "c"};
+    const FixedArray<std::string, 3> vs{"a", "b", "c"};
     const size_t hr = HashRange(vs.begin(), vs.end());
     size_t seed = TKIT_HASH_SEED;
     for (auto &s : vs)

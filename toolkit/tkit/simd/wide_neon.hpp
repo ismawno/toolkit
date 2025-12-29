@@ -2,7 +2,7 @@
 
 #include "tkit/preprocessor/system.hpp"
 #ifdef TKIT_SIMD_NEON
-#    include "tkit/container/array.hpp"
+#    include "tkit/container/fixed_array.hpp"
 #    include "tkit/simd/utils.hpp"
 #    include <arm_neon.h>
 
@@ -180,9 +180,9 @@ template <Arithmetic T> class Wide
 
     template <usize Count>
         requires(Count > 1)
-    static constexpr Array<Wide, Count> Gather(const T *p_Data)
+    static constexpr FixedArray<Wide, Count> Gather(const T *p_Data)
     {
-        Array<Wide, Count> result;
+        FixedArray<Wide, Count> result;
         if constexpr (Count > 4)
         {
             for (usize i = 0; i < Count; ++i)
@@ -209,7 +209,7 @@ template <Arithmetic T> class Wide
     }
     template <usize Count>
         requires(Count > 1)
-    static constexpr void Scatter(T *p_Data, const Array<Wide, Count> &p_Wides)
+    static constexpr void Scatter(T *p_Data, const FixedArray<Wide, Count> &p_Wides)
     {
         if constexpr (Count > 4)
             for (usize i = 0; i < Count; ++i)

@@ -4,7 +4,7 @@
 #ifdef TKIT_SIMD_SSE2
 #    include "tkit/memory/memory.hpp"
 #    include "tkit/simd/utils.hpp"
-#    include "tkit/container/array.hpp"
+#    include "tkit/container/fixed_array.hpp"
 #    include "tkit/utils/bit.hpp"
 #    ifdef TKIT_SIMD_SSE4_2
 #        include <nmmintrin.h>
@@ -164,16 +164,16 @@ template <Arithmetic T> class Wide
 
     template <usize Count>
         requires(Count > 1)
-    static constexpr Array<Wide, Count> Gather(const T *p_Data)
+    static constexpr FixedArray<Wide, Count> Gather(const T *p_Data)
     {
-        Array<Wide, Count> result;
+        FixedArray<Wide, Count> result;
         for (usize i = 0; i < Count; ++i)
             result[i] = Gather(p_Data + i, Count * sizeof(T));
         return result;
     }
     template <usize Count>
         requires(Count > 1)
-    static constexpr void Scatter(T *p_Data, const Array<Wide, Count> &p_Wides)
+    static constexpr void Scatter(T *p_Data, const FixedArray<Wide, Count> &p_Wides)
     {
         for (usize i = 0; i < Count; ++i)
             p_Wides[i].Scatter(p_Data + i, Count * sizeof(T));

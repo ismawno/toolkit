@@ -6,7 +6,7 @@
 #endif
 
 #include "tkit/serialization/yaml/codec.hpp"
-#include "tkit/container/array.hpp"
+#include "tkit/container/fixed_array.hpp"
 #include "tkit/container/static_array.hpp"
 #include "tkit/container/span.hpp"
 #include "tkit/container/weak_array.hpp"
@@ -15,9 +15,9 @@
 
 namespace TKit::Yaml
 {
-template <typename T, usize N, typename Traits> struct Codec<Array<T, N, Traits>>
+template <typename T, usize N, typename Traits> struct Codec<FixedArray<T, N, Traits>>
 {
-    static Node Encode(const Array<T, N> &p_Instance)
+    static Node Encode(const FixedArray<T, N> &p_Instance)
     {
         Node node;
         for (const T &element : p_Instance)
@@ -25,7 +25,7 @@ template <typename T, usize N, typename Traits> struct Codec<Array<T, N, Traits>
         return node;
     }
 
-    static bool Decode(const Node &p_Node, Array<T, N> &p_Instance)
+    static bool Decode(const Node &p_Node, FixedArray<T, N> &p_Instance)
     {
         if (!p_Node.IsSequence() || p_Node.size() > N)
             return false;

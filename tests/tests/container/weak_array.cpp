@@ -65,9 +65,9 @@ TEST_CASE("WeakArray static: default, pointer, pointer+size", "[WeakArray]")
     REQUIRE(arr3.GetBack() == 3);
 }
 
-TEST_CASE("WeakArray static: from Array and StaticArray", "[WeakArray]")
+TEST_CASE("WeakArray static: from FixedArray and StaticArray", "[WeakArray]")
 {
-    Array<u32, 3> rawArr{10u, 20u, 30u};
+    FixedArray<u32, 3> rawArr{10u, 20u, 30u};
     const WeakArray<u32, 3> arr1(rawArr, 2);
     REQUIRE(arr1.GetData() == rawArr.GetData());
     REQUIRE(arr1.GetSize() == 2);
@@ -110,7 +110,7 @@ TEST_CASE("WeakArray static: modify elements", "[WeakArray]")
     REQUIRE(arr.GetSize() == 3);
     REQUIRE(arr[1] == 9);
 
-    const TKit::Array<u32, 2> extra = {7, 8};
+    const TKit::FixedArray<u32, 2> extra = {7, 8};
     arr.Insert(arr.begin() + 3, extra.begin(), extra.end());
     REQUIRE(arr.GetSize() == 5);
     REQUIRE(arr[3] == 7);
@@ -129,7 +129,7 @@ TEST_CASE("WeakArray static: modify elements", "[WeakArray]")
 
 TEST_CASE("WeakArray static: Resize, Clear, iteration", "[WeakArray]")
 {
-    TKit::Array<WTrackable, 4> backing;
+    TKit::FixedArray<WTrackable, 4> backing;
     WeakArray<WTrackable, 4> arr(backing.GetData(), 0);
     g_CtorCount = g_DtorCount = 0;
 
@@ -188,9 +188,9 @@ TEST_CASE("WeakArray dynamic: default, pointer+capacity, pointer+capacity+size",
     REQUIRE(arr3[2] == 3);
 }
 
-TEST_CASE("WeakArray dynamic: from Array, StaticArray, DynamicArray", "[WeakArray]")
+TEST_CASE("WeakArray dynamic: from FixedArray, StaticArray, DynamicArray", "[WeakArray]")
 {
-    Array<u32, 3> rawArr{2u, 4u, 6u};
+    FixedArray<u32, 3> rawArr{2u, 4u, 6u};
     StaticArray<u32, 3> staticArr{7u, 8u};
     DynamicArray<u32> dynArr{9u, 10u, 11u};
 
@@ -236,7 +236,7 @@ TEST_CASE("WeakArray dynamic: modify & inspect", "[WeakArray]")
     arr.Insert(arr.begin() + 1, 7);
     REQUIRE(arr[1] == 7);
 
-    const Array<u32, 3> extra{8, 9, 10};
+    const FixedArray<u32, 3> extra{8, 9, 10};
     arr.Insert(arr.begin() + 2, extra.begin(), extra.end());
     REQUIRE(arr.GetSize() == 5);
     REQUIRE(arr.GetBack() == 10);

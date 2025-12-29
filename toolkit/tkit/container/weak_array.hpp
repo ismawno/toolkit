@@ -38,11 +38,11 @@ class WeakArray
     {
     }
 
-    constexpr WeakArray(const Array<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
+    constexpr WeakArray(const FixedArray<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
         : m_Data(p_Array.GetData()), m_Size(p_Size)
     {
     }
-    constexpr WeakArray(Array<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
+    constexpr WeakArray(FixedArray<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
         : m_Data(p_Array.GetData()), m_Size(p_Size)
     {
     }
@@ -341,12 +341,12 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
     }
 
     template <SizeType Capacity>
-    constexpr WeakArray(const Array<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
+    constexpr WeakArray(const FixedArray<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
         : m_Data(p_Array.GetData()), m_Size(p_Size), m_Capacity(Capacity)
     {
     }
     template <SizeType Capacity>
-    constexpr WeakArray(Array<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
+    constexpr WeakArray(FixedArray<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
         : m_Data(p_Array.GetData()), m_Size(p_Size), m_Capacity(Capacity)
     {
     }

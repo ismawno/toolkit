@@ -53,7 +53,7 @@ orchestrator = CPPOrchestrator.from_cli_arguments(args, macros=macros, reserved_
 
 
 def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> None:
-    hpp.include("tkit/container/array.hpp", quotes=True)
+    hpp.include("tkit/container/fixed_array.hpp", quotes=True)
     hpp.include("tkit/reflection/reflect.hpp", quotes=True)
     hpp.include("tkit/utils/debug.hpp", quotes=True)
     hpp.include("tuple")
@@ -276,7 +276,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                     def create_array_sequence(fields: list[str], /, *, vtype: str | None = None) -> str:
                         if vtype is None:
                             vtype = "Ref_Type"
-                        return f"Array<{modifier}Field<{vtype}>, {len(fields)}>{{{', '.join(fields)}}}"
+                        return f"FixedArray<{modifier}Field<{vtype}>, {len(fields)}>{{{', '.join(fields)}}}"
 
                     def create_get_fields_method(fields: list[Field], /, *, group: str = "") -> None:
                         fields_cpp = create_cpp_fields_sequence(fields)
@@ -293,7 +293,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                                 "You may optionally provide type filters so that only fields with such types are retrieved.",
                             )
                             hpp.ret(
-                                f"If the retrieved fields share all the same type, the return value will be simplified to a `TKit::Array<{modifier}Field>`. If that is not the case however, the fields will be stored in a `std::tuple`."
+                                f"If the retrieved fields share all the same type, the return value will be simplified to a `TKit::FixedArray<{modifier}Field>`. If that is not the case however, the fields will be stored in a `std::tuple`."
                             )
 
                         with hpp.scope(
@@ -373,7 +373,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                                 "You may optionally provide type filters so that only fields with such types are retrieved.",
                             )
                             hpp.ret(
-                                f"If the retrieved fields share all the same type, the return value will be simplified to a `TKit::Array<{modifier}Field>`. If that is not the case however, the fields will be stored in a `std::tuple`."
+                                f"If the retrieved fields share all the same type, the return value will be simplified to a `TKit::FixedArray<{modifier}Field>`. If that is not the case however, the fields will be stored in a `std::tuple`."
                             )
                         with hpp.scope(
                             f"template <{modifier}Group Ref_Group, typename... Ref_Types> static constexpr auto Get{modifier}FieldsByGroup()"
@@ -391,7 +391,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                                 "else if constexpr (sizeof...(Ref_Types) == 1)",
                                 delimiters=False,
                             ):
-                                hpp(f"return Array<{modifier}Field<Ref_Types...>, 0>{{}};")
+                                hpp(f"return FixedArray<{modifier}Field<Ref_Types...>, 0>{{}};")
                             with hpp.scope("else", delimiters=False):
                                 hpp("return std::tuple{};")
 
@@ -436,7 +436,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
 
                             create_if_constexpr_per_type(
                                 generator,
-                                f"Array<{modifier}Field<Ref_Type>, 0>{{}}",
+                                f"FixedArray<{modifier}Field<Ref_Type>, 0>{{}}",
                                 group=group,
                             )
 
