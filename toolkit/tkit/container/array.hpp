@@ -1,7 +1,7 @@
 #pragma once
 
 #if !defined(TKIT_USE_STATIC_ARRAY) && !defined(TKIT_USE_DYNAMIC_ARRAY)
-#    define TKIT_USE_DYNAMIC_ARRAY
+#    define TKIT_USE_STATIC_ARRAY
 #endif
 
 #if defined(TKIT_USE_STATIC_ARRAY) && defined(TKIT_USE_DYNAMIC_ARRAY)
