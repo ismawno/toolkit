@@ -2,13 +2,6 @@
 
 #include "tkit/utils/alias.hpp"
 
-#ifndef TKIT_MAX_THREADS
-#    define TKIT_MAX_THREADS 16
-#endif
-#if TKIT_MAX_THREADS < 1
-#    error "[TOOLKIT][TOPOLOGY] Maximum threads must at least be 1"
-#endif
-
 namespace TKit::Topology
 {
 struct Handle;

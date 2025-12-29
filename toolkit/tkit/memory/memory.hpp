@@ -5,24 +5,20 @@
 #include "tkit/utils/debug.hpp"
 #include <algorithm>
 
-#ifndef TKIT_MEMORY_MAX_STACK_ALLOCATION
-#    define TKIT_MEMORY_MAX_STACK_ALLOCATION 1024
-#endif
-
 #ifdef TKIT_COMPILER_MSVC
 #    define TKIT_MEMORY_STACK_ALLOCATE(p_Size) _alloca(p_Size)
 #    define TKIT_MEMORY_STACK_DEALLOCATE(p_Ptr)
 #    define TKIT_MEMORY_STACK_CHECK(p_Size)                                                                            \
-        TKIT_ASSERT(p_Size <= TKIT_MEMORY_MAX_STACK_ALLOCATION,                                                        \
+        TKIT_ASSERT(p_Size <= TKit::MaxStackAlloc,                                                                     \
                     "[TOOLKIT][MEMORY] Stack allocation size exceeded. Requested size was {}, but maximum is {}",      \
-                    p_Size, TKIT_MEMORY_MAX_STACK_ALLOCATION)
+                    p_Size, TKit::MaxStackAlloc)
 #elif defined(TKIT_COMPILER_GCC) || defined(TKIT_COMPILER_CLANG)
 #    define TKIT_MEMORY_STACK_ALLOCATE(p_Size) alloca(p_Size)
 #    define TKIT_MEMORY_STACK_DEALLOCATE(p_Ptr)
 #    define TKIT_MEMORY_STACK_CHECK(p_Size)                                                                            \
-        TKIT_ASSERT(p_Size <= TKIT_MEMORY_MAX_STACK_ALLOCATION,                                                        \
+        TKIT_ASSERT(p_Size <= TKit::MaxStackAlloc,                                                                     \
                     "[TOOLKIT][MEMORY] Stack allocation size exceeded. Requested size was {}, but maximum is {}",      \
-                    p_Size, TKIT_MEMORY_MAX_STACK_ALLOCATION)
+                    p_Size, TKit::MaxStackAlloc)
 #else
 #    define TKIT_MEMORY_STACK_ALLOCATE(p_Size) TKit::Memory::Allocate(p_Size)
 #    define TKIT_MEMORY_STACK_DEALLOCATE(p_Ptr) TKit::Memory::Deallocate(p_Ptr)

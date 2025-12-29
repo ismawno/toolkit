@@ -8,6 +8,7 @@
 
 #include "tkit/utils/alias.hpp"
 #include <limits>
+#include <math.h>
 
 #define TKIT_F32_MIN TKit::Limits<f32>::Min()
 #define TKIT_F64_MIN TKit::Limits<f64>::Min()
@@ -59,6 +60,61 @@ template <typename T> struct Limits
         return std::numeric_limits<T>::epsilon();
     }
 };
+
+#ifndef TKIT_MEMORY_MAX_STACK_ALLOCATION
+#    define TKIT_MEMORY_MAX_STACK_ALLOCATION 1024
+#endif
+
+#ifndef TKIT_MAX_THREADS
+#    define TKIT_MAX_THREADS 16
+#endif
+#if TKIT_MAX_THREADS < 1
+#    error "[TOOLKIT][TOPOLOGY] Maximum threads must at least be 1"
+#endif
+
+#ifndef TKIT_THREAD_POOL_MAX_WORKERS
+#    define TKIT_THREAD_POOL_MAX_WORKERS (TKIT_MAX_THREADS - 1)
+#endif
+
+#if TKIT_THREAD_POOL_MAX_WORKERS >= TKIT_MAX_THREADS
+#    error "TKIT_THREAD_POOL_MAX_WORKERS must not violate TKIT_MAX_THREADS. It must be at most the latter minus one"
+#endif
+
+#ifndef TKIT_THREAD_POOL_MAX_TASKS
+#    define TKIT_THREAD_POOL_MAX_TASKS 32
+#endif
+
+#if TKIT_THREAD_POOL_MAX_WORKERS < 1
+#    error "[TOOLKIT][MULTIPROC] The maximum workers of a thread pool must be greater than one"
+#endif
+
+#if TKIT_THREAD_POOL_MAX_TASKS < 1
+#    error "[TOOLKIT][MULTIPROC] The maximum tasks of a thread pool must be greater than one"
+#endif
+
+#ifndef TKIT_TOPOLOGY_MAX_HANDLES
+#    define TKIT_TOPOLOGY_MAX_HANDLES 64
+#endif
+
+#ifndef TKIT_STACK_ALLOCATOR_MAX_ENTRIES
+#    define TKIT_STACK_ALLOCATOR_MAX_ENTRIES 128
+#endif
+#if TKIT_STACK_ALLOCATOR_MAX_ENTRIES < 1
+#    error "[TOOLKIT][STACK-ALLOC] Maximum stack allocator entries must be greater than one"
+#endif
+
+#ifndef TKIT_TIER_ALLOCATOR_MAX_TIERS
+#    define TKIT_TIER_ALLOCATOR_MAX_TIERS 128
+#endif
+
+constexpr usize MaxStackAlloc = TKIT_MEMORY_MAX_STACK_ALLOCATION;
+constexpr usize MaxThreads = TKIT_MAX_THREADS;
+constexpr usize MaxPoolWorkers = TKIT_THREAD_POOL_MAX_WORKERS;
+constexpr usize MaxPoolTasks = TKIT_THREAD_POOL_MAX_TASKS;
+constexpr usize MaxTopologyHandles = TKIT_TOPOLOGY_MAX_HANDLES;
+constexpr usize MaxStackAllocEntries = TKIT_STACK_ALLOCATOR_MAX_ENTRIES;
+constexpr usize MaxAllocTiers = TKIT_TIER_ALLOCATOR_MAX_TIERS;
+
 template <typename T> constexpr bool ApproachesZero(const T p_Value)
 {
     if constexpr (Float<T>)

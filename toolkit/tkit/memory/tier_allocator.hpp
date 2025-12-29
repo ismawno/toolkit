@@ -7,8 +7,7 @@
 #include "tkit/memory/memory.hpp"
 #include "tkit/utils/non_copyable.hpp"
 #include "tkit/utils/debug.hpp"
-
-#define TKIT_TIER_ALLOCATOR_MAX_TIERS 128
+#include "tkit/utils/limits.hpp"
 
 namespace TKit
 {
@@ -38,7 +37,7 @@ class TKIT_API TierAllocator
     };
     struct Description
     {
-        StaticArray<TierInfo, TKIT_TIER_ALLOCATOR_MAX_TIERS> Tiers;
+        StaticArray<TierInfo, MaxAllocTiers> Tiers;
         usize BufferSize;
         usize MaxAllocation;
         usize MinAllocation;
@@ -173,7 +172,7 @@ class TKIT_API TierAllocator
 #endif
     void deallocateBuffer();
 
-    StaticArray<Tier, TKIT_TIER_ALLOCATOR_MAX_TIERS> m_Tiers{};
+    StaticArray<Tier, MaxAllocTiers> m_Tiers{};
     std::byte *m_Buffer;
     usize m_BufferSize;
     usize m_MinAllocation;

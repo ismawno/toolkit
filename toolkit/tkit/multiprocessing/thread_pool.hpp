@@ -10,27 +10,8 @@
 #include "tkit/multiprocessing/mpmc_stack.hpp"
 #include "tkit/container/static_array.hpp"
 #include "tkit/multiprocessing/topology.hpp"
+#include "tkit/utils/limits.hpp"
 #include <thread>
-
-#ifndef TKIT_THREAD_POOL_MAX_WORKERS
-#    define TKIT_THREAD_POOL_MAX_WORKERS (TKIT_MAX_THREADS - 1)
-#endif
-
-#if TKIT_THREAD_POOL_MAX_WORKERS >= TKIT_MAX_THREADS
-#    error "TKIT_THREAD_POOL_MAX_WORKERS must not violate TKIT_MAX_THREADS. It must be at most the latter minus one"
-#endif
-
-#ifndef TKIT_THREAD_POOL_MAX_TASKS
-#    define TKIT_THREAD_POOL_MAX_TASKS 32
-#endif
-
-#if TKIT_THREAD_POOL_MAX_WORKERS < 1
-#    error "[TOOLKIT][MULTIPROC] The maximum workers of a thread pool must be greater than one"
-#endif
-
-#if TKIT_THREAD_POOL_MAX_TASKS < 1
-#    error "[TOOLKIT][MULTIPROC] The maximum tasks of a thread pool must be greater than one"
-#endif
 
 namespace TKit
 {
@@ -62,7 +43,7 @@ class TKIT_API ThreadPool final : public ITaskManager
         }
 
         std::thread Thread;
-        ChaseLevDeque<ITask *, TKIT_THREAD_POOL_MAX_TASKS> Queue{};
+        ChaseLevDeque<ITask *, MaxPoolTasks> Queue{};
         MpmcStack<ITask *> Inbox{};
         std::atomic<u32> Epochs{0};
         std::atomic<u32> TaskCount{0}; // Speculative
@@ -107,7 +88,7 @@ class TKIT_API ThreadPool final : public ITaskManager
     void drainTasks(usize p_WorkerIndex, usize p_Workers);
     bool trySteal(usize p_Victim);
 
-    StaticArray<Worker, TKIT_THREAD_POOL_MAX_WORKERS> m_Workers;
+    StaticArray<Worker, MaxPoolWorkers> m_Workers;
 
     alignas(TKIT_CACHE_LINE_SIZE) std::atomic_flag m_ReadySignal = ATOMIC_FLAG_INIT;
     Topology::Handle *m_Handle;

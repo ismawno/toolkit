@@ -9,10 +9,6 @@
 #include <functional>
 #include <atomic>
 
-#ifndef TKIT_TASK_ALLOCATOR_CAPACITY
-#    define TKIT_TASK_ALLOCATOR_CAPACITY 1024
-#endif
-
 namespace TKit
 {
 /**

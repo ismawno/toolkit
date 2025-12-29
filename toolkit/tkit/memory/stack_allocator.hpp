@@ -8,13 +8,7 @@
 #include "tkit/utils/debug.hpp"
 #include "tkit/utils/non_copyable.hpp"
 #include "tkit/container/static_array.hpp"
-
-#ifndef TKIT_STACK_ALLOCATOR_MAX_ENTRIES
-#    define TKIT_STACK_ALLOCATOR_MAX_ENTRIES 128
-#endif
-#if TKIT_STACK_ALLOCATOR_MAX_ENTRIES < 1
-#    error "[TOOLKIT][STACK-ALLOC] Maximum stack allocator entries must be greater than one"
-#endif
+#include "tkit/utils/limits.hpp"
 
 namespace TKit
 {
@@ -215,7 +209,7 @@ class TKIT_API StackAllocator
   private:
     void deallocateBuffer();
 
-    StaticArray<Entry, TKIT_STACK_ALLOCATOR_MAX_ENTRIES> m_Entries{};
+    StaticArray<Entry, MaxStackAllocEntries> m_Entries{};
     std::byte *m_Buffer;
     usize m_Size = 0;
     usize m_Remaining = 0;
