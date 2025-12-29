@@ -68,28 +68,18 @@ template <typename T> struct Limits
 #ifndef TKIT_MAX_THREADS
 #    define TKIT_MAX_THREADS 16
 #endif
-#if TKIT_MAX_THREADS < 1
-#    error "[TOOLKIT][TOPOLOGY] Maximum threads must at least be 1"
-#endif
 
 #ifndef TKIT_THREAD_POOL_MAX_WORKERS
 #    define TKIT_THREAD_POOL_MAX_WORKERS (TKIT_MAX_THREADS - 1)
 #endif
 
 #if TKIT_THREAD_POOL_MAX_WORKERS >= TKIT_MAX_THREADS
-#    error "TKIT_THREAD_POOL_MAX_WORKERS must not violate TKIT_MAX_THREADS. It must be at most the latter minus one"
+#    error                                                                                                             \
+        "[TOOLKIT][MULTI-PROC] TKIT_THREAD_POOL_MAX_WORKERS must not violate TKIT_MAX_THREADS. It must be at most the latter minus one"
 #endif
 
 #ifndef TKIT_THREAD_POOL_MAX_TASKS
 #    define TKIT_THREAD_POOL_MAX_TASKS 32
-#endif
-
-#if TKIT_THREAD_POOL_MAX_WORKERS < 1
-#    error "[TOOLKIT][MULTIPROC] The maximum workers of a thread pool must be greater than one"
-#endif
-
-#if TKIT_THREAD_POOL_MAX_TASKS < 1
-#    error "[TOOLKIT][MULTIPROC] The maximum tasks of a thread pool must be greater than one"
 #endif
 
 #ifndef TKIT_TOPOLOGY_MAX_HANDLES
