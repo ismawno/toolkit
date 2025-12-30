@@ -104,13 +104,6 @@ template <typename Traits> struct ArrayTools
         }
     }
 
-    /**
-     * @brief Insert a new element at the specified position. The element is copied or moved into the array.
-     *
-     * @param p_End The end iterator of the array.
-     * @param p_Pos The position to insert the element at.
-     * @param p_Value The value to insert.
-     */
     template <typename T> static constexpr void Insert(const Iterator p_End, const Iterator p_Pos, T &&p_Value)
     {
         if (p_Pos == p_End) [[unlikely]]
@@ -132,15 +125,6 @@ template <typename Traits> struct ArrayTools
         *p_Pos = std::forward<T>(p_Value);
     }
 
-    /**
-     * @brief Insert a range of elements at the specified position. The elements are copied or moved into the array.
-     *
-     * @param p_End The end iterator of the array.
-     * @param p_Pos The position to insert the elements at.
-     * @param p_Begin The beginning of the range to insert.
-     * @param p_End The end of the range to insert.
-     * @return The amount of elements inserted.
-     */
     template <typename It>
     static constexpr SizeType Insert(const Iterator p_End, const Iterator p_Pos, const It p_SrcBegin, const It p_SrcEnd)
     {

@@ -11,13 +11,6 @@
 
 namespace TKit
 {
-// This is a block allocator whose role is to 1: speed up single allocations and 2: improve contiguity, which is
-// guaranteed up to the amount of allocations per block
-
-// On my macOS m1 this allocator is able to allocate 10000 elements of 128 bytes in 0.035 ms and deallocate them in
-// 0.012 (3.5ns per allocation and 1.2ns per deallocation). This is roughly a 10x improvement over the default
-// new/delete, using the Serial variants. When using the safe variants, latency is doubled (aprox)
-
 /**
  * @brief A block allocator that allocates memory in blocks of a fixed size.
  *

@@ -10,8 +10,6 @@
 
 namespace TKit::Detail
 {
-// This is a special hash overload for associative containers that uses transparent hashing and comparison (advised by
-// sonarlint)
 struct TKIT_API StringHash
 {
     using is_transparent = void; // Enables heterogeneous operations.

@@ -150,20 +150,7 @@ template <typename It1, typename It2> constexpr auto BackwardMove(It1 p_Dst, It2
     return std::move_backward(p_Begin, p_End, p_Dst);
 }
 
-/**
- * @brief Check if an adress pointer is aligned to a specific alignment.
- *
- * @param p_Ptr The adress that will be checked for alignment.
- * @param p_Alignment The required alignment.
- */
 bool IsAligned(const void *p_Ptr, size_t p_Alignment);
-
-/**
- * @brief Check if an adress pointer is aligned to a specific alignment.
- *
- * @param p_Ptr The adress that will be checked for alignment.
- * @param p_Alignment The required alignment.
- */
 bool IsAligned(size_t p_Address, size_t p_Alignment);
 
 /**

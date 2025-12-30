@@ -154,14 +154,6 @@ class StaticDeque
         return *this;
     }
 
-    /**
-     * @brief Insert a new element at the beginning of the queue.
-     *
-     * The element is constructed in place using the provided arguments.
-     *
-     * @param p_Args The arguments to pass to the constructor of `T`.
-     * @return A reference to the newly constructed element.
-     */
     template <typename... Args>
         requires std::constructible_from<ValueType, Args...>
     constexpr ValueType &PushFront(Args &&...p_Args)
@@ -173,14 +165,6 @@ class StaticDeque
         return val;
     }
 
-    /**
-     * @brief Insert a new element at the end of the queue.
-     *
-     * The element is constructed in place using the provided arguments.
-     *
-     * @param p_Args The arguments to pass to the constructor of `T`.
-     * @return A reference to the newly constructed element.
-     */
     template <typename... Args>
         requires std::constructible_from<ValueType, Args...>
     constexpr ValueType &PushBack(Args &&...p_Args)
@@ -192,14 +176,6 @@ class StaticDeque
         return val;
     }
 
-    /**
-     * @brief Erase the element at the beginning of the queue.
-     *
-     * The destructor will only be called if not trivially destructible.
-     *
-     * @param p_Args The arguments to pass to the constructor of `T`.
-     * @return A reference to the newly constructed element.
-     */
     constexpr void PopFront()
     {
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][STAT-DEQUE] Container is already empty");
@@ -208,14 +184,6 @@ class StaticDeque
             Memory::DestructFromIterator(GetData() + m_Front);
         --m_Size;
     }
-    /**
-     * @brief Erase the element at the end of the queue.
-     *
-     * The destructor will only be called if not trivially destructible.
-     *
-     * @param p_Args The arguments to pass to the constructor of `T`.
-     * @return A reference to the newly constructed element.
-     */
     constexpr void PopBack()
     {
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][STAT-DEQUE] Container is already empty");
@@ -225,12 +193,6 @@ class StaticDeque
         --m_Size;
     }
 
-    /**
-     * @brief Clear the deque and set its size to 0.
-     *
-     * The elements are destroyed if not trivially destructible. The memory is not deallocated.
-     *
-     */
     constexpr void Clear()
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
@@ -312,54 +274,23 @@ class StaticDeque
         return At(p_Index);
     }
 
-    /**
-     * @brief Get the index of the front element.
-     *
-     * Useful as an iteration starting point.
-     *
-     */
     constexpr SizeType GetFrontIndex() const
     {
         return NextIndex(m_Front);
     }
-    /**
-     * @brief Get the index of the back element.
-     *
-     * Useful as a reverse iteration starting point.
-     *
-     */
     constexpr SizeType GetBackIndex() const
     {
         return PrevIndex(m_Back);
     }
-    /**
-     * @brief Get the bound located at the front of the queue.
-     *
-     * Useful as a reverse iteration stop condition.
-     *
-     */
     constexpr SizeType GetFrontEnd() const
     {
         return m_Front;
     }
-    /**
-     * @brief Get the bound located at the back of the queue.
-     *
-     * Useful as an iteration stop condition.
-     *
-     */
     constexpr SizeType GetBackEnd() const
     {
         return m_Back;
     }
 
-    /**
-     * @brief Get the next buffer index, cycling if necessary.
-     *
-     * Useful when iterating.
-     *
-     * @return The next index.
-     */
     constexpr static SizeType NextIndex(const SizeType p_Index)
     {
         if (p_Index == Capacity - 1)
@@ -367,13 +298,6 @@ class StaticDeque
         return p_Index + 1;
     }
 
-    /**
-     * @brief Get the previous buffer index, cycling if necessary.
-     *
-     * Useful when iterating.
-     *
-     * @return The previous index.
-     */
     constexpr static SizeType PrevIndex(const SizeType p_Index)
     {
         if (p_Index == 0)
