@@ -158,6 +158,7 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                             hpp(f"p_Instance = {enum.id.identifier}::{entry};")
                             hpp(f"return true;")
 
+                    hpp("TKIT_FATAL(\"[TOOLKIT][YAML] Failed to parse enum from '{val}'. Unknown enum value\");")
                     hpp(f"return false;")
 
         for clsinfo in classes.classes:
