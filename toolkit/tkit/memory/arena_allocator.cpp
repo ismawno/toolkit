@@ -86,11 +86,11 @@ void ArenaAllocator::deallocateBuffer()
 {
     if (!m_Buffer || m_Provided)
         return;
-    TKIT_LOG_WARNING_IF(
-        m_Remaining != m_Size,
-        "[TOOLKIT][ARENA-ALLOC] Deallocating an arena allocator with active allocations. If the elements are not "
-        "trivially destructible, you will have to call "
-        "Destroy() for each element to avoid undefined behaviour (this deallocation will not call the destructor)");
+    // TKIT_LOG_WARNING_IF(
+    //     m_Remaining != m_Size,
+    //     "[TOOLKIT][ARENA-ALLOC] Deallocating an arena allocator with active allocations. If the elements are not "
+    //     "trivially destructible, you will have to call "
+    //     "Destroy() for each element to avoid undefined behaviour (this deallocation will not call the destructor)");
     Memory::DeallocateAligned(m_Buffer);
 }
 } // namespace TKit
