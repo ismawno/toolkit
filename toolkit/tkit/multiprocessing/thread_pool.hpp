@@ -31,7 +31,7 @@ namespace TKit
  * when using the thread index.
  *
  */
-class TKIT_API ThreadPool final : public ITaskManager
+class ThreadPool final : public ITaskManager
 {
   public:
     struct alignas(TKIT_CACHE_LINE_SIZE) Worker

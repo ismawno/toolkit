@@ -26,7 +26,7 @@ namespace TKit
  * may be a nasty bug to track down.
  *
  */
-class TKIT_API ITask
+class ITask
 {
   public:
     constexpr ITask() = default;
@@ -175,7 +175,7 @@ template <typename T = void> class Task final : public ITask
  * The task is a simple callable object that takes a thread index as an argument.
  *
  */
-template <> class TKIT_API Task<void> final : public ITask
+template <> class Task<void> final : public ITask
 {
   public:
     constexpr Task() = default;

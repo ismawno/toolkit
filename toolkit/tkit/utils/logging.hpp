@@ -52,8 +52,8 @@ inline thread_local bool t_DisabledWarningLogs = false;
 inline thread_local bool t_DisabledErrorLogs = false;
 #endif
 
-TKIT_API void Log(std::string_view p_Message, const char *p_Level, const char *p_Color);
-TKIT_API void Log(std::string_view p_Message, const char *p_Level, const char *p_Color, const char *p_File, i32 p_Line);
+void Log(std::string_view p_Message, const char *p_Level, const char *p_Color);
+void Log(std::string_view p_Message, const char *p_Level, const char *p_Color, const char *p_File, i32 p_Line);
 
 CREATE_DETAIL_LOGGING_FUNCTIONS(fmt::format_string<Args...>)
 CREATE_DETAIL_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)
@@ -63,7 +63,7 @@ CREATE_DETAIL_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)
 
 namespace TKit
 {
-TKIT_API fmt::runtime_format_string<> RuntimeString(std::string_view p_String);
+fmt::runtime_format_string<> RuntimeString(std::string_view p_String);
 
 CREATE_LOGGING_FUNCTIONS(fmt::format_string<Args...>)
 CREATE_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)

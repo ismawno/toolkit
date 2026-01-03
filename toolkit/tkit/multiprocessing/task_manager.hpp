@@ -20,7 +20,7 @@ namespace TKit
  * manager must have their indices set with `TKit::Topology::SetThreadIndex()`. Failing to do so will result in races.
  *
  */
-class TKIT_API ITaskManager
+class ITaskManager
 {
   public:
     explicit ITaskManager(usize p_WorkerCount);
@@ -101,7 +101,7 @@ class TKIT_API ITaskManager
  * immediately.
  *
  */
-class TKIT_API TaskManager final : public ITaskManager
+class TaskManager final : public ITaskManager
 {
   public:
     TaskManager();

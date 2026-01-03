@@ -125,10 +125,10 @@ template <typename T> struct Codec
     }
 };
 
-TKIT_API Node FromString(std::string_view p_String);
-TKIT_API Node FromFile(std::string_view p_Path);
+Node FromString(std::string_view p_String);
+Node FromFile(std::string_view p_Path);
 
-TKIT_API void ToFile(std::string_view p_Path, const Node &p_Node);
+void ToFile(std::string_view p_Path, const Node &p_Node);
 
 template <typename T> void Serialize(const std::string_view p_Path, const T &p_Instance)
 {

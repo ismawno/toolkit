@@ -38,7 +38,7 @@ namespace TKit::Memory
  * @param p_Size The size of the memory to allocate.
  * @return A pointer to the allocated memory.
  */
-TKIT_API void *Allocate(size_t p_Size);
+void *Allocate(size_t p_Size);
 
 /**
  * @brief Deallocate a chunk of memory
@@ -47,7 +47,7 @@ TKIT_API void *Allocate(size_t p_Size);
  *
  * @param p_Ptr A pointer to the memory to deallocate.
  */
-TKIT_API void Deallocate(void *p_Ptr);
+void Deallocate(void *p_Ptr);
 
 /**
  * @brief Allocate a chunk of memory of a given size with a given alignment.
@@ -59,7 +59,7 @@ TKIT_API void Deallocate(void *p_Ptr);
  * @param p_Alignment The alignment of the memory to allocate.
  * @return A pointer to the allocated memory.
  */
-TKIT_API void *AllocateAligned(size_t p_Size, size_t p_Alignment);
+void *AllocateAligned(size_t p_Size, size_t p_Alignment);
 
 /**
  * @brief Deallocate a chunk of memory with a given alignment.
@@ -70,7 +70,7 @@ TKIT_API void *AllocateAligned(size_t p_Size, size_t p_Alignment);
  * @param p_Ptr A pointer to the memory to deallocate.
  * @param p_Alignment The alignment of the memory to deallocate.
  */
-TKIT_API void DeallocateAligned(void *p_Ptr);
+void DeallocateAligned(void *p_Ptr);
 
 /**
  * @brief Copy a chunk of memory from one location to another.
@@ -81,7 +81,7 @@ TKIT_API void DeallocateAligned(void *p_Ptr);
  * @param p_Src A pointer to the source memory.
  * @param p_Size The size of the memory to copy, in bytes.
  */
-TKIT_API void *ForwardCopy(void *p_Dst, const void *p_Src, size_t p_Size);
+void *ForwardCopy(void *p_Dst, const void *p_Src, size_t p_Size);
 
 /**
  * @brief Copy a chunk of memory from one location to another in reverse order.
@@ -92,7 +92,7 @@ TKIT_API void *ForwardCopy(void *p_Dst, const void *p_Src, size_t p_Size);
  * @param p_Src A pointer to the source memory.
  * @param p_Size The size of the memory to copy, in bytes.
  */
-TKIT_API void *BackwardCopy(void *p_Dst, const void *p_Src, size_t p_Size);
+void *BackwardCopy(void *p_Dst, const void *p_Src, size_t p_Size);
 
 /**
  * @brief Copy a range of elements from one iterator to another.

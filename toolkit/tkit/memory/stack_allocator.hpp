@@ -27,7 +27,7 @@ namespace TKit
  * A multithreaded environment has the exact opposite property, so this allocator is not thread safe.
  *
  */
-class TKIT_API StackAllocator
+class StackAllocator
 {
     TKIT_NON_COPYABLE(StackAllocator)
   public:

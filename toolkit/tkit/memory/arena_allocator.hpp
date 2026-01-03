@@ -24,7 +24,7 @@ namespace TKit
  * @note Thread safety considerations: This allocator is not thread safe.
  *
  */
-class TKIT_API ArenaAllocator
+class ArenaAllocator
 {
     TKIT_NON_COPYABLE(ArenaAllocator)
   public:

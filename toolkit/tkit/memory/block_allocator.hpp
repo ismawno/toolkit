@@ -29,7 +29,7 @@ namespace TKit
  *
  * This is roughly a 10x improvement over the default new/delete.
  */
-class TKIT_API BlockAllocator
+class BlockAllocator
 {
     TKIT_NON_COPYABLE(BlockAllocator)
   public:

@@ -45,23 +45,23 @@
 #    define TKIT_COMPILER_MSVC_VERSION_FULL _MSC_FULL_VER
 #endif
 
-#ifdef TKIT_OS_WINDOWS
-#    ifdef TKIT_SHARED_LIBRARY
-#        ifdef TKIT_EXPORT
-#            define TKIT_API __declspec(dllexport)
-#        else
-#            define TKIT_API __declspec(dllimport)
-#        endif
-#    else
-#        define TKIT_API
-#    endif
-#elif defined(TKIT_OS_LINUX) || defined(TKIT_OS_APPLE)
-#    if defined(TKIT_SHARED_LIBRARY) && defined(TKIT_EXPORT)
-#        define TKIT_API __attribute__((visibility("default")))
-#    else
-#        define TKIT_API
-#    endif
-#endif
+// #ifdef TKIT_OS_WINDOWS
+// #    ifdef TKIT_SHARED_LIBRARY
+// #        ifdef TKIT_EXPORT
+// #            define TKIT_API __declspec(dllexport)
+// #        else
+// #            define TKIT_API __declspec(dllimport)
+// #        endif
+// #    else
+// #        define TKIT_API
+// #    endif
+// #elif defined(TKIT_OS_LINUX) || defined(TKIT_OS_APPLE)
+// #    if defined(TKIT_SHARED_LIBRARY) && defined(TKIT_EXPORT)
+// #        define TKIT_API __attribute__((visibility("default")))
+// #    else
+// #        define TKIT_API
+// #    endif
+// #endif
 
 #ifdef TKIT_COMPILER_CLANG
 #    define TKIT_PRAGMA(p_Arg) _Pragma(#p_Arg)

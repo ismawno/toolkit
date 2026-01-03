@@ -18,7 +18,7 @@ concept Numeric = std::is_arithmetic_v<T>;
 
 namespace TKit
 {
-class TKIT_API Timespan
+class Timespan
 {
   public:
     using Nanoseconds = std::chrono::nanoseconds;

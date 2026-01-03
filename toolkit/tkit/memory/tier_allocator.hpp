@@ -25,7 +25,7 @@ namespace TKit
  * index total tier size.
  *
  */
-class TKIT_API TierAllocator
+class TierAllocator
 {
     TKIT_NON_COPYABLE(TierAllocator)
   public:

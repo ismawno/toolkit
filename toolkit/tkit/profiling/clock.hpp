@@ -9,7 +9,7 @@
 
 namespace TKit
 {
-class TKIT_API Clock
+class Clock
 {
   public:
     using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;

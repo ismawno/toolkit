@@ -10,7 +10,7 @@
 
 namespace TKit::Detail
 {
-struct TKIT_API StringHash
+struct StringHash
 {
     using is_transparent = void; // Enables heterogeneous operations.
 
@@ -25,7 +25,7 @@ template <typename T> struct HashAlias
 {
     using Type = std::hash<T>;
 };
-template <> struct TKIT_API HashAlias<std::string>
+template <> struct HashAlias<std::string>
 {
     using Type = StringHash;
 };
@@ -34,7 +34,7 @@ template <typename T> struct OpAlias
 {
     using Type = std::equal_to<T>;
 };
-template <> struct TKIT_API OpAlias<std::string>
+template <> struct OpAlias<std::string>
 {
     using Type = std::equal_to<>;
 };
