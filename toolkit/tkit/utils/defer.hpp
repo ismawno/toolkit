@@ -3,9 +3,8 @@
 #include "tkit/utils/non_copyable.hpp"
 #include "tkit/preprocessor/utils.hpp"
 
-#define TKIT_DEFER_CAPTURE(p_Deletor, ...)                                                                             \
-    const TKit::Defer TKIT_CONCAT(__tkit_defer, __LINE__){[__VA_ARGS__] { p_Deletor; }};
-#define TKIT_DEFER(p_Deletor) const TKit::Defer TKIT_CONCAT(__tkit_defer, __LINE__){[&] { p_Deletor; }};
+#define TKIT_DEFER_CAPTURE(p_Deletor, ...) const TKit::Defer __tkit_defer##__LINE__{[__VA_ARGS__] { p_Deletor; }};
+#define TKIT_DEFER(p_Deletor) const TKit::Defer __tkit_defer##__LINE__{[&] { p_Deletor; }};
 
 namespace TKit
 {
