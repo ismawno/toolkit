@@ -30,6 +30,9 @@ namespace TKit
  * you want to partition your tasks in such a way that the main thread does some work. If you do not, simply subtract 1
  * when using the thread index.
  *
+ * Only one `ThreadPool` object may exist at any given time. Having more is theoretically possible but may (and will)
+ * lead to errors and problems, especially with thread indices.
+ *
  */
 class ThreadPool final : public ITaskManager
 {

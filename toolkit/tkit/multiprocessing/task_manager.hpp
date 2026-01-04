@@ -19,6 +19,9 @@ namespace TKit
  * @note To be able to use it with an interface that accepts an `ITaskManager` base class, the threads owned by the task
  * manager must have their indices set with `TKit::Topology::SetThreadIndex()`. Failing to do so will result in races.
  *
+ * @note In general, there should only be a single `ITaskManager` object alive per program. It is possible to have
+ * multiple, but it is very brittle due to how thread indices are distributed.
+ *
  */
 class ITaskManager
 {
