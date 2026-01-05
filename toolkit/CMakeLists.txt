@@ -5,6 +5,10 @@ set(NAME toolkit)
 
 set(SOURCES tkit/core/pch.cpp tkit/memory/memory.cpp tkit/utils/logging.cpp)
 
+if(TOOLKIT_ENABLE_ASSERTS)
+  list(APPEND SOURCES tkit/utils/debug.cpp)
+endif()
+
 if(TOOLKIT_ENABLE_ARENA_ALLOCATOR)
   list(APPEND SOURCES tkit/memory/arena_allocator.cpp)
 endif()

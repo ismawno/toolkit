@@ -207,7 +207,7 @@ template <Valid T> class Wide
 
     constexpr const T At(const usize p_Index) const
     {
-        TKIT_ASSERT(p_Index < Lanes, "[TOOLKIT][AVX] Index exceeds lane count");
+        TKIT_ASSERT(p_Index < Lanes, "[TOOLKIT][AVX] Index exceeds lane count: {} >= {}", p_Index, Lanes);
         alignas(Alignment) T tmp[Lanes];
         StoreAligned(tmp);
         return tmp[p_Index];

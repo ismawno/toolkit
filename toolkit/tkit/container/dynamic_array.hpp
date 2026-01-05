@@ -123,7 +123,7 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
 
     constexpr void Pop()
     {
-        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][DYN-ARRAY] Container is already empty");
+        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][DYN-ARRAY] Cannot Pop(). Container is already empty");
         --m_Size;
         if constexpr (!std::is_trivially_destructible_v<ValueType>)
             Memory::DestructFromIterator(end());
@@ -361,10 +361,12 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
     constexpr void modifyCapacity(const SizeType p_Capacity)
     {
         TKIT_ASSERT(p_Capacity > 0, "[TOOLKIT][DYN-ARRAY] Capacity must be greater than 0");
-        TKIT_ASSERT(p_Capacity >= m_Size, "[TOOLKIT][DYN-ARRAY] Capacity is smaller than size");
+        TKIT_ASSERT(p_Capacity >= m_Size, "[TOOLKIT][DYN-ARRAY] Capacity ({}) is smaller than size ({})", p_Capacity,
+                    m_Size);
         ValueType *newData =
             static_cast<ValueType *>(Memory::AllocateAligned(p_Capacity * sizeof(ValueType), alignof(ValueType)));
-        TKIT_ASSERT(newData, "[TOOLKIT][DYN-ARRAY] Failed to allocate memory");
+        TKIT_ASSERT(newData, "[TOOLKIT][DYN-ARRAY] Failed to allocate {} bytes of memory aligned to {} bytes",
+                    p_Capacity * sizeof(ValueType), alignof(ValueType));
 
         if (m_Data)
         {
@@ -379,7 +381,8 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
 
     constexpr void deallocateBuffer()
     {
-        TKIT_ASSERT(m_Size == 0, "[TOOLKIT][DYN-ARRAY] Cannot deallocate buffer while it is not empty");
+        TKIT_ASSERT(m_Size == 0, "[TOOLKIT][DYN-ARRAY] Cannot deallocate buffer while it is not empty. Size is {}",
+                    m_Size);
         if (m_Data)
         {
             Memory::DeallocateAligned(m_Data);

@@ -98,13 +98,14 @@ class WeakArray
         requires std::constructible_from<ValueType, Args...>
     constexpr ValueType &Append(Args &&...p_Args)
     {
-        TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Container is already full");
+        TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Cannot Append(). Container is already at capacity ({})",
+                    Capacity);
         return *Memory::ConstructFromIterator(begin() + m_Size++, std::forward<Args>(p_Args)...);
     }
 
     constexpr void Pop()
     {
-        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][WEAK-ARRAY] Container is already empty");
+        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][WEAK-ARRAY] Cannot Pop(). Container is already empty");
         --m_Size;
         if constexpr (!std::is_trivially_destructible_v<ValueType>)
             Memory::DestructFromIterator(end());
@@ -114,7 +115,7 @@ class WeakArray
         requires(std::convertible_to<std::remove_cvref_t<ValueType>, std::remove_cvref_t<U>>)
     constexpr void Insert(const Iterator p_Pos, U &&p_Value)
     {
-        TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Container is already full");
+        TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Cannot Insert(). Container is at capacity ({})", Capacity);
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
         Tools::Insert(end(), p_Pos, std::forward<U>(p_Value));
         ++m_Size;
@@ -160,7 +161,7 @@ class WeakArray
     {
         TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT][WEAK-ARRAY] Begin iterator is out of bounds");
         TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT][WEAK-ARRAY] End iterator is out of bounds");
-        TKIT_ASSERT(m_Size >= std::distance(p_Begin, p_End), "[TOOLKIT][WEAK-ARRAY] New size is negative");
+        TKIT_ASSERT(m_Size >= std::distance(p_Begin, p_End), "[TOOLKIT][WEAK-ARRAY] Range overflows array");
 
         m_Size -= Tools::RemoveOrdered(end(), p_Begin, p_End);
     }
@@ -194,7 +195,8 @@ class WeakArray
         requires std::constructible_from<ValueType, Args...>
     constexpr void Resize(const SizeType p_Size, Args &&...args)
     {
-        TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT][WEAK-ARRAY] Size is bigger than capacity");
+        TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT][WEAK-ARRAY] Size ({}) is bigger than capacity ({})", p_Size,
+                    Capacity);
 
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (p_Size < m_Size)
@@ -386,13 +388,13 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
         requires std::constructible_from<ValueType, Args...>
     constexpr ValueType &Append(Args &&...p_Args)
     {
-        TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Container is already full");
+        TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Cannot Append(). Container is at capacity ({})", m_Capacity);
         return *Memory::ConstructFromIterator(begin() + m_Size++, std::forward<Args>(p_Args)...);
     }
 
     constexpr void Pop()
     {
-        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][WEAK-ARRAY] Container is already empty");
+        TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][WEAK-ARRAY] Cannot Pop(). Container is already empty");
         --m_Size;
         if constexpr (!std::is_trivially_destructible_v<ValueType>)
             Memory::DestructFromIterator(end());
@@ -402,7 +404,7 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
         requires(std::convertible_to<std::remove_cvref_t<ValueType>, std::remove_cvref_t<U>>)
     constexpr void Insert(const Iterator p_Pos, U &&p_Value)
     {
-        TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Container is already full");
+        TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Cannot Insert(). Container is at capacity ({})", m_Capacity);
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
         Tools::Insert(end(), p_Pos, std::forward<U>(p_Value));
         ++m_Size;
@@ -448,7 +450,7 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
     {
         TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT][WEAK-ARRAY] Begin iterator is out of bounds");
         TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT][WEAK-ARRAY] End iterator is out of bounds");
-        TKIT_ASSERT(m_Size >= std::distance(p_Begin, p_End), "[TOOLKIT][WEAK-ARRAY] New size is negative");
+        TKIT_ASSERT(m_Size >= std::distance(p_Begin, p_End), "[TOOLKIT][WEAK-ARRAY] Range overflows array");
 
         m_Size -= Tools::RemoveOrdered(end(), p_Begin, p_End);
     }
@@ -482,7 +484,8 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
         requires std::constructible_from<ValueType, Args...>
     constexpr void Resize(const SizeType p_Size, Args &&...args)
     {
-        TKIT_ASSERT(p_Size <= m_Capacity, "[TOOLKIT][WEAK-ARRAY] Size is bigger than capacity");
+        TKIT_ASSERT(p_Size <= m_Capacity, "[TOOLKIT][WEAK-ARRAY] Size ({}) is bigger than capacity ({})", p_Size,
+                    m_Capacity);
 
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (p_Size < m_Size)

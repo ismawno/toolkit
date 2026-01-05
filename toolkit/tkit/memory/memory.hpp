@@ -220,8 +220,10 @@ template <typename T> class STLAllocator
  */
 template <typename T, typename... Args> T *Construct(T *p_Ptr, Args &&...p_Args)
 {
-    TKIT_ASSERT(IsAligned(p_Ptr, alignof(T)),
-                "[TOOLKIT][MEMORY] The address used to construct an object is not correctly aligned to its alignment");
+    TKIT_ASSERT(
+        IsAligned(p_Ptr, alignof(T)),
+        "[TOOLKIT][MEMORY] The address used to construct an object is not correctly aligned to its alignment of {}",
+        alignof(T));
     return std::launder(::new (p_Ptr) T(std::forward<Args>(p_Args)...));
 }
 

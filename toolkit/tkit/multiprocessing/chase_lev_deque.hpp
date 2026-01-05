@@ -45,7 +45,8 @@ template <typename T, u64 Capacity> class ChaseLevDeque
     void PushBack(Args &&...p_Args)
     {
         const u64 back = m_Back.load(std::memory_order_relaxed);
-        TKIT_ASSERT(back - m_Front.load(std::memory_order_relaxed) < Capacity, "[TOOLKIT][CHASE-LEV] Queue is full!");
+        TKIT_ASSERT(back - m_Front.load(std::memory_order_relaxed) < Capacity,
+                    "[TOOLKIT][CHASE-LEV] Cannot PushBack(). Queue is at capacity ({})", Capacity);
 
         store(back, std::move(T{std::forward<Args>(p_Args)...}));
 

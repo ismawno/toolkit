@@ -41,15 +41,6 @@ int main(int argc, char **argv)
     TKIT_LOG_INFO("[TOOLKIT][PERF] Running static array...");
     RecordStaticArray(settings.Container);
 
-    TKIT_LOG_INFO("[TOOLKIT][PERF] Running deque...");
-    RecordDeque(settings.Container);
-
-    TKIT_LOG_INFO("[TOOLKIT][PERF] Running dynamic deque...");
-    RecordDynamicDeque(settings.Container);
-
-    TKIT_LOG_INFO("[TOOLKIT][PERF] Running static deque...");
-    RecordStaticDeque(settings.Container);
-
     TKIT_LOG_INFO("[TOOLKIT][PERF] Done! ({:.1f} seconds) Results have been written to 'performance/results'",
                   clock.GetElapsed().AsSeconds());
 }

@@ -14,7 +14,8 @@ StackAllocator::StackAllocator(const usize p_Size, const usize p_Alignment)
     : m_Size(p_Size), m_Remaining(p_Size), m_Provided(false)
 {
     m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(static_cast<size_t>(p_Size), p_Alignment));
-    TKIT_ASSERT(m_Buffer, "[TOOLKIT][STACK-ALLOC] Failed to allocate memory");
+    TKIT_ASSERT(m_Buffer, "[TOOLKIT][STACK-ALLOC] Failed to allocate {} bytes of memory aligned to {} bytes", p_Size,
+                p_Alignment);
 }
 
 StackAllocator::~StackAllocator()
@@ -56,7 +57,8 @@ StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other)
 
 void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment)
 {
-    TKIT_ASSERT(Bit::IsPowerOfTwo(p_Alignment), "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2");
+    TKIT_ASSERT(Bit::IsPowerOfTwo(p_Alignment), "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2, but {} is not",
+                p_Alignment);
     std::byte *ptr = m_Entries.IsEmpty() ? m_Buffer : m_Entries.GetBack().Ptr + m_Entries.GetBack().Size;
     const uptr address = reinterpret_cast<uptr>(ptr);
     TKIT_COMPILER_WARNING_IGNORE_PUSH()
@@ -75,7 +77,8 @@ void *StackAllocator::Allocate(const usize p_Size, const usize p_Alignment)
                 "have triggered",
                 p_Size, p_Alignment);
     TKIT_ASSERT(Memory::IsAligned(alignedPtr, p_Alignment),
-                "[TOOLKIT][STACK-ALLOC] Aligned pointer is not aligned to the requested alignment");
+                "[TOOLKIT][STACK-ALLOC] Aligned pointer is not aligned to the requested alignment of {} bytes",
+                p_Alignment);
 
     m_Remaining -= size;
     m_Entries.Append(alignedPtr, size);
@@ -86,7 +89,7 @@ void StackAllocator::Deallocate([[maybe_unused]] const void *p_Ptr)
 {
     TKIT_ASSERT(p_Ptr, "[TOOLKIT][STACK-ALLOC] Cannot deallocate a null pointer");
     TKIT_ASSERT(!m_Entries.IsEmpty(),
-                "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is IsEmpty");
+                "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is empty");
     TKIT_ASSERT(m_Entries.GetBack().Ptr == p_Ptr,
                 "[TOOLKIT][STACK-ALLOC] Elements must be deallocated in the reverse order they were allocated");
     m_Remaining += m_Entries.GetBack().Size;
@@ -95,7 +98,7 @@ void StackAllocator::Deallocate([[maybe_unused]] const void *p_Ptr)
 void StackAllocator::Deallocate()
 {
     TKIT_ASSERT(!m_Entries.IsEmpty(),
-                "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is IsEmpty");
+                "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is empty");
     m_Remaining += m_Entries.GetBack().Size;
     m_Entries.Pop();
 }

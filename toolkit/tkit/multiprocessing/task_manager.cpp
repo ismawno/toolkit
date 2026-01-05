@@ -6,7 +6,7 @@ namespace TKit
 {
 ITaskManager::ITaskManager(const usize p_WorkerCount) : m_WorkerCount(p_WorkerCount)
 {
-    TKIT_ASSERT(p_WorkerCount != 0, "[TOOLKIT][MULTIPROC] The worker count must be greater than 0.");
+    TKIT_ASSERT(p_WorkerCount != 0, "[TOOLKIT][MULTIPROC] The worker count must be greater than 0");
 }
 
 TaskManager::TaskManager() : ITaskManager(1)

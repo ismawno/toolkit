@@ -32,7 +32,8 @@ class StaticArray
     template <typename... Args>
     constexpr explicit StaticArray(const SizeType p_Size, const Args &...p_Args) : m_Size(p_Size)
     {
-        TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size is bigger than capacity");
+        TKIT_ASSERT(m_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size ({}) is bigger than capacity ({})", m_Size,
+                    Capacity);
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
             Memory::ConstructRange(begin(), end(), p_Args...);
     }
@@ -42,7 +43,8 @@ class StaticArray
         requires(std::is_copy_constructible_v<T>)
     {
         m_Size = static_cast<SizeType>(std::distance(p_Begin, p_End));
-        TKIT_ASSERT(m_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size is bigger than capacity");
+        TKIT_ASSERT(m_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size ({}) is bigger than capacity ({})", m_Size,
+                    Capacity);
         Tools::CopyConstructFromRange(begin(), p_Begin, p_End);
     }
 
@@ -50,7 +52,8 @@ class StaticArray
         requires(std::is_copy_constructible_v<T>)
         : m_Size(static_cast<SizeType>(p_List.size()))
     {
-        TKIT_ASSERT(p_List.size() <= Capacity, "[TOOLKIT][STAT-ARRAY] Size is bigger than capacity");
+        TKIT_ASSERT(m_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size ({}) is bigger than capacity ({})", m_Size,
+                    Capacity);
         Tools::CopyConstructFromRange(begin(), p_List.begin(), p_List.end());
     }
 
@@ -62,7 +65,8 @@ class StaticArray
     {
         if constexpr (M > Capacity)
         {
-            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT][STAT-ARRAY] Size is bigger than capacity");
+            TKIT_ASSERT(m_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size ({}) is bigger than capacity ({})", m_Size,
+                        Capacity);
         }
         Tools::CopyConstructFromRange(begin(), p_Other.begin(), p_Other.end());
     }
@@ -75,7 +79,8 @@ class StaticArray
     {
         if constexpr (M > Capacity)
         {
-            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT][STAT-ARRAY] Size is bigger than capacity");
+            TKIT_ASSERT(m_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size ({}) is bigger than capacity ({})", m_Size,
+                        Capacity);
         }
         Tools::MoveConstructFromRange(begin(), p_Other.begin(), p_Other.end());
     }
@@ -111,7 +116,8 @@ class StaticArray
         }
         if constexpr (M > Capacity)
         {
-            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT][STAT-ARRAY] Size is bigger than capacity");
+            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT][STAT-ARRAY] Size ({}) is bigger than capacity ({})",
+                        p_Other.GetSize(), Capacity);
         }
         Tools::CopyAssignFromRange(begin(), end(), p_Other.begin(), p_Other.end());
         m_Size = p_Other.GetSize();
@@ -130,7 +136,8 @@ class StaticArray
         }
         if constexpr (M > Capacity)
         {
-            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT][STAT-ARRAY] Size is bigger than capacity");
+            TKIT_ASSERT(p_Other.GetSize() <= Capacity, "[TOOLKIT][STAT-ARRAY] Size ({}) is bigger than capacity ({})",
+                        p_Other.GetSize(), Capacity);
         }
 
         Tools::MoveAssignFromRange(begin(), end(), p_Other.begin(), p_Other.end());
@@ -224,7 +231,7 @@ class StaticArray
     {
         TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT][STAT-ARRAY] Begin iterator is out of bounds");
         TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT][STAT-ARRAY] End iterator is out of bounds");
-        TKIT_ASSERT(m_Size >= std::distance(p_Begin, p_End), "[TOOLKIT][STAT-ARRAY] New size is negative");
+        TKIT_ASSERT(m_Size >= std::distance(p_Begin, p_End), "[TOOLKIT][STAT-ARRAY] Range overflows array");
 
         m_Size -= Tools::RemoveOrdered(end(), p_Begin, p_End);
     }
@@ -258,7 +265,8 @@ class StaticArray
         requires std::constructible_from<ValueType, Args...>
     constexpr void Resize(const SizeType p_Size, const Args &...p_Args)
     {
-        TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size is bigger than capacity");
+        TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size ({}) is bigger than capacity ({})", p_Size,
+                    Capacity);
 
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (p_Size < m_Size)

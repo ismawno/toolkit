@@ -8,16 +8,23 @@ namespace TKit
 TierAllocator::Description TierAllocator::CreateDescription(const usize p_MaxAllocation, const usize p_MinAllocation,
                                                             const usize p_Granularity, const f32 p_TierSlotDecay)
 {
-    TKIT_ASSERT(
-        Bit::IsPowerOfTwo(p_MaxAllocation) && Bit::IsPowerOfTwo(p_MinAllocation) && Bit::IsPowerOfTwo(p_Granularity),
-        "[TOOLKIT][TIER-ALLOC] All integer arguments must be powers of two when creating a tier allocator description");
+    TKIT_ASSERT(Bit::IsPowerOfTwo(p_MaxAllocation) && Bit::IsPowerOfTwo(p_MinAllocation) &&
+                    Bit::IsPowerOfTwo(p_Granularity),
+                "[TOOLKIT][TIER-ALLOC] All integer arguments must be powers of two when creating a tier allocator "
+                "description, but the values where {}, {}, and {}",
+                p_MaxAllocation, p_MinAllocation, p_Granularity);
     TKIT_ASSERT(p_MinAllocation >= sizeof(void *),
-                "[TOOLKIT][TIER-ALLOC] Minimum allocation size must be at least sizeof(void *)");
+                "[TOOLKIT][TIER-ALLOC] Minimum allocation size must be at least sizeof(void *) = {}, but passed value "
+                "was {} bytes",
+                sizeof(void *), p_MinAllocation);
     TKIT_ASSERT(p_Granularity <= p_MinAllocation,
-                "[TOOLKIT][TIER-ALLOC] Granularity must be less or equal than the minimum allocation");
-    TKIT_ASSERT(p_Granularity >= 2, "[TOOLKIT][TIER-ALLOC] Granularity cannot be smaller than 2");
+                "[TOOLKIT][TIER-ALLOC] Granularity ({}) must be less or equal than the minimum allocation ({})",
+                p_Granularity, p_MinAllocation);
+    TKIT_ASSERT(p_Granularity >= 2, "[TOOLKIT][TIER-ALLOC] Granularity cannot be smaller than 2, but its value is {}",
+                p_Granularity);
     TKIT_ASSERT(p_TierSlotDecay > 0.f && p_TierSlotDecay <= 1.f,
-                "[TOOLKIT][TIER-ALLOC] Tier slot decay must be between 0 and 1.");
+                "[TOOLKIT][TIER-ALLOC] Tier slot decay must be between 0.0 and 1.0, but its value was {}",
+                p_TierSlotDecay);
 
     Description desc{};
     desc.MaxAllocation = p_MaxAllocation;
@@ -83,7 +90,8 @@ TierAllocator::TierAllocator(const usize p_MaxAllocation, const usize p_MinAlloc
 TierAllocator::TierAllocator(const Description &p_Description, const usize p_MaxAlignment)
     : m_MinAllocation(p_Description.MinAllocation), m_Granularity(p_Description.Granularity)
 {
-    TKIT_ASSERT(Bit::IsPowerOfTwo(p_MaxAlignment), "[TOOLKIT][TIER-ALLOC] Maximum alignment must be a power of 2");
+    TKIT_ASSERT(Bit::IsPowerOfTwo(p_MaxAlignment),
+                "[TOOLKIT][TIER-ALLOC] Maximum alignment must be a power of 2, but {} is not", p_MaxAlignment);
 
     m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(p_Description.BufferSize, p_MaxAlignment));
     TKIT_ASSERT(m_Buffer,
@@ -151,8 +159,9 @@ void TierAllocator::setupMemoryLayout(const Description &p_Description)
 
         TKIT_ASSERT(Memory::IsAligned(tier.Buffer, std::min(p_MaxAlignment, Bit::PrevPowerOfTwo(tinfo.AllocationSize))),
                     "[TOOLKIT][TIER-ALLOC] Tier with size {} and buffer {} failed alignment check: it is not aligned "
-                    "to either the maximum alignment or its previous power of 2",
-                    tinfo.Size, static_cast<void *>(tier.Buffer));
+                    "to either the maximum alignment ({}) or its previous power of 2 ({})",
+                    tinfo.Size, static_cast<void *>(tier.Buffer), p_MaxAlignment,
+                    Bit::PrevPowerOfTwo(tinfo.AllocationSize));
 
         Allocation *next = nullptr;
         for (usize i = count - 1; i < count; --i)

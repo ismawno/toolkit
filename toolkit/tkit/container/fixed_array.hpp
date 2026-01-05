@@ -12,9 +12,9 @@ namespace TKit
  * provide a bit more control.
  *
  * @tparam T The type of the elements.
- * @tparam Size The number of elements in the array.
+ * @tparam Capacity The number of elements in the array.
  */
-template <typename T, usize Size, typename Traits = Container::ArrayTraits<T>> struct FixedArray
+template <typename T, usize Capacity, typename Traits = Container::ArrayTraits<T>> struct FixedArray
 {
     using ValueType = typename Traits::ValueType;
     using SizeType = typename Traits::SizeType;
@@ -26,16 +26,17 @@ template <typename T, usize Size, typename Traits = Container::ArrayTraits<T>> s
 
     constexpr FixedArray(const std::initializer_list<ValueType> p_Elements)
     {
-        TKIT_ASSERT(p_Elements.size() <= Size, "[TOOLKIT][ARRAY] Size is bigger than capacity");
+        TKIT_ASSERT(p_Elements.size() <= Capacity, "[TOOLKIT][STAT-ARRAY] Size ({}) is bigger than capacity ({})",
+                    p_Elements.size(), Capacity);
         Tools::CopyConstructFromRange(begin(), p_Elements.begin(), p_Elements.end());
     }
 
     template <usize OtherSize>
-        requires(OtherSize == Size - 1)
+        requires(OtherSize == Capacity - 1)
     constexpr FixedArray(const FixedArray<T, OtherSize> &p_Other, const T &p_Value)
     {
         Tools::CopyConstructFromRange(begin(), p_Other.begin(), p_Other.end());
-        Elements[Size - 1] = p_Value;
+        Elements[Capacity - 1] = p_Value;
     }
 
     constexpr const ValueType &operator[](const SizeType p_Index) const
@@ -49,18 +50,18 @@ template <typename T, usize Size, typename Traits = Container::ArrayTraits<T>> s
 
     constexpr const ValueType &At(const SizeType p_Index) const
     {
-        TKIT_ASSERT(p_Index < Size, "[TOOLKIT][ARRAY] Index is out of bounds: {} >= {}", p_Index, Size);
+        TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT][ARRAY] Index is out of bounds: {} >= {}", p_Index, Capacity);
         return Elements[p_Index];
     }
     constexpr ValueType &At(const SizeType p_Index)
     {
-        TKIT_ASSERT(p_Index < Size, "[TOOLKIT][ARRAY] Index is out of bounds: {} >= {}", p_Index, Size);
+        TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT][ARRAY] Index is out of bounds: {} >= {}", p_Index, Capacity);
         return Elements[p_Index];
     }
 
     constexpr SizeType GetSize() const
     {
-        return Size;
+        return Capacity;
     }
 
     constexpr const ValueType *GetData() const
@@ -78,7 +79,7 @@ template <typename T, usize Size, typename Traits = Container::ArrayTraits<T>> s
     }
     constexpr Iterator end()
     {
-        return Elements + Size;
+        return Elements + Capacity;
     }
 
     constexpr ConstIterator begin() const
@@ -87,10 +88,10 @@ template <typename T, usize Size, typename Traits = Container::ArrayTraits<T>> s
     }
     constexpr ConstIterator end() const
     {
-        return Elements + Size;
+        return Elements + Capacity;
     }
 
-    ValueType Elements[Size];
+    ValueType Elements[Capacity];
 };
 
 template <typename T> using FixedArray4 = FixedArray<T, 4>;
