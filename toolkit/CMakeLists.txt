@@ -254,6 +254,9 @@ endif()
 
 if(TOOLKIT_ENABLE_ASSERTS)
   target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ASSERTS)
+  if(MSVC)
+    target_compile_options(toolkit PUBLIC /Zc:preprocessor)
+  endif()
 endif()
 
 if(TOOLKIT_ENABLE_REFLECTION)
