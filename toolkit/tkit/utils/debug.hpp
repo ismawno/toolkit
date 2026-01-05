@@ -23,10 +23,16 @@
 namespace TKit::Detail
 {
 #ifdef TKIT_ENABLE_ASSERTS
-inline void LogAndBreak(const std::string_view p_Message, const char *p_Level, const char *p_Color, const char *p_File,
-                        const i32 p_Line)
+template <typename... Args>
+void LogAndBreak(const char *p_Level, const char *p_Color, const char *p_File, const i32 p_Line,
+                 const fmt::format_string<Args...> p_Message, Args &&...p_Args)
 {
-    Log(p_Message, p_Level, p_Color, p_File, p_Line);
+    Log(p_Message, p_Level, p_Color, p_File, p_Line, std::forward<Args>(p_Args)...);
+    TKIT_DEBUG_BREAK();
+}
+inline void LogAndBreak(const char *p_Level, const char *p_Color, const char *p_File, const i32 p_Line)
+{
+    Log("Assertion failed!", p_Level, p_Color, p_File, p_Line);
     TKIT_DEBUG_BREAK();
 }
 #endif
@@ -34,17 +40,19 @@ inline void LogAndBreak(const std::string_view p_Message, const char *p_Level, c
 
 #ifdef TKIT_ENABLE_ASSERTS
 #    define TKIT_FATAL(...)                                                                                            \
-        TKit::Detail::LogAndBreak(TKit::Format(__VA_ARGS__), "FATAL", TKIT_LOG_COLOR_FATAL, __FILE__, __LINE__)
+        TKit::Detail::LogAndBreak("FATAL", TKIT_LOG_COLOR_FATAL, __FILE__, __LINE__ __VA_OPT__(, ) __VA_ARGS__)
 #    define TKIT_ASSERT(p_Condition, ...)                                                                              \
         if (!(p_Condition))                                                                                            \
-        TKit::Detail::LogAndBreak(TKit::Format(__VA_ARGS__), "FATAL", TKIT_LOG_COLOR_FATAL, __FILE__, __LINE__)
+        TKit::Detail::LogAndBreak("FATAL", TKIT_LOG_COLOR_FATAL, __FILE__, __LINE__ __VA_OPT__(, ) __VA_ARGS__)
 
-#    define TKIT_ASSERT_RETURNS(expression, expected, ...) TKIT_ASSERT((expression) == (expected), __VA_ARGS__)
-#    define TKIT_ASSERT_NOT_RETURNS(expression, expected, ...) TKIT_ASSERT((expression) != (expected), __VA_ARGS__)
+#    define TKIT_ASSERT_RETURNS(p_Expression, p_Expected, ...)                                                         \
+        TKIT_ASSERT((p_Expression) == (p_Expected)__VA_OPT__(, ) __VA_ARGS__)
+#    define TKIT_ASSERT_NOT_RETURNS(p_Expression, p_Expected, ...)                                                     \
+        TKIT_ASSERT((p_Expression) != (p_Expected)__VA_OPT__(, ) __VA_ARGS__)
 #else
 #    define TKIT_FATAL(p_Message, ...)
 #    define TKIT_ASSERT(p_Condition, p_Message, ...)
 
-#    define TKIT_ASSERT_RETURNS(expression, expected, ...) expression
-#    define TKIT_ASSERT_NOT_RETURNS(expression, expected, ...) expression
+#    define TKIT_ASSERT_RETURNS(p_Expression, p_Expected, ...) p_Expression
+#    define TKIT_ASSERT_NOT_RETURNS(p_Expression, p_Expected, ...) p_Expression
 #endif
