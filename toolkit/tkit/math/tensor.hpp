@@ -187,12 +187,12 @@ struct Tensor
 
     constexpr const ChildType &At(const usize p_Index) const
     {
-        TKIT_ASSERT(p_Index < N0, "[TOOLKIT][TENSOR] Index is out of bounds: {} >= {}", p_Index, N0);
+        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, N0, "[TOOLKIT][TENSOR] ");
         return Ranked[p_Index];
     }
     constexpr ChildType &At(const usize p_Index)
     {
-        TKIT_ASSERT(p_Index < N0, "[TOOLKIT][TENSOR] Index is out of bounds: {} >= {}", p_Index, N0);
+        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, N0, "[TOOLKIT][TENSOR] ");
         return Ranked[p_Index];
     }
 
@@ -367,7 +367,7 @@ constexpr void SubTensorImpl(const Tensor<T, N0, N...> &p_Tensor, Tensor<T, N0 -
     requires((N0 > 1) && ... && (N0 == N))
 {
     const usize first = static_cast<usize>(p_First);
-    TKIT_ASSERT(first < N0, "[TOOLKIT][TENSOR] Index is out of bounds: {} >= {}", first, N0);
+    TKIT_CHECK_OUT_OF_BOUNDS(first, N0, "[TOOLKIT][TENSOR] ");
     for (usize i = 0, j = 0; i < N0; ++i)
         if (i != first)
         {

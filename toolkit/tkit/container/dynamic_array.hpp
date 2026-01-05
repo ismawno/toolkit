@@ -259,12 +259,12 @@ template <typename T, typename Traits = Container::ArrayTraits<T>> class Dynamic
     }
     constexpr const ValueType &At(const SizeType p_Index) const
     {
-        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT][DYN-ARRAY] Index is out of bounds: {} >= {}", p_Index, m_Size);
+        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, m_Size, "[TOOLKIT][DYN-ARRAY] ");
         return *(begin() + p_Index);
     }
     constexpr ValueType &At(const SizeType p_Index)
     {
-        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT][DYN-ARRAY] Index is out of bounds: {} >= {}", p_Index, m_Size);
+        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, m_Size, "[TOOLKIT][DYN-ARRAY] ");
         return *(begin() + p_Index);
     }
 

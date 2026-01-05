@@ -50,12 +50,12 @@ template <typename T, usize Capacity, typename Traits = Container::ArrayTraits<T
 
     constexpr const ValueType &At(const SizeType p_Index) const
     {
-        TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT][ARRAY] Index is out of bounds: {} >= {}", p_Index, Capacity);
+        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, Capacity, "[TOOLKIT][ARRAY] ");
         return Elements[p_Index];
     }
     constexpr ValueType &At(const SizeType p_Index)
     {
-        TKIT_ASSERT(p_Index < Capacity, "[TOOLKIT][ARRAY] Index is out of bounds: {} >= {}", p_Index, Capacity);
+        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, Capacity, "[TOOLKIT][ARRAY] ");
         return Elements[p_Index];
     }
 

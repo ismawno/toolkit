@@ -216,7 +216,7 @@ class WeakArray
 
     constexpr ElementType &At(const SizeType p_Index) const
     {
-        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT][WEAK-ARRAY] Index is out of bounds: {} >= {}", p_Index, m_Size);
+        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, m_Size, "[TOOLKIT][WEAK-ARRAY] ");
         return *(begin() + p_Index);
     }
 
@@ -504,7 +504,7 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
     }
     constexpr ElementType &At(const SizeType p_Index) const
     {
-        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT][WEAK-ARRAY] Index is out of bounds: {} >= {}", p_Index, m_Size);
+        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, m_Size, "[TOOLKIT][WEAK-ARRAY] ");
         return *(begin() + p_Index);
     }
 

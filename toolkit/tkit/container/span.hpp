@@ -56,12 +56,12 @@ class Span
 
     constexpr ElementType &operator[](const SizeType p_Index) const
     {
-        TKIT_ASSERT(p_Index < Extent, "[TOOLKIT][SPAN] Index is out of bounds: {} >= {}", p_Index, Extent);
+        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, Extent, "[TOOLKIT][SPAN] ");
         return m_Data[p_Index];
     }
     constexpr ElementType &At(const SizeType p_Index) const
     {
-        TKIT_ASSERT(p_Index < Extent, "[TOOLKIT][SPAN] Index is out of bounds: {} >= {}", p_Index, Extent);
+        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, Extent, "[TOOLKIT][SPAN] ");
         return m_Data[p_Index];
     }
 
@@ -171,12 +171,12 @@ template <typename T, typename Traits> class Span<T, TKIT_USIZE_MAX, Traits>
 
     constexpr ElementType &operator[](const SizeType p_Index) const
     {
-        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT][SPAN] Index is out of bounds: {} >= {}", p_Index, m_Size);
+        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, m_Size, "[TOOLKIT][SPAN] ");
         return m_Data[p_Index];
     }
     constexpr ElementType &At(const SizeType p_Index) const
     {
-        TKIT_ASSERT(p_Index < m_Size, "[TOOLKIT][SPAN] Index is out of bounds: {} >= {}", p_Index, m_Size);
+        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, m_Size, "[TOOLKIT][SPAN] ");
         return m_Data[p_Index];
     }
 
