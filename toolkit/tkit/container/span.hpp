@@ -28,6 +28,12 @@ class Span
     constexpr Span() : m_Data(nullptr)
     {
     }
+    constexpr Span(ElementType &p_Data)
+        requires(Extent == 1)
+        : Span(&p_Data)
+    {
+    }
+    constexpr Span(T &&p_Data) = delete;
     constexpr Span(ElementType *p_Data) : m_Data(p_Data)
     {
     }
@@ -111,6 +117,11 @@ template <typename T, typename Traits> class Span<T, TKIT_USIZE_MAX, Traits>
     constexpr Span() : m_Data(nullptr), m_Size(0)
     {
     }
+    constexpr Span(ElementType &p_Data) : Span(&p_Data, 1)
+    {
+    }
+    constexpr Span(T &&p_Data) = delete;
+
     constexpr Span(ElementType *p_Data, const SizeType p_Size) : m_Data(p_Data), m_Size(p_Size)
     {
     }

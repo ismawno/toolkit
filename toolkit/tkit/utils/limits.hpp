@@ -99,7 +99,7 @@ template <typename T> struct Limits
 
 constexpr usize MaxStackAlloc = TKIT_MEMORY_MAX_STACK_ALLOCATION;
 constexpr usize MaxThreads = TKIT_MAX_THREADS;
-constexpr usize MaxPoolWorkers = TKIT_THREAD_POOL_MAX_WORKERS;
+constexpr usize MaxPoolWorkers = TKIT_THREAD_POOL_MAX_WORKERS; // hard limit
 constexpr usize MaxPoolTasks = TKIT_THREAD_POOL_MAX_TASKS;
 constexpr usize MaxTopologyHandles = TKIT_TOPOLOGY_MAX_HANDLES;
 constexpr usize MaxStackAllocEntries = TKIT_STACK_ALLOCATOR_MAX_ENTRIES;
