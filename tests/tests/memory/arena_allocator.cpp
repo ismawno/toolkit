@@ -16,12 +16,12 @@ struct WarningShutter : Catch::EventListenerBase
 
     void testCaseStarting(const Catch::TestCaseInfo &) override
     {
-        TKIT_IGNORE_WARNING_LOGS_PUSH();
+        TKIT_IGNORE_WARNING_LOGS(true);
     }
 
     void testCaseEnded(const Catch::TestCaseStats &) override
     {
-        TKIT_IGNORE_WARNING_LOGS_POP();
+        TKIT_IGNORE_WARNING_LOGS(false);
     }
 };
 
