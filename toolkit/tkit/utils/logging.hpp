@@ -41,19 +41,19 @@
 namespace TKit::Detail
 {
 #ifdef TKIT_ENABLE_DEBUG_LOGS
-inline thread_local bool t_DisabledDebugLogs = false;
+inline static thread_local bool t_DisabledDebugLogs = false;
 #endif
 
 #ifdef TKIT_ENABLE_INFO_LOGS
-inline thread_local bool t_DisabledInfoLogs = false;
+inline static thread_local bool t_DisabledInfoLogs = false;
 #endif
 
 #ifdef TKIT_ENABLE_WARNING_LOGS
-inline thread_local bool t_DisabledWarningLogs = false;
+inline static thread_local bool t_DisabledWarningLogs = false;
 #endif
 
 #ifdef TKIT_ENABLE_ERROR_LOGS
-inline thread_local bool t_DisabledErrorLogs = false;
+inline static thread_local bool t_DisabledErrorLogs = false;
 #endif
 
 void Log(std::string_view p_Message, const char *p_Level, const char *p_Color);
