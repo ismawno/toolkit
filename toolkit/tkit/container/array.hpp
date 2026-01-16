@@ -4,15 +4,15 @@
 
 namespace TKit
 {
-
 template <typename T, typename AllocState> class Array
 {
   public:
+    static constexpr bool Safeguard = true;
     using ValueType = T;
     using Tools = Container::ArrayTools<T>;
 
     template <typename... Args>
-        requires(sizeof...(Args) > 1 || ((!std::is_same_v<Array, std::remove_cvref_t<Args>>) && ... && true))
+        requires(sizeof...(Args) > 1 || ((!Args::Safeguard) && ... && true))
     constexpr Array(Args &&...p_Args) : m_State(std::forward<Args>(p_Args)...)
     {
     }
@@ -74,6 +74,20 @@ template <typename T, typename AllocState> class Array
         Tools::CopyConstructFromRange(begin(), p_Other.begin(), p_Other.end());
     }
 
+    template <typename OtherAlloc> constexpr Array(const Array<T, OtherAlloc> &p_Other)
+    {
+        m_State.Size = p_Other.m_State.Size;
+        if constexpr (AllocState::IsReallocatable)
+            m_State.GrowCapacityIf(m_State.Size > 0, m_State.Size);
+        else
+        {
+            TKIT_ASSERT(m_State.Size <= m_State.GetCapacity(),
+                        "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", m_State.Size, m_State.GetCapacity());
+        }
+
+        Tools::CopyConstructFromRange(begin(), p_Other.begin(), p_Other.end());
+    }
+
     constexpr Array(Array &&p_Other)
     {
         if constexpr (!AllocState::IsMovable)
@@ -97,6 +111,17 @@ template <typename T, typename AllocState> class Array
         if (this == &p_Other)
             return *this;
 
+        const usize otherSize = p_Other.m_State.Size;
+        if constexpr (AllocState::IsReallocatable)
+            m_State.GrowCapacityIf(otherSize > m_State.GetCapacity(), otherSize);
+
+        Tools::CopyAssignFromRange(begin(), end(), p_Other.begin(), p_Other.end());
+        m_State.Size = otherSize;
+        return *this;
+    }
+
+    template <typename OtherAlloc> constexpr Array &operator=(const Array<T, OtherAlloc> &p_Other)
+    {
         const usize otherSize = p_Other.m_State.Size;
         if constexpr (AllocState::IsReallocatable)
             m_State.GrowCapacityIf(otherSize > m_State.GetCapacity(), otherSize);
@@ -397,6 +422,8 @@ template <typename T, typename AllocState> class Array
 
   private:
     AllocState m_State{};
+
+    template <typename U, typename OtherAlloc> friend class Array;
 };
 
 } // namespace TKit
