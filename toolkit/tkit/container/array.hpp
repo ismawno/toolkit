@@ -33,9 +33,7 @@ template <typename T, typename AllocState> class Array
     }
 
     template <std::input_iterator It, typename... Args>
-    constexpr Array(const It p_Begin, const It p_End, Args &&...p_Args)
-        requires(std::is_copy_constructible_v<T>)
-        : m_State(std::forward<Args>(p_Args)...)
+    constexpr Array(const It p_Begin, const It p_End, Args &&...p_Args) : m_State(std::forward<Args>(p_Args)...)
     {
         m_State.Size = static_cast<usize>(std::distance(p_Begin, p_End));
         if constexpr (AllocState::IsReallocatable)
@@ -49,9 +47,7 @@ template <typename T, typename AllocState> class Array
     }
 
     template <typename... Args>
-    constexpr Array(const std::initializer_list<T> p_List, Args &&...p_Args)
-        requires(std::is_copy_constructible_v<T>)
-        : m_State(std::forward<Args>(p_Args)...)
+    constexpr Array(const std::initializer_list<T> p_List, Args &&...p_Args) : m_State(std::forward<Args>(p_Args)...)
     {
         m_State.Size = static_cast<usize>(p_List.size());
         if constexpr (AllocState::IsReallocatable)
@@ -65,7 +61,6 @@ template <typename T, typename AllocState> class Array
     }
 
     constexpr Array(const Array &p_Other)
-        requires(std::is_copy_constructible_v<T>)
     {
         m_State.Size = p_Other.m_State.Size;
         if constexpr (AllocState::IsReallocatable)
@@ -80,7 +75,6 @@ template <typename T, typename AllocState> class Array
     }
 
     constexpr Array(Array &&p_Other)
-        requires(std::is_move_constructible_v<T>)
     {
         if constexpr (!AllocState::IsMovable)
         {
