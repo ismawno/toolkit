@@ -51,8 +51,8 @@ TEST_CASE("Span dynamic extent: default and pointer+size ctor", "[Span]")
 TEST_CASE("Span dynamic extent: from FixedArray, StaticArray, WeakArray, DynamicArray", "[Span]")
 {
     FixedArray<u32, 3> arr = {2u, 4u, 6u};
-    StaticArray<u32, 3> sarr{7u, 8u};
-    DynamicArray<u32> darr{9u, 10u, 11u};
+    StaticArray<u32, 3> sarr{{7u, 8u}};
+    DynamicArray<u32> darr{{9u, 10u, 11u}};
     FixedArray<u32, 4> backing = {1u, 2u, 3u, 4u};
     const WeakArray<u32, 4> warr(backing.GetData(), 2);
 
@@ -75,7 +75,7 @@ TEST_CASE("Span dynamic extent: from FixedArray, StaticArray, WeakArray, Dynamic
 
 TEST_CASE("Span dynamic extent: iteration and bool", "[Span]")
 {
-    DynamicArray<std::string> vec = {"a", "b", "c"};
+    DynamicArray<std::string> vec = {{"a", "b", "c"}};
     Span<std::string> span(vec.GetData(), vec.GetSize());
     REQUIRE(span);
     REQUIRE(!span.IsEmpty());

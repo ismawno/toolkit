@@ -7,7 +7,7 @@
 
 #include "tkit/utils/debug.hpp"
 #include "tkit/utils/non_copyable.hpp"
-#include "tkit/container/array.hpp"
+#include "tkit/container/static_array.hpp"
 #include "tkit/utils/limits.hpp"
 
 namespace TKit
@@ -209,7 +209,7 @@ class StackAllocator
   private:
     void deallocateBuffer();
 
-    Array<Entry, MaxStackAllocEntries> m_Entries{};
+    StaticArray<Entry, MaxStackAllocEntries> m_Entries{};
     std::byte *m_Buffer;
     usize m_Size = 0;
     usize m_Remaining = 0;

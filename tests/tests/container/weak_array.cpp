@@ -72,7 +72,7 @@ TEST_CASE("WeakArray static: from FixedArray and StaticArray", "[WeakArray]")
     REQUIRE(arr1.GetData() == rawArr.GetData());
     REQUIRE(arr1.GetSize() == 2);
 
-    StaticArray<u32, 3> staticArr{5u, 6u};
+    StaticArray<u32, 3> staticArr{{5u, 6u}};
     const WeakArray<u32, 3> arr2(staticArr);
     REQUIRE(arr2.GetSize() == 2);
     REQUIRE(arr2[1] == 6u);
@@ -191,8 +191,8 @@ TEST_CASE("WeakArray dynamic: default, pointer+capacity, pointer+capacity+size",
 TEST_CASE("WeakArray dynamic: from FixedArray, StaticArray, DynamicArray", "[WeakArray]")
 {
     FixedArray<u32, 3> rawArr{2u, 4u, 6u};
-    StaticArray<u32, 3> staticArr{7u, 8u};
-    DynamicArray<u32> dynArr{9u, 10u, 11u};
+    StaticArray<u32, 3> staticArr{{7u, 8u}};
+    DynamicArray<u32> dynArr{{9u, 10u, 11u}};
 
     const WeakArray<u32> arr1(rawArr, 2);
     const WeakArray<u32> arr2(staticArr);

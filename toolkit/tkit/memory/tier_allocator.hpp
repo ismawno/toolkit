@@ -3,7 +3,7 @@
         "[TOOLKIT][TIER-ALLOC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_TIER_ALLOCATOR"
 #endif
 
-#include "tkit/container/array.hpp"
+#include "tkit/container/static_array.hpp"
 #include "tkit/memory/memory.hpp"
 #include "tkit/utils/non_copyable.hpp"
 #include "tkit/utils/debug.hpp"
@@ -37,7 +37,7 @@ class TierAllocator
     };
     struct Description
     {
-        Array<TierInfo, MaxAllocTiers> Tiers;
+        StaticArray<TierInfo, MaxAllocTiers> Tiers;
         usize BufferSize;
         usize MaxAllocation;
         usize MinAllocation;
@@ -172,7 +172,7 @@ class TierAllocator
 #endif
     void deallocateBuffer();
 
-    Array<Tier, MaxAllocTiers> m_Tiers{};
+    StaticArray<Tier, MaxAllocTiers> m_Tiers{};
     std::byte *m_Buffer;
     usize m_BufferSize;
     usize m_MinAllocation;

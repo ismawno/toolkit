@@ -57,4 +57,5 @@ void CheckOutOfBounds(const char *p_Level, const char *p_Color, const char *p_Fi
 
 #    define TKIT_CHECK_RETURNS(p_Expression, p_Expected, ...) p_Expression
 #    define TKIT_CHECK_NOT_RETURNS(p_Expression, p_Expected, ...) p_Expression
+#    define TKIT_CHECK_OUT_OF_BOUNDS(p_Index, p_Size, ...)
 #endif

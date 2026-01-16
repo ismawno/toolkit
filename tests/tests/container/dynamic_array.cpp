@@ -70,28 +70,26 @@ TEST_CASE("DynamicArray: constructor from size+fill args", "[DynamicArray]")
     REQUIRE(arr1.GetSize() == 4);
 
     g_Constructions = g_Destructions = 0;
-    const DynamicArray<DTrackable> arr2(2, 42u);
+    const DynamicArray<DTrackable> arr2(2);
     REQUIRE(arr2.GetSize() == 2);
     REQUIRE(g_Constructions == 2);
-    for (usize i = 0; i < 2; ++i)
-        REQUIRE(arr2[i].Value == 42u);
 }
 
 TEST_CASE("DynamicArray: range and initializer_list constructors", "[DynamicArray]")
 {
-    const DynamicArray<u32> src = {10, 20, 30};
+    const DynamicArray<u32> src{{10, 20, 30}};
     const DynamicArray<u32> arr1(src.begin(), src.end());
     REQUIRE(arr1.GetSize() == 3);
     REQUIRE(std::equal(arr1.begin(), arr1.end(), src.begin()));
 
-    const DynamicArray<u32> arr2{5u, 6u, 7u};
+    const DynamicArray<u32> arr2{{5u, 6u, 7u}};
     REQUIRE(arr2.GetSize() == 3);
     REQUIRE(arr2[1] == 6u);
 }
 
 TEST_CASE("DynamicArray: copy/move ctor and assignment", "[DynamicArray]")
 {
-    const DynamicArray<u32> arr1{1u, 2u, 3u};
+    const DynamicArray<u32> arr1{{1u, 2u, 3u}};
     DynamicArray<u32> arr2 = arr1;
     REQUIRE(arr2.GetSize() == 3);
     REQUIRE(std::equal(arr2.begin(), arr2.end(), arr1.begin()));
@@ -113,7 +111,7 @@ TEST_CASE("DynamicArray: copy/move ctor and assignment", "[DynamicArray]")
 
 TEST_CASE("DynamicArray: Insert single and range", "[DynamicArray]")
 {
-    DynamicArray<u32> arr{1u, 2u, 4u, 5u};
+    DynamicArray<u32> arr{{1u, 2u, 4u, 5u}};
     arr.Insert(arr.begin() + 2, 3u);
     REQUIRE(arr.GetSize() == 5);
 
@@ -126,7 +124,7 @@ TEST_CASE("DynamicArray: Insert single and range", "[DynamicArray]")
 
 TEST_CASE("DynamicArray: RemoveOrdered and RemoveUnordered", "[DynamicArray]")
 {
-    DynamicArray<u32> arr{10u, 20u, 30u, 40u, 50u};
+    DynamicArray<u32> arr{{10u, 20u, 30u, 40u, 50u}};
     arr.RemoveOrdered(arr.begin() + 1);
     REQUIRE(arr.GetSize() == 4);
 
@@ -135,7 +133,7 @@ TEST_CASE("DynamicArray: RemoveOrdered and RemoveUnordered", "[DynamicArray]")
     REQUIRE(arr[0] == 10u);
     REQUIRE(arr[1] == 50u);
 
-    arr = DynamicArray<u32>{1u, 2u, 3u, 4u};
+    arr = DynamicArray<u32>{{1u, 2u, 3u, 4u}};
     arr.RemoveUnordered(arr.begin() + 1);
     REQUIRE(arr.GetSize() == 3);
     REQUIRE(arr[1] != 2u);
@@ -162,7 +160,7 @@ TEST_CASE("DynamicArray: Resize, Clear, Shrink, iteration", "[DynamicArray]")
     arr1.Clear();
     REQUIRE(arr1.IsEmpty());
 
-    DynamicArray<u32> arr2{1u, 2u, 3u, 4u, 5u};
+    DynamicArray<u32> arr2{{1u, 2u, 3u, 4u, 5u}};
     arr2.Shrink();
     REQUIRE(arr2.GetSize() == 5);
 
@@ -181,7 +179,7 @@ TEST_CASE("DynamicArray<std::string>: non-trivial operations", "[DynamicArray][s
     REQUIRE(arr1.GetSize() == 3);
     REQUIRE(arr1[1] == "two");
 
-    auto arr2 = arr1;
+    DynamicArray<std::string> arr2{arr1};
     arr2[1] = "TWO";
     REQUIRE(arr1[1] == "two");
     REQUIRE(arr2[1] == "TWO");

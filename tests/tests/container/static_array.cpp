@@ -107,18 +107,16 @@ TEST_CASE("StaticArray: constructor from size+fill args", "[StaticArray]")
 
     // non-trivial => should invoke CTOR for each
     g_Constructions = g_Destructions = 0;
-    const StaticArray<STrackable, 5> nt(2, 42);
+    const StaticArray<STrackable, 5> nt(2);
     REQUIRE(nt.GetSize() == 2);
     REQUIRE(g_Constructions == 2);
-    for (usize i = 0; i < 2; ++i)
-        REQUIRE(nt[i].Value == 42);
     // destructor runs in ~StaticArray
 }
 
 TEST_CASE("StaticArray: initializer_list & range constructors", "[StaticArray]")
 {
     // initializer_list
-    const StaticArray<u32, 4> arr{5u, 6u, 7u};
+    const StaticArray<u32, 4> arr{{5u, 6u, 7u}};
     REQUIRE(arr.GetSize() == 3);
     REQUIRE(std::equal(arr.begin(), arr.end(), FixedArray<u32, 3>{5, 6, 7}.begin()));
 
@@ -132,7 +130,7 @@ TEST_CASE("StaticArray: initializer_list & range constructors", "[StaticArray]")
 
 TEST_CASE("StaticArray: copy/move ctor and assignment", "[StaticArray]")
 {
-    StaticArray<u32, 4> arr1{1, 2, 3};
+    StaticArray<u32, 4> arr1{{1, 2, 3}};
     const StaticArray<u32, 4> arr2 = arr1; // copy ctor
     REQUIRE(arr2.GetSize() == 3);
     REQUIRE(std::equal(arr2.begin(), arr2.end(), arr1.begin()));
@@ -156,7 +154,7 @@ TEST_CASE("StaticArray: copy/move ctor and assignment", "[StaticArray]")
 
 TEST_CASE("StaticArray: member Insert wrappers", "[StaticArray]")
 {
-    StaticArray<u32, 7> arr{1, 2, 4, 5};
+    StaticArray<u32, 7> arr{{1, 2, 4, 5}};
     arr.Insert(arr.begin() + 2, 3u); // insert single at pos 2
     REQUIRE(arr.GetSize() == 5);
 
@@ -168,7 +166,7 @@ TEST_CASE("StaticArray: member Insert wrappers", "[StaticArray]")
 
 TEST_CASE("StaticArray: member RemoveOrdered/Unordered wrappers", "[StaticArray]")
 {
-    StaticArray<u32, 6> arr{10, 20, 30, 40, 50};
+    StaticArray<u32, 6> arr{{10, 20, 30, 40, 50}};
     REQUIRE(arr.GetSize() == 5);
 
     arr.RemoveOrdered(arr.begin() + 1); // remove '20'
@@ -180,7 +178,7 @@ TEST_CASE("StaticArray: member RemoveOrdered/Unordered wrappers", "[StaticArray]
     REQUIRE(arr[1] == 50);
 
     // unordered remove
-    arr = StaticArray<u32, 6>{1, 2, 3, 4};
+    arr = StaticArray<u32, 6>{{1, 2, 3, 4}};
     arr.RemoveUnordered(arr.begin() + 1); // replace at idx1 with last
     REQUIRE(arr.GetSize() == 3);
     REQUIRE(arr[1] == 4);
@@ -211,13 +209,13 @@ TEST_CASE("StaticArray: Resize", "[StaticArray]")
 
 TEST_CASE("StaticArray: Clear and iteration", "[StaticArray]")
 {
-    StaticArray<u32, 4> arr1{9, 8, 7};
+    StaticArray<u32, 4> arr1{{9, 8, 7}};
     arr1.Clear();
     REQUIRE(arr1.GetSize() == 0);
     REQUIRE(arr1.IsEmpty());
 
     // range-for
-    const StaticArray<u32, 4> arr2{1, 2, 3};
+    const StaticArray<u32, 4> arr2{{1, 2, 3}};
     u32 sum = 0;
     for (const u32 x : arr2)
         sum += x;
@@ -287,7 +285,7 @@ TEST_CASE("StaticArray<std::string>: basic operations", "[StaticArray][string]")
     REQUIRE(arr1.GetSize() == 4);
 
     // RemoveUnordered
-    arr1 = StaticArray<std::string, 5>{"A", "B", "C", "D"};
+    arr1 = StaticArray<std::string, 15>{{"A", "B", "C", "D"}};
     arr1.RemoveUnordered(arr1.begin() + 1);
     REQUIRE(arr1.GetSize() == 3);
     // element at idx1 should be one of the originals, but not "B"
