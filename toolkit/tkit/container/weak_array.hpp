@@ -15,58 +15,58 @@ namespace TKit
  * @tparam T The type of the elements in the array.
  * @tparam Capacity The capacity of the array.
  */
-template <typename T, usize Capacity = TKIT_USIZE_MAX, typename Traits = Container::ArrayTraits<std::remove_cvref_t<T>>>
-class WeakArray
+template <typename T, usize Capacity = TKIT_USIZE_MAX> class WeakArray
 {
     static_assert(Capacity > 0, "[TOOLKIT][WEAK-ARRAY] Capacity must be greater than 0");
     TKIT_NON_COPYABLE(WeakArray)
 
   public:
-    using ElementType = T;
-    using ValueType = typename Traits::ValueType;
-    using SizeType = typename Traits::SizeType;
-    using Iterator = ElementType *;
-    using Tools = Container::ArrayTools<Traits>;
+    using ValueType = T;
+    using ElementType = std::remove_cvref_t<T>;
+    using Tools = Container::ArrayTools<ElementType>;
 
     constexpr WeakArray() : m_Data(nullptr), m_Size(0)
     {
     }
-    constexpr WeakArray(ElementType *p_Data) : m_Data(p_Data), m_Size(0)
+    constexpr WeakArray(T *p_Data) : m_Data(p_Data), m_Size(0)
     {
     }
-    constexpr WeakArray(ElementType *p_Data, const SizeType p_Size) : m_Data(p_Data), m_Size(p_Size)
+    constexpr WeakArray(T *p_Data, const usize p_Size) : m_Data(p_Data), m_Size(p_Size)
     {
     }
 
-    constexpr WeakArray(const FixedArray<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
+    constexpr WeakArray(const FixedArray<ElementType, Capacity> &p_Array, const usize p_Size = 0)
         : m_Data(p_Array.GetData()), m_Size(p_Size)
     {
     }
-    constexpr WeakArray(FixedArray<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
+    constexpr WeakArray(FixedArray<ElementType, Capacity> &p_Array, const usize p_Size = 0)
         : m_Data(p_Array.GetData()), m_Size(p_Size)
     {
     }
 
-    constexpr WeakArray(const StaticArray<ValueType, Capacity, Traits> &p_Array)
+    constexpr WeakArray(const StaticArray<ElementType, Capacity> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
-    constexpr WeakArray(StaticArray<ValueType, Capacity, Traits> &p_Array)
+    constexpr WeakArray(StaticArray<ElementType, Capacity> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
 
-    template <typename U>
-        requires(std::convertible_to<U *, T *> && std::same_as<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
-    constexpr WeakArray(WeakArray<U, Capacity, Traits> &&p_Other) : m_Data(p_Other.GetData()), m_Size(p_Other.GetSize())
+    template <typename ElementType>
+        requires(std::convertible_to<ElementType *, T *> &&
+                 std::same_as<std::remove_cvref_t<ElementType>, std::remove_cvref_t<T>>)
+    constexpr WeakArray(WeakArray<ElementType, Capacity> &&p_Other)
+        : m_Data(p_Other.GetData()), m_Size(p_Other.GetSize())
     {
         p_Other.m_Data = nullptr;
         p_Other.m_Size = 0;
     }
 
-    template <typename U>
-        requires(std::convertible_to<U *, T *> && std::same_as<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
-    constexpr WeakArray &operator=(WeakArray<U, Capacity, Traits> &&p_Other)
+    template <typename ElementType>
+        requires(std::convertible_to<ElementType *, T *> &&
+                 std::same_as<std::remove_cvref_t<ElementType>, std::remove_cvref_t<T>>)
+    constexpr WeakArray &operator=(WeakArray<ElementType, Capacity> &&p_Other)
     {
         m_Data = p_Other.GetData();
         m_Size = p_Other.GetSize();
@@ -95,8 +95,8 @@ class WeakArray
     }
 
     template <typename... Args>
-        requires std::constructible_from<ValueType, Args...>
-    constexpr ValueType &Append(Args &&...p_Args)
+        requires std::constructible_from<ElementType, Args...>
+    constexpr ElementType &Append(Args &&...p_Args)
     {
         TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Cannot Append(). Container is already at capacity ({})",
                     Capacity);
@@ -107,21 +107,21 @@ class WeakArray
     {
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][WEAK-ARRAY] Cannot Pop(). Container is already empty");
         --m_Size;
-        if constexpr (!std::is_trivially_destructible_v<ValueType>)
+        if constexpr (!std::is_trivially_destructible_v<ElementType>)
             Memory::DestructFromIterator(end());
     }
 
-    template <typename U>
-        requires(std::convertible_to<std::remove_cvref_t<ValueType>, std::remove_cvref_t<U>>)
-    constexpr void Insert(const Iterator p_Pos, U &&p_Value)
+    template <typename ElementType>
+        requires(std::convertible_to<std::remove_cvref_t<ElementType>, std::remove_cvref_t<ElementType>>)
+    constexpr void Insert(T *p_Pos, ElementType &&p_Value)
     {
         TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Cannot Insert(). Container is at capacity ({})", Capacity);
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
-        Tools::Insert(end(), p_Pos, std::forward<U>(p_Value));
+        Tools::Insert(end(), p_Pos, std::forward<ElementType>(p_Value));
         ++m_Size;
     }
 
-    template <std::input_iterator It> constexpr void Insert(const Iterator p_Pos, It p_Begin, It p_End)
+    template <std::input_iterator It> constexpr void Insert(T *p_Pos, It p_Begin, It p_End)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
         TKIT_ASSERT(std::distance(p_Begin, p_End) + m_Size <= Capacity,
@@ -130,7 +130,7 @@ class WeakArray
         m_Size += Tools::Insert(end(), p_Pos, p_Begin, p_End);
     }
 
-    constexpr void Insert(const Iterator p_Pos, const std::initializer_list<ValueType> p_Elements)
+    constexpr void Insert(T *p_Pos, const std::initializer_list<ElementType> p_Elements)
     {
         Insert(p_Pos, p_Elements.begin(), p_Elements.end());
     }
@@ -142,7 +142,7 @@ class WeakArray
      *
      * @param p_Pos The position to remove the element at.
      */
-    constexpr void RemoveOrdered(const Iterator p_Pos)
+    constexpr void RemoveOrdered(T *p_Pos)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
         Tools::RemoveOrdered(end(), p_Pos);
@@ -157,7 +157,7 @@ class WeakArray
      * @param p_Begin The beginning of the range to erase.
      * @param p_End The end of the range to erase.
      */
-    constexpr void RemoveOrdered(const Iterator p_Begin, const Iterator p_End)
+    constexpr void RemoveOrdered(T *p_Begin, T *p_End)
     {
         TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT][WEAK-ARRAY] Begin iterator is out of bounds");
         TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT][WEAK-ARRAY] End iterator is out of bounds");
@@ -174,7 +174,7 @@ class WeakArray
      *
      * @param p_Pos The position to remove the element at.
      */
-    constexpr void RemoveUnordered(const Iterator p_Pos)
+    constexpr void RemoveUnordered(T *p_Pos)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
         Tools::RemoveUnordered(end(), p_Pos);
@@ -192,8 +192,8 @@ class WeakArray
      * size.)
      */
     template <typename... Args>
-        requires std::constructible_from<ValueType, Args...>
-    constexpr void Resize(const SizeType p_Size, Args &&...args)
+        requires std::constructible_from<ElementType, Args...>
+    constexpr void Resize(const usize p_Size, Args &&...args)
     {
         TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT][WEAK-ARRAY] Size ({}) is bigger than capacity ({})", p_Size,
                     Capacity);
@@ -209,22 +209,22 @@ class WeakArray
         m_Size = p_Size;
     }
 
-    constexpr ElementType &operator[](const SizeType p_Index) const
+    constexpr T &operator[](const usize p_Index) const
     {
         return At(p_Index);
     }
 
-    constexpr ElementType &At(const SizeType p_Index) const
+    constexpr T &At(const usize p_Index) const
     {
         TKIT_CHECK_OUT_OF_BOUNDS(p_Index, m_Size, "[TOOLKIT][WEAK-ARRAY] ");
         return *(begin() + p_Index);
     }
 
-    constexpr ElementType &GetFront() const
+    constexpr T &GetFront() const
     {
         return At(0);
     }
-    constexpr ElementType &GetBack() const
+    constexpr T &GetBack() const
     {
         return At(m_Size - 1);
     }
@@ -236,25 +236,25 @@ class WeakArray
         m_Size = 0;
     }
 
-    constexpr ElementType *GetData() const
+    constexpr T *GetData() const
     {
         return m_Data;
     }
 
-    constexpr Iterator begin() const
+    constexpr T *begin() const
     {
         return m_Data;
     }
-    constexpr Iterator end() const
+    constexpr T *end() const
     {
         return m_Data + m_Size;
     }
 
-    constexpr SizeType GetSize() const
+    constexpr usize GetSize() const
     {
         return m_Size;
     }
-    constexpr SizeType capacity() const
+    constexpr usize capacity() const
     {
         return Capacity;
     }
@@ -273,10 +273,10 @@ class WeakArray
     }
 
   private:
-    ElementType *m_Data;
-    SizeType m_Size;
+    T *m_Data;
+    usize m_Size;
 
-    template <typename U, usize OtherCapacity, typename OtherTraits> friend class WeakArray;
+    template <typename ElementType, usize OtherCapacity> friend class WeakArray;
 };
 
 /**
@@ -286,59 +286,57 @@ class WeakArray
  *
  * @tparam T The type of the elements in the array.
  */
-template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits>
+template <typename T> class WeakArray<T, TKIT_USIZE_MAX>
 {
     TKIT_NON_COPYABLE(WeakArray)
 
   public:
-    using ElementType = T;
-    using ValueType = typename Traits::ValueType;
-    using SizeType = typename Traits::SizeType;
-    using Iterator = ElementType *;
-    using Tools = Container::ArrayTools<Traits>;
+    using ElementType = std::remove_cvref_t<T>;
+    using Tools = Container::ArrayTools<ElementType>;
 
     constexpr WeakArray() : m_Data(nullptr), m_Size(0), m_Capacity(0)
     {
     }
-    constexpr WeakArray(ElementType *p_Data, const SizeType p_Capacity, const SizeType p_Size = 0)
+    constexpr WeakArray(T *p_Data, const usize p_Capacity, const usize p_Size = 0)
         : m_Data(p_Data), m_Size(p_Size), m_Capacity(p_Capacity)
     {
     }
 
-    template <SizeType Capacity>
-    constexpr WeakArray(const FixedArray<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
+    template <usize Capacity>
+    constexpr WeakArray(const FixedArray<ElementType, Capacity> &p_Array, const usize p_Size = 0)
         : m_Data(p_Array.GetData()), m_Size(p_Size), m_Capacity(Capacity)
     {
     }
-    template <SizeType Capacity>
-    constexpr WeakArray(FixedArray<ValueType, Capacity, Traits> &p_Array, const SizeType p_Size = 0)
+    template <usize Capacity>
+    constexpr WeakArray(FixedArray<ElementType, Capacity> &p_Array, const usize p_Size = 0)
         : m_Data(p_Array.GetData()), m_Size(p_Size), m_Capacity(Capacity)
     {
     }
 
-    template <SizeType Capacity>
-    constexpr WeakArray(const StaticArray<ValueType, Capacity, Traits> &p_Array)
+    template <usize Capacity>
+    constexpr WeakArray(const StaticArray<ElementType, Capacity> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize()), m_Capacity(Capacity)
     {
     }
-    template <SizeType Capacity>
-    constexpr WeakArray(StaticArray<ValueType, Capacity, Traits> &p_Array)
+    template <usize Capacity>
+    constexpr WeakArray(StaticArray<ElementType, Capacity> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize()), m_Capacity(Capacity)
     {
     }
 
-    constexpr WeakArray(const DynamicArray<ValueType> &p_Array)
+    constexpr WeakArray(const DynamicArray<ElementType> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize()), m_Capacity(p_Array.GetCapacity())
     {
     }
-    constexpr WeakArray(DynamicArray<ValueType> &p_Array)
+    constexpr WeakArray(DynamicArray<ElementType> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize()), m_Capacity(p_Array.GetCapacity())
     {
     }
 
-    template <typename U, SizeType Capacity>
-        requires(std::convertible_to<U *, T *> && std::same_as<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
-    constexpr WeakArray(WeakArray<U, Capacity, Traits> &&p_Other)
+    template <typename ElementType, usize Capacity>
+        requires(std::convertible_to<ElementType *, T *> &&
+                 std::same_as<std::remove_cvref_t<ElementType>, std::remove_cvref_t<T>>)
+    constexpr WeakArray(WeakArray<ElementType, Capacity> &&p_Other)
         : m_Data(p_Other.GetData()), m_Size(p_Other.GetSize()), m_Capacity(p_Other.GetCapacity())
     {
         p_Other.m_Data = nullptr;
@@ -347,9 +345,10 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
             p_Other.m_Capacity = 0;
     }
 
-    template <typename U, SizeType Capacity>
-        requires(std::convertible_to<U *, T *> && std::same_as<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
-    constexpr WeakArray &operator=(WeakArray<U, Capacity, Traits> &&p_Other)
+    template <typename ElementType, usize Capacity>
+        requires(std::convertible_to<ElementType *, T *> &&
+                 std::same_as<std::remove_cvref_t<ElementType>, std::remove_cvref_t<T>>)
+    constexpr WeakArray &operator=(WeakArray<ElementType, Capacity> &&p_Other)
     {
         m_Data = p_Other.GetData();
         m_Size = p_Other.GetSize();
@@ -385,8 +384,8 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
     }
 
     template <typename... Args>
-        requires std::constructible_from<ValueType, Args...>
-    constexpr ValueType &Append(Args &&...p_Args)
+        requires std::constructible_from<ElementType, Args...>
+    constexpr ElementType &Append(Args &&...p_Args)
     {
         TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Cannot Append(). Container is at capacity ({})", m_Capacity);
         return *Memory::ConstructFromIterator(begin() + m_Size++, std::forward<Args>(p_Args)...);
@@ -396,21 +395,21 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
     {
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][WEAK-ARRAY] Cannot Pop(). Container is already empty");
         --m_Size;
-        if constexpr (!std::is_trivially_destructible_v<ValueType>)
+        if constexpr (!std::is_trivially_destructible_v<ElementType>)
             Memory::DestructFromIterator(end());
     }
 
-    template <typename U>
-        requires(std::convertible_to<std::remove_cvref_t<ValueType>, std::remove_cvref_t<U>>)
-    constexpr void Insert(const Iterator p_Pos, U &&p_Value)
+    template <typename ElementType>
+        requires(std::convertible_to<std::remove_cvref_t<ElementType>, std::remove_cvref_t<ElementType>>)
+    constexpr void Insert(T *p_Pos, ElementType &&p_Value)
     {
         TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Cannot Insert(). Container is at capacity ({})", m_Capacity);
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
-        Tools::Insert(end(), p_Pos, std::forward<U>(p_Value));
+        Tools::Insert(end(), p_Pos, std::forward<ElementType>(p_Value));
         ++m_Size;
     }
 
-    template <std::input_iterator It> constexpr void Insert(const Iterator p_Pos, It p_Begin, It p_End)
+    template <std::input_iterator It> constexpr void Insert(T *p_Pos, It p_Begin, It p_End)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
         TKIT_ASSERT(std::distance(p_Begin, p_End) + m_Size <= m_Capacity,
@@ -419,7 +418,7 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
         m_Size += Tools::Insert(end(), p_Pos, p_Begin, p_End);
     }
 
-    constexpr void Insert(const Iterator p_Pos, const std::initializer_list<ValueType> p_Elements)
+    constexpr void Insert(T *p_Pos, const std::initializer_list<ElementType> p_Elements)
     {
         Insert(p_Pos, p_Elements.begin(), p_Elements.end());
     }
@@ -431,7 +430,7 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
      *
      * @param p_Pos The position to remove the element at.
      */
-    constexpr void RemoveOrdered(const Iterator p_Pos)
+    constexpr void RemoveOrdered(T *p_Pos)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
         Tools::RemoveOrdered(end(), p_Pos);
@@ -446,7 +445,7 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
      * @param p_Begin The beginning of the range to erase.
      * @param p_End The end of the range to erase.
      */
-    constexpr void RemoveOrdered(const Iterator p_Begin, const Iterator p_End)
+    constexpr void RemoveOrdered(T *p_Begin, T *p_End)
     {
         TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT][WEAK-ARRAY] Begin iterator is out of bounds");
         TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT][WEAK-ARRAY] End iterator is out of bounds");
@@ -463,7 +462,7 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
      *
      * @param p_Pos The position to remove the element at.
      */
-    constexpr void RemoveUnordered(const Iterator p_Pos)
+    constexpr void RemoveUnordered(T *p_Pos)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT][WEAK-ARRAY] Iterator is out of bounds");
         Tools::RemoveUnordered(end(), p_Pos);
@@ -481,8 +480,8 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
      * size.)
      */
     template <typename... Args>
-        requires std::constructible_from<ValueType, Args...>
-    constexpr void Resize(const SizeType p_Size, Args &&...args)
+        requires std::constructible_from<ElementType, Args...>
+    constexpr void Resize(const usize p_Size, Args &&...args)
     {
         TKIT_ASSERT(p_Size <= m_Capacity, "[TOOLKIT][WEAK-ARRAY] Size ({}) is bigger than capacity ({})", p_Size,
                     m_Capacity);
@@ -498,22 +497,22 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
         m_Size = p_Size;
     }
 
-    constexpr ElementType &operator[](const SizeType p_Index) const
+    constexpr T &operator[](const usize p_Index) const
     {
         return At(p_Index);
     }
-    constexpr ElementType &At(const SizeType p_Index) const
+    constexpr T &At(const usize p_Index) const
     {
         TKIT_CHECK_OUT_OF_BOUNDS(p_Index, m_Size, "[TOOLKIT][WEAK-ARRAY] ");
         return *(begin() + p_Index);
     }
 
-    constexpr ElementType &GetFront() const
+    constexpr T &GetFront() const
     {
         return At(0);
     }
 
-    constexpr ElementType &GetBack() const
+    constexpr T &GetBack() const
     {
         return At(m_Size - 1);
     }
@@ -525,25 +524,25 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
         m_Size = 0;
     }
 
-    constexpr ElementType *GetData() const
+    constexpr T *GetData() const
     {
         return m_Data;
     }
 
-    constexpr Iterator begin() const
+    constexpr T *begin() const
     {
         return m_Data;
     }
-    constexpr Iterator end() const
+    constexpr T *end() const
     {
         return m_Data + m_Size;
     }
 
-    constexpr SizeType GetSize() const
+    constexpr usize GetSize() const
     {
         return m_Size;
     }
-    constexpr SizeType GetCapacity() const
+    constexpr usize GetCapacity() const
     {
         return m_Capacity;
     }
@@ -562,10 +561,10 @@ template <typename T, typename Traits> class WeakArray<T, TKIT_USIZE_MAX, Traits
     }
 
   private:
-    ElementType *m_Data;
-    SizeType m_Size;
-    SizeType m_Capacity;
+    T *m_Data;
+    usize m_Size;
+    usize m_Capacity;
 
-    template <typename U, usize Capacity, typename OtherTraits> friend class WeakArray;
+    template <typename ElementType, usize Capacity> friend class WeakArray;
 };
 } // namespace TKit

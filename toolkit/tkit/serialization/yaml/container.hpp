@@ -15,7 +15,7 @@
 
 namespace TKit::Yaml
 {
-template <typename T, usize N, typename Traits> struct Codec<FixedArray<T, N, Traits>>
+template <typename T, usize N> struct Codec<FixedArray<T, N>>
 {
     static Node Encode(const FixedArray<T, N> &p_Instance)
     {
@@ -30,14 +30,13 @@ template <typename T, usize N, typename Traits> struct Codec<FixedArray<T, N, Tr
         if (!p_Node.IsSequence() || p_Node.size() > N)
             return false;
 
-        using SizeType = typename Traits::SizeType;
-        for (SizeType i = 0; i < N; ++i)
+        for (usize i = 0; i < N; ++i)
             p_Instance[i] = p_Node[i].template as<T>();
         return true;
     }
 };
 
-template <typename T, usize N, typename Traits> struct Codec<StaticArray<T, N, Traits>>
+template <typename T, usize N> struct Codec<StaticArray<T, N>>
 {
     static Node Encode(const StaticArray<T, N> &p_Instance)
     {
@@ -58,7 +57,7 @@ template <typename T, usize N, typename Traits> struct Codec<StaticArray<T, N, T
     }
 };
 
-template <typename T, typename Traits> struct Codec<DynamicArray<T, Traits>>
+template <typename T> struct Codec<DynamicArray<T>>
 {
     static Node Encode(const DynamicArray<T> &p_Instance)
     {

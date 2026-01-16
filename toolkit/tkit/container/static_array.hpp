@@ -14,23 +14,19 @@ namespace TKit
  *
  * @tparam T The type of the elements in the array.
  * @tparam Capacity The capacity of the array.
- * @tparam Traits The traits of the array, to define the types used for the iterators, size, etc.
  */
-template <typename T, usize Capacity, typename Traits = Container::ArrayTraits<T>>
+template <typename T, usize Capacity>
     requires(Capacity > 0)
 class StaticArray
 {
   public:
-    using ValueType = typename Traits::ValueType;
-    using SizeType = typename Traits::SizeType;
-    using Iterator = typename Traits::Iterator;
-    using ConstIterator = typename Traits::ConstIterator;
-    using Tools = Container::ArrayTools<Traits>;
+    using ValueType = T;
+    using Tools = Container::ArrayTools<T>;
 
     constexpr StaticArray() = default;
 
     template <typename... Args>
-    constexpr explicit StaticArray(const SizeType p_Size, const Args &...p_Args) : m_Size(p_Size)
+    constexpr explicit StaticArray(const usize p_Size, const Args &...p_Args) : m_Size(p_Size)
     {
         TKIT_ASSERT(m_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size ({}) is bigger than capacity ({})", m_Size,
                     Capacity);
@@ -42,15 +38,15 @@ class StaticArray
     constexpr StaticArray(const It p_Begin, const It p_End)
         requires(std::is_copy_constructible_v<T>)
     {
-        m_Size = static_cast<SizeType>(std::distance(p_Begin, p_End));
+        m_Size = static_cast<usize>(std::distance(p_Begin, p_End));
         TKIT_ASSERT(m_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size ({}) is bigger than capacity ({})", m_Size,
                     Capacity);
         Tools::CopyConstructFromRange(begin(), p_Begin, p_End);
     }
 
-    constexpr StaticArray(const std::initializer_list<ValueType> p_List)
+    constexpr StaticArray(const std::initializer_list<T> p_List)
         requires(std::is_copy_constructible_v<T>)
-        : m_Size(static_cast<SizeType>(p_List.size()))
+        : m_Size(static_cast<usize>(p_List.size()))
     {
         TKIT_ASSERT(m_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size ({}) is bigger than capacity ({})", m_Size,
                     Capacity);
@@ -58,8 +54,8 @@ class StaticArray
     }
 
     // This constructor WONT include the case M == Capacity (ie, copy constructor)
-    template <SizeType M>
-    constexpr StaticArray(const StaticArray<ValueType, M, Traits> &p_Other)
+    template <usize M>
+    constexpr StaticArray(const StaticArray<T, M> &p_Other)
         requires(std::is_copy_constructible_v<T>)
         : m_Size(p_Other.GetSize())
     {
@@ -72,8 +68,8 @@ class StaticArray
     }
 
     // This constructor WONT include the case M == Capacity (ie, move constructor)
-    template <SizeType M>
-    constexpr StaticArray(StaticArray<ValueType, M, Traits> &&p_Other)
+    template <usize M>
+    constexpr StaticArray(StaticArray<T, M> &&p_Other)
         requires(std::is_move_constructible_v<T>)
         : m_Size(p_Other.GetSize())
     {
@@ -105,8 +101,8 @@ class StaticArray
     }
 
     // Same goes for assignment. It wont include `M == Capacity`, and use the default assignment operator
-    template <SizeType M>
-    constexpr StaticArray &operator=(const StaticArray<ValueType, M, Traits> &p_Other)
+    template <usize M>
+    constexpr StaticArray &operator=(const StaticArray<T, M> &p_Other)
         requires(std::is_copy_assignable_v<T>)
     {
         if constexpr (M == Capacity)
@@ -125,8 +121,8 @@ class StaticArray
     }
 
     // Same goes for assignment. It wont include `M == Capacity`, and use the default assignment operator
-    template <SizeType M>
-    constexpr StaticArray &operator=(StaticArray<ValueType, M, Traits> &&p_Other)
+    template <usize M>
+    constexpr StaticArray &operator=(StaticArray<T, M> &&p_Other)
         requires(std::is_move_assignable_v<T>)
     {
         if constexpr (M == Capacity)
@@ -166,8 +162,8 @@ class StaticArray
     }
 
     template <typename... Args>
-        requires std::constructible_from<ValueType, Args...>
-    constexpr ValueType &Append(Args &&...p_Args)
+        requires std::constructible_from<T, Args...>
+    constexpr T &Append(Args &&...p_Args)
     {
         TKIT_ASSERT(!IsFull(), "[TOOLKIT][STAT-ARRAY] Container is already full");
         return *Memory::ConstructFromIterator(begin() + m_Size++, std::forward<Args>(p_Args)...);
@@ -177,13 +173,13 @@ class StaticArray
     {
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][STAT-ARRAY] Container is already empty");
         --m_Size;
-        if constexpr (!std::is_trivially_destructible_v<ValueType>)
+        if constexpr (!std::is_trivially_destructible_v<T>)
             Memory::DestructFromIterator(end());
     }
 
     template <typename U>
-        requires(std::convertible_to<std::remove_cvref_t<ValueType>, std::remove_cvref_t<U>>)
-    constexpr void Insert(const Iterator p_Pos, U &&p_Value)
+        requires(std::convertible_to<std::remove_cvref_t<T>, std::remove_cvref_t<U>>)
+    constexpr void Insert(T *p_Pos, U &&p_Value)
     {
         TKIT_ASSERT(!IsFull(), "[TOOLKIT][STAT-ARRAY] Container is already full");
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][STAT-ARRAY] Iterator is out of bounds");
@@ -191,7 +187,7 @@ class StaticArray
         ++m_Size;
     }
 
-    template <std::input_iterator It> constexpr void Insert(const Iterator p_Pos, It p_Begin, It p_End)
+    template <std::input_iterator It> constexpr void Insert(T *p_Pos, It p_Begin, It p_End)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][STAT-ARRAY] Iterator is out of bounds");
         TKIT_ASSERT(std::distance(p_Begin, p_End) + m_Size <= Capacity,
@@ -200,7 +196,7 @@ class StaticArray
         m_Size += Tools::Insert(end(), p_Pos, p_Begin, p_End);
     }
 
-    constexpr void Insert(const Iterator p_Pos, const std::initializer_list<ValueType> p_Elements)
+    constexpr void Insert(T *p_Pos, const std::initializer_list<T> p_Elements)
     {
         Insert(p_Pos, p_Elements.begin(), p_Elements.end());
     }
@@ -212,7 +208,7 @@ class StaticArray
      *
      * @param p_Pos The position to remove the element at.
      */
-    constexpr void RemoveOrdered(const Iterator p_Pos)
+    constexpr void RemoveOrdered(T *p_Pos)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT][STAT-ARRAY] Iterator is out of bounds");
         Tools::RemoveOrdered(end(), p_Pos);
@@ -227,7 +223,7 @@ class StaticArray
      * @param p_Begin The beginning of the range to erase.
      * @param p_End The end of the range to erase.
      */
-    constexpr void RemoveOrdered(const Iterator p_Begin, const Iterator p_End)
+    constexpr void RemoveOrdered(T *p_Begin, T *p_End)
     {
         TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT][STAT-ARRAY] Begin iterator is out of bounds");
         TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT][STAT-ARRAY] End iterator is out of bounds");
@@ -244,7 +240,7 @@ class StaticArray
      *
      * @param p_Pos The position to remove the element at.
      */
-    constexpr void RemoveUnordered(const Iterator p_Pos)
+    constexpr void RemoveUnordered(T *p_Pos)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT][STAT-ARRAY] Iterator is out of bounds");
         Tools::RemoveUnordered(end(), p_Pos);
@@ -262,8 +258,8 @@ class StaticArray
      * size.)
      */
     template <typename... Args>
-        requires std::constructible_from<ValueType, Args...>
-    constexpr void Resize(const SizeType p_Size, const Args &...p_Args)
+        requires std::constructible_from<T, Args...>
+    constexpr void Resize(const usize p_Size, const Args &...p_Args)
     {
         TKIT_ASSERT(p_Size <= Capacity, "[TOOLKIT][STAT-ARRAY] Size ({}) is bigger than capacity ({})", p_Size,
                     Capacity);
@@ -279,39 +275,39 @@ class StaticArray
         m_Size = p_Size;
     }
 
-    constexpr const ValueType &operator[](const SizeType p_Index) const
+    constexpr const T &operator[](const usize p_Index) const
     {
         return At(p_Index);
     }
-    constexpr ValueType &operator[](const SizeType p_Index)
+    constexpr T &operator[](const usize p_Index)
     {
         return At(p_Index);
     }
-    constexpr const ValueType &At(const SizeType p_Index) const
+    constexpr const T &At(const usize p_Index) const
     {
         TKIT_CHECK_OUT_OF_BOUNDS(p_Index, m_Size, "[TOOLKIT][STAT-ARRAY] ");
         return *(begin() + p_Index);
     }
-    constexpr ValueType &At(const SizeType p_Index)
+    constexpr T &At(const usize p_Index)
     {
         TKIT_CHECK_OUT_OF_BOUNDS(p_Index, m_Size, "[TOOLKIT][STAT-ARRAY] ");
         return *(begin() + p_Index);
     }
 
-    constexpr const ValueType &GetFront() const
+    constexpr const T &GetFront() const
     {
         return At(0);
     }
-    constexpr ValueType &GetFront()
+    constexpr T &GetFront()
     {
         return At(0);
     }
 
-    constexpr const ValueType &GetBack() const
+    constexpr const T &GetBack() const
     {
         return At(m_Size - 1);
     }
-    constexpr ValueType &GetBack()
+    constexpr T &GetBack()
     {
         return At(m_Size - 1);
     }
@@ -323,42 +319,42 @@ class StaticArray
         m_Size = 0;
     }
 
-    constexpr const ValueType *GetData() const
+    constexpr const T *GetData() const
     {
-        return reinterpret_cast<const ValueType *>(&m_Data[0]);
+        return reinterpret_cast<const T *>(&m_Data[0]);
     }
 
-    constexpr ValueType *GetData()
+    constexpr T *GetData()
     {
-        return reinterpret_cast<ValueType *>(&m_Data[0]);
+        return reinterpret_cast<T *>(&m_Data[0]);
     }
 
-    constexpr Iterator begin()
-    {
-        return GetData();
-    }
-
-    constexpr Iterator end()
-    {
-        return begin() + m_Size;
-    }
-
-    constexpr ConstIterator begin() const
+    constexpr T *begin()
     {
         return GetData();
     }
 
-    constexpr ConstIterator end() const
+    constexpr T *end()
     {
         return begin() + m_Size;
     }
 
-    constexpr SizeType GetSize() const
+    constexpr const T *begin() const
+    {
+        return GetData();
+    }
+
+    constexpr const T *end() const
+    {
+        return begin() + m_Size;
+    }
+
+    constexpr usize GetSize() const
     {
         return m_Size;
     }
 
-    constexpr SizeType GetCapacity() const
+    constexpr usize GetCapacity() const
     {
         return Capacity;
     }
@@ -374,16 +370,16 @@ class StaticArray
     }
 
   private:
-    struct alignas(ValueType) Element
+    struct alignas(T) Element
     {
-        std::byte Data[sizeof(ValueType)];
+        std::byte Data[sizeof(T)];
     };
 
-    static_assert(sizeof(Element) == sizeof(ValueType), "Element size is not equal to T size");
-    static_assert(alignof(Element) == alignof(ValueType), "Element alignment is not equal to T alignment");
+    static_assert(sizeof(Element) == sizeof(T), "Element size is not equal to T size");
+    static_assert(alignof(Element) == alignof(T), "Element alignment is not equal to T alignment");
 
     FixedArray<Element, Capacity> m_Data{};
-    SizeType m_Size = 0;
+    usize m_Size = 0;
 };
 
 template <typename T> using StaticArray4 = StaticArray<T, 4>;

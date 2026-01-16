@@ -14,17 +14,14 @@ namespace TKit
  * @tparam T The type of the elements.
  * @tparam Capacity The number of elements in the array.
  */
-template <typename T, usize Capacity, typename Traits = Container::ArrayTraits<T>> struct FixedArray
+template <typename T, usize Capacity> struct FixedArray
 {
-    using ValueType = typename Traits::ValueType;
-    using SizeType = typename Traits::SizeType;
-    using Iterator = typename Traits::Iterator;
-    using ConstIterator = typename Traits::ConstIterator;
-    using Tools = Container::ArrayTools<Traits>;
+    using ValueType = T;
+    using Tools = Container::ArrayTools<T>;
 
     constexpr FixedArray() = default;
 
-    constexpr FixedArray(const std::initializer_list<ValueType> p_Elements)
+    constexpr FixedArray(const std::initializer_list<T> p_Elements)
     {
         TKIT_ASSERT(p_Elements.size() <= Capacity, "[TOOLKIT][STAT-ARRAY] Size ({}) is bigger than capacity ({})",
                     p_Elements.size(), Capacity);
@@ -39,59 +36,59 @@ template <typename T, usize Capacity, typename Traits = Container::ArrayTraits<T
         Elements[Capacity - 1] = p_Value;
     }
 
-    constexpr const ValueType &operator[](const SizeType p_Index) const
+    constexpr const T &operator[](const usize p_Index) const
     {
         return At(p_Index);
     }
-    constexpr ValueType &operator[](const SizeType p_Index)
+    constexpr T &operator[](const usize p_Index)
     {
         return At(p_Index);
     }
 
-    constexpr const ValueType &At(const SizeType p_Index) const
+    constexpr const T &At(const usize p_Index) const
     {
         TKIT_CHECK_OUT_OF_BOUNDS(p_Index, Capacity, "[TOOLKIT][ARRAY] ");
         return Elements[p_Index];
     }
-    constexpr ValueType &At(const SizeType p_Index)
+    constexpr T &At(const usize p_Index)
     {
         TKIT_CHECK_OUT_OF_BOUNDS(p_Index, Capacity, "[TOOLKIT][ARRAY] ");
         return Elements[p_Index];
     }
 
-    constexpr SizeType GetSize() const
+    constexpr usize GetSize() const
     {
         return Capacity;
     }
 
-    constexpr const ValueType *GetData() const
+    constexpr const T *GetData() const
     {
         return Elements;
     }
-    constexpr ValueType *GetData()
+    constexpr T *GetData()
     {
         return Elements;
     }
 
-    constexpr Iterator begin()
+    constexpr T *begin()
     {
         return Elements;
     }
-    constexpr Iterator end()
+    constexpr T *end()
     {
         return Elements + Capacity;
     }
 
-    constexpr ConstIterator begin() const
+    constexpr const T *begin() const
     {
         return Elements;
     }
-    constexpr ConstIterator end() const
+    constexpr const T *end() const
     {
         return Elements + Capacity;
     }
 
-    ValueType Elements[Capacity];
+    T Elements[Capacity];
 };
 
 template <typename T> using FixedArray4 = FixedArray<T, 4>;

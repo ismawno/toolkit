@@ -28,6 +28,7 @@ template <typename T, u64 Capacity> class ChaseLevDeque
 
     TKIT_NON_COPYABLE(ChaseLevDeque)
   public:
+    using ValueType = T;
     static constexpr u64 Mask = Capacity - 1;
 
     constexpr ChaseLevDeque() = default;
@@ -122,8 +123,7 @@ template <typename T, u64 Capacity> class ChaseLevDeque
 
     alignas(TKIT_CACHE_LINE_SIZE) std::atomic<u64> m_Front{1};
     alignas(TKIT_CACHE_LINE_SIZE) std::atomic<u64> m_Back{1};
-    alignas(TKIT_CACHE_LINE_SIZE)
-        FixedArray<std::atomic<T>, Capacity, Container::ArrayTraits<std::atomic<T>, u64>> m_Data{};
+    alignas(TKIT_CACHE_LINE_SIZE) FixedArray<std::atomic<T>, Capacity> m_Data{};
 };
 TKIT_COMPILER_WARNING_IGNORE_POP()
 } // namespace TKit

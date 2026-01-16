@@ -9,15 +9,7 @@ using namespace TKit;
 using namespace TKit::Container;
 using namespace TKit::Alias;
 
-template <typename T> struct RawArrayTraits
-{
-    using ValueType = T;
-    using SizeType = usize;
-    using Iterator = T *;
-    using ConstIterator = const T *;
-};
-
-template <typename T> using Tools = ArrayTools<RawArrayTraits<T>>;
+template <typename T> using Tools = ArrayTools<T>;
 
 struct CopyOnly
 {

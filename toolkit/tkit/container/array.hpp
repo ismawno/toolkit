@@ -18,12 +18,10 @@
 namespace TKit
 {
 #ifdef TKIT_USE_STATIC_ARRAY
-template <typename T, usize Capacity, typename Traits = Container::ArrayTraits<T>>
-using Array = StaticArray<T, Capacity, Traits>;
+template <typename T, usize Capacity> using Array = StaticArray<T, Capacity>;
 #    define TKIT_ARRAY_RESERVE(p_Arr, p_Size)
 #elif defined(TKIT_USE_DYNAMIC_ARRAY)
-template <typename T, usize Capacity, typename Traits = Container::ArrayTraits<T>>
-using Array = DynamicArray<T, Traits>;
+template <typename T, usize Capacity> using Array = DynamicArray<T>;
 #    define TKIT_ARRAY_RESERVE(p_Arr, p_Size) p_Arr.Reserve(p_Size)
 #endif
 
