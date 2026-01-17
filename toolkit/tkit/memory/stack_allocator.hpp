@@ -26,7 +26,9 @@ namespace TKit
  * A multithreaded environment has the exact opposite property, so this allocator is not thread safe.
  *
  */
-class StackAllocator
+TKIT_COMPILER_WARNING_IGNORE_PUSH()
+TKIT_MSVC_WARNING_IGNORE(4324)
+class alignas(TKIT_CACHE_LINE_SIZE) StackAllocator
 {
     TKIT_NON_COPYABLE(StackAllocator)
   public:
@@ -199,4 +201,5 @@ class StackAllocator
     usize m_Alignment = 0;
     bool m_Provided;
 };
+TKIT_COMPILER_WARNING_IGNORE_POP()
 } // namespace TKit

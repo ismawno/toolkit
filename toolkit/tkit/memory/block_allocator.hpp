@@ -29,7 +29,9 @@ namespace TKit
  *
  * This is roughly a 10x improvement over the default new/delete.
  */
-class BlockAllocator
+TKIT_COMPILER_WARNING_IGNORE_PUSH()
+TKIT_MSVC_WARNING_IGNORE(4324)
+class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
 {
     TKIT_NON_COPYABLE(BlockAllocator)
   public:
@@ -178,5 +180,5 @@ class BlockAllocator
     usize m_AllocationSize;
     bool m_Provided;
 };
-
+TKIT_COMPILER_WARNING_IGNORE_POP()
 } // namespace TKit
