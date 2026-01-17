@@ -27,7 +27,7 @@ template <typename T> class ChaseLevDeque
   public:
     using ValueType = T;
 
-    constexpr ChaseLevDeque(ArenaAllocator *p_Allocator, const u64 p_Capacity)
+    constexpr ChaseLevDeque(ArenaAllocator *p_Allocator, const usize p_Capacity)
         : m_Data(p_Capacity, p_Allocator, p_Capacity), m_Mask(p_Capacity - 1)
     {
         TKIT_ASSERT(Bit::IsPowerOfTwo(p_Capacity),
