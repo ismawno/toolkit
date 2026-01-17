@@ -11,7 +11,7 @@ TierAllocator::Description TierAllocator::CreateDescription(const usize p_MaxAll
     TKIT_ASSERT(Bit::IsPowerOfTwo(p_MaxAllocation) && Bit::IsPowerOfTwo(p_MinAllocation) &&
                     Bit::IsPowerOfTwo(p_Granularity),
                 "[TOOLKIT][TIER-ALLOC] All integer arguments must be powers of two when creating a tier allocator "
-                "description, but the values where {}, {}, and {}",
+                "description, but the values where {}, {} and {}",
                 p_MaxAllocation, p_MinAllocation, p_Granularity);
     TKIT_ASSERT(p_MinAllocation >= sizeof(void *),
                 "[TOOLKIT][TIER-ALLOC] Minimum allocation size must be at least sizeof(void *) = {}, but passed value "

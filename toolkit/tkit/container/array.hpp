@@ -23,7 +23,7 @@ template <typename T, typename AllocState> class Array
     using Tools = Container::ArrayTools<T>;
 
     template <typename... Args>
-        requires(sizeof...(Args) > 1 || ((!Args::Safeguard) && ... && true))
+        requires(sizeof...(Args) > 1 || ((!std::is_same_v<Array, std::remove_cvref_t<Args>>) && ... && true))
     constexpr Array(Args &&...p_Args) : m_State(std::forward<Args>(p_Args)...)
     {
     }

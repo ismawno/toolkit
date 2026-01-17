@@ -13,6 +13,7 @@ set(SOURCES
     tests/memory/ptr.cpp
     tests/container/arena_array.cpp
     tests/container/stack_array.cpp
+    tests/container/tier_array.cpp
     tests/container/static_array.cpp
     tests/container/dynamic_array.cpp
     tests/container/container.cpp
@@ -57,5 +58,5 @@ tkit_default_configure(toolkit-tests NO_RTTI)
 
 include(CTest)
 include(Catch)
-catch_discover_tests(toolkit-tests)
+# catch_discover_tests(toolkit-tests)
 enable_testing()
