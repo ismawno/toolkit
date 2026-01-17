@@ -28,15 +28,10 @@ class ArenaAllocator
 {
     TKIT_NON_COPYABLE(ArenaAllocator)
   public:
-    // The alignment parameter specifies the starting alignment of the whole memory buffer so that your first allocation
-    // will not be padded in case you need specific alignment requirements for it, but it does not restrict the
-    // alignment of the individual allocations at all. You can still specify alignments of, say, 64 if you want when
-    // allocating
-
-    explicit ArenaAllocator(usize p_Size, usize p_Alignment = alignof(std::max_align_t));
+    explicit ArenaAllocator(usize p_Capacity, usize p_Alignment = alignof(std::max_align_t));
 
     // This constructor is NOT owning the buffer, so it will not deallocate it. Up to the user to manage the memory
-    ArenaAllocator(void *p_Buffer, usize p_Size);
+    ArenaAllocator(void *p_Buffer, usize p_Capacity, usize p_Alignment = alignof(std::max_align_t));
     ~ArenaAllocator();
 
     ArenaAllocator(ArenaAllocator &&p_Other);
@@ -46,10 +41,9 @@ class ArenaAllocator
      * @brief Allocate a new block of memory into the arena allocator.
      *
      * @param p_Size The size of the block to allocate.
-     * @param p_Alignment The alignment of the block.
      * @return A pointer to the allocated block.
      */
-    void *Allocate(usize p_Size, usize p_Alignment = alignof(std::max_align_t));
+    void *Allocate(usize p_Size);
 
     /**
      * @brief Allocate a new block of memory into the arena allocator and casts the result to `T`.
@@ -59,7 +53,11 @@ class ArenaAllocator
      */
     template <typename T> T *Allocate(const usize p_Count = 1)
     {
-        return static_cast<T *>(Allocate(p_Count * sizeof(T), alignof(T)));
+        T *ptr = static_cast<T *>(Allocate(p_Count * sizeof(T)));
+        TKIT_ASSERT(Memory::IsAligned(ptr, alignof(T)),
+                    "[TOOLKIT][STACK-ALLOC] Requested type T to be allocated has stricter alignment requirements than "
+                    "the ones provided by this allocator. Considering bumping the alignment parameter");
+        return ptr;
     }
 
     /**
@@ -68,7 +66,10 @@ class ArenaAllocator
      * It may be used again after calling this method.
      *
      */
-    void Reset();
+    void Reset()
+    {
+        m_Top = 0;
+    }
 
     /**
      * @brief Allocate a new block of memory in the arena allocator and create a new object of type `T` out of it.
@@ -116,38 +117,39 @@ class ArenaAllocator
     bool Belongs(const void *p_Ptr) const
     {
         const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
-        return ptr >= m_Buffer && ptr < m_Buffer + (m_Size - m_Remaining);
+        return ptr >= m_Buffer && ptr < m_Buffer + m_Top;
     }
 
     bool IsEmpty() const
     {
-        return m_Remaining == m_Size;
+        return m_Top == 0;
     }
 
     bool IsFull() const
     {
-        return m_Remaining == 0;
+        return m_Top == m_Capacity;
     }
 
-    usize GetSize() const
+    usize GetCapacity() const
     {
-        return m_Size;
+        return m_Capacity;
     }
-    usize GetAllocated() const
+    usize GetAllocatedBytes() const
     {
-        return m_Size - m_Remaining;
+        return m_Top;
     }
-    usize GetRemaining() const
+    usize GetRemainingBytes() const
     {
-        return m_Remaining;
+        return m_Capacity - m_Top;
     }
 
   private:
     void deallocateBuffer();
 
-    std::byte *m_Buffer;
-    usize m_Size = 0;
-    usize m_Remaining = 0;
+    std::byte *m_Buffer = nullptr;
+    usize m_Top = 0;
+    usize m_Capacity = 0;
+    usize m_Alignment = 0;
     bool m_Provided;
 };
 } // namespace TKit

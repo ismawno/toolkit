@@ -43,10 +43,10 @@ class StackAllocator
      * @brief Allocate a new block of memory into the stack allocator.
      *
      * @param p_Size The size of the block to allocate.
-     * @param p_Alignment The alignment of the block.
      * @return A pointer to the allocated block.
      */
     void *Allocate(usize p_Size);
+
     /**
      * @brief Allocate a new block of memory into the stack allocator and casts the result to `T`.
      *

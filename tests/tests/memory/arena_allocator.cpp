@@ -55,9 +55,9 @@ TEST_CASE("Constructor and initial state", "[ArenaAllocator]")
 
     REQUIRE(arena.IsEmpty());
     REQUIRE(!arena.IsFull());
-    REQUIRE(arena.GetSize() == size);
-    REQUIRE(arena.GetAllocated() == 0);
-    REQUIRE(arena.GetRemaining() == size);
+    REQUIRE(arena.GetCapacity() == size);
+    REQUIRE(arena.GetAllocatedBytes() == 0);
+    REQUIRE(arena.GetRemainingBytes() == size);
     // nothing has been allocated → no pointer should belong
     u32 dummy = 0;
     REQUIRE(!arena.Belongs(&dummy));
@@ -66,15 +66,15 @@ TEST_CASE("Constructor and initial state", "[ArenaAllocator]")
 TEST_CASE("Allocate blocks and invariants", "[ArenaAllocator]")
 {
     ArenaAllocator arena(256);
-    const usize beforeRem = arena.GetRemaining();
+    const usize beforeRem = arena.GetRemainingBytes();
 
     // allocate 64 bytes
     const void *p = arena.Allocate(64);
     REQUIRE(p);
     REQUIRE(arena.Belongs(p));
     // allocated + remaining == total
-    REQUIRE(arena.GetAllocated() + arena.GetRemaining() == arena.GetSize());
-    REQUIRE(arena.GetRemaining() < beforeRem);
+    REQUIRE(arena.GetAllocatedBytes() + arena.GetRemainingBytes() == arena.GetCapacity());
+    REQUIRE(arena.GetRemainingBytes() < beforeRem);
 
     // default Allocate<T>
     const auto pi = arena.Allocate<u32>(4);
@@ -89,66 +89,17 @@ TEST_CASE("Allocate blocks and invariants", "[ArenaAllocator]")
 
 TEST_CASE("Alignment behavior", "[ArenaAllocator]")
 {
-    constexpr usize size = 128;
-    ArenaAllocator arena(size);
-
-    // ask for 1 byte but 32-byte alignment
+    constexpr usize size = 64;
     constexpr usize align = 32;
-    const void *p = arena.Allocate(1, align);
-    REQUIRE(p);
-    REQUIRE(arena.Belongs(p));
-    REQUIRE(reinterpret_cast<uptr>(p) % align == 0);
-}
+    ArenaAllocator arena(size, align);
 
-TEST_CASE("Allocate until full and Reset", "[ArenaAllocator]")
-{
-    ArenaAllocator arena(64);
-
-    // consume all with 1-byte allocs, aligned to 1 byte
-    std::vector<void *> ptrs;
-    for (;;)
-    {
-        void *p = arena.Allocate(1, 1);
-        if (!p)
-            break;
-        ptrs.push_back(p);
-    }
-
-    REQUIRE(arena.IsFull());
-    REQUIRE(arena.GetRemaining() == 0);
-    REQUIRE(arena.Allocate(1) == nullptr);
-    REQUIRE(arena.GetAllocated() == static_cast<usize>(ptrs.size()));
-
-    // Reset and allocate again
+    const void *p1 = arena.Allocate(1);
+    const void *p2 = arena.Allocate(1);
+    REQUIRE(p1);
+    REQUIRE(p2);
+    REQUIRE(reinterpret_cast<uptr>(p1) % align == 0);
+    REQUIRE(reinterpret_cast<uptr>(p2) % align == 0);
     arena.Reset();
-    REQUIRE(arena.IsEmpty());
-    REQUIRE(arena.GetRemaining() == arena.GetSize());
-    const void *p2 = arena.Allocate(8);
-    REQUIRE(p2 != nullptr);
-    REQUIRE(!arena.IsEmpty());
-}
-
-TEST_CASE("Move constructor and move assignment", "[ArenaAllocator]")
-{
-    ArenaAllocator a1(128);
-    a1.Allocate(16);
-    const auto rem1 = a1.GetRemaining();
-
-    // move-construct
-    ArenaAllocator a2(std::move(a1));
-    REQUIRE(a2.GetSize() == 128);
-    REQUIRE(a2.GetRemaining() == rem1);
-    // a1 has been zeroed-out
-    REQUIRE(a1.GetSize() == 0);
-    REQUIRE(a1.GetRemaining() == 0);
-
-    // move-assign
-    ArenaAllocator a3(64);
-    a3 = std::move(a2);
-    REQUIRE(a3.GetSize() == 128);
-    REQUIRE(a3.GetRemaining() == rem1);
-    REQUIRE(a2.GetSize() == 0);
-    REQUIRE(a2.GetRemaining() == 0);
 }
 
 TEST_CASE("Create<T> and NCreate<T>", "[ArenaAllocator]")
@@ -173,6 +124,60 @@ TEST_CASE("Create<T> and NCreate<T>", "[ArenaAllocator]")
     for (u32 i = 0; i < 3; ++i)
         ptr[i].~NonTrivialAA();
     REQUIRE(NonTrivialAA::DtorCount == 3);
+    arena.Reset();
+}
+
+TEST_CASE("Allocate until full and Reset", "[ArenaAllocator]")
+{
+    ArenaAllocator arena(64, 8);
+
+    // consume all with 1-byte allocs, aligned to 1 byte
+    std::vector<void *> ptrs;
+    for (;;)
+    {
+        void *p = arena.Allocate(8);
+        if (!p)
+            break;
+        ptrs.push_back(p);
+    }
+
+    REQUIRE(arena.IsFull());
+    REQUIRE(arena.GetRemainingBytes() == 0);
+    REQUIRE(arena.Allocate(1) == nullptr);
+    REQUIRE(arena.GetAllocatedBytes() == static_cast<usize>(ptrs.size() * 8));
+
+    // Reset and allocate again
+    arena.Reset();
+    REQUIRE(arena.IsEmpty());
+    REQUIRE(arena.GetRemainingBytes() == arena.GetCapacity());
+    const void *p2 = arena.Allocate(8);
+    REQUIRE(p2 != nullptr);
+    REQUIRE(!arena.IsEmpty());
+    arena.Reset();
+}
+
+TEST_CASE("Move constructor and move assignment", "[ArenaAllocator]")
+{
+    ArenaAllocator a1(128);
+    a1.Allocate(16);
+    const auto rem1 = a1.GetRemainingBytes();
+
+    // move-construct
+    ArenaAllocator a2(std::move(a1));
+    REQUIRE(a2.GetCapacity() == 128);
+    REQUIRE(a2.GetRemainingBytes() == rem1);
+    // a1 has been zeroed-out
+    REQUIRE(a1.GetCapacity() == 0);
+    REQUIRE(a1.GetRemainingBytes() == 0);
+
+    // move-assign
+    ArenaAllocator a3(64);
+    a3 = std::move(a2);
+    REQUIRE(a3.GetCapacity() == 128);
+    REQUIRE(a3.GetRemainingBytes() == rem1);
+    REQUIRE(a2.GetCapacity() == 0);
+    REQUIRE(a2.GetRemainingBytes() == 0);
+    a3.Reset();
 }
 
 TEST_CASE("User-provided buffer constructor", "[ArenaAllocator]")
@@ -182,9 +187,10 @@ TEST_CASE("User-provided buffer constructor", "[ArenaAllocator]")
     ArenaAllocator arena(buffer, size);
 
     REQUIRE(arena.IsEmpty());
-    REQUIRE(arena.GetSize() == size);
+    REQUIRE(arena.GetCapacity() == size);
 
     const void *p = arena.Allocate(32);
     REQUIRE(p);
     REQUIRE(arena.Belongs(p));
+    arena.Reset();
 }
