@@ -7,8 +7,7 @@
 
 #include "tkit/utils/debug.hpp"
 #include "tkit/utils/non_copyable.hpp"
-#include "tkit/container/static_array.hpp"
-#include "tkit/utils/limits.hpp"
+#include "tkit/memory/memory.hpp"
 
 namespace TKit
 {
@@ -31,24 +30,10 @@ class StackAllocator
 {
     TKIT_NON_COPYABLE(StackAllocator)
   public:
-    struct Entry
-    {
-        Entry(std::byte *p_Ptr, const usize p_Size) : Ptr(p_Ptr), Size(p_Size)
-        {
-        }
-        std::byte *Ptr;
-        usize Size;
-    };
-
-    // The alignment parameter specifies the starting alignment of the whole memory buffer so that your first allocation
-    // will not be padded in case you need specific alignment requirements for it, but it does not restrict the
-    // alignment of the individual allocations at all. You can still specify alignments of, say, 64 if you want when
-    // allocating
-
-    explicit StackAllocator(usize p_Size, usize p_Alignment = alignof(std::max_align_t));
+    explicit StackAllocator(usize p_Capacity, usize p_Alignment = alignof(std::max_align_t));
 
     // This constructor is NOT owning the buffer, so it will not deallocate it. Up to the user to manage the memory
-    StackAllocator(void *p_Buffer, usize p_Size);
+    StackAllocator(void *p_Buffer, usize p_Capacity, usize p_Alignment = alignof(std::max_align_t));
     ~StackAllocator();
 
     StackAllocator(StackAllocator &&p_Other);
@@ -61,7 +46,7 @@ class StackAllocator
      * @param p_Alignment The alignment of the block.
      * @return A pointer to the allocated block.
      */
-    void *Allocate(usize p_Size, usize p_Alignment = alignof(std::max_align_t));
+    void *Allocate(usize p_Size);
     /**
      * @brief Allocate a new block of memory into the stack allocator and casts the result to `T`.
      *
@@ -70,7 +55,11 @@ class StackAllocator
      */
     template <typename T> T *Allocate(const usize p_Count = 1)
     {
-        return static_cast<T *>(Allocate(p_Count * sizeof(T), alignof(T)));
+        T *ptr = static_cast<T *>(Allocate(p_Count * sizeof(T)));
+        TKIT_ASSERT(Memory::IsAligned(ptr, alignof(T)),
+                    "[TOOLKIT][STACK-ALLOC] Requested type T to be allocated has stricter alignment requirements than "
+                    "the ones provided by this allocator. Considering bumping the alignment parameter");
+        return ptr;
     }
 
     /**
@@ -82,13 +71,14 @@ class StackAllocator
      *
      * @param p_Ptr The pointer to the block to deallocate.
      */
-    void Deallocate(const void *p_Ptr);
+    void Deallocate(const void *p_Ptr, usize p_Size);
 
-    /**
-     * @brief Deallocate a block of memory from the stack allocator.
-     *
-     */
-    void Deallocate();
+    template <typename T>
+        requires(!std::same_as<T, void>)
+    void Deallocate(const T *p_Ptr, const usize p_Count = 1)
+    {
+        Deallocate(static_cast<const void *>(p_Ptr), p_Count * sizeof(T));
+    }
 
     /**
      * @brief Allocate a new block of memory in the stack allocator and create a new object of type `T` out of it.
@@ -98,12 +88,27 @@ class StackAllocator
      */
     template <typename T, typename... Args>
         requires std::constructible_from<T, Args...>
-    T *Create(Args &&...p_Args)
+    constexpr T *Create(Args &&...p_Args)
     {
         T *ptr = Allocate<T>();
         if (!ptr)
             return nullptr;
         return Memory::Construct(ptr, std::forward<Args>(p_Args)...);
+    }
+
+    /**
+     * @brief Deallocate a block of memory from the stack allocator and destroy the object of type `T` created from it.
+     *
+     * @tparam T The type of the block.
+     * @param p_Ptr The pointer to the block to deallocate.
+     */
+    template <typename T>
+        requires(!std::same_as<T, void>)
+    constexpr void Destroy(const T *p_Ptr)
+    {
+        if constexpr (!std::is_trivially_destructible_v<T>)
+            p_Ptr->~T();
+        Deallocate(p_Ptr);
     }
 
     /**
@@ -118,7 +123,7 @@ class StackAllocator
      */
     template <typename T, typename... Args>
         requires std::constructible_from<T, Args...>
-    T *NCreate(const usize p_Count, Args &&...p_Args)
+    constexpr T *NCreate(const usize p_Count, Args &&...p_Args)
     {
         T *ptr = Allocate<T>(p_Count);
         if (!ptr)
@@ -132,41 +137,22 @@ class StackAllocator
      *
      * @tparam T The type of the block.
      * @param p_Ptr The pointer to the block to deallocate.
+     * @param p_Count The number of elements of type `T` to deallocate.
      */
-    template <typename T> void Destroy(T *p_Ptr)
+    template <typename T> constexpr void NDestroy(const T *p_Ptr, const usize p_Count)
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
             TKIT_ASSERT(p_Ptr, "[TOOLKIT][STACK-ALLOC] Cannot deallocate a null pointer");
-            TKIT_ASSERT(!m_Entries.IsEmpty(),
-                        "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is empty");
-            TKIT_ASSERT(m_Entries.GetBack().Ptr == reinterpret_cast<std::byte *>(p_Ptr),
+            TKIT_ASSERT(m_Top != 0, "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is empty");
+            TKIT_ASSERT(m_Buffer + m_Top - Memory::NextAlignedSize(sizeof(T) * p_Count, m_Alignment) ==
+                            reinterpret_cast<const std::byte *>(p_Ptr),
                         "[TOOLKIT][STACK-ALLOC] Elements must be deallocated in the reverse order they were allocated");
 
-            const usize n = m_Entries.GetBack().Size / sizeof(T);
-            for (usize i = 0; i < n; ++i)
+            for (usize i = 0; i < p_Count; ++i)
                 p_Ptr[i].~T();
         }
         Deallocate(p_Ptr);
-    }
-
-    /**
-     * @brief Get the top entry of the stack allocator.
-     *
-     */
-    const Entry &Top() const
-    {
-        TKIT_ASSERT(!m_Entries.IsEmpty(), "[TOOLKIT][STACK-ALLOC] No elements in the stack allocator");
-        return m_Entries.GetBack();
-    }
-
-    /**
-     * @brief Get the top entry of the stack allocator.
-     *
-     */
-    template <typename T> T *Top()
-    {
-        return reinterpret_cast<T *>(Top().Ptr);
     }
 
     /**
@@ -177,42 +163,40 @@ class StackAllocator
      */
     bool Belongs(const void *p_Ptr) const
     {
-        if (m_Entries.IsEmpty())
-            return false;
         const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
-        return ptr >= m_Buffer && ptr < m_Entries.GetBack().Ptr + m_Entries.GetBack().Size;
+        return ptr >= m_Buffer && ptr < m_Buffer + m_Top;
     }
 
     bool IsEmpty() const
     {
-        return m_Remaining == m_Size;
+        return m_Top == 0;
     }
 
     bool IsFull() const
     {
-        return m_Remaining == 0;
+        return m_Top == m_Capacity;
     }
 
-    usize GetSize() const
+    usize GetCapacity() const
     {
-        return m_Size;
+        return m_Capacity;
     }
-    usize GetAllocated() const
+    usize GetAllocatedBytes() const
     {
-        return m_Size - m_Remaining;
+        return m_Top;
     }
-    usize GetRemaining() const
+    usize GetRemainingBytes() const
     {
-        return m_Remaining;
+        return m_Capacity - m_Top;
     }
 
   private:
     void deallocateBuffer();
 
-    StaticArray<Entry, MaxStackAllocEntries> m_Entries{};
-    std::byte *m_Buffer;
-    usize m_Size = 0;
-    usize m_Remaining = 0;
+    std::byte *m_Buffer = nullptr;
+    usize m_Top = 0;
+    usize m_Capacity = 0;
+    usize m_Alignment = 0;
     bool m_Provided;
 };
 } // namespace TKit

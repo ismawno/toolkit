@@ -26,154 +26,148 @@ struct NonTrivialSA
 TEST_CASE("Constructor and initial state", "[StackAllocator]")
 {
     constexpr usize size = 256;
-    const StackAllocator arena(size);
+    const StackAllocator stack(size);
 
-    REQUIRE(arena.IsEmpty());
-    REQUIRE(!arena.IsFull());
-    REQUIRE(arena.GetSize() == size);
-    REQUIRE(arena.GetAllocated() == 0);
-    REQUIRE(arena.GetRemaining() == size);
+    REQUIRE(stack.IsEmpty());
+    REQUIRE(!stack.IsFull());
+    REQUIRE(stack.GetCapacity() == size);
+    REQUIRE(stack.GetAllocatedBytes() == 0);
+    REQUIRE(stack.GetRemainingBytes() == size);
     // no allocations yet → no pointer belongs
     u32 dummy = 0;
-    REQUIRE(!arena.Belongs(&dummy));
+    REQUIRE(!stack.Belongs(&dummy));
 }
 
 TEST_CASE("Allocate blocks and invariants", "[StackAllocator]")
 {
     constexpr usize size = 64;
-    StackAllocator arena(size);
+    StackAllocator stack(size);
 
     // Allocate two small blocks
-    const void *p1 = arena.Allocate(16);
+    const void *p1 = stack.Allocate(16);
     REQUIRE(p1);
-    REQUIRE(arena.Belongs(p1));
-    REQUIRE(arena.GetAllocated() + arena.GetRemaining() == arena.GetSize());
-    const void *p2 = arena.Allocate(8);
+    REQUIRE(stack.Belongs(p1));
+    REQUIRE(stack.GetAllocatedBytes() + stack.GetRemainingBytes() == stack.GetCapacity());
+    const void *p2 = stack.Allocate(8);
     REQUIRE(p2);
-    REQUIRE(arena.Belongs(p2));
-    REQUIRE(!arena.IsEmpty());
+    REQUIRE(stack.Belongs(p2));
+    REQUIRE(!stack.IsEmpty());
     // Deallocate in LIFO order
-    arena.Deallocate(p2);
-    REQUIRE(arena.GetRemaining() == arena.GetSize() - 16);
-    arena.Deallocate(p1);
-    REQUIRE(arena.IsEmpty());
+    stack.Deallocate(p2, 8);
+    REQUIRE(stack.GetRemainingBytes() == stack.GetCapacity() - 16);
+    stack.Deallocate(p1, 16);
+    REQUIRE(stack.IsEmpty());
 }
 
 TEST_CASE("Allocate<T> template overload", "[StackAllocator]")
 {
-    StackAllocator arena(128);
-    const auto pi = arena.Allocate<u32>(4); // alloc 4×sizeof(u32)
+    StackAllocator stack(128);
+    const auto pi = stack.Allocate<u32>(4); // alloc 4×sizeof(u32)
     REQUIRE(pi);
     for (u32 i = 0; i < 4; ++i)
         pi[i] = i * 5;
     for (u32 i = 0; i < 4; ++i)
         REQUIRE(pi[i] == i * 5);
-    arena.Deallocate(pi);
-    REQUIRE(arena.IsEmpty());
+    stack.Deallocate<u32>(pi, 4);
+    REQUIRE(stack.IsEmpty());
 }
 
 TEST_CASE("Alignment behavior", "[StackAllocator]")
 {
     constexpr usize size = 64;
-    StackAllocator arena(size);
-
     constexpr usize align = 32;
-    const void *p = arena.Allocate(1, align);
-    REQUIRE(p);
-    REQUIRE(reinterpret_cast<uptr>(p) % align == 0);
-    arena.Deallocate(p);
-    REQUIRE(arena.IsEmpty());
+    StackAllocator stack(size, align);
+
+    const void *p1 = stack.Allocate(1);
+    const void *p2 = stack.Allocate(1);
+    REQUIRE(p1);
+    REQUIRE(p2);
+    REQUIRE(reinterpret_cast<uptr>(p1) % align == 0);
+    REQUIRE(reinterpret_cast<uptr>(p2) % align == 0);
+    stack.Deallocate(p2, 1);
+    stack.Deallocate(p1, 1);
+    REQUIRE(stack.IsEmpty());
 }
 
 TEST_CASE("Create<T> and NCreate<T> with Destroy<T>", "[StackAllocator]")
 {
-    StackAllocator arena(256);
+    StackAllocator stack(256);
 
     // single Create
     NonTrivialSA::CtorCount = 0;
     NonTrivialSA::DtorCount = 0;
-    const auto p = arena.Create<NonTrivialSA>(42);
+    const auto p = stack.Create<NonTrivialSA>(42);
     REQUIRE(p);
     REQUIRE(NonTrivialSA::CtorCount == 1);
     REQUIRE(p->value == 42);
 
+    stack.Destroy(p);
+    REQUIRE(NonTrivialSA::DtorCount == 1);
+
     // array NCreate
     NonTrivialSA::CtorCount = 0;
     NonTrivialSA::DtorCount = 0;
-    const auto arr = arena.NCreate<NonTrivialSA>(3, 7);
+    const auto arr = stack.NCreate<NonTrivialSA>(3, 7);
     REQUIRE(arr);
     REQUIRE(NonTrivialSA::CtorCount == 3);
     for (u32 i = 0; i < 3; ++i)
         REQUIRE(arr[i].value == 7);
 
     // Destroy all (LIFO)
-    arena.Destroy(arr);
-    arena.Destroy(p);
-    REQUIRE(NonTrivialSA::DtorCount == 4);
-    REQUIRE(arena.IsEmpty());
-}
-
-TEST_CASE("Top() entry reflects last allocation", "[StackAllocator]")
-{
-    StackAllocator arena(64);
-    const auto p1 = arena.Allocate(8);
-    const auto p2 = arena.Allocate(16);
-    const auto &e = arena.Top();
-    REQUIRE(e.Ptr == p2);
-    // REQUIRE(e.Size == 16);
-    arena.Deallocate(p2);
-    arena.Deallocate(p1);
+    stack.NDestroy(arr, 3);
+    REQUIRE(NonTrivialSA::DtorCount == 3);
+    REQUIRE(stack.IsEmpty());
 }
 
 TEST_CASE("Allocate until full and LIFO deallocate", "[StackAllocator]")
 {
     constexpr usize blockSize = 16;
-    constexpr usize capacity = 128 / blockSize; // TKIT_STACK_ALLOCATOR_MAX_ENTRIES default ≥ capacity
-    StackAllocator arena(capacity * blockSize);
+    constexpr usize capacity = 128 / blockSize;
+    StackAllocator stack(capacity * blockSize);
 
     std::vector<const void *> ptrs;
     for (usize i = 0; i < capacity; ++i)
     {
-        const void *p = arena.Allocate(blockSize, 1);
+        const void *p = stack.Allocate(blockSize);
         REQUIRE(p);
         ptrs.push_back(p);
     }
-    REQUIRE(arena.IsFull());
-    REQUIRE(arena.GetRemaining() == 0);
+    REQUIRE(stack.IsFull());
+    REQUIRE(stack.GetRemainingBytes() == 0);
 
     // deallocate all in reverse
     for (usize i = static_cast<usize>(ptrs.size()); i > 0; --i)
-        arena.Deallocate(ptrs[i - 1]);
-    REQUIRE(arena.IsEmpty());
+        stack.Deallocate(ptrs[i - 1], blockSize);
+    REQUIRE(stack.IsEmpty());
 }
 
 TEST_CASE("Move constructor and move assignment", "[StackAllocator]")
 {
     StackAllocator a1(128);
     a1.Allocate(32);
-    const auto rem = a1.GetRemaining();
+    const auto rem = a1.GetRemainingBytes();
 
     StackAllocator a2(std::move(a1));
-    REQUIRE(a2.GetRemaining() == rem);
-    REQUIRE(a1.GetSize() == 0);
+    REQUIRE(a2.GetRemainingBytes() == rem);
+    REQUIRE(a1.GetCapacity() == 0);
 
     StackAllocator a3(64);
     a3 = std::move(a2);
-    REQUIRE(a3.GetRemaining() == rem);
-    REQUIRE(a2.GetSize() == 0);
+    REQUIRE(a3.GetRemainingBytes() == rem);
+    REQUIRE(a2.GetCapacity() == 0);
 }
 
 TEST_CASE("User-provided buffer constructor", "[StackAllocator]")
 {
     constexpr usize size = 200;
     alignas(std::max_align_t) std::byte buffer[size];
-    StackAllocator arena(buffer, size);
+    StackAllocator stack(buffer, size);
 
-    REQUIRE(arena.IsEmpty());
-    REQUIRE(arena.GetSize() == size);
-    const void *p = arena.Allocate(32);
+    REQUIRE(stack.IsEmpty());
+    REQUIRE(stack.GetCapacity() == size);
+    const void *p = stack.Allocate(32);
     REQUIRE(p);
-    REQUIRE(arena.Belongs(p));
-    arena.Deallocate(p);
-    REQUIRE(arena.IsEmpty());
+    REQUIRE(stack.Belongs(p));
+    stack.Deallocate(p, 32);
+    REQUIRE(stack.IsEmpty());
 }

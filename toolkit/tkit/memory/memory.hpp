@@ -150,8 +150,19 @@ template <typename It1, typename It2> constexpr auto BackwardMove(It1 p_Dst, It2
     return std::move_backward(p_Begin, p_End, p_Dst);
 }
 
-bool IsAligned(const void *p_Ptr, size_t p_Alignment);
-bool IsAligned(size_t p_Address, size_t p_Alignment);
+inline bool IsAligned(const void *p_Ptr, const size_t p_Alignment)
+{
+    const uptr addr = reinterpret_cast<uptr>(p_Ptr);
+    return (addr & (p_Alignment - 1)) == 0;
+}
+inline bool IsAligned(const size_t p_Address, const size_t p_Alignment)
+{
+    return (p_Address & (p_Alignment - 1)) == 0;
+}
+inline usize NextAlignedSize(const usize p_Size, const usize p_Alignment)
+{
+    return (p_Size + p_Alignment - 1) & ~(p_Alignment - 1);
+}
 
 /**
  * @brief A custom allocator that uses a custom size_type (usually `u32`) for indexing, compatible with STL.

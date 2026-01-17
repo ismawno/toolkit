@@ -10,16 +10,6 @@
 
 namespace TKit::Memory
 {
-bool IsAligned(const void *p_Ptr, const size_t p_Alignment)
-{
-    const uptr addr = reinterpret_cast<uptr>(p_Ptr);
-    return (addr & (p_Alignment - 1)) == 0;
-}
-
-bool IsAligned(const size_t p_Address, const size_t p_Alignment)
-{
-    return (p_Address & (p_Alignment - 1)) == 0;
-}
 
 void *Allocate(const size_t p_Size)
 {

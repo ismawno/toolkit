@@ -23,7 +23,7 @@ template <typename T, usize Capacity> struct FixedArray
 
     constexpr FixedArray(const std::initializer_list<T> p_Elements)
     {
-        TKIT_ASSERT(p_Elements.size() <= Capacity, "[TOOLKIT][STAT-ARRAY] Size ({}) is bigger than capacity ({})",
+        TKIT_ASSERT(p_Elements.size() <= Capacity, "[TOOLKIT][FIXED-ARRAY] Size ({}) is bigger than capacity ({})",
                     p_Elements.size(), Capacity);
         Tools::CopyConstructFromRange(begin(), p_Elements.begin(), p_Elements.end());
     }
