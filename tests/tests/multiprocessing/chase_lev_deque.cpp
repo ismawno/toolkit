@@ -1,4 +1,5 @@
 #include "tkit/multiprocessing/chase_lev_deque.hpp" // adjust path if needed
+#include "tkit/utils/literals.hpp"
 #include <catch2/catch_test_macros.hpp>
 
 #include <thread>
@@ -6,6 +7,8 @@
 using namespace TKit;
 using namespace TKit::Alias;
 // simple payload
+
+static ArenaAllocator s_Alloc{16_kib, TKIT_CACHE_LINE_SIZE};
 struct DTask
 {
     u32 Value{0};
@@ -21,8 +24,7 @@ struct DTask
 
 TEST_CASE("ChaseLevDeque: single-thread owner push/pop back", "[ChaseLevDeque]")
 {
-    constexpr u64 cap = 16;
-    ChaseLevDeque<DTask, cap> q;
+    ChaseLevDeque<DTask> q{&s_Alloc, 16};
 
     for (u32 i = 0; i < 8; ++i)
         q.PushBack(i);
@@ -38,7 +40,7 @@ TEST_CASE("ChaseLevDeque: single-thread owner push/pop back", "[ChaseLevDeque]")
 
 TEST_CASE("ChaseLevDeque: uniqueness", "[ChaseLevDeque][uniqueness]")
 {
-    ChaseLevDeque<DTask, 1> q;
+    ChaseLevDeque<DTask> q{&s_Alloc, 1};
     q.PushBack(3u);
 
     std::atomic<u32> winners{0};
@@ -70,7 +72,7 @@ TEST_CASE("ChaseLevDeque: many thieves steal while owner pushes", "[ChaseLevDequ
     constexpr u32 total = 3000;
     constexpr u32 thieves = 4;
 
-    ChaseLevDeque<DTask, cap> q;
+    ChaseLevDeque<DTask> q{&s_Alloc, cap};
 
     std::atomic<bool> run{true};
     std::atomic<u32> remaining{cap};

@@ -5,7 +5,8 @@
 
 namespace TKit
 {
-TierAllocator::Description TierAllocator::CreateDescription(const usize p_MaxAllocation, const usize p_MinAllocation,
+TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *p_Allocator, const usize p_MaxTiers,
+                                                            const usize p_MaxAllocation, const usize p_MinAllocation,
                                                             const usize p_Granularity, const f32 p_TierSlotDecay)
 {
     TKIT_ASSERT(Bit::IsPowerOfTwo(p_MaxAllocation) && Bit::IsPowerOfTwo(p_MinAllocation) &&
@@ -26,7 +27,7 @@ TierAllocator::Description TierAllocator::CreateDescription(const usize p_MaxAll
                 "[TOOLKIT][TIER-ALLOC] Tier slot decay must be between 0.0 and 1.0, but its value was {}",
                 p_TierSlotDecay);
 
-    Description desc{};
+    Description desc{p_Allocator, p_MaxTiers};
     desc.MaxAllocation = p_MaxAllocation;
     desc.MinAllocation = p_MinAllocation;
     desc.Granularity = p_Granularity;
@@ -81,14 +82,20 @@ TierAllocator::Description TierAllocator::CreateDescription(const usize p_MaxAll
     desc.BufferSize = size;
     return desc;
 }
-TierAllocator::TierAllocator(const usize p_MaxAllocation, const usize p_MinAllocation, const usize p_Granularity,
-                             const f32 p_TierSlotDecay, const usize p_MaxAlignment)
-    : TierAllocator(CreateDescription(p_MaxAllocation, p_MinAllocation, p_Granularity, p_TierSlotDecay), p_MaxAlignment)
+TierAllocator::TierAllocator(ArenaAllocator *p_Allocator, const usize p_MaxTiers, const usize p_MaxAllocation,
+                             const usize p_MinAllocation, const usize p_Granularity, const f32 p_TierSlotDecay,
+                             const usize p_MaxAlignment)
+    : TierAllocator(
+          p_Allocator, p_MaxTiers,
+          CreateDescription(p_Allocator, p_MaxTiers, p_MaxAllocation, p_MinAllocation, p_Granularity, p_TierSlotDecay),
+          p_MaxAlignment)
 {
 }
 
-TierAllocator::TierAllocator(const Description &p_Description, const usize p_MaxAlignment)
-    : m_MinAllocation(p_Description.MinAllocation), m_Granularity(p_Description.Granularity)
+TierAllocator::TierAllocator(ArenaAllocator *p_Allocator, const usize p_MaxTiers, const Description &p_Description,
+                             const usize p_MaxAlignment)
+    : m_Tiers(p_Allocator, p_MaxTiers), m_MinAllocation(p_Description.MinAllocation),
+      m_Granularity(p_Description.Granularity)
 {
     TKIT_ASSERT(Bit::IsPowerOfTwo(p_MaxAlignment),
                 "[TOOLKIT][TIER-ALLOC] Maximum alignment must be a power of 2, but {} is not", p_MaxAlignment);

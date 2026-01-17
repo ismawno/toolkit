@@ -8,9 +8,8 @@
 #include "tkit/multiprocessing/task_manager.hpp"
 #include "tkit/multiprocessing/chase_lev_deque.hpp"
 #include "tkit/multiprocessing/mpmc_stack.hpp"
-#include "tkit/container/static_array.hpp"
+#include "tkit/container/arena_array.hpp"
 #include "tkit/multiprocessing/topology.hpp"
-#include "tkit/utils/limits.hpp"
 #include <thread>
 
 namespace TKit
@@ -40,19 +39,19 @@ class ThreadPool final : public ITaskManager
     struct alignas(TKIT_CACHE_LINE_SIZE) Worker
     {
         template <typename Callable, typename... Args>
-        Worker(Callable &&p_Callable, Args &&...p_Args)
-            : Thread(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...)
+        Worker(ArenaAllocator *p_Allocator, const usize p_MaxTasks, Callable &&p_Callable, Args &&...p_Args)
+            : Thread(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...), Queue(p_Allocator, p_MaxTasks)
         {
         }
         std::thread Thread;
-        ChaseLevDeque<ITask *, MaxPoolTasks> Queue{};
+        ChaseLevDeque<ITask *> Queue;
         MpmcStack<ITask *> Inbox{};
         std::atomic<u32> Epochs{0};
         std::atomic<u32> TaskCount{0}; // Speculative
         std::atomic_flag TerminateSignal = ATOMIC_FLAG_INIT;
     };
 
-    explicit ThreadPool(usize p_WokerCount);
+    explicit ThreadPool(ArenaAllocator *p_Allocator, usize p_WokerCount, usize p_MaxTasksPerQueue = 32);
     ~ThreadPool() override;
 
     /**
@@ -90,7 +89,7 @@ class ThreadPool final : public ITaskManager
     void drainTasks(usize p_WorkerIndex, usize p_Workers);
     bool trySteal(usize p_Victim);
 
-    StaticArray<Worker, MaxPoolWorkers> m_Workers;
+    ArenaArray<Worker> m_Workers;
 
     alignas(TKIT_CACHE_LINE_SIZE) std::atomic_flag m_ReadySignal = ATOMIC_FLAG_INIT;
     Topology::Handle *m_Handle;

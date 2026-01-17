@@ -461,11 +461,5 @@ if(TOOLKIT_BUILD_TESTS)
 endif()
 
 if(TOOLKIT_BUILD_PERFORMANCE)
-  message(
-    WARNING
-      "TOOLKIT - By building performance tests, the stack allocator maximum entries will be forced to 10000."
-  )
-  target_compile_definitions(toolkit
-                             PUBLIC TKIT_STACK_ALLOCATOR_MAX_ENTRIES=10000)
   add_subdirectory(performance)
 endif()

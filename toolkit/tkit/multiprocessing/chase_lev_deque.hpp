@@ -1,7 +1,8 @@
 #pragma once
 
-#include "tkit/container/fixed_array.hpp"
 #include "tkit/utils/non_copyable.hpp"
+#include "tkit/container/arena_array.hpp"
+#include "tkit/utils/bit.hpp"
 #include <atomic>
 #include <optional>
 
@@ -19,19 +20,19 @@ namespace TKit
  * It is best used when `T` is lightweight and trivial, so that its atomic counterpart is lock-less.
  *
  * @tparam T The type of the elements in the deque.
- * @tparam Capacity The capacity of the deque.
  */
-template <typename T, u64 Capacity> class ChaseLevDeque
+template <typename T> class ChaseLevDeque
 {
-    static_assert((Capacity & (Capacity - 1)) == 0,
-                  "[TOOLKIT][CHASE-LEV] Chase Lev Deque capacity must be a power of 2");
-
     TKIT_NON_COPYABLE(ChaseLevDeque)
   public:
     using ValueType = T;
-    static constexpr u64 Mask = Capacity - 1;
 
-    constexpr ChaseLevDeque() = default;
+    constexpr ChaseLevDeque(ArenaAllocator *p_Allocator, const u64 p_Capacity)
+        : m_Data(p_Capacity, p_Allocator, p_Capacity), m_Mask(p_Capacity - 1)
+    {
+        TKIT_ASSERT(Bit::IsPowerOfTwo(p_Capacity),
+                    "[TOOLKIT][CHASE-LEV] Chase Lev Deque capacity must be a power of 2");
+    }
 
     /**
      * @brief Push a new element into the back of the queue.
@@ -46,8 +47,8 @@ template <typename T, u64 Capacity> class ChaseLevDeque
     void PushBack(Args &&...p_Args)
     {
         const u64 back = m_Back.load(std::memory_order_relaxed);
-        TKIT_ASSERT(back - m_Front.load(std::memory_order_relaxed) < Capacity,
-                    "[TOOLKIT][CHASE-LEV] Cannot PushBack(). Queue is at capacity ({})", Capacity);
+        TKIT_ASSERT(back - m_Front.load(std::memory_order_relaxed) < m_Data.GetCapacity(),
+                    "[TOOLKIT][CHASE-LEV] Cannot PushBack(). Queue is at capacity ({})", m_Data.GetCapacity());
 
         store(back, std::move(T{std::forward<Args>(p_Args)...}));
 
@@ -114,16 +115,17 @@ template <typename T, u64 Capacity> class ChaseLevDeque
   private:
     T load(const u64 p_Index) const
     {
-        return m_Data[p_Index & Mask].load(std::memory_order_relaxed);
+        return m_Data[p_Index & m_Mask].load(std::memory_order_relaxed);
     }
     void store(const u64 p_Index, T &&p_Element)
     {
-        m_Data[p_Index & Mask].store(std::move(p_Element), std::memory_order_relaxed);
+        m_Data[p_Index & m_Mask].store(std::move(p_Element), std::memory_order_relaxed);
     }
 
     alignas(TKIT_CACHE_LINE_SIZE) std::atomic<u64> m_Front{1};
     alignas(TKIT_CACHE_LINE_SIZE) std::atomic<u64> m_Back{1};
-    alignas(TKIT_CACHE_LINE_SIZE) FixedArray<std::atomic<T>, Capacity> m_Data{};
+    alignas(TKIT_CACHE_LINE_SIZE) ArenaArray<std::atomic<T>> m_Data{};
+    alignas(TKIT_CACHE_LINE_SIZE) u64 m_Mask;
 };
 TKIT_COMPILER_WARNING_IGNORE_POP()
 } // namespace TKit

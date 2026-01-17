@@ -67,7 +67,8 @@ bool ThreadPool::trySteal(const usize p_Victim)
     return false;
 }
 
-ThreadPool::ThreadPool(const usize p_WorkerCount) : ITaskManager(p_WorkerCount)
+ThreadPool::ThreadPool(ArenaAllocator *p_Allocator, const usize p_WorkerCount, usize p_MaxTasksPerQueue)
+    : ITaskManager(p_WorkerCount), m_Workers{p_Allocator, p_WorkerCount}
 {
     TKIT_ASSERT(p_WorkerCount > 1, "[TOOLKIT][MULTIPROC] At least 2 workers are required to create a thread pool");
     m_Handle = Topology::Initialize();
@@ -102,7 +103,7 @@ ThreadPool::ThreadPool(const usize p_WorkerCount) : ITaskManager(p_WorkerCount)
         }
     };
     for (usize i = 0; i < p_WorkerCount; ++i)
-        m_Workers.Append(worker, i + 1);
+        m_Workers.Append(p_Allocator, p_MaxTasksPerQueue, worker, i + 1);
 
     m_ReadySignal.test_and_set(std::memory_order_release);
     m_ReadySignal.notify_all();

@@ -1,16 +1,18 @@
 #include "tkit/multiprocessing/task.hpp"
 #include "tkit/multiprocessing/thread_pool.hpp"
+#include "tkit/utils/literals.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <atomic>
 #include <array>
 
 using namespace TKit;
+static ArenaAllocator s_Alloc{16_kib, TKIT_CACHE_LINE_SIZE};
 
 TEST_CASE("ThreadPool executes Task<void>s", "[ThreadPool]")
 {
     constexpr usize threadCount = 4;
     constexpr usize taskCount = 10;
-    ThreadPool pool(threadCount);
+    ThreadPool pool(&s_Alloc, threadCount);
 
     std::atomic<usize> counter{0};
     std::array<Task<>, taskCount> tasks;
@@ -32,7 +34,7 @@ TEST_CASE("ThreadPool executes Task<usize>s and preserves results", "[ThreadPool
 {
     constexpr usize threadCount = 3;
     constexpr usize taskCount = 6;
-    ThreadPool pool(threadCount);
+    ThreadPool pool(&s_Alloc, threadCount);
 
     std::array<Task<usize>, taskCount> tasks;
 

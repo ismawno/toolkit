@@ -3,11 +3,10 @@
         "[TOOLKIT][TIER-ALLOC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_TIER_ALLOCATOR"
 #endif
 
-#include "tkit/container/static_array.hpp"
+#include "tkit/container/arena_array.hpp"
 #include "tkit/memory/memory.hpp"
 #include "tkit/utils/non_copyable.hpp"
 #include "tkit/utils/debug.hpp"
-#include "tkit/utils/limits.hpp"
 
 namespace TKit
 {
@@ -39,7 +38,10 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     };
     struct Description
     {
-        StaticArray<TierInfo, MaxAllocTiers> Tiers;
+        Description(ArenaAllocator *p_Allocator, const usize p_MaxTiers) : Tiers(p_Allocator, p_MaxTiers)
+        {
+        }
+        ArenaArray<TierInfo> Tiers;
         usize BufferSize;
         usize MaxAllocation;
         usize MinAllocation;
@@ -81,12 +83,15 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
      * by this value. The tier with index 0 has always exactly one slot. Setting this value too low may cause the buffer
      * size to explode.
      */
-    static Description CreateDescription(usize p_MaxAllocation, usize p_MinAllocation = sizeof(void *),
-                                         usize p_Granularity = 4, f32 p_TierSlotDecay = 0.9f);
+    static Description CreateDescription(ArenaAllocator *p_Allocator, usize p_MaxTiers, usize p_MaxAllocation,
+                                         usize p_MinAllocation = sizeof(void *), usize p_Granularity = 4,
+                                         f32 p_TierSlotDecay = 0.9f);
 
-    explicit TierAllocator(usize p_MaxAllocation, usize p_MinAllocation = sizeof(void *), usize p_Granularity = 4,
-                           f32 p_TierSlotDecay = 0.9f, usize p_MaxAlignment = 64);
-    explicit TierAllocator(const Description &p_Description, usize p_MaxAlignment = 64);
+    explicit TierAllocator(ArenaAllocator *p_Allocator, usize p_MaxTiers, usize p_MaxAllocation,
+                           usize p_MinAllocation = sizeof(void *), usize p_Granularity = 4, f32 p_TierSlotDecay = 0.9f,
+                           usize p_MaxAlignment = 64);
+    explicit TierAllocator(ArenaAllocator *p_Allocaotr, usize p_MaxTiers, const Description &p_Description,
+                           usize p_MaxAlignment = 64);
 
     ~TierAllocator();
 
@@ -100,7 +105,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     {
         T *ptr = static_cast<T *>(Allocate(p_Count * sizeof(T)));
         TKIT_ASSERT(!ptr || Memory::IsAligned(ptr, alignof(T)),
-                    "[TOOLKIT][BLOCK-ALLOC] Type T has stronger memory alignment requirements than specified. Bump the "
+                    "[TOOLKIT][TIER-ALLOC] Type T has stronger memory alignment requirements than specified. Bump the "
                     "alignment of the allocator or prevent using it to allocate objects of such type");
         return ptr;
     }
@@ -174,7 +179,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 #endif
     void deallocateBuffer();
 
-    StaticArray<Tier, MaxAllocTiers> m_Tiers{};
+    ArenaArray<Tier> m_Tiers;
     std::byte *m_Buffer;
     usize m_BufferSize;
     usize m_MinAllocation;

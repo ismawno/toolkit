@@ -4,10 +4,12 @@
 #include "tkit/container/dynamic_array.hpp"
 #include "tkit/container/static_array.hpp"
 #include "tkit/profiling/clock.hpp"
+#include "tkit/utils/literals.hpp"
 #include <fstream>
 
 namespace TKit::Perf
 {
+static ArenaAllocator s_Alloc{1_kib};
 struct Number
 {
     u32 Value;
@@ -19,7 +21,7 @@ void RecordThreadPoolSum(const ThreadPoolSettings &p_Settings)
     std::ofstream file(g_Root + "/performance/results/thread_pool_sum.csv");
     file << "threads,sum (ns),result\n";
 
-    ThreadPool threadPool(p_Settings.MaxThreads);
+    ThreadPool threadPool(&s_Alloc, p_Settings.MaxThreads);
     StaticArray128<Task<u32>> tasks(p_Settings.MaxThreads);
     DynamicArray<u32> values(p_Settings.SumCount);
 

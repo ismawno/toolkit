@@ -57,7 +57,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) ArenaAllocator
     {
         T *ptr = static_cast<T *>(Allocate(p_Count * sizeof(T)));
         TKIT_ASSERT(Memory::IsAligned(ptr, alignof(T)),
-                    "[TOOLKIT][STACK-ALLOC] Requested type T to be allocated has stricter alignment requirements than "
+                    "[TOOLKIT][ARENA-ALLOC] Requested type T to be allocated has stricter alignment requirements than "
                     "the ones provided by this allocator. Considering bumping the alignment parameter");
         return ptr;
     }

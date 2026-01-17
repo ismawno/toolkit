@@ -1,5 +1,6 @@
 #include "tkit/multiprocessing/for_each.hpp"
 #include "tkit/multiprocessing/thread_pool.hpp"
+#include "tkit/utils/literals.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <atomic>
 #include <array>
@@ -7,9 +8,11 @@
 using namespace TKit;
 using namespace TKit::Alias;
 
+static ArenaAllocator s_Alloc{16_kib, TKIT_CACHE_LINE_SIZE};
+
 TEST_CASE("NonBlockingForEach (void) with ThreadPool sums all elements", "[NonBlockingForEach][ThreadPool]")
 {
-    ThreadPool pool(4);
+    ThreadPool pool(&s_Alloc, 4);
     constexpr usize firstIndex = 0;
     constexpr usize lastIndex = 100;
     constexpr usize partitionCount = 5;
@@ -31,7 +34,7 @@ TEST_CASE("NonBlockingForEach (void) with ThreadPool sums all elements", "[NonBl
 
 TEST_CASE("NonBlockingForEach with output iterator collects and executes all", "[NonBlockingForEach][ThreadPool]")
 {
-    ThreadPool pool(3);
+    ThreadPool pool(&s_Alloc, 3);
     constexpr usize firstIndex = 10;
     constexpr usize lastIndex = 25;
     constexpr usize partitionCount = 5;
@@ -57,7 +60,7 @@ TEST_CASE("NonBlockingForEach with output iterator collects and executes all", "
 
 TEST_CASE("BlockingForEach with output iterator partitions and returns main result", "[BlockingForEach][ThreadPool]")
 {
-    ThreadPool pool(3);
+    ThreadPool pool(&s_Alloc, 3);
     const usize firstIndex = 0;
     const usize lastIndex = 100;
     const usize partitionCount = 4;
@@ -91,7 +94,7 @@ TEST_CASE("BlockingForEach with output iterator partitions and returns main resu
 
 TEST_CASE("BlockingForEach without output iterator executes all partitions", "[BlockingForEach][ThreadPool]")
 {
-    ThreadPool pool(2);
+    ThreadPool pool(&s_Alloc, 2);
     const usize firstIndex = 10;
     const usize lastIndex = 30;
     const usize partitionCount = 5;
