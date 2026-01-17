@@ -1,31 +1,9 @@
 #include "tkit/memory/arena_allocator.hpp"
-#include "tkit/utils/logging.hpp"
-TKIT_COMPILER_WARNING_IGNORE_PUSH()
-TKIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
-TKIT_GCC_WARNING_IGNORE("-Wunused-parameter")
-#include <catch2/catch_all.hpp>
-TKIT_COMPILER_WARNING_IGNORE_POP()
+#include <catch2/catch_test_macros.hpp>
 #include <cstddef>
 #include <vector>
 
 using namespace TKit;
-
-struct WarningShutter : Catch::EventListenerBase
-{
-    using EventListenerBase::EventListenerBase;
-
-    void testCaseStarting(const Catch::TestCaseInfo &) override
-    {
-        TKIT_IGNORE_WARNING_LOGS(true);
-    }
-
-    void testCaseEnded(const Catch::TestCaseStats &) override
-    {
-        TKIT_IGNORE_WARNING_LOGS(false);
-    }
-};
-
-CATCH_REGISTER_LISTENER(WarningShutter)
 
 // A helper non-trivial type to test Create/NCreate
 struct NonTrivialAA

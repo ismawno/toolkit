@@ -2,32 +2,25 @@
 
 #include "tkit/preprocessor/system.hpp"
 
+#define TKIT_KIB(p_Value) (p_Value) * 1024
+#define TKIT_MIB(p_Value) TKIT_KIB(p_Value) * 1024
+#define TKIT_GIB(p_Value) TKIT_MIB(p_Value) * 1024
+
 namespace TKit::Literals
 {
-
-TKIT_CONSTEVAL unsigned long long operator""_b(const unsigned long long p_Value)
+TKIT_CONSTEVAL unsigned long long operator""_kib(const unsigned long long p_Value)
 {
-    return p_Value;
+    return p_Value * 1024;
 }
 
-TKIT_CONSTEVAL unsigned long long operator""_kb(const unsigned long long p_Value)
+TKIT_CONSTEVAL unsigned long long operator""_mib(const unsigned long long p_Value)
 {
-    return p_Value * 1024_b;
+    return p_Value * 1024_kib;
 }
 
-TKIT_CONSTEVAL unsigned long long operator""_mb(const unsigned long long p_Value)
+TKIT_CONSTEVAL unsigned long long operator""_gib(const unsigned long long p_Value)
 {
-    return p_Value * 1024_kb;
-}
-
-TKIT_CONSTEVAL unsigned long long operator""_gb(const unsigned long long p_Value)
-{
-    return p_Value * 1024_mb;
-}
-
-TKIT_CONSTEVAL unsigned long long operator""_tb(const unsigned long long p_Value)
-{
-    return p_Value * 1024_gb;
+    return p_Value * 1024_mib;
 }
 }; // namespace TKit::Literals
 

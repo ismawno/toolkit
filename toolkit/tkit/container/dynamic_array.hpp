@@ -9,6 +9,9 @@ template <typename T> struct DynamicAllocation
     static constexpr bool IsReallocatable = true;
     static constexpr bool IsMovable = true;
     static constexpr bool IsDeallocatable = true;
+    static constexpr bool HasAllocator = false;
+
+    using AllocatorType = void;
 
     DynamicAllocation() = default;
 

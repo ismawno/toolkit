@@ -10,6 +10,9 @@ template <typename T, usize Capacity> struct StaticAllocation
     static constexpr bool IsReallocatable = false;
     static constexpr bool IsMovable = false;
     static constexpr bool IsDeallocatable = false;
+    static constexpr bool HasAllocator = false;
+
+    using AllocatorType = void;
 
     StaticAllocation() = default;
     struct alignas(T) Element

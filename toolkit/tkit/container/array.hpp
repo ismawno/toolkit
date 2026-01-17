@@ -65,6 +65,8 @@ template <typename T, typename AllocState> class Array
         m_State.Size = p_Other.m_State.Size;
         if constexpr (AllocState::IsReallocatable)
             m_State.GrowCapacityIf(m_State.Size > 0, m_State.Size);
+        else if constexpr (AllocState::HasAllocator)
+            m_State = AllocState{p_Other.m_State.Allocator, p_Other.m_State.GetCapacity(), m_State.Size};
         else
         {
             TKIT_ASSERT(m_State.Size <= m_State.GetCapacity(),
@@ -79,6 +81,8 @@ template <typename T, typename AllocState> class Array
         m_State.Size = p_Other.m_State.Size;
         if constexpr (AllocState::IsReallocatable)
             m_State.GrowCapacityIf(m_State.Size > 0, m_State.Size);
+        else if constexpr (AllocState::HasAllocator)
+            m_State = AllocState{p_Other.m_State.Allocator, p_Other.m_State.GetCapacity(), m_State.Size};
         else
         {
             TKIT_ASSERT(m_State.Size <= m_State.GetCapacity(),
@@ -114,6 +118,11 @@ template <typename T, typename AllocState> class Array
         const usize otherSize = p_Other.m_State.Size;
         if constexpr (AllocState::IsReallocatable)
             m_State.GrowCapacityIf(otherSize > m_State.GetCapacity(), otherSize);
+        else if constexpr (AllocState::HasAllocator)
+        {
+            if (!GetData())
+                m_State = AllocState{p_Other.m_State.Allocator, p_Other.m_State.GetCapacity(), m_State.Size};
+        }
 
         Tools::CopyAssignFromRange(begin(), end(), p_Other.begin(), p_Other.end());
         m_State.Size = otherSize;
@@ -125,6 +134,17 @@ template <typename T, typename AllocState> class Array
         const usize otherSize = p_Other.m_State.Size;
         if constexpr (AllocState::IsReallocatable)
             m_State.GrowCapacityIf(otherSize > m_State.GetCapacity(), otherSize);
+        else if constexpr (AllocState::HasAllocator && OtherAlloc::HasAllocator &&
+                           std::is_same_v<typename AllocState::AllocatorType, typename OtherAlloc::AllocatorType>)
+        {
+            if (!GetData())
+                m_State = AllocState{p_Other.m_State.Allocator, p_Other.m_State.GetCapacity(), m_State.Size};
+        }
+        else
+        {
+            TKIT_ASSERT(otherSize <= m_State.GetCapacity(), "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})",
+                        m_State.Size, m_State.GetCapacity());
+        }
 
         Tools::CopyAssignFromRange(begin(), end(), p_Other.begin(), p_Other.end());
         m_State.Size = otherSize;
@@ -350,7 +370,8 @@ template <typename T, typename AllocState> class Array
     constexpr void Clear()
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
-            Memory::DestructRange(begin(), end());
+            if (GetData())
+                Memory::DestructRange(begin(), end());
         m_State.Size = 0;
     }
 
@@ -382,21 +403,29 @@ template <typename T, typename AllocState> class Array
 
     constexpr T *begin()
     {
+        TKIT_ASSERT(GetData(), "[TOOLKIT][ARRAY] Array data is uninitialized, likely because the allocator used with "
+                               "the array needs an explicit initialization through one of the array constructors");
         return GetData();
     }
 
     constexpr T *end()
     {
+        TKIT_ASSERT(GetData(), "[TOOLKIT][ARRAY] Array data is uninitialized, likely because the allocator used with "
+                               "the array needs an explicit initialization through one of the array constructors");
         return begin() + m_State.Size;
     }
 
     constexpr const T *begin() const
     {
+        TKIT_ASSERT(GetData(), "[TOOLKIT][ARRAY] Array data is uninitialized, likely because the allocator used with "
+                               "the array needs an explicit initialization through one of the array constructors");
         return GetData();
     }
 
     constexpr const T *end() const
     {
+        TKIT_ASSERT(GetData(), "[TOOLKIT][ARRAY] Array data is uninitialized, likely because the allocator used with "
+                               "the array needs an explicit initialization through one of the array constructors");
         return begin() + m_State.Size;
     }
 
