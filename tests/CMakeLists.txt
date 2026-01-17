@@ -12,6 +12,7 @@ set(SOURCES
     tests/memory/tier_allocator.cpp
     tests/memory/ptr.cpp
     tests/container/arena_array.cpp
+    tests/container/stack_array.cpp
     tests/container/static_array.cpp
     tests/container/dynamic_array.cpp
     tests/container/container.cpp

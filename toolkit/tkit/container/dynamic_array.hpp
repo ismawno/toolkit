@@ -6,9 +6,9 @@ namespace TKit
 {
 template <typename T> struct DynamicAllocation
 {
+    static constexpr bool IsDeallocatable = true;
     static constexpr bool IsReallocatable = true;
     static constexpr bool IsMovable = true;
-    static constexpr bool IsDeallocatable = true;
     static constexpr bool HasAllocator = false;
 
     using AllocatorType = void;
@@ -34,6 +34,12 @@ template <typename T> struct DynamicAllocation
         p_Other.Size = 0;
         p_Other.Capacity = 0;
         return *this;
+    }
+
+    void Allocate()
+    {
+        TKIT_ASSERT(Capacity != 0, "[TOOLKIT][ARRAY] Capacity must be greater than 0");
+        Data = static_cast<T *>(Memory::AllocateAligned(Capacity * sizeof(T), alignof(T)));
     }
 
     void Deallocate()

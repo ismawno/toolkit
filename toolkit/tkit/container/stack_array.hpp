@@ -1,29 +1,28 @@
 #pragma once
 
 #include "tkit/container/array.hpp"
-#include "tkit/memory/arena_allocator.hpp"
+#include "tkit/memory/stack_allocator.hpp"
 
 namespace TKit
 {
-template <typename T> struct ArenaAllocation
+template <typename T> struct StackAllocation
 {
-    static constexpr bool IsAllocatable = true;
-    static constexpr bool IsDeallocatable = false;
+    static constexpr bool IsDeallocatable = true;
     static constexpr bool IsReallocatable = false;
     static constexpr bool IsMovable = true;
     static constexpr bool HasAllocator = true;
 
-    using AllocatorType = ArenaAllocator;
+    using AllocatorType = StackAllocator;
 
-    ArenaAllocation() = default;
-    ArenaAllocation(ArenaAllocator *p_Allocator, const usize p_Capacity, const usize p_Size = 0)
+    StackAllocation() = default;
+    StackAllocation(StackAllocator *p_Allocator, const usize p_Capacity, const usize p_Size = 0)
         : Allocator(p_Allocator), Size(p_Size), Capacity(p_Capacity)
     {
         Allocate();
     }
 
-    ArenaAllocation(const ArenaAllocation &) = delete;
-    ArenaAllocation(ArenaAllocation &&p_Other)
+    StackAllocation(const StackAllocation &) = delete;
+    StackAllocation(StackAllocation &&p_Other)
         : Allocator(p_Other.Allocator), Data(p_Other.Data), Size(p_Other.Size), Capacity(p_Other.Capacity)
     {
         p_Other.Allocator = nullptr;
@@ -32,8 +31,8 @@ template <typename T> struct ArenaAllocation
         p_Other.Capacity = 0;
     }
 
-    ArenaAllocation &operator=(const ArenaAllocation &) = delete;
-    ArenaAllocation &operator=(ArenaAllocation &&p_Other)
+    StackAllocation &operator=(const StackAllocation &) = delete;
+    StackAllocation &operator=(StackAllocation &&p_Other)
     {
         Allocator = p_Other.Allocator;
         Data = p_Other.Data;
@@ -52,15 +51,25 @@ template <typename T> struct ArenaAllocation
         Data = Allocator->Allocate<T>(Capacity);
     }
 
+    void Deallocate()
+    {
+        TKIT_ASSERT(Size == 0, "[TOOLKIT][ARRAY] Cannot deallocate buffer while it is not empty. Size is {}", Size);
+        if (Data)
+        {
+            Allocator->Deallocate(Data, Capacity);
+            Data = nullptr;
+            Capacity = 0;
+        }
+    }
     constexpr usize GetCapacity() const
     {
         return Capacity;
     }
 
-    ArenaAllocator *Allocator = nullptr;
+    StackAllocator *Allocator = nullptr;
     T *Data = nullptr;
     usize Size = 0;
     usize Capacity = 0;
 };
-template <typename T> using ArenaArray = Array<T, ArenaAllocation<T>>;
+template <typename T> using StackArray = Array<T, StackAllocation<T>>;
 } // namespace TKit

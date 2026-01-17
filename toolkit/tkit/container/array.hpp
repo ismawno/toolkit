@@ -159,6 +159,8 @@ template <typename T, typename AllocState> class Array
         if constexpr (AllocState::IsMovable)
         {
             Clear();
+            if constexpr (AllocState::IsDeallocatable)
+                m_State.Deallocate();
             m_State = std::move(p_Other.m_State);
         }
         else
@@ -389,6 +391,24 @@ template <typename T, typename AllocState> class Array
             m_State.Deallocate();
         else if (m_State.Size < m_State.GetCapacity())
             m_State.ModifyCapacity(m_State.Size);
+    }
+
+    constexpr void Deallocate()
+        requires(AllocState::IsDeallocatable)
+    {
+        m_State.Deallocate();
+    }
+    constexpr void Allocate(const usize p_Capacity)
+        requires(AllocState::IsAllocatable)
+    {
+        TKIT_ASSERT(m_State.Size == 0,
+                    "[TOOLKIT][ARRAY] Cannot allocate while the array has {} active allocations. Call Clear() first",
+                    m_State.Size);
+        TKIT_ASSERT(!m_State.Data,
+                    "[TOOLKIT][ARRAY] Cannot allocate with an active capacity of {}. Call Deallocate() first",
+                    m_State.Capacity);
+        m_State.Capacity = p_Capacity;
+        m_State.Allocate();
     }
 
     constexpr const T *GetData() const
