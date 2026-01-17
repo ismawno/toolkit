@@ -66,6 +66,7 @@ template <typename T> struct TierAllocation
         {
             TKIT_ASSERT(Capacity != 0,
                         "[TOOLKIT][TIER-ARRAY] Capacity cannot be zero if buffer is about to be deallocated");
+            TKIT_ASSERT(Allocator, "[TOOLKIT][TIER-ARRAY] Array must have a valid allocator to deallocate memory");
             Allocator->Deallocate(Data, Capacity);
             Data = nullptr;
             Capacity = 0;

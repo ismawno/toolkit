@@ -186,7 +186,12 @@ void *TierAllocator::Allocate(const usize p_Size)
     const usize index = getTierIndex(p_Size);
     Tier &tier = m_Tiers[index];
     if (!tier.FreeList)
+    {
+        TKIT_LOG_WARNING("[TOOLKIT][TIER-ALLOC] Allocator ran out of slots when trying to perform an allocation for "
+                         "tier index {} and size {}",
+                         index, p_Size);
         return nullptr;
+    }
 
     Allocation *alloc = tier.FreeList;
     tier.FreeList = alloc->Next;

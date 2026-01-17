@@ -10,6 +10,9 @@ template <typename T> struct ArenaAllocation
     static constexpr ArrayType Type = Array_Arena;
 
     ArenaAllocation() = default;
+    ArenaAllocation(ArenaAllocator *p_Allocator) : Allocator(p_Allocator)
+    {
+    }
     ArenaAllocation(ArenaAllocator *p_Allocator, const usize p_Capacity) : Allocator(p_Allocator)
     {
         Allocate(p_Capacity);

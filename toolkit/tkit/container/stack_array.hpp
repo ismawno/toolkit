@@ -10,6 +10,9 @@ template <typename T> struct StackAllocation
     static constexpr ArrayType Type = Array_Stack;
 
     StackAllocation() = default;
+    StackAllocation(StackAllocator *p_Allocator) : Allocator(p_Allocator)
+    {
+    }
     StackAllocation(StackAllocator *p_Allocator, const usize p_Capacity) : Allocator(p_Allocator)
     {
         Allocate(p_Capacity);
@@ -63,6 +66,7 @@ template <typename T> struct StackAllocation
         {
             TKIT_ASSERT(Capacity != 0,
                         "[TOOLKIT][STACK-ARRAY] Capacity cannot be zero if buffer is about to be deallocated");
+            TKIT_ASSERT(Allocator, "[TOOLKIT][STACK-ARRAY] Array must have a valid allocator to deallocate memory");
             Allocator->Deallocate(Data, Capacity);
             Data = nullptr;
             Capacity = 0;

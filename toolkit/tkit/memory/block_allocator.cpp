@@ -73,7 +73,10 @@ void *BlockAllocator::Allocate()
 {
     // TKIT_ASSERT(m_FreeList, "The allocator is full");
     if (!m_FreeList)
+    {
+        TKIT_LOG_WARNING("[TOOLKIT][BLOCK-ALLOC] Allocator ran out of slots when trying to perform an allocation");
         return nullptr;
+    }
 
     Allocation *alloc = m_FreeList;
     m_FreeList = m_FreeList->Next;

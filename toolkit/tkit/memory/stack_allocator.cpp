@@ -66,7 +66,12 @@ void *StackAllocator::Allocate(const usize p_Size)
     TKIT_ASSERT(p_Size != 0, "[TOOLKIT][STACK-ALLOC] Cannot allocate 0 bytes");
     const usize size = Memory::NextAlignedSize(p_Size, m_Alignment);
     if (m_Top + size > m_Capacity)
+    {
+        TKIT_LOG_WARNING(
+            "[TOOLKIT][STACK-ALLOC] Allocator ran out of memory while trying to allocate {} bytes (only {} remaining)",
+            size, m_Capacity - m_Top);
         return nullptr;
+    }
 
     std::byte *ptr = m_Buffer + m_Top;
     m_Top += size;
