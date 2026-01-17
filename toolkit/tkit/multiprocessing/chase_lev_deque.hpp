@@ -115,11 +115,11 @@ template <typename T> class ChaseLevDeque
   private:
     T load(const u64 p_Index) const
     {
-        return m_Data[p_Index & m_Mask].load(std::memory_order_relaxed);
+        return m_Data[static_cast<usize>(p_Index & m_Mask)].load(std::memory_order_relaxed);
     }
     void store(const u64 p_Index, T &&p_Element)
     {
-        m_Data[p_Index & m_Mask].store(std::move(p_Element), std::memory_order_relaxed);
+        m_Data[static_cast<usize>(p_Index & m_Mask)].store(std::move(p_Element), std::memory_order_relaxed);
     }
 
     alignas(TKIT_CACHE_LINE_SIZE) std::atomic<u64> m_Front{1};
