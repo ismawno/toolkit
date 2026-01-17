@@ -7,26 +7,18 @@ namespace TKit
 {
 template <typename T> struct ArenaAllocation
 {
-    static constexpr bool IsAllocatable = true;
-    static constexpr bool IsDeallocatable = false;
-    static constexpr bool IsReallocatable = false;
-    static constexpr bool IsMovable = true;
-    static constexpr bool HasAllocator = true;
-
-    using AllocatorType = ArenaAllocator;
+    static constexpr ArrayType Type = Array_Arena;
 
     ArenaAllocation() = default;
-    ArenaAllocation(ArenaAllocator *p_Allocator, const usize p_Capacity, const usize p_Size = 0)
-        : Allocator(p_Allocator), Size(p_Size), Capacity(p_Capacity)
+    ArenaAllocation(ArenaAllocator *p_Allocator, const usize p_Capacity) : Allocator(p_Allocator)
     {
-        Allocate();
+        Allocate(p_Capacity);
     }
 
     ArenaAllocation(const ArenaAllocation &) = delete;
     ArenaAllocation(ArenaAllocation &&p_Other)
         : Allocator(p_Other.Allocator), Data(p_Other.Data), Size(p_Other.Size), Capacity(p_Other.Capacity)
     {
-        p_Other.Allocator = nullptr;
         p_Other.Data = nullptr;
         p_Other.Size = 0;
         p_Other.Capacity = 0;
@@ -39,17 +31,28 @@ template <typename T> struct ArenaAllocation
         Data = p_Other.Data;
         Size = p_Other.Size;
         Capacity = p_Other.Capacity;
-        p_Other.Allocator = nullptr;
         p_Other.Data = nullptr;
         p_Other.Size = 0;
         p_Other.Capacity = 0;
         return *this;
     }
 
-    void Allocate()
+    void Allocate(const usize p_Capacity)
     {
-        TKIT_ASSERT(Capacity != 0, "[TOOLKIT][ARRAY] Capacity must be greater than 0");
-        Data = Allocator->Allocate<T>(Capacity);
+        TKIT_ASSERT(
+            Size == 0,
+            "[TOOLKIT][ARENA-ARRAY] Cannot allocate while the array has {} active allocations. Call Clear() first",
+            Size);
+        TKIT_ASSERT(Capacity == 0, "[TOOLKIT][ARENA-ARRAY] Cannot allocate with an active capacity of {}", Capacity);
+        TKIT_ASSERT(!Data,
+                    "[TOOLKIT][ARENA-ARRAY] Cannot allocate with an active allocation. In fact, an active allocation "
+                    "cannot exist if capacity is 0. Capacity: {}",
+                    Capacity);
+
+        TKIT_ASSERT(p_Capacity != 0, "[TOOLKIT][ARENA-ARRAY] Capacity must be greater than 0");
+        TKIT_ASSERT(Allocator, "[TOOLKIT][ARENA-ARRAY] Array must have a valid allocator to allocate memory");
+        Data = Allocator->Allocate<T>(p_Capacity);
+        Capacity = p_Capacity;
     }
 
     constexpr usize GetCapacity() const

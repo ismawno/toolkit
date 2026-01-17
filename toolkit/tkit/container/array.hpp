@@ -4,10 +4,21 @@
 
 namespace TKit
 {
+enum ArrayType : u8
+{
+    Array_Static,
+    Array_Dynamic,
+    Array_Arena,
+    Array_Stack,
+    Array_Tier
+};
+
 template <typename T, typename AllocState> class Array
 {
   public:
     static constexpr bool Safeguard = true;
+    static constexpr ArrayType Type = AllocState::Type;
+
     using ValueType = T;
     using Tools = Container::ArrayTools<T>;
 
@@ -21,7 +32,7 @@ template <typename T, typename AllocState> class Array
     constexpr explicit Array(const U p_Size, Args &&...p_Args) : m_State(std::forward<Args>(p_Args)...)
     {
         m_State.Size = static_cast<usize>(p_Size);
-        if constexpr (AllocState::IsReallocatable)
+        if constexpr (Type == Array_Dynamic || Type == Array_Tier)
             m_State.GrowCapacityIf(m_State.Size > 0, m_State.Size);
         else
         {
@@ -36,7 +47,7 @@ template <typename T, typename AllocState> class Array
     constexpr Array(const It p_Begin, const It p_End, Args &&...p_Args) : m_State(std::forward<Args>(p_Args)...)
     {
         m_State.Size = static_cast<usize>(std::distance(p_Begin, p_End));
-        if constexpr (AllocState::IsReallocatable)
+        if constexpr (Type == Array_Dynamic || Type == Array_Tier)
             m_State.GrowCapacityIf(m_State.Size > 0, m_State.Size);
         else
         {
@@ -50,7 +61,7 @@ template <typename T, typename AllocState> class Array
     constexpr Array(const std::initializer_list<T> p_List, Args &&...p_Args) : m_State(std::forward<Args>(p_Args)...)
     {
         m_State.Size = static_cast<usize>(p_List.size());
-        if constexpr (AllocState::IsReallocatable)
+        if constexpr (Type == Array_Dynamic || Type == Array_Tier)
             m_State.GrowCapacityIf(m_State.Size > 0, m_State.Size);
         else
         {
@@ -62,39 +73,53 @@ template <typename T, typename AllocState> class Array
 
     constexpr Array(const Array &p_Other)
     {
-        m_State.Size = p_Other.m_State.Size;
-        if constexpr (AllocState::IsReallocatable)
-            m_State.GrowCapacityIf(m_State.Size > 0, m_State.Size);
-        else if constexpr (AllocState::HasAllocator)
-            m_State = AllocState{p_Other.m_State.Allocator, p_Other.m_State.GetCapacity(), m_State.Size};
+        const usize otherSize = p_Other.m_State.Size;
+        if constexpr (Type == Array_Dynamic)
+            m_State.GrowCapacityIf(otherSize > 0, otherSize);
+        else if constexpr (Type == Array_Arena || Type == Array_Stack || Type == Array_Tier)
+        {
+            m_State.Allocator = p_Other.m_State.Allocator;
+            if constexpr (Type == Array_Tier)
+                m_State.GrowCapacityIf(otherSize > 0, otherSize);
+            else
+                m_State.Allocate(p_Other.m_State.Capacity);
+        }
         else
         {
-            TKIT_ASSERT(m_State.Size <= m_State.GetCapacity(),
-                        "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", m_State.Size, m_State.GetCapacity());
+            TKIT_ASSERT(otherSize <= m_State.GetCapacity(), "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})",
+                        otherSize, m_State.GetCapacity());
         }
 
+        m_State.Size = otherSize;
         Tools::CopyConstructFromRange(begin(), p_Other.begin(), p_Other.end());
     }
 
     template <typename OtherAlloc> constexpr Array(const Array<T, OtherAlloc> &p_Other)
     {
-        m_State.Size = p_Other.m_State.Size;
-        if constexpr (AllocState::IsReallocatable)
-            m_State.GrowCapacityIf(m_State.Size > 0, m_State.Size);
-        else if constexpr (AllocState::HasAllocator)
-            m_State = AllocState{p_Other.m_State.Allocator, p_Other.m_State.GetCapacity(), m_State.Size};
+        const usize otherSize = p_Other.m_State.Size;
+        if constexpr (Type == Array_Dynamic)
+            m_State.GrowCapacityIf(otherSize > 0, otherSize);
+        else if constexpr (Type == Array_Arena || Type == Array_Stack || Type == Array_Tier)
+        {
+            m_State.Allocator = p_Other.m_State.Allocator;
+            if constexpr (Type == Array_Tier)
+                m_State.GrowCapacityIf(otherSize > 0, otherSize);
+            else
+                m_State.Allocate(p_Other.m_State.Capacity);
+        }
         else
         {
-            TKIT_ASSERT(m_State.Size <= m_State.GetCapacity(),
-                        "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", m_State.Size, m_State.GetCapacity());
+            TKIT_ASSERT(otherSize <= m_State.GetCapacity(), "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})",
+                        otherSize, m_State.GetCapacity());
         }
 
+        m_State.Size = otherSize;
         Tools::CopyConstructFromRange(begin(), p_Other.begin(), p_Other.end());
     }
 
     constexpr Array(Array &&p_Other)
     {
-        if constexpr (!AllocState::IsMovable)
+        if constexpr (Type == Array_Static)
         {
             m_State.Size = p_Other.m_State.Size;
             Tools::MoveConstructFromRange(begin(), p_Other.begin(), p_Other.end());
@@ -106,7 +131,7 @@ template <typename T, typename AllocState> class Array
     ~Array()
     {
         Clear();
-        if constexpr (AllocState::IsDeallocatable)
+        if constexpr (Type == Array_Dynamic || Type == Array_Stack || Type == Array_Tier)
             m_State.Deallocate();
     }
 
@@ -116,12 +141,36 @@ template <typename T, typename AllocState> class Array
             return *this;
 
         const usize otherSize = p_Other.m_State.Size;
-        if constexpr (AllocState::IsReallocatable)
-            m_State.GrowCapacityIf(otherSize > m_State.GetCapacity(), otherSize);
-        else if constexpr (AllocState::HasAllocator)
+        if constexpr (Type == Array_Dynamic)
+            m_State.GrowCapacityIf(otherSize > m_State.Capacity, otherSize);
+        else if constexpr (Type == Array_Arena || Type == Array_Stack)
         {
+            TKIT_ASSERT(!GetData() || otherSize <= m_State.Capacity,
+                        "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", otherSize, m_State.Capacity);
+            if (!m_State.Allocator)
+            {
+                TKIT_ASSERT(!m_State.Data, "[TOOLKIT][ARRAY] If the array has no allocator, it should not be allowed "
+                                           "to have an active allocation");
+                TKIT_ASSERT(m_State.Capacity == 0,
+                            "[TOOLKIT][ARRAY] If the array has no allocator, it should not be allowed "
+                            "to have an active capacity");
+                m_State.Allocator = p_Other.m_State.Allocator;
+            }
             if (!GetData())
-                m_State = AllocState{p_Other.m_State.Allocator, p_Other.m_State.GetCapacity(), m_State.Size};
+                m_State.Allocate(p_Other.m_State.Capacity);
+        }
+        else if constexpr (Type == Array_Tier)
+        {
+            if (!m_State.Allocator)
+            {
+                TKIT_ASSERT(!m_State.Data, "[TOOLKIT][ARRAY] If the array has no allocator, it should not be allowed "
+                                           "to have an active allocation");
+                TKIT_ASSERT(m_State.Capacity == 0,
+                            "[TOOLKIT][ARRAY] If the array has no allocator, it should not be allowed "
+                            "to have an active capacity");
+                m_State.Allocator = p_Other.m_State.Allocator;
+            }
+            m_State.GrowCapacityIf(otherSize > m_State.Capacity, otherSize);
         }
 
         Tools::CopyAssignFromRange(begin(), end(), p_Other.begin(), p_Other.end());
@@ -131,19 +180,23 @@ template <typename T, typename AllocState> class Array
 
     template <typename OtherAlloc> constexpr Array &operator=(const Array<T, OtherAlloc> &p_Other)
     {
+        if (this == &p_Other)
+            return *this;
+
         const usize otherSize = p_Other.m_State.Size;
-        if constexpr (AllocState::IsReallocatable)
-            m_State.GrowCapacityIf(otherSize > m_State.GetCapacity(), otherSize);
-        else if constexpr (AllocState::HasAllocator && OtherAlloc::HasAllocator &&
-                           std::is_same_v<typename AllocState::AllocatorType, typename OtherAlloc::AllocatorType>)
+        if constexpr (Type == Array_Dynamic || Type == Array_Tier)
+            m_State.GrowCapacityIf(otherSize > m_State.Capacity, otherSize);
+        else if constexpr (Type == Array_Arena || Type == Array_Stack)
         {
+            TKIT_ASSERT(otherSize <= m_State.Capacity, "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})",
+                        otherSize, m_State.Capacity);
             if (!GetData())
-                m_State = AllocState{p_Other.m_State.Allocator, p_Other.m_State.GetCapacity(), m_State.Size};
+                m_State.Allocate(p_Other.m_State.Capacity);
         }
         else
         {
             TKIT_ASSERT(otherSize <= m_State.GetCapacity(), "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})",
-                        m_State.Size, m_State.GetCapacity());
+                        otherSize, m_State.GetCapacity());
         }
 
         Tools::CopyAssignFromRange(begin(), end(), p_Other.begin(), p_Other.end());
@@ -156,10 +209,10 @@ template <typename T, typename AllocState> class Array
         if (this == &p_Other)
             return *this;
 
-        if constexpr (AllocState::IsMovable)
+        if constexpr (Type != Array_Static)
         {
             Clear();
-            if constexpr (AllocState::IsDeallocatable)
+            if constexpr (Type != Array_Arena)
                 m_State.Deallocate();
             m_State = std::move(p_Other.m_State);
         }
@@ -175,7 +228,7 @@ template <typename T, typename AllocState> class Array
         requires std::constructible_from<T, Args...>
     constexpr T &Append(Args &&...p_Args)
     {
-        if constexpr (AllocState::IsReallocatable)
+        if constexpr (Type == Array_Dynamic || Type == Array_Tier)
         {
             const usize newSize = m_State.Size + 1;
             m_State.GrowCapacityIf(newSize > m_State.GetCapacity(), newSize);
@@ -202,7 +255,7 @@ template <typename T, typename AllocState> class Array
     constexpr void Insert(T *p_Pos, U &&p_Value)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][ARRAY] Iterator is out of bounds");
-        if constexpr (AllocState::IsReallocatable)
+        if constexpr (Type == Array_Dynamic || Type == Array_Tier)
         {
             const usize newSize = m_State.Size + 1;
             if (newSize > m_State.GetCapacity())
@@ -226,7 +279,7 @@ template <typename T, typename AllocState> class Array
     template <std::input_iterator It> constexpr void Insert(T *p_Pos, It p_Begin, It p_End)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][ARRAY] Iterator is out of bounds");
-        if constexpr (AllocState::IsReallocatable)
+        if constexpr (Type == Array_Dynamic || Type == Array_Tier)
         {
             const usize newSize = m_State.Size + static_cast<usize>(std::distance(p_Begin, p_End));
             if (newSize > m_State.GetCapacity())
@@ -313,7 +366,7 @@ template <typename T, typename AllocState> class Array
         requires std::constructible_from<T, Args...>
     constexpr void Resize(const usize p_Size, const Args &...p_Args)
     {
-        if constexpr (AllocState::IsReallocatable)
+        if constexpr (Type == Array_Dynamic || Type == Array_Tier)
             m_State.GrowCapacityIf(p_Size > m_State.GetCapacity(), p_Size);
         else
         {
@@ -378,35 +431,29 @@ template <typename T, typename AllocState> class Array
     }
 
     constexpr void Reserve(const usize p_Capacity)
-        requires(AllocState::IsReallocatable)
+        requires(Type == Array_Dynamic || Type == Array_Tier)
     {
-        if (p_Capacity > m_State.GetCapacity())
+        if (p_Capacity > m_State.Capacity)
             m_State.ModifyCapacity(p_Capacity);
     }
 
     constexpr void Shrink()
-        requires(AllocState::IsReallocatable)
+        requires(Type == Array_Dynamic || Type == Array_Tier)
     {
         if (m_State.Size == 0)
             m_State.Deallocate();
-        else if (m_State.Size < m_State.GetCapacity())
+        else if (m_State.Size < m_State.Capacity)
             m_State.ModifyCapacity(m_State.Size);
     }
 
     constexpr void Deallocate()
-        requires(AllocState::IsDeallocatable)
+        requires(Type != Array_Static && Type != Array_Arena)
     {
         m_State.Deallocate();
     }
     constexpr void Allocate(const usize p_Capacity)
-        requires(AllocState::IsAllocatable)
+        requires(Type != Array_Static)
     {
-        TKIT_ASSERT(m_State.Size == 0,
-                    "[TOOLKIT][ARRAY] Cannot allocate while the array has {} active allocations. Call Clear() first",
-                    m_State.Size);
-        TKIT_ASSERT(!m_State.Data,
-                    "[TOOLKIT][ARRAY] Cannot allocate with an active capacity of {}. Call Deallocate() first",
-                    m_State.Capacity);
         m_State.Capacity = p_Capacity;
         m_State.Allocate();
     }

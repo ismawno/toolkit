@@ -9,15 +9,15 @@ ArenaAllocator::ArenaAllocator(void *p_Buffer, const usize p_Capacity, const usi
     : m_Buffer(static_cast<std::byte *>(p_Buffer)), m_Capacity(p_Capacity), m_Alignment(p_Alignment), m_Provided(true)
 {
     TKIT_ASSERT(Bit::IsPowerOfTwo(p_Alignment),
-                "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2, but the value is {}", p_Alignment);
+                "[TOOLKIT][ARENA-ALLOC] Alignment must be a power of 2, but the value is {}", p_Alignment);
     TKIT_ASSERT(Memory::IsAligned(p_Buffer, p_Alignment),
-                "[TOOLKIT][STACK-ALLOC] Provided buffer must be aligned to the given alignment of {}", p_Alignment);
+                "[TOOLKIT][ARENA-ALLOC] Provided buffer must be aligned to the given alignment of {}", p_Alignment);
 }
 ArenaAllocator::ArenaAllocator(const usize p_Capacity, const usize p_Alignment)
     : m_Capacity(p_Capacity), m_Alignment(p_Alignment), m_Provided(false)
 {
     TKIT_ASSERT(Bit::IsPowerOfTwo(p_Alignment),
-                "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2, but the value is {}", p_Alignment);
+                "[TOOLKIT][ARENA-ALLOC] Alignment must be a power of 2, but the value is {}", p_Alignment);
     m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(static_cast<size_t>(p_Capacity), p_Alignment));
     TKIT_ASSERT(m_Buffer, "[TOOLKIT][ARENA-ALLOC] Failed to allocate memory");
 }
@@ -59,6 +59,7 @@ ArenaAllocator &ArenaAllocator::operator=(ArenaAllocator &&p_Other)
 
 void *ArenaAllocator::Allocate(const usize p_Size)
 {
+    TKIT_ASSERT(p_Size != 0, "[TOOLKIT][ARENA-ALLOC] Cannot allocate 0 bytes");
     const usize size = Memory::NextAlignedSize(p_Size, m_Alignment);
     if (m_Top + size > m_Capacity)
         return nullptr;
@@ -66,7 +67,7 @@ void *ArenaAllocator::Allocate(const usize p_Size)
     std::byte *ptr = m_Buffer + m_Top;
     m_Top += size;
     TKIT_ASSERT(Memory::IsAligned(ptr, m_Alignment),
-                "[TOOLKIT][STACK-ALLOC] Allocated memory is not aligned to specified alignment");
+                "[TOOLKIT][ARENA-ALLOC] Allocated memory is not aligned to specified alignment");
     return ptr;
 }
 
