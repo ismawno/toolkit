@@ -89,14 +89,14 @@ TEST_CASE("Alignment behavior", "[StackAllocator]")
     REQUIRE(stack.IsEmpty());
 }
 
-TEST_CASE("Create<T> and NCreate<T> with Destroy<T>", "[StackAllocator]")
+TEST_CASE("Create<T> and NCreate<T> with NDestroy<T>", "[StackAllocator]")
 {
     StackAllocator stack(256);
 
     // single Create
     NonTrivialSA::CtorCount = 0;
     NonTrivialSA::DtorCount = 0;
-    const auto p = stack.Create<NonTrivialSA>(42);
+    const NonTrivialSA *p = stack.Create<NonTrivialSA>(42);
     REQUIRE(p);
     REQUIRE(NonTrivialSA::CtorCount == 1);
     REQUIRE(p->value == 42);
@@ -107,7 +107,7 @@ TEST_CASE("Create<T> and NCreate<T> with Destroy<T>", "[StackAllocator]")
     // array NCreate
     NonTrivialSA::CtorCount = 0;
     NonTrivialSA::DtorCount = 0;
-    const auto arr = stack.NCreate<NonTrivialSA>(3, 7);
+    const NonTrivialSA *arr = stack.NCreate<NonTrivialSA>(3, 7);
     REQUIRE(arr);
     REQUIRE(NonTrivialSA::CtorCount == 3);
     for (u32 i = 0; i < 3; ++i)

@@ -152,7 +152,7 @@ class StackAllocator
             for (usize i = 0; i < p_Count; ++i)
                 p_Ptr[i].~T();
         }
-        Deallocate(p_Ptr);
+        Deallocate(p_Ptr, p_Count);
     }
 
     /**
