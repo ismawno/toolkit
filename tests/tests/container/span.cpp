@@ -1,4 +1,6 @@
 #include "tkit/container/span.hpp"
+#include "tkit/container/dynamic_array.hpp"
+#include "tkit/container/static_array.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <string>
 

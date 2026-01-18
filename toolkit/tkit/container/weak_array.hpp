@@ -1,7 +1,7 @@
 #pragma once
 
-#include "tkit/container/static_array.hpp"
-#include "tkit/container/dynamic_array.hpp"
+#include "tkit/container/fixed_array.hpp"
+#include "tkit/container/array.hpp"
 #include "tkit/utils/non_copyable.hpp"
 #include "tkit/utils/limits.hpp"
 
@@ -44,12 +44,13 @@ template <typename T, usize Capacity = TKIT_USIZE_MAX> class WeakArray
     {
     }
 
-    constexpr WeakArray(const StaticArray<ElementType, Capacity> &p_Array)
+    template <typename AllocState>
+    constexpr WeakArray(const Array<ElementType, AllocState> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
-    constexpr WeakArray(StaticArray<ElementType, Capacity> &p_Array)
-        : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
+    template <typename AllocState>
+    constexpr WeakArray(Array<ElementType, AllocState> &p_Array) : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
 
@@ -313,22 +314,13 @@ template <typename T> class WeakArray<T, TKIT_USIZE_MAX>
     {
     }
 
-    template <usize Capacity>
-    constexpr WeakArray(const StaticArray<ElementType, Capacity> &p_Array)
-        : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize()), m_Capacity(Capacity)
-    {
-    }
-    template <usize Capacity>
-    constexpr WeakArray(StaticArray<ElementType, Capacity> &p_Array)
-        : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize()), m_Capacity(Capacity)
-    {
-    }
-
-    constexpr WeakArray(const DynamicArray<ElementType> &p_Array)
+    template <typename AllocState>
+    constexpr WeakArray(const Array<ElementType, AllocState> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize()), m_Capacity(p_Array.GetCapacity())
     {
     }
-    constexpr WeakArray(DynamicArray<ElementType> &p_Array)
+    template <typename AllocState>
+    constexpr WeakArray(Array<ElementType, AllocState> &p_Array)
         : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize()), m_Capacity(p_Array.GetCapacity())
     {
     }

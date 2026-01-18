@@ -1,7 +1,7 @@
 #pragma once
 
 #include "tkit/container/weak_array.hpp"
-#include "tkit/container/dynamic_array.hpp"
+#include "tkit/container/array.hpp"
 
 namespace TKit
 {
@@ -130,13 +130,12 @@ template <typename T> class Span<T, TKIT_USIZE_MAX>
     {
     }
 
-    template <usize Capacity>
-    constexpr Span(const StaticArray<ElementType, Capacity> &p_Array)
-        : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
+    template <typename AllocState>
+    constexpr Span(const Array<ElementType, AllocState> &p_Array) : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
-    template <usize Capacity>
-    constexpr Span(StaticArray<ElementType, Capacity> &p_Array) : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
+    template <typename AllocState>
+    constexpr Span(Array<ElementType, AllocState> &p_Array) : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
 
@@ -151,13 +150,6 @@ template <typename T> class Span<T, TKIT_USIZE_MAX>
         requires(std::convertible_to<ElementType *, T *> &&
                  std::same_as<std::remove_cvref_t<ElementType>, std::remove_cvref_t<T>>)
     constexpr Span(WeakArray<ElementType, Capacity> &p_Array) : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
-    {
-    }
-
-    constexpr Span(const DynamicArray<ElementType> &p_Array) : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
-    {
-    }
-    constexpr Span(DynamicArray<ElementType> &p_Array) : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
     {
     }
 
