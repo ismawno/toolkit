@@ -148,7 +148,7 @@ template <typename T, typename AllocState> class Array
             m_State.GrowCapacityIf(otherSize > m_State.Capacity, otherSize);
         else if constexpr (Type == Array_Arena || Type == Array_Stack)
         {
-            TKIT_ASSERT(!GetData() || otherSize <= m_State.Capacity,
+            TKIT_ASSERT(!m_State.Data || otherSize <= m_State.Capacity,
                         "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", otherSize, m_State.Capacity);
             if (!m_State.Allocator)
             {
@@ -159,7 +159,7 @@ template <typename T, typename AllocState> class Array
                             "to have an active capacity");
                 m_State.Allocator = p_Other.m_State.Allocator;
             }
-            if (!GetData())
+            if (!m_State.Data)
                 m_State.Allocate(p_Other.m_State.Capacity);
         }
         else if constexpr (Type == Array_Tier)
@@ -193,7 +193,7 @@ template <typename T, typename AllocState> class Array
         {
             TKIT_ASSERT(otherSize <= m_State.Capacity, "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})",
                         otherSize, m_State.Capacity);
-            if (!GetData())
+            if (!m_State.Data)
                 m_State.Allocate(p_Other.m_State.Capacity);
         }
         else
@@ -355,39 +355,6 @@ template <typename T, typename AllocState> class Array
         --m_State.Size;
     }
 
-    /**
-     * @brief Resize the array.
-     *
-     * If the new size is smaller than the current size, the elements are destroyed. If the new size is bigger than the
-     * current size, the elements are constructed in place.
-     *
-     * @param p_Size The new size of the array.
-     * @param args The arguments to pass to the constructor of `T` (only used if the new size is bigger than the current
-     * size.)
-     */
-    template <typename... Args>
-        requires std::constructible_from<T, Args...>
-    constexpr void Resize(const usize p_Size, const Args &...p_Args)
-    {
-        if constexpr (Type == Array_Dynamic || Type == Array_Tier)
-            m_State.GrowCapacityIf(p_Size > m_State.GetCapacity(), p_Size);
-        else
-        {
-            TKIT_ASSERT(p_Size <= m_State.GetCapacity(), "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})",
-                        p_Size, m_State.GetCapacity());
-        }
-
-        if constexpr (!std::is_trivially_destructible_v<T>)
-            if (p_Size < m_State.Size)
-                Memory::DestructRange(begin() + p_Size, end());
-
-        if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
-            if (p_Size > m_State.Size)
-                Memory::ConstructRange(begin() + m_State.Size, begin() + p_Size, p_Args...);
-
-        m_State.Size = p_Size;
-    }
-
     constexpr const T &operator[](const usize p_Index) const
     {
         return At(p_Index);
@@ -433,11 +400,88 @@ template <typename T, typename AllocState> class Array
         m_State.Size = 0;
     }
 
-    constexpr void Reserve(const usize p_Capacity)
-        requires(Type == Array_Dynamic || Type == Array_Tier)
+    /**
+     * @brief Resize the array.
+     *
+     * If the new size is smaller than the current size, the elements are destroyed. If the new size is bigger than the
+     * current size, the elements are constructed in place.
+     *
+     * @param p_Size The new size of the array.
+     * @param args The arguments to pass to the constructor of `T` (only used if the new size is bigger than the current
+     * size.)
+     */
+    template <typename... Args> constexpr void Resize(const usize p_Size, const Args &...p_Args)
     {
-        if (p_Capacity > m_State.Capacity)
-            m_State.ModifyCapacity(p_Capacity);
+        if constexpr (Type == Array_Dynamic || Type == Array_Tier)
+            m_State.GrowCapacityIf(p_Size > m_State.GetCapacity(), p_Size);
+        else
+        {
+            if constexpr (Type != Array_Static)
+            {
+                if (!m_State.Data)
+                    m_State.Allocate(p_Size);
+            }
+            TKIT_ASSERT(p_Size <= m_State.GetCapacity(), "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})",
+                        p_Size, m_State.GetCapacity());
+        }
+
+        if constexpr (!std::is_trivially_destructible_v<T>)
+            if (p_Size < m_State.Size)
+                Memory::DestructRange(begin() + p_Size, end());
+
+        if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
+            if (p_Size > m_State.Size)
+                Memory::ConstructRange(begin() + m_State.Size, begin() + p_Size, p_Args...);
+
+        m_State.Size = p_Size;
+    }
+
+    constexpr void Reserve(const usize p_Capacity)
+        requires(Type != Array_Static)
+    {
+        if constexpr (Type == Array_Dynamic || Type == Array_Tier)
+        {
+            if (p_Capacity > m_State.Capacity)
+                m_State.ModifyCapacity(p_Capacity);
+        }
+        else
+            m_State.Allocate(p_Capacity);
+    }
+
+    constexpr void Allocate(const usize p_Capacity)
+        requires(Type != Array_Static)
+    {
+        m_State.Allocate(p_Capacity);
+    }
+    template <typename... Args>
+    constexpr void Create(const usize p_Size, Args &&...p_Args)
+        requires(Type != Array_Static)
+    {
+        m_State.Allocate(p_Size);
+        m_State.Size = p_Size;
+        if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
+            Memory::ConstructRange(begin(), end(), std::forward<Args>(p_Args)...);
+    }
+    template <typename Allocator>
+    constexpr void Allocate(Allocator *p_Allocator, const usize p_Capacity)
+        requires(Type != Array_Static && Type != Array_Dynamic)
+    {
+        TKIT_ASSERT(!m_State.Allocator, "[TOOLKIT][ARRAY] Array state has already an active allocator and cannot be "
+                                        "replaced. Use the Allocate() overload that does not accept an allocator");
+        m_State.Allocator = p_Allocator;
+        m_State.Allocate(p_Capacity);
+    }
+    template <typename Allocator, typename... Args>
+    constexpr void Create(Allocator *p_Allocator, const usize p_Size, Args &&...p_Args)
+        requires(Type != Array_Static && Type != Array_Dynamic)
+    {
+        TKIT_ASSERT(!m_State.Allocator, "[TOOLKIT][ARRAY] Array state has already an active allocator and cannot be "
+                                        "replaced. Use the Allocate() overload that does not accept an allocator");
+        m_State.Allocator = p_Allocator;
+        m_State.Allocate(p_Size);
+        m_State.Size = p_Size;
+        if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
+            Memory::ConstructRange(begin(), end(), std::forward<Args>(p_Args)...);
     }
 
     constexpr void Shrink()
@@ -453,41 +497,6 @@ template <typename T, typename AllocState> class Array
         requires(Type != Array_Static && Type != Array_Arena)
     {
         m_State.Deallocate();
-    }
-    constexpr void Allocate(const usize p_Capacity)
-        requires(Type != Array_Static)
-    {
-        m_State.Allocate(p_Capacity);
-    }
-    template <typename... Args>
-    constexpr void Create(const usize p_Capacity, const usize p_Size, Args &&...p_Args)
-        requires(Type != Array_Static)
-    {
-        m_State.Allocate(p_Capacity);
-        m_State.Size = p_Size;
-        if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
-            Memory::ConstructRange(begin(), end(), std::forward<Args>(p_Args)...);
-    }
-    template <typename Allocator>
-    constexpr void Allocate(Allocator *p_Allocator, const usize p_Capacity)
-        requires(Type != Array_Static && Type != Array_Dynamic)
-    {
-        TKIT_ASSERT(!m_State.Allocator, "[TOOLKIT][ARRAY] Array state has already an active allocator and cannot be "
-                                        "replaced. Use the Allocate() overload that does not accept an allocator");
-        m_State.Allocator = p_Allocator;
-        m_State.Allocate(p_Capacity);
-    }
-    template <typename Allocator, typename... Args>
-    constexpr void Create(Allocator *p_Allocator, const usize p_Capacity, const usize p_Size, Args &&...p_Args)
-        requires(Type != Array_Static && Type != Array_Dynamic)
-    {
-        TKIT_ASSERT(!m_State.Allocator, "[TOOLKIT][ARRAY] Array state has already an active allocator and cannot be "
-                                        "replaced. Use the Allocate() overload that does not accept an allocator");
-        m_State.Allocator = p_Allocator;
-        m_State.Allocate(p_Capacity);
-        m_State.Size = p_Size;
-        if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
-            Memory::ConstructRange(begin(), end(), std::forward<Args>(p_Args)...);
     }
 
     constexpr const T *GetData() const
