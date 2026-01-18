@@ -193,9 +193,6 @@ template <typename T, typename AllocState> class Array
 
     template <typename OtherAlloc> constexpr Array &operator=(const Array<T, OtherAlloc> &p_Other)
     {
-        if (this == &p_Other)
-            return *this;
-
         const usize otherSize = p_Other.m_State.Size;
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
             m_State.GrowCapacityIf(otherSize > m_State.Capacity, otherSize);
