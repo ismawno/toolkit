@@ -10,6 +10,10 @@ template <typename T> struct ArenaAllocation
     static constexpr ArrayType Type = Array_Arena;
 
     ArenaAllocation() = default;
+    ArenaAllocation(const usize p_Capacity, ArenaAllocator *p_Allocator = nullptr) : Allocator(p_Allocator)
+    {
+        Allocate(p_Capacity);
+    }
     ArenaAllocation(ArenaAllocator *p_Allocator) : Allocator(p_Allocator)
     {
     }
@@ -53,6 +57,8 @@ template <typename T> struct ArenaAllocation
                     Capacity);
 
         TKIT_ASSERT(p_Capacity != 0, "[TOOLKIT][ARENA-ARRAY] Capacity must be greater than 0");
+        if (!Allocator)
+            Allocator = Memory::GetArena();
         TKIT_ASSERT(Allocator, "[TOOLKIT][ARENA-ARRAY] Array must have a valid allocator to allocate memory");
         Data = Allocator->Allocate<T>(p_Capacity);
         Capacity = p_Capacity;

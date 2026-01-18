@@ -53,6 +53,8 @@ template <typename T> struct TierAllocation
                     Capacity);
 
         TKIT_ASSERT(p_Capacity != 0, "[TOOLKIT][TIER-ARRAY] Capacity must be greater than 0");
+        if (!Allocator)
+            Allocator = Memory::GetTier();
         TKIT_ASSERT(Allocator, "[TOOLKIT][TIER-ARRAY] Array must have a valid allocator to allocate memory");
         Data = Allocator->Allocate<T>(p_Capacity);
         Capacity = p_Capacity;
@@ -85,21 +87,22 @@ template <typename T> struct TierAllocation
     void ModifyCapacity(const usize p_Capacity)
     {
         using Tools = Container::ArrayTools<T>;
+        if (!Data)
+        {
+            Allocate(p_Capacity);
+            return;
+        }
         TKIT_ASSERT(Allocator, "[TOOLKIT][TIER-ARRAY] Array must have a valid allocator to allocate memory");
-        TKIT_ASSERT(p_Capacity > 0, "[TOOLKIT][TIER-ARRAY] Capacity must be greater than 0");
+        TKIT_ASSERT(p_Capacity != 0, "[TOOLKIT][TIER-ARRAY] Capacity must be greater than 0");
         TKIT_ASSERT(p_Capacity >= Size, "[TOOLKIT][TIER-ARRAY] Capacity ({}) is smaller than size ({})", p_Capacity,
                     Size);
         T *newData = Allocator->Allocate<T>(p_Capacity);
         TKIT_ASSERT(newData, "[TOOLKIT][TIER-ARRAY] Failed to allocate {} bytes of memory aligned to {} bytes",
                     p_Capacity * sizeof(T), alignof(T));
-
-        if (Data)
-        {
-            Tools::MoveConstructFromRange(newData, Data, Data + Size);
-            if constexpr (!std::is_trivially_destructible_v<T>)
-                Memory::DestructRange(Data, Data + Size);
-            Allocator->Deallocate(Data, Capacity);
-        }
+        Tools::MoveConstructFromRange(newData, Data, Data + Size);
+        if constexpr (!std::is_trivially_destructible_v<T>)
+            Memory::DestructRange(Data, Data + Size);
+        Allocator->Deallocate(Data, Capacity);
         Data = newData;
         Capacity = p_Capacity;
     }

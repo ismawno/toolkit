@@ -2,6 +2,9 @@
 #include "tkit/memory/memory.hpp"
 #include "tkit/profiling/macros.hpp"
 #include "tkit/preprocessor/utils.hpp"
+#include "tkit/utils/limits.hpp"
+#include "tkit/container/fixed_array.hpp"
+#include "tkit/multiprocessing/topology.hpp"
 #ifdef TKIT_ENABLE_MIMALLOC
 #    include <mimalloc-new-delete.h>
 #    include <mimalloc-override.h>
@@ -10,6 +13,52 @@
 
 namespace TKit::Memory
 {
+static thread_local FixedArray<ArenaAllocator *, MaxAllocatorPushDepth> s_Arenas{};
+static thread_local FixedArray<StackAllocator *, MaxAllocatorPushDepth> s_Stacks{};
+static thread_local FixedArray<TierAllocator *, MaxAllocatorPushDepth> s_Tiers{};
+
+static thread_local usize s_ArenaSize = 0;
+static thread_local usize s_StackSize = 0;
+static thread_local usize s_TierSize = 0;
+
+void PushArena(ArenaAllocator *p_Alloc)
+{
+    s_Arenas[s_ArenaSize++] = p_Alloc;
+}
+void PushStack(StackAllocator *p_Alloc)
+{
+    s_Stacks[s_StackSize++] = p_Alloc;
+}
+void PushTier(TierAllocator *p_Alloc)
+{
+    s_Tiers[s_TierSize++] = p_Alloc;
+}
+
+ArenaAllocator *GetArena()
+{
+    return s_ArenaSize == 0 ? nullptr : s_Arenas[s_ArenaSize - 1];
+}
+StackAllocator *GetStack()
+{
+    return s_StackSize == 0 ? nullptr : s_Stacks[s_StackSize - 1];
+}
+TierAllocator *GetTier()
+{
+    return s_TierSize == 0 ? nullptr : s_Tiers[s_TierSize - 1];
+}
+
+void PopArena()
+{
+    --s_ArenaSize;
+}
+void PopStack()
+{
+    --s_StackSize;
+}
+void PopTier()
+{
+    --s_TierSize;
+}
 
 void *Allocate(const size_t p_Size)
 {

@@ -76,7 +76,7 @@ template <typename T> struct DynamicAllocation
     void ModifyCapacity(const usize p_Capacity)
     {
         using Tools = Container::ArrayTools<T>;
-        TKIT_ASSERT(p_Capacity > 0, "[TOOLKIT][DYN-ARRAY] Capacity must be greater than 0");
+        TKIT_ASSERT(p_Capacity != 0, "[TOOLKIT][DYN-ARRAY] Capacity must be greater than 0");
         TKIT_ASSERT(p_Capacity >= Size, "[TOOLKIT][DYN-ARRAY] Capacity ({}) is smaller than size ({})", p_Capacity,
                     Size);
         T *newData = static_cast<T *>(Memory::AllocateAligned(p_Capacity * sizeof(T), alignof(T)));

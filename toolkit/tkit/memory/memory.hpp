@@ -25,8 +25,27 @@
 #    define TKIT_MEMORY_STACK_CHECK(p_Size)
 #endif
 
+namespace TKit
+{
+class ArenaAllocator;
+class StackAllocator;
+class TierAllocator;
+}; // namespace TKit
+
 namespace TKit::Memory
 {
+void PushArena(ArenaAllocator *p_Alloc);
+void PushStack(StackAllocator *p_Alloc);
+void PushTier(TierAllocator *p_Alloc);
+
+ArenaAllocator *GetArena();
+StackAllocator *GetStack();
+TierAllocator *GetTier();
+
+void PopArena();
+void PopStack();
+void PopTier();
+
 // Could abstract this in some way (by defining those as function pointers) to allow for custom allocators
 // For now, I'll leave it as it is
 

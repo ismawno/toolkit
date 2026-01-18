@@ -31,14 +31,15 @@ template <typename T, typename AllocState> class Array
     template <std::convertible_to<usize> U, typename... Args>
     constexpr explicit Array(const U p_Size, Args &&...p_Args) : m_State(std::forward<Args>(p_Args)...)
     {
-        m_State.Size = static_cast<usize>(p_Size);
+        const usize size = static_cast<usize>(p_Size);
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
-            m_State.GrowCapacityIf(m_State.Size > 0, m_State.Size);
+            m_State.GrowCapacityIf(size > 0, size);
         else
         {
-            TKIT_ASSERT(m_State.Size <= m_State.GetCapacity(),
-                        "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", m_State.Size, m_State.GetCapacity());
+            TKIT_ASSERT(size <= m_State.GetCapacity(), "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", size,
+                        m_State.GetCapacity());
         }
+        m_State.Size = size;
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
             Memory::ConstructRange(begin(), end());
     }
@@ -46,28 +47,30 @@ template <typename T, typename AllocState> class Array
     template <std::input_iterator It, typename... Args>
     constexpr Array(const It p_Begin, const It p_End, Args &&...p_Args) : m_State(std::forward<Args>(p_Args)...)
     {
-        m_State.Size = static_cast<usize>(std::distance(p_Begin, p_End));
+        const usize size = static_cast<usize>(std::distance(p_Begin, p_End));
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
-            m_State.GrowCapacityIf(m_State.Size > 0, m_State.Size);
+            m_State.GrowCapacityIf(size > 0, size);
         else
         {
-            TKIT_ASSERT(m_State.Size <= m_State.GetCapacity(),
-                        "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", m_State.Size, m_State.GetCapacity());
+            TKIT_ASSERT(size <= m_State.GetCapacity(), "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", size,
+                        m_State.GetCapacity());
         }
+        m_State.Size = size;
         Tools::CopyConstructFromRange(begin(), p_Begin, p_End);
     }
 
     template <typename... Args>
     constexpr Array(const std::initializer_list<T> p_List, Args &&...p_Args) : m_State(std::forward<Args>(p_Args)...)
     {
-        m_State.Size = static_cast<usize>(p_List.size());
+        const usize size = static_cast<usize>(p_List.size());
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
-            m_State.GrowCapacityIf(m_State.Size > 0, m_State.Size);
+            m_State.GrowCapacityIf(size > 0, size);
         else
         {
-            TKIT_ASSERT(m_State.Size <= m_State.GetCapacity(),
-                        "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", m_State.Size, m_State.GetCapacity());
+            TKIT_ASSERT(size <= m_State.GetCapacity(), "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", size,
+                        m_State.GetCapacity());
         }
+        m_State.Size = size;
         Tools::CopyConstructFromRange(begin(), p_List.begin(), p_List.end());
     }
 

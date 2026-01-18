@@ -53,6 +53,8 @@ template <typename T> struct StackAllocation
                     Capacity);
 
         TKIT_ASSERT(p_Capacity != 0, "[TOOLKIT][STACK-ARRAY] Capacity must be greater than 0");
+        if (!Allocator)
+            Allocator = Memory::GetStack();
         TKIT_ASSERT(Allocator, "[TOOLKIT][STACK-ARRAY] Array must have a valid allocator to allocate memory");
         Data = Allocator->Allocate<T>(p_Capacity);
         Capacity = p_Capacity;
