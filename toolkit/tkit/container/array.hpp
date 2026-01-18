@@ -40,7 +40,7 @@ template <typename T, typename AllocState> class Array
                         m_State.GetCapacity());
         }
         m_State.Size = size;
-        if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
+        if constexpr (!std::is_trivially_default_constructible_v<T>)
             Memory::ConstructRange(begin(), end());
     }
 
@@ -459,6 +459,15 @@ template <typename T, typename AllocState> class Array
     {
         m_State.Allocate(p_Capacity);
     }
+    template <typename... Args>
+    constexpr void Allocate(const usize p_Capacity, const usize p_Size, Args &&...p_Args)
+        requires(Type != Array_Static)
+    {
+        m_State.Allocate(p_Capacity);
+        m_State.Size = p_Size;
+        if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
+            Memory::ConstructRange(begin(), end(), std::forward<Args>(p_Args)...);
+    }
     template <typename Allocator>
     constexpr void Allocate(Allocator *p_Allocator, const usize p_Capacity)
         requires(Type != Array_Static && Type != Array_Dynamic)
@@ -467,6 +476,18 @@ template <typename T, typename AllocState> class Array
                                         "replaced. Use the Allocate() overload that does not accept an allocator");
         m_State.Allocator = p_Allocator;
         m_State.Allocate(p_Capacity);
+    }
+    template <typename Allocator, typename... Args>
+    constexpr void Allocate(Allocator *p_Allocator, const usize p_Capacity, const usize p_Size, Args &&...p_Args)
+        requires(Type != Array_Static && Type != Array_Dynamic)
+    {
+        TKIT_ASSERT(!m_State.Allocator, "[TOOLKIT][ARRAY] Array state has already an active allocator and cannot be "
+                                        "replaced. Use the Allocate() overload that does not accept an allocator");
+        m_State.Allocator = p_Allocator;
+        m_State.Allocate(p_Capacity);
+        m_State.Size = p_Size;
+        if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
+            Memory::ConstructRange(begin(), end(), std::forward<Args>(p_Args)...);
     }
 
     constexpr const T *GetData() const
