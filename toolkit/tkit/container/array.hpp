@@ -2,6 +2,10 @@
 
 #include "tkit/container/container.hpp"
 
+#define CHECK_DATA()                                                                                                   \
+    TKIT_ASSERT(GetData(), "[TOOLKIT][ARRAY] Array data is uninitialized, likely because the allocator used with "     \
+                           "the array needs an explicit initialization through one of the array constructors")
+
 namespace TKit
 {
 enum ArrayType : u8
@@ -46,7 +50,10 @@ template <typename T, typename AllocState> class Array
         }
         m_State.Size = size;
         if constexpr (!std::is_trivially_default_constructible_v<T>)
+        {
+            CHECK_DATA();
             Memory::ConstructRange(begin(), end());
+        }
     }
 
     template <std::input_iterator It, typename... Args>
@@ -66,6 +73,7 @@ template <typename T, typename AllocState> class Array
                         m_State.GetCapacity());
         }
         m_State.Size = size;
+        CHECK_DATA();
         Tools::CopyConstructFromRange(begin(), p_Begin, p_End);
     }
 
@@ -86,6 +94,7 @@ template <typename T, typename AllocState> class Array
                         m_State.GetCapacity());
         }
         m_State.Size = size;
+        CHECK_DATA();
         Tools::CopyConstructFromRange(begin(), p_List.begin(), p_List.end());
     }
 
@@ -109,6 +118,7 @@ template <typename T, typename AllocState> class Array
         }
 
         m_State.Size = otherSize;
+        CHECK_DATA();
         Tools::CopyConstructFromRange(begin(), p_Other.begin(), p_Other.end());
     }
 
@@ -131,6 +141,7 @@ template <typename T, typename AllocState> class Array
         }
 
         m_State.Size = otherSize;
+        CHECK_DATA();
         Tools::CopyConstructFromRange(begin(), p_Other.begin(), p_Other.end());
     }
 
@@ -210,6 +221,7 @@ template <typename T, typename AllocState> class Array
                         otherSize, m_State.GetCapacity());
         }
 
+        CHECK_DATA();
         Tools::CopyAssignFromRange(begin(), end(), p_Other.begin(), p_Other.end());
         m_State.Size = otherSize;
         return *this;
@@ -249,6 +261,7 @@ template <typename T, typename AllocState> class Array
         else
         {
             TKIT_ASSERT(!IsFull(), "[TOOLKIT][ARRAY] Container is already at capacity of {}", m_State.GetCapacity());
+            CHECK_DATA();
             return *Memory::ConstructFromIterator(begin() + m_State.Size++, std::forward<Args>(p_Args)...);
         }
     }
@@ -256,6 +269,7 @@ template <typename T, typename AllocState> class Array
     constexpr void Pop()
     {
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][ARRAY] Cannot Pop(). Container is already empty");
+        CHECK_DATA();
         --m_State.Size;
         if constexpr (!std::is_trivially_destructible_v<T>)
             Memory::DestructFromIterator(end());
@@ -266,6 +280,7 @@ template <typename T, typename AllocState> class Array
     constexpr void Insert(T *p_Pos, U &&p_Value)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][ARRAY] Iterator is out of bounds");
+        CHECK_DATA();
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
         {
             const usize newSize = m_State.Size + 1;
@@ -290,6 +305,7 @@ template <typename T, typename AllocState> class Array
     template <std::input_iterator It> constexpr void Insert(T *p_Pos, It p_Begin, It p_End)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos <= end(), "[TOOLKIT][ARRAY] Iterator is out of bounds");
+        CHECK_DATA();
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
         {
             const usize newSize = m_State.Size + static_cast<usize>(std::distance(p_Begin, p_End));
@@ -327,6 +343,7 @@ template <typename T, typename AllocState> class Array
     constexpr void RemoveOrdered(T *p_Pos)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT][ARRAY] Iterator is out of bounds");
+        CHECK_DATA();
         Tools::RemoveOrdered(end(), p_Pos);
         --m_State.Size;
     }
@@ -344,6 +361,7 @@ template <typename T, typename AllocState> class Array
         TKIT_ASSERT(p_Begin >= begin() && p_Begin <= end(), "[TOOLKIT][ARRAY] Begin iterator is out of bounds");
         TKIT_ASSERT(p_End >= begin() && p_End <= end(), "[TOOLKIT][ARRAY] End iterator is out of bounds");
         TKIT_ASSERT(m_State.Size >= std::distance(p_Begin, p_End), "[TOOLKIT][ARRAY] Range overflows array");
+        CHECK_DATA();
 
         m_State.Size -= Tools::RemoveOrdered(end(), p_Begin, p_End);
     }
@@ -359,6 +377,7 @@ template <typename T, typename AllocState> class Array
     constexpr void RemoveUnordered(T *p_Pos)
     {
         TKIT_ASSERT(p_Pos >= begin() && p_Pos < end(), "[TOOLKIT][ARRAY] Iterator is out of bounds");
+        CHECK_DATA();
         Tools::RemoveUnordered(end(), p_Pos);
         --m_State.Size;
     }
@@ -374,11 +393,13 @@ template <typename T, typename AllocState> class Array
     constexpr const T &At(const usize p_Index) const
     {
         TKIT_CHECK_OUT_OF_BOUNDS(p_Index, m_State.Size, "[TOOLKIT][ARRAY] ");
+        CHECK_DATA();
         return *(begin() + p_Index);
     }
     constexpr T &At(const usize p_Index)
     {
         TKIT_CHECK_OUT_OF_BOUNDS(p_Index, m_State.Size, "[TOOLKIT][ARRAY] ");
+        CHECK_DATA();
         return *(begin() + p_Index);
     }
 
@@ -452,7 +473,7 @@ template <typename T, typename AllocState> class Array
             if (p_Capacity > m_State.Capacity)
                 m_State.ModifyCapacity(p_Capacity);
         }
-        else
+        else if (p_Capacity != 0)
             m_State.Allocate(p_Capacity);
     }
 
@@ -519,29 +540,21 @@ template <typename T, typename AllocState> class Array
 
     constexpr T *begin()
     {
-        TKIT_ASSERT(GetData(), "[TOOLKIT][ARRAY] Array data is uninitialized, likely because the allocator used with "
-                               "the array needs an explicit initialization through one of the array constructors");
         return GetData();
     }
 
     constexpr T *end()
     {
-        TKIT_ASSERT(GetData(), "[TOOLKIT][ARRAY] Array data is uninitialized, likely because the allocator used with "
-                               "the array needs an explicit initialization through one of the array constructors");
         return begin() + m_State.Size;
     }
 
     constexpr const T *begin() const
     {
-        TKIT_ASSERT(GetData(), "[TOOLKIT][ARRAY] Array data is uninitialized, likely because the allocator used with "
-                               "the array needs an explicit initialization through one of the array constructors");
         return GetData();
     }
 
     constexpr const T *end() const
     {
-        TKIT_ASSERT(GetData(), "[TOOLKIT][ARRAY] Array data is uninitialized, likely because the allocator used with "
-                               "the array needs an explicit initialization through one of the array constructors");
         return begin() + m_State.Size;
     }
 
@@ -571,4 +584,5 @@ template <typename T, typename AllocState> class Array
     template <typename U, typename OtherAlloc> friend class Array;
 };
 
+#undef CHECK_DATA
 } // namespace TKit
