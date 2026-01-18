@@ -454,8 +454,14 @@ template <typename T, typename AllocState> class Array
     constexpr void Allocate(const usize p_Capacity)
         requires(Type != Array_Static)
     {
-        m_State.Capacity = p_Capacity;
-        m_State.Allocate();
+        m_State.Allocate(p_Capacity);
+    }
+    template <typename Allocator>
+    constexpr void Allocate(Allocator *p_Allocator, const usize p_Capacity)
+        requires(Type != Array_Static && Type != Array_Dynamic)
+    {
+        m_State.Allocator = p_Allocator;
+        m_State.Allocate(p_Capacity);
     }
 
     constexpr const T *GetData() const
