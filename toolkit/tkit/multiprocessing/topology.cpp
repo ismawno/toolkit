@@ -132,9 +132,10 @@ static std::string toString(const KindInfo::CoreType p_CType)
         return "IntelCore";
     case KindInfo::IntelAtom:
         return "IntelAtom";
-    default:
+    case KindInfo::Unk:
         return "Unknown";
     }
+    return "Unknown";
 }
 #    endif
 
