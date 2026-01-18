@@ -1,3 +1,5 @@
+#pragma once
+
 #ifndef TKIT_ENABLE_TIER_ALLOCATOR
 #    error                                                                                                             \
         "[TOOLKIT][TIER-ALLOC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_TIER_ALLOCATOR"
