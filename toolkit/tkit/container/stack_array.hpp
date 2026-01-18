@@ -42,6 +42,8 @@ template <typename T> struct StackAllocation
 
     void Allocate(const usize p_Capacity)
     {
+        if (p_Capacity == 0)
+            return;
         TKIT_ASSERT(
             Size == 0,
             "[TOOLKIT][STACK-ARRAY] Cannot allocate while the array has {} active allocations. Call Clear() first",
@@ -52,7 +54,6 @@ template <typename T> struct StackAllocation
                     "cannot exist if capacity is 0. Capacity: {}",
                     Capacity);
 
-        TKIT_ASSERT(p_Capacity != 0, "[TOOLKIT][STACK-ARRAY] Capacity must be greater than 0");
         if (!Allocator)
             Allocator = Memory::GetStack();
         TKIT_ASSERT(Allocator, "[TOOLKIT][STACK-ARRAY] Array must have a valid allocator to allocate memory");

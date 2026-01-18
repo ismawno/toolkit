@@ -37,6 +37,8 @@ template <typename T> struct DynamicAllocation
 
     void Allocate(const usize p_Capacity)
     {
+        if (p_Capacity == 0)
+            return;
         TKIT_ASSERT(
             Size == 0,
             "[TOOLKIT][DYN-ARRAY] Cannot allocate while the array has {} active allocations. Call Clear() first", Size);
@@ -46,7 +48,6 @@ template <typename T> struct DynamicAllocation
                     "cannot exist if capacity is 0. Capacity: {}",
                     Capacity);
 
-        TKIT_ASSERT(p_Capacity != 0, "[TOOLKIT][DYN-ARRAY] Capacity must be greater than 0");
         Data = static_cast<T *>(Memory::AllocateAligned(p_Capacity * sizeof(T), alignof(T)));
         Capacity = p_Capacity;
     }

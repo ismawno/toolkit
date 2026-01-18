@@ -46,6 +46,8 @@ template <typename T> struct ArenaAllocation
 
     void Allocate(const usize p_Capacity)
     {
+        if (p_Capacity == 0)
+            return;
         TKIT_ASSERT(
             Size == 0,
             "[TOOLKIT][ARENA-ARRAY] Cannot allocate while the array has {} active allocations. Call Clear() first",
@@ -56,7 +58,6 @@ template <typename T> struct ArenaAllocation
                     "cannot exist if capacity is 0. Capacity: {}",
                     Capacity);
 
-        TKIT_ASSERT(p_Capacity != 0, "[TOOLKIT][ARENA-ARRAY] Capacity must be greater than 0");
         if (!Allocator)
             Allocator = Memory::GetArena();
         TKIT_ASSERT(Allocator, "[TOOLKIT][ARENA-ARRAY] Array must have a valid allocator to allocate memory");
