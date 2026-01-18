@@ -69,17 +69,12 @@ template <typename T> struct Limits
 #    define TKIT_MAX_THREADS 16
 #endif
 
-#ifndef TKIT_TOPOLOGY_MAX_HANDLES
-#    define TKIT_TOPOLOGY_MAX_HANDLES 64
-#endif
-
 #ifndef TKIT_MAX_ALLOCATOR_PUSH_DEPTH
 #    define TKIT_MAX_ALLOCATOR_PUSH_DEPTH 4
 #endif
 
 constexpr usize MaxStackAlloc = TKIT_MEMORY_MAX_STACK_ALLOCATION;
 constexpr usize MaxThreads = TKIT_MAX_THREADS;
-constexpr usize MaxTopologyHandles = TKIT_TOPOLOGY_MAX_HANDLES;
 constexpr usize MaxAllocatorPushDepth = TKIT_MAX_ALLOCATOR_PUSH_DEPTH;
 
 template <typename T> constexpr bool ApproachesZero(const T p_Value)

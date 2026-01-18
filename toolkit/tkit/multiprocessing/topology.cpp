@@ -1,7 +1,6 @@
 #include "tkit/core/pch.hpp"
 #include "tkit/multiprocessing/topology.hpp"
 #include "tkit/container/dynamic_array.hpp"
-#include "tkit/memory/block_allocator.hpp"
 #include "tkit/utils/limits.hpp"
 
 #ifdef TKIT_HWLOC_INSTALLED
@@ -17,7 +16,6 @@
 
 namespace TKit::Topology
 {
-
 static thread_local usize t_ThreadIndex = 0;
 usize GetThreadIndex()
 {
@@ -61,7 +59,6 @@ struct Handle
     hwloc_topology_t Topology = nullptr;
 };
 
-static BlockAllocator s_HandleAllocator = BlockAllocator::CreateFromType<Handle>(MaxTopologyHandles);
 static DynamicArray<u32> s_BuildOrder{};
 
 struct KindInfo
@@ -286,19 +283,19 @@ void PinThread(const Handle *p_Handle, const u32 p_ThreadIndex)
     bindCurrentThread(p_Handle->Topology, pindex);
 }
 
-Handle *Initialize()
+const Handle *Initialize()
 {
-    Handle *handle = s_HandleAllocator.Allocate<Handle>();
+    Handle *handle = new Handle;
     hwloc_topology_init(&handle->Topology);
     hwloc_topology_set_flags(handle->Topology, HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM);
     hwloc_topology_load(handle->Topology);
     return handle;
 }
 
-void Terminate(Handle *p_Handle)
+void Terminate(const Handle *p_Handle)
 {
     hwloc_topology_destroy(p_Handle->Topology);
-    s_HandleAllocator.Deallocate(p_Handle);
+    delete p_Handle;
 }
 #else
 struct Handle
@@ -312,7 +309,7 @@ void PinThread(const Handle *, const u32)
 {
 }
 
-Handle *Initialize()
+const Handle *Initialize()
 {
     TKIT_LOG_WARNING(
         "[TOOLKIT][TOPOLOGY] The library HWLOC, required to pin threads to optimal cpu cores, has not been found. "
@@ -320,7 +317,7 @@ Handle *Initialize()
     return nullptr;
 }
 
-void Terminate(Handle *)
+void Terminate(const Handle *)
 {
 }
 #endif

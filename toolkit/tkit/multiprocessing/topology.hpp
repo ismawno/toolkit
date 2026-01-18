@@ -11,13 +11,13 @@ struct Handle;
 
 usize GetThreadIndex();
 void SetThreadIndex(usize p_ThreadIndex);
-Handle *Initialize();
+const Handle *Initialize();
 
 void BuildAffinityOrder(const Handle *p_Handle);
 void PinThread(const Handle *p_Handle, usize p_ThreadIndex);
 
 void SetThreadName(usize p_ThreadIndex, const char *p_Name = nullptr);
 
-void Terminate(Handle *p_Handle);
+void Terminate(const Handle *p_Handle);
 
 } // namespace TKit::Topology

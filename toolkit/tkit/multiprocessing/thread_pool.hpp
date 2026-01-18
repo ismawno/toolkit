@@ -94,7 +94,7 @@ class ThreadPool final : public ITaskManager
     ArenaArray<Worker> m_Workers;
 
     alignas(TKIT_CACHE_LINE_SIZE) std::atomic_flag m_ReadySignal = ATOMIC_FLAG_INIT;
-    Topology::Handle *m_Handle;
+    const Topology::Handle *m_Handle;
 };
 TKIT_COMPILER_WARNING_IGNORE_POP()
 } // namespace TKit
