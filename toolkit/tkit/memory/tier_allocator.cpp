@@ -5,6 +5,33 @@
 
 namespace TKit
 {
+static usize bitIndex(const usize p_Value)
+{
+    return static_cast<usize>(std::countr_zero(p_Value));
+}
+static usize getTierIndex(const usize p_Size, const usize p_MinAllocation, const usize p_Granularity,
+                          const usize p_LastIndex)
+{
+    if (p_Size <= p_MinAllocation)
+        return p_LastIndex;
+
+    const usize np2 = Bit::NextPowerOfTwo(p_Size);
+
+    const usize grIndex = bitIndex(p_Granularity);
+    const usize incIndex = bitIndex(np2 >> grIndex);
+    const usize reference = np2 - p_Size;
+
+    // Signed code for a bit more correctness, but as final result is guaranteed to not exceed uint max, it is not
+    // strictly needed constexpr auto cast = [](const usize p_Value) { return static_cast<ssize>(p_Value); };
+    //
+    // const ssize offset = cast(bitIndex(p_MinAllocation)) - cast(bitIndex(p_Granularity));
+    //
+    // const ssize idx = cast(p_LastIndex) + cast(factor) * (offset - cast(incIndex)) + cast(reference / increment);
+    // return static_cast<usize>(idx);
+    const usize offset = bitIndex(p_MinAllocation) - grIndex;
+
+    return p_LastIndex + ((offset - incIndex) << (grIndex - 1)) + (reference >> incIndex);
+}
 TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *p_Allocator, const usize p_MaxTiers,
                                                             const usize p_MaxAllocation, const usize p_MinAllocation,
                                                             const usize p_Granularity, const f32 p_TierSlotDecay)
@@ -14,10 +41,6 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *p_Al
                 "[TOOLKIT][TIER-ALLOC] All integer arguments must be powers of two when creating a tier allocator "
                 "description, but the values where {}, {} and {}",
                 p_MaxAllocation, p_MinAllocation, p_Granularity);
-    TKIT_ASSERT(p_MinAllocation >= sizeof(void *),
-                "[TOOLKIT][TIER-ALLOC] Minimum allocation size must be at least sizeof(void *) = {}, but passed value "
-                "was {} bytes",
-                sizeof(void *), p_MinAllocation);
     TKIT_ASSERT(p_Granularity <= p_MinAllocation,
                 "[TOOLKIT][TIER-ALLOC] Granularity ({}) must be less or equal than the minimum allocation ({})",
                 p_Granularity, p_MinAllocation);
@@ -26,6 +49,10 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *p_Al
     TKIT_ASSERT(p_TierSlotDecay > 0.f && p_TierSlotDecay <= 1.f,
                 "[TOOLKIT][TIER-ALLOC] Tier slot decay must be between 0.0 and 1.0, but its value was {}",
                 p_TierSlotDecay);
+    TKIT_ASSERT(p_MinAllocation >= sizeof(void *) * p_Granularity,
+                "[TOOLKIT][TIER-ALLOC] The minimum allocation must at least be granularity * sizeof(void *) = {}, but "
+                "passed value was {}",
+                p_Granularity * sizeof(void *), p_MinAllocation);
 
     Description desc{p_Allocator, p_MaxTiers};
     desc.MaxAllocation = p_MaxAllocation;
@@ -39,6 +66,11 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *p_Al
 
     const auto nextAlloc = [p_Granularity](const usize p_CurrentAlloc) {
         const usize increment = Bit::NextPowerOfTwo(p_CurrentAlloc) / p_Granularity;
+        TKIT_ASSERT(increment % sizeof(void *) == 0,
+                    "[TOOLKIT][TIER-ALLOC] Increments in memory between tiers must all be divisible by sizeof(void *) "
+                    "= {}, but found an increment of {}. To avoid this error, ensure that minAllocation >= granularity "
+                    "* sizeof(void *)",
+                    sizeof(void *), increment);
         return p_CurrentAlloc - increment;
     };
 
@@ -80,6 +112,31 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *p_Al
         currentSlots = 0;
     }
     desc.BufferSize = size;
+#ifdef TKIT_ENABLE_ASSERTS
+    const auto slowIndex = [&](const usize p_Size) {
+        for (usize i = desc.Tiers.GetSize() - 1; (i >= 0 && i < desc.Tiers.GetSize()); --i)
+            if (desc.Tiers[i].AllocationSize >= p_Size)
+                return i;
+        return desc.Tiers.GetSize();
+    };
+    for (usize size = p_MinAllocation; size < p_MaxAllocation; ++size)
+    {
+        const usize index = TKit::getTierIndex(size, p_MinAllocation, p_Granularity, desc.Tiers.GetSize() - 1);
+        TKIT_ASSERT(desc.Tiers[index].AllocationSize >= size,
+                    "[TOOLKIT][TIER-ALLOC] Allocator is malformed! Found a size of {} being assigned a tier index of "
+                    "{} with a smaller allocation size of {}",
+                    size, index, desc.Tiers[index].AllocationSize);
+        TKIT_ASSERT(index == desc.Tiers.GetSize() - 1 || desc.Tiers[index + 1].AllocationSize < size,
+                    "[TOOLKIT][TIER-ALLOC] Allocator is malformed! Found a size of {} being assigned a tier index of "
+                    "{} with an allocation size of {}, but tier index {} has a big enough allocation size of {}",
+                    size, index, desc.Tiers[index].AllocationSize, index + 1, desc.Tiers[index + 1].AllocationSize);
+        const usize sindex = slowIndex(size);
+        TKIT_ASSERT(sindex == index,
+                    "[TOOLKIT][TIER-ALLOC] Allocator is malformed! Brute forced tier index discovery of {} for a size "
+                    "of {} bytes, while the fast approach computed {}",
+                    sindex, size, index);
+    }
+#endif
     return desc;
 }
 TierAllocator::TierAllocator(ArenaAllocator *p_Allocator, const usize p_MaxTiers, const usize p_MaxAllocation,
@@ -174,6 +231,10 @@ void TierAllocator::setupMemoryLayout(const Description &p_Description)
         for (usize i = count - 1; i < count; --i)
         {
             Allocation *alloc = reinterpret_cast<Allocation *>(tier.Buffer + i * tinfo.AllocationSize);
+            TKIT_ASSERT(Memory::IsAligned(alloc, alignof(Allocation)),
+                        "[TOOLKIT][TIER-ALLOC] Allocation landed in a memory region where its alignment of {} is not "
+                        "respected. This happened when using an allocation size of {}",
+                        alignof(Allocation), tinfo.AllocationSize);
             alloc->Next = next;
             next = alloc;
         }
@@ -216,35 +277,6 @@ void TierAllocator::Deallocate(void *p_Ptr, const usize p_Size)
     Allocation *alloc = static_cast<Allocation *>(p_Ptr);
     alloc->Next = tier.FreeList;
     tier.FreeList = alloc;
-}
-
-static usize bitIndex(const usize p_Value)
-{
-    return static_cast<usize>(std::countr_zero(p_Value));
-}
-
-static usize getTierIndex(const usize p_Size, const usize p_MinAllocation, const usize p_Granularity,
-                          const usize p_LastIndex)
-{
-    if (p_Size <= p_MinAllocation)
-        return p_LastIndex;
-
-    const usize np2 = Bit::NextPowerOfTwo(p_Size);
-
-    const usize grIndex = bitIndex(p_Granularity);
-    const usize incIndex = bitIndex(np2 >> grIndex);
-    const usize reference = np2 - p_Size;
-
-    // Signed code for a bit more correctness, but as final result is guaranteed to not exceed uint max, it is not
-    // strictly needed constexpr auto cast = [](const usize p_Value) { return static_cast<ssize>(p_Value); };
-    //
-    // const ssize offset = cast(bitIndex(p_MinAllocation)) - cast(bitIndex(p_Granularity));
-    //
-    // const ssize idx = cast(p_LastIndex) + cast(factor) * (offset - cast(incIndex)) + cast(reference / increment);
-    // return static_cast<usize>(idx);
-    const usize offset = bitIndex(p_MinAllocation) - grIndex;
-
-    return p_LastIndex + ((offset - incIndex) << (grIndex - 1)) + (reference >> incIndex);
 }
 
 usize TierAllocator::Description::GetTierIndex(const usize p_Size) const
