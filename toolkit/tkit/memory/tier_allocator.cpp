@@ -114,27 +114,27 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *p_Al
     desc.BufferSize = size;
 #ifdef TKIT_ENABLE_ASSERTS
     const auto slowIndex = [&](const usize p_Size) {
-        for (usize i = desc.Tiers.GetSize() - 1; (i >= 0 && i < desc.Tiers.GetSize()); --i)
+        for (usize i = desc.Tiers.GetSize() - 1; i < desc.Tiers.GetSize(); --i)
             if (desc.Tiers[i].AllocationSize >= p_Size)
                 return i;
         return desc.Tiers.GetSize();
     };
-    for (usize size = p_MinAllocation; size <= p_MaxAllocation; ++size)
+    for (usize mem = p_MinAllocation; mem <= p_MaxAllocation; ++mem)
     {
-        const usize index = TKit::getTierIndex(size, p_MinAllocation, p_Granularity, desc.Tiers.GetSize() - 1);
-        TKIT_ASSERT(desc.Tiers[index].AllocationSize >= size,
+        const usize index = TKit::getTierIndex(mem, p_MinAllocation, p_Granularity, desc.Tiers.GetSize() - 1);
+        TKIT_ASSERT(desc.Tiers[index].AllocationSize >= mem,
                     "[TOOLKIT][TIER-ALLOC] Allocator is malformed! Found a size of {} being assigned a tier index of "
                     "{} with a smaller allocation size of {}",
-                    size, index, desc.Tiers[index].AllocationSize);
-        TKIT_ASSERT(index == desc.Tiers.GetSize() - 1 || desc.Tiers[index + 1].AllocationSize < size,
+                    mem, index, desc.Tiers[index].AllocationSize);
+        TKIT_ASSERT(index == desc.Tiers.GetSize() - 1 || desc.Tiers[index + 1].AllocationSize < mem,
                     "[TOOLKIT][TIER-ALLOC] Allocator is malformed! Found a size of {} being assigned a tier index of "
                     "{} with an allocation size of {}, but tier index {} has a big enough allocation size of {}",
-                    size, index, desc.Tiers[index].AllocationSize, index + 1, desc.Tiers[index + 1].AllocationSize);
-        const usize sindex = slowIndex(size);
+                    mem, index, desc.Tiers[index].AllocationSize, index + 1, desc.Tiers[index + 1].AllocationSize);
+        const usize sindex = slowIndex(mem);
         TKIT_ASSERT(sindex == index,
                     "[TOOLKIT][TIER-ALLOC] Allocator is malformed! Brute forced tier index discovery of {} for a size "
                     "of {} bytes, while the fast approach computed {}",
-                    sindex, size, index);
+                    sindex, mem, index);
     }
 #endif
     return desc;
