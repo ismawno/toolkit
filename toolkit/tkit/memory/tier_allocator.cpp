@@ -119,7 +119,7 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *p_Al
                 return i;
         return desc.Tiers.GetSize();
     };
-    for (usize size = p_MinAllocation; size < p_MaxAllocation; ++size)
+    for (usize size = p_MinAllocation; size <= p_MaxAllocation; ++size)
     {
         const usize index = TKit::getTierIndex(size, p_MinAllocation, p_Granularity, desc.Tiers.GetSize() - 1);
         TKIT_ASSERT(desc.Tiers[index].AllocationSize >= size,
