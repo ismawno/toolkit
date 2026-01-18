@@ -460,6 +460,8 @@ template <typename T, typename AllocState> class Array
     constexpr void Allocate(Allocator *p_Allocator, const usize p_Capacity)
         requires(Type != Array_Static && Type != Array_Dynamic)
     {
+        TKIT_ASSERT(!m_State.Allocator, "[TOOLKIT][ARRAY] Array state has already an active allocator and cannot be "
+                                        "replaced. Use the Allocate() overload that does not accept an allocator");
         m_State.Allocator = p_Allocator;
         m_State.Allocate(p_Capacity);
     }
