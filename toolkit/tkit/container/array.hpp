@@ -36,6 +36,11 @@ template <typename T, typename AllocState> class Array
             m_State.GrowCapacityIf(size > 0, size);
         else
         {
+            if constexpr (Type != Array_Static)
+            {
+                if (!m_State.Data)
+                    m_State.Allocate(size);
+            }
             TKIT_ASSERT(size <= m_State.GetCapacity(), "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", size,
                         m_State.GetCapacity());
         }
@@ -52,6 +57,11 @@ template <typename T, typename AllocState> class Array
             m_State.GrowCapacityIf(size > 0, size);
         else
         {
+            if constexpr (Type != Array_Static)
+            {
+                if (!m_State.Data)
+                    m_State.Allocate(size);
+            }
             TKIT_ASSERT(size <= m_State.GetCapacity(), "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", size,
                         m_State.GetCapacity());
         }
@@ -67,6 +77,11 @@ template <typename T, typename AllocState> class Array
             m_State.GrowCapacityIf(size > 0, size);
         else
         {
+            if constexpr (Type != Array_Static)
+            {
+                if (!m_State.Data)
+                    m_State.Allocate(size);
+            }
             TKIT_ASSERT(size <= m_State.GetCapacity(), "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", size,
                         m_State.GetCapacity());
         }
@@ -85,7 +100,7 @@ template <typename T, typename AllocState> class Array
             if constexpr (Type == Array_Tier)
                 m_State.GrowCapacityIf(otherSize > 0, otherSize);
             else
-                m_State.Allocate(p_Other.m_State.Capacity);
+                m_State.Allocate(p_Other.m_State.Capacity); // could argue... size or capacity?
         }
         else
         {
@@ -104,7 +119,6 @@ template <typename T, typename AllocState> class Array
             m_State.GrowCapacityIf(otherSize > 0, otherSize);
         else if constexpr (Type == Array_Arena || Type == Array_Stack || Type == Array_Tier)
         {
-            m_State.Allocator = p_Other.m_State.Allocator;
             if constexpr (Type == Array_Tier)
                 m_State.GrowCapacityIf(otherSize > 0, otherSize);
             else
@@ -146,36 +160,32 @@ template <typename T, typename AllocState> class Array
         const usize otherSize = p_Other.m_State.Size;
         if constexpr (Type == Array_Dynamic)
             m_State.GrowCapacityIf(otherSize > m_State.Capacity, otherSize);
-        else if constexpr (Type == Array_Arena || Type == Array_Stack)
+        else
         {
-            TKIT_ASSERT(!m_State.Data || otherSize <= m_State.Capacity,
-                        "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", otherSize, m_State.Capacity);
-            if (!m_State.Allocator)
+            if constexpr (Type != Array_Static)
             {
-                TKIT_ASSERT(!m_State.Data, "[TOOLKIT][ARRAY] If the array has no allocator, it should not be allowed "
-                                           "to have an active allocation");
-                TKIT_ASSERT(m_State.Capacity == 0,
-                            "[TOOLKIT][ARRAY] If the array has no allocator, it should not be allowed "
-                            "to have an active capacity");
-                m_State.Allocator = p_Other.m_State.Allocator;
+                if (!m_State.Allocator)
+                {
+                    TKIT_ASSERT(!m_State.Data,
+                                "[TOOLKIT][ARRAY] If the array has no allocator, it should not be allowed "
+                                "to have an active allocation");
+                    TKIT_ASSERT(m_State.Capacity == 0,
+                                "[TOOLKIT][ARRAY] If the array has no allocator, it should not be allowed "
+                                "to have an active capacity");
+                    m_State.Allocator = p_Other.m_State.Allocator;
+                }
+                if (!m_State.Data)
+                    m_State.Allocate(p_Other.m_State.Capacity);
+                else if constexpr (Type == Array_Tier)
+                    m_State.GrowCapacityIf(otherSize > m_State.Capacity, otherSize);
             }
-            if (!m_State.Data)
-                m_State.Allocate(p_Other.m_State.Capacity);
-        }
-        else if constexpr (Type == Array_Tier)
-        {
-            if (!m_State.Allocator)
+            if constexpr (Type != Array_Tier)
             {
-                TKIT_ASSERT(!m_State.Data, "[TOOLKIT][ARRAY] If the array has no allocator, it should not be allowed "
-                                           "to have an active allocation");
-                TKIT_ASSERT(m_State.Capacity == 0,
-                            "[TOOLKIT][ARRAY] If the array has no allocator, it should not be allowed "
-                            "to have an active capacity");
-                m_State.Allocator = p_Other.m_State.Allocator;
+                TKIT_ASSERT(otherSize <= m_State.GetCapacity(),
+                            "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})", otherSize,
+                            m_State.GetCapacity());
             }
-            m_State.GrowCapacityIf(otherSize > m_State.Capacity, otherSize);
         }
-
         Tools::CopyAssignFromRange(begin(), end(), p_Other.begin(), p_Other.end());
         m_State.Size = otherSize;
         return *this;
@@ -189,15 +199,13 @@ template <typename T, typename AllocState> class Array
         const usize otherSize = p_Other.m_State.Size;
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
             m_State.GrowCapacityIf(otherSize > m_State.Capacity, otherSize);
-        else if constexpr (Type == Array_Arena || Type == Array_Stack)
-        {
-            TKIT_ASSERT(otherSize <= m_State.Capacity, "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})",
-                        otherSize, m_State.Capacity);
-            if (!m_State.Data)
-                m_State.Allocate(p_Other.m_State.Capacity);
-        }
         else
         {
+            if constexpr (Type != Array_Static)
+            {
+                if (!m_State.Data)
+                    m_State.Allocate(p_Other.m_State.Capacity);
+            }
             TKIT_ASSERT(otherSize <= m_State.GetCapacity(), "[TOOLKIT][ARRAY] Size ({}) is bigger than capacity ({})",
                         otherSize, m_State.GetCapacity());
         }
