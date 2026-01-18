@@ -460,7 +460,7 @@ template <typename T, typename AllocState> class Array
         m_State.Allocate(p_Capacity);
     }
     template <typename... Args>
-    constexpr void Allocate(const usize p_Capacity, const usize p_Size, Args &&...p_Args)
+    constexpr void Create(const usize p_Capacity, const usize p_Size, Args &&...p_Args)
         requires(Type != Array_Static)
     {
         m_State.Allocate(p_Capacity);
@@ -478,7 +478,7 @@ template <typename T, typename AllocState> class Array
         m_State.Allocate(p_Capacity);
     }
     template <typename Allocator, typename... Args>
-    constexpr void Allocate(Allocator *p_Allocator, const usize p_Capacity, const usize p_Size, Args &&...p_Args)
+    constexpr void Create(Allocator *p_Allocator, const usize p_Capacity, const usize p_Size, Args &&...p_Args)
         requires(Type != Array_Static && Type != Array_Dynamic)
     {
         TKIT_ASSERT(!m_State.Allocator, "[TOOLKIT][ARRAY] Array state has already an active allocator and cannot be "
