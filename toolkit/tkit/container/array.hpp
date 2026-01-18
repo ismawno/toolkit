@@ -480,12 +480,15 @@ template <typename T, typename AllocState> class Array
     constexpr void Allocate(const usize p_Capacity)
         requires(Type != Array_Static)
     {
-        m_State.Allocate(p_Capacity);
+        if (p_Capacity != 0)
+            m_State.Allocate(p_Capacity);
     }
     template <typename... Args>
     constexpr void Create(const usize p_Size, Args &&...p_Args)
         requires(Type != Array_Static)
     {
+        if (p_Size == 0)
+            return;
         m_State.Allocate(p_Size);
         m_State.Size = p_Size;
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
@@ -498,7 +501,8 @@ template <typename T, typename AllocState> class Array
         TKIT_ASSERT(!m_State.Allocator, "[TOOLKIT][ARRAY] Array state has already an active allocator and cannot be "
                                         "replaced. Use the Allocate() overload that does not accept an allocator");
         m_State.Allocator = p_Allocator;
-        m_State.Allocate(p_Capacity);
+        if (p_Capacity != 0)
+            m_State.Allocate(p_Capacity);
     }
     template <typename Allocator, typename... Args>
     constexpr void Create(Allocator *p_Allocator, const usize p_Size, Args &&...p_Args)
@@ -507,6 +511,8 @@ template <typename T, typename AllocState> class Array
         TKIT_ASSERT(!m_State.Allocator, "[TOOLKIT][ARRAY] Array state has already an active allocator and cannot be "
                                         "replaced. Use the Allocate() overload that does not accept an allocator");
         m_State.Allocator = p_Allocator;
+        if (p_Size == 0)
+            return;
         m_State.Allocate(p_Size);
         m_State.Size = p_Size;
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
