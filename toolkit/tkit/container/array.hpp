@@ -100,7 +100,7 @@ template <typename T, typename AllocState> class Array
             if constexpr (Type == Array_Tier)
                 m_State.GrowCapacityIf(otherSize > 0, otherSize);
             else
-                m_State.Allocate(p_Other.m_State.Capacity); // could argue... size or capacity?
+                m_State.Allocate(p_Other.m_State.Capacity);
         }
         else
         {
