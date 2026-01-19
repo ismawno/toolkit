@@ -44,15 +44,16 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *p_Al
     TKIT_ASSERT(p_Granularity <= p_MinAllocation,
                 "[TOOLKIT][TIER-ALLOC] Granularity ({}) must be less or equal than the minimum allocation ({})",
                 p_Granularity, p_MinAllocation);
-    TKIT_ASSERT(p_Granularity >= 2, "[TOOLKIT][TIER-ALLOC] Granularity cannot be smaller than 2, but its value is {}",
+    TKIT_ASSERT(p_Granularity >= 2, "[TOOLKIT][TIER-ALLOC] Granularity cannot be smaller than 2, but its value was {}",
                 p_Granularity);
     TKIT_ASSERT(p_TierSlotDecay > 0.f && p_TierSlotDecay <= 1.f,
                 "[TOOLKIT][TIER-ALLOC] Tier slot decay must be between 0.0 and 1.0, but its value was {}",
                 p_TierSlotDecay);
-    TKIT_ASSERT(p_MinAllocation >= sizeof(void *) * p_Granularity,
-                "[TOOLKIT][TIER-ALLOC] The minimum allocation must at least be granularity * sizeof(void *) = {}, but "
-                "passed value was {}",
-                p_Granularity * sizeof(void *), p_MinAllocation);
+    TKIT_ASSERT(
+        2 * p_MinAllocation >= sizeof(void *) * p_Granularity,
+        "[TOOLKIT][TIER-ALLOC] The minimum allocation must at least be granularity * sizeof(void *) / 2 = {}, but "
+        "passed value was {}",
+        p_Granularity * sizeof(void *) / 2, p_MinAllocation);
 
     Description desc{p_Allocator, p_MaxTiers};
     desc.MaxAllocation = p_MaxAllocation;

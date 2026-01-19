@@ -37,8 +37,8 @@ struct alignas(64) Align64TA
 TEST_CASE("Constructor and basic state", "[TierAllocator]")
 {
     constexpr usize maxAlloc = 1024;
-    constexpr usize gran = 4;
-    constexpr usize minAlloc = gran * sizeof(void *);
+    constexpr usize gran = 8;
+    constexpr usize minAlloc = gran * sizeof(void *) / 2;
     constexpr f32 decay = 0.9f;
     constexpr usize maxAlign = 64;
 
@@ -54,8 +54,8 @@ TEST_CASE("Allocate/Deallocate across sizes", "[TierAllocator]")
 {
     // Keep params small so we can exercise several tiers
     constexpr usize maxAlloc = 256;
-    constexpr usize gran = 4;
-    constexpr usize minAlloc = gran * sizeof(void *);
+    constexpr usize gran = 8;
+    constexpr usize minAlloc = gran * sizeof(void *) / 2;
     constexpr f32 decay = 0.9f;
 
     TierAllocator alloc(&s_Alloc, 32, maxAlloc, minAlloc, gran, decay);
@@ -104,7 +104,7 @@ TEST_CASE("Exhaust smallest tier and recover", "[TierAllocator]")
 {
     constexpr usize maxAlloc = 512;
     constexpr usize gran = 4;
-    constexpr usize minAlloc = gran * sizeof(void *);
+    constexpr usize minAlloc = gran * sizeof(void *) / 2;
     constexpr f32 decay = 0.9f;
 
     TierAllocator alloc(&s_Alloc, 32, maxAlloc, minAlloc, gran, decay);
@@ -136,7 +136,7 @@ TEST_CASE("Typed Allocate<T>(count) and Destroy<T>(count)", "[TierAllocator]")
 {
     constexpr usize maxAlloc = 1024;
     constexpr usize gran = 4;
-    constexpr usize minAlloc = gran * sizeof(void *);
+    constexpr usize minAlloc = gran * sizeof(void *) / 2;
     constexpr f32 decay = 0.9f;
 
     TierAllocator alloc(&s_Alloc, 32, maxAlloc, minAlloc, gran, decay);
@@ -159,7 +159,7 @@ TEST_CASE("Create<T>, NCreate<T> and Destroy<T>", "[TierAllocator]")
 {
     constexpr usize maxAlloc = 1024;
     constexpr usize gran = 4;
-    constexpr usize minAlloc = gran * sizeof(void *);
+    constexpr usize minAlloc = gran * sizeof(void *) / 2;
     constexpr f32 decay = 0.9f;
 
     TierAllocator alloc(&s_Alloc, 32, maxAlloc, minAlloc, gran, decay);
@@ -193,7 +193,7 @@ TEST_CASE("Alignment guarantees (up to max alignment)", "[TierAllocator]")
 {
     constexpr usize maxAlloc = 1024;
     constexpr usize gran = 4;
-    constexpr usize minAlloc = gran * sizeof(void *);
+    constexpr usize minAlloc = gran * sizeof(void *) / 2;
     constexpr f32 decay = 0.9f;
     constexpr usize maxAlign = 64;
 
@@ -212,7 +212,7 @@ TEST_CASE("Belongs() only checks buffer boundaries (not allocation state)", "[Ti
 {
     constexpr usize maxAlloc = 256;
     constexpr usize gran = 4;
-    constexpr usize minAlloc = gran * sizeof(void *);
+    constexpr usize minAlloc = gran * sizeof(void *) / 2;
     constexpr f32 decay = 0.9f;
 
     TierAllocator alloc(&s_Alloc, 32, maxAlloc, minAlloc, gran, decay);
@@ -230,7 +230,7 @@ TEST_CASE("Description::GetTierIndex sanity for min allocation", "[TierAllocator
 {
     constexpr usize maxAlloc = 512;
     constexpr usize gran = 4;
-    constexpr usize minAlloc = gran * sizeof(void *);
+    constexpr usize minAlloc = gran * sizeof(void *) / 2;
     constexpr f32 decay = 0.9f;
 
     auto desc = TierAllocator::CreateDescription(&s_Alloc, 32, maxAlloc, minAlloc, gran, decay);
