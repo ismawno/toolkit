@@ -43,9 +43,6 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
         Description(ArenaAllocator *p_Allocator, const usize p_MaxTiers) : Tiers(p_Allocator, p_MaxTiers)
         {
         }
-        Description(const usize p_MaxTiers) : Tiers(p_MaxTiers)
-        {
-        }
         ArenaArray<TierInfo> Tiers;
         usize BufferSize;
         usize MaxAllocation;
@@ -92,12 +89,19 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     static Description CreateDescription(ArenaAllocator *p_Allocator, usize p_MaxTiers, usize p_MaxAllocation,
                                          usize p_MinAllocation = 2 * sizeof(void *), usize p_Granularity = 4,
                                          f32 p_TierSlotDecay = 0.9f);
+    static Description CreateDescription(usize p_MaxTiers, usize p_MaxAllocation,
+                                         usize p_MinAllocation = 2 * sizeof(void *), usize p_Granularity = 4,
+                                         f32 p_TierSlotDecay = 0.9f);
 
     explicit TierAllocator(ArenaAllocator *p_Allocator, usize p_MaxTiers, usize p_MaxAllocation,
                            usize p_MinAllocation = 2 * sizeof(void *), usize p_Granularity = 4,
                            f32 p_TierSlotDecay = 0.9f, usize p_MaxAlignment = 64);
-    explicit TierAllocator(ArenaAllocator *p_Allocaotr, usize p_MaxTiers, const Description &p_Description,
+    explicit TierAllocator(ArenaAllocator *p_Allocator, usize p_MaxTiers, const Description &p_Description,
                            usize p_MaxAlignment = 64);
+
+    explicit TierAllocator(usize p_MaxTiers, usize p_MaxAllocation, usize p_MinAllocation = 2 * sizeof(void *),
+                           usize p_Granularity = 4, f32 p_TierSlotDecay = 0.9f, usize p_MaxAlignment = 64);
+    explicit TierAllocator(usize p_MaxTiers, const Description &p_Description, usize p_MaxAlignment = 64);
 
     ~TierAllocator();
 

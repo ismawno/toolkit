@@ -32,6 +32,13 @@ static usize getTierIndex(const usize p_Size, const usize p_MinAllocation, const
 
     return p_LastIndex + ((offset - incIndex) << (grIndex - 1)) + (reference >> incIndex);
 }
+TierAllocator::Description TierAllocator::CreateDescription(const usize p_MaxTiers, const usize p_MaxAllocation,
+                                                            const usize p_MinAllocation, const usize p_Granularity,
+                                                            const f32 p_TierSlotDecay)
+{
+    return CreateDescription(TKit::Memory::GetArena(), p_MaxTiers, p_MaxAllocation, p_MinAllocation, p_Granularity,
+                             p_TierSlotDecay);
+}
 TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *p_Allocator, const usize p_MaxTiers,
                                                             const usize p_MaxAllocation, const usize p_MinAllocation,
                                                             const usize p_Granularity, const f32 p_TierSlotDecay)
@@ -139,6 +146,12 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *p_Al
     }
 #endif
     return desc;
+}
+TierAllocator::TierAllocator(const usize p_MaxTiers, const usize p_MaxAllocation, const usize p_MinAllocation,
+                             const usize p_Granularity, const f32 p_TierSlotDecay, const usize p_MaxAlignment)
+    : TierAllocator(TKit::Memory::GetArena(), p_MaxTiers, p_MaxAllocation, p_MinAllocation, p_Granularity,
+                    p_TierSlotDecay, p_MaxAlignment)
+{
 }
 TierAllocator::TierAllocator(ArenaAllocator *p_Allocator, const usize p_MaxTiers, const usize p_MaxAllocation,
                              const usize p_MinAllocation, const usize p_Granularity, const f32 p_TierSlotDecay,
