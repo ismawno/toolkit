@@ -120,6 +120,13 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
         return ptr;
     }
 
+    template <typename T>
+        requires(!std::same_as<T, void>)
+    void Deallocate(T *p_Ptr, const usize p_Count = 1)
+    {
+        Deallocate(static_cast<void *>(p_Ptr), p_Count * sizeof(T));
+    }
+
     template <typename T, typename... Args> T *Create(Args &&...p_Args)
     {
         T *ptr = Allocate<T>();
@@ -137,7 +144,16 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
         return ptr;
     }
 
-    template <typename T> void Destroy(T *p_Ptr, const usize p_Count = 1)
+    template <typename T>
+        requires(!std::same_as<T, void>)
+    constexpr void Destroy(T *p_Ptr)
+    {
+        if constexpr (!std::is_trivially_destructible_v<T>)
+            p_Ptr->~T();
+        Deallocate(p_Ptr);
+    }
+
+    template <typename T> void NDestroy(T *p_Ptr, const usize p_Count)
     {
         TKIT_ASSERT(p_Ptr, "[TOOLKIT][TIER-ALLOC] Cannot deallocate a null pointer");
         TKIT_ASSERT(Belongs(p_Ptr),
@@ -145,8 +161,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
         if constexpr (!std::is_trivially_destructible_v<T>)
             for (usize i = 0; i < p_Count; ++i)
                 p_Ptr[i].~T();
-
-        Deallocate(p_Ptr, p_Count * sizeof(T));
+        Deallocate(p_Ptr, p_Count);
     }
 
     /**

@@ -143,17 +143,14 @@ class alignas(TKIT_CACHE_LINE_SIZE) StackAllocator
      */
     template <typename T> constexpr void NDestroy(const T *p_Ptr, const usize p_Count)
     {
+        TKIT_ASSERT(p_Ptr, "[TOOLKIT][STACK-ALLOC] Cannot deallocate a null pointer");
+        TKIT_ASSERT(m_Top != 0, "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is empty");
+        TKIT_ASSERT(m_Buffer + m_Top - Memory::NextAlignedSize(sizeof(T) * p_Count, m_Alignment) ==
+                        reinterpret_cast<const std::byte *>(p_Ptr),
+                    "[TOOLKIT][STACK-ALLOC] Elements must be deallocated in the reverse order they were allocated");
         if constexpr (!std::is_trivially_destructible_v<T>)
-        {
-            TKIT_ASSERT(p_Ptr, "[TOOLKIT][STACK-ALLOC] Cannot deallocate a null pointer");
-            TKIT_ASSERT(m_Top != 0, "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is empty");
-            TKIT_ASSERT(m_Buffer + m_Top - Memory::NextAlignedSize(sizeof(T) * p_Count, m_Alignment) ==
-                            reinterpret_cast<const std::byte *>(p_Ptr),
-                        "[TOOLKIT][STACK-ALLOC] Elements must be deallocated in the reverse order they were allocated");
-
             for (usize i = 0; i < p_Count; ++i)
                 p_Ptr[i].~T();
-        }
         Deallocate(p_Ptr, p_Count);
     }
 

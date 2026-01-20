@@ -152,7 +152,7 @@ TEST_CASE("Typed Allocate<T>(count) and Destroy<T>(count)", "[TierAllocator]")
     for (usize i = 0; i < count; ++i)
         REQUIRE(arr[i] == static_cast<u32>(i * 3));
 
-    alloc.Destroy(arr, count);
+    alloc.NDestroy(arr, count);
 }
 
 TEST_CASE("Create<T>, NCreate<T> and Destroy<T>", "[TierAllocator]")
@@ -185,7 +185,7 @@ TEST_CASE("Create<T>, NCreate<T> and Destroy<T>", "[TierAllocator]")
     for (usize i = 0; i < n; ++i)
         REQUIRE(many[i].value == 42);
 
-    alloc.Destroy(many, n);
+    alloc.NDestroy(many, n);
     REQUIRE(NonTrivialTA::DtorCount == 1 + n);
 }
 
