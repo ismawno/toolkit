@@ -5,7 +5,7 @@
 
 using namespace TKit;
 
-static ArenaAllocator s_Alloc{10_kib};
+static ArenaAllocator s_Alloc{1_mib};
 
 // A helper non-trivial type to test Create<T>, NCreate<T>, Destroy<T>
 struct NonTrivialTA

@@ -12,7 +12,7 @@ using namespace TKit::Alias;
 // A non-trivial type to track construction/destruction
 static u32 g_Constructions = 0;
 static u32 g_Destructions = 0;
-static ArenaAllocator s_Arena{1_kib};
+static ArenaAllocator s_Arena{10_kib};
 static TierAllocator s_Alloc{&s_Arena, 32, 16_kib};
 struct TTrackable
 {

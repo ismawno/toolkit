@@ -194,6 +194,11 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     {
         std::byte *Buffer;
         Allocation *FreeList;
+#ifdef TKIT_ENABLE_ASSERTS
+        usize Allocations = 0;
+        usize Deallocations = 0;
+        usize Slots = 0;
+#endif
     };
 
     usize getTierIndex(usize p_Size) const;
