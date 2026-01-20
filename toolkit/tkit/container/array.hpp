@@ -510,7 +510,7 @@ template <typename T, typename AllocState> class Array
         TKIT_ASSERT(ptr || m_State.Size == 0,
                     "[TOOLKIT][ARRAY] If the data of an array is null, its size must be zero");
         TKIT_ASSERT(ptr || m_State.GetCapacity() == 0,
-                    "[TOOLKIT][ARRAY] If the dat of an array is null, its capacity must be zero");
+                    "[TOOLKIT][ARRAY] If the data of an array is null, its capacity must be zero");
         TKIT_ASSERT(!ptr || m_State.GetCapacity() != 0,
                     "[TOOLKIT][ARRAY] If the data of an array is not null, its capacity must be greater than 0");
         return ptr;
@@ -522,7 +522,7 @@ template <typename T, typename AllocState> class Array
         TKIT_ASSERT(ptr || m_State.Size == 0,
                     "[TOOLKIT][ARRAY] If the data of an array is null, its size must be zero");
         TKIT_ASSERT(ptr || m_State.GetCapacity() == 0,
-                    "[TOOLKIT][ARRAY] If the dat of an array is null, its capacity must be zero");
+                    "[TOOLKIT][ARRAY] If the data of an array is null, its capacity must be zero");
         TKIT_ASSERT(!ptr || m_State.GetCapacity() != 0,
                     "[TOOLKIT][ARRAY] If the data of an array is not null, its capacity must be greater than 0");
         return ptr;
