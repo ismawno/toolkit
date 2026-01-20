@@ -67,9 +67,15 @@ bool ThreadPool::trySteal(const usize p_Victim)
     return false;
 }
 
-ThreadPool::ThreadPool(ArenaAllocator *p_Allocator, const usize p_WorkerCount, usize p_MaxTasksPerQueue)
+ThreadPool::ThreadPool(const usize p_WorkerCount, const usize p_MaxTasksPerQueue)
+    : ThreadPool(TKit::Memory::GetArena(), p_WorkerCount, p_MaxTasksPerQueue)
+{
+}
+
+ThreadPool::ThreadPool(ArenaAllocator *p_Allocator, const usize p_WorkerCount, const usize p_MaxTasksPerQueue)
     : ITaskManager(p_WorkerCount), m_Workers{p_Allocator, p_WorkerCount}
 {
+    TKIT_ASSERT(p_Allocator, "[TOOLKIT][MULTIPROC] An arena allocator must be provided, but passed value was null");
     TKIT_ASSERT(p_WorkerCount > 1, "[TOOLKIT][MULTIPROC] At least 2 workers are required to create a thread pool");
     m_Handle = Topology::Initialize();
     Topology::SetThreadIndex(0);

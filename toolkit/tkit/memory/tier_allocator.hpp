@@ -61,9 +61,10 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
      * with a reasonable total buffer size. Check the description values to make sure the buffer size has a value that
      * works for you.
      *
-     * All integer parameters must be powers of 2. The maximum alignment is provided at construction. Every allocation
-     * is guaranteed to be aligned to the maximum alignment or its natural alignment, so the allocator will respect
-     * alignment requirements (including the ones set by `alignas`) up to the specified maximum alignment.
+     * All integer parameters (except for `p_MaxTiers`) must be powers of 2. The maximum alignment is provided at
+     * construction. Every allocation is guaranteed to be aligned to the maximum alignment or its natural alignment, so
+     * the allocator will respect alignment requirements (including the ones set by `alignas`) up to the specified
+     * maximum alignment.
      *
      * @param p_MaxAllocation The maximum allocation size the allocator will support. This also equals to the size of
      * the first tier (which is the one with the largest allocation size), meaning only one allocation of

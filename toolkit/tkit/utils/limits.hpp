@@ -69,6 +69,10 @@ template <typename T> struct Limits
 #    define TKIT_MAX_THREADS 16
 #endif
 
+#if TKIT_MAX_THREADS < 1
+#    error "[TOOLKIT][LIMITS] TKIT_MAX_THREADS must be at least 1"
+#endif
+
 #ifndef TKIT_MAX_ALLOCATOR_PUSH_DEPTH
 #    define TKIT_MAX_ALLOCATOR_PUSH_DEPTH 4
 #endif

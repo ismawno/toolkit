@@ -53,7 +53,8 @@ class ThreadPool final : public ITaskManager
         std::atomic_flag TerminateSignal = ATOMIC_FLAG_INIT;
     };
 
-    explicit ThreadPool(ArenaAllocator *p_Allocator, usize p_WokerCount, usize p_MaxTasksPerQueue = 32);
+    ThreadPool(ArenaAllocator *p_Allocator, usize p_WokerCount, usize p_MaxTasksPerQueue = 32);
+    explicit ThreadPool(usize p_WokerCount, usize p_MaxTasksPerQueue = 32);
     ~ThreadPool() override;
 
     /**
