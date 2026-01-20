@@ -43,6 +43,9 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
         Description(ArenaAllocator *p_Allocator, const usize p_MaxTiers) : Tiers(p_Allocator, p_MaxTiers)
         {
         }
+        Description(const usize p_MaxTiers) : Tiers(p_MaxTiers)
+        {
+        }
         ArenaArray<TierInfo> Tiers;
         usize BufferSize;
         usize MaxAllocation;
