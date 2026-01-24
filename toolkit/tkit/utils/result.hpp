@@ -8,8 +8,8 @@
     return p_Result
 
 #define TKIT_RETURN_IF_FAILED(p_Expression)                                                                            \
-    if (const auto result = p_Expression; !result)                                                                     \
-        return result;
+    if (const auto __tkit_result = p_Expression; !__tkit_result)                                                       \
+        return __tkit_result;
 
 #define TKIT_OR_ELSE(p_Result, p_Fallback) p_Result ? p_Result.GetValue() : p_Fallback
 
