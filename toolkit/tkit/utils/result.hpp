@@ -7,6 +7,10 @@
     if (!p_Result)                                                                                                     \
     return p_Result
 
+#define TKIT_RETURN_IF_FAILED(p_Expression)                                                                            \
+    if (const auto result = p_Expression; !result)                                                                     \
+        return result;
+
 #define TKIT_OR_ELSE(p_Result, p_Fallback) p_Result ? p_Result.GetValue() : p_Fallback
 
 namespace TKit
