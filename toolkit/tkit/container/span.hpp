@@ -142,8 +142,7 @@ template <typename T> class Span<T, TKIT_USIZE_MAX>
     template <typename ElementType, usize Capacity>
         requires(std::convertible_to<ElementType *, T *> &&
                  std::same_as<std::remove_cvref_t<ElementType>, std::remove_cvref_t<T>>)
-    constexpr Span(const WeakArray<ElementType, Capacity> &array)
-        : m_Data(array.GetData()), m_Size(array.GetSize())
+    constexpr Span(const WeakArray<ElementType, Capacity> &array) : m_Data(array.GetData()), m_Size(array.GetSize())
     {
     }
     template <typename ElementType, usize Capacity>

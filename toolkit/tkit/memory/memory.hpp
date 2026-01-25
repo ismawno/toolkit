@@ -8,15 +8,15 @@
 #ifdef TKIT_COMPILER_MSVC
 #    define TKIT_MEMORY_STACK_ALLOCATE(size) _alloca(size)
 #    define TKIT_MEMORY_STACK_DEALLOCATE(ptr)
-#    define TKIT_MEMORY_STACK_CHECK(size)                                                                            \
-        TKIT_ASSERT(size <= TKit::MaxStackAlloc,                                                                     \
+#    define TKIT_MEMORY_STACK_CHECK(size)                                                                              \
+        TKIT_ASSERT(size <= TKit::MaxStackAlloc,                                                                       \
                     "[TOOLKIT][MEMORY] Stack allocation size exceeded. Requested size was {}, but maximum is {}",      \
                     size, TKit::MaxStackAlloc)
 #elif defined(TKIT_COMPILER_GCC) || defined(TKIT_COMPILER_CLANG)
 #    define TKIT_MEMORY_STACK_ALLOCATE(size) alloca(size)
 #    define TKIT_MEMORY_STACK_DEALLOCATE(ptr)
-#    define TKIT_MEMORY_STACK_CHECK(size)                                                                            \
-        TKIT_ASSERT(size <= TKit::MaxStackAlloc,                                                                     \
+#    define TKIT_MEMORY_STACK_CHECK(size)                                                                              \
+        TKIT_ASSERT(size <= TKit::MaxStackAlloc,                                                                       \
                     "[TOOLKIT][MEMORY] Stack allocation size exceeded. Requested size was {}, but maximum is {}",      \
                     size, TKit::MaxStackAlloc)
 #else

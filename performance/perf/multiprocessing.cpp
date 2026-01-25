@@ -31,13 +31,12 @@ void RecordThreadPoolSum(const ThreadPoolSettings &settings)
     usize nthreads = 1;
     while (nthreads <= settings.MaxThreads)
     {
-        NonBlockingForEach(threadPool, values.begin(), values.end(), tasks.begin(), nthreads,
-                           [](auto it1, auto it2) {
-                               u32 sum = 0;
-                               for (auto it = it1; it != it2; ++it)
-                                   sum += *it;
-                               return sum;
-                           });
+        NonBlockingForEach(threadPool, values.begin(), values.end(), tasks.begin(), nthreads, [](auto it1, auto it2) {
+            u32 sum = 0;
+            for (auto it = it1; it != it2; ++it)
+                sum += *it;
+            return sum;
+        });
 
         Clock clock;
         u32 sum = 0;

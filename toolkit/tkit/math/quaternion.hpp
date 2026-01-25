@@ -35,8 +35,7 @@ template <Float T> struct Quaternion
     {
         *this = FromEulerAngles(eulerAngles);
     }
-    constexpr explicit Quaternion(const vec4<T> &vector)
-        : w(vector[0]), x(vector[1]), y(vector[2]), z(vector[3])
+    constexpr explicit Quaternion(const vec4<T> &vector) : w(vector[0]), x(vector[1]), y(vector[2]), z(vector[3])
     {
     }
 
@@ -115,14 +114,14 @@ template <Float T> struct Quaternion
         switch (biggestIndex)
         {
         case 0:
-            return Quaternion(biggestVal, (matrix[1][2] - matrix[2][1]) * mult,
-                              (matrix[2][0] - matrix[0][2]) * mult, (matrix[0][1] - matrix[1][0]) * mult);
+            return Quaternion(biggestVal, (matrix[1][2] - matrix[2][1]) * mult, (matrix[2][0] - matrix[0][2]) * mult,
+                              (matrix[0][1] - matrix[1][0]) * mult);
         case 1:
-            return Quaternion((matrix[1][2] - matrix[2][1]) * mult, biggestVal,
-                              (matrix[0][1] + matrix[1][0]) * mult, (matrix[2][0] + matrix[0][2]) * mult);
+            return Quaternion((matrix[1][2] - matrix[2][1]) * mult, biggestVal, (matrix[0][1] + matrix[1][0]) * mult,
+                              (matrix[2][0] + matrix[0][2]) * mult);
         case 2:
-            return Quaternion((matrix[2][0] - matrix[0][2]) * mult, (matrix[0][1] + matrix[1][0]) * mult,
-                              biggestVal, (matrix[1][2] + matrix[2][1]) * mult);
+            return Quaternion((matrix[2][0] - matrix[0][2]) * mult, (matrix[0][1] + matrix[1][0]) * mult, biggestVal,
+                              (matrix[1][2] + matrix[2][1]) * mult);
         case 3:
             return Quaternion((matrix[0][1] - matrix[1][0]) * mult, (matrix[2][0] + matrix[0][2]) * mult,
                               (matrix[1][2] + matrix[2][1]) * mult, biggestVal);
@@ -191,11 +190,10 @@ template <Float T> struct Quaternion
         return vec3<T>{x, y, z};
     }
 
-#define CREATE_ARITHMETIC_OP(op)                                                                                     \
-    friend constexpr Quaternion operator op(const Quaternion &left, const Quaternion &right)                     \
+#define CREATE_ARITHMETIC_OP(op)                                                                                       \
+    friend constexpr Quaternion operator op(const Quaternion &left, const Quaternion &right)                           \
     {                                                                                                                  \
-        return Quaternion{left.w op right.w, left.x op right.x, left.y op right.y,                   \
-                          left.z op right.z};                                                                    \
+        return Quaternion{left.w op right.w, left.x op right.x, left.y op right.y, left.z op right.z};                 \
     }
 
     CREATE_ARITHMETIC_OP(+)
@@ -231,14 +229,14 @@ template <Float T> struct Quaternion
         return result;
     }
 
-#define CREATE_SCALAR_OP(op)                                                                                         \
-    friend constexpr Quaternion operator op(const Quaternion &left, const T right)                               \
+#define CREATE_SCALAR_OP(op)                                                                                           \
+    friend constexpr Quaternion operator op(const Quaternion &left, const T right)                                     \
     {                                                                                                                  \
-        return Quaternion{left.w op right, left.x op right, left.y op right, left.z op right}; \
+        return Quaternion{left.w op right, left.x op right, left.y op right, left.z op right};                         \
     }                                                                                                                  \
-    friend constexpr Quaternion operator op(const T left, const Quaternion &right)                               \
+    friend constexpr Quaternion operator op(const T left, const Quaternion &right)                                     \
     {                                                                                                                  \
-        return Quaternion{left op right.w, left op right.x, left op right.y, left op right.z}; \
+        return Quaternion{left op right.w, left op right.x, left op right.y, left op right.z};                         \
     }
 
     CREATE_SCALAR_OP(+)
@@ -246,25 +244,24 @@ template <Float T> struct Quaternion
     CREATE_SCALAR_OP(*)
     CREATE_SCALAR_OP(/)
 
-#define CREATE_CMP_OP(op, cmp)                                                                                     \
-    friend constexpr bool operator op(const Quaternion &left, const Quaternion &right)                           \
+#define CREATE_CMP_OP(op, cmp)                                                                                         \
+    friend constexpr bool operator op(const Quaternion &left, const Quaternion &right)                                 \
     {                                                                                                                  \
-        return left.w op right.w cmp left.x op right.x cmp left.y op right.y cmp               \
-            left.z op right.z;                                                                                   \
+        return left.w op right.w cmp left.x op right.x cmp left.y op right.y cmp left.z op right.z;                    \
     }
 
     CREATE_CMP_OP(==, &&)
     CREATE_CMP_OP(!=, ||)
 
-#define CREATE_SELF_OP(op)                                                                                           \
-    constexpr Quaternion &operator op## = (const Quaternion &other)                                                \
+#define CREATE_SELF_OP(op)                                                                                             \
+    constexpr Quaternion &operator op## = (const Quaternion &other)                                                    \
     {                                                                                                                  \
-        *this = *this op other;                                                                                    \
+        *this = *this op other;                                                                                        \
         return *this;                                                                                                  \
     }                                                                                                                  \
-    template <std::convertible_to<T> U> constexpr Quaternion &operator op## = (const U value)                      \
+    template <std::convertible_to<T> U> constexpr Quaternion &operator op## = (const U value)                          \
     {                                                                                                                  \
-        *this = *this op value;                                                                                    \
+        *this = *this op value;                                                                                        \
         return *this;                                                                                                  \
     }
 

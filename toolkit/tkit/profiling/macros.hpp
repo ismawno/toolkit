@@ -25,8 +25,7 @@ using ProfilingPlotFormat = tracy::PlotFormatType;
 #    define TKIT_PROFILE_SCOPE_IF(enabled) ZoneNamed(__tkit_perf_scope##__LINE__, enabled)
 #    define TKIT_PROFILE_NSCOPE_IF(enabled, name) ZoneNamedN(__tkit_perf_scope##__LINE__, name, enabled)
 #    define TKIT_PROFILE_CSCOPE_IF(enabled, color) ZoneNamedC(__tkit_perf_scope##__LINE__, color, enabled)
-#    define TKIT_PROFILE_NCSCOPE_IF(enabled, name, color)                                                        \
-        ZoneNamedNC(__tkit_perf_scope##__LINE__, name, color, enabled)
+#    define TKIT_PROFILE_NCSCOPE_IF(enabled, name, color) ZoneNamedNC(__tkit_perf_scope##__LINE__, name, color, enabled)
 
 #    define TKIT_PROFILE_SCOPE() ZoneNamed(__tkit_perf_scope##__LINE__, true)
 #    define TKIT_PROFILE_NSCOPE(name) ZoneNamedN(__tkit_perf_scope##__LINE__, name, true)
@@ -51,8 +50,7 @@ using ProfilingPlotFormat = tracy::PlotFormatType;
 #    define TKIT_PROFILE_MARK_POOLED_DEALLOCATION(name, ptr) TracyFreeN(ptr, name)
 
 #    define TKIT_PROFILE_PLOT(name, value) TracyPlot(name, value)
-#    define TKIT_PROFILE_PLOT_CONFIG(name, format, step, fill, color)                                        \
-        TracyPlotConfig(name, format, step, fill, color)
+#    define TKIT_PROFILE_PLOT_CONFIG(name, format, step, fill, color) TracyPlotConfig(name, format, step, fill, color)
 
 #else
 

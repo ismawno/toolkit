@@ -14,8 +14,8 @@
 #    define TKIT_DEBUG_BREAK() raise(SIGABRT)
 #endif
 
-#define TKIT_DEBUG_BREAK_IF(condition)                                                                               \
-    if (condition)                                                                                                   \
+#define TKIT_DEBUG_BREAK_IF(condition)                                                                                 \
+    if (condition)                                                                                                     \
     TKIT_DEBUG_BREAK()
 
 #define TKIT_LOG_COLOR_FATAL "\033[1;31m"
@@ -31,25 +31,25 @@ void LogAndBreak(const char *level, const char *color, const char *file, const i
     TKIT_DEBUG_BREAK();
 }
 void LogAndBreak(const char *level, const char *color, const char *file, i32 line);
-void CheckOutOfBounds(const char *level, const char *color, const char *file, i32 line, usize index,
-                      usize size, std::string_view head = "");
+void CheckOutOfBounds(const char *level, const char *color, const char *file, i32 line, usize index, usize size,
+                      std::string_view head = "");
 } // namespace TKit::Detail
 #endif
 
 #ifdef TKIT_ENABLE_ASSERTS
 #    define TKIT_FATAL(...)                                                                                            \
         TKit::Detail::LogAndBreak("FATAL", TKIT_LOG_COLOR_FATAL, __FILE__, __LINE__ __VA_OPT__(, ) __VA_ARGS__)
-#    define TKIT_ASSERT(condition, ...)                                                                              \
-        if (!(condition))                                                                                            \
+#    define TKIT_ASSERT(condition, ...)                                                                                \
+        if (!(condition))                                                                                              \
         TKit::Detail::LogAndBreak("FATAL", TKIT_LOG_COLOR_FATAL, __FILE__, __LINE__ __VA_OPT__(, ) __VA_ARGS__)
-#    define TKIT_CHECK_OUT_OF_BOUNDS(index, size, ...)                                                             \
-        if ((index) >= (size))                                                                                     \
-            TKit::Detail::CheckOutOfBounds("FATAL", TKIT_LOG_COLOR_FATAL, __FILE__, __LINE__, index,                 \
+#    define TKIT_CHECK_OUT_OF_BOUNDS(index, size, ...)                                                                 \
+        if ((index) >= (size))                                                                                         \
+            TKit::Detail::CheckOutOfBounds("FATAL", TKIT_LOG_COLOR_FATAL, __FILE__, __LINE__, index,                   \
                                            size __VA_OPT__(, ) __VA_ARGS__);
 
-#    define TKIT_CHECK_RETURNS(expression, expected, ...)                                                          \
+#    define TKIT_CHECK_RETURNS(expression, expected, ...)                                                              \
         TKIT_ASSERT((expression) == (expected)__VA_OPT__(, ) __VA_ARGS__)
-#    define TKIT_CHECK_NOT_RETURNS(expression, expected, ...)                                                      \
+#    define TKIT_CHECK_NOT_RETURNS(expression, expected, ...)                                                          \
         TKIT_ASSERT((expression) != (expected)__VA_OPT__(, ) __VA_ARGS__)
 #else
 #    define TKIT_FATAL(message, ...)

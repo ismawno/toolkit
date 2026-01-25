@@ -21,10 +21,9 @@ TEST_CASE("NonBlockingForEach (void) with ThreadPool sums all elements", "[NonBl
     // Partition [0,100) into 5 chunks; each chunk adds its length to totalSum
     std::array<Task<>, partitionCount> tasks{};
 
-    NonBlockingForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount,
-                       [&](const usize start, const usize end) {
-                           totalSum.fetch_add(end - start, std::memory_order_relaxed);
-                       });
+    NonBlockingForEach(
+        pool, firstIndex, lastIndex, tasks.begin(), partitionCount,
+        [&](const usize start, const usize end) { totalSum.fetch_add(end - start, std::memory_order_relaxed); });
 
     for (const Task<> &task : tasks)
         pool.WaitUntilFinished(task);
@@ -43,10 +42,9 @@ TEST_CASE("NonBlockingForEach with output iterator collects and executes all", "
     std::array<Task<>, partitionCount> tasks{};
 
     // Partition [10,25) into 5 chunks; capture tasks and sum chunk sizes
-    NonBlockingForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount,
-                       [&](const usize start, const usize end) {
-                           totalSum.fetch_add(end - start, std::memory_order_relaxed);
-                       });
+    NonBlockingForEach(
+        pool, firstIndex, lastIndex, tasks.begin(), partitionCount,
+        [&](const usize start, const usize end) { totalSum.fetch_add(end - start, std::memory_order_relaxed); });
 
     // we should have one task per partition
     REQUIRE(static_cast<usize>(tasks.size()) == partitionCount);

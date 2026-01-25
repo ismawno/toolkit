@@ -3,12 +3,12 @@
 #include "tkit/utils/debug.hpp"
 #include "tkit/container/storage.hpp"
 
-#define TKIT_RETURN_ON_ERROR(result)                                                                                 \
-    if (!result)                                                                                                     \
+#define TKIT_RETURN_ON_ERROR(result)                                                                                   \
+    if (!result)                                                                                                       \
     return result
 
-#define TKIT_RETURN_IF_FAILED(expression)                                                                            \
-    if (const auto __tkit_result = expression; !__tkit_result)                                                       \
+#define TKIT_RETURN_IF_FAILED(expression)                                                                              \
+    if (const auto __tkit_result = expression; !__tkit_result)                                                         \
         return __tkit_result;
 
 #define TKIT_OR_ELSE(result, fallback) result ? result.GetValue() : fallback

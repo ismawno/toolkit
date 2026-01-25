@@ -144,13 +144,13 @@ template <typename T> constexpr T AntiTangent(const T y, const T x)
     return std::atan2(y, x);
 }
 
-#define CREATE_MATH_TENSOR_FUNC(name)                                                                                \
-    template <typename T, usize N0, usize... N> constexpr ten<T, N0, N...> name(const ten<T, N0, N...> &tensor)    \
+#define CREATE_MATH_TENSOR_FUNC(name)                                                                                  \
+    template <typename T, usize N0, usize... N> constexpr ten<T, N0, N...> name(const ten<T, N0, N...> &tensor)        \
     {                                                                                                                  \
         ten<T, N0, N...> result;                                                                                       \
         constexpr usize size = N0 * (N * ... * 1);                                                                     \
         for (usize i = 0; i < size; ++i)                                                                               \
-            result.Flat[i] = name(tensor.Flat[i]);                                                                 \
+            result.Flat[i] = name(tensor.Flat[i]);                                                                     \
         return result;                                                                                                 \
     }
 

@@ -15,8 +15,7 @@ template <typename T> struct ArrayTools
 {
     using ValueType = T;
 
-    template <typename It>
-    static constexpr void CopyConstructFromRange(T *dstBegin, const It srcBegin, const It srcEnd)
+    template <typename It> static constexpr void CopyConstructFromRange(T *dstBegin, const It srcBegin, const It srcEnd)
     {
         using U = decltype(*srcBegin);
         if constexpr (std::is_trivially_copyable_v<T> && std::is_same_v<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
@@ -24,8 +23,7 @@ template <typename T> struct ArrayTools
         else
             Memory::ConstructRangeCopy(dstBegin, srcBegin, srcEnd);
     }
-    template <typename It>
-    static constexpr void MoveConstructFromRange(T *dstBegin, const It srcBegin, const It srcEnd)
+    template <typename It> static constexpr void MoveConstructFromRange(T *dstBegin, const It srcBegin, const It srcEnd)
     {
         using U = decltype(*srcBegin);
         if constexpr (std::is_trivially_copyable_v<T> && std::is_trivially_move_constructible_v<T> &&

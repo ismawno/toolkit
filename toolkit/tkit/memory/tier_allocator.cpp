@@ -9,8 +9,7 @@ static usize bitIndex(const usize value)
 {
     return static_cast<usize>(std::countr_zero(value));
 }
-static usize getTierIndex(const usize size, const usize minAllocation, const usize granularity,
-                          const usize lastIndex)
+static usize getTierIndex(const usize size, const usize minAllocation, const usize granularity, const usize lastIndex)
 {
     if (size <= minAllocation)
         return lastIndex;
@@ -43,8 +42,7 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *allo
                                                             const usize maxAllocation, const usize minAllocation,
                                                             const usize granularity, const f32 tierSlotDecay)
 {
-    TKIT_ASSERT(Bit::IsPowerOfTwo(maxAllocation) && Bit::IsPowerOfTwo(minAllocation) &&
-                    Bit::IsPowerOfTwo(granularity),
+    TKIT_ASSERT(Bit::IsPowerOfTwo(maxAllocation) && Bit::IsPowerOfTwo(minAllocation) && Bit::IsPowerOfTwo(granularity),
                 "[TOOLKIT][TIER-ALLOC] All integer arguments must be powers of two when creating a tier allocator "
                 "description, but the values where {}, {} and {}",
                 maxAllocation, minAllocation, granularity);
@@ -149,24 +147,22 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *allo
 }
 TierAllocator::TierAllocator(const usize maxTiers, const usize maxAllocation, const usize minAllocation,
                              const usize granularity, const f32 tierSlotDecay, const usize maxAlignment)
-    : TierAllocator(TKit::Memory::GetArena(), maxTiers, maxAllocation, minAllocation, granularity,
-                    tierSlotDecay, maxAlignment)
+    : TierAllocator(TKit::Memory::GetArena(), maxTiers, maxAllocation, minAllocation, granularity, tierSlotDecay,
+                    maxAlignment)
 {
 }
 TierAllocator::TierAllocator(ArenaAllocator *allocator, const usize maxTiers, const usize maxAllocation,
                              const usize minAllocation, const usize granularity, const f32 tierSlotDecay,
                              const usize maxAlignment)
-    : TierAllocator(
-          allocator, maxTiers,
-          CreateDescription(allocator, maxTiers, maxAllocation, minAllocation, granularity, tierSlotDecay),
-          maxAlignment)
+    : TierAllocator(allocator, maxTiers,
+                    CreateDescription(allocator, maxTiers, maxAllocation, minAllocation, granularity, tierSlotDecay),
+                    maxAlignment)
 {
 }
 
 TierAllocator::TierAllocator(ArenaAllocator *allocator, const usize maxTiers, const Description &description,
                              const usize maxAlignment)
-    : m_Tiers(allocator, maxTiers), m_MinAllocation(description.MinAllocation),
-      m_Granularity(description.Granularity)
+    : m_Tiers(allocator, maxTiers), m_MinAllocation(description.MinAllocation), m_Granularity(description.Granularity)
 {
     TKIT_ASSERT(Bit::IsPowerOfTwo(maxAlignment),
                 "[TOOLKIT][TIER-ALLOC] Maximum alignment must be a power of 2, but {} is not", maxAlignment);

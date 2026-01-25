@@ -95,8 +95,7 @@ template <typename T> struct TierAllocation
         }
         TKIT_ASSERT(Allocator, "[TOOLKIT][TIER-ARRAY] Array must have a valid allocator to allocate memory");
         TKIT_ASSERT(capacity != 0, "[TOOLKIT][TIER-ARRAY] Capacity must be greater than 0");
-        TKIT_ASSERT(capacity >= Size, "[TOOLKIT][TIER-ARRAY] Capacity ({}) is smaller than size ({})", capacity,
-                    Size);
+        TKIT_ASSERT(capacity >= Size, "[TOOLKIT][TIER-ARRAY] Capacity ({}) is smaller than size ({})", capacity, Size);
         T *newData = Allocator->Allocate<T>(capacity);
         TKIT_ASSERT(newData, "[TOOLKIT][TIER-ARRAY] Failed to allocate {} bytes of memory aligned to {} bytes",
                     capacity * sizeof(T), alignof(T));

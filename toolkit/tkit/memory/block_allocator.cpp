@@ -11,12 +11,12 @@ BlockAllocator::BlockAllocator(const usize bufferSize, const usize allocationSiz
     TKIT_ASSERT(allocationSize >= sizeof(Allocation),
                 "[TOOLKIT][BLOCK-ALLOC] The allocation size must be at least {} bytes", sizeof(Allocation));
     TKIT_ASSERT(bufferSize % alignment == 0, "[TOOLKIT][BLOCK-ALLOC] The buffer size must be a multiple of the "
-                                                 "alignment to ensure every block of memory is aligned to it");
+                                             "alignment to ensure every block of memory is aligned to it");
     TKIT_ASSERT(
         bufferSize % allocationSize == 0,
         "[TOOLKIT][BLOCK-ALLOC] The buffer size must be a multiple of the allocation size to guarantee a tight fit");
     TKIT_ASSERT(allocationSize % alignment == 0, "[TOOLKIT][BLOCK-ALLOC] The allocation size must be a multiple of "
-                                                     "the alignment to ensure every block of memory is aligned to it");
+                                                 "the alignment to ensure every block of memory is aligned to it");
 
     m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(bufferSize, alignment));
     TKIT_ASSERT(m_Buffer, "[TOOLKIT][BLOCK-ALLOC] Failed to allocate memory");

@@ -78,8 +78,7 @@ template <typename T> struct DynamicAllocation
     {
         using Tools = Container::ArrayTools<T>;
         TKIT_ASSERT(capacity != 0, "[TOOLKIT][DYN-ARRAY] Capacity must be greater than 0");
-        TKIT_ASSERT(capacity >= Size, "[TOOLKIT][DYN-ARRAY] Capacity ({}) is smaller than size ({})", capacity,
-                    Size);
+        TKIT_ASSERT(capacity >= Size, "[TOOLKIT][DYN-ARRAY] Capacity ({}) is smaller than size ({})", capacity, Size);
         T *newData = static_cast<T *>(Memory::AllocateAligned(capacity * sizeof(T), alignof(T)));
         TKIT_ASSERT(newData, "[TOOLKIT][DYN-ARRAY] Failed to allocate {} bytes of memory aligned to {} bytes",
                     capacity * sizeof(T), alignof(T));

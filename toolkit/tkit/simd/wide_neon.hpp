@@ -151,8 +151,8 @@ template <Arithmetic T> class Wide
     }
     static constexpr Wide Gather(const T *data, const usize stride)
     {
-        TKIT_ASSERT(stride >= sizeof(T), "[TOOLKIT][SIMD] The stride ({}) must be greater than sizeof(T) = {}",
-                    stride, sizeof(T));
+        TKIT_ASSERT(stride >= sizeof(T), "[TOOLKIT][SIMD] The stride ({}) must be greater than sizeof(T) = {}", stride,
+                    sizeof(T));
         TKIT_LOG_WARNING_IF(
             stride == sizeof(T),
             "[TOOLKIT][SIMD] Stride of {} is equal to sizeof(T), which might as well be a contiguous load", stride);
@@ -166,8 +166,8 @@ template <Arithmetic T> class Wide
     }
     constexpr void Scatter(T *data, const usize stride) const
     {
-        TKIT_ASSERT(stride >= sizeof(T), "[TOOLKIT][SIMD] The stride ({}) must be greater than sizeof(T) = {}",
-                    stride, sizeof(T));
+        TKIT_ASSERT(stride >= sizeof(T), "[TOOLKIT][SIMD] The stride ({}) must be greater than sizeof(T) = {}", stride,
+                    sizeof(T));
         TKIT_LOG_WARNING_IF(
             stride == sizeof(T),
             "[TOOLKIT][SIMD] Stride of {} is equal to sizeof(T), which might as well be a contiguous store", stride);
@@ -269,70 +269,70 @@ template <Arithmetic T> class Wide
         return At(index);
     }
 
-#    define CREATE_METHOD_INT(func, prefix, suffix, ...)                                                         \
+#    define CREATE_METHOD_INT(func, prefix, suffix, ...)                                                               \
         if constexpr (s_Equals<u64>)                                                                                   \
-            prefix func##_u64(__VA_ARGS__) suffix;                                                               \
+            prefix func##_u64(__VA_ARGS__) suffix;                                                                     \
         else if constexpr (s_Equals<i64>)                                                                              \
-            prefix func##_s64(__VA_ARGS__) suffix;                                                               \
+            prefix func##_s64(__VA_ARGS__) suffix;                                                                     \
         else if constexpr (s_Equals<u32>)                                                                              \
-            prefix func##_u32(__VA_ARGS__) suffix;                                                               \
+            prefix func##_u32(__VA_ARGS__) suffix;                                                                     \
         else if constexpr (s_Equals<i32>)                                                                              \
-            prefix func##_s32(__VA_ARGS__) suffix;                                                               \
+            prefix func##_s32(__VA_ARGS__) suffix;                                                                     \
         else if constexpr (s_Equals<u16>)                                                                              \
-            prefix func##_u16(__VA_ARGS__) suffix;                                                               \
+            prefix func##_u16(__VA_ARGS__) suffix;                                                                     \
         else if constexpr (s_Equals<i16>)                                                                              \
-            prefix func##_s16(__VA_ARGS__) suffix;                                                               \
+            prefix func##_s16(__VA_ARGS__) suffix;                                                                     \
         else if constexpr (s_Equals<u8>)                                                                               \
-            prefix func##_u8(__VA_ARGS__) suffix;                                                                \
+            prefix func##_u8(__VA_ARGS__) suffix;                                                                      \
         else if constexpr (s_Equals<i8>)                                                                               \
-            prefix func##_s8(__VA_ARGS__) suffix;                                                                \
+            prefix func##_s8(__VA_ARGS__) suffix;                                                                      \
         CREATE_BAD_BRANCH()
 
 #    ifdef TKIT_AARCH64
-#        define CREATE_METHOD(func, prefix, suffix, ...)                                                         \
+#        define CREATE_METHOD(func, prefix, suffix, ...)                                                               \
             if constexpr (s_Equals<f32>)                                                                               \
-                prefix func##_f32(__VA_ARGS__) suffix;                                                           \
+                prefix func##_f32(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<f64>)                                                                          \
-                prefix func##_f64(__VA_ARGS__) suffix;                                                           \
+                prefix func##_f64(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<u64>)                                                                          \
-                prefix func##_u64(__VA_ARGS__) suffix;                                                           \
+                prefix func##_u64(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<i64>)                                                                          \
-                prefix func##_s64(__VA_ARGS__) suffix;                                                           \
+                prefix func##_s64(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<u32>)                                                                          \
-                prefix func##_u32(__VA_ARGS__) suffix;                                                           \
+                prefix func##_u32(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<i32>)                                                                          \
-                prefix func##_s32(__VA_ARGS__) suffix;                                                           \
+                prefix func##_s32(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<u16>)                                                                          \
-                prefix func##_u16(__VA_ARGS__) suffix;                                                           \
+                prefix func##_u16(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<i16>)                                                                          \
-                prefix func##_s16(__VA_ARGS__) suffix;                                                           \
+                prefix func##_s16(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<u8>)                                                                           \
-                prefix func##_u8(__VA_ARGS__) suffix;                                                            \
+                prefix func##_u8(__VA_ARGS__) suffix;                                                                  \
             else if constexpr (s_Equals<i8>)                                                                           \
-                prefix func##_s8(__VA_ARGS__) suffix;                                                            \
+                prefix func##_s8(__VA_ARGS__) suffix;                                                                  \
             CREATE_BAD_BRANCH()
 #    else
-#        define CREATE_METHOD(func, prefix, suffix, ...)                                                         \
+#        define CREATE_METHOD(func, prefix, suffix, ...)                                                               \
             if constexpr (s_Equals<f32>)                                                                               \
-                prefix func##_f32(__VA_ARGS__) suffix;                                                           \
+                prefix func##_f32(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<f64>)                                                                          \
-                prefix func##_f64(__VA_ARGS__) suffix;                                                           \
+                prefix func##_f64(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<u64>)                                                                          \
-                prefix func##_u64(__VA_ARGS__) suffix;                                                           \
+                prefix func##_u64(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<i64>)                                                                          \
-                prefix func##_s64(__VA_ARGS__) suffix;                                                           \
+                prefix func##_s64(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<u32>)                                                                          \
-                prefix func##_u32(__VA_ARGS__) suffix;                                                           \
+                prefix func##_u32(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<i32>)                                                                          \
-                prefix func##_s32(__VA_ARGS__) suffix;                                                           \
+                prefix func##_s32(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<u16>)                                                                          \
-                prefix func##_u16(__VA_ARGS__) suffix;                                                           \
+                prefix func##_u16(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<i16>)                                                                          \
-                prefix func##_s16(__VA_ARGS__) suffix;                                                           \
+                prefix func##_s16(__VA_ARGS__) suffix;                                                                 \
             else if constexpr (s_Equals<u8>)                                                                           \
-                prefix func##_u8(__VA_ARGS__) suffix;                                                            \
+                prefix func##_u8(__VA_ARGS__) suffix;                                                                  \
             else if constexpr (s_Equals<i8>)                                                                           \
-                prefix func##_s8(__VA_ARGS__) suffix;                                                            \
+                prefix func##_s8(__VA_ARGS__) suffix;                                                                  \
             CREATE_BAD_BRANCH()
 #    endif
 
@@ -367,35 +367,35 @@ template <Arithmetic T> class Wide
         CREATE_METHOD(vaddvq, return, , wide.m_Data);
     }
 
-#    define CREATE_ARITHMETIC_OP(op, opName)                                                                       \
-        friend constexpr Wide operator op(const Wide &left, const Wide &right)                                   \
+#    define CREATE_ARITHMETIC_OP(op, opName)                                                                           \
+        friend constexpr Wide operator op(const Wide &left, const Wide &right)                                         \
         {                                                                                                              \
-            CREATE_METHOD(v##opName##q,                                                                              \
+            CREATE_METHOD(v##opName##q,                                                                                \
                           return Wide{                                                                                 \
                               ,                                                                                        \
                           },                                                                                           \
-                          left.m_Data, right.m_Data);                                                              \
+                          left.m_Data, right.m_Data);                                                                  \
         }
-#    define CREATE_ARITHMETIC_OP_INT(op, opName)                                                                   \
-        friend constexpr Wide operator op(const Wide &left, const Wide &right)                                   \
+#    define CREATE_ARITHMETIC_OP_INT(op, opName)                                                                       \
+        friend constexpr Wide operator op(const Wide &left, const Wide &right)                                         \
             requires(Integer<T>)                                                                                       \
         {                                                                                                              \
-            CREATE_METHOD_INT(v##opName##q,                                                                          \
+            CREATE_METHOD_INT(v##opName##q,                                                                            \
                               return Wide{                                                                             \
                                   ,                                                                                    \
                               },                                                                                       \
-                              left.m_Data, right.m_Data);                                                          \
+                              left.m_Data, right.m_Data);                                                              \
         }
-#    define CREATE_BITSHIFT_OP(op, argName)                                                                        \
+#    define CREATE_BITSHIFT_OP(op, argName)                                                                            \
         template <std::convertible_to<T> U>                                                                            \
-        friend constexpr Wide operator op(const Wide &left, const U shift)                                       \
+        friend constexpr Wide operator op(const Wide &left, const U shift)                                             \
             requires(Integer<T>)                                                                                       \
         {                                                                                                              \
             CREATE_METHOD_INT(vshlq,                                                                                   \
                               return Wide{                                                                             \
                                   ,                                                                                    \
                               },                                                                                       \
-                              left.m_Data, set(static_cast<T>(argName)));                                          \
+                              left.m_Data, set(static_cast<T>(argName)));                                              \
         }
 
     CREATE_ARITHMETIC_OP(+, add)
@@ -438,24 +438,18 @@ template <Arithmetic T> class Wide
         return other * static_cast<T>(-1);
     }
 
-#    define CREATE_SELF_OP(op, requires)                                                                           \
-        constexpr Wide &operator op## = (const Wide &other)requires                                              \
-        {                                                                                                              \
-            *this = *this op other;                                                                                \
+#    define CREATE_SELF_OP(op, requires)                                                                               \
+        constexpr Wide &operator op## = (const Wide &other) requires {                                                 \
+            *this = *this op other;                                                                                    \
             return *this;                                                                                              \
         }
 
-#    define CREATE_SCALAR_OP(op, requires)                                                                         \
+#    define CREATE_SCALAR_OP(op, requires)                                                                             \
         template <std::convertible_to<T> U>                                                                            \
-        friend constexpr Wide operator op(const Wide &left, const U right) requires                            \
-        {                                                                                                              \
-            return left op Wide{right};                                                                          \
-        }                                                                                                              \
-        template <std::convertible_to<T> U>                                                                            \
-        friend constexpr Wide operator op(const U left, const Wide &right) requires                            \
-        {                                                                                                              \
-            return Wide{left} op right;                                                                          \
-        }
+        friend constexpr Wide operator op(const Wide &left, const U right) requires {                                  \
+            return left op Wide{right};                                                                                \
+        } template <std::convertible_to<T> U>                                                                          \
+        friend constexpr Wide operator op(const U left, const Wide &right) requires { return Wide{left} op right; }
 
     CREATE_SCALAR_OP(+, )
     CREATE_SCALAR_OP(-, )
@@ -472,10 +466,10 @@ template <Arithmetic T> class Wide
     CREATE_SELF_OP(&, requires(Integer<T>))
     CREATE_SELF_OP(|, requires(Integer<T>))
 
-#    define CREATE_CMP_OP(op, opName)                                                                              \
-        friend constexpr Mask operator op(const Wide &left, const Wide &right)                                   \
+#    define CREATE_CMP_OP(op, opName)                                                                                  \
+        friend constexpr Mask operator op(const Wide &left, const Wide &right)                                         \
         {                                                                                                              \
-            CREATE_METHOD(v##opName##q, return, , left.m_Data, right.m_Data);                                    \
+            CREATE_METHOD(v##opName##q, return, , left.m_Data, right.m_Data);                                          \
         }
 
     CREATE_CMP_OP(==, ceq)
