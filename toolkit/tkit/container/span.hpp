@@ -27,7 +27,7 @@ class Span
     }
     constexpr Span(T &data)
         requires(Extent == 1)
-        : Span(&data)
+        : Span(std::addressof(data))
     {
     }
     constexpr Span(T &&data) = delete;
@@ -112,7 +112,7 @@ template <typename T> class Span<T, TKIT_USIZE_MAX>
     constexpr Span() : m_Data(nullptr), m_Size(0)
     {
     }
-    constexpr Span(T &data) : Span(&data, 1)
+    constexpr Span(T &data) : Span(std::addressof(data), 1)
     {
     }
     constexpr Span(T &&data) = delete;
