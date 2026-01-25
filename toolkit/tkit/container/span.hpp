@@ -25,27 +25,27 @@ class Span
     constexpr Span() : m_Data(nullptr)
     {
     }
-    constexpr Span(T &p_Data)
+    constexpr Span(T &data)
         requires(Extent == 1)
-        : Span(&p_Data)
+        : Span(&data)
     {
     }
-    constexpr Span(T &&p_Data) = delete;
-    constexpr Span(T *p_Data) : m_Data(p_Data)
+    constexpr Span(T &&data) = delete;
+    constexpr Span(T *data) : m_Data(data)
     {
     }
 
-    constexpr Span(const FixedArray<ElementType, Extent> &p_Array) : m_Data(p_Array.GetData())
+    constexpr Span(const FixedArray<ElementType, Extent> &array) : m_Data(array.GetData())
     {
     }
-    constexpr Span(FixedArray<ElementType, Extent> &p_Array) : m_Data(p_Array.GetData())
+    constexpr Span(FixedArray<ElementType, Extent> &array) : m_Data(array.GetData())
     {
     }
 
     template <typename ElementType>
         requires(std::convertible_to<ElementType *, T *> &&
                  std::same_as<std::remove_cvref_t<ElementType>, std::remove_cvref_t<T>>)
-    constexpr Span(const Span<ElementType, Extent> &p_Other) : m_Data(p_Other.GetData())
+    constexpr Span(const Span<ElementType, Extent> &other) : m_Data(other.GetData())
     {
     }
 
@@ -58,15 +58,15 @@ class Span
         return Extent;
     }
 
-    constexpr T &operator[](const usize p_Index) const
+    constexpr T &operator[](const usize index) const
     {
-        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, Extent, "[TOOLKIT][SPAN] ");
-        return m_Data[p_Index];
+        TKIT_CHECK_OUT_OF_BOUNDS(index, Extent, "[TOOLKIT][SPAN] ");
+        return m_Data[index];
     }
-    constexpr T &At(const usize p_Index) const
+    constexpr T &At(const usize index) const
     {
-        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, Extent, "[TOOLKIT][SPAN] ");
-        return m_Data[p_Index];
+        TKIT_CHECK_OUT_OF_BOUNDS(index, Extent, "[TOOLKIT][SPAN] ");
+        return m_Data[index];
     }
 
     constexpr T &GetFront() const
@@ -112,51 +112,51 @@ template <typename T> class Span<T, TKIT_USIZE_MAX>
     constexpr Span() : m_Data(nullptr), m_Size(0)
     {
     }
-    constexpr Span(T &p_Data) : Span(&p_Data, 1)
+    constexpr Span(T &data) : Span(&data, 1)
     {
     }
-    constexpr Span(T &&p_Data) = delete;
+    constexpr Span(T &&data) = delete;
 
-    constexpr Span(T *p_Data, const usize p_Size) : m_Data(p_Data), m_Size(p_Size)
+    constexpr Span(T *data, const usize size) : m_Data(data), m_Size(size)
     {
     }
 
     template <usize Extent>
-    constexpr Span(const FixedArray<ElementType, Extent> &p_Array) : m_Data(p_Array.GetData()), m_Size(Extent)
+    constexpr Span(const FixedArray<ElementType, Extent> &array) : m_Data(array.GetData()), m_Size(Extent)
     {
     }
     template <usize Extent>
-    constexpr Span(FixedArray<ElementType, Extent> &p_Array) : m_Data(p_Array.GetData()), m_Size(Extent)
+    constexpr Span(FixedArray<ElementType, Extent> &array) : m_Data(array.GetData()), m_Size(Extent)
     {
     }
 
     template <typename AllocState>
-    constexpr Span(const Array<ElementType, AllocState> &p_Array) : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
+    constexpr Span(const Array<ElementType, AllocState> &array) : m_Data(array.GetData()), m_Size(array.GetSize())
     {
     }
     template <typename AllocState>
-    constexpr Span(Array<ElementType, AllocState> &p_Array) : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
+    constexpr Span(Array<ElementType, AllocState> &array) : m_Data(array.GetData()), m_Size(array.GetSize())
     {
     }
 
     template <typename ElementType, usize Capacity>
         requires(std::convertible_to<ElementType *, T *> &&
                  std::same_as<std::remove_cvref_t<ElementType>, std::remove_cvref_t<T>>)
-    constexpr Span(const WeakArray<ElementType, Capacity> &p_Array)
-        : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
+    constexpr Span(const WeakArray<ElementType, Capacity> &array)
+        : m_Data(array.GetData()), m_Size(array.GetSize())
     {
     }
     template <typename ElementType, usize Capacity>
         requires(std::convertible_to<ElementType *, T *> &&
                  std::same_as<std::remove_cvref_t<ElementType>, std::remove_cvref_t<T>>)
-    constexpr Span(WeakArray<ElementType, Capacity> &p_Array) : m_Data(p_Array.GetData()), m_Size(p_Array.GetSize())
+    constexpr Span(WeakArray<ElementType, Capacity> &array) : m_Data(array.GetData()), m_Size(array.GetSize())
     {
     }
 
     template <typename ElementType, usize Extent>
         requires(std::convertible_to<ElementType *, T *> &&
                  std::same_as<std::remove_cvref_t<ElementType>, std::remove_cvref_t<T>>)
-    constexpr Span(const Span<ElementType, Extent> &p_Other) : m_Data(p_Other.GetData()), m_Size(p_Other.GetSize())
+    constexpr Span(const Span<ElementType, Extent> &other) : m_Data(other.GetData()), m_Size(other.GetSize())
     {
     }
 
@@ -169,15 +169,15 @@ template <typename T> class Span<T, TKIT_USIZE_MAX>
         return m_Size;
     }
 
-    constexpr T &operator[](const usize p_Index) const
+    constexpr T &operator[](const usize index) const
     {
-        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, m_Size, "[TOOLKIT][SPAN] ");
-        return m_Data[p_Index];
+        TKIT_CHECK_OUT_OF_BOUNDS(index, m_Size, "[TOOLKIT][SPAN] ");
+        return m_Data[index];
     }
-    constexpr T &At(const usize p_Index) const
+    constexpr T &At(const usize index) const
     {
-        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, m_Size, "[TOOLKIT][SPAN] ");
-        return m_Data[p_Index];
+        TKIT_CHECK_OUT_OF_BOUNDS(index, m_Size, "[TOOLKIT][SPAN] ");
+        return m_Data[index];
     }
 
     constexpr T &GetFront() const

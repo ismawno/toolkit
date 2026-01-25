@@ -60,7 +60,7 @@ template <typename Wide> void RunWideTests()
 
     SECTION("Construction from callable")
     {
-        Wide w{[](const usize p_Index) { return p_Index * 2; }};
+        Wide w{[](const usize index) { return index * 2; }};
         for (usize i = 0; i < Lanes; ++i)
             REQUIRE(w[i] == static_cast<T>(i * 2));
     }
@@ -109,7 +109,7 @@ template <typename Wide> void RunWideTests()
 
     SECTION("Scatter()")
     {
-        const Wide w{[](const usize p_Index) { return p_Index + 1; }};
+        const Wide w{[](const usize index) { return index + 1; }};
 
         Spread spread[Lanes];
         w.Scatter(&spread[0].Relevant, sizeof(Spread));
@@ -126,8 +126,8 @@ template <typename Wide> void RunWideTests()
 
     SECTION("Arithmetic operators")
     {
-        const Wide a{[](const usize p_Index) { return p_Index + 1; }};
-        const Wide b{[](const usize p_Index) { return p_Index + 2; }};
+        const Wide a{[](const usize index) { return index + 1; }};
+        const Wide b{[](const usize index) { return index + 2; }};
 
         const Wide add = a + b;
         const Wide sub = b - a;
@@ -146,7 +146,7 @@ template <typename Wide> void RunWideTests()
     }
     SECTION("Scalar operators")
     {
-        const Wide a{[](const usize p_Index) { return p_Index + 1; }};
+        const Wide a{[](const usize index) { return index + 1; }};
         const T b{static_cast<T>(10)};
 
         const Wide add = a + b;
@@ -165,8 +165,8 @@ template <typename Wide> void RunWideTests()
 
     SECTION("Comparison operators")
     {
-        const Wide a{[](const usize p_Index) { return p_Index; }};
-        const Wide b{[](const usize p_Index) { return p_Index + 1; }};
+        const Wide a{[](const usize index) { return index; }};
+        const Wide b{[](const usize index) { return index + 1; }};
 
         const BitMask eq = Wide::PackMask(a == a);
         const BitMask ne = Wide::PackMask(a != b);
@@ -188,8 +188,8 @@ template <typename Wide> void RunWideTests()
 
     SECTION("Min and Max")
     {
-        const Wide a{[](const usize p_Index) { return p_Index + 2; }};
-        const Wide b{[](const usize p_Index) { return p_Index + 3; }};
+        const Wide a{[](const usize index) { return index + 2; }};
+        const Wide b{[](const usize index) { return index + 3; }};
 
         const Wide mn = Wide::Min(a, b);
         const Wide mx = Wide::Max(a, b);
@@ -203,8 +203,8 @@ template <typename Wide> void RunWideTests()
 
     SECTION("Select()")
     {
-        const Wide a{[](const usize p_Index) { return p_Index + 1; }};
-        const Wide b{[](const usize p_Index) { return p_Index + 100; }};
+        const Wide a{[](const usize index) { return index + 1; }};
+        const Wide b{[](const usize index) { return index + 100; }};
 
         const BitMask bmask = static_cast<BitMask>(0b01010101010101);
         const Mask mask = Wide::WidenMask(bmask);
@@ -219,7 +219,7 @@ template <typename Wide> void RunWideTests()
 
     SECTION("Reduce()")
     {
-        const Wide w{[](const usize p_Index) { return p_Index + 1; }};
+        const Wide w{[](const usize index) { return index + 1; }};
         T expected = static_cast<T>(0);
         for (usize i = 0; i < Lanes; ++i)
             expected += w[i];
@@ -230,7 +230,7 @@ template <typename Wide> void RunWideTests()
     {
         SECTION("Bit shift operators")
         {
-            const Wide base{[](const usize p_Index) { return 255 - p_Index; }};
+            const Wide base{[](const usize index) { return 255 - index; }};
 
             const u32 shiftLeft = 3;
             const Wide shiftedLeft = base << shiftLeft;
@@ -246,8 +246,8 @@ template <typename Wide> void RunWideTests()
         }
         SECTION("Bitwise AND and OR operators")
         {
-            const Wide a{[](const usize p_Index) { return static_cast<T>((p_Index % 2) ? 0xFF : 0x0F); }};
-            const Wide b{[](const usize p_Index) { return static_cast<T>((p_Index % 2) ? 0xF0 : 0x0F); }};
+            const Wide a{[](const usize index) { return static_cast<T>((index % 2) ? 0xFF : 0x0F); }};
+            const Wide b{[](const usize index) { return static_cast<T>((index % 2) ? 0xF0 : 0x0F); }};
 
             const Wide band = a & b;
             const Wide bor = a | b;

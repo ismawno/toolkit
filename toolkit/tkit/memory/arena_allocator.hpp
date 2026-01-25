@@ -30,32 +30,32 @@ class alignas(TKIT_CACHE_LINE_SIZE) ArenaAllocator
 {
     TKIT_NON_COPYABLE(ArenaAllocator)
   public:
-    explicit ArenaAllocator(usize p_Capacity, usize p_Alignment = alignof(std::max_align_t));
+    explicit ArenaAllocator(usize capacity, usize alignment = alignof(std::max_align_t));
 
     // This constructor is NOT owning the buffer, so it will not deallocate it. Up to the user to manage the memory
-    ArenaAllocator(void *p_Buffer, usize p_Capacity, usize p_Alignment = alignof(std::max_align_t));
+    ArenaAllocator(void *buffer, usize capacity, usize alignment = alignof(std::max_align_t));
     ~ArenaAllocator();
 
-    ArenaAllocator(ArenaAllocator &&p_Other);
-    ArenaAllocator &operator=(ArenaAllocator &&p_Other);
+    ArenaAllocator(ArenaAllocator &&other);
+    ArenaAllocator &operator=(ArenaAllocator &&other);
 
     /**
      * @brief Allocate a new block of memory into the arena allocator.
      *
-     * @param p_Size The size of the block to allocate.
+     * @param size The size of the block to allocate.
      * @return A pointer to the allocated block.
      */
-    void *Allocate(usize p_Size);
+    void *Allocate(usize size);
 
     /**
      * @brief Allocate a new block of memory into the arena allocator and casts the result to `T`.
      *
-     * @param p_Count The number of elements of type `T` to allocate.
+     * @param count The number of elements of type `T` to allocate.
      * @return A pointer to the allocated block.
      */
-    template <typename T> T *Allocate(const usize p_Count = 1)
+    template <typename T> T *Allocate(const usize count = 1)
     {
-        T *ptr = static_cast<T *>(Allocate(p_Count * sizeof(T)));
+        T *ptr = static_cast<T *>(Allocate(count * sizeof(T)));
         TKIT_ASSERT(Memory::IsAligned(ptr, alignof(T)),
                     "[TOOLKIT][ARENA-ALLOC] Requested type T to be allocated has stricter alignment requirements than "
                     "the ones provided by this allocator. Considering bumping the alignment parameter");
@@ -81,45 +81,45 @@ class alignas(TKIT_CACHE_LINE_SIZE) ArenaAllocator
      */
     template <typename T, typename... Args>
         requires std::constructible_from<T, Args...>
-    T *Create(Args &&...p_Args)
+    T *Create(Args &&...args)
     {
         T *ptr = Allocate<T>();
         if (!ptr)
             return nullptr;
-        return Memory::Construct(ptr, std::forward<Args>(p_Args)...);
+        return Memory::Construct(ptr, std::forward<Args>(args)...);
     }
 
     /**
      * @brief Allocate a new block of memory in the arena allocator and create an array of objects of type `T` out of
      * it.
      *
-     * The block is created with the size of `sizeof(T) * p_Count`.
+     * The block is created with the size of `sizeof(T) * count`.
      *
      * @tparam T The type of the block.
-     * @param p_Count The number of elements of type `T` to allocate.
+     * @param count The number of elements of type `T` to allocate.
      * @return A pointer to the allocated block.
      */
     template <typename T, typename... Args>
         requires std::constructible_from<T, Args...>
-    T *NCreate(const usize p_Count, Args &&...p_Args)
+    T *NCreate(const usize count, Args &&...args)
     {
-        T *ptr = Allocate<T>(p_Count);
+        T *ptr = Allocate<T>(count);
         if (!ptr)
             return nullptr;
-        Memory::ConstructRange(ptr, ptr + p_Count, std::forward<Args>(p_Args)...);
+        Memory::ConstructRange(ptr, ptr + count, std::forward<Args>(args)...);
         return ptr;
     }
 
     /**
      * @brief Check if a pointer belongs to the arena allocator.
      *
-     * @param p_Ptr The pointer to check.
+     * @param ptr The pointer to check.
      * @return Whether the pointer belongs to the arena allocator.
      */
-    bool Belongs(const void *p_Ptr) const
+    bool Belongs(const void *ptr) const
     {
-        const std::byte *ptr = reinterpret_cast<const std::byte *>(p_Ptr);
-        return ptr >= m_Buffer && ptr < m_Buffer + m_Top;
+        const std::byte *bptr = reinterpret_cast<const std::byte *>(ptr);
+        return bptr >= m_Buffer && bptr < m_Buffer + m_Top;
     }
 
     bool IsEmpty() const

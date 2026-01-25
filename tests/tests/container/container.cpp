@@ -17,15 +17,15 @@ struct CopyOnly
     CopyOnly() : Value(0)
     {
     }
-    CopyOnly(const u32 p_Value) : Value(p_Value)
+    CopyOnly(const u32 value) : Value(value)
     {
     }
-    CopyOnly(const CopyOnly &p_Other) : Value(p_Other.Value)
+    CopyOnly(const CopyOnly &other) : Value(other.Value)
     {
     }
-    CopyOnly &operator=(const CopyOnly &p_Other)
+    CopyOnly &operator=(const CopyOnly &other)
     {
-        Value = p_Other.Value;
+        Value = other.Value;
         return *this;
     }
 };
@@ -36,19 +36,19 @@ struct MoveOnly
     MoveOnly() : Value(0)
     {
     }
-    MoveOnly(const u32 p_Value) : Value(p_Value)
+    MoveOnly(const u32 value) : Value(value)
     {
     }
     MoveOnly(const MoveOnly &) = delete;
     MoveOnly &operator=(const MoveOnly &) = delete;
-    MoveOnly(MoveOnly &&p_Other) : Value(p_Other.Value)
+    MoveOnly(MoveOnly &&other) : Value(other.Value)
     {
-        p_Other.Value = TKIT_U32_MAX;
+        other.Value = TKIT_U32_MAX;
     }
-    MoveOnly &operator=(MoveOnly &&p_Other)
+    MoveOnly &operator=(MoveOnly &&other)
     {
-        Value = p_Other.Value;
-        p_Other.Value = TKIT_U32_MAX;
+        Value = other.Value;
+        other.Value = TKIT_U32_MAX;
         return *this;
     }
 };

@@ -11,7 +11,7 @@ struct NonTrivialSA
     static inline u32 CtorCount = 0;
     static inline u32 DtorCount = 0;
     u32 value;
-    NonTrivialSA(const u32 p_Value) : value(p_Value)
+    NonTrivialSA(const u32 value) : value(value)
     {
         ++CtorCount;
     }

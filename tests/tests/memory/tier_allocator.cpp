@@ -15,7 +15,7 @@ struct NonTrivialTA
 
     u32 value;
 
-    NonTrivialTA(const u32 p_Value) : value(p_Value)
+    NonTrivialTA(const u32 value) : value(value)
     {
         ++CtorCount;
     }

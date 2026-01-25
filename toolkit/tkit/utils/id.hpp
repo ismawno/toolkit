@@ -7,7 +7,7 @@ namespace TKit
 template <Hashable ID = u64> struct Id
 {
     Id() = default;
-    Id(const ID p_ID) : Value(p_ID)
+    Id(const ID id) : Value(id)
     {
     }
 
@@ -19,7 +19,7 @@ template <Hashable ID = u64> struct Id
         return Value;
     }
 
-    std::strong_ordering operator<=>(const Id &p_Other) const = default;
+    std::strong_ordering operator<=>(const Id &other) const = default;
 
     ID Value;
 };
@@ -27,8 +27,8 @@ template <Hashable ID = u64> struct Id
 
 template <TKit::Hashable ID> struct std::hash<TKit::Id<ID>>
 {
-    std::size_t operator()(const TKit::Id<ID> &p_UUID) const
+    std::size_t operator()(const TKit::Id<ID> &uuid) const
     {
-        return std::hash<ID>()(p_UUID.Value);
+        return std::hash<ID>()(uuid.Value);
     }
 };

@@ -16,25 +16,25 @@ struct Number
     std::byte Padding[TKIT_CACHE_LINE_SIZE - sizeof(u32)];
 };
 
-void RecordThreadPoolSum(const ThreadPoolSettings &p_Settings)
+void RecordThreadPoolSum(const ThreadPoolSettings &settings)
 {
     std::ofstream file(g_Root + "/performance/results/thread_pool_sum.csv");
     file << "threads,sum (ns),result\n";
 
-    ThreadPool threadPool(&s_Alloc, p_Settings.MaxThreads);
-    StaticArray128<Task<u32>> tasks(p_Settings.MaxThreads);
-    DynamicArray<u32> values(p_Settings.SumCount);
+    ThreadPool threadPool(&s_Alloc, settings.MaxThreads);
+    StaticArray128<Task<u32>> tasks(settings.MaxThreads);
+    DynamicArray<u32> values(settings.SumCount);
 
-    for (u32 i = 0; i < p_Settings.SumCount; ++i)
+    for (u32 i = 0; i < settings.SumCount; ++i)
         values[i] = i;
 
     usize nthreads = 1;
-    while (nthreads <= p_Settings.MaxThreads)
+    while (nthreads <= settings.MaxThreads)
     {
         NonBlockingForEach(threadPool, values.begin(), values.end(), tasks.begin(), nthreads,
-                           [](auto p_It1, auto p_It2) {
+                           [](auto it1, auto it2) {
                                u32 sum = 0;
-                               for (auto it = p_It1; it != p_It2; ++it)
+                               for (auto it = it1; it != it2; ++it)
                                    sum += *it;
                                return sum;
                            });
@@ -53,26 +53,26 @@ void RecordThreadPoolSum(const ThreadPoolSettings &p_Settings)
     }
 }
 
-void RecordParallelSum(const ThreadPoolSettings &p_Settings)
+void RecordParallelSum(const ThreadPoolSettings &settings)
 {
     std::ofstream file(g_Root + "/performance/results/parallel_sum.csv");
     file << "threads,sum (ns),result\n";
 
-    DynamicArray<std::thread> threads(p_Settings.MaxThreads);
-    DynamicArray<u32> sums(p_Settings.MaxThreads);
-    DynamicArray<u32> values(p_Settings.SumCount);
+    DynamicArray<std::thread> threads(settings.MaxThreads);
+    DynamicArray<u32> sums(settings.MaxThreads);
+    DynamicArray<u32> values(settings.SumCount);
 
-    for (u32 i = 0; i < p_Settings.SumCount; ++i)
+    for (u32 i = 0; i < settings.SumCount; ++i)
         values[i] = i;
 
     usize nthreads = 1;
-    while (nthreads <= p_Settings.MaxThreads)
+    while (nthreads <= settings.MaxThreads)
     {
 
         for (usize i = 0; i < nthreads; ++i)
         {
-            const usize start = i * p_Settings.SumCount / nthreads;
-            const usize end = (i + 1) * p_Settings.SumCount / nthreads;
+            const usize start = i * settings.SumCount / nthreads;
+            const usize end = (i + 1) * settings.SumCount / nthreads;
             threads[i] = std::thread([i, start, end, &sums, &values] {
                 u32 sum = 0;
                 for (usize j = start; j < end; ++j)

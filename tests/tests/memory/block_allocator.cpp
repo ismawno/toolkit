@@ -12,7 +12,7 @@ struct NonTrivialBA
     static inline u32 DtorCount = 0;
     u32 value;
 
-    NonTrivialBA(const u32 p_Value) : value(p_Value)
+    NonTrivialBA(const u32 value) : value(value)
     {
         ++CtorCount;
     }

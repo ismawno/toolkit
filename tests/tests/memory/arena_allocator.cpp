@@ -12,7 +12,7 @@ struct NonTrivialAA
     static inline u32 DtorCount = 0;
     u32 Value;
 
-    NonTrivialAA(const u32 p_Value) : Value(p_Value)
+    NonTrivialAA(const u32 value) : Value(value)
     {
         ++CtorCount;
     }

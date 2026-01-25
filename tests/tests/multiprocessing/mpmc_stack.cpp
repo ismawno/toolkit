@@ -29,15 +29,15 @@ struct STTrackable
     {
         g_Constructions.fetch_add(1, std::memory_order_relaxed);
     }
-    STTrackable(const u32 p_Value) : Value(p_Value)
+    STTrackable(const u32 value) : Value(value)
     {
         g_Constructions.fetch_add(1, std::memory_order_relaxed);
     }
-    STTrackable(const STTrackable &p_Other) : Value(p_Other.Value)
+    STTrackable(const STTrackable &other) : Value(other.Value)
     {
         g_Constructions.fetch_add(1, std::memory_order_relaxed);
     }
-    STTrackable(STTrackable &&p_Other) : Value(p_Other.Value)
+    STTrackable(STTrackable &&other) : Value(other.Value)
     {
         g_Constructions.fetch_add(1, std::memory_order_relaxed);
     }
@@ -45,14 +45,14 @@ struct STTrackable
     {
         g_Destructions.fetch_add(1, std::memory_order_relaxed);
     }
-    STTrackable &operator=(const STTrackable &p_Other)
+    STTrackable &operator=(const STTrackable &other)
     {
-        Value = p_Other.Value;
+        Value = other.Value;
         return *this;
     }
-    STTrackable &operator=(STTrackable &&p_Other)
+    STTrackable &operator=(STTrackable &&other)
     {
-        Value = p_Other.Value;
+        Value = other.Value;
         return *this;
     }
 };

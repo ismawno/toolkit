@@ -105,9 +105,9 @@ TEST_CASE("Matrix multiplication", "[Tensor][Matrix]")
     REQUIRE(c[1][1] == 2 * 1 + 4 * 2);
 }
 
-template <usize N, typename... Args> void CreateInverseTest(const Args... p_Args)
+template <usize N, typename... Args> void CreateInverseTest(const Args... args)
 {
-    const f32m<N> mat{p_Args...};
+    const f32m<N> mat{args...};
     const f32m<N> inv = Inverse(mat);
     const f32m<N> id = inv * mat;
     for (usize i = 0; i < N; ++i)

@@ -18,15 +18,15 @@ struct WTrackable
     {
         ++g_CtorCount;
     }
-    WTrackable(const u32 p_Value) : Value(p_Value)
+    WTrackable(const u32 value) : Value(value)
     {
         ++g_CtorCount;
     }
-    WTrackable(const WTrackable &p_Other) : Value(p_Other.Value)
+    WTrackable(const WTrackable &other) : Value(other.Value)
     {
         ++g_CtorCount;
     }
-    WTrackable(WTrackable &&p_Other) : Value(p_Other.Value)
+    WTrackable(WTrackable &&other) : Value(other.Value)
     {
         ++g_CtorCount;
     }
@@ -34,14 +34,14 @@ struct WTrackable
     {
         ++g_DtorCount;
     }
-    WTrackable &operator=(const WTrackable &p_Other)
+    WTrackable &operator=(const WTrackable &other)
     {
-        Value = p_Other.Value;
+        Value = other.Value;
         return *this;
     }
-    WTrackable &operator=(WTrackable &&p_Other)
+    WTrackable &operator=(WTrackable &&other)
     {
-        Value = p_Other.Value;
+        Value = other.Value;
         return *this;
     }
 };

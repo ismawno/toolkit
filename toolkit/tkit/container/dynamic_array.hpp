@@ -9,35 +9,35 @@ template <typename T> struct DynamicAllocation
     static constexpr ArrayType Type = Array_Dynamic;
 
     DynamicAllocation() = default;
-    DynamicAllocation(const usize p_Capacity)
+    DynamicAllocation(const usize capacity)
     {
-        Allocate(p_Capacity);
+        Allocate(capacity);
     }
 
     DynamicAllocation(const DynamicAllocation &) = delete;
-    DynamicAllocation(DynamicAllocation &&p_Other) : Data(p_Other.Data), Size(p_Other.Size), Capacity(p_Other.Capacity)
+    DynamicAllocation(DynamicAllocation &&other) : Data(other.Data), Size(other.Size), Capacity(other.Capacity)
     {
-        p_Other.Data = nullptr;
-        p_Other.Size = 0;
-        p_Other.Capacity = 0;
+        other.Data = nullptr;
+        other.Size = 0;
+        other.Capacity = 0;
     }
 
     DynamicAllocation &operator=(const DynamicAllocation &) = delete;
-    DynamicAllocation &operator=(DynamicAllocation &&p_Other)
+    DynamicAllocation &operator=(DynamicAllocation &&other)
     {
 
-        Data = p_Other.Data;
-        Size = p_Other.Size;
-        Capacity = p_Other.Capacity;
-        p_Other.Data = nullptr;
-        p_Other.Size = 0;
-        p_Other.Capacity = 0;
+        Data = other.Data;
+        Size = other.Size;
+        Capacity = other.Capacity;
+        other.Data = nullptr;
+        other.Size = 0;
+        other.Capacity = 0;
         return *this;
     }
 
-    void Allocate(const usize p_Capacity)
+    void Allocate(const usize capacity)
     {
-        if (p_Capacity == 0)
+        if (capacity == 0)
             return;
         TKIT_ASSERT(
             Size == 0,
@@ -48,8 +48,8 @@ template <typename T> struct DynamicAllocation
                     "cannot exist if capacity is 0. Capacity: {}",
                     Capacity);
 
-        Data = static_cast<T *>(Memory::AllocateAligned(p_Capacity * sizeof(T), alignof(T)));
-        Capacity = p_Capacity;
+        Data = static_cast<T *>(Memory::AllocateAligned(capacity * sizeof(T), alignof(T)));
+        Capacity = capacity;
     }
 
     void Deallocate()
@@ -69,20 +69,20 @@ template <typename T> struct DynamicAllocation
         return Capacity;
     }
 
-    void GrowCapacityIf(const bool p_ShouldGrow, const usize p_Size)
+    void GrowCapacityIf(const bool shouldGrow, const usize size)
     {
-        if (p_ShouldGrow)
-            GrowCapacity(p_Size);
+        if (shouldGrow)
+            GrowCapacity(size);
     }
-    void ModifyCapacity(const usize p_Capacity)
+    void ModifyCapacity(const usize capacity)
     {
         using Tools = Container::ArrayTools<T>;
-        TKIT_ASSERT(p_Capacity != 0, "[TOOLKIT][DYN-ARRAY] Capacity must be greater than 0");
-        TKIT_ASSERT(p_Capacity >= Size, "[TOOLKIT][DYN-ARRAY] Capacity ({}) is smaller than size ({})", p_Capacity,
+        TKIT_ASSERT(capacity != 0, "[TOOLKIT][DYN-ARRAY] Capacity must be greater than 0");
+        TKIT_ASSERT(capacity >= Size, "[TOOLKIT][DYN-ARRAY] Capacity ({}) is smaller than size ({})", capacity,
                     Size);
-        T *newData = static_cast<T *>(Memory::AllocateAligned(p_Capacity * sizeof(T), alignof(T)));
+        T *newData = static_cast<T *>(Memory::AllocateAligned(capacity * sizeof(T), alignof(T)));
         TKIT_ASSERT(newData, "[TOOLKIT][DYN-ARRAY] Failed to allocate {} bytes of memory aligned to {} bytes",
-                    p_Capacity * sizeof(T), alignof(T));
+                    capacity * sizeof(T), alignof(T));
 
         if (Data)
         {
@@ -92,12 +92,12 @@ template <typename T> struct DynamicAllocation
             Memory::DeallocateAligned(Data);
         }
         Data = newData;
-        Capacity = p_Capacity;
+        Capacity = capacity;
     }
-    void GrowCapacity(const usize p_Size)
+    void GrowCapacity(const usize size)
     {
         using Tools = Container::ArrayTools<T>;
-        const usize capacity = Tools::GrowthFactor(p_Size);
+        const usize capacity = Tools::GrowthFactor(size);
         ModifyCapacity(capacity);
     }
 

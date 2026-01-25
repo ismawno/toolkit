@@ -18,15 +18,15 @@ struct DTrackable
     {
         ++g_Constructions;
     }
-    DTrackable(const u32 p_Value) : Value(p_Value)
+    DTrackable(const u32 value) : Value(value)
     {
         ++g_Constructions;
     }
-    DTrackable(const DTrackable &p_Other) : Value(p_Other.Value)
+    DTrackable(const DTrackable &other) : Value(other.Value)
     {
         ++g_Constructions;
     }
-    DTrackable(DTrackable &&p_Other) : Value(p_Other.Value)
+    DTrackable(DTrackable &&other) : Value(other.Value)
     {
         ++g_Constructions;
     }
@@ -34,14 +34,14 @@ struct DTrackable
     {
         ++g_Destructions;
     }
-    DTrackable &operator=(const DTrackable &p_Other)
+    DTrackable &operator=(const DTrackable &other)
     {
-        Value = p_Other.Value;
+        Value = other.Value;
         return *this;
     }
-    DTrackable &operator=(DTrackable &&p_Other)
+    DTrackable &operator=(DTrackable &&other)
     {
-        Value = p_Other.Value;
+        Value = other.Value;
         return *this;
     }
 };

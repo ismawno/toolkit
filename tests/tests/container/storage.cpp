@@ -21,7 +21,7 @@ struct NT
     static inline u32 CtorCount = 0;
     static inline u32 DtorCount = 0;
     u32 value;
-    NT(const u32 p_Value) : value(p_Value)
+    NT(const u32 value) : value(value)
     {
         ++CtorCount;
     }
@@ -95,15 +95,15 @@ struct STrack
     static inline u32 CopyCtorCount = 0;
     static inline u32 MoveCtorCount = 0;
     u32 Val;
-    STrack(const u32 p_Value) : Val(p_Value)
+    STrack(const u32 value) : Val(value)
     {
         ++CtorCount;
     }
-    STrack(const STrack &p_Other) : Val(p_Other.Val)
+    STrack(const STrack &other) : Val(other.Val)
     {
         ++CopyCtorCount;
     }
-    STrack(STrack &&p_Other) : Val(p_Other.Val)
+    STrack(STrack &&other) : Val(other.Val)
     {
         ++MoveCtorCount;
     }

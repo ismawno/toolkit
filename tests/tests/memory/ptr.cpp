@@ -9,7 +9,7 @@ struct MyRefCounted : public RefCounted<MyRefCounted>
 {
     u32 Value;
     static inline u32 DtorCount = 0;
-    MyRefCounted(const u32 p_Value) : Value(p_Value)
+    MyRefCounted(const u32 value) : Value(value)
     {
     }
     ~MyRefCounted()
@@ -82,7 +82,7 @@ struct MyScopeObj
 {
     static inline u32 DtorCount = 0;
     u32 Value;
-    MyScopeObj(const u32 p_Value) : Value(p_Value)
+    MyScopeObj(const u32 value) : Value(value)
     {
     }
     ~MyScopeObj()

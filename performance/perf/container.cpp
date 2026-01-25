@@ -18,32 +18,32 @@ struct Example
         delete Element;
     }
 
-    Example(const Example &p_Other)
+    Example(const Example &other)
     {
-        Element = new u32(*p_Other.Element);
+        Element = new u32(*other.Element);
     }
-    Example(Example &&p_Other)
+    Example(Example &&other)
     {
-        Element = p_Other.Element;
-        p_Other.Element = nullptr;
+        Element = other.Element;
+        other.Element = nullptr;
     }
 
-    Example &operator=(const Example &p_Other)
+    Example &operator=(const Example &other)
     {
-        if (this == &p_Other)
+        if (this == &other)
             return *this;
 
         delete Element;
-        *Element = *p_Other.Element;
+        *Element = *other.Element;
         return *this;
     }
-    Example &operator=(Example &&p_Other)
+    Example &operator=(Example &&other)
     {
-        if (this == &p_Other)
+        if (this == &other)
             return *this;
         delete Element;
-        Element = p_Other.Element;
-        p_Other.Element = nullptr;
+        Element = other.Element;
+        other.Element = nullptr;
         return *this;
     }
 
@@ -52,14 +52,14 @@ struct Example
 
 // using Example = u32; // to test trivial types
 
-void RecordVector(const ContainerSettings &p_Settings)
+void RecordVector(const ContainerSettings &settings)
 {
     std::ofstream file(g_Root + "/performance/results/vector.csv");
     file << "passes,pushback,pushfront,popback,popfront,copy,move\n";
 
     std::vector<Example> array;
-    array.reserve(p_Settings.MaxPasses + 1);
-    for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
+    array.reserve(settings.MaxPasses + 1);
+    for (usize passes = settings.MinPasses; passes <= settings.MaxPasses; passes += settings.PassIncrement)
     {
         array.resize(passes);
         Clock clock;
@@ -87,13 +87,13 @@ void RecordVector(const ContainerSettings &p_Settings)
     }
 }
 
-void RecordStaticArray(const ContainerSettings &p_Settings)
+void RecordStaticArray(const ContainerSettings &settings)
 {
     std::ofstream file(g_Root + "/performance/results/static_array.csv");
     file << "passes,append,insert,pop,remove\n";
 
     StaticArray<Example, 1000000> array;
-    for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
+    for (usize passes = settings.MinPasses; passes <= settings.MaxPasses; passes += settings.PassIncrement)
     {
         array.Resize(passes);
         Clock clock;
@@ -114,14 +114,14 @@ void RecordStaticArray(const ContainerSettings &p_Settings)
     }
 }
 
-void RecordDynamicArray(const ContainerSettings &p_Settings)
+void RecordDynamicArray(const ContainerSettings &settings)
 {
     std::ofstream file(g_Root + "/performance/results/dynamic_array.csv");
     file << "passes,append,insert,pop,remove,copy,move\n";
 
     DynamicArray<Example> array;
-    array.Reserve(p_Settings.MaxPasses + 1);
-    for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
+    array.Reserve(settings.MaxPasses + 1);
+    for (usize passes = settings.MinPasses; passes <= settings.MaxPasses; passes += settings.PassIncrement)
     {
         array.Resize(passes);
         Clock clock;
@@ -149,13 +149,13 @@ void RecordDynamicArray(const ContainerSettings &p_Settings)
     }
 }
 
-void RecordDeque(const ContainerSettings &p_Settings)
+void RecordDeque(const ContainerSettings &settings)
 {
     std::ofstream file(g_Root + "/performance/results/deque.csv");
     file << "passes,pushback,pushfront,popback,popfront,copy,move\n";
 
     std::deque<Example> deque;
-    for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
+    for (usize passes = settings.MinPasses; passes <= settings.MaxPasses; passes += settings.PassIncrement)
     {
         Clock clock;
         deque.push_back(Example{});

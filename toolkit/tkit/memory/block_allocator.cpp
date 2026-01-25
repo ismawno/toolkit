@@ -5,30 +5,30 @@
 
 namespace TKit
 {
-BlockAllocator::BlockAllocator(const usize p_BufferSize, const usize p_AllocationSize, const usize p_Alignment)
-    : m_BufferSize(p_BufferSize), m_AllocationSize(p_AllocationSize), m_Provided(false)
+BlockAllocator::BlockAllocator(const usize bufferSize, const usize allocationSize, const usize alignment)
+    : m_BufferSize(bufferSize), m_AllocationSize(allocationSize), m_Provided(false)
 {
-    TKIT_ASSERT(p_AllocationSize >= sizeof(Allocation),
+    TKIT_ASSERT(allocationSize >= sizeof(Allocation),
                 "[TOOLKIT][BLOCK-ALLOC] The allocation size must be at least {} bytes", sizeof(Allocation));
-    TKIT_ASSERT(p_BufferSize % p_Alignment == 0, "[TOOLKIT][BLOCK-ALLOC] The buffer size must be a multiple of the "
+    TKIT_ASSERT(bufferSize % alignment == 0, "[TOOLKIT][BLOCK-ALLOC] The buffer size must be a multiple of the "
                                                  "alignment to ensure every block of memory is aligned to it");
     TKIT_ASSERT(
-        p_BufferSize % p_AllocationSize == 0,
+        bufferSize % allocationSize == 0,
         "[TOOLKIT][BLOCK-ALLOC] The buffer size must be a multiple of the allocation size to guarantee a tight fit");
-    TKIT_ASSERT(p_AllocationSize % p_Alignment == 0, "[TOOLKIT][BLOCK-ALLOC] The allocation size must be a multiple of "
+    TKIT_ASSERT(allocationSize % alignment == 0, "[TOOLKIT][BLOCK-ALLOC] The allocation size must be a multiple of "
                                                      "the alignment to ensure every block of memory is aligned to it");
 
-    m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(p_BufferSize, p_Alignment));
+    m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(bufferSize, alignment));
     TKIT_ASSERT(m_Buffer, "[TOOLKIT][BLOCK-ALLOC] Failed to allocate memory");
     setupMemoryLayout();
 }
 
-BlockAllocator::BlockAllocator(void *p_Buffer, const usize p_BufferSize, const usize p_AllocationSize)
-    : m_Buffer(static_cast<std::byte *>(p_Buffer)), m_BufferSize(p_BufferSize), m_AllocationSize(p_AllocationSize),
+BlockAllocator::BlockAllocator(void *buffer, const usize bufferSize, const usize allocationSize)
+    : m_Buffer(static_cast<std::byte *>(buffer)), m_BufferSize(bufferSize), m_AllocationSize(allocationSize),
       m_Provided(true)
 {
     TKIT_ASSERT(
-        p_BufferSize % p_AllocationSize == 0,
+        bufferSize % allocationSize == 0,
         "[TOOLKIT][BLOCK-ALLOC] The buffer size must be a multiple of the allocation size to guarantee a tight fit");
     setupMemoryLayout();
 }
@@ -38,32 +38,32 @@ BlockAllocator::~BlockAllocator()
     deallocateBuffer();
 }
 
-BlockAllocator::BlockAllocator(BlockAllocator &&p_Other)
-    : m_Buffer(p_Other.m_Buffer), m_FreeList(p_Other.m_FreeList), m_BufferSize(p_Other.m_BufferSize),
-      m_AllocationSize(p_Other.m_AllocationSize), m_Provided(p_Other.m_Provided)
+BlockAllocator::BlockAllocator(BlockAllocator &&other)
+    : m_Buffer(other.m_Buffer), m_FreeList(other.m_FreeList), m_BufferSize(other.m_BufferSize),
+      m_AllocationSize(other.m_AllocationSize), m_Provided(other.m_Provided)
 {
-    p_Other.m_Buffer = nullptr;
-    p_Other.m_FreeList = nullptr;
-    p_Other.m_BufferSize = 0;
-    p_Other.m_AllocationSize = 0;
+    other.m_Buffer = nullptr;
+    other.m_FreeList = nullptr;
+    other.m_BufferSize = 0;
+    other.m_AllocationSize = 0;
     m_Provided = false;
 }
 
-BlockAllocator &BlockAllocator::operator=(BlockAllocator &&p_Other)
+BlockAllocator &BlockAllocator::operator=(BlockAllocator &&other)
 {
-    if (this != &p_Other)
+    if (this != &other)
     {
         deallocateBuffer();
-        m_Buffer = p_Other.m_Buffer;
-        m_FreeList = p_Other.m_FreeList;
-        m_BufferSize = p_Other.m_BufferSize;
-        m_AllocationSize = p_Other.m_AllocationSize;
-        m_Provided = p_Other.m_Provided;
+        m_Buffer = other.m_Buffer;
+        m_FreeList = other.m_FreeList;
+        m_BufferSize = other.m_BufferSize;
+        m_AllocationSize = other.m_AllocationSize;
+        m_Provided = other.m_Provided;
 
-        p_Other.m_Buffer = nullptr;
-        p_Other.m_FreeList = nullptr;
-        p_Other.m_BufferSize = 0;
-        p_Other.m_AllocationSize = 0;
+        other.m_Buffer = nullptr;
+        other.m_FreeList = nullptr;
+        other.m_BufferSize = 0;
+        other.m_AllocationSize = 0;
         m_Provided = false;
     }
     return *this;
@@ -83,13 +83,13 @@ void *BlockAllocator::Allocate()
     return alloc;
 }
 
-void BlockAllocator::Deallocate(void *p_Ptr)
+void BlockAllocator::Deallocate(void *ptr)
 {
-    TKIT_ASSERT(p_Ptr, "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a null pointer");
-    TKIT_ASSERT(Belongs(p_Ptr),
+    TKIT_ASSERT(ptr, "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a null pointer");
+    TKIT_ASSERT(Belongs(ptr),
                 "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a pointer that does not belong to the allocator");
 
-    Allocation *alloc = static_cast<Allocation *>(p_Ptr);
+    Allocation *alloc = static_cast<Allocation *>(ptr);
     alloc->Next = m_FreeList;
     m_FreeList = alloc;
 }

@@ -81,21 +81,21 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                     hpp.brief("Get an enum value from a string.")
                     hpp("If no valid enum value is found, the first enum value will be returned. Take care.")
 
-                with hpp.scope(f"static constexpr {enum.id.identifier} FromString(const std::string_view p_Value)"):
+                with hpp.scope(f"static constexpr {enum.id.identifier} FromString(const std::string_view value)"):
                     vals = list(enum.values.keys())
                     for val in vals:
-                        with hpp.scope(f'if (p_Value == "{val}")', delimiters=False):
+                        with hpp.scope(f'if (value == "{val}")', delimiters=False):
                             hpp(f"return {enum.id.identifier}::{val};")
 
-                    hpp('TKIT_FATAL("Found no valid enum value for the string {}.", p_Value);')
+                    hpp('TKIT_FATAL("Found no valid enum value for the string {}.", value);')
                     hpp(f"return {enum.id.identifier}::{vals[0]};")
 
                 with hpp.doc():
                     hpp.brief("Transform an enum value to a string.")
                     hpp("If the enum is not valid, a null pointer will be returned.")
 
-                with hpp.scope(f"static constexpr const char *ToString(const {enum.id.identifier} p_Value)"):
-                    with hpp.scope("switch(p_Value)"):
+                with hpp.scope(f"static constexpr const char *ToString(const {enum.id.identifier} value)"):
+                    with hpp.scope("switch(value)"):
                         for val in enum.values:
                             with hpp.scope(f"case {enum.id.identifier}::{val}:", delimiters=False):
                                 hpp(f'return "{val}";')
@@ -181,27 +181,27 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                                     hpp.brief(
                                         f"Given an instance of `{clsinfo.id.identifier}`, access the value of the field that is currently represented."
                                     )
-                                    hpp.param("p_Instance", f"An instance of type `{clsinfo.id.identifier}`.")
+                                    hpp.param("instance", f"An instance of type `{clsinfo.id.identifier}`.")
                                     hpp.ret(f"The value of the field for the instance.")
 
                             create_get_doc()
-                            with hpp.scope(f"Ref_Type &Get({clsinfo.id.identifier} &p_Instance) const"):
-                                hpp("return p_Instance.*Pointer;")
+                            with hpp.scope(f"Ref_Type &Get({clsinfo.id.identifier} &instance) const"):
+                                hpp("return instance.*Pointer;")
 
                             create_get_doc()
-                            with hpp.scope(f"const Ref_Type &Get(const {clsinfo.id.identifier} &p_Instance) const"):
-                                hpp("return p_Instance.*Pointer;")
+                            with hpp.scope(f"const Ref_Type &Get(const {clsinfo.id.identifier} &instance) const"):
+                                hpp("return instance.*Pointer;")
 
                             with hpp.doc():
                                 hpp.brief(
                                     f"Given an instance of `{clsinfo.id.identifier}`, set the value of the field that is currently represented."
                                 )
-                                hpp.param("p_Instance", f"An instance of type `{clsinfo.id.identifier}`.")
-                                hpp.param("p_Value", "The value to set.")
+                                hpp.param("instance", f"An instance of type `{clsinfo.id.identifier}`.")
+                                hpp.param("value", "The value to set.")
                             with hpp.scope(
-                                f"template <std::convertible_to<Ref_Type> U> void Set({clsinfo.id.identifier} &p_Instance, U &&p_Value) const"
+                                f"template <std::convertible_to<Ref_Type> U> void Set({clsinfo.id.identifier} &instance, U &&value) const"
                             ):
-                                hpp("p_Instance.*Pointer = std::forward<U>(p_Value);")
+                                hpp("instance.*Pointer = std::forward<U>(value);")
 
                     def create_if_constexpr_per_type(
                         fn: Callable[..., None],
@@ -247,15 +247,15 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                         hpp.tparam(
                             "Ref_Type", "The type of the field. A global, type agnostic query is not supported."
                         )
-                        hpp.param("p_Field", "The name of the field.")
+                        hpp.param("field", "The name of the field.")
 
                     with hpp.scope(
-                        f"template <typename Ref_Type> static auto Get{modifier}Field(const std::string_view p_Field)"
+                        f"template <typename Ref_Type> static auto Get{modifier}Field(const std::string_view field)"
                     ):
 
                         def generator(fields: list[Field], vtype: str, /) -> None:
                             for field in fields:
-                                with hpp.scope(f'if (p_Field == "{field.name}")', delimiters=False):
+                                with hpp.scope(f'if (field == "{field.name}")', delimiters=False):
                                     hpp(f"return {convert_field_to_cpp(field)};")
                             hpp(f"return {modifier}Field<{vtype}>{{}};")
 
@@ -263,9 +263,9 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                             generator, f"{modifier}Field<u8>{{}}", as_sequence=False, delimiters=True
                         )
 
-                    with hpp.scope(f"static bool Has{modifier}Field(const std::string p_Field)"):
+                    with hpp.scope(f"static bool Has{modifier}Field(const std::string field)"):
                         for vtype in fcollection.per_type:
-                            with hpp.scope(f"if (Get{modifier}Field<{vtype}>(p_Field))", delimiters=False):
+                            with hpp.scope(f"if (Get{modifier}Field<{vtype}>(field))", delimiters=False):
                                 hpp("return true;")
 
                         hpp("return false;")
@@ -322,15 +322,15 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                                 "You may optionally provide type filters so that only fields with such types are retrieved.",
                             )
                             hpp.param(
-                                "p_Fun",
-                                "A callable object that must accept any field type. The most straightforward way of doing so is by declaring the macro as `[](const auto &p_Field){};`.",
+                                "fun",
+                                "A callable object that must accept any field type. The most straightforward way of doing so is by declaring the macro as `[](const auto &field){};`.",
                             )
 
                         with hpp.scope(
-                            f"template <typename... Ref_Types, typename Ref_Fun> static constexpr void ForEach{group}{modifier}Field(Ref_Fun &&p_Fun)"
+                            f"template <typename... Ref_Types, typename Ref_Fun> static constexpr void ForEach{group}{modifier}Field(Ref_Fun &&fun)"
                         ):
                             hpp(f"const auto fields = Get{group}{modifier}Fields<Ref_Types...>();")
-                            hpp(f"ForEach{modifier}Field(fields, std::forward<Ref_Fun>(p_Fun));")
+                            hpp(f"ForEach{modifier}Field(fields, std::forward<Ref_Fun>(fun));")
 
                     with hpp.doc():
                         hpp.brief(f"Iterate over all {modifier.lower()} fields.")
@@ -339,26 +339,26 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                             "You may optionally provide type filters so that only fields with such types are retrieved.",
                         )
                         hpp.param(
-                            "p_Fields",
+                            "fields",
                             f"A collection of fields. It is advisable for this parameter to be of the type returned by the `Get{modifier}Fields()` methods.",
                         )
                         hpp.param(
-                            "p_Fun",
-                            "A callable object that must accept any field type. The most straightforward way of doing so is by declaring the macro as `[](const auto &p_Field){};`.",
+                            "fun",
+                            "A callable object that must accept any field type. The most straightforward way of doing so is by declaring the macro as `[](const auto &field){};`.",
                         )
 
                     with hpp.scope(
-                        f"template <typename Ref_Type, typename Ref_Fun> static constexpr void ForEach{modifier}Field(const Ref_Type &p_Fields, Ref_Fun &&p_Fun)"
+                        f"template <typename Ref_Type, typename Ref_Fun> static constexpr void ForEach{modifier}Field(const Ref_Type &fields, Ref_Fun &&fun)"
                     ):
                         with hpp.scope("if constexpr (Container::Iterable<Ref_Type>)", delimiters=False):
                             with hpp.scope(
-                                "for (const auto &field : p_Fields)",
+                                "for (const auto &field : fields)",
                                 delimiters=False,
                             ):
-                                hpp("std::forward<Ref_Fun>(p_Fun)(field);")
+                                hpp("std::forward<Ref_Fun>(fun)(field);")
                         with hpp.scope("else", delimiters=False):
                             hpp(
-                                "std::apply([&p_Fun](const auto &...p_Field) {(std::forward<Ref_Fun>(p_Fun)(p_Field), ...);}, p_Fields);"
+                                "std::apply([&fun](const auto &...field) {(std::forward<Ref_Fun>(fun)(field), ...);}, fields);"
                             )
 
                     create_get_fields_method(fcollection.fields)
@@ -403,14 +403,14 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                                 "You may optionally provide type filters so that only fields with such types are retrieved.",
                             )
                             hpp.param(
-                                "p_Fun",
-                                "A callable object that must accept any field type. The most straightforward way of doing so is by declaring the macro as `[](const auto &p_Field){};`.",
+                                "fun",
+                                "A callable object that must accept any field type. The most straightforward way of doing so is by declaring the macro as `[](const auto &field){};`.",
                             )
                         with hpp.scope(
-                            f"template <{modifier}Group Ref_Group, typename... Ref_Types, typename Ref_Fun> static constexpr void ForEach{modifier}FieldByGroup(Ref_Fun &&p_Fun)"
+                            f"template <{modifier}Group Ref_Group, typename... Ref_Types, typename Ref_Fun> static constexpr void ForEach{modifier}FieldByGroup(Ref_Fun &&fun)"
                         ):
                             hpp(f"const auto fields = Get{modifier}FieldsByGroup<Ref_Group, Ref_Types...>();")
-                            hpp(f"ForEach{modifier}Field(fields, std::forward<Ref_Fun>(p_Fun));")
+                            hpp(f"ForEach{modifier}Field(fields, std::forward<Ref_Fun>(fun));")
 
                     for group, fields in fcollection.per_group.items():
                         create_get_fields_method(fields, group=group.name)

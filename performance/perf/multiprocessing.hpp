@@ -2,6 +2,6 @@
 
 namespace TKit::Perf
 {
-void RecordThreadPoolSum(const ThreadPoolSettings &p_Settings);
-void RecordParallelSum(const ThreadPoolSettings &p_Settings);
+void RecordThreadPoolSum(const ThreadPoolSettings &settings);
+void RecordParallelSum(const ThreadPoolSettings &settings);
 } // namespace TKit::Perf

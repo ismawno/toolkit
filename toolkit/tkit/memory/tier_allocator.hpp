@@ -40,7 +40,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     };
     struct Description
     {
-        Description(ArenaAllocator *p_Allocator, const usize p_MaxTiers) : Tiers(p_Allocator, p_MaxTiers)
+        Description(ArenaAllocator *allocator, const usize maxTiers) : Tiers(allocator, maxTiers)
         {
         }
         ArenaArray<TierInfo> Tiers;
@@ -50,7 +50,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
         usize Granularity;
         f32 TierSlotDecay;
 
-        usize GetTierIndex(usize p_Size) const;
+        usize GetTierIndex(usize size) const;
     };
 
     /**
@@ -61,59 +61,58 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
      * with a reasonable total buffer size. Check the description values to make sure the buffer size has a value that
      * works for you.
      *
-     * All integer parameters (except for `p_MaxTiers`) must be powers of 2. The maximum alignment is provided at
+     * All integer parameters (except for `maxTiers`) must be powers of 2. The maximum alignment is provided at
      * construction. Every allocation is guaranteed to be aligned to the maximum alignment or its natural alignment, so
      * the allocator will respect alignment requirements (including the ones set by `alignas`) up to the specified
      * maximum alignment.
      *
-     * @param p_MaxAllocation The maximum allocation size the allocator will support. This also equals to the size of
+     * @param maxAllocation The maximum allocation size the allocator will support. This also equals to the size of
      * the first tier (which is the one with the largest allocation size), meaning only one allocation of
-     * `p_MaxAllocation` bytes can be made.
+     * `maxAllocation` bytes can be made.
      *
-     * @param p_MinAllocation The minimum allowed allocation. Allocation requests smaller than this size will round up
-     * to `p_MinAllocation`. It can never be smaller than `sizeof(void *)`.
+     * @param minAllocation The minimum allowed allocation. Allocation requests smaller than this size will round up
+     * to `minAllocation`. It can never be smaller than `sizeof(void *)`.
      *
-     * @param p_Granularity It controls how the size difference between tiers evolves, such that the difference between
+     * @param granularity It controls how the size difference between tiers evolves, such that the difference between
      * the allocation sizes of tiers i and i + 1 is the next power of 2 from the allocation size i, divided by the
      * granularity. A small granularity causes tier sizes to shrink (remember, tiers are built from biggest to smallest)
-     * fast in between tiers, reaching `p_MinAllocation` from `p_MaxAllocation` quicker and thus resulting in a smaller
+     * fast in between tiers, reaching `minAllocation` from `maxAllocation` quicker and thus resulting in a smaller
      * total buffer size, but fragmentation risk is higher. Bigger granularities prevent fragmentation but cause the
      * total buffer size to explode very fast. A granularity of 2 for instance means that tiers always double their
-     * capacity with respect the previous one. It cannot be greater than `p_MinAllocation`.
+     * capacity with respect the previous one. It cannot be greater than `minAllocation`.
      *
-     * @param p_TierSlotDecay A value between 0 and 1 that controls how the amount of slots scales when creating tiers
+     * @param tierSlotDecay A value between 0 and 1 that controls how the amount of slots scales when creating tiers
      * with smaller allocation sizes. A tier with index i + 1 will have at least the amount of slots tier i has divided
      * by this value. The tier with index 0 has always exactly one slot. Setting this value too low may cause the buffer
      * size to explode.
      */
-    static Description CreateDescription(ArenaAllocator *p_Allocator, usize p_MaxTiers, usize p_MaxAllocation,
-                                         usize p_MinAllocation = 2 * sizeof(void *), usize p_Granularity = 4,
-                                         f32 p_TierSlotDecay = 0.9f);
-    static Description CreateDescription(usize p_MaxTiers, usize p_MaxAllocation,
-                                         usize p_MinAllocation = 2 * sizeof(void *), usize p_Granularity = 4,
-                                         f32 p_TierSlotDecay = 0.9f);
+    static Description CreateDescription(ArenaAllocator *allocator, usize maxTiers, usize maxAllocation,
+                                         usize minAllocation = 2 * sizeof(void *), usize granularity = 4,
+                                         f32 tierSlotDecay = 0.9f);
+    static Description CreateDescription(usize maxTiers, usize maxAllocation, usize minAllocation = 2 * sizeof(void *),
+                                         usize granularity = 4, f32 tierSlotDecay = 0.9f);
 
-    explicit TierAllocator(ArenaAllocator *p_Allocator, usize p_MaxTiers, usize p_MaxAllocation,
-                           usize p_MinAllocation = 2 * sizeof(void *), usize p_Granularity = 4,
-                           f32 p_TierSlotDecay = 0.9f, usize p_MaxAlignment = 64);
-    explicit TierAllocator(ArenaAllocator *p_Allocator, usize p_MaxTiers, const Description &p_Description,
-                           usize p_MaxAlignment = 64);
+    explicit TierAllocator(ArenaAllocator *allocator, usize maxTiers, usize maxAllocation,
+                           usize minAllocation = 2 * sizeof(void *), usize granularity = 4, f32 tierSlotDecay = 0.9f,
+                           usize maxAlignment = 64);
+    explicit TierAllocator(ArenaAllocator *allocator, usize maxTiers, const Description &description,
+                           usize maxAlignment = 64);
 
-    explicit TierAllocator(usize p_MaxTiers, usize p_MaxAllocation, usize p_MinAllocation = 2 * sizeof(void *),
-                           usize p_Granularity = 4, f32 p_TierSlotDecay = 0.9f, usize p_MaxAlignment = 64);
-    explicit TierAllocator(usize p_MaxTiers, const Description &p_Description, usize p_MaxAlignment = 64);
+    explicit TierAllocator(usize maxTiers, usize maxAllocation, usize minAllocation = 2 * sizeof(void *),
+                           usize granularity = 4, f32 tierSlotDecay = 0.9f, usize maxAlignment = 64);
+    explicit TierAllocator(usize maxTiers, const Description &description, usize maxAlignment = 64);
 
     ~TierAllocator();
 
-    TierAllocator(TierAllocator &&p_Other);
-    TierAllocator &operator=(TierAllocator &&p_Other);
+    TierAllocator(TierAllocator &&other);
+    TierAllocator &operator=(TierAllocator &&other);
 
-    void *Allocate(usize p_Size);
-    void Deallocate(void *p_Ptr, usize p_Size);
+    void *Allocate(usize size);
+    void Deallocate(void *ptr, usize size);
 
-    template <typename T> T *Allocate(const usize p_Count = 1)
+    template <typename T> T *Allocate(const usize count = 1)
     {
-        T *ptr = static_cast<T *>(Allocate(p_Count * sizeof(T)));
+        T *ptr = static_cast<T *>(Allocate(count * sizeof(T)));
         TKIT_ASSERT(!ptr || Memory::IsAligned(ptr, alignof(T)),
                     "[TOOLKIT][TIER-ALLOC] Type T has stronger memory alignment requirements than specified. Bump the "
                     "alignment of the allocator or prevent using it to allocate objects of such type");
@@ -122,46 +121,46 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 
     template <typename T>
         requires(!std::same_as<T, void>)
-    void Deallocate(T *p_Ptr, const usize p_Count = 1)
+    void Deallocate(T *ptr, const usize count = 1)
     {
-        Deallocate(static_cast<void *>(p_Ptr), p_Count * sizeof(T));
+        Deallocate(static_cast<void *>(ptr), count * sizeof(T));
     }
 
-    template <typename T, typename... Args> T *Create(Args &&...p_Args)
+    template <typename T, typename... Args> T *Create(Args &&...args)
     {
         T *ptr = Allocate<T>();
         if (!ptr)
             return nullptr;
-        return Memory::Construct(ptr, std::forward<Args>(p_Args)...);
+        return Memory::Construct(ptr, std::forward<Args>(args)...);
     }
 
-    template <typename T, typename... Args> T *NCreate(const usize p_Count, Args &&...p_Args)
+    template <typename T, typename... Args> T *NCreate(const usize count, Args &&...args)
     {
-        T *ptr = Allocate<T>(p_Count);
+        T *ptr = Allocate<T>(count);
         if (!ptr)
             return nullptr;
-        Memory::ConstructRange(ptr, ptr + p_Count, std::forward<Args>(p_Args)...);
+        Memory::ConstructRange(ptr, ptr + count, std::forward<Args>(args)...);
         return ptr;
     }
 
     template <typename T>
         requires(!std::same_as<T, void>)
-    constexpr void Destroy(T *p_Ptr)
+    constexpr void Destroy(T *ptr)
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
-            p_Ptr->~T();
-        Deallocate(p_Ptr);
+            ptr->~T();
+        Deallocate(ptr);
     }
 
-    template <typename T> void NDestroy(T *p_Ptr, const usize p_Count)
+    template <typename T> void NDestroy(T *ptr, const usize count)
     {
-        TKIT_ASSERT(p_Ptr, "[TOOLKIT][TIER-ALLOC] Cannot deallocate a null pointer");
-        TKIT_ASSERT(Belongs(p_Ptr),
+        TKIT_ASSERT(ptr, "[TOOLKIT][TIER-ALLOC] Cannot deallocate a null pointer");
+        TKIT_ASSERT(Belongs(ptr),
                     "[TOOLKIT][TIER-ALLOC] Cannot deallocate a pointer that does not belong to the allocator");
         if constexpr (!std::is_trivially_destructible_v<T>)
-            for (usize i = 0; i < p_Count; ++i)
-                p_Ptr[i].~T();
-        Deallocate(p_Ptr, p_Count);
+            for (usize i = 0; i < count; ++i)
+                ptr[i].~T();
+        Deallocate(ptr, count);
     }
 
     /**
@@ -170,13 +169,13 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
      * @note This is a simple check to see if the provided pointer lies within the boundaries of the buffer. It will not
      * be able to determine if the pointer is currently allocated or free.
      *
-     * @param p_Ptr The pointer to check.
+     * @param ptr The pointer to check.
      * @return Whether the pointer belongs to the tier allocator.
      */
-    bool Belongs(const void *p_Ptr) const
+    bool Belongs(const void *ptr) const
     {
-        const std::byte *ptr = static_cast<const std::byte *>(p_Ptr);
-        return ptr >= m_Buffer && ptr < m_Buffer + m_BufferSize;
+        const std::byte *bptr = static_cast<const std::byte *>(ptr);
+        return bptr >= m_Buffer && bptr < m_Buffer + m_BufferSize;
     }
 
     usize GetBufferSize() const
@@ -201,11 +200,11 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 #endif
     };
 
-    usize getTierIndex(usize p_Size) const;
+    usize getTierIndex(usize size) const;
 #ifdef TKIT_ENABLE_ASSERTS
-    void setupMemoryLayout(const Description &p_Description, usize p_MaxAlignment);
+    void setupMemoryLayout(const Description &description, usize maxAlignment);
 #else
-    void setupMemoryLayout(const Description &p_Description);
+    void setupMemoryLayout(const Description &description);
 #endif
     void deallocateBuffer();
 

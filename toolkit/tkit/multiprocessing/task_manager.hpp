@@ -26,7 +26,7 @@ namespace TKit
 class ITaskManager
 {
   public:
-    explicit ITaskManager(usize p_WorkerCount);
+    explicit ITaskManager(usize workerCount);
     virtual ~ITaskManager() = default;
 
     /**
@@ -34,13 +34,13 @@ class ITaskManager
      *
      * The task will be executed as soon as possible.
      *
-     * @param p_Task The task to submit.
-     * @param p_SubmissionIndex An optional submission index to potentially speed up submission process when submitting
+     * @param task The task to submit.
+     * @param submissionIndex An optional submission index to potentially speed up submission process when submitting
      * many tasks in a short period of time (which will certainly almost always be the case). It is completely optional
      * and can be ignored. It should always start at 0 when a new batch of tasks is going to be submitted.
      * @return The next submission index that should be fed to the next task submission while in the same batch.
      */
-    virtual usize SubmitTask(ITask *p_Task, usize p_SubmissionIndex = 0) = 0;
+    virtual usize SubmitTask(ITask *task, usize submissionIndex = 0) = 0;
 
     /**
      * @brief Block the calling thread until the task has finished executing.
@@ -51,7 +51,7 @@ class ITaskManager
      * other tasks in the meantime, avoiding the above issue and make better use of the thread's resources.
      *
      */
-    virtual void WaitUntilFinished(const ITask &p_Task) = 0;
+    virtual void WaitUntilFinished(const ITask &task) = 0;
 
     /**
      * @brief Block the calling thread until the task has finished executing and return the task's result.
@@ -64,24 +64,24 @@ class ITaskManager
      * @return The task result.
      *
      */
-    template <typename T> T WaitForResult(const Task<T> &p_Task)
+    template <typename T> T WaitForResult(const Task<T> &task)
     {
-        WaitUntilFinished(p_Task);
-        return p_Task.GetResult();
+        WaitUntilFinished(task);
+        return task.GetResult();
     }
 
     /**
      * @brief Create a task inferred from the return type of the lambda.
      *
-     * @param p_Callable The callable object to execute.
-     * @param p_Args Extra arguments to pass to the callable object.
+     * @param callable The callable object to execute.
+     * @param args Extra arguments to pass to the callable object.
      * @return A new task object.
      */
     template <typename Callable, typename... Args>
-    static auto CreateTask(Callable &&p_Callable, Args &&...p_Args) -> Task<std::invoke_result_t<Callable, Args...>>
+    static auto CreateTask(Callable &&callable, Args &&...args) -> Task<std::invoke_result_t<Callable, Args...>>
     {
         using RType = std::invoke_result_t<Callable, Args...>;
-        return Task<RType>{std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...};
+        return Task<RType>{std::forward<Callable>(callable), std::forward<Args>(args)...};
     }
 
     /**
@@ -109,8 +109,8 @@ class TaskManager final : public ITaskManager
   public:
     TaskManager();
 
-    usize SubmitTask(ITask *p_Task, usize) override;
+    usize SubmitTask(ITask *task, usize) override;
 
-    void WaitUntilFinished(const ITask &p_Task) override;
+    void WaitUntilFinished(const ITask &task) override;
 };
 } // namespace TKit

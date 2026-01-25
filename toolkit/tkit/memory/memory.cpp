@@ -21,17 +21,17 @@ static thread_local usize s_ArenaSize = 0;
 static thread_local usize s_StackSize = 0;
 static thread_local usize s_TierSize = 0;
 
-void PushArena(ArenaAllocator *p_Alloc)
+void PushArena(ArenaAllocator *alloc)
 {
-    s_Arenas[s_ArenaSize++] = p_Alloc;
+    s_Arenas[s_ArenaSize++] = alloc;
 }
-void PushStack(StackAllocator *p_Alloc)
+void PushStack(StackAllocator *alloc)
 {
-    s_Stacks[s_StackSize++] = p_Alloc;
+    s_Stacks[s_StackSize++] = alloc;
 }
-void PushTier(TierAllocator *p_Alloc)
+void PushTier(TierAllocator *alloc)
 {
-    s_Tiers[s_TierSize++] = p_Alloc;
+    s_Tiers[s_TierSize++] = alloc;
 }
 
 ArenaAllocator *GetArena()
@@ -60,128 +60,128 @@ void PopTier()
     --s_TierSize;
 }
 
-void *Allocate(const size_t p_Size)
+void *Allocate(const size_t size)
 {
-    void *ptr = malloc(p_Size);
-    TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
+    void *ptr = malloc(size);
+    TKIT_PROFILE_MARK_ALLOCATION(ptr, size);
     return ptr;
 }
 
-void Deallocate(void *p_Ptr)
+void Deallocate(void *ptr)
 {
-    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
-    free(p_Ptr);
+    TKIT_PROFILE_MARK_DEALLOCATION(ptr);
+    free(ptr);
 }
 
-void *AllocateAligned(const size_t p_Size, size_t p_Alignment)
+void *AllocateAligned(const size_t size, size_t alignment)
 {
     void *ptr = nullptr;
-    p_Alignment = (p_Alignment + sizeof(void *) - 1) & ~(sizeof(void *) - 1);
+    alignment = (alignment + sizeof(void *) - 1) & ~(sizeof(void *) - 1);
 #ifdef TKIT_OS_WINDOWS
-    ptr = _aligned_malloc(p_Size, p_Alignment);
+    ptr = _aligned_malloc(size, alignment);
 #else
-    int result = posix_memalign(&ptr, p_Alignment, p_Size);
+    int result = posix_memalign(&ptr, alignment, size);
     TKIT_UNUSED(result); // Sould do something with this at some point
 #endif
-    TKIT_PROFILE_MARK_ALLOCATION(ptr, p_Size);
+    TKIT_PROFILE_MARK_ALLOCATION(ptr, size);
     return ptr;
 }
 
-void DeallocateAligned(void *p_Ptr)
+void DeallocateAligned(void *ptr)
 {
-    TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr);
+    TKIT_PROFILE_MARK_DEALLOCATION(ptr);
 #ifdef TKIT_OS_WINDOWS
-    _aligned_free(p_Ptr);
+    _aligned_free(ptr);
 #else
-    free(p_Ptr);
+    free(ptr);
 #endif
 }
 
-void *ForwardCopy(void *p_Dst, const void *p_Src, size_t p_Size)
+void *ForwardCopy(void *dst, const void *src, size_t size)
 {
-    return std::memcpy(p_Dst, p_Src, p_Size);
+    return std::memcpy(dst, src, size);
 }
-void *BackwardCopy(void *p_Dst, const void *p_Src, size_t p_Size)
+void *BackwardCopy(void *dst, const void *src, size_t size)
 {
-    return std::memmove(p_Dst, p_Src, p_Size);
+    return std::memmove(dst, src, size);
 }
 
 } // namespace TKit::Memory
 
 #if !defined(TKIT_DISABLE_MEMORY_OVERRIDES) && !defined(TKIT_ENABLE_MIMALLOC)
-void *operator new(const size_t p_Size)
+void *operator new(const size_t size)
 {
-    return TKit::Memory::Allocate(p_Size);
+    return TKit::Memory::Allocate(size);
 }
-void *operator new[](const size_t p_Size)
+void *operator new[](const size_t size)
 {
-    return TKit::Memory::Allocate(p_Size);
+    return TKit::Memory::Allocate(size);
 }
-void *operator new(const size_t p_Size, const std::align_val_t p_Alignment)
+void *operator new(const size_t size, const std::align_val_t alignment)
 {
-    return TKit::Memory::AllocateAligned(p_Size, static_cast<size_t>(p_Alignment));
+    return TKit::Memory::AllocateAligned(size, static_cast<size_t>(alignment));
 }
-void *operator new[](const size_t p_Size, const std::align_val_t p_Alignment)
+void *operator new[](const size_t size, const std::align_val_t alignment)
 {
-    return TKit::Memory::AllocateAligned(p_Size, static_cast<size_t>(p_Alignment));
+    return TKit::Memory::AllocateAligned(size, static_cast<size_t>(alignment));
 }
-void *operator new(const size_t p_Size, const std::nothrow_t &) noexcept
+void *operator new(const size_t size, const std::nothrow_t &) noexcept
 {
-    return TKit::Memory::Allocate(p_Size);
+    return TKit::Memory::Allocate(size);
 }
-void *operator new[](const size_t p_Size, const std::nothrow_t &) noexcept
+void *operator new[](const size_t size, const std::nothrow_t &) noexcept
 {
-    return TKit::Memory::Allocate(p_Size);
-}
-
-void operator delete(void *p_Ptr) noexcept
-{
-    TKit::Memory::Deallocate(p_Ptr);
-}
-void operator delete[](void *p_Ptr) noexcept
-{
-    TKit::Memory::Deallocate(p_Ptr);
-}
-void operator delete(void *p_Ptr, std::align_val_t) noexcept
-{
-    TKit::Memory::DeallocateAligned(p_Ptr);
-}
-void operator delete[](void *p_Ptr, std::align_val_t) noexcept
-{
-    TKit::Memory::DeallocateAligned(p_Ptr);
-}
-void operator delete(void *p_Ptr, const std::nothrow_t &) noexcept
-{
-    TKit::Memory::Deallocate(p_Ptr);
-}
-void operator delete[](void *p_Ptr, const std::nothrow_t &) noexcept
-{
-    TKit::Memory::Deallocate(p_Ptr);
+    return TKit::Memory::Allocate(size);
 }
 
-void operator delete(void *p_Ptr, size_t) noexcept
+void operator delete(void *ptr) noexcept
 {
-    TKit::Memory::Deallocate(p_Ptr);
+    TKit::Memory::Deallocate(ptr);
 }
-void operator delete[](void *p_Ptr, size_t) noexcept
+void operator delete[](void *ptr) noexcept
 {
-    TKit::Memory::Deallocate(p_Ptr);
+    TKit::Memory::Deallocate(ptr);
 }
-void operator delete(void *p_Ptr, size_t, std::align_val_t) noexcept
+void operator delete(void *ptr, std::align_val_t) noexcept
 {
-    TKit::Memory::DeallocateAligned(p_Ptr);
+    TKit::Memory::DeallocateAligned(ptr);
 }
-void operator delete[](void *p_Ptr, size_t, std::align_val_t) noexcept
+void operator delete[](void *ptr, std::align_val_t) noexcept
 {
-    TKit::Memory::DeallocateAligned(p_Ptr);
+    TKit::Memory::DeallocateAligned(ptr);
 }
-void operator delete(void *p_Ptr, size_t, const std::nothrow_t &) noexcept
+void operator delete(void *ptr, const std::nothrow_t &) noexcept
 {
-    TKit::Memory::Deallocate(p_Ptr);
+    TKit::Memory::Deallocate(ptr);
 }
-void operator delete[](void *p_Ptr, size_t, const std::nothrow_t &) noexcept
+void operator delete[](void *ptr, const std::nothrow_t &) noexcept
 {
-    TKit::Memory::Deallocate(p_Ptr);
+    TKit::Memory::Deallocate(ptr);
+}
+
+void operator delete(void *ptr, size_t) noexcept
+{
+    TKit::Memory::Deallocate(ptr);
+}
+void operator delete[](void *ptr, size_t) noexcept
+{
+    TKit::Memory::Deallocate(ptr);
+}
+void operator delete(void *ptr, size_t, std::align_val_t) noexcept
+{
+    TKit::Memory::DeallocateAligned(ptr);
+}
+void operator delete[](void *ptr, size_t, std::align_val_t) noexcept
+{
+    TKit::Memory::DeallocateAligned(ptr);
+}
+void operator delete(void *ptr, size_t, const std::nothrow_t &) noexcept
+{
+    TKit::Memory::Deallocate(ptr);
+}
+void operator delete[](void *ptr, size_t, const std::nothrow_t &) noexcept
+{
+    TKit::Memory::Deallocate(ptr);
 }
 
 #endif

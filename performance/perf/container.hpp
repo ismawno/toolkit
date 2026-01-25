@@ -4,7 +4,7 @@
 
 namespace TKit::Perf
 {
-void RecordVector(const ContainerSettings &p_Settings);
-void RecordStaticArray(const ContainerSettings &p_Settings);
-void RecordDynamicArray(const ContainerSettings &p_Settings);
+void RecordVector(const ContainerSettings &settings);
+void RecordStaticArray(const ContainerSettings &settings);
+void RecordDynamicArray(const ContainerSettings &settings);
 } // namespace TKit::Perf

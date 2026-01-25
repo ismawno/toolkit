@@ -4,8 +4,8 @@
 
 namespace TKit
 {
-void Timespan::Sleep(const Timespan p_Duration)
+void Timespan::Sleep(const Timespan duration)
 {
-    std::this_thread::sleep_for(p_Duration.m_Elapsed);
+    std::this_thread::sleep_for(duration.m_Elapsed);
 }
 } // namespace TKit

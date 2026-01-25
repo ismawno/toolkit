@@ -6,24 +6,24 @@ namespace ch = std::chrono;
 
 namespace TKit::Detail
 {
-void Log(const std::string_view p_Message, const char *p_Level, const char *p_Color)
+void Log(const std::string_view message, const char *level, const char *color)
 {
     const auto tm = ch::round<ch::seconds>(ch::system_clock::now());
-    fmt::println("[{:%Y-%m-%d %H:%M:%S}] [{}{}{}] {}", tm, p_Color, p_Level, TKIT_LOG_COLOR_RESET, p_Message);
+    fmt::println("[{:%Y-%m-%d %H:%M:%S}] [{}{}{}] {}", tm, color, level, TKIT_LOG_COLOR_RESET, message);
 }
-void Log(const std::string_view p_Message, const char *p_Level, const char *p_Color, const char *p_File,
-         const i32 p_Line)
+void Log(const std::string_view message, const char *level, const char *color, const char *file,
+         const i32 line)
 {
     const auto tm = ch::round<ch::seconds>(ch::system_clock::now());
-    fmt::println("[{:%Y-%m-%d %H:%M:%S}] [{}{}{}] [{}:{}] {}\n", tm, p_Color, p_Level, TKIT_LOG_COLOR_RESET, p_File,
-                 p_Line, p_Message);
+    fmt::println("[{:%Y-%m-%d %H:%M:%S}] [{}{}{}] [{}:{}] {}\n", tm, color, level, TKIT_LOG_COLOR_RESET, file,
+                 line, message);
 }
 } // namespace TKit::Detail
 
 namespace TKit
 {
-fmt::runtime_format_string<> RuntimeString(const std::string_view p_String)
+fmt::runtime_format_string<> RuntimeString(const std::string_view string)
 {
-    return fmt::runtime(p_String);
+    return fmt::runtime(string);
 }
 } // namespace TKit

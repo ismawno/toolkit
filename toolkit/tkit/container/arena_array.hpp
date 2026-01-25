@@ -10,43 +10,43 @@ template <typename T> struct ArenaAllocation
     static constexpr ArrayType Type = Array_Arena;
 
     ArenaAllocation() = default;
-    ArenaAllocation(const usize p_Capacity, ArenaAllocator *p_Allocator = nullptr) : Allocator(p_Allocator)
+    ArenaAllocation(const usize capacity, ArenaAllocator *allocator = nullptr) : Allocator(allocator)
     {
-        Allocate(p_Capacity);
+        Allocate(capacity);
     }
-    ArenaAllocation(ArenaAllocator *p_Allocator) : Allocator(p_Allocator)
+    ArenaAllocation(ArenaAllocator *allocator) : Allocator(allocator)
     {
     }
-    ArenaAllocation(ArenaAllocator *p_Allocator, const usize p_Capacity) : Allocator(p_Allocator)
+    ArenaAllocation(ArenaAllocator *allocator, const usize capacity) : Allocator(allocator)
     {
-        Allocate(p_Capacity);
+        Allocate(capacity);
     }
 
     ArenaAllocation(const ArenaAllocation &) = delete;
-    ArenaAllocation(ArenaAllocation &&p_Other)
-        : Allocator(p_Other.Allocator), Data(p_Other.Data), Size(p_Other.Size), Capacity(p_Other.Capacity)
+    ArenaAllocation(ArenaAllocation &&other)
+        : Allocator(other.Allocator), Data(other.Data), Size(other.Size), Capacity(other.Capacity)
     {
-        p_Other.Data = nullptr;
-        p_Other.Size = 0;
-        p_Other.Capacity = 0;
+        other.Data = nullptr;
+        other.Size = 0;
+        other.Capacity = 0;
     }
 
     ArenaAllocation &operator=(const ArenaAllocation &) = delete;
-    ArenaAllocation &operator=(ArenaAllocation &&p_Other)
+    ArenaAllocation &operator=(ArenaAllocation &&other)
     {
-        Allocator = p_Other.Allocator;
-        Data = p_Other.Data;
-        Size = p_Other.Size;
-        Capacity = p_Other.Capacity;
-        p_Other.Data = nullptr;
-        p_Other.Size = 0;
-        p_Other.Capacity = 0;
+        Allocator = other.Allocator;
+        Data = other.Data;
+        Size = other.Size;
+        Capacity = other.Capacity;
+        other.Data = nullptr;
+        other.Size = 0;
+        other.Capacity = 0;
         return *this;
     }
 
-    void Allocate(const usize p_Capacity)
+    void Allocate(const usize capacity)
     {
-        if (p_Capacity == 0)
+        if (capacity == 0)
             return;
         TKIT_ASSERT(
             Size == 0,
@@ -61,8 +61,8 @@ template <typename T> struct ArenaAllocation
         if (!Allocator)
             Allocator = Memory::GetArena();
         TKIT_ASSERT(Allocator, "[TOOLKIT][ARENA-ARRAY] Array must have a valid allocator to allocate memory");
-        Data = Allocator->Allocate<T>(p_Capacity);
-        Capacity = p_Capacity;
+        Data = Allocator->Allocate<T>(capacity);
+        Capacity = capacity;
     }
 
     constexpr usize GetCapacity() const

@@ -40,7 +40,7 @@ using Node = YAML::Node;
  */
 template <typename T> struct Codec
 {
-    static Node Encode(const T &p_Instance)
+    static Node Encode(const T &instance)
     {
         Node node;
 #ifdef TKIT_SERIALIZATION_FROM_REFLECTION
@@ -48,14 +48,14 @@ template <typename T> struct Codec
                       "If type has not a dedicated 'Codec<T>' specialization, it must be reflected "
                       "to auto-serialize. It is recommended to use the serialization marks and scripts available.");
         if constexpr (Reflect<T>::Implemented)
-            Reflect<T>::ForEachField([&](const auto &p_Field) { node[p_Field.Name] = p_Field.Get(p_Instance); });
+            Reflect<T>::ForEachField([&](const auto &field) { node[field.Name] = field.Get(instance); });
         else
         {
             using Integer = std::underlying_type_t<T>;
             if constexpr (std::is_same_v<Integer, u8>)
-                node = Node{static_cast<u16>(p_Instance)};
+                node = Node{static_cast<u16>(instance)};
             else
-                node = Node{static_cast<Integer>(p_Instance)};
+                node = Node{static_cast<Integer>(instance)};
         }
 #else
         if constexpr (Reflect<T>::Implemented)
@@ -76,14 +76,14 @@ template <typename T> struct Codec
                 "and scripts available, which is the recommended approach.");
         using Integer = std::underlying_type_t<T>;
         if constexpr (std::is_same_v<Integer, u8>)
-            node = Node{static_cast<u16>(p_Instance)};
+            node = Node{static_cast<u16>(instance)};
         else
-            node = Node{static_cast<Integer>(p_Instance)};
+            node = Node{static_cast<Integer>(instance)};
 #endif
         return node;
     }
 
-    static bool Decode(const Node &p_Node, T &p_Instance)
+    static bool Decode(const Node &node, T &instance)
     {
 #ifdef TKIT_SERIALIZATION_FROM_REFLECTION
         static_assert(Reflect<T>::Implemented || std::is_enum_v<T>,
@@ -91,14 +91,14 @@ template <typename T> struct Codec
                       "to auto-deserialize. It is recommended to use the serialization marks and scripts available.");
 
         if constexpr (Reflect<T>::Implemented)
-            Reflect<T>::ForEachField([&](const auto &p_Field) {
-                using Type = TKIT_REFLECT_FIELD_TYPE(p_Field);
-                p_Field.Set(p_Instance, p_Node[p_Field.Name].template as<Type>());
+            Reflect<T>::ForEachField([&](const auto &field) {
+                using Type = TKIT_REFLECT_FIELD_TYPE(field);
+                field.Set(instance, node[field.Name].template as<Type>());
             });
         else
         {
             using Integer = std::underlying_type_t<T>;
-            p_Instance = static_cast<T>(p_Node.as<Integer>());
+            instance = static_cast<T>(node.as<Integer>());
         }
 #else
         if constexpr (Reflect<T>::Implemented)
@@ -119,25 +119,25 @@ template <typename T> struct Codec
                 "and scripts available, which is the recommended approach.");
 
         using Integer = std::underlying_type_t<T>;
-        p_Instance = static_cast<T>(p_Node.as<Integer>());
+        instance = static_cast<T>(node.as<Integer>());
 #endif
         return true;
     }
 };
 
-Node FromString(std::string_view p_String);
-Node FromFile(std::string_view p_Path);
+Node FromString(std::string_view string);
+Node FromFile(std::string_view path);
 
-void ToFile(std::string_view p_Path, const Node &p_Node);
+void ToFile(std::string_view path, const Node &node);
 
-template <typename T> void Serialize(const std::string_view p_Path, const T &p_Instance)
+template <typename T> void Serialize(const std::string_view path, const T &instance)
 {
-    const Node node{p_Instance};
-    ToFile(p_Path, node);
+    const Node node{instance};
+    ToFile(path, node);
 }
-template <typename T> T Deserialize(const std::string_view p_Path)
+template <typename T> T Deserialize(const std::string_view path)
 {
-    const Node node = FromFile(p_Path);
+    const Node node = FromFile(path);
     return node.as<T>();
 }
 
@@ -147,14 +147,14 @@ namespace YAML
 {
 template <typename T> struct convert
 {
-    static Node encode(const T &p_Instance)
+    static Node encode(const T &instance)
     {
-        return TKit::Yaml::Codec<T>::Encode(p_Instance);
+        return TKit::Yaml::Codec<T>::Encode(instance);
     }
 
-    static bool decode(const Node &p_Node, T &p_Instance)
+    static bool decode(const Node &node, T &instance)
     {
-        return TKit::Yaml::Codec<T>::Decode(p_Node, p_Instance);
+        return TKit::Yaml::Codec<T>::Decode(node, instance);
     }
 };
 } // namespace YAML

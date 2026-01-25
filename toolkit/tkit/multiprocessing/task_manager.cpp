@@ -4,22 +4,22 @@
 
 namespace TKit
 {
-ITaskManager::ITaskManager(const usize p_WorkerCount) : m_WorkerCount(p_WorkerCount)
+ITaskManager::ITaskManager(const usize workerCount) : m_WorkerCount(workerCount)
 {
-    TKIT_ASSERT(p_WorkerCount != 0, "[TOOLKIT][MULTIPROC] The worker count must be greater than 0");
+    TKIT_ASSERT(workerCount != 0, "[TOOLKIT][MULTIPROC] The worker count must be greater than 0");
 }
 
 TaskManager::TaskManager() : ITaskManager(1)
 {
 }
 
-usize TaskManager::SubmitTask(ITask *p_Task, const usize)
+usize TaskManager::SubmitTask(ITask *task, const usize)
 {
-    (*p_Task)();
+    (*task)();
     return 0;
 }
-void TaskManager::WaitUntilFinished(const ITask &p_Task)
+void TaskManager::WaitUntilFinished(const ITask &task)
 {
-    p_Task.WaitUntilFinished();
+    task.WaitUntilFinished();
 }
 } // namespace TKit

@@ -132,11 +132,11 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
             ):
                 with hpp.doc():
                     hpp.brief(f"Encode an instance of type `{enum.id.name}` into a `Node` (serialization step).")
-                    hpp.param("p_Instance", f"An instance of type `{enum.id.name}`.")
+                    hpp.param("instance", f"An instance of type `{enum.id.name}`.")
                     hpp.ret("A node with serialization information.")
 
-                with hpp.scope(f"static Node Encode(const {enum.id.name} &p_Instance)"):
-                    with hpp.scope(f"switch (p_Instance)"):
+                with hpp.scope(f"static Node Encode(const {enum.id.name} &instance)"):
+                    with hpp.scope(f"switch (instance)"):
                         for entry in enum.values:
                             with hpp.scope(f"case {enum.id.name}::{entry}:", delimiters=False):
                                 hpp(f'return Node{{"{entry}"}};')
@@ -148,14 +148,14 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                     hpp.brief(
                         f"Decode an instance of type `{enum.id.identifier}` from a `Node` (deserialization step)."
                     )
-                    hpp.param("p_Node", "A node with serialization information.")
-                    hpp.param("p_Instance", f"An instance of type `{enum.id.identifier}`.")
+                    hpp.param("node", "A node with serialization information.")
+                    hpp.param("instance", f"An instance of type `{enum.id.identifier}`.")
 
-                with hpp.scope(f"static bool Decode(const Node &p_Node, {enum.id.identifier} &p_Instance)"):
-                    hpp("const std::string val = p_Node.as<std::string>();")
+                with hpp.scope(f"static bool Decode(const Node &node, {enum.id.identifier} &instance)"):
+                    hpp("const std::string val = node.as<std::string>();")
                     for entry in enum.values:
                         with hpp.scope(f'if (val == "{entry}")'):
-                            hpp(f"p_Instance = {enum.id.identifier}::{entry};")
+                            hpp(f"instance = {enum.id.identifier}::{entry};")
                             hpp(f"return true;")
 
                     hpp("TKIT_FATAL(\"[TOOLKIT][YAML] Failed to parse enum from '{}'. Unknown enum value\", val);")
@@ -201,10 +201,10 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                     hpp.brief(
                         f"Encode an instance of type `{clsinfo.id.identifier}` into a `Node` (serialization step)."
                     )
-                    hpp.param("p_Instance", f"An instance of type `{clsinfo.id.identifier}`.")
+                    hpp.param("instance", f"An instance of type `{clsinfo.id.identifier}`.")
                     hpp.ret("A node with serialization information.")
 
-                with hpp.scope(f"static Node Encode(const {clsinfo.id.identifier} &p_Instance)"):
+                with hpp.scope(f"static Node Encode(const {clsinfo.id.identifier} &instance)"):
                     hpp("Node node;")
                     for field, options in fields:
                         if in_options("only-deserialize", options):
@@ -224,20 +224,20 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                                     )
 
                         if vtype is None:
-                            hpp(f'node["{field.name}"] = p_Instance.{field.name};')
+                            hpp(f'node["{field.name}"] = instance.{field.name};')
                         else:
-                            hpp(f'node["{field.name}"] = static_cast<{vtype}>(p_Instance.{field.name});')
+                            hpp(f'node["{field.name}"] = static_cast<{vtype}>(instance.{field.name});')
                     hpp("return node;")
 
                 with hpp.doc():
                     hpp.brief(
                         f"Decode an instance of type `{clsinfo.id.identifier}` from a `Node` (deserialization step)."
                     )
-                    hpp.param("p_Node", "A node with serialization information.")
-                    hpp.param("p_Instance", f"An instance of type `{clsinfo.id.identifier}`.")
+                    hpp.param("node", "A node with serialization information.")
+                    hpp.param("instance", f"An instance of type `{clsinfo.id.identifier}`.")
 
-                with hpp.scope(f"static bool Decode(const Node &p_Node, {clsinfo.id.identifier} &p_Instance)"):
-                    with hpp.scope("if (!p_Node.IsMap())", delimiters=False):
+                with hpp.scope(f"static bool Decode(const Node &node, {clsinfo.id.identifier} &instance)"):
+                    with hpp.scope("if (!node.IsMap())", delimiters=False):
                         hpp("return false;")
 
                     for field, options in fields:
@@ -258,10 +258,10 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                                     )
 
                         if in_options("skip-if-missing", options):
-                            with hpp.scope(f'if (p_Node["{field.name}"])', delimiters=False):
-                                hpp(f'p_Instance.{field.name} = p_Node["{field.name}"].as<{vtype}>();')
+                            with hpp.scope(f'if (node["{field.name}"])', delimiters=False):
+                                hpp(f'instance.{field.name} = node["{field.name}"].as<{vtype}>();')
                         else:
-                            hpp(f'p_Instance.{field.name} = p_Node["{field.name}"].as<{vtype}>();')
+                            hpp(f'instance.{field.name} = node["{field.name}"].as<{vtype}>();')
 
                     hpp("return true;")
 

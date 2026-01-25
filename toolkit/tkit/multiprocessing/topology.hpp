@@ -15,14 +15,14 @@ struct Handle;
 // thread index at construction. This needs to be documented further. Look at thread pool as a valid usage example
 
 usize GetThreadIndex();
-void SetThreadIndex(usize p_ThreadIndex);
+void SetThreadIndex(usize threadIndex);
 const Handle *Initialize();
 
-void BuildAffinityOrder(const Handle *p_Handle);
-void PinThread(const Handle *p_Handle, usize p_ThreadIndex);
+void BuildAffinityOrder(const Handle *handle);
+void PinThread(const Handle *handle, usize threadIndex);
 
-void SetThreadName(usize p_ThreadIndex, const char *p_Name = nullptr);
+void SetThreadName(usize threadIndex, const char *name = nullptr);
 
-void Terminate(const Handle *p_Handle);
+void Terminate(const Handle *handle);
 
 } // namespace TKit::Topology

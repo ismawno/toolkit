@@ -38,26 +38,26 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
     // The alignment parameter specifies the alignment of all consecuent allocations. Thus, the buffer size must be a
     // multiple of the alignment
 
-    BlockAllocator(usize p_BufferSize, usize p_AllocationSize, usize p_Alignment = alignof(std::max_align_t));
+    BlockAllocator(usize bufferSize, usize allocationSize, usize alignment = alignof(std::max_align_t));
 
     // This constructor is NOT owning the buffer, so it will not deallocate it. Up to the user to manage the memory
-    BlockAllocator(void *p_Buffer, usize p_BufferSize, usize p_AllocationSize);
+    BlockAllocator(void *buffer, usize bufferSize, usize allocationSize);
     ~BlockAllocator();
 
-    BlockAllocator(BlockAllocator &&p_Other);
-    BlockAllocator &operator=(BlockAllocator &&p_Other);
+    BlockAllocator(BlockAllocator &&other);
+    BlockAllocator &operator=(BlockAllocator &&other);
 
     /**
      * @brief Create a block allocator suited to allocate elements from type `T`.
      *
      * @tparam T The type the allocator will be suited for.
-     * @param p_Count The capacity of the allocator, measured in how many objects of type `T` will be able to allocate.
+     * @param count The capacity of the allocator, measured in how many objects of type `T` will be able to allocate.
      * @return A `BlockAllocator` instance.
      */
-    template <typename T> static BlockAllocator CreateFromType(const usize p_Count)
+    template <typename T> static BlockAllocator CreateFromType(const usize count)
     {
         const usize size = sizeof(T) > sizeof(Allocation) ? sizeof(T) : sizeof(Allocation);
-        return BlockAllocator{p_Count * size, size, alignof(T)};
+        return BlockAllocator{count * size, size, alignof(T)};
     }
 
     /**
@@ -95,9 +95,9 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
     /**
      * @brief Deallocate a block of memory from the block allocator.
      *
-     * @param p_Ptr A pointer to the block to deallocate.
+     * @param ptr A pointer to the block to deallocate.
      */
-    void Deallocate(void *p_Ptr);
+    void Deallocate(void *ptr);
 
     /**
      * @brief Allocate a new block of memory and create a new object of type `T` out of it.
@@ -106,27 +106,27 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
      * @return A pointer to the allocated block. If the allocation fails, `nullptr` will be returned and the object will
      * not be constructed.
      */
-    template <typename T, typename... Args> T *Create(Args &&...p_Args)
+    template <typename T, typename... Args> T *Create(Args &&...args)
     {
         T *ptr = Allocate<T>();
-        return ptr ? Memory::Construct(ptr, std::forward<Args>(p_Args)...) : nullptr;
+        return ptr ? Memory::Construct(ptr, std::forward<Args>(args)...) : nullptr;
     }
 
     /**
      * @brief Deallocate a block of memory and destroy the object of type `T` created from it.
      *
      * @tparam T The type of object to deallocate.
-     * @param p_Ptr The pointer to the block to deallocate.
+     * @param ptr The pointer to the block to deallocate.
      */
-    template <typename T> void Destroy(T *p_Ptr)
+    template <typename T> void Destroy(T *ptr)
     {
-        TKIT_ASSERT(p_Ptr, "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a null pointer");
+        TKIT_ASSERT(ptr, "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a null pointer");
         // TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate from an empty allocator");
-        TKIT_ASSERT(Belongs(p_Ptr),
+        TKIT_ASSERT(Belongs(ptr),
                     "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a pointer that does not belong to the allocator");
         if constexpr (!std::is_trivially_destructible_v<T>)
-            p_Ptr->~T();
-        Deallocate(p_Ptr);
+            ptr->~T();
+        Deallocate(ptr);
     }
 
     void Reset();
@@ -137,13 +137,13 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
      * @note This is a simple check to see if the provided pointer lies within the boundaries of the buffer. It will not
      * be able to determine if the pointer is currently allocated or free.
      *
-     * @param p_Ptr The pointer to check.
+     * @param ptr The pointer to check.
      * @return Whether the pointer belongs to the block allocator.
      */
-    bool Belongs(const void *p_Ptr) const
+    bool Belongs(const void *ptr) const
     {
-        const std::byte *ptr = static_cast<const std::byte *>(p_Ptr);
-        return ptr >= m_Buffer && ptr < m_Buffer + m_BufferSize;
+        const std::byte *bptr = static_cast<const std::byte *>(ptr);
+        return bptr >= m_Buffer && bptr < m_Buffer + m_BufferSize;
     }
 
     bool IsFull() const

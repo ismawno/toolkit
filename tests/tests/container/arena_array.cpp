@@ -20,15 +20,15 @@ struct ATrackable
     {
         ++g_Constructions;
     }
-    ATrackable(const u32 p_Value) : Value(p_Value)
+    ATrackable(const u32 value) : Value(value)
     {
         ++g_Constructions;
     }
-    ATrackable(const ATrackable &p_Other) : Value(p_Other.Value)
+    ATrackable(const ATrackable &other) : Value(other.Value)
     {
         ++g_Constructions;
     }
-    ATrackable(ATrackable &&p_Other) : Value(p_Other.Value)
+    ATrackable(ATrackable &&other) : Value(other.Value)
     {
         ++g_Constructions;
     }
@@ -36,14 +36,14 @@ struct ATrackable
     {
         ++g_Destructions;
     }
-    ATrackable &operator=(const ATrackable &p_Other)
+    ATrackable &operator=(const ATrackable &other)
     {
-        Value = p_Other.Value;
+        Value = other.Value;
         return *this;
     }
-    ATrackable &operator=(ATrackable &&p_Other)
+    ATrackable &operator=(ATrackable &&other)
     {
-        Value = p_Other.Value;
+        Value = other.Value;
         return *this;
     }
 };

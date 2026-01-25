@@ -6,23 +6,23 @@
 #include <algorithm>
 
 #ifdef TKIT_COMPILER_MSVC
-#    define TKIT_MEMORY_STACK_ALLOCATE(p_Size) _alloca(p_Size)
-#    define TKIT_MEMORY_STACK_DEALLOCATE(p_Ptr)
-#    define TKIT_MEMORY_STACK_CHECK(p_Size)                                                                            \
-        TKIT_ASSERT(p_Size <= TKit::MaxStackAlloc,                                                                     \
+#    define TKIT_MEMORY_STACK_ALLOCATE(size) _alloca(size)
+#    define TKIT_MEMORY_STACK_DEALLOCATE(ptr)
+#    define TKIT_MEMORY_STACK_CHECK(size)                                                                            \
+        TKIT_ASSERT(size <= TKit::MaxStackAlloc,                                                                     \
                     "[TOOLKIT][MEMORY] Stack allocation size exceeded. Requested size was {}, but maximum is {}",      \
-                    p_Size, TKit::MaxStackAlloc)
+                    size, TKit::MaxStackAlloc)
 #elif defined(TKIT_COMPILER_GCC) || defined(TKIT_COMPILER_CLANG)
-#    define TKIT_MEMORY_STACK_ALLOCATE(p_Size) alloca(p_Size)
-#    define TKIT_MEMORY_STACK_DEALLOCATE(p_Ptr)
-#    define TKIT_MEMORY_STACK_CHECK(p_Size)                                                                            \
-        TKIT_ASSERT(p_Size <= TKit::MaxStackAlloc,                                                                     \
+#    define TKIT_MEMORY_STACK_ALLOCATE(size) alloca(size)
+#    define TKIT_MEMORY_STACK_DEALLOCATE(ptr)
+#    define TKIT_MEMORY_STACK_CHECK(size)                                                                            \
+        TKIT_ASSERT(size <= TKit::MaxStackAlloc,                                                                     \
                     "[TOOLKIT][MEMORY] Stack allocation size exceeded. Requested size was {}, but maximum is {}",      \
-                    p_Size, TKit::MaxStackAlloc)
+                    size, TKit::MaxStackAlloc)
 #else
-#    define TKIT_MEMORY_STACK_ALLOCATE(p_Size) TKit::Memory::Allocate(p_Size)
-#    define TKIT_MEMORY_STACK_DEALLOCATE(p_Ptr) TKit::Memory::Deallocate(p_Ptr)
-#    define TKIT_MEMORY_STACK_CHECK(p_Size)
+#    define TKIT_MEMORY_STACK_ALLOCATE(size) TKit::Memory::Allocate(size)
+#    define TKIT_MEMORY_STACK_DEALLOCATE(ptr) TKit::Memory::Deallocate(ptr)
+#    define TKIT_MEMORY_STACK_CHECK(size)
 #endif
 
 namespace TKit
@@ -34,9 +34,9 @@ class TierAllocator;
 
 namespace TKit::Memory
 {
-void PushArena(ArenaAllocator *p_Alloc);
-void PushStack(StackAllocator *p_Alloc);
-void PushTier(TierAllocator *p_Alloc);
+void PushArena(ArenaAllocator *alloc);
+void PushStack(StackAllocator *alloc);
+void PushTier(TierAllocator *alloc);
 
 ArenaAllocator *GetArena();
 StackAllocator *GetStack();
@@ -54,19 +54,19 @@ void PopTier();
  *
  * Uses default `malloc`. It is here as a placeholder for future custom global allocators.
  *
- * @param p_Size The size of the memory to allocate.
+ * @param size The size of the memory to allocate.
  * @return A pointer to the allocated memory.
  */
-void *Allocate(size_t p_Size);
+void *Allocate(size_t size);
 
 /**
  * @brief Deallocate a chunk of memory
  *
  * Uses default `free`. It is here as a placeholder for future custom global allocators.
  *
- * @param p_Ptr A pointer to the memory to deallocate.
+ * @param ptr A pointer to the memory to deallocate.
  */
-void Deallocate(void *p_Ptr);
+void Deallocate(void *ptr);
 
 /**
  * @brief Allocate a chunk of memory of a given size with a given alignment.
@@ -74,11 +74,11 @@ void Deallocate(void *p_Ptr);
  * Uses the default platform-specific aligned allocation. It is here as a placeholder for future custom global
  * allocators.
  *
- * @param p_Size The size of the memory to allocate.
- * @param p_Alignment The alignment of the memory to allocate.
+ * @param size The size of the memory to allocate.
+ * @param alignment The alignment of the memory to allocate.
  * @return A pointer to the allocated memory.
  */
-void *AllocateAligned(size_t p_Size, size_t p_Alignment);
+void *AllocateAligned(size_t size, size_t alignment);
 
 /**
  * @brief Deallocate a chunk of memory with a given alignment.
@@ -86,45 +86,45 @@ void *AllocateAligned(size_t p_Size, size_t p_Alignment);
  * Uses the default platform-specific aligned deallocation. It is here as a placeholder for future custom global
  * allocators.
  *
- * @param p_Ptr A pointer to the memory to deallocate.
- * @param p_Alignment The alignment of the memory to deallocate.
+ * @param ptr A pointer to the memory to deallocate.
+ * @param alignment The alignment of the memory to deallocate.
  */
-void DeallocateAligned(void *p_Ptr);
+void DeallocateAligned(void *ptr);
 
 /**
  * @brief Copy a chunk of memory from one location to another.
  *
  * Uses the default `::memcpy()`. It is here as a placeholder for future custom global memory management.
  *
- * @param p_Dst A pointer to the destination memory.
- * @param p_Src A pointer to the source memory.
- * @param p_Size The size of the memory to copy, in bytes.
+ * @param dst A pointer to the destination memory.
+ * @param src A pointer to the source memory.
+ * @param size The size of the memory to copy, in bytes.
  */
-void *ForwardCopy(void *p_Dst, const void *p_Src, size_t p_Size);
+void *ForwardCopy(void *dst, const void *src, size_t size);
 
 /**
  * @brief Copy a chunk of memory from one location to another in reverse order.
  *
  * Uses the default `::memmove()`. It is here as a placeholder for future custom global memory management.
  *
- * @param p_Dst A pointer to the destination memory.
- * @param p_Src A pointer to the source memory.
- * @param p_Size The size of the memory to copy, in bytes.
+ * @param dst A pointer to the destination memory.
+ * @param src A pointer to the source memory.
+ * @param size The size of the memory to copy, in bytes.
  */
-void *BackwardCopy(void *p_Dst, const void *p_Src, size_t p_Size);
+void *BackwardCopy(void *dst, const void *src, size_t size);
 
 /**
  * @brief Copy a range of elements from one iterator to another.
  *
  * Uses the default `std::copy()`. It is here as a placeholder for future custom global memory management.
  *
- * @param p_Dst An iterator pointing to the destination memory.
- * @param p_Begin An iterator pointing to the beginning of the source memory.
- * @param p_End An iterator pointing to the end of the source memory.
+ * @param dst An iterator pointing to the destination memory.
+ * @param begin An iterator pointing to the beginning of the source memory.
+ * @param end An iterator pointing to the end of the source memory.
  */
-template <typename It1, typename It2> constexpr auto ForwardCopy(It1 p_Dst, It2 p_Begin, It2 p_End)
+template <typename It1, typename It2> constexpr auto ForwardCopy(It1 dst, It2 begin, It2 end)
 {
-    return std::copy(p_Begin, p_End, p_Dst);
+    return std::copy(begin, end, dst);
 }
 
 /**
@@ -132,13 +132,13 @@ template <typename It1, typename It2> constexpr auto ForwardCopy(It1 p_Dst, It2 
  *
  * Uses the default `std::copy_backward()`. It is here as a placeholder for future custom global memory management.
  *
- * @param p_Dst An iterator pointing to the destination memory.
- * @param p_Begin An iterator pointing to the beginning of the source memory.
- * @param p_End An iterator pointing to the end of the source memory.
+ * @param dst An iterator pointing to the destination memory.
+ * @param begin An iterator pointing to the beginning of the source memory.
+ * @param end An iterator pointing to the end of the source memory.
  */
-template <typename It1, typename It2> constexpr auto BackwardCopy(It1 p_Dst, It2 p_Begin, It2 p_End)
+template <typename It1, typename It2> constexpr auto BackwardCopy(It1 dst, It2 begin, It2 end)
 {
-    return std::copy_backward(p_Begin, p_End, p_Dst);
+    return std::copy_backward(begin, end, dst);
 }
 
 /**
@@ -146,13 +146,13 @@ template <typename It1, typename It2> constexpr auto BackwardCopy(It1 p_Dst, It2
  *
  * Uses the default `std::move()`. It is here as a placeholder for future custom global memory management.
  *
- * @param p_Dst An iterator pointing to the destination memory.
- * @param p_Begin An iterator pointing to the beginning of the source memory.
- * @param p_End An iterator pointing to the end of the source memory.
+ * @param dst An iterator pointing to the destination memory.
+ * @param begin An iterator pointing to the beginning of the source memory.
+ * @param end An iterator pointing to the end of the source memory.
  */
-template <typename It1, typename It2> constexpr auto ForwardMove(It1 p_Dst, It2 p_Begin, It2 p_End)
+template <typename It1, typename It2> constexpr auto ForwardMove(It1 dst, It2 begin, It2 end)
 {
-    return std::move(p_Begin, p_End, p_Dst);
+    return std::move(begin, end, dst);
 }
 
 /**
@@ -160,27 +160,27 @@ template <typename It1, typename It2> constexpr auto ForwardMove(It1 p_Dst, It2 
  *
  * Uses the default `std::move_backward()`. It is here as a placeholder for future custom global memory management.
  *
- * @param p_Dst An iterator pointing to the destination memory.
- * @param p_Begin An iterator pointing to the beginning of the source memory.
- * @param p_End An iterator pointing to the end of the source memory.
+ * @param dst An iterator pointing to the destination memory.
+ * @param begin An iterator pointing to the beginning of the source memory.
+ * @param end An iterator pointing to the end of the source memory.
  */
-template <typename It1, typename It2> constexpr auto BackwardMove(It1 p_Dst, It2 p_Begin, It2 p_End)
+template <typename It1, typename It2> constexpr auto BackwardMove(It1 dst, It2 begin, It2 end)
 {
-    return std::move_backward(p_Begin, p_End, p_Dst);
+    return std::move_backward(begin, end, dst);
 }
 
-inline bool IsAligned(const void *p_Ptr, const size_t p_Alignment)
+inline bool IsAligned(const void *ptr, const size_t alignment)
 {
-    const uptr addr = reinterpret_cast<uptr>(p_Ptr);
-    return (addr & (p_Alignment - 1)) == 0;
+    const uptr addr = reinterpret_cast<uptr>(ptr);
+    return (addr & (alignment - 1)) == 0;
 }
-inline bool IsAligned(const size_t p_Address, const size_t p_Alignment)
+inline bool IsAligned(const size_t address, const size_t alignment)
 {
-    return (p_Address & (p_Alignment - 1)) == 0;
+    return (address & (alignment - 1)) == 0;
 }
-inline usize NextAlignedSize(const usize p_Size, const usize p_Alignment)
+inline usize NextAlignedSize(const usize size, const usize alignment)
 {
-    return (p_Size + p_Alignment - 1) & ~(p_Alignment - 1);
+    return (size + alignment - 1) & ~(alignment - 1);
 }
 
 /**
@@ -219,14 +219,14 @@ template <typename T> class STLAllocator
     {
     }
 
-    pointer allocate(size_type p_N)
+    pointer allocate(size_type n)
     {
-        return static_cast<pointer>(Allocate(p_N * sizeof(T)));
+        return static_cast<pointer>(Allocate(n * sizeof(T)));
     }
 
-    void deallocate(pointer p_Ptr, size_type)
+    void deallocate(pointer ptr, size_type)
     {
-        Deallocate(p_Ptr);
+        Deallocate(ptr);
     }
 
     bool operator==(const STLAllocator &) const
@@ -244,17 +244,17 @@ template <typename T> class STLAllocator
  *
  * @note This function does not allocate memory. It only calls the constructor of the object.
  *
- * @param p_Ptr A pointer to the memory location where the object should be constructed.
- * @param p_Args The arguments to pass to the constructor of `T`.
+ * @param ptr A pointer to the memory location where the object should be constructed.
+ * @param args The arguments to pass to the constructor of `T`.
  * @return A pointer to the constructed object.
  */
-template <typename T, typename... Args> T *Construct(T *p_Ptr, Args &&...p_Args)
+template <typename T, typename... Args> T *Construct(T *ptr, Args &&...args)
 {
     TKIT_ASSERT(
-        IsAligned(p_Ptr, alignof(T)),
+        IsAligned(ptr, alignof(T)),
         "[TOOLKIT][MEMORY] The address used to construct an object is not correctly aligned to its alignment of {}",
         alignof(T));
-    return std::launder(::new (p_Ptr) T(std::forward<Args>(p_Args)...));
+    return std::launder(::new (ptr) T(std::forward<Args>(args)...));
 }
 
 /**
@@ -262,11 +262,11 @@ template <typename T, typename... Args> T *Construct(T *p_Ptr, Args &&...p_Args)
  *
  * @note This function does not deallocate the memory. It only calls the destructor of the object.
  *
- * @param p_Ptr A pointer to the memory location where the object should be destroyed.
+ * @param ptr A pointer to the memory location where the object should be destroyed.
  */
-template <typename T> void Destruct(T *p_Ptr)
+template <typename T> void Destruct(T *ptr)
 {
-    p_Ptr->~T();
+    ptr->~T();
 }
 
 /**
@@ -276,16 +276,16 @@ template <typename T> void Destruct(T *p_Ptr)
  *
  * @note This function does not allocate memory. It only calls the constructor of the object.
  *
- * @param p_It An iterator pointing to the memory location where the object should be constructed.
- * @param p_Args The arguments to pass to the constructor of `T`.
+ * @param it An iterator pointing to the memory location where the object should be constructed.
+ * @param args The arguments to pass to the constructor of `T`.
  * @return A pointer to the constructed object.
  */
-template <typename It, typename... Args> auto ConstructFromIterator(const It p_It, Args &&...p_Args)
+template <typename It, typename... Args> auto ConstructFromIterator(const It it, Args &&...args)
 {
     if constexpr (std::is_pointer_v<It>)
-        return Construct(p_It, std::forward<Args>(p_Args)...);
+        return Construct(it, std::forward<Args>(args)...);
     else
-        return Construct(&*p_It, std::forward<Args>(p_Args)...);
+        return Construct(&*it, std::forward<Args>(args)...);
 }
 
 /**
@@ -295,14 +295,14 @@ template <typename It, typename... Args> auto ConstructFromIterator(const It p_I
  *
  * @note This function does not deallocate the memory. It only calls the destructor of the object.
  *
- * @param p_It An iterator pointing to the memory location where the object should be destroyed.
+ * @param it An iterator pointing to the memory location where the object should be destroyed.
  */
-template <typename It> void DestructFromIterator(const It p_It)
+template <typename It> void DestructFromIterator(const It it)
 {
     if constexpr (std::is_pointer_v<It>)
-        Destruct(p_It);
+        Destruct(it);
     else
-        Destruct(&*p_It);
+        Destruct(&*it);
 }
 
 /**
@@ -310,14 +310,14 @@ template <typename It> void DestructFromIterator(const It p_It)
  *
  * @note This function does not allocate memory. It only calls the constructor of the object.
  *
- * @param p_Begin An iterator pointing to the beginning of the range where the objects should be constructed.
- * @param p_End An iterator pointing to the end of the range where the objects should be constructed.
- * @param p_Args The arguments to pass to the constructor of `T`.
+ * @param begin An iterator pointing to the beginning of the range where the objects should be constructed.
+ * @param end An iterator pointing to the end of the range where the objects should be constructed.
+ * @param args The arguments to pass to the constructor of `T`.
  */
-template <typename It, typename... Args> void ConstructRange(const It p_Begin, const It p_End, const Args &...p_Args)
+template <typename It, typename... Args> void ConstructRange(const It begin, const It end, const Args &...args)
 {
-    for (auto it = p_Begin; it != p_End; ++it)
-        ConstructFromIterator(it, p_Args...);
+    for (auto it = begin; it != end; ++it)
+        ConstructFromIterator(it, args...);
 }
 
 /**
@@ -325,14 +325,14 @@ template <typename It, typename... Args> void ConstructRange(const It p_Begin, c
  *
  * @note This function does not allocate memory. It only calls the constructor of the object.
  *
- * @param p_Dst An iterator pointing to the beginning of the destination range where the objects should be constructed.
- * @param p_Begin An iterator pointing to the beginning of the source range where the objects should be copied from.
- * @param p_End An iterator pointing to the end of the source range where the objects should be copied from.
+ * @param dst An iterator pointing to the beginning of the destination range where the objects should be constructed.
+ * @param begin An iterator pointing to the beginning of the source range where the objects should be copied from.
+ * @param end An iterator pointing to the end of the source range where the objects should be copied from.
  */
-template <typename It1, typename It2> void ConstructRangeCopy(It1 p_Dst, const It2 p_Begin, const It2 p_End)
+template <typename It1, typename It2> void ConstructRangeCopy(It1 dst, const It2 begin, const It2 end)
 {
-    for (auto it = p_Begin; it != p_End; ++it, ++p_Dst)
-        ConstructFromIterator(p_Dst, *it);
+    for (auto it = begin; it != end; ++it, ++dst)
+        ConstructFromIterator(dst, *it);
 }
 
 /**
@@ -340,14 +340,14 @@ template <typename It1, typename It2> void ConstructRangeCopy(It1 p_Dst, const I
  *
  * @note This function does not allocate memory. It only calls the constructor of the object.
  *
- * @param p_Dst An iterator pointing to the beginning of the destination range where the objects should be constructed.
- * @param p_Begin An iterator pointing to the beginning of the source range where the objects should be moved from.
- * @param p_End An iterator pointing to the end of the source range where the objects should be moved from.
+ * @param dst An iterator pointing to the beginning of the destination range where the objects should be constructed.
+ * @param begin An iterator pointing to the beginning of the source range where the objects should be moved from.
+ * @param end An iterator pointing to the end of the source range where the objects should be moved from.
  */
-template <typename It1, typename It2> void ConstructRangeMove(It1 p_Dst, const It2 p_Begin, const It2 p_End)
+template <typename It1, typename It2> void ConstructRangeMove(It1 dst, const It2 begin, const It2 end)
 {
-    for (auto it = p_Begin; it != p_End; ++it, ++p_Dst)
-        ConstructFromIterator(p_Dst, std::move(*it));
+    for (auto it = begin; it != end; ++it, ++dst)
+        ConstructFromIterator(dst, std::move(*it));
 }
 
 /**
@@ -355,12 +355,12 @@ template <typename It1, typename It2> void ConstructRangeMove(It1 p_Dst, const I
  *
  * @note This function does not deallocate the memory. It only calls the destructor of the object.
  *
- * @param p_Begin An iterator pointing to the beginning of the range where the objects should be destroyed.
- * @param p_End An iterator pointing to the end of the range where the objects should be destroyed.
+ * @param begin An iterator pointing to the beginning of the range where the objects should be destroyed.
+ * @param end An iterator pointing to the end of the range where the objects should be destroyed.
  */
-template <typename It> void DestructRange(const It p_Begin, const It p_End)
+template <typename It> void DestructRange(const It begin, const It end)
 {
-    for (auto it = p_Begin; it != p_End; ++it)
+    for (auto it = begin; it != end; ++it)
         DestructFromIterator(it);
 }
 

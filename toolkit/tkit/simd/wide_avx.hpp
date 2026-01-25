@@ -64,209 +64,209 @@ template <Valid T> class Wide
         }
 
     constexpr Wide() = default;
-    constexpr Wide(const m256 p_Data) : m_Data(p_Data)
+    constexpr Wide(const m256 data) : m_Data(data)
     {
     }
-    template <std::convertible_to<T> U> constexpr Wide(const U p_Data) : m_Data(set(static_cast<T>(p_Data)))
+    template <std::convertible_to<T> U> constexpr Wide(const U data) : m_Data(set(static_cast<T>(data)))
     {
     }
-    constexpr explicit Wide(const T *p_Data) : m_Data(loadAligned(p_Data))
+    constexpr explicit Wide(const T *data) : m_Data(loadAligned(data))
     {
     }
 
     template <typename Callable>
         requires std::invocable<Callable, usize>
-    constexpr explicit Wide(Callable &&p_Callable)
-        : m_Data(makeIntrinsic(std::forward<Callable>(p_Callable), std::make_integer_sequence<usize, Lanes>{}))
+    constexpr explicit Wide(Callable &&callable)
+        : m_Data(makeIntrinsic(std::forward<Callable>(callable), std::make_integer_sequence<usize, Lanes>{}))
     {
     }
 
-    template <std::convertible_to<T> U> constexpr Wide &operator=(const U p_Data)
+    template <std::convertible_to<T> U> constexpr Wide &operator=(const U data)
     {
-        m_Data = set(static_cast<T>(p_Data));
+        m_Data = set(static_cast<T>(data));
     }
 
-    static constexpr Wide LoadAligned(const T *p_Data)
+    static constexpr Wide LoadAligned(const T *data)
     {
-        return Wide{loadAligned(p_Data)};
+        return Wide{loadAligned(data)};
     }
-    static constexpr Wide LoadUnaligned(const T *p_Data)
+    static constexpr Wide LoadUnaligned(const T *data)
     {
-        return Wide{loadUnaligned(p_Data)};
+        return Wide{loadUnaligned(data)};
     }
-    static constexpr Wide Gather(const T *p_Data, const usize p_Stride)
+    static constexpr Wide Gather(const T *data, const usize stride)
     {
-        TKIT_ASSERT(p_Stride >= sizeof(T), "[TOOLKIT][SIMD] The stride ({}) must be greater than sizeof(T) = {}",
-                    p_Stride, sizeof(T));
+        TKIT_ASSERT(stride >= sizeof(T), "[TOOLKIT][SIMD] The stride ({}) must be greater than sizeof(T) = {}", stride,
+                    sizeof(T));
         TKIT_LOG_WARNING_IF(
-            p_Stride == sizeof(T),
-            "[TOOLKIT][SIMD] Stride of {} is equal to sizeof(T), which might as well be a contiguous load", p_Stride);
+            stride == sizeof(T),
+            "[TOOLKIT][SIMD] Stride of {} is equal to sizeof(T), which might as well be a contiguous load", stride);
 
 #    ifndef TKIT_SIMD_AVX2
         alignas(Alignment) T dst[Lanes];
-        const std::byte *src = reinterpret_cast<const std::byte *>(p_Data);
+        const std::byte *src = reinterpret_cast<const std::byte *>(data);
 
         for (usize i = 0; i < Lanes; ++i)
-            Memory::ForwardCopy(dst + i, src + i * p_Stride, sizeof(T));
+            Memory::ForwardCopy(dst + i, src + i * stride, sizeof(T));
         return Wide{loadAligned(dst)};
 #    else
-        const i32 idx = static_cast<i32>(p_Stride);
+        const i32 idx = static_cast<i32>(stride);
         if constexpr (s_Equals<__m256>)
         {
             const __m256i indices = _mm256_setr_epi32(0, idx, 2 * idx, 3 * idx, 4 * idx, 5 * idx, 6 * idx, 7 * idx);
-            return Wide{_mm256_i32gather_ps(p_Data, indices, 1)};
+            return Wide{_mm256_i32gather_ps(data, indices, 1)};
         }
         else if constexpr (s_Equals<__m256d>)
         {
             const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
-            return Wide{_mm256_i32gather_pd(p_Data, indices, 1)};
+            return Wide{_mm256_i32gather_pd(data, indices, 1)};
         }
         else if constexpr (s_Equals<__m256i>)
         {
             if constexpr (s_IsSize<8>)
             {
                 const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
-                return Wide{_mm256_i32gather_epi64(reinterpret_cast<const long long int *>(p_Data), indices, 1)};
+                return Wide{_mm256_i32gather_epi64(reinterpret_cast<const long long int *>(data), indices, 1)};
             }
             else if constexpr (s_IsSize<4>)
             {
                 const __m256i indices = _mm256_setr_epi32(0, idx, 2 * idx, 3 * idx, 4 * idx, 5 * idx, 6 * idx, 7 * idx);
-                return Wide{_mm256_i32gather_epi32(reinterpret_cast<const i32 *>(p_Data), indices, 1)};
+                return Wide{_mm256_i32gather_epi32(reinterpret_cast<const i32 *>(data), indices, 1)};
             }
             else
             {
                 alignas(Alignment) T dst[Lanes];
-                const std::byte *src = reinterpret_cast<const std::byte *>(p_Data);
+                const std::byte *src = reinterpret_cast<const std::byte *>(data);
 
                 for (usize i = 0; i < Lanes; ++i)
-                    Memory::ForwardCopy(dst + i, src + i * p_Stride, sizeof(T));
+                    Memory::ForwardCopy(dst + i, src + i * stride, sizeof(T));
                 return Wide{loadAligned(dst)};
             }
         }
         CREATE_BAD_BRANCH()
 #    endif
     }
-    constexpr void Scatter(T *p_Data, const usize p_Stride) const
+    constexpr void Scatter(T *data, const usize stride) const
     {
-        TKIT_ASSERT(p_Stride >= sizeof(T), "[TOOLKIT][SIMD] The stride ({}) must be greater than sizeof(T) = {}",
-                    p_Stride, sizeof(T));
+        TKIT_ASSERT(stride >= sizeof(T), "[TOOLKIT][SIMD] The stride ({}) must be greater than sizeof(T) = {}", stride,
+                    sizeof(T));
         TKIT_LOG_WARNING_IF(
-            p_Stride == sizeof(T),
-            "[TOOLKIT][SIMD] Stride of {} is equal to sizeof(T), which might as well be a contiguous store", p_Stride);
+            stride == sizeof(T),
+            "[TOOLKIT][SIMD] Stride of {} is equal to sizeof(T), which might as well be a contiguous store", stride);
         alignas(Alignment) T src[Lanes];
         StoreAligned(src);
 
-        std::byte *dst = reinterpret_cast<std::byte *>(p_Data);
+        std::byte *dst = reinterpret_cast<std::byte *>(data);
         for (usize i = 0; i < Lanes; ++i)
-            Memory::ForwardCopy(dst + i * p_Stride, &src[i], sizeof(T));
+            Memory::ForwardCopy(dst + i * stride, &src[i], sizeof(T));
     }
 
     template <usize Count>
         requires(Count > 1)
-    static constexpr FixedArray<Wide, Count> Gather(const T *p_Data)
+    static constexpr FixedArray<Wide, Count> Gather(const T *data)
     {
         FixedArray<Wide, Count> result;
         for (usize i = 0; i < Count; ++i)
-            result[i] = Gather(p_Data + i, Count * sizeof(T));
+            result[i] = Gather(data + i, Count * sizeof(T));
         return result;
     }
     template <usize Count>
         requires(Count > 1)
-    static constexpr void Scatter(T *p_Data, const FixedArray<Wide, Count> &p_Wides)
+    static constexpr void Scatter(T *data, const FixedArray<Wide, Count> &wides)
     {
         for (usize i = 0; i < Count; ++i)
-            p_Wides[i].Scatter(p_Data + i, Count * sizeof(T));
+            wides[i].Scatter(data + i, Count * sizeof(T));
     }
 
-    constexpr void StoreAligned(T *p_Data) const
+    constexpr void StoreAligned(T *data) const
     {
-        TKIT_ASSERT(Memory::IsAligned(p_Data, Alignment),
+        TKIT_ASSERT(Memory::IsAligned(data, Alignment),
                     "[TOOLKIT][AVX] Data must be aligned to {} bytes to use the AVX SIMD set", Alignment);
         if constexpr (s_Equals<__m256>)
-            _mm256_store_ps(p_Data, m_Data);
+            _mm256_store_ps(data, m_Data);
         else if constexpr (s_Equals<__m256d>)
-            _mm256_store_pd(p_Data, m_Data);
+            _mm256_store_pd(data, m_Data);
 #    ifdef TKIT_SIMD_AVX2
         else if constexpr (s_Equals<__m256i>)
-            _mm256_store_si256(reinterpret_cast<__m256i *>(p_Data), m_Data);
+            _mm256_store_si256(reinterpret_cast<__m256i *>(data), m_Data);
 #    endif
         CREATE_BAD_BRANCH()
     }
-    constexpr void StoreUnaligned(T *p_Data) const
+    constexpr void StoreUnaligned(T *data) const
     {
         if constexpr (s_Equals<__m256>)
-            _mm256_storeu_ps(p_Data, m_Data);
+            _mm256_storeu_ps(data, m_Data);
         else if constexpr (s_Equals<__m256d>)
-            _mm256_storeu_pd(p_Data, m_Data);
+            _mm256_storeu_pd(data, m_Data);
 #    ifdef TKIT_SIMD_AVX2
         else if constexpr (s_Equals<__m256i>)
-            _mm256_storeu_si256(reinterpret_cast<__m256i *>(p_Data), m_Data);
+            _mm256_storeu_si256(reinterpret_cast<__m256i *>(data), m_Data);
 #    endif
         CREATE_BAD_BRANCH()
     }
 
-    constexpr const T At(const usize p_Index) const
+    constexpr const T At(const usize index) const
     {
-        TKIT_ASSERT(p_Index < Lanes, "[TOOLKIT][AVX] Index exceeds lane count: {} >= {}", p_Index, Lanes);
+        TKIT_ASSERT(index < Lanes, "[TOOLKIT][AVX] Index exceeds lane count: {} >= {}", index, Lanes);
         alignas(Alignment) T tmp[Lanes];
         StoreAligned(tmp);
-        return tmp[p_Index];
+        return tmp[index];
     }
-    constexpr const T operator[](const usize p_Index) const
+    constexpr const T operator[](const usize index) const
     {
-        return At(p_Index);
+        return At(index);
     }
 
-    static constexpr Wide Select(const Wide &p_Left, const Wide &p_Right, const Mask &p_Mask)
+    static constexpr Wide Select(const Wide &left, const Wide &right, const Mask &mask)
     {
         if constexpr (s_Equals<__m256>)
-            return Wide{_mm256_blendv_ps(p_Right.m_Data, p_Left.m_Data, p_Mask)};
+            return Wide{_mm256_blendv_ps(right.m_Data, left.m_Data, mask)};
         else if constexpr (s_Equals<__m256d>)
-            return Wide{_mm256_blendv_pd(p_Right.m_Data, p_Left.m_Data, p_Mask)};
+            return Wide{_mm256_blendv_pd(right.m_Data, left.m_Data, mask)};
 #    ifdef TKIT_SIMD_AVX2
         else if constexpr (s_Equals<__m256i>)
-            return Wide{_mm256_blendv_epi8(p_Right.m_Data, p_Left.m_Data, p_Mask)};
+            return Wide{_mm256_blendv_epi8(right.m_Data, left.m_Data, mask)};
 #    endif
         CREATE_BAD_BRANCH()
     }
 
 #    ifdef TKIT_SIMD_AVX2
-#        define CREATE_MIN_MAX_INT(p_Op)                                                                               \
+#        define CREATE_MIN_MAX_INT(op)                                                                                 \
             else if constexpr (s_Equals<__m256i>)                                                                      \
             {                                                                                                          \
                 if constexpr (s_IsSize<8>)                                                                             \
-                    return Wide{_mm256_##p_Op##_epi64(p_Left.m_Data, p_Right.m_Data)};                                 \
+                    return Wide{_mm256_##op##_epi64(left.m_Data, right.m_Data)};                                       \
                 else if constexpr (std::is_signed_v<T>)                                                                \
                 {                                                                                                      \
                     if constexpr (s_IsSize<4>)                                                                         \
-                        return Wide{_mm256_##p_Op##_epi32(p_Left.m_Data, p_Right.m_Data)};                             \
+                        return Wide{_mm256_##op##_epi32(left.m_Data, right.m_Data)};                                   \
                     else if constexpr (s_IsSize<2>)                                                                    \
-                        return Wide{_mm256_##p_Op##_epi16(p_Left.m_Data, p_Right.m_Data)};                             \
+                        return Wide{_mm256_##op##_epi16(left.m_Data, right.m_Data)};                                   \
                     else if constexpr (s_IsSize<1>)                                                                    \
-                        return Wide{_mm256_##p_Op##_epi8(p_Left.m_Data, p_Right.m_Data)};                              \
+                        return Wide{_mm256_##op##_epi8(left.m_Data, right.m_Data)};                                    \
                 }                                                                                                      \
                 else                                                                                                   \
                 {                                                                                                      \
                     if constexpr (s_IsSize<4>)                                                                         \
-                        return Wide{_mm256_##p_Op##_epu32(p_Left.m_Data, p_Right.m_Data)};                             \
+                        return Wide{_mm256_##op##_epu32(left.m_Data, right.m_Data)};                                   \
                     else if constexpr (s_IsSize<2>)                                                                    \
-                        return Wide{_mm256_##p_Op##_epu16(p_Left.m_Data, p_Right.m_Data)};                             \
+                        return Wide{_mm256_##op##_epu16(left.m_Data, right.m_Data)};                                   \
                     else if constexpr (s_IsSize<1>)                                                                    \
-                        return Wide{_mm256_##p_Op##_epu8(p_Left.m_Data, p_Right.m_Data)};                              \
+                        return Wide{_mm256_##op##_epu8(left.m_Data, right.m_Data)};                                    \
                 }                                                                                                      \
             }
 #    else
-#        define CREATE_MIN_MAX_INT(p_Op)
+#        define CREATE_MIN_MAX_INT(op)
 #    endif
 
-#    define CREATE_MIN_MAX(p_Name, p_Op)                                                                               \
-        static constexpr Wide p_Name(const Wide &p_Left, const Wide &p_Right)                                          \
+#    define CREATE_MIN_MAX(name, op)                                                                                   \
+        static constexpr Wide name(const Wide &left, const Wide &right)                                                \
         {                                                                                                              \
             if constexpr (s_Equals<__m256>)                                                                            \
-                return Wide{_mm256_##p_Op##_ps(p_Left.m_Data, p_Right.m_Data)};                                        \
+                return Wide{_mm256_##op##_ps(left.m_Data, right.m_Data)};                                              \
             else if constexpr (s_Equals<__m256d>)                                                                      \
-                return Wide{_mm256_##p_Op##_pd(p_Left.m_Data, p_Right.m_Data)};                                        \
-            CREATE_MIN_MAX_INT(p_Op)                                                                                   \
+                return Wide{_mm256_##op##_pd(left.m_Data, right.m_Data)};                                              \
+            CREATE_MIN_MAX_INT(op)                                                                                     \
             CREATE_BAD_BRANCH()                                                                                        \
         }
 
@@ -274,31 +274,31 @@ template <Valid T> class Wide
     CREATE_MIN_MAX(Max, max)
 
 #    ifdef TKIT_SIMD_AVX2
-#        define CREATE_ARITHMETIC_OP_INT(p_Op)                                                                         \
+#        define CREATE_ARITHMETIC_OP_INT(op)                                                                           \
             else if constexpr (s_Equals<__m256i>)                                                                      \
             {                                                                                                          \
                 if constexpr (s_IsSize<8>)                                                                             \
-                    return Wide{_mm256_##p_Op##_epi64(p_Left.m_Data, p_Right.m_Data)};                                 \
+                    return Wide{_mm256_##op##_epi64(left.m_Data, right.m_Data)};                                       \
                 else if constexpr (s_IsSize<4>)                                                                        \
-                    return Wide{_mm256_##p_Op##_epi32(p_Left.m_Data, p_Right.m_Data)};                                 \
+                    return Wide{_mm256_##op##_epi32(left.m_Data, right.m_Data)};                                       \
                 else if constexpr (s_IsSize<2>)                                                                        \
-                    return Wide{_mm256_##p_Op##_epi16(p_Left.m_Data, p_Right.m_Data)};                                 \
+                    return Wide{_mm256_##op##_epi16(left.m_Data, right.m_Data)};                                       \
                 else if constexpr (s_IsSize<1>)                                                                        \
-                    return Wide{_mm256_##p_Op##_epi8(p_Left.m_Data, p_Right.m_Data)};                                  \
+                    return Wide{_mm256_##op##_epi8(left.m_Data, right.m_Data)};                                        \
                 CREATE_BAD_BRANCH()                                                                                    \
             }
 #    else
-#        define CREATE_ARITHMETIC_OP_INT(p_Op)
+#        define CREATE_ARITHMETIC_OP_INT(op)
 #    endif
 
-#    define CREATE_ARITHMETIC_OP(p_Op, p_FloatOp, p_IntOp)                                                             \
-        friend constexpr Wide operator p_Op(const Wide &p_Left, const Wide &p_Right)                                   \
+#    define CREATE_ARITHMETIC_OP(op, floatOp, intOp)                                                                   \
+        friend constexpr Wide operator op(const Wide &left, const Wide &right)                                         \
         {                                                                                                              \
             if constexpr (s_Equals<__m256>)                                                                            \
-                return Wide{_mm256_##p_FloatOp##_ps(p_Left.m_Data, p_Right.m_Data)};                                   \
+                return Wide{_mm256_##floatOp##_ps(left.m_Data, right.m_Data)};                                         \
             else if constexpr (s_Equals<__m256d>)                                                                      \
-                return Wide{_mm256_##p_FloatOp##_pd(p_Left.m_Data, p_Right.m_Data)};                                   \
-            CREATE_ARITHMETIC_OP_INT(p_IntOp)                                                                          \
+                return Wide{_mm256_##floatOp##_pd(left.m_Data, right.m_Data)};                                         \
+            CREATE_ARITHMETIC_OP_INT(intOp)                                                                            \
             CREATE_BAD_BRANCH()                                                                                        \
         }
 
@@ -306,12 +306,12 @@ template <Valid T> class Wide
     CREATE_ARITHMETIC_OP(-, sub, sub)
     CREATE_ARITHMETIC_OP(*, mul, mullo)
 
-    friend constexpr Wide operator/(const Wide &p_Left, const Wide &p_Right)
+    friend constexpr Wide operator/(const Wide &left, const Wide &right)
     {
         if constexpr (s_Equals<__m256>)
-            return Wide{_mm256_div_ps(p_Left.m_Data, p_Right.m_Data)};
+            return Wide{_mm256_div_ps(left.m_Data, right.m_Data)};
         else if constexpr (s_Equals<__m256d>)
-            return Wide{_mm256_div_pd(p_Left.m_Data, p_Right.m_Data)};
+            return Wide{_mm256_div_pd(left.m_Data, right.m_Data)};
 #    ifdef TKIT_SIMD_AVX2
         else if constexpr (s_Equals<__m256i>)
         {
@@ -320,8 +320,8 @@ template <Valid T> class Wide
             alignas(Alignment) T right[Lanes];
             alignas(Alignment) T result[Lanes];
 
-            p_Left.StoreAligned(left);
-            p_Right.StoreAligned(right);
+            left.StoreAligned(left);
+            right.StoreAligned(right);
             for (usize i = 0; i < Lanes; ++i)
                 result[i] = left[i] / right[i];
 
@@ -336,29 +336,23 @@ template <Valid T> class Wide
 #    endif
     }
 
-    friend constexpr Wide operator-(const Wide &p_Other)
+    friend constexpr Wide operator-(const Wide &other)
     {
-        return p_Other * static_cast<T>(-1);
+        return other * static_cast<T>(-1);
     }
 
-#    define CREATE_SELF_OP(p_Op, p_Requires)                                                                           \
-        constexpr Wide &operator p_Op## = (const Wide &p_Other)p_Requires                                              \
-        {                                                                                                              \
-            *this = *this p_Op p_Other;                                                                                \
+#    define CREATE_SELF_OP(op, requires)                                                                               \
+        constexpr Wide &operator op## = (const Wide &other) requires {                                                 \
+            *this = *this op other;                                                                                    \
             return *this;                                                                                              \
         }
 
-#    define CREATE_SCALAR_OP(p_Op, p_Requires)                                                                         \
+#    define CREATE_SCALAR_OP(op, requires)                                                                             \
         template <std::convertible_to<T> U>                                                                            \
-        friend constexpr Wide operator p_Op(const Wide &p_Left, const U p_Right) p_Requires                            \
-        {                                                                                                              \
-            return p_Left p_Op Wide{p_Right};                                                                          \
-        }                                                                                                              \
-        template <std::convertible_to<T> U>                                                                            \
-        friend constexpr Wide operator p_Op(const U p_Left, const Wide &p_Right) p_Requires                            \
-        {                                                                                                              \
-            return Wide{p_Left} p_Op p_Right;                                                                          \
-        }
+        friend constexpr Wide operator op(const Wide &left, const U right) requires {                                  \
+            return left op Wide{right};                                                                                \
+        } template <std::convertible_to<T> U>                                                                          \
+        friend constexpr Wide operator op(const U left, const Wide &right) requires { return Wide{left} op right; }
 
     CREATE_SCALAR_OP(+, )
     CREATE_SCALAR_OP(-, )
@@ -372,63 +366,63 @@ template <Valid T> class Wide
 
 #    ifdef TKIT_SIMD_AVX2
     template <std::convertible_to<i32> U>
-    friend constexpr Wide operator>>(const Wide &p_Left, const U p_Shift)
+    friend constexpr Wide operator>>(const Wide &left, const U pshift)
         requires(Integer<T>)
     {
-        const i32 shift = static_cast<i32>(p_Shift);
+        const i32 shift = static_cast<i32>(pshift);
         if constexpr (s_IsSize<8>)
         {
             if constexpr (std::is_signed_v<T>)
-                return Wide{_mm256_sra_epi64(p_Left.m_Data, shift)};
+                return Wide{_mm256_sra_epi64(left.m_Data, shift)};
             else
-                return Wide{_mm256_srl_epi64(p_Left.m_Data, _mm_cvtsi32_si128(shift))};
+                return Wide{_mm256_srl_epi64(left.m_Data, _mm_cvtsi32_si128(shift))};
         }
         else if constexpr (s_IsSize<4>)
         {
             if constexpr (std::is_signed_v<T>)
-                return Wide{_mm256_sra_epi32(p_Left.m_Data, _mm_cvtsi32_si128(shift))};
+                return Wide{_mm256_sra_epi32(left.m_Data, _mm_cvtsi32_si128(shift))};
             else
-                return Wide{_mm256_srl_epi32(p_Left.m_Data, _mm_cvtsi32_si128(shift))};
+                return Wide{_mm256_srl_epi32(left.m_Data, _mm_cvtsi32_si128(shift))};
         }
         else if constexpr (s_IsSize<2>)
         {
             if constexpr (std::is_signed_v<T>)
-                return Wide{_mm256_sra_epi16(p_Left.m_Data, _mm_cvtsi32_si128(shift))};
+                return Wide{_mm256_sra_epi16(left.m_Data, _mm_cvtsi32_si128(shift))};
             else
-                return Wide{_mm256_srl_epi16(p_Left.m_Data, _mm_cvtsi32_si128(shift))};
+                return Wide{_mm256_srl_epi16(left.m_Data, _mm_cvtsi32_si128(shift))};
         }
         else if constexpr (s_IsSize<1>)
         {
             if constexpr (std::is_signed_v<T>)
-                return Wide{_mm256_sra_epi8(p_Left.m_Data, shift)};
+                return Wide{_mm256_sra_epi8(left.m_Data, shift)};
             else
-                return Wide{_mm256_srl_epi8(p_Left.m_Data, shift)};
+                return Wide{_mm256_srl_epi8(left.m_Data, shift)};
         }
     }
 
     template <std::convertible_to<i32> U>
-    friend constexpr Wide operator<<(const Wide &p_Left, const U p_Shift)
+    friend constexpr Wide operator<<(const Wide &left, const U pshift)
         requires(Integer<T>)
     {
-        const i32 shift = static_cast<i32>(p_Shift);
+        const i32 shift = static_cast<i32>(pshift);
         if constexpr (s_IsSize<8>)
-            return Wide{_mm256_sll_epi64(p_Left.m_Data, _mm_cvtsi32_si128(shift))};
+            return Wide{_mm256_sll_epi64(left.m_Data, _mm_cvtsi32_si128(shift))};
         else if constexpr (s_IsSize<4>)
-            return Wide{_mm256_sll_epi32(p_Left.m_Data, _mm_cvtsi32_si128(shift))};
+            return Wide{_mm256_sll_epi32(left.m_Data, _mm_cvtsi32_si128(shift))};
         else if constexpr (s_IsSize<2>)
-            return Wide{_mm256_sll_epi16(p_Left.m_Data, _mm_cvtsi32_si128(shift))};
+            return Wide{_mm256_sll_epi16(left.m_Data, _mm_cvtsi32_si128(shift))};
         else if constexpr (s_IsSize<1>)
-            return Wide{_mm256_sll_epi8(p_Left.m_Data, shift)};
+            return Wide{_mm256_sll_epi8(left.m_Data, shift)};
     }
-    friend constexpr Wide operator&(const Wide &p_Left, const Wide &p_Right)
+    friend constexpr Wide operator&(const Wide &left, const Wide &right)
         requires(Integer<T>)
     {
-        return Wide{_mm256_and_si256(p_Left.m_Data, p_Right.m_Data)};
+        return Wide{_mm256_and_si256(left.m_Data, right.m_Data)};
     }
-    friend constexpr Wide operator|(const Wide &p_Left, const Wide &p_Right)
+    friend constexpr Wide operator|(const Wide &left, const Wide &right)
         requires(Integer<T>)
     {
-        return Wide{_mm256_or_si256(p_Left.m_Data, p_Right.m_Data)};
+        return Wide{_mm256_or_si256(left.m_Data, right.m_Data)};
     }
 
     CREATE_SCALAR_OP(&, requires(Integer<T>))
@@ -441,31 +435,31 @@ template <Valid T> class Wide
 #    endif
 
 #    ifdef TKIT_SIMD_AVX2
-#        define CREATE_CMP_OP_INT(p_Op)                                                                                \
+#        define CREATE_CMP_OP_INT(op)                                                                                  \
             else if constexpr (s_Equals<__m256i>)                                                                      \
             {                                                                                                          \
                 if constexpr (s_IsSize<8>)                                                                             \
-                    return _mm256_cmp##p_Op##_epi64(p_Left.m_Data, p_Right.m_Data);                                    \
+                    return _mm256_cmp##op##_epi64(left.m_Data, right.m_Data);                                          \
                 else if constexpr (s_IsSize<4>)                                                                        \
-                    return _mm256_cmp##p_Op##_epi32(p_Left.m_Data, p_Right.m_Data);                                    \
+                    return _mm256_cmp##op##_epi32(left.m_Data, right.m_Data);                                          \
                 else if constexpr (s_IsSize<2>)                                                                        \
-                    return _mm256_cmp##p_Op##_epi16(p_Left.m_Data, p_Right.m_Data);                                    \
+                    return _mm256_cmp##op##_epi16(left.m_Data, right.m_Data);                                          \
                 else if constexpr (s_IsSize<1>)                                                                        \
-                    return _mm256_cmp##p_Op##_epi8(p_Left.m_Data, p_Right.m_Data);                                     \
+                    return _mm256_cmp##op##_epi8(left.m_Data, right.m_Data);                                           \
                 CREATE_BAD_BRANCH()                                                                                    \
             }
 #    else
-#        define CREATE_CMP_OP_INT(p_Op)
+#        define CREATE_CMP_OP_INT(op)
 #    endif
 
-#    define CREATE_CMP_OP(p_Op, p_Flag, p_IntOpName)                                                                   \
-        friend constexpr Mask operator p_Op(const Wide &p_Left, const Wide &p_Right)                                   \
+#    define CREATE_CMP_OP(op, flag, intOpName)                                                                         \
+        friend constexpr Mask operator op(const Wide &left, const Wide &right)                                         \
         {                                                                                                              \
             if constexpr (s_Equals<__m256>)                                                                            \
-                return _mm256_cmp_ps(p_Left.m_Data, p_Right.m_Data, p_Flag);                                           \
+                return _mm256_cmp_ps(left.m_Data, right.m_Data, flag);                                                 \
             else if constexpr (s_Equals<__m256d>)                                                                      \
-                return _mm256_cmp_pd(p_Left.m_Data, p_Right.m_Data, p_Flag);                                           \
-            CREATE_CMP_OP_INT(p_IntOpName)                                                                             \
+                return _mm256_cmp_pd(left.m_Data, right.m_Data, flag);                                                 \
+            CREATE_CMP_OP_INT(intOpName)                                                                               \
         }
 
     CREATE_CMP_OP(==, _CMP_EQ_OQ, eq)
@@ -475,12 +469,12 @@ template <Valid T> class Wide
     CREATE_CMP_OP(<=, _CMP_LE_OQ, le)
     CREATE_CMP_OP(>=, _CMP_GE_OQ, ge)
 
-    static T Reduce(const Wide &p_Wide)
+    static T Reduce(const Wide &wide)
     {
         if constexpr (s_Equals<__m256>)
         {
-            const __m128 lo = _mm256_castps256_ps128(p_Wide.m_Data);
-            const __m128 hi = _mm256_extractf128_ps(p_Wide.m_Data, 1);
+            const __m128 lo = _mm256_castps256_ps128(wide.m_Data);
+            const __m128 hi = _mm256_extractf128_ps(wide.m_Data, 1);
             __m128 sum = _mm_add_ps(lo, hi);
             __m128 shift = _mm_movehl_ps(sum, sum);
             sum = _mm_add_ps(sum, shift);
@@ -490,8 +484,8 @@ template <Valid T> class Wide
         }
         else if constexpr (s_Equals<__m256d>)
         {
-            const __m128d lo = _mm256_castpd256_pd128(p_Wide.m_Data);
-            const __m128d hi = _mm256_extractf128_pd(p_Wide.m_Data, 1);
+            const __m128d lo = _mm256_castpd256_pd128(wide.m_Data);
+            const __m128d hi = _mm256_extractf128_pd(wide.m_Data, 1);
             __m128d sum = _mm_add_pd(lo, hi);
             __m128d shift = _mm_unpackhi_pd(sum, sum);
             sum = _mm_add_sd(sum, shift);
@@ -501,8 +495,8 @@ template <Valid T> class Wide
         {
             if constexpr (s_IsSize<8>)
             {
-                const __m128i lo = _mm256_castsi256_si128(p_Wide.m_Data);
-                const __m128i hi = _mm256_extracti128_si256(p_Wide.m_Data, 1);
+                const __m128i lo = _mm256_castsi256_si128(wide.m_Data);
+                const __m128i hi = _mm256_extracti128_si256(wide.m_Data, 1);
 
                 __m128i sum = _mm_add_epi64(lo, hi);
                 const __m128i tmp = _mm_srli_si128(sum, 8);
@@ -512,8 +506,8 @@ template <Valid T> class Wide
             }
             else if constexpr (s_IsSize<4>)
             {
-                const __m128i lo = _mm256_castsi256_si128(p_Wide.m_Data);
-                const __m128i hi = _mm256_extracti128_si256(p_Wide.m_Data, 1);
+                const __m128i lo = _mm256_castsi256_si128(wide.m_Data);
+                const __m128i hi = _mm256_extracti128_si256(wide.m_Data, 1);
                 __m128i sum = _mm_add_epi32(lo, hi);
                 __m128i tmp = _mm_srli_si128(sum, 4);
                 sum = _mm_add_epi32(sum, tmp);
@@ -524,8 +518,8 @@ template <Valid T> class Wide
             }
             else if constexpr (s_IsSize<2>)
             {
-                const __m128i lo = _mm256_castsi256_si128(p_Wide.m_Data);
-                const __m128i hi = _mm256_extracti128_si256(p_Wide.m_Data, 1);
+                const __m128i lo = _mm256_castsi256_si128(wide.m_Data);
+                const __m128i hi = _mm256_extracti128_si256(wide.m_Data, 1);
                 __m128i sum = _mm_add_epi16(lo, hi);
                 __m128i tmp = _mm_srli_si128(sum, 2);
                 sum = _mm_add_epi16(sum, tmp);
@@ -538,8 +532,8 @@ template <Valid T> class Wide
             }
             else if constexpr (s_IsSize<1>)
             {
-                const __m128i lo = _mm256_castsi256_si128(p_Wide.m_Data);
-                const __m128i hi = _mm256_extracti128_si256(p_Wide.m_Data, 1);
+                const __m128i lo = _mm256_castsi256_si128(wide.m_Data);
+                const __m128i hi = _mm256_extracti128_si256(wide.m_Data, 1);
 
                 __m128i sum = _mm_add_epi8(lo, hi);
                 __m128i tmp = _mm_srli_si128(sum, 1);
@@ -556,16 +550,16 @@ template <Valid T> class Wide
         }
     }
 
-    static constexpr BitMask PackMask(const Mask &p_Mask)
+    static constexpr BitMask PackMask(const Mask &mask)
     {
         if constexpr (s_Equals<__m256>)
-            return static_cast<BitMask>(_mm256_movemask_ps(p_Mask));
+            return static_cast<BitMask>(_mm256_movemask_ps(mask));
         else if constexpr (s_Equals<__m256d>)
-            return static_cast<BitMask>(_mm256_movemask_pd(p_Mask));
+            return static_cast<BitMask>(_mm256_movemask_pd(mask));
 #    ifdef TKIT_SIMD_AVX2
         else if constexpr (s_Equals<__m256i>)
         {
-            const u32 byteMask = static_cast<u32>(_mm256_movemask_epi8(p_Mask));
+            const u32 byteMask = static_cast<u32>(_mm256_movemask_epi8(mask));
             if constexpr (s_IsSize<1>)
                 return static_cast<BitMask>(byteMask);
 #        ifdef TKIT_BMI2
@@ -589,77 +583,77 @@ template <Valid T> class Wide
         CREATE_BAD_BRANCH()
     }
 
-    static constexpr Mask WidenMask(const BitMask p_Mask)
+    static constexpr Mask WidenMask(const BitMask mask)
     {
         using Integer = u<sizeof(T) * 8>;
         alignas(Alignment) Integer tmp[Lanes];
 
         for (usize i = 0; i < Lanes; ++i)
-            tmp[i] = (p_Mask & (BitMask{1} << i)) ? static_cast<Integer>(-1) : Integer{0};
+            tmp[i] = (mask & (BitMask{1} << i)) ? static_cast<Integer>(-1) : Integer{0};
 
         return loadAligned(reinterpret_cast<const T *>(tmp));
     }
 
-    static constexpr bool AllOf(const Mask &p_Mask)
+    static constexpr bool AllOf(const Mask &mask)
     {
-        return Bit::AllOf(PackMask(p_Mask));
+        return Bit::AllOf(PackMask(mask));
     }
-    static constexpr bool NoneOf(const Mask &p_Mask)
+    static constexpr bool NoneOf(const Mask &mask)
     {
-        return Bit::NoneOf(PackMask(p_Mask));
+        return Bit::NoneOf(PackMask(mask));
     }
-    static constexpr bool AnyOf(const Mask &p_Mask)
+    static constexpr bool AnyOf(const Mask &mask)
     {
-        return Bit::AnyOf(PackMask(p_Mask));
+        return Bit::AnyOf(PackMask(mask));
     }
 
   private:
-    static m256 loadAligned(const T *p_Data)
+    static m256 loadAligned(const T *data)
     {
-        TKIT_ASSERT(Memory::IsAligned(p_Data, Alignment),
+        TKIT_ASSERT(Memory::IsAligned(data, Alignment),
                     "[TOOLKIT][AVX] Data must be aligned to {} bytes to use the AVX SIMD set", Alignment);
 
         if constexpr (s_Equals<__m256>)
-            return _mm256_load_ps(p_Data);
+            return _mm256_load_ps(data);
         else if constexpr (s_Equals<__m256d>)
-            return _mm256_load_pd(p_Data);
+            return _mm256_load_pd(data);
 #    ifdef TKIT_SIMD_AVX2
         else if constexpr (s_Equals<__m256i>)
-            return _mm256_load_si256(reinterpret_cast<const __m256i *>(p_Data));
+            return _mm256_load_si256(reinterpret_cast<const __m256i *>(data));
 #    endif
         CREATE_BAD_BRANCH()
     }
 
-    static m256 loadUnaligned(const T *p_Data)
+    static m256 loadUnaligned(const T *data)
     {
         if constexpr (s_Equals<__m256>)
-            return _mm256_loadu_ps(p_Data);
+            return _mm256_loadu_ps(data);
         else if constexpr (s_Equals<__m256d>)
-            return _mm256_loadu_pd(p_Data);
+            return _mm256_loadu_pd(data);
 #    ifdef TKIT_SIMD_AVX2
         else if constexpr (s_Equals<__m256i>)
-            return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(p_Data));
+            return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(data));
 #    endif
         CREATE_BAD_BRANCH()
     }
 
-    static m256 set(const T p_Data)
+    static m256 set(const T data)
     {
         if constexpr (s_Equals<__m256>)
-            return _mm256_set1_ps(p_Data);
+            return _mm256_set1_ps(data);
         else if constexpr (s_Equals<__m256d>)
-            return _mm256_set1_pd(p_Data);
+            return _mm256_set1_pd(data);
 #    ifdef TKIT_SIMD_AVX2
         else if constexpr (s_Equals<__m256i>)
         {
             if constexpr (s_IsSize<8>)
-                return _mm256_set1_epi64x(p_Data);
+                return _mm256_set1_epi64x(data);
             else if constexpr (s_IsSize<4>)
-                return _mm256_set1_epi32(p_Data);
+                return _mm256_set1_epi32(data);
             else if constexpr (s_IsSize<2>)
-                return _mm256_set1_epi16(p_Data);
+                return _mm256_set1_epi16(data);
             else if constexpr (s_IsSize<1>)
-                return _mm256_set1_epi8(p_Data);
+                return _mm256_set1_epi8(data);
             CREATE_BAD_BRANCH()
         }
 #    endif
@@ -667,95 +661,95 @@ template <Valid T> class Wide
     }
 
     template <typename Callable, usize... I>
-    static constexpr m256 makeIntrinsic(Callable &&p_Callable, std::integer_sequence<usize, I...>)
+    static constexpr m256 makeIntrinsic(Callable &&callable, std::integer_sequence<usize, I...>)
     {
         if constexpr (s_Equals<__m256>)
-            return _mm256_setr_ps(static_cast<T>(std::forward<Callable>(p_Callable)(I))...);
+            return _mm256_setr_ps(static_cast<T>(std::forward<Callable>(callable)(I))...);
         else if constexpr (s_Equals<__m256d>)
-            return _mm256_setr_pd(static_cast<T>(std::forward<Callable>(p_Callable)(I))...);
+            return _mm256_setr_pd(static_cast<T>(std::forward<Callable>(callable)(I))...);
 #    ifdef TKIT_SIMD_AVX2
         else if constexpr (s_Equals<__m256i>)
         {
             if constexpr (s_IsSize<8>)
-                return _mm256_setr_epi64x(static_cast<T>(std::forward<Callable>(p_Callable)(I))...);
+                return _mm256_setr_epi64x(static_cast<T>(std::forward<Callable>(callable)(I))...);
             else if constexpr (s_IsSize<4>)
-                return _mm256_setr_epi32(static_cast<T>(std::forward<Callable>(p_Callable)(I))...);
+                return _mm256_setr_epi32(static_cast<T>(std::forward<Callable>(callable)(I))...);
             else if constexpr (s_IsSize<2>)
-                return _mm256_setr_epi16(static_cast<T>(std::forward<Callable>(p_Callable)(I))...);
+                return _mm256_setr_epi16(static_cast<T>(std::forward<Callable>(callable)(I))...);
             else if constexpr (s_IsSize<1>)
-                return _mm256_setr_epi8(static_cast<T>(std::forward<Callable>(p_Callable)(I))...);
+                return _mm256_setr_epi8(static_cast<T>(std::forward<Callable>(callable)(I))...);
         }
 #    endif
         CREATE_BAD_BRANCH()
     }
 
 #    ifdef TKIT_SIMD_AVX2
-    static constexpr __m256i _mm256_srai_epi64_32(const __m256i p_Data)
+    static constexpr __m256i _mm256_srai_epi64_32(const __m256i data)
     {
-        const __m256i shifted = _mm256_srli_epi64(p_Data, 32);
+        const __m256i shifted = _mm256_srli_epi64(data, 32);
 
-        __m256i sign = _mm256_srai_epi32(_mm256_shuffle_epi32(p_Data, _MM_SHUFFLE(3, 3, 1, 1)), 31);
+        __m256i sign = _mm256_srai_epi32(_mm256_shuffle_epi32(data, _MM_SHUFFLE(3, 3, 1, 1)), 31);
         sign = _mm256_slli_epi64(sign, 32);
 
         return _mm256_or_si256(shifted, sign);
     };
-    static constexpr __m256i _mm256_sra_epi64(const __m256i p_Data, const i32 p_Shift)
+    static constexpr __m256i _mm256_sra_epi64(const __m256i data, const i32 shift)
     {
-        const __m256i shifted = _mm256_srl_epi64(p_Data, _mm_cvtsi32_si128(p_Shift));
+        const __m256i shifted = _mm256_srl_epi64(data, _mm_cvtsi32_si128(shift));
 
-        __m256i sign = _mm256_srai_epi32(_mm256_shuffle_epi32(p_Data, _MM_SHUFFLE(3, 3, 1, 1)), 31);
-        sign = _mm256_sll_epi64(sign, _mm_cvtsi32_si128(64 - p_Shift));
+        __m256i sign = _mm256_srai_epi32(_mm256_shuffle_epi32(data, _MM_SHUFFLE(3, 3, 1, 1)), 31);
+        sign = _mm256_sll_epi64(sign, _mm_cvtsi32_si128(64 - shift));
 
         return _mm256_or_si256(shifted, sign);
     };
-    static constexpr __m256i _mm256_srl_epi8(const __m256i p_Data, const i32 p_Shift)
+    static constexpr __m256i _mm256_srl_epi8(const __m256i data, const i32 shift)
     {
-        const __m256i shifted = _mm256_srl_epi16(p_Data, _mm_cvtsi32_si128(p_Shift));
+        const __m256i shifted = _mm256_srl_epi16(data, _mm_cvtsi32_si128(shift));
 
-        const __m256i mask1 = _mm256_set1_epi16(static_cast<i16>(0x00FF >> p_Shift));
+        const __m256i mask1 = _mm256_set1_epi16(static_cast<i16>(0x00FF >> shift));
         const __m256i mask2 = _mm256_set1_epi16(static_cast<i16>(0xFF00));
 
         const __m256i lo = _mm256_and_si256(shifted, mask1);
         const __m256i hi = _mm256_and_si256(shifted, mask2);
         return _mm256_or_si256(lo, hi);
     }
-    static constexpr __m256i _mm256_sll_epi8(const __m256i p_Data, const i32 p_Shift)
+    static constexpr __m256i _mm256_sll_epi8(const __m256i data, const i32 shift)
     {
-        const __m256i shifted = _mm256_sll_epi16(p_Data, _mm_cvtsi32_si128(p_Shift));
+        const __m256i shifted = _mm256_sll_epi16(data, _mm_cvtsi32_si128(shift));
 
-        const __m256i mask1 = _mm256_set1_epi16(static_cast<i16>(0xFF00 << p_Shift));
+        const __m256i mask1 = _mm256_set1_epi16(static_cast<i16>(0xFF00 << shift));
         const __m256i mask2 = _mm256_set1_epi16(static_cast<i16>(0x00FF));
 
         const __m256i lo = _mm256_and_si256(shifted, mask1);
         const __m256i hi = _mm256_and_si256(shifted, mask2);
         return _mm256_or_si256(lo, hi);
     }
-    static constexpr __m256i _mm256_sra_epi8(const __m256i p_Data, const i32 p_Shift)
+    static constexpr __m256i _mm256_sra_epi8(const __m256i data, const i32 shift)
     {
-        const __m256i shifted = _mm256_srl_epi8(p_Data, p_Shift);
-        const __m256i signmask = _mm256_cmpgt_epi8(_mm256_setzero_si256(), p_Data);
-        const __m256i mask = _mm256_sll_epi8(signmask, 8 - p_Shift);
+        const __m256i shifted = _mm256_srl_epi8(data, shift);
+        const __m256i signmask = _mm256_cmpgt_epi8(_mm256_setzero_si256(), data);
+        const __m256i mask = _mm256_sll_epi8(signmask, 8 - shift);
 
         return _mm256_or_si256(shifted, mask);
     }
-    static constexpr __m256i _mm256_mullo_epi64(const __m256i p_Left, const __m256i p_Right)
+    static constexpr __m256i _mm256_mullo_epi64(const __m256i left, const __m256i right)
     {
         const __m256i mask32 = _mm256_set1_epi64x(0xFFFFFFFF);
 
-        const __m256i llo = _mm256_and_si256(p_Left, mask32);
-        const __m256i rlo = _mm256_and_si256(p_Right, mask32);
+        const __m256i llo = _mm256_and_si256(left, mask32);
+        const __m256i rlo = _mm256_and_si256(right, mask32);
 
         __m256i lhi;
         __m256i rhi;
         if constexpr (!std::is_signed_v<T>)
         {
-            lhi = _mm256_srli_epi64(p_Left, 32);
-            rhi = _mm256_srli_epi64(p_Right, 32);
+            lhi = _mm256_srli_epi64(left, 32);
+            rhi = _mm256_srli_epi64(right, 32);
         }
         else
         {
-            lhi = _mm256_srai_epi64_32(p_Left);
-            rhi = _mm256_srai_epi64_32(p_Right);
+            lhi = _mm256_srai_epi64_32(left);
+            rhi = _mm256_srai_epi64_32(right);
         }
 
         const __m256i lo = _mm256_mul_epu32(llo, rlo);
@@ -767,14 +761,14 @@ template <Valid T> class Wide
 
         return _mm256_add_epi64(lo, mid);
     }
-    static constexpr __m256i _mm256_mullo_epi8(const __m256i p_Left, const __m256i p_Right)
+    static constexpr __m256i _mm256_mullo_epi8(const __m256i left, const __m256i right)
     {
         const __m256i zero = _mm256_setzero_si256();
-        const __m256i llo = _mm256_unpacklo_epi8(p_Left, zero);
-        const __m256i lhi = _mm256_unpackhi_epi8(p_Left, zero);
+        const __m256i llo = _mm256_unpacklo_epi8(left, zero);
+        const __m256i lhi = _mm256_unpackhi_epi8(left, zero);
 
-        const __m256i rlo = _mm256_unpacklo_epi8(p_Right, zero);
-        const __m256i rhi = _mm256_unpackhi_epi8(p_Right, zero);
+        const __m256i rlo = _mm256_unpacklo_epi8(right, zero);
+        const __m256i rhi = _mm256_unpackhi_epi8(right, zero);
 
         const __m256i plo = _mm256_mullo_epi16(llo, rlo);
         const __m256i phi = _mm256_mullo_epi16(lhi, rhi);
@@ -783,76 +777,76 @@ template <Valid T> class Wide
         return _mm256_packus_epi16(_mm256_and_si256(plo, mask), _mm256_and_si256(phi, mask));
     }
 
-    static constexpr __m256i _mm256_min_epi64(const __m256i p_Left, const __m256i p_Right)
+    static constexpr __m256i _mm256_min_epi64(const __m256i left, const __m256i right)
     {
-        const __m256i cmp = _mm256_cmpgt_epi64(p_Left, p_Right);
-        return _mm256_blendv_epi8(p_Left, p_Right, cmp);
+        const __m256i cmp = _mm256_cmpgt_epi64(left, right);
+        return _mm256_blendv_epi8(left, right, cmp);
     }
-    static constexpr __m256i _mm256_max_epi64(const __m256i p_Left, const __m256i p_Right)
+    static constexpr __m256i _mm256_max_epi64(const __m256i left, const __m256i right)
     {
-        const __m256i cmp = _mm256_cmpgt_epi64(p_Left, p_Right);
-        return _mm256_blendv_epi8(p_Right, p_Left, cmp);
+        const __m256i cmp = _mm256_cmpgt_epi64(left, right);
+        return _mm256_blendv_epi8(right, left, cmp);
     }
 
-    static constexpr __m256i _mm256_cmpgt_epi64(__m256i p_Left, __m256i p_Right)
+    static constexpr __m256i _mm256_cmpgt_epi64(__m256i left, __m256i right)
     {
         if constexpr (!std::is_signed_v<T>)
         {
             const __m256i offset = _mm256_set1_epi64x(static_cast<i64>(1ull << 63));
-            p_Left = _mm256_xor_si256(p_Left, offset);
-            p_Right = _mm256_xor_si256(p_Right, offset);
+            left = _mm256_xor_si256(left, offset);
+            right = _mm256_xor_si256(right, offset);
         }
-        return ::_mm256_cmpgt_epi64(p_Left, p_Right);
+        return ::_mm256_cmpgt_epi64(left, right);
     }
-    static constexpr __m256i _mm256_cmpgt_epi32(const __m256i p_Left, const __m256i p_Right)
+    static constexpr __m256i _mm256_cmpgt_epi32(const __m256i left, const __m256i right)
     {
         if constexpr (std::is_signed_v<T>)
-            return ::_mm256_cmpgt_epi32(p_Left, p_Right);
+            return ::_mm256_cmpgt_epi32(left, right);
         else
         {
             const __m256i offset = _mm256_set1_epi32(static_cast<i32>(1 << 31));
-            return ::_mm256_cmpgt_epi32(_mm256_xor_si256(p_Left, offset), _mm256_xor_si256(p_Right, offset));
+            return ::_mm256_cmpgt_epi32(_mm256_xor_si256(left, offset), _mm256_xor_si256(right, offset));
         }
     }
-    static constexpr __m256i _mm256_cmpgt_epi16(const __m256i p_Left, const __m256i p_Right)
+    static constexpr __m256i _mm256_cmpgt_epi16(const __m256i left, const __m256i right)
     {
         if constexpr (std::is_signed_v<T>)
-            return ::_mm256_cmpgt_epi16(p_Left, p_Right);
+            return ::_mm256_cmpgt_epi16(left, right);
         else
         {
             const __m256i offset = _mm256_set1_epi16(static_cast<i16>(1 << 15));
-            return ::_mm256_cmpgt_epi16(_mm256_xor_si256(p_Left, offset), _mm256_xor_si256(p_Right, offset));
+            return ::_mm256_cmpgt_epi16(_mm256_xor_si256(left, offset), _mm256_xor_si256(right, offset));
         }
     }
-    static constexpr __m256i _mm256_cmpgt_epi8(const __m256i p_Left, const __m256i p_Right)
+    static constexpr __m256i _mm256_cmpgt_epi8(const __m256i left, const __m256i right)
     {
         if constexpr (std::is_signed_v<T>)
-            return ::_mm256_cmpgt_epi8(p_Left, p_Right);
+            return ::_mm256_cmpgt_epi8(left, right);
         else
         {
             const __m256i offset = _mm256_set1_epi8(static_cast<i8>(1 << 7));
-            return ::_mm256_cmpgt_epi8(_mm256_xor_si256(p_Left, offset), _mm256_xor_si256(p_Right, offset));
+            return ::_mm256_cmpgt_epi8(_mm256_xor_si256(left, offset), _mm256_xor_si256(right, offset));
         }
     }
-#        define CREATE_INT_CMP(p_Type, p_Name)                                                                         \
-            static constexpr __m256i _mm256_cmpneq_ep##p_Type(const __m256i p_Left, const __m256i p_Right)             \
+#        define CREATE_INT_CMP(type, name)                                                                             \
+            static constexpr __m256i _mm256_cmpneq_ep##type(const __m256i left, const __m256i right)                   \
             {                                                                                                          \
-                return _mm256_xor_si256(_mm256_cmpeq_ep##p_Type(p_Left, p_Right),                                      \
-                                        _mm256_set1_ep##p_Name(static_cast<p_Type>(-1)));                              \
+                return _mm256_xor_si256(_mm256_cmpeq_ep##type(left, right),                                            \
+                                        _mm256_set1_ep##name(static_cast<type>(-1)));                                  \
             }                                                                                                          \
-            static constexpr __m256i _mm256_cmplt_ep##p_Type(const __m256i p_Left, const __m256i p_Right)              \
+            static constexpr __m256i _mm256_cmplt_ep##type(const __m256i left, const __m256i right)                    \
             {                                                                                                          \
-                return _mm256_cmpgt_ep##p_Type(p_Right, p_Left);                                                       \
+                return _mm256_cmpgt_ep##type(right, left);                                                             \
             }                                                                                                          \
-            static constexpr __m256i _mm256_cmpge_ep##p_Type(const __m256i p_Left, const __m256i p_Right)              \
+            static constexpr __m256i _mm256_cmpge_ep##type(const __m256i left, const __m256i right)                    \
             {                                                                                                          \
-                return _mm256_xor_si256(_mm256_cmplt_ep##p_Type(p_Left, p_Right),                                      \
-                                        _mm256_set1_ep##p_Name(static_cast<p_Type>(-1)));                              \
+                return _mm256_xor_si256(_mm256_cmplt_ep##type(left, right),                                            \
+                                        _mm256_set1_ep##name(static_cast<type>(-1)));                                  \
             }                                                                                                          \
-            static constexpr __m256i _mm256_cmple_ep##p_Type(const __m256i p_Left, const __m256i p_Right)              \
+            static constexpr __m256i _mm256_cmple_ep##type(const __m256i left, const __m256i right)                    \
             {                                                                                                          \
-                return _mm256_xor_si256(_mm256_cmpgt_ep##p_Type(p_Left, p_Right),                                      \
-                                        _mm256_set1_ep##p_Name(static_cast<p_Type>(-1)));                              \
+                return _mm256_xor_si256(_mm256_cmpgt_ep##type(left, right),                                            \
+                                        _mm256_set1_ep##name(static_cast<type>(-1)));                                  \
             }
 
     CREATE_INT_CMP(i8, i8)

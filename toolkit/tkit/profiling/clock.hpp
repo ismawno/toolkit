@@ -46,6 +46,6 @@ class Clock
 
   private:
     TimePoint m_Start;
-    static u64 timePointToU64(const TimePoint p_TimePoint);
+    static u64 timePointToU64(const TimePoint timePoint);
 };
 } // namespace TKit

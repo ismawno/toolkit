@@ -18,13 +18,13 @@ struct ExampleData
     }
 };
 
-void RecordMallocFree(const AllocationSettings &p_Settings)
+void RecordMallocFree(const AllocationSettings &settings)
 {
     std::ofstream file(g_Root + "/performance/results/malloc_free.csv");
-    DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
+    DynamicArray<ExampleData *> allocated{settings.MaxPasses};
 
     file << "passes,malloc (ns),free (ns)\n";
-    for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
+    for (usize passes = settings.MinPasses; passes <= settings.MaxPasses; passes += settings.PassIncrement)
     {
         Clock clock;
         for (usize i = 0; i < passes; ++i)
@@ -39,14 +39,14 @@ void RecordMallocFree(const AllocationSettings &p_Settings)
     }
 }
 
-void RecordBlockAllocator(const AllocationSettings &p_Settings)
+void RecordBlockAllocator(const AllocationSettings &settings)
 {
     std::ofstream file(g_Root + "/performance/results/block_allocator.csv");
-    DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
+    DynamicArray<ExampleData *> allocated{settings.MaxPasses};
     file << "passes,block_alloc (ns),block_dealloc (ns)\n";
 
-    BlockAllocator allocator = BlockAllocator::CreateFromType<ExampleData>(p_Settings.MaxPasses);
-    for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
+    BlockAllocator allocator = BlockAllocator::CreateFromType<ExampleData>(settings.MaxPasses);
+    for (usize passes = settings.MinPasses; passes <= settings.MaxPasses; passes += settings.PassIncrement)
     {
         Clock clock;
         for (usize i = 0; i < passes; ++i)
@@ -61,15 +61,15 @@ void RecordBlockAllocator(const AllocationSettings &p_Settings)
     }
 }
 
-void RecordStackAllocator(const AllocationSettings &p_Settings)
+void RecordStackAllocator(const AllocationSettings &settings)
 {
     const char *path = "/performance/results/stack_allocator.csv";
     std::ofstream file(g_Root + path);
-    DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
+    DynamicArray<ExampleData *> allocated{settings.MaxPasses};
     file << "passes,stack_alloc (ns),stack_dealloc (ns)\n";
 
-    StackAllocator allocator{static_cast<usize>(p_Settings.MaxPasses * sizeof(ExampleData))};
-    for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
+    StackAllocator allocator{static_cast<usize>(settings.MaxPasses * sizeof(ExampleData))};
+    for (usize passes = settings.MinPasses; passes <= settings.MaxPasses; passes += settings.PassIncrement)
     {
         Clock clock;
         for (usize i = 0; i < passes; ++i)
@@ -84,15 +84,15 @@ void RecordStackAllocator(const AllocationSettings &p_Settings)
     }
 }
 
-void RecordArenaAllocator(const AllocationSettings &p_Settings)
+void RecordArenaAllocator(const AllocationSettings &settings)
 {
     const char *path = "/performance/results/arena_allocator.csv";
     std::ofstream file(g_Root + path);
-    DynamicArray<ExampleData *> allocated{p_Settings.MaxPasses};
+    DynamicArray<ExampleData *> allocated{settings.MaxPasses};
     file << "passes,arena_alloc (ns)\n";
 
-    ArenaAllocator allocator{static_cast<usize>(p_Settings.MaxPasses * sizeof(ExampleData))};
-    for (usize passes = p_Settings.MinPasses; passes <= p_Settings.MaxPasses; passes += p_Settings.PassIncrement)
+    ArenaAllocator allocator{static_cast<usize>(settings.MaxPasses * sizeof(ExampleData))};
+    for (usize passes = settings.MinPasses; passes <= settings.MaxPasses; passes += settings.PassIncrement)
     {
         Clock clock;
         for (usize i = 0; i < passes; ++i)

@@ -22,8 +22,8 @@ TEST_CASE("NonBlockingForEach (void) with ThreadPool sums all elements", "[NonBl
     std::array<Task<>, partitionCount> tasks{};
 
     NonBlockingForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount,
-                       [&](const usize p_Start, const usize p_End) {
-                           totalSum.fetch_add(p_End - p_Start, std::memory_order_relaxed);
+                       [&](const usize start, const usize end) {
+                           totalSum.fetch_add(end - start, std::memory_order_relaxed);
                        });
 
     for (const Task<> &task : tasks)
@@ -44,8 +44,8 @@ TEST_CASE("NonBlockingForEach with output iterator collects and executes all", "
 
     // Partition [10,25) into 5 chunks; capture tasks and sum chunk sizes
     NonBlockingForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount,
-                       [&](const usize p_Start, const usize p_End) {
-                           totalSum.fetch_add(p_End - p_Start, std::memory_order_relaxed);
+                       [&](const usize start, const usize end) {
+                           totalSum.fetch_add(end - start, std::memory_order_relaxed);
                        });
 
     // we should have one task per partition
@@ -68,13 +68,13 @@ TEST_CASE("BlockingForEach with output iterator partitions and returns main resu
     std::array<Task<usize>, partitionCount - 1> tasks{};
 
     // Callable returns usize length for main partition; others add to otherSum
-    const auto callable = [&](const usize p_Start, const usize p_End) -> usize {
-        if (p_Start != firstIndex)
+    const auto callable = [&](const usize start, const usize end) -> usize {
+        if (start != firstIndex)
         {
-            otherSum.fetch_add(p_End - p_Start, std::memory_order_relaxed);
+            otherSum.fetch_add(end - start, std::memory_order_relaxed);
             return 0;
         }
-        return p_End - p_Start;
+        return end - start;
     };
 
     const usize mainLength = BlockingForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount, callable);
@@ -102,8 +102,8 @@ TEST_CASE("BlockingForEach without output iterator executes all partitions", "[B
     std::array<Task<>, partitionCount - 1> tasks{};
 
     // Callable adds length of each range to totalSum
-    const auto callable = [&](const usize p_Start, const usize p_End) {
-        totalSum.fetch_add(p_End - p_Start, std::memory_order_relaxed);
+    const auto callable = [&](const usize start, const usize end) {
+        totalSum.fetch_add(end - start, std::memory_order_relaxed);
     };
 
     // This overload does not return a value

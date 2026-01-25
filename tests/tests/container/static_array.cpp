@@ -17,15 +17,15 @@ struct STrackable
     {
         ++g_Constructions;
     }
-    STrackable(const u32 p_Value) : Value(p_Value)
+    STrackable(const u32 value) : Value(value)
     {
         ++g_Constructions;
     }
-    STrackable(const STrackable &p_Other) : Value(p_Other.Value)
+    STrackable(const STrackable &other) : Value(other.Value)
     {
         ++g_Constructions;
     }
-    STrackable(STrackable &&p_Other) : Value(p_Other.Value)
+    STrackable(STrackable &&other) : Value(other.Value)
     {
         ++g_Constructions;
     }
@@ -33,14 +33,14 @@ struct STrackable
     {
         ++g_Destructions;
     }
-    STrackable &operator=(const STrackable &p_Other)
+    STrackable &operator=(const STrackable &other)
     {
-        Value = p_Other.Value;
+        Value = other.Value;
         return *this;
     }
-    STrackable &operator=(STrackable &&p_Other)
+    STrackable &operator=(STrackable &&other)
     {
-        Value = p_Other.Value;
+        Value = other.Value;
         return *this;
     }
 };

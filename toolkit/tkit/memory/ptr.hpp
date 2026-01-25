@@ -97,84 +97,84 @@ template <typename T> class Ref
     Ref() = default;
 
     /* COPY-MOVE CTORS */
-    Ref(T *p_Ptr) : m_Ptr(p_Ptr)
+    Ref(T *ptr) : m_Ptr(ptr)
     {
         increaseRef();
     }
-    Ref(const Ref &p_Other) : m_Ptr(p_Other.m_Ptr)
+    Ref(const Ref &other) : m_Ptr(other.m_Ptr)
     {
         increaseRef();
     }
-    Ref(Ref &&p_Other) : m_Ptr(p_Other.m_Ptr)
+    Ref(Ref &&other) : m_Ptr(other.m_Ptr)
     {
-        p_Other.m_Ptr = nullptr;
+        other.m_Ptr = nullptr;
     }
 
     /* COPY-MOVE ASSIGNMENTS */
-    Ref &operator=(T *p_Ptr)
+    Ref &operator=(T *ptr)
     {
-        if (m_Ptr != p_Ptr)
+        if (m_Ptr != ptr)
         {
             decreaseRef();
-            m_Ptr = p_Ptr;
+            m_Ptr = ptr;
             increaseRef();
         }
         return *this;
     }
-    Ref &operator=(const Ref &p_Other)
+    Ref &operator=(const Ref &other)
     {
-        if (m_Ptr != p_Other.m_Ptr)
+        if (m_Ptr != other.m_Ptr)
         {
             decreaseRef();
-            m_Ptr = p_Other.m_Ptr;
+            m_Ptr = other.m_Ptr;
             increaseRef();
         }
         return *this;
     }
-    Ref &operator=(Ref &&p_Other)
+    Ref &operator=(Ref &&other)
     {
-        if (m_Ptr != p_Other.m_Ptr)
+        if (m_Ptr != other.m_Ptr)
         {
             decreaseRef();
-            m_Ptr = p_Other.m_Ptr;
+            m_Ptr = other.m_Ptr;
 
             // I have considered moving this out of the if (and calling increaseRef() on the next line) to avoid the
             // small inconsistency (sometimes moved object gets nuked?), but I dont think it will cause any issues
-            p_Other.m_Ptr = nullptr;
+            other.m_Ptr = nullptr;
         }
         return *this;
     }
 
     /* COPY-MOVE CTORS TEMPLATED VARIANTS */
-    template <typename U> Ref(const Ref<U> &p_Other) : m_Ptr(p_Other.m_Ptr)
+    template <typename U> Ref(const Ref<U> &other) : m_Ptr(other.m_Ptr)
     {
         increaseRef();
     }
 
-    template <typename U> Ref(Ref<U> &&p_Other) : m_Ptr(p_Other.m_Ptr)
+    template <typename U> Ref(Ref<U> &&other) : m_Ptr(other.m_Ptr)
     {
-        p_Other.m_Ptr = nullptr;
+        other.m_Ptr = nullptr;
     }
 
     /* COPY-MOVE ASSIGNMENTS TEMPLATED VARIANTS */
-    template <typename U> Ref &operator=(const Ref<U> &p_Other)
+    template <typename U> Ref &operator=(const Ref<U> &other)
     {
-        if (m_Ptr != p_Other.m_Ptr)
+        if (m_Ptr != other.m_Ptr)
         {
             decreaseRef();
-            m_Ptr = p_Other.m_Ptr;
+            m_Ptr = other.m_Ptr;
             increaseRef();
         }
         return *this;
     }
 
-    template <typename U> Ref &operator=(Ref<U> &&p_Other)
+    template <typename U> Ref &operator=(Ref<U> &&other)
     {
-        if (m_Ptr != p_Other.m_Ptr)
+        if (m_Ptr != other.m_Ptr)
         {
             decreaseRef();
-            m_Ptr = p_Other.m_Ptr;
-            p_Other.m_Ptr = nullptr;
+            m_Ptr = other.m_Ptr;
+            other.m_Ptr = nullptr;
         }
         return *this;
     }
@@ -215,17 +215,17 @@ template <typename T> class Ref
      *
      * This is a factory method that creates a new `Ref<T>` object.
      *
-     * @param p_Args The arguments to pass to the constructor of `T`.
+     * @param args The arguments to pass to the constructor of `T`.
      * @return A new `Ref<T>` object.
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
-    static Ref Create(Args &&...p_Args)
+    static Ref Create(Args &&...args)
     {
-        return Ref(new T(std::forward<Args>(p_Args)...));
+        return Ref(new T(std::forward<Args>(args)...));
     }
 
-    std::strong_ordering operator<=>(const Ref &p_Other) const = default;
+    std::strong_ordering operator<=>(const Ref &other) const = default;
 
   private:
     void increaseRef() const
@@ -262,28 +262,28 @@ template <typename T> class Scope
     TKIT_NON_COPYABLE(Scope)
   public:
     Scope() = default;
-    Scope(T *p_Ptr) : m_Ptr(p_Ptr)
+    Scope(T *ptr) : m_Ptr(ptr)
     {
     }
-    Scope(Scope &&p_Other) : m_Ptr(p_Other.m_Ptr)
+    Scope(Scope &&other) : m_Ptr(other.m_Ptr)
     {
-        p_Other.m_Ptr = nullptr;
+        other.m_Ptr = nullptr;
     }
-    template <typename U> Scope(Scope<U> &&p_Other) : m_Ptr(p_Other.m_Ptr)
+    template <typename U> Scope(Scope<U> &&other) : m_Ptr(other.m_Ptr)
     {
-        p_Other.m_Ptr = nullptr;
+        other.m_Ptr = nullptr;
     }
 
-    Scope &operator=(Scope &&p_Other)
+    Scope &operator=(Scope &&other)
     {
-        if (m_Ptr != p_Other.m_Ptr)
-            Reset(p_Other.Release());
+        if (m_Ptr != other.m_Ptr)
+            Reset(other.Release());
         return *this;
     }
-    template <typename U> Scope &operator=(Scope<U> &&p_Other)
+    template <typename U> Scope &operator=(Scope<U> &&other)
     {
-        if (m_Ptr != p_Other.m_Ptr)
-            Reset(p_Other.Release());
+        if (m_Ptr != other.m_Ptr)
+            Reset(other.Release());
 
         return *this;
     }
@@ -296,12 +296,12 @@ template <typename T> class Scope
     /**
      * @brief Reset the pointer, deleting it and replacing it by the provided one (which can be nullptr).
      *
-     * @param p_Ptr The new pointer to manage.
+     * @param ptr The new pointer to manage.
      */
-    void Reset(T *p_Ptr = nullptr)
+    void Reset(T *ptr = nullptr)
     {
         delete m_Ptr;
-        m_Ptr = p_Ptr;
+        m_Ptr = ptr;
     }
 
     /**
@@ -361,17 +361,17 @@ template <typename T> class Scope
      *
      * This is a factory method that creates a new Scope object.
      *
-     * @param p_Args The arguments to pass to the constructor of `T`.
+     * @param args The arguments to pass to the constructor of `T`.
      * @return A new `Scope<T>` object.
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
-    static Scope Create(Args &&...p_Args)
+    static Scope Create(Args &&...args)
     {
-        return Scope(new T(std::forward<Args>(p_Args)...));
+        return Scope(new T(std::forward<Args>(args)...));
     }
 
-    std::strong_ordering operator<=>(const Scope &p_Other) const = default;
+    std::strong_ordering operator<=>(const Scope &other) const = default;
 
   private:
     T *m_Ptr = nullptr;
@@ -382,16 +382,16 @@ template <typename T> class Scope
 
 template <typename T> struct std::hash<TKit::Ref<T>>
 {
-    std::size_t operator()(const TKit::Ref<T> &p_Ref) const
+    std::size_t operator()(const TKit::Ref<T> &ref) const
     {
-        return std::hash<T *>()(p_Ref.Get());
+        return std::hash<T *>()(ref.Get());
     }
 };
 
 template <typename T> struct std::hash<TKit::Scope<T>>
 {
-    std::size_t operator()(const TKit::Scope<T> &p_Scope) const
+    std::size_t operator()(const TKit::Scope<T> &scope) const
     {
-        return std::hash<T *>()(p_Scope.Get());
+        return std::hash<T *>()(scope.Get());
     }
 };

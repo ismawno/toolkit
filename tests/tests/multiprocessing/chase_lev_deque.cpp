@@ -59,10 +59,10 @@ TEST_CASE("ChaseLevDeque: uniqueness", "[ChaseLevDeque][uniqueness]")
     REQUIRE(winners.load(std::memory_order_relaxed) == 1);
 }
 
-static void sort(std::vector<DTask> &p_Vector)
+static void sort(std::vector<DTask> &vector)
 {
-    std::sort(p_Vector.begin(), p_Vector.end(),
-              [](const DTask &p_Task1, const DTask &p_Task2) { return p_Task1.Value < p_Task2.Value; });
+    std::sort(vector.begin(), vector.end(),
+              [](const DTask &task1, const DTask &task2) { return task1.Value < task2.Value; });
 }
 
 TEST_CASE("ChaseLevDeque: many thieves steal while owner pushes", "[ChaseLevDeque][wrap]")

@@ -38,7 +38,7 @@ struct Settings
 };
 
 #ifdef TKIT_ENABLE_INFO_LOGS
-void LogSettings(const Settings &p_Settings);
+void LogSettings(const Settings &settings);
 #endif
 Settings CreateSettings(int argc, char **argv);
 } // namespace TKit::Perf

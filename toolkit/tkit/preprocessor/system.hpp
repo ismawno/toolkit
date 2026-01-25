@@ -64,28 +64,28 @@
 // #endif
 
 #ifdef TKIT_COMPILER_CLANG
-#    define TKIT_PRAGMA(p_Arg) _Pragma(#p_Arg)
+#    define TKIT_PRAGMA(arg) _Pragma(#arg)
 #    define TKIT_COMPILER_WARNING_IGNORE_PUSH() TKIT_PRAGMA(clang diagnostic push)
 #    define TKIT_COMPILER_WARNING_IGNORE_POP() TKIT_PRAGMA(clang diagnostic pop)
-#    define TKIT_CLANG_WARNING_IGNORE(p_Warning) TKIT_PRAGMA(clang diagnostic ignored p_Warning)
+#    define TKIT_CLANG_WARNING_IGNORE(warning) TKIT_PRAGMA(clang diagnostic ignored warning)
 #else
-#    define TKIT_CLANG_WARNING_IGNORE(p_Warning)
+#    define TKIT_CLANG_WARNING_IGNORE(warning)
 #endif
 #ifdef TKIT_COMPILER_GCC
 #    define TKIT_PRAGMA(x) _Pragma(#x)
 #    define TKIT_COMPILER_WARNING_IGNORE_PUSH() TKIT_PRAGMA(GCC diagnostic push)
 #    define TKIT_COMPILER_WARNING_IGNORE_POP() TKIT_PRAGMA(GCC diagnostic pop)
-#    define TKIT_GCC_WARNING_IGNORE(p_Warning) TKIT_PRAGMA(GCC diagnostic ignored p_Warning)
+#    define TKIT_GCC_WARNING_IGNORE(warning) TKIT_PRAGMA(GCC diagnostic ignored warning)
 #else
-#    define TKIT_GCC_WARNING_IGNORE(p_Warning)
+#    define TKIT_GCC_WARNING_IGNORE(warning)
 #endif
 #ifdef TKIT_COMPILER_MSVC
 #    define TKIT_PRAGMA(x) __pragma(x)
 #    define TKIT_COMPILER_WARNING_IGNORE_PUSH() TKIT_PRAGMA(warning(push))
 #    define TKIT_COMPILER_WARNING_IGNORE_POP() TKIT_PRAGMA(warning(pop))
-#    define TKIT_MSVC_WARNING_IGNORE(p_Warning) TKIT_PRAGMA(warning(disable : p_Warning))
+#    define TKIT_MSVC_WARNING_IGNORE(warning) TKIT_PRAGMA(warning(disable : warning))
 #else
-#    define TKIT_MSVC_WARNING_IGNORE(p_Warning)
+#    define TKIT_MSVC_WARNING_IGNORE(warning)
 #endif
 
 #ifdef TKIT_COMPILER_MSVC
@@ -94,8 +94,8 @@
 #    define TKIT_NO_RETURN __attribute__((noreturn))
 #endif
 
-#define TKIT_PUSH_MACRO(p_Macro) TKIT_PRAGMA(push_macro(#p_Macro))
-#define TKIT_POP_MACRO(p_Macro) TKIT_PRAGMA(pop_macro(#p_Macro))
+#define TKIT_PUSH_MACRO(macro) TKIT_PRAGMA(push_macro(#macro))
+#define TKIT_POP_MACRO(macro) TKIT_PRAGMA(pop_macro(#macro))
 
 #if defined(TKIT_OS_WINDOWS) || defined(TKIT_OS_APPLE)
 #    define TKIT_CONSTEVAL consteval

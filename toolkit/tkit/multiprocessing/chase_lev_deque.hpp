@@ -27,10 +27,10 @@ template <typename T> class ChaseLevDeque
   public:
     using ValueType = T;
 
-    constexpr ChaseLevDeque(ArenaAllocator *p_Allocator, const usize p_Capacity)
-        : m_Data(p_Capacity, p_Allocator, p_Capacity), m_Mask(p_Capacity - 1)
+    constexpr ChaseLevDeque(ArenaAllocator *allocator, const usize capacity)
+        : m_Data(capacity, allocator, capacity), m_Mask(capacity - 1)
     {
-        TKIT_ASSERT(Bit::IsPowerOfTwo(p_Capacity),
+        TKIT_ASSERT(Bit::IsPowerOfTwo(capacity),
                     "[TOOLKIT][CHASE-LEV] Chase Lev Deque capacity must be a power of 2");
     }
 
@@ -40,17 +40,17 @@ template <typename T> class ChaseLevDeque
      * The element is constructed in place using the provided arguments.
      * This method can only be accessed by the owner of the queue. Concurrent use will cause undefined behaviour.
      *
-     * @param p_Args The arguments to pass to the constructor of `T`.
+     * @param args The arguments to pass to the constructor of `T`.
      */
     template <typename... Args>
         requires std::constructible_from<T, Args...>
-    void PushBack(Args &&...p_Args)
+    void PushBack(Args &&...args)
     {
         const u64 back = m_Back.load(std::memory_order_relaxed);
         TKIT_ASSERT(back - m_Front.load(std::memory_order_relaxed) < m_Data.GetCapacity(),
                     "[TOOLKIT][CHASE-LEV] Cannot PushBack(). Queue is at capacity ({})", m_Data.GetCapacity());
 
-        store(back, std::move(T{std::forward<Args>(p_Args)...}));
+        store(back, std::move(T{std::forward<Args>(args)...}));
 
         std::atomic_thread_fence(std::memory_order_release);
         m_Back.store(back + 1, std::memory_order_relaxed);
@@ -113,13 +113,13 @@ template <typename T> class ChaseLevDeque
     }
 
   private:
-    T load(const u64 p_Index) const
+    T load(const u64 index) const
     {
-        return m_Data[static_cast<usize>(p_Index & m_Mask)].load(std::memory_order_relaxed);
+        return m_Data[static_cast<usize>(index & m_Mask)].load(std::memory_order_relaxed);
     }
-    void store(const u64 p_Index, T &&p_Element)
+    void store(const u64 index, T &&element)
     {
-        m_Data[static_cast<usize>(p_Index & m_Mask)].store(std::move(p_Element), std::memory_order_relaxed);
+        m_Data[static_cast<usize>(index & m_Mask)].store(std::move(element), std::memory_order_relaxed);
     }
 
     alignas(TKIT_CACHE_LINE_SIZE) std::atomic<u64> m_Front{1};

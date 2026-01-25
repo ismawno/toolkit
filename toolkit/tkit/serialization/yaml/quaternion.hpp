@@ -7,22 +7,22 @@ namespace TKit::Yaml
 {
 template <typename T> struct Codec<qua<T>>
 {
-    static Node Encode(const qua<T> &p_Instance)
+    static Node Encode(const qua<T> &instance)
     {
         Node node;
         for (usize i = 0; i < 4; ++i)
-            node.push_back(p_Instance[i]);
+            node.push_back(instance[i]);
         node.SetStyle(YAML::EmitterStyle::Flow);
         return node;
     }
 
-    static bool Decode(const Node &p_Node, qua<T> &p_Instance)
+    static bool Decode(const Node &node, qua<T> &instance)
     {
-        if (!p_Node.IsSequence() || p_Node.size() != 4)
+        if (!node.IsSequence() || node.size() != 4)
             return false;
 
         for (usize i = 0; i < 4; ++i)
-            p_Instance[i] = p_Node[i].as<T>();
+            instance[i] = node[i].as<T>();
         return true;
     }
 };

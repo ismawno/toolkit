@@ -10,39 +10,39 @@ template <typename T> struct StackAllocation
     static constexpr ArrayType Type = Array_Stack;
 
     StackAllocation() = default;
-    StackAllocation(StackAllocator *p_Allocator) : Allocator(p_Allocator)
+    StackAllocation(StackAllocator *allocator) : Allocator(allocator)
     {
     }
-    StackAllocation(StackAllocator *p_Allocator, const usize p_Capacity) : Allocator(p_Allocator)
+    StackAllocation(StackAllocator *allocator, const usize capacity) : Allocator(allocator)
     {
-        Allocate(p_Capacity);
+        Allocate(capacity);
     }
 
     StackAllocation(const StackAllocation &) = delete;
-    StackAllocation(StackAllocation &&p_Other)
-        : Allocator(p_Other.Allocator), Data(p_Other.Data), Size(p_Other.Size), Capacity(p_Other.Capacity)
+    StackAllocation(StackAllocation &&other)
+        : Allocator(other.Allocator), Data(other.Data), Size(other.Size), Capacity(other.Capacity)
     {
-        p_Other.Data = nullptr;
-        p_Other.Size = 0;
-        p_Other.Capacity = 0;
+        other.Data = nullptr;
+        other.Size = 0;
+        other.Capacity = 0;
     }
 
     StackAllocation &operator=(const StackAllocation &) = delete;
-    StackAllocation &operator=(StackAllocation &&p_Other)
+    StackAllocation &operator=(StackAllocation &&other)
     {
-        Allocator = p_Other.Allocator;
-        Data = p_Other.Data;
-        Size = p_Other.Size;
-        Capacity = p_Other.Capacity;
-        p_Other.Data = nullptr;
-        p_Other.Size = 0;
-        p_Other.Capacity = 0;
+        Allocator = other.Allocator;
+        Data = other.Data;
+        Size = other.Size;
+        Capacity = other.Capacity;
+        other.Data = nullptr;
+        other.Size = 0;
+        other.Capacity = 0;
         return *this;
     }
 
-    void Allocate(const usize p_Capacity)
+    void Allocate(const usize capacity)
     {
-        if (p_Capacity == 0)
+        if (capacity == 0)
             return;
         TKIT_ASSERT(
             Size == 0,
@@ -57,8 +57,8 @@ template <typename T> struct StackAllocation
         if (!Allocator)
             Allocator = Memory::GetStack();
         TKIT_ASSERT(Allocator, "[TOOLKIT][STACK-ARRAY] Array must have a valid allocator to allocate memory");
-        Data = Allocator->Allocate<T>(p_Capacity);
-        Capacity = p_Capacity;
+        Data = Allocator->Allocate<T>(capacity);
+        Capacity = capacity;
     }
 
     void Deallocate()

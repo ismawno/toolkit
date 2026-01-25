@@ -4,26 +4,26 @@
 namespace TKit
 {
 thread_local usize t_Victim;
-static usize cheapRand(const usize p_Workers)
+static usize cheapRand(const usize workers)
 {
     thread_local usize seed = 0x9e3779b9u ^ Topology::GetThreadIndex();
     seed ^= seed << 13;
     seed ^= seed >> 17;
     seed ^= seed << 5;
 
-    return static_cast<usize>((u64(seed) * u64(p_Workers)) >> 32);
+    return static_cast<usize>((u64(seed) * u64(workers)) >> 32);
 }
-static void shuffleVictim(const usize p_WorkerIndex, const usize p_Workers)
+static void shuffleVictim(const usize workerIndex, const usize workers)
 {
-    usize victim = cheapRand(p_Workers);
-    while (victim == p_WorkerIndex)
-        victim = cheapRand(p_Workers);
+    usize victim = cheapRand(workers);
+    while (victim == workerIndex)
+        victim = cheapRand(workers);
     t_Victim = victim;
 }
 
-void ThreadPool::drainTasks(const usize p_WorkerIndex, const usize p_Workers)
+void ThreadPool::drainTasks(const usize workerIndex, const usize workers)
 {
-    Worker &myself = m_Workers[p_WorkerIndex];
+    Worker &myself = m_Workers[workerIndex];
 
     using Node = MpmcStack<ITask *>::Node;
     Node *taskTail = myself.Inbox.Acquire();
@@ -51,15 +51,15 @@ void ThreadPool::drainTasks(const usize p_WorkerIndex, const usize p_Workers)
         myself.TaskCount.fetch_sub(1, std::memory_order_relaxed);
     }
     if (!trySteal(t_Victim))
-        shuffleVictim(p_WorkerIndex, p_Workers);
+        shuffleVictim(workerIndex, workers);
 }
 
-bool ThreadPool::trySteal(const usize p_Victim)
+bool ThreadPool::trySteal(const usize victim)
 {
-    Worker &victim = m_Workers[p_Victim];
-    if (const auto stolen = victim.Queue.PopFront())
+    Worker &wvictim = m_Workers[victim];
+    if (const auto stolen = wvictim.Queue.PopFront())
     {
-        victim.TaskCount.fetch_sub(1, std::memory_order_relaxed);
+        wvictim.TaskCount.fetch_sub(1, std::memory_order_relaxed);
         ITask *task = *stolen;
         (*task)();
         return true;
@@ -67,28 +67,28 @@ bool ThreadPool::trySteal(const usize p_Victim)
     return false;
 }
 
-ThreadPool::ThreadPool(const usize p_WorkerCount, const usize p_MaxTasksPerQueue)
-    : ThreadPool(TKit::Memory::GetArena(), p_WorkerCount, p_MaxTasksPerQueue)
+ThreadPool::ThreadPool(const usize workerCount, const usize maxTasksPerQueue)
+    : ThreadPool(TKit::Memory::GetArena(), workerCount, maxTasksPerQueue)
 {
 }
 
-ThreadPool::ThreadPool(ArenaAllocator *p_Allocator, const usize p_WorkerCount, const usize p_MaxTasksPerQueue)
-    : ITaskManager(p_WorkerCount), m_Workers{p_Allocator, p_WorkerCount}
+ThreadPool::ThreadPool(ArenaAllocator *allocator, const usize workerCount, const usize maxTasksPerQueue)
+    : ITaskManager(workerCount), m_Workers{allocator, workerCount}
 {
-    TKIT_ASSERT(p_Allocator, "[TOOLKIT][MULTIPROC] An arena allocator must be provided, but passed value was null");
-    TKIT_ASSERT(p_WorkerCount > 1, "[TOOLKIT][MULTIPROC] At least 2 workers are required to create a thread pool");
+    TKIT_ASSERT(allocator, "[TOOLKIT][MULTIPROC] An arena allocator must be provided, but passed value was null");
+    TKIT_ASSERT(workerCount > 1, "[TOOLKIT][MULTIPROC] At least 2 workers are required to create a thread pool");
     m_Handle = Topology::Initialize();
     Topology::SetThreadIndex(0);
     Topology::BuildAffinityOrder(m_Handle);
     Topology::PinThread(m_Handle, 0);
     Topology::SetThreadName(0, "tkit-main");
 
-    const auto worker = [this](const usize p_ThreadIndex) {
-        Topology::SetThreadIndex(p_ThreadIndex);
-        Topology::PinThread(m_Handle, p_ThreadIndex);
-        Topology::SetThreadName(p_ThreadIndex);
+    const auto worker = [this](const usize threadIndex) {
+        Topology::SetThreadIndex(threadIndex);
+        Topology::PinThread(m_Handle, threadIndex);
+        Topology::SetThreadName(threadIndex);
 
-        const usize workerIndex = p_ThreadIndex - 1;
+        const usize workerIndex = threadIndex - 1;
 
         m_ReadySignal.wait(false, std::memory_order_acquire);
 
@@ -108,8 +108,8 @@ ThreadPool::ThreadPool(ArenaAllocator *p_Allocator, const usize p_WorkerCount, c
                 break;
         }
     };
-    for (usize i = 0; i < p_WorkerCount; ++i)
-        m_Workers.Append(p_Allocator, p_MaxTasksPerQueue, worker, i + 1);
+    for (usize i = 0; i < workerCount; ++i)
+        m_Workers.Append(allocator, maxTasksPerQueue, worker, i + 1);
 
     m_ReadySignal.test_and_set(std::memory_order_release);
     m_ReadySignal.notify_all();
@@ -128,45 +128,45 @@ ThreadPool::~ThreadPool()
     Topology::Terminate(m_Handle);
 }
 
-static void assignTask(const usize p_WorkerIndex, ThreadPool::Worker &p_Worker, ITask *p_Task)
+static void assignTask(const usize workerIndex, ThreadPool::Worker &worker, ITask *task)
 {
-    if (p_WorkerIndex == ThreadPool::GetWorkerIndex())
-        p_Worker.Queue.PushBack(p_Task);
+    if (workerIndex == ThreadPool::GetWorkerIndex())
+        worker.Queue.PushBack(task);
     else
-        p_Worker.Inbox.Push(p_Task);
+        worker.Inbox.Push(task);
 
-    p_Worker.TaskCount.fetch_add(1, std::memory_order_relaxed);
-    p_Worker.Epochs.fetch_add(1, std::memory_order_release);
-    p_Worker.Epochs.notify_one();
+    worker.TaskCount.fetch_add(1, std::memory_order_relaxed);
+    worker.Epochs.fetch_add(1, std::memory_order_release);
+    worker.Epochs.notify_one();
 }
 
-usize ThreadPool::SubmitTask(ITask *p_Task, usize p_SubmissionIndex)
+usize ThreadPool::SubmitTask(ITask *task, usize submissionIndex)
 {
     const usize wcount = m_Workers.GetSize();
     u32 maxCount = 0;
     for (;;)
     {
-        for (usize i = p_SubmissionIndex; i < wcount; ++i)
+        for (usize i = submissionIndex; i < wcount; ++i)
         {
             const u32 count = m_Workers[i].TaskCount.load(std::memory_order_relaxed);
             if (count <= maxCount)
             {
-                assignTask(i, m_Workers[i], p_Task);
+                assignTask(i, m_Workers[i], task);
                 return (i + 1) % wcount;
             }
         }
-        p_SubmissionIndex = 0;
+        submissionIndex = 0;
         ++maxCount;
     }
 }
 
-void ThreadPool::WaitUntilFinished(const ITask &p_Task)
+void ThreadPool::WaitUntilFinished(const ITask &task)
 {
     const usize nworkers = m_Workers.GetSize();
     if (Topology::GetThreadIndex() == 0)
     {
         usize index = cheapRand(nworkers);
-        while (!p_Task.IsFinished(std::memory_order_acquire))
+        while (!task.IsFinished(std::memory_order_acquire))
         {
             trySteal(index);
             index = (index + 1) % nworkers;
@@ -176,7 +176,7 @@ void ThreadPool::WaitUntilFinished(const ITask &p_Task)
     else
     {
         const usize workerIndex = GetWorkerIndex();
-        while (!p_Task.IsFinished(std::memory_order_acquire))
+        while (!task.IsFinished(std::memory_order_acquire))
         {
             drainTasks(workerIndex, nworkers);
             std::this_thread::yield();

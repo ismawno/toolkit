@@ -81,16 +81,16 @@ constexpr usize MaxStackAlloc = TKIT_MEMORY_MAX_STACK_ALLOCATION;
 constexpr usize MaxThreads = TKIT_MAX_THREADS;
 constexpr usize MaxAllocatorPushDepth = TKIT_MAX_ALLOCATOR_PUSH_DEPTH;
 
-template <typename T> constexpr bool ApproachesZero(const T p_Value)
+template <typename T> constexpr bool ApproachesZero(const T value)
 {
     if constexpr (Float<T>)
-        return std::abs(p_Value) <= Limits<T>::Epsilon();
+        return std::abs(value) <= Limits<T>::Epsilon();
     else
-        return p_Value == static_cast<T>(0);
+        return value == static_cast<T>(0);
 }
 
-template <typename T> constexpr bool Approximately(const T p_Left, const T p_Right)
+template <typename T> constexpr bool Approximately(const T left, const T right)
 {
-    return ApproachesZero(p_Left - p_Right);
+    return ApproachesZero(left - right);
 }
 } // namespace TKit

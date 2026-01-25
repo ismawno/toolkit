@@ -43,15 +43,15 @@
  */
 #ifdef TKIT_ENABLE_YAML_SERIALIZATION
 #    include "tkit/serialization/yaml/codec.hpp"
-#    define TKIT_YAML_SERIALIZE_DECLARE(p_ClassName, ...) friend struct TKit::Yaml::Codec<p_ClassName>;
+#    define TKIT_YAML_SERIALIZE_DECLARE(className, ...) friend struct TKit::Yaml::Codec<className>;
 #else
-#    define TKIT_YAML_SERIALIZE_DECLARE(p_ClassName, ...)
+#    define TKIT_YAML_SERIALIZE_DECLARE(className, ...)
 #endif
 
 /**
  * A serialization macro for enums. It must be used outside of the enum definition, before its declaration.
  */
-#define TKIT_YAML_SERIALIZE_DECLARE_ENUM(p_EnumName)
+#define TKIT_YAML_SERIALIZE_DECLARE_ENUM(enumName)
 
 /**
  * A pair of macros that will allow you to customize how each field gets (de)serialized. The available options are the

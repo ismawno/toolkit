@@ -8,94 +8,94 @@ namespace TKit::Math
 using Detail::SquareRoot;
 
 // TODO: Adapt so SIMD
-template <typename T, usize N0, usize... N> constexpr ten<T, N0, N...> SquareRoot(const ten<T, N0, N...> &p_Tensor)
+template <typename T, usize N0, usize... N> constexpr ten<T, N0, N...> SquareRoot(const ten<T, N0, N...> &tensor)
 {
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = SquareRoot(p_Tensor.Flat[i]);
+        result.Flat[i] = SquareRoot(tensor.Flat[i]);
 
     return result;
 }
 
-template <typename T> constexpr T Min(const std::initializer_list<T> p_Values)
+template <typename T> constexpr T Min(const std::initializer_list<T> values)
 {
-    return std::min(p_Values);
+    return std::min(values);
 }
-template <typename T> constexpr T Max(const std::initializer_list<T> p_Values)
+template <typename T> constexpr T Max(const std::initializer_list<T> values)
 {
-    return std::max(p_Values);
+    return std::max(values);
 }
 
-template <typename T> constexpr T Min(const T p_Left, const T p_Right)
+template <typename T> constexpr T Min(const T left, const T right)
 {
-    return std::min(p_Left, p_Right);
+    return std::min(left, right);
 }
-template <typename T> constexpr T Max(const T p_Left, const T p_Right)
+template <typename T> constexpr T Max(const T left, const T right)
 {
-    return std::max(p_Left, p_Right);
+    return std::max(left, right);
 }
-template <typename T> constexpr T Clamp(const T p_Value, const T p_Min, const T p_Max)
+template <typename T> constexpr T Clamp(const T value, const T min, const T max)
 {
-    return std::clamp(p_Value, p_Min, p_Max);
+    return std::clamp(value, min, max);
 }
 
 // TODO: Adapt so SIMD
-template <typename T, usize N0, usize... N> constexpr T Min(const ten<T, N0, N...> &p_Tensor)
+template <typename T, usize N0, usize... N> constexpr T Min(const ten<T, N0, N...> &tensor)
 {
     T mn{std::numeric_limits<T>::max()};
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        if (mn > p_Tensor.Flat[i])
-            mn = p_Tensor.Flat[i];
+        if (mn > tensor.Flat[i])
+            mn = tensor.Flat[i];
     return mn;
 }
-template <typename T, usize N0, usize... N> constexpr T Max(const ten<T, N0, N...> &p_Tensor)
+template <typename T, usize N0, usize... N> constexpr T Max(const ten<T, N0, N...> &tensor)
 {
     T mx{static_cast<T>(0)};
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        if (mx < p_Tensor.Flat[i])
-            mx = p_Tensor.Flat[i];
+        if (mx < tensor.Flat[i])
+            mx = tensor.Flat[i];
     return mx;
 }
 
 template <typename T, usize N0, usize... N>
-constexpr ten<T, N0, N...> Min(const ten<T, N0, N...> &p_Left, const ten<T, N0, N...> &p_Right)
+constexpr ten<T, N0, N...> Min(const ten<T, N0, N...> &left, const ten<T, N0, N...> &right)
 {
     ten<T, N0, N...> mn;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        mn.Flat[i] = Min(p_Left.Flat[i], p_Right.Flat[i]);
+        mn.Flat[i] = Min(left.Flat[i], right.Flat[i]);
     return mn;
 }
 template <typename T, usize N0, usize... N>
-constexpr ten<T, N0, N...> Max(const ten<T, N0, N...> &p_Left, const ten<T, N0, N...> &p_Right)
+constexpr ten<T, N0, N...> Max(const ten<T, N0, N...> &left, const ten<T, N0, N...> &right)
 {
     ten<T, N0, N...> mx;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        mx.Flat[i] = Max(p_Left.Flat[i], p_Right.Flat[i]);
+        mx.Flat[i] = Max(left.Flat[i], right.Flat[i]);
     return mx;
 }
 template <typename T, usize N0, usize... N>
-constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &p_Tensor, const ten<T, N0, N...> &p_Min,
-                                 const ten<T, N0, N...> &p_Max)
+constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &tensor, const ten<T, N0, N...> &min,
+                                 const ten<T, N0, N...> &max)
 {
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = Clamp(p_Tensor.Flat[i], p_Min.Flat[i], p_Max.Flat[i]);
+        result.Flat[i] = Clamp(tensor.Flat[i], min.Flat[i], max.Flat[i]);
     return result;
 }
 template <typename T, std::convertible_to<T> U, usize N0, usize... N>
-constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &p_Tensor, U &&p_Min, U &&p_Max)
+constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &tensor, U &&min, U &&max)
 {
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
         result.Flat[i] =
-            Clamp(p_Tensor.Flat[i], static_cast<T>(std::forward<U>(p_Min)), static_cast<T>(std::forward<U>(p_Max)));
+            Clamp(tensor.Flat[i], static_cast<T>(std::forward<U>(min)), static_cast<T>(std::forward<U>(max)));
     return result;
 }
 
@@ -103,54 +103,54 @@ template <typename T> constexpr T Pi()
 {
     return static_cast<T>(3.14159265358979323846);
 }
-template <typename T> constexpr T Radians(const T p_Degrees)
+template <typename T> constexpr T Radians(const T degrees)
 {
-    return p_Degrees * (Pi<T>() / 180.f);
+    return degrees * (Pi<T>() / 180.f);
 }
-template <typename T> constexpr T Degrees(const T p_Radians)
+template <typename T> constexpr T Degrees(const T radians)
 {
-    return p_Radians * (180.f / Pi<T>());
+    return radians * (180.f / Pi<T>());
 }
-template <typename T> constexpr T Absolute(const T p_Value)
+template <typename T> constexpr T Absolute(const T value)
 {
-    return std::abs(p_Value);
+    return std::abs(value);
 }
-template <typename T> constexpr T Cosine(const T p_Value)
+template <typename T> constexpr T Cosine(const T value)
 {
-    return std::cos(p_Value);
+    return std::cos(value);
 }
-template <typename T> constexpr T Sine(const T p_Value)
+template <typename T> constexpr T Sine(const T value)
 {
-    return std::sin(p_Value);
+    return std::sin(value);
 }
-template <typename T> constexpr T Tangent(const T p_Value)
+template <typename T> constexpr T Tangent(const T value)
 {
-    return std::tan(p_Value);
+    return std::tan(value);
 }
-template <typename T> constexpr T AntiCosine(const T p_Value)
+template <typename T> constexpr T AntiCosine(const T value)
 {
-    return std::acos(p_Value);
+    return std::acos(value);
 }
-template <typename T> constexpr T AntiSine(const T p_Value)
+template <typename T> constexpr T AntiSine(const T value)
 {
-    return std::asin(p_Value);
+    return std::asin(value);
 }
-template <typename T> constexpr T AntiTangent(const T p_Value)
+template <typename T> constexpr T AntiTangent(const T value)
 {
-    return std::atan(p_Value);
+    return std::atan(value);
 }
-template <typename T> constexpr T AntiTangent(const T p_Y, const T p_X)
+template <typename T> constexpr T AntiTangent(const T y, const T x)
 {
-    return std::atan2(p_Y, p_X);
+    return std::atan2(y, x);
 }
 
-#define CREATE_MATH_TENSOR_FUNC(p_Name)                                                                                \
-    template <typename T, usize N0, usize... N> constexpr ten<T, N0, N...> p_Name(const ten<T, N0, N...> &p_Tensor)    \
+#define CREATE_MATH_TENSOR_FUNC(name)                                                                                \
+    template <typename T, usize N0, usize... N> constexpr ten<T, N0, N...> name(const ten<T, N0, N...> &tensor)    \
     {                                                                                                                  \
         ten<T, N0, N...> result;                                                                                       \
         constexpr usize size = N0 * (N * ... * 1);                                                                     \
         for (usize i = 0; i < size; ++i)                                                                               \
-            result.Flat[i] = p_Name(p_Tensor.Flat[i]);                                                                 \
+            result.Flat[i] = name(tensor.Flat[i]);                                                                 \
         return result;                                                                                                 \
     }
 
@@ -165,12 +165,12 @@ CREATE_MATH_TENSOR_FUNC(AntiSine)
 CREATE_MATH_TENSOR_FUNC(AntiTangent)
 
 template <typename T, usize N0, usize... N>
-constexpr ten<T, N0, N...> AntiTangent(const ten<T, N0, N...> &p_Y, const ten<T, N0, N...> &p_X)
+constexpr ten<T, N0, N...> AntiTangent(const ten<T, N0, N...> &y, const ten<T, N0, N...> &x)
 {
     ten<T, N0, N...> sn;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        sn.Flat[i] = AntiTangent(p_Y.Flat[i], p_X.Flat[i]);
+        sn.Flat[i] = AntiTangent(y.Flat[i], x.Flat[i]);
     return sn;
 }
 

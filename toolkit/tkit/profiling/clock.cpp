@@ -3,9 +3,9 @@
 
 namespace TKit
 {
-u64 Clock::timePointToU64(const TimePoint p_TimePoint)
+u64 Clock::timePointToU64(const TimePoint timePoint)
 {
-    return std::chrono::duration_cast<std::chrono::nanoseconds>(p_TimePoint.time_since_epoch()).count();
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(timePoint.time_since_epoch()).count();
 }
 
 Timespan Clock::Restart()

@@ -40,21 +40,21 @@
  * Fix: template <typename U> class Child3 {TKIT_REFLECT_DECLARE(Child3, Parent<int, U, 0>)}
  */
 #ifdef TKIT_ENABLE_REFLECTION
-#    define TKIT_REFLECT_DECLARE(p_ClassName, ...) friend class TKit::Reflect<p_ClassName>;
+#    define TKIT_REFLECT_DECLARE(className, ...) friend class TKit::Reflect<className>;
 #else
-#    define TKIT_REFLECT_DECLARE(p_ClassName, ...)
+#    define TKIT_REFLECT_DECLARE(className, ...)
 #endif
 
 /**
  * A reflection macro for enums. It must be used outside of the enum definition, before its declaration.
  */
-#define TKIT_REFLECT_DECLARE_ENUM(p_EnumName)
+#define TKIT_REFLECT_DECLARE_ENUM(enumName)
 
 /**
  * A pair of macros that will allow you to group fields in any way you prefer, so that later, when iterating over the
  * fields of a class, you may do so only within a subset of the fields.
  */
-#define TKIT_REFLECT_GROUP_BEGIN(p_GroupName)
+#define TKIT_REFLECT_GROUP_BEGIN(groupName)
 #define TKIT_REFLECT_GROUP_END()
 
 /**
@@ -63,7 +63,7 @@
 #define TKIT_REFLECT_IGNORE_BEGIN()
 #define TKIT_REFLECT_IGNORE_END()
 
-#define TKIT_REFLECT_FIELD_TYPE(p_Field) typename std::remove_cvref_t<decltype(p_Field)>::Type
+#define TKIT_REFLECT_FIELD_TYPE(field) typename std::remove_cvref_t<decltype(field)>::Type
 
 namespace TKit
 {

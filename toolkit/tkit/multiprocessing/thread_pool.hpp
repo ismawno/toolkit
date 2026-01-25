@@ -41,8 +41,8 @@ class ThreadPool final : public ITaskManager
     struct alignas(TKIT_CACHE_LINE_SIZE) Worker
     {
         template <typename Callable, typename... Args>
-        Worker(ArenaAllocator *p_Allocator, const usize p_MaxTasks, Callable &&p_Callable, Args &&...p_Args)
-            : Thread(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...), Queue(p_Allocator, p_MaxTasks)
+        Worker(ArenaAllocator *allocator, const usize maxTasks, Callable &&callable, Args &&...args)
+            : Thread(std::forward<Callable>(callable), std::forward<Args>(args)...), Queue(allocator, maxTasks)
         {
         }
         std::thread Thread;
@@ -53,8 +53,8 @@ class ThreadPool final : public ITaskManager
         std::atomic_flag TerminateSignal = ATOMIC_FLAG_INIT;
     };
 
-    ThreadPool(ArenaAllocator *p_Allocator, usize p_WokerCount, usize p_MaxTasksPerQueue = 32);
-    explicit ThreadPool(usize p_WokerCount, usize p_MaxTasksPerQueue = 32);
+    ThreadPool(ArenaAllocator *allocator, usize wokerCount, usize maxTasksPerQueue = 32);
+    explicit ThreadPool(usize wokerCount, usize maxTasksPerQueue = 32);
     ~ThreadPool() override;
 
     /**
@@ -62,13 +62,13 @@ class ThreadPool final : public ITaskManager
      *
      * The task will be scheduled and executed as soon as possible.
      *
-     * @param p_Task The task to submit.
-     * @param p_SubmissionIndex An optional submission index to potentially speed up submission process when submitting
+     * @param task The task to submit.
+     * @param submissionIndex An optional submission index to potentially speed up submission process when submitting
      * many tasks in a short period of time (which will certainly almost always be the case). It is completely optional
      * and can be ignored. It should always start at 0 when a new batch of tasks is going to be submitted.
      * @return The next submission index that should be fed to the next task submission while in the same batch.
      */
-    usize SubmitTask(ITask *p_Task, usize p_SubmissionIndex = 0) override;
+    usize SubmitTask(ITask *task, usize submissionIndex = 0) override;
 
     /**
      * @brief Block the calling thread until the task has finished executing.
@@ -81,7 +81,7 @@ class ThreadPool final : public ITaskManager
      * completed before moving on.
      *
      */
-    void WaitUntilFinished(const ITask &p_Task) override;
+    void WaitUntilFinished(const ITask &task) override;
 
     static usize GetWorkerIndex()
     {
@@ -89,8 +89,8 @@ class ThreadPool final : public ITaskManager
     }
 
   private:
-    void drainTasks(usize p_WorkerIndex, usize p_Workers);
-    bool trySteal(usize p_Victim);
+    void drainTasks(usize workerIndex, usize workers);
+    bool trySteal(usize victim);
 
     ArenaArray<Worker> m_Workers;
 

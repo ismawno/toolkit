@@ -21,33 +21,33 @@ usize GetThreadIndex()
 {
     return t_ThreadIndex;
 }
-void SetThreadIndex(const usize p_ThreadIndex)
+void SetThreadIndex(const usize threadIndex)
 {
-    t_ThreadIndex = p_ThreadIndex;
+    t_ThreadIndex = threadIndex;
 }
 
-void SetThreadName(const u32 p_ThreadIndex, const char *p_Name)
+void SetThreadName(const u32 threadIndex, const char *name)
 {
 #ifdef TKIT_OS_WINDOWS
     const HANDLE thread = GetCurrentThread();
     std::ostringstream oss;
-    if (p_Name)
-        oss << p_Name;
+    if (name)
+        oss << name;
     else
-        oss << "tkit-worker-" << p_ThreadIndex;
+        oss << "tkit-worker-" << threadIndex;
 
     const auto str = oss.str();
-    const std::wstring name(str.begin(), str.end());
+    const std::wstring wname(str.begin(), str.end());
 
-    SetThreadDescription(thread, name.c_str());
+    SetThreadDescription(thread, wname.c_str());
 #else
-    const std::string name = p_Name ? p_Name : ("tkit-worker-" + std::to_string(p_ThreadIndex));
+    const std::string sname = name ? name : ("tkit-worker-" + std::to_string(threadIndex));
 #endif
 #ifdef TKIT_OS_LINUX
     const pthread_t current = pthread_self();
-    pthread_setname_np(current, name.c_str());
+    pthread_setname_np(current, sname.c_str());
 #elif defined(TKIT_OS_APPLE)
-    pthread_setname_np(name.c_str());
+    pthread_setname_np(sname.c_str());
 #endif
 }
 
@@ -74,9 +74,9 @@ struct KindInfo
     CoreType CType = Unk;
 };
 
-static KindInfo getKindInfo(const hwloc_topology_t p_Topology, const u32 PuIndex)
+static KindInfo getKindInfo(const hwloc_topology_t topology, const u32 PuIndex)
 {
-    const i32 err = hwloc_cpukinds_get_nr(p_Topology, 0);
+    const i32 err = hwloc_cpukinds_get_nr(topology, 0);
     KindInfo kinfo{};
 
     if (err == -1)
@@ -90,7 +90,7 @@ static KindInfo getKindInfo(const hwloc_topology_t p_Topology, const u32 PuIndex
         u32 ninfos = 0;
         struct hwloc_info_s *infos = nullptr;
 
-        if (hwloc_cpukinds_get_info(p_Topology, i, set, &eff, &ninfos, &infos, 0) == 0 &&
+        if (hwloc_cpukinds_get_info(topology, i, set, &eff, &ninfos, &infos, 0) == 0 &&
             hwloc_bitmap_isset(set, PuIndex))
         {
             kinfo.Rank = i;
@@ -115,15 +115,15 @@ static KindInfo getKindInfo(const hwloc_topology_t p_Topology, const u32 PuIndex
 }
 
 #    ifdef TKIT_ENABLE_DEBUG_LOGS
-static std::string toString(const u32 p_Value)
+static std::string toString(const u32 value)
 {
-    if (p_Value == Unknown)
+    if (value == Unknown)
         return "Unknown";
-    return std::to_string(p_Value);
+    return std::to_string(value);
 }
-static std::string toString(const KindInfo::CoreType p_CType)
+static std::string toString(const KindInfo::CoreType cType)
 {
-    switch (p_CType)
+    switch (cType)
     {
     case KindInfo::IntelCore:
         return "IntelCore";
@@ -145,19 +145,18 @@ struct PuInfo
     KindInfo KInfo{};
 };
 
-static hwloc_obj_t ancestor(const hwloc_topology_t p_Topology, const hwloc_obj_t p_Object,
-                            const hwloc_obj_type_t p_Type)
+static hwloc_obj_t ancestor(const hwloc_topology_t topology, const hwloc_obj_t object, const hwloc_obj_type_t type)
 {
-    return hwloc_get_ancestor_obj_by_type(p_Topology, p_Type, p_Object);
+    return hwloc_get_ancestor_obj_by_type(topology, type, object);
 }
 
-static DynamicArray<u32> buildOrder(const hwloc_topology_t p_Topology)
+static DynamicArray<u32> buildOrder(const hwloc_topology_t topology)
 {
     TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY] Building affinity order...");
 
     DynamicArray<u32> order{};
 
-    const u32 nbpus = static_cast<u32>(hwloc_get_nbobjs_by_type(p_Topology, HWLOC_OBJ_PU));
+    const u32 nbpus = static_cast<u32>(hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU));
     TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY] Found {} PUs", nbpus);
     if (nbpus == 0)
         return order;
@@ -167,7 +166,7 @@ static DynamicArray<u32> buildOrder(const hwloc_topology_t p_Topology)
 
     for (u32 i = 0; i < nbpus; ++i)
     {
-        const hwloc_obj_t pu = hwloc_get_obj_by_type(p_Topology, HWLOC_OBJ_PU, i);
+        const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
         if (!pu)
         {
             TKIT_LOG_WARNING("[TOOLKIT][TOPOLOGY]    PU {} is NULL", i);
@@ -176,16 +175,16 @@ static DynamicArray<u32> buildOrder(const hwloc_topology_t p_Topology)
 
         PuInfo p{};
         p.Pu = pu->os_index;
-        if (const hwloc_obj_t numa = ancestor(p_Topology, pu, HWLOC_OBJ_NUMANODE))
+        if (const hwloc_obj_t numa = ancestor(topology, pu, HWLOC_OBJ_NUMANODE))
             p.Numa = numa->os_index;
-        if (const hwloc_obj_t core = ancestor(p_Topology, pu, HWLOC_OBJ_CORE))
+        if (const hwloc_obj_t core = ancestor(topology, pu, HWLOC_OBJ_CORE))
             p.Core = core->os_index;
 
         u32 rank = 0;
-        if (const hwloc_obj_t core = ancestor(p_Topology, pu, HWLOC_OBJ_CORE))
+        if (const hwloc_obj_t core = ancestor(topology, pu, HWLOC_OBJ_CORE))
         {
-            const auto next = [p_Topology, core](const hwloc_obj_t p_Child = nullptr) {
-                return hwloc_get_next_obj_inside_cpuset_by_type(p_Topology, core->cpuset, HWLOC_OBJ_PU, p_Child);
+            const auto next = [topology, core](const hwloc_obj_t child = nullptr) {
+                return hwloc_get_next_obj_inside_cpuset_by_type(topology, core->cpuset, HWLOC_OBJ_PU, child);
             };
             for (hwloc_obj_t child = next(); child; child = next(child))
             {
@@ -195,7 +194,7 @@ static DynamicArray<u32> buildOrder(const hwloc_topology_t p_Topology)
             }
         }
         p.SmtRank = rank;
-        p.KInfo = getKindInfo(p_Topology, p.Pu);
+        p.KInfo = getKindInfo(topology, p.Pu);
 
         // TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY]    PU {} SMT rank: {}", i, toString(p.SmtRank));
         // TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY]    PU {} Kind rank: {}", i, toString(p.KInfo.Rank));
@@ -205,29 +204,29 @@ static DynamicArray<u32> buildOrder(const hwloc_topology_t p_Topology)
         infos.Append(p);
     }
 
-    std::sort(infos.begin(), infos.end(), [](const PuInfo &p_Node1, const PuInfo &p_Node2) {
-        const u32 e1 = p_Node1.KInfo.Efficiency;
-        const u32 e2 = p_Node2.KInfo.Efficiency;
+    std::sort(infos.begin(), infos.end(), [](const PuInfo &node1, const PuInfo &node2) {
+        const u32 e1 = node1.KInfo.Efficiency;
+        const u32 e2 = node2.KInfo.Efficiency;
 
         if (e1 != Unknown && e2 != Unknown && e1 != e2)
             return e1 > e2;
 
-        if (p_Node1.SmtRank != p_Node2.SmtRank)
-            return p_Node1.SmtRank < p_Node2.SmtRank;
+        if (node1.SmtRank != node2.SmtRank)
+            return node1.SmtRank < node2.SmtRank;
 
-        if (p_Node1.KInfo.CType != p_Node2.KInfo.CType)
-            return p_Node1.KInfo.CType < p_Node2.KInfo.CType;
+        if (node1.KInfo.CType != node2.KInfo.CType)
+            return node1.KInfo.CType < node2.KInfo.CType;
 
-        const u32 r1 = p_Node1.KInfo.Rank;
-        const u32 r2 = p_Node2.KInfo.Rank;
+        const u32 r1 = node1.KInfo.Rank;
+        const u32 r2 = node2.KInfo.Rank;
 
         if (r1 != Unknown && r2 != Unknown && r1 != r2)
             return r1 > r2;
 
-        if (p_Node1.Core != p_Node2.Core)
-            return p_Node1.Core < p_Node2.Core;
+        if (node1.Core != node2.Core)
+            return node1.Core < node2.Core;
 
-        return p_Node1.Pu < p_Node2.Pu;
+        return node1.Pu < node2.Pu;
     });
 
     TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY] Gathered all PUs. Sorting by desirability...");
@@ -248,39 +247,39 @@ static DynamicArray<u32> buildOrder(const hwloc_topology_t p_Topology)
     return order;
 }
 
-static void bindCurrentThread(const hwloc_topology_t p_Topology, const u32 p_PuIndex)
+static void bindCurrentThread(const hwloc_topology_t topology, const u32 puIndex)
 {
-    const hwloc_obj_t pu = hwloc_get_pu_obj_by_os_index(p_Topology, p_PuIndex);
+    const hwloc_obj_t pu = hwloc_get_pu_obj_by_os_index(topology, puIndex);
     if (!pu)
     {
-        TKIT_LOG_WARNING("[TOOLKIT][TOPOLOGY] Failed to bind PU index {}: PU was NULL", p_PuIndex);
+        TKIT_LOG_WARNING("[TOOLKIT][TOPOLOGY] Failed to bind PU index {}: PU was NULL", puIndex);
         return;
     }
 
     const hwloc_cpuset_t set = hwloc_bitmap_dup(pu->cpuset);
     hwloc_bitmap_singlify(set);
 
-    TKIT_LOG_WARNING_IF_NOT_RETURNS(hwloc_set_cpubind(p_Topology, set, HWLOC_CPUBIND_THREAD), 0,
-                                    "[TOOLKIT][TOPOLOGY] CPU Bind to Pu index {} failed", p_PuIndex);
+    TKIT_LOG_WARNING_IF_NOT_RETURNS(hwloc_set_cpubind(topology, set, HWLOC_CPUBIND_THREAD), 0,
+                                    "[TOOLKIT][TOPOLOGY] CPU Bind to Pu index {} failed", puIndex);
     hwloc_bitmap_free(set);
 }
 
-void BuildAffinityOrder(const Handle *p_Handle)
+void BuildAffinityOrder(const Handle *handle)
 {
     if (s_BuildOrder.IsEmpty())
     {
-        s_BuildOrder = buildOrder(p_Handle->Topology);
+        s_BuildOrder = buildOrder(handle->Topology);
         return;
     }
 }
 
-void PinThread(const Handle *p_Handle, const u32 p_ThreadIndex)
+void PinThread(const Handle *handle, const u32 threadIndex)
 {
     if (s_BuildOrder.IsEmpty())
         return;
-    const u32 index = p_ThreadIndex % s_BuildOrder.GetSize();
+    const u32 index = threadIndex % s_BuildOrder.GetSize();
     const u32 pindex = s_BuildOrder[index];
-    bindCurrentThread(p_Handle->Topology, pindex);
+    bindCurrentThread(handle->Topology, pindex);
 }
 
 const Handle *Initialize()
@@ -292,10 +291,10 @@ const Handle *Initialize()
     return handle;
 }
 
-void Terminate(const Handle *p_Handle)
+void Terminate(const Handle *handle)
 {
-    hwloc_topology_destroy(p_Handle->Topology);
-    delete p_Handle;
+    hwloc_topology_destroy(handle->Topology);
+    delete handle;
 }
 #else
 struct Handle

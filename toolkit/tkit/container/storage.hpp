@@ -31,14 +31,14 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
      * If your type is trivially constructible, you dont need to call this function.
      *
      * @tparam T The type of the object to create.
-     * @param p_Args The arguments to pass to the constructor of `T`.
+     * @param args The arguments to pass to the constructor of `T`.
      * @return A pointer to the newly created object.
      */
-    template <typename T, typename... Args> constexpr T *Construct(Args &&...p_Args)
+    template <typename T, typename... Args> constexpr T *Construct(Args &&...args)
     {
         static_assert(sizeof(T) <= Size, "Object does not fit in the local buffer");
         static_assert(alignof(T) <= Alignment, "Object has incompatible alignment");
-        return Memory::Construct(Get<T>(), std::forward<Args>(p_Args)...);
+        return Memory::Construct(Get<T>(), std::forward<Args>(args)...);
     }
 
     /**
@@ -108,38 +108,38 @@ template <typename T> class Storage
   public:
     constexpr Storage() = default;
 
-    constexpr Storage(const Storage &p_Other)
+    constexpr Storage(const Storage &other)
         requires std::copy_constructible<T>
     {
-        m_Storage.template Construct<T>(*p_Other.Get());
+        m_Storage.template Construct<T>(*other.Get());
     }
-    constexpr Storage(Storage &&p_Other)
+    constexpr Storage(Storage &&other)
         requires std::move_constructible<T>
     {
-        m_Storage.template Construct<T>(std::move(*p_Other.Get()));
+        m_Storage.template Construct<T>(std::move(*other.Get()));
     }
 
-    constexpr Storage &operator=(const Storage &p_Other)
+    constexpr Storage &operator=(const Storage &other)
         requires std::is_copy_assignable_v<T>
     {
-        if (this != &p_Other)
-            *Get() = *p_Other.Get();
+        if (this != &other)
+            *Get() = *other.Get();
         return *this;
     }
 
-    constexpr Storage &operator=(Storage &&p_Other)
+    constexpr Storage &operator=(Storage &&other)
         requires std::is_move_assignable_v<T>
     {
-        if (this != &p_Other)
-            *Get() = std::move(*p_Other.Get());
+        if (this != &other)
+            *Get() = std::move(*other.Get());
         return *this;
     }
 
     template <typename... Args>
         requires(!std::same_as<Storage, std::decay_t<Args>> && ...)
-    constexpr Storage(Args &&...p_Args)
+    constexpr Storage(Args &&...args)
     {
-        m_Storage.template Construct<T>(std::forward<Args>(p_Args)...);
+        m_Storage.template Construct<T>(std::forward<Args>(args)...);
     }
 
     /**
@@ -147,12 +147,12 @@ template <typename T> class Storage
      *
      * Calling `Construct()` on top of an existing object will cause undefined behavior.
      *
-     * @param p_Args The arguments to pass to the constructor of `T`.
+     * @param args The arguments to pass to the constructor of `T`.
      * @return A pointer to the newly created object.
      */
-    template <typename... Args> constexpr T *Construct(Args &&...p_Args)
+    template <typename... Args> constexpr T *Construct(Args &&...args)
     {
-        return m_Storage.template Construct<T>(std::forward<Args>(p_Args)...);
+        return m_Storage.template Construct<T>(std::forward<Args>(args)...);
     }
 
     /**

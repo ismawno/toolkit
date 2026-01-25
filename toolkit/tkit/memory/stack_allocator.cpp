@@ -5,23 +5,23 @@
 
 namespace TKit
 {
-StackAllocator::StackAllocator(void *p_Buffer, const usize p_Capacity, const usize p_Alignment)
-    : m_Buffer(static_cast<std::byte *>(p_Buffer)), m_Capacity(p_Capacity), m_Alignment(p_Alignment), m_Provided(true)
+StackAllocator::StackAllocator(void *buffer, const usize capacity, const usize alignment)
+    : m_Buffer(static_cast<std::byte *>(buffer)), m_Capacity(capacity), m_Alignment(alignment), m_Provided(true)
 {
-    TKIT_ASSERT(Bit::IsPowerOfTwo(p_Alignment),
-                "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2, but the value is {}", p_Alignment);
-    TKIT_ASSERT(Memory::IsAligned(p_Buffer, p_Alignment),
-                "[TOOLKIT][STACK-ALLOC] Provided buffer must be aligned to the given alignment of {}", p_Alignment);
+    TKIT_ASSERT(Bit::IsPowerOfTwo(alignment),
+                "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2, but the value is {}", alignment);
+    TKIT_ASSERT(Memory::IsAligned(buffer, alignment),
+                "[TOOLKIT][STACK-ALLOC] Provided buffer must be aligned to the given alignment of {}", alignment);
 }
 
-StackAllocator::StackAllocator(const usize p_Capacity, const usize p_Alignment)
-    : m_Capacity(p_Capacity), m_Alignment(p_Alignment), m_Provided(false)
+StackAllocator::StackAllocator(const usize capacity, const usize alignment)
+    : m_Capacity(capacity), m_Alignment(alignment), m_Provided(false)
 {
-    TKIT_ASSERT(Bit::IsPowerOfTwo(p_Alignment),
-                "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2, but the value is {}", p_Alignment);
-    m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(static_cast<size_t>(p_Capacity), p_Alignment));
-    TKIT_ASSERT(m_Buffer, "[TOOLKIT][STACK-ALLOC] Failed to allocate {} bytes of memory aligned to {} bytes",
-                p_Capacity, p_Alignment);
+    TKIT_ASSERT(Bit::IsPowerOfTwo(alignment),
+                "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2, but the value is {}", alignment);
+    m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(static_cast<size_t>(capacity), alignment));
+    TKIT_ASSERT(m_Buffer, "[TOOLKIT][STACK-ALLOC] Failed to allocate {} bytes of memory aligned to {} bytes", capacity,
+                alignment);
 }
 
 StackAllocator::~StackAllocator()
@@ -29,63 +29,63 @@ StackAllocator::~StackAllocator()
     deallocateBuffer();
 }
 
-StackAllocator::StackAllocator(StackAllocator &&p_Other)
-    : m_Buffer(p_Other.m_Buffer), m_Top(p_Other.m_Top), m_Capacity(p_Other.m_Capacity),
-      m_Alignment(p_Other.m_Alignment), m_Provided(p_Other.m_Provided)
+StackAllocator::StackAllocator(StackAllocator &&other)
+    : m_Buffer(other.m_Buffer), m_Top(other.m_Top), m_Capacity(other.m_Capacity), m_Alignment(other.m_Alignment),
+      m_Provided(other.m_Provided)
 
 {
-    p_Other.m_Buffer = nullptr;
-    p_Other.m_Top = 0;
-    p_Other.m_Capacity = 0;
-    p_Other.m_Alignment = 0;
-    p_Other.m_Provided = false;
+    other.m_Buffer = nullptr;
+    other.m_Top = 0;
+    other.m_Capacity = 0;
+    other.m_Alignment = 0;
+    other.m_Provided = false;
 }
 
-StackAllocator &StackAllocator::operator=(StackAllocator &&p_Other)
+StackAllocator &StackAllocator::operator=(StackAllocator &&other)
 {
-    if (this != &p_Other)
+    if (this != &other)
     {
         deallocateBuffer();
-        m_Buffer = p_Other.m_Buffer;
-        m_Top = p_Other.m_Top;
-        m_Capacity = p_Other.m_Capacity;
-        m_Alignment = p_Other.m_Alignment;
-        m_Provided = p_Other.m_Provided;
+        m_Buffer = other.m_Buffer;
+        m_Top = other.m_Top;
+        m_Capacity = other.m_Capacity;
+        m_Alignment = other.m_Alignment;
+        m_Provided = other.m_Provided;
 
-        p_Other.m_Buffer = nullptr;
-        p_Other.m_Top = 0;
-        p_Other.m_Capacity = 0;
-        p_Other.m_Alignment = 0;
-        p_Other.m_Provided = false;
+        other.m_Buffer = nullptr;
+        other.m_Top = 0;
+        other.m_Capacity = 0;
+        other.m_Alignment = 0;
+        other.m_Provided = false;
     }
     return *this;
 }
 
-void *StackAllocator::Allocate(const usize p_Size)
+void *StackAllocator::Allocate(const usize size)
 {
-    TKIT_ASSERT(p_Size != 0, "[TOOLKIT][STACK-ALLOC] Cannot allocate 0 bytes");
-    const usize size = Memory::NextAlignedSize(p_Size, m_Alignment);
-    if (m_Top + size > m_Capacity)
+    TKIT_ASSERT(size != 0, "[TOOLKIT][STACK-ALLOC] Cannot allocate 0 bytes");
+    const usize asize = Memory::NextAlignedSize(size, m_Alignment);
+    if (m_Top + asize > m_Capacity)
     {
         TKIT_LOG_WARNING(
             "[TOOLKIT][STACK-ALLOC] Allocator ran out of memory while trying to allocate {} bytes (only {} remaining)",
-            size, m_Capacity - m_Top);
+            asize, m_Capacity - m_Top);
         return nullptr;
     }
 
     std::byte *ptr = m_Buffer + m_Top;
-    m_Top += size;
+    m_Top += asize;
     TKIT_ASSERT(Memory::IsAligned(ptr, m_Alignment),
                 "[TOOLKIT][STACK-ALLOC] Allocated memory is not aligned to specified alignment");
     return ptr;
 }
 
-void StackAllocator::Deallocate([[maybe_unused]] const void *p_Ptr, const usize p_Size)
+void StackAllocator::Deallocate([[maybe_unused]] const void *ptr, const usize size)
 {
-    TKIT_ASSERT(p_Ptr, "[TOOLKIT][STACK-ALLOC] Cannot deallocate a null pointer");
+    TKIT_ASSERT(ptr, "[TOOLKIT][STACK-ALLOC] Cannot deallocate a null pointer");
     TKIT_ASSERT(m_Top != 0, "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is empty");
-    m_Top -= Memory::NextAlignedSize(p_Size, m_Alignment);
-    TKIT_ASSERT(m_Buffer + m_Top == p_Ptr,
+    m_Top -= Memory::NextAlignedSize(size, m_Alignment);
+    TKIT_ASSERT(m_Buffer + m_Top == ptr,
                 "[TOOLKIT][STACK-ALLOC] Elements must be deallocated in the reverse order they were allocated");
 }
 

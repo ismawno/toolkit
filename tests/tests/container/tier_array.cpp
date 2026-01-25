@@ -21,15 +21,15 @@ struct TTrackable
     {
         ++g_Constructions;
     }
-    TTrackable(const u32 p_Value) : Value(p_Value)
+    TTrackable(const u32 value) : Value(value)
     {
         ++g_Constructions;
     }
-    TTrackable(const TTrackable &p_Other) : Value(p_Other.Value)
+    TTrackable(const TTrackable &other) : Value(other.Value)
     {
         ++g_Constructions;
     }
-    TTrackable(TTrackable &&p_Other) : Value(p_Other.Value)
+    TTrackable(TTrackable &&other) : Value(other.Value)
     {
         ++g_Constructions;
     }
@@ -37,14 +37,14 @@ struct TTrackable
     {
         ++g_Destructions;
     }
-    TTrackable &operator=(const TTrackable &p_Other)
+    TTrackable &operator=(const TTrackable &other)
     {
-        Value = p_Other.Value;
+        Value = other.Value;
         return *this;
     }
-    TTrackable &operator=(TTrackable &&p_Other)
+    TTrackable &operator=(TTrackable &&other)
     {
-        Value = p_Other.Value;
+        Value = other.Value;
         return *this;
     }
 };

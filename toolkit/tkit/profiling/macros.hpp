@@ -18,78 +18,78 @@ using ProfilingPlotFormat = tracy::PlotFormatType;
 } // namespace TKit
 
 #    define TKIT_PROFILE_MARK_FRAME() FrameMark
-#    define TKIT_PROFILE_MARK_FRAME_START(p_Name) FrameMarkStart(p_Name)
-#    define TKIT_PROFILE_MARK_FRAME_END(p_Name) FrameMarkEnd(p_Name)
-#    define TKIT_PROFILE_NMARK_FRAME(p_Name) FrameMarkNamed(p_Name)
+#    define TKIT_PROFILE_MARK_FRAME_START(name) FrameMarkStart(name)
+#    define TKIT_PROFILE_MARK_FRAME_END(name) FrameMarkEnd(name)
+#    define TKIT_PROFILE_NMARK_FRAME(name) FrameMarkNamed(name)
 
-#    define TKIT_PROFILE_SCOPE_IF(p_Enabled) ZoneNamed(__tkit_perf_scope##__LINE__, p_Enabled)
-#    define TKIT_PROFILE_NSCOPE_IF(p_Enabled, p_Name) ZoneNamedN(__tkit_perf_scope##__LINE__, p_Name, p_Enabled)
-#    define TKIT_PROFILE_CSCOPE_IF(p_Enabled, p_Color) ZoneNamedC(__tkit_perf_scope##__LINE__, p_Color, p_Enabled)
-#    define TKIT_PROFILE_NCSCOPE_IF(p_Enabled, p_Name, p_Color)                                                        \
-        ZoneNamedNC(__tkit_perf_scope##__LINE__, p_Name, p_Color, p_Enabled)
+#    define TKIT_PROFILE_SCOPE_IF(enabled) ZoneNamed(__tkit_perf_scope##__LINE__, enabled)
+#    define TKIT_PROFILE_NSCOPE_IF(enabled, name) ZoneNamedN(__tkit_perf_scope##__LINE__, name, enabled)
+#    define TKIT_PROFILE_CSCOPE_IF(enabled, color) ZoneNamedC(__tkit_perf_scope##__LINE__, color, enabled)
+#    define TKIT_PROFILE_NCSCOPE_IF(enabled, name, color)                                                        \
+        ZoneNamedNC(__tkit_perf_scope##__LINE__, name, color, enabled)
 
 #    define TKIT_PROFILE_SCOPE() ZoneNamed(__tkit_perf_scope##__LINE__, true)
-#    define TKIT_PROFILE_NSCOPE(p_Name) ZoneNamedN(__tkit_perf_scope##__LINE__, p_Name, true)
-#    define TKIT_PROFILE_CSCOPE(p_Color) ZoneNamedC(__tkit_perf_scope##__LINE__, p_Color, true)
-#    define TKIT_PROFILE_NCSCOPE(p_Name, p_Color) ZoneNamedNC(__tkit_perf_scope##__LINE__, p_Name, p_Color, true)
+#    define TKIT_PROFILE_NSCOPE(name) ZoneNamedN(__tkit_perf_scope##__LINE__, name, true)
+#    define TKIT_PROFILE_CSCOPE(color) ZoneNamedC(__tkit_perf_scope##__LINE__, color, true)
+#    define TKIT_PROFILE_NCSCOPE(name, color) ZoneNamedNC(__tkit_perf_scope##__LINE__, name, color, true)
 
-#    define TKIT_PROFILE_SCOPE_TEXT(p_Text, p_Size) ZoneTextV(__tkit_perf_scope##__LINE__, p_Text, p_Size)
-#    define TKIT_PROFILE_SCOPE_NAME(p_Name, p_Size) ZoneNameV(__tkit_perf_scope##__LINE__, p_Name, p_Size)
-#    define TKIT_PROFILE_SCOPE_COLOR(p_Color) ZoneColorV(__tkit_perf_scope##__LINE__, p_Color)
+#    define TKIT_PROFILE_SCOPE_TEXT(text, size) ZoneTextV(__tkit_perf_scope##__LINE__, text, size)
+#    define TKIT_PROFILE_SCOPE_NAME(name, size) ZoneNameV(__tkit_perf_scope##__LINE__, name, size)
+#    define TKIT_PROFILE_SCOPE_COLOR(color) ZoneColorV(__tkit_perf_scope##__LINE__, color)
 
-#    define TKIT_PROFILE_MESSAGE(p_Message) TracyMessageL(p_Message)
-#    define TKIT_PROFILE_NMESSAGE(p_Message, p_Size) TracyMessage(p_Message, p_Size)
+#    define TKIT_PROFILE_MESSAGE(message) TracyMessageL(message)
+#    define TKIT_PROFILE_NMESSAGE(message, size) TracyMessage(message, size)
 
-#    define TKIT_PROFILE_DECLARE_MUTEX(p_Type, p_MutexName) TracyLockable(p_Type, p_MutexName)
-#    define TKIT_PROFILE_DECLARE_SHARED_MUTEX(p_Type, p_MutexName) TracySharedLockable(p_Type, p_MutexName)
-#    define TKIT_PROFILE_MARK_LOCK(p_Lock) LockMark(p_Lock)
+#    define TKIT_PROFILE_DECLARE_MUTEX(type, mutexName) TracyLockable(type, mutexName)
+#    define TKIT_PROFILE_DECLARE_SHARED_MUTEX(type, mutexName) TracySharedLockable(type, mutexName)
+#    define TKIT_PROFILE_MARK_LOCK(lock) LockMark(lock)
 
-#    define TKIT_PROFILE_MARK_ALLOCATION(p_Ptr, p_Size) TracyAlloc(p_Ptr, p_Size)
-#    define TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr) TracyFree(p_Ptr)
+#    define TKIT_PROFILE_MARK_ALLOCATION(ptr, size) TracyAlloc(ptr, size)
+#    define TKIT_PROFILE_MARK_DEALLOCATION(ptr) TracyFree(ptr)
 
-#    define TKIT_PROFILE_MARK_POOLED_ALLOCATION(p_Name, p_Ptr, p_Size) TracyAllocN(p_Ptr, p_Size, p_Name)
-#    define TKIT_PROFILE_MARK_POOLED_DEALLOCATION(p_Name, p_Ptr) TracyFreeN(p_Ptr, p_Name)
+#    define TKIT_PROFILE_MARK_POOLED_ALLOCATION(name, ptr, size) TracyAllocN(ptr, size, name)
+#    define TKIT_PROFILE_MARK_POOLED_DEALLOCATION(name, ptr) TracyFreeN(ptr, name)
 
-#    define TKIT_PROFILE_PLOT(p_Name, p_Value) TracyPlot(p_Name, p_Value)
-#    define TKIT_PROFILE_PLOT_CONFIG(p_Name, p_Format, p_Step, p_Fill, p_Color)                                        \
-        TracyPlotConfig(p_Name, p_Format, p_Step, p_Fill, p_Color)
+#    define TKIT_PROFILE_PLOT(name, value) TracyPlot(name, value)
+#    define TKIT_PROFILE_PLOT_CONFIG(name, format, step, fill, color)                                        \
+        TracyPlotConfig(name, format, step, fill, color)
 
 #else
 
 #    define TKIT_PROFILE_MARK_FRAME()
-#    define TKIT_PROFILE_MARK_FRAME_START(p_Name)
-#    define TKIT_PROFILE_MARK_FRAME_END(p_Name)
-#    define TKIT_PROFILE_NMARK_FRAME(p_Name)
+#    define TKIT_PROFILE_MARK_FRAME_START(name)
+#    define TKIT_PROFILE_MARK_FRAME_END(name)
+#    define TKIT_PROFILE_NMARK_FRAME(name)
 
-#    define TKIT_PROFILE_SCOPE_IF(p_Enabled)
-#    define TKIT_PROFILE_NSCOPE_IF(p_Enabled, p_Name)
-#    define TKIT_PROFILE_CSCOPE_IF(p_Enabled, p_Color)
-#    define TKIT_PROFILE_NCSCOPE_IF(p_Enabled, p_Name, p_Color)
+#    define TKIT_PROFILE_SCOPE_IF(enabled)
+#    define TKIT_PROFILE_NSCOPE_IF(enabled, name)
+#    define TKIT_PROFILE_CSCOPE_IF(enabled, color)
+#    define TKIT_PROFILE_NCSCOPE_IF(enabled, name, color)
 
 #    define TKIT_PROFILE_SCOPE()
-#    define TKIT_PROFILE_NSCOPE(p_Name)
-#    define TKIT_PROFILE_CSCOPE(p_Color)
-#    define TKIT_PROFILE_NCSCOPE(p_Name, p_Color)
+#    define TKIT_PROFILE_NSCOPE(name)
+#    define TKIT_PROFILE_CSCOPE(color)
+#    define TKIT_PROFILE_NCSCOPE(name, color)
 
-#    define TKIT_PROFILE_SCOPE_TEXT(p_Text, p_Size)
-#    define TKIT_PROFILE_SCOPE_NAME(p_Name, p_Size)
-#    define TKIT_PROFILE_SCOPE_COLOR(p_Color)
+#    define TKIT_PROFILE_SCOPE_TEXT(text, size)
+#    define TKIT_PROFILE_SCOPE_NAME(name, size)
+#    define TKIT_PROFILE_SCOPE_COLOR(color)
 
-#    define TKIT_PROFILE_MESSAGE(p_Message)
-#    define TKIT_PROFILE_NMESSAGE(p_Message, p_Size)
+#    define TKIT_PROFILE_MESSAGE(message)
+#    define TKIT_PROFILE_NMESSAGE(message, size)
 
-#    define TKIT_PROFILE_DECLARE_MUTEX(p_Type, p_MutexName) p_Type p_MutexName
-#    define TKIT_PROFILE_DECLARE_SHARED_MUTEX(p_Type, p_MutexName) p_Type p_MutexName
+#    define TKIT_PROFILE_DECLARE_MUTEX(type, mutexName) type mutexName
+#    define TKIT_PROFILE_DECLARE_SHARED_MUTEX(type, mutexName) type mutexName
 
-#    define TKIT_PROFILE_MARK_LOCK(p_Lock)
+#    define TKIT_PROFILE_MARK_LOCK(lock)
 
-#    define TKIT_PROFILE_MARK_ALLOCATION(p_Ptr, p_Size)
-#    define TKIT_PROFILE_MARK_DEALLOCATION(p_Ptr)
+#    define TKIT_PROFILE_MARK_ALLOCATION(ptr, size)
+#    define TKIT_PROFILE_MARK_DEALLOCATION(ptr)
 
-#    define TKIT_PROFILE_MARK_POOLED_ALLOCATION(p_Name, p_Ptr, p_Size)
-#    define TKIT_PROFILE_MARK_POOLED_DEALLOCATION(p_Name, p_Ptr)
+#    define TKIT_PROFILE_MARK_POOLED_ALLOCATION(name, ptr, size)
+#    define TKIT_PROFILE_MARK_POOLED_DEALLOCATION(name, ptr)
 
-#    define TKIT_PROFILE_PLOT(p_Name, p_Value)
-#    define TKIT_PROFILE_PLOT_CONFIG(p_Name, p_Format, p_Step, p_Fill, p_Color)
+#    define TKIT_PROFILE_PLOT(name, value)
+#    define TKIT_PROFILE_PLOT_CONFIG(name, format, step, fill, color)
 
 #endif

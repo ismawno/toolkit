@@ -37,12 +37,12 @@ class ITask
     /**
      * @brief Check if the task has finished executing.
      *
-     * @param p_Order The memory order of the operation.
+     * @param order The memory order of the operation.
      *
      */
-    bool IsFinished(const std::memory_order p_Order = std::memory_order_relaxed) const
+    bool IsFinished(const std::memory_order order = std::memory_order_relaxed) const
     {
-        return m_Finished.test(p_Order);
+        return m_Finished.test(order);
     }
 
     /**
@@ -75,12 +75,12 @@ class ITask
   protected:
     template <typename Callable, typename... Args>
         requires std::invocable<Callable, Args...>
-    static constexpr auto bind(Callable &&p_Callable, Args &&...p_Args)
+    static constexpr auto bind(Callable &&callable, Args &&...args)
     {
         if constexpr (sizeof...(Args) == 0)
-            return p_Callable;
+            return callable;
         else
-            return std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
+            return std::bind_front(std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
   private:
@@ -105,24 +105,24 @@ template <typename T = void> class Task final : public ITask
 
     template <typename Callable, typename... Args>
         requires(std::invocable<Callable, Args...> && !std::is_same_v<std::remove_cvref_t<Callable>, Task>)
-    constexpr explicit Task(Callable &&p_Callable, Args &&...p_Args)
-        : m_Function(bind(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
+    constexpr explicit Task(Callable &&callable, Args &&...args)
+        : m_Function(bind(std::forward<Callable>(callable), std::forward<Args>(args)...))
     {
     }
 
     template <typename Callable>
         requires(!std::is_same_v<std::remove_cvref_t<Callable>, Task>)
-    constexpr Task &operator=(Callable &&p_Callable)
+    constexpr Task &operator=(Callable &&callable)
     {
-        m_Function = std::forward<Callable>(p_Callable);
+        m_Function = std::forward<Callable>(callable);
         return *this;
     }
 
     template <typename Callable, typename... Args>
         requires std::invocable<Callable, Args...>
-    constexpr void Set(Callable &&p_Callable, Args &&...p_Args)
+    constexpr void Set(Callable &&callable, Args &&...args)
     {
-        m_Function = std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
+        m_Function = std::bind_front(std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
     void operator()() override
@@ -182,24 +182,24 @@ template <> class Task<void> final : public ITask
 
     template <typename Callable, typename... Args>
         requires(std::invocable<Callable, Args...> && !std::is_same_v<std::remove_cvref_t<Callable>, Task>)
-    constexpr explicit Task(Callable &&p_Callable, Args &&...p_Args)
-        : m_Function(bind(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...))
+    constexpr explicit Task(Callable &&callable, Args &&...args)
+        : m_Function(bind(std::forward<Callable>(callable), std::forward<Args>(args)...))
     {
     }
 
     template <typename Callable>
         requires(!std::is_same_v<std::remove_cvref_t<Callable>, Task>)
-    constexpr Task &operator=(Callable &&p_Callable)
+    constexpr Task &operator=(Callable &&callable)
     {
-        m_Function = std::forward<Callable>(p_Callable);
+        m_Function = std::forward<Callable>(callable);
         return *this;
     }
 
     template <typename Callable, typename... Args>
         requires std::invocable<Callable, Args...>
-    constexpr void Set(Callable &&p_Callable, Args &&...p_Args)
+    constexpr void Set(Callable &&callable, Args &&...args)
     {
-        m_Function = std::bind_front(std::forward<Callable>(p_Callable), std::forward<Args>(p_Args)...);
+        m_Function = std::bind_front(std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
     void operator()() override;
