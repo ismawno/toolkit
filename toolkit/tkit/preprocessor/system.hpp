@@ -83,9 +83,9 @@
 #    define TKIT_PRAGMA(x) __pragma(x)
 #    define TKIT_COMPILER_WARNING_IGNORE_PUSH() TKIT_PRAGMA(warning(push))
 #    define TKIT_COMPILER_WARNING_IGNORE_POP() TKIT_PRAGMA(warning(pop))
-#    define TKIT_MSVC_WARNING_IGNORE(warning) TKIT_PRAGMA(warning(disable : warning))
+#    define TKIT_MSVC_WARNING_IGNORE(w) TKIT_PRAGMA(warning(disable : w))
 #else
-#    define TKIT_MSVC_WARNING_IGNORE(warning)
+#    define TKIT_MSVC_WARNING_IGNORE(w)
 #endif
 
 #ifdef TKIT_COMPILER_MSVC
