@@ -209,7 +209,7 @@ struct Tensor
     {
         Tensor tensor;
         for (usize i = 0; i < Size; ++i)
-            ptensor.Flat[i] = -ptensor.Flat[i];
+            tensor.Flat[i] = -ptensor.Flat[i];
         return tensor;
     }
 
