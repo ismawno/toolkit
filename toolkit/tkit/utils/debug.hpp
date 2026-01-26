@@ -1,5 +1,6 @@
 #pragma once
 
+#include "tkit/preprocessor/system.hpp"
 #include "tkit/utils/logging.hpp"
 
 #ifdef TKIT_COMPILER_CLANG
@@ -12,6 +13,8 @@
 #    define TKIT_DEBUG_BREAK() raise(SIGTRAP)
 #elif defined(SIGABRT)
 #    define TKIT_DEBUG_BREAK() raise(SIGABRT)
+#else
+#    error "[TOOLKIT][DEBUG] Unable to find a good definition for TKIT_DEBUG_BREAK()"
 #endif
 
 #define TKIT_DEBUG_BREAK_IF(condition)                                                                                 \

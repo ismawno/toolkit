@@ -1,6 +1,5 @@
 #pragma once
 
-#include "tkit/preprocessor/system.hpp"
 #include "tkit/utils/alias.hpp"
 #include <string_view>
 #include <fmt/format.h>
