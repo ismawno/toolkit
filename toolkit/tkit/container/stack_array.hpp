@@ -58,6 +58,7 @@ template <typename T> struct StackAllocation
             Allocator = Memory::GetStack();
         TKIT_ASSERT(Allocator, "[TOOLKIT][STACK-ARRAY] Array must have a valid allocator to allocate memory");
         Data = Allocator->Allocate<T>(capacity);
+        TKIT_ASSERT(Data, "[TOOLKIT][STACK-ARRAY] Failed to allocate {} bytes of memory", capacity * sizeof(T));
         Capacity = capacity;
     }
 

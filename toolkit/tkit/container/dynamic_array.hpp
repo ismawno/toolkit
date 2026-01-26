@@ -49,6 +49,8 @@ template <typename T> struct DynamicAllocation
                     Capacity);
 
         Data = static_cast<T *>(Memory::AllocateAligned(capacity * sizeof(T), alignof(T)));
+        TKIT_ASSERT(Data, "[TOOLKIT][DYN-ARRAY] Failed to allocate {} bytes of memory aligned to {} bytes",
+                    capacity * sizeof(T), alignof(T));
         Capacity = capacity;
     }
 
