@@ -29,7 +29,7 @@
           pkg-config
           hwloc
           perf
-          gnumake
+          ninja
           python313
         ];
         shellHook = ''
