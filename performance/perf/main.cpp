@@ -8,9 +8,9 @@ using namespace TKit::Alias;
 
 int main(int argc, char **argv)
 {
-    const TKit::Perf::Settings settings = TKit::Perf::CreateSettings(argc, argv);
+    const TKit::Settings settings = TKit::CreateSettings(argc, argv);
 #ifdef TKIT_ENABLE_INFO_LOGS
-    TKit::Perf::LogSettings(settings);
+    TKit::LogSettings(settings);
 #endif
 
     TKit::Clock clock;

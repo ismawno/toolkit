@@ -4,7 +4,7 @@
 #include <argparse/argparse.hpp>
 #include <filesystem>
 
-namespace TKit::Perf
+namespace TKit
 {
 static std::string cliName(std::string name)
 {
@@ -96,4 +96,4 @@ Settings CreateSettings(int argc, char **argv)
 
     return settings;
 }
-} // namespace TKit::Perf
+} // namespace TKit

@@ -2,9 +2,9 @@
 
 #include "perf/settings.hpp"
 
-namespace TKit::Perf
+namespace TKit
 {
 void RecordVector(const ContainerSettings &settings);
 void RecordStaticArray(const ContainerSettings &settings);
 void RecordDynamicArray(const ContainerSettings &settings);
-} // namespace TKit::Perf
+} // namespace TKit

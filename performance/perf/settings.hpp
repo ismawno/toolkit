@@ -5,7 +5,7 @@
 #include "tkit/reflection/reflect.hpp"
 #include <string>
 
-namespace TKit::Perf
+namespace TKit
 {
 inline std::string g_Root = TKIT_ROOT_PATH;
 
@@ -41,4 +41,4 @@ struct Settings
 void LogSettings(const Settings &settings);
 #endif
 Settings CreateSettings(int argc, char **argv);
-} // namespace TKit::Perf
+} // namespace TKit

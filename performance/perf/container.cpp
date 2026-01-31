@@ -5,7 +5,7 @@
 #include <deque>
 #include <fstream>
 
-namespace TKit::Perf
+namespace TKit
 {
 struct Example
 {
@@ -182,4 +182,4 @@ void RecordDeque(const ContainerSettings &settings)
     }
 }
 
-} // namespace TKit::Perf
+} // namespace TKit

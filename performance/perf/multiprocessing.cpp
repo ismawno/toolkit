@@ -7,7 +7,7 @@
 #include "tkit/utils/literals.hpp"
 #include <fstream>
 
-namespace TKit::Perf
+namespace TKit
 {
 static ArenaAllocator s_Alloc{1_kib};
 struct Number
@@ -92,4 +92,4 @@ void RecordParallelSum(const ThreadPoolSettings &settings)
         nthreads *= 2;
     }
 }
-} // namespace TKit::Perf
+} // namespace TKit

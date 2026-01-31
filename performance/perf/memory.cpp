@@ -6,7 +6,7 @@
 #include "tkit/container/dynamic_array.hpp"
 #include <fstream>
 
-namespace TKit::Perf
+namespace TKit
 {
 struct ExampleData
 {
@@ -104,4 +104,4 @@ void RecordArenaAllocator(const AllocationSettings &settings)
         file << passes << ',' << allocTime.AsNanoseconds() << '\n';
     }
 }
-} // namespace TKit::Perf
+} // namespace TKit
