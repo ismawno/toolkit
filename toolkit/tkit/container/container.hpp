@@ -19,18 +19,18 @@ template <typename T> struct ArrayTools
     {
         using U = decltype(*srcBegin);
         if constexpr (std::is_trivially_copyable_v<T> && std::is_same_v<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
-            Memory::ForwardCopy(dstBegin, srcBegin, srcEnd);
+            ForwardCopy(dstBegin, srcBegin, srcEnd);
         else
-            Memory::ConstructRangeCopy(dstBegin, srcBegin, srcEnd);
+            ConstructRangeCopy(dstBegin, srcBegin, srcEnd);
     }
     template <typename It> static constexpr void MoveConstructFromRange(T *dstBegin, const It srcBegin, const It srcEnd)
     {
         using U = decltype(*srcBegin);
         if constexpr (std::is_trivially_copyable_v<T> && std::is_trivially_move_constructible_v<T> &&
                       std::is_same_v<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
-            Memory::ForwardMove(dstBegin, srcBegin, srcEnd);
+            ForwardMove(dstBegin, srcBegin, srcEnd);
         else
-            Memory::ConstructRangeMove(dstBegin, srcBegin, srcEnd);
+            ConstructRangeMove(dstBegin, srcBegin, srcEnd);
     }
 
     template <typename It>
@@ -42,22 +42,22 @@ template <typename T> struct ArrayTools
         using U = decltype(*srcBegin);
         if constexpr (std::is_trivially_copyable_v<T> && std::is_same_v<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
         {
-            Memory::ForwardCopy(dstBegin, srcBegin, srcEnd);
+            ForwardCopy(dstBegin, srcBegin, srcEnd);
             if constexpr (!std::is_trivially_destructible_v<T>)
             {
                 if (srcSize < dstSize)
-                    Memory::DestructRange(dstBegin + srcSize, dstEnd);
+                    DestructRange(dstBegin + srcSize, dstEnd);
             }
         }
         else
         {
             const usize minSize = dstSize < srcSize ? dstSize : srcSize;
-            Memory::ForwardCopy(dstBegin, srcBegin, srcBegin + minSize);
+            ForwardCopy(dstBegin, srcBegin, srcBegin + minSize);
 
             if (srcSize > dstSize)
-                Memory::ConstructRangeCopy(dstEnd, srcBegin + dstSize, srcEnd);
+                ConstructRangeCopy(dstEnd, srcBegin + dstSize, srcEnd);
             else if (srcSize < dstSize)
-                Memory::DestructRange(dstBegin + srcSize, dstEnd);
+                DestructRange(dstBegin + srcSize, dstEnd);
         }
     }
     template <typename It>
@@ -67,22 +67,22 @@ template <typename T> struct ArrayTools
         const usize srcSize = static_cast<usize>(std::distance(srcBegin, srcEnd));
         if constexpr (std::is_trivially_copyable_v<T>)
         {
-            Memory::ForwardMove(dstBegin, srcBegin, srcEnd);
+            ForwardMove(dstBegin, srcBegin, srcEnd);
             if constexpr (!std::is_trivially_destructible_v<T>)
             {
                 if (srcSize < dstSize)
-                    Memory::DestructRange(dstBegin + srcSize, dstEnd);
+                    DestructRange(dstBegin + srcSize, dstEnd);
             }
         }
         else
         {
             const usize minSize = dstSize < srcSize ? dstSize : srcSize;
-            Memory::ForwardMove(dstBegin, srcBegin, srcBegin + minSize);
+            ForwardMove(dstBegin, srcBegin, srcBegin + minSize);
 
             if (srcSize > dstSize)
-                Memory::ConstructRangeMove(dstEnd, srcBegin + dstSize, srcEnd);
+                ConstructRangeMove(dstEnd, srcBegin + dstSize, srcEnd);
             else if (srcSize < dstSize)
-                Memory::DestructRange(dstBegin + srcSize, dstEnd);
+                DestructRange(dstBegin + srcSize, dstEnd);
         }
     }
 
@@ -90,19 +90,19 @@ template <typename T> struct ArrayTools
     {
         if (pos == end) [[unlikely]]
         {
-            Memory::ConstructFromIterator(pos, std::forward<U>(value));
+            ConstructFromIterator(pos, std::forward<U>(value));
             return;
         }
 
         if constexpr (!std::is_trivially_constructible_v<T>)
         { // Current end pointer is uninitialized, so it must be handled manually
-            Memory::ConstructFromIterator(end, std::move(*(end - 1)));
+            ConstructFromIterator(end, std::move(*(end - 1)));
 
             if (T *shiftedEnd = end - 1; pos < shiftedEnd)
-                Memory::BackwardMove(end, pos, shiftedEnd);
+                BackwardMove(end, pos, shiftedEnd);
         }
         else
-            Memory::BackwardMove(end + 1, pos, end);
+            BackwardMove(end + 1, pos, end);
 
         *pos = std::forward<U>(value);
     }
@@ -127,9 +127,9 @@ template <typename T> struct ArrayTools
             T *inBetweenSrcBegin = pos;
             T *inBetweenSrcEnd = pos + (tail - count);
             T *inBetweenDstEnd = end;
-            Memory::BackwardMove(inBetweenDstEnd, inBetweenSrcBegin, inBetweenSrcEnd);
+            BackwardMove(inBetweenDstEnd, inBetweenSrcBegin, inBetweenSrcEnd);
 
-            Memory::ForwardCopy(pos, srcBegin, srcEnd);
+            ForwardCopy(pos, srcBegin, srcEnd);
         }
         else if (tail < count)
         {
@@ -143,7 +143,7 @@ template <typename T> struct ArrayTools
             T *inBetweenDstEnd = end;
             CopyConstructFromRange(inBetweenDstEnd, inBetweenSrcBegin, inBetweenSrcEnd);
 
-            Memory::ForwardCopy(pos, srcBegin, srcBegin + tail);
+            ForwardCopy(pos, srcBegin, srcBegin + tail);
         }
         else
         {
@@ -152,7 +152,7 @@ template <typename T> struct ArrayTools
             T *overflowDstBegin = end;
             MoveConstructFromRange(overflowDstBegin, overflowSrcBegin, overflowSrcEnd);
 
-            Memory::ForwardCopy(pos, srcBegin, srcEnd);
+            ForwardCopy(pos, srcBegin, srcEnd);
         }
         return count;
     }
@@ -165,22 +165,22 @@ template <typename T> struct ArrayTools
     static constexpr void RemoveOrdered(T *end, T *pos)
     {
         // Copy/move the elements after the erased one
-        Memory::ForwardMove(pos, pos + 1, end);
+        ForwardMove(pos, pos + 1, end);
         // And destroy the last element
         if constexpr (!std::is_trivially_destructible_v<T>)
-            Memory::DestructFromIterator(end - 1);
+            DestructFromIterator(end - 1);
     }
 
     static constexpr usize RemoveOrdered(T *end, T *remBegin, T *remEnd)
     {
         TKIT_ASSERT(remBegin <= remEnd, "[TOOLKIT][CONTAINER] Begin iterator is greater than end iterator");
         // Copy/move the elements after the erased ones
-        Memory::ForwardMove(remBegin, remEnd, end);
+        ForwardMove(remBegin, remEnd, end);
 
         const usize count = static_cast<usize>(std::distance(remBegin, remEnd));
         // And destroy the last elements
         if constexpr (!std::is_trivially_destructible_v<T>)
-            Memory::DestructRange(end - count, end);
+            DestructRange(end - count, end);
         return count;
     }
 
@@ -189,7 +189,7 @@ template <typename T> struct ArrayTools
         T *last = end - 1;
         *pos = std::move(*last);
         if constexpr (!std::is_trivially_destructible_v<T>)
-            Memory::DestructFromIterator(last);
+            DestructFromIterator(last);
     }
 };
 

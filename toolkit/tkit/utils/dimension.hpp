@@ -17,4 +17,12 @@ enum Dimension : u8
     D2 = 2,
     D3 = 3
 };
+
+template <typename T, T Value>
+
+inline int main()
+{
+    return 0;
+}
+
 } // namespace TKit

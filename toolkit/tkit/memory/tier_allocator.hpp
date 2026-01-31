@@ -113,7 +113,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     template <typename T> T *Allocate(const usize count = 1)
     {
         T *ptr = static_cast<T *>(Allocate(count * sizeof(T)));
-        TKIT_ASSERT(!ptr || Memory::IsAligned(ptr, alignof(T)),
+        TKIT_ASSERT(!ptr || IsAligned(ptr, alignof(T)),
                     "[TOOLKIT][TIER-ALLOC] Type T has stronger memory alignment requirements than specified. Bump the "
                     "alignment of the allocator or prevent using it to allocate objects of such type");
         return ptr;
@@ -131,7 +131,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
         T *ptr = Allocate<T>();
         if (!ptr)
             return nullptr;
-        return Memory::Construct(ptr, std::forward<Args>(args)...);
+        return Construct(ptr, std::forward<Args>(args)...);
     }
 
     template <typename T, typename... Args> T *NCreate(const usize count, Args &&...args)
@@ -139,7 +139,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
         T *ptr = Allocate<T>(count);
         if (!ptr)
             return nullptr;
-        Memory::ConstructRange(ptr, ptr + count, std::forward<Args>(args)...);
+        ConstructRange(ptr, ptr + count, std::forward<Args>(args)...);
         return ptr;
     }
 

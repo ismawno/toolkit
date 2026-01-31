@@ -30,7 +30,7 @@ template <typename T> class ChaseLevDeque
     constexpr ChaseLevDeque(ArenaAllocator *allocator, const usize capacity)
         : m_Data(capacity, allocator, capacity), m_Mask(capacity - 1)
     {
-        TKIT_ASSERT(Bit::IsPowerOfTwo(capacity), "[TOOLKIT][CHASE-LEV] Chase Lev Deque capacity must be a power of 2");
+        TKIT_ASSERT(IsPowerOfTwo(capacity), "[TOOLKIT][CHASE-LEV] Chase Lev Deque capacity must be a power of 2");
     }
 
     /**

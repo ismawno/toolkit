@@ -68,7 +68,7 @@ bool ThreadPool::trySteal(const usize victim)
 }
 
 ThreadPool::ThreadPool(const usize workerCount, const usize maxTasksPerQueue)
-    : ThreadPool(TKit::Memory::GetArena(), workerCount, maxTasksPerQueue)
+    : ThreadPool(TKit::GetArena(), workerCount, maxTasksPerQueue)
 {
 }
 

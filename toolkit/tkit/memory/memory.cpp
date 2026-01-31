@@ -11,7 +11,7 @@
 #endif
 #include <cstring>
 
-namespace TKit::Memory
+namespace TKit
 {
 static thread_local FixedArray<ArenaAllocator *, MaxAllocatorPushDepth> s_Arenas{};
 static thread_local FixedArray<StackAllocator *, MaxAllocatorPushDepth> s_Stacks{};
@@ -106,82 +106,82 @@ void *BackwardCopy(void *dst, const void *src, size_t size)
     return std::memmove(dst, src, size);
 }
 
-} // namespace TKit::Memory
+} // namespace TKit
 
 #if !defined(TKIT_DISABLE_MEMORY_OVERRIDES) && !defined(TKIT_ENABLE_MIMALLOC)
 void *operator new(const size_t size)
 {
-    return TKit::Memory::Allocate(size);
+    return TKit::Allocate(size);
 }
 void *operator new[](const size_t size)
 {
-    return TKit::Memory::Allocate(size);
+    return TKit::Allocate(size);
 }
 void *operator new(const size_t size, const std::align_val_t alignment)
 {
-    return TKit::Memory::AllocateAligned(size, static_cast<size_t>(alignment));
+    return TKit::AllocateAligned(size, static_cast<size_t>(alignment));
 }
 void *operator new[](const size_t size, const std::align_val_t alignment)
 {
-    return TKit::Memory::AllocateAligned(size, static_cast<size_t>(alignment));
+    return TKit::AllocateAligned(size, static_cast<size_t>(alignment));
 }
 void *operator new(const size_t size, const std::nothrow_t &) noexcept
 {
-    return TKit::Memory::Allocate(size);
+    return TKit::Allocate(size);
 }
 void *operator new[](const size_t size, const std::nothrow_t &) noexcept
 {
-    return TKit::Memory::Allocate(size);
+    return TKit::Allocate(size);
 }
 
 void operator delete(void *ptr) noexcept
 {
-    TKit::Memory::Deallocate(ptr);
+    TKit::Deallocate(ptr);
 }
 void operator delete[](void *ptr) noexcept
 {
-    TKit::Memory::Deallocate(ptr);
+    TKit::Deallocate(ptr);
 }
 void operator delete(void *ptr, std::align_val_t) noexcept
 {
-    TKit::Memory::DeallocateAligned(ptr);
+    TKit::DeallocateAligned(ptr);
 }
 void operator delete[](void *ptr, std::align_val_t) noexcept
 {
-    TKit::Memory::DeallocateAligned(ptr);
+    TKit::DeallocateAligned(ptr);
 }
 void operator delete(void *ptr, const std::nothrow_t &) noexcept
 {
-    TKit::Memory::Deallocate(ptr);
+    TKit::Deallocate(ptr);
 }
 void operator delete[](void *ptr, const std::nothrow_t &) noexcept
 {
-    TKit::Memory::Deallocate(ptr);
+    TKit::Deallocate(ptr);
 }
 
 void operator delete(void *ptr, size_t) noexcept
 {
-    TKit::Memory::Deallocate(ptr);
+    TKit::Deallocate(ptr);
 }
 void operator delete[](void *ptr, size_t) noexcept
 {
-    TKit::Memory::Deallocate(ptr);
+    TKit::Deallocate(ptr);
 }
 void operator delete(void *ptr, size_t, std::align_val_t) noexcept
 {
-    TKit::Memory::DeallocateAligned(ptr);
+    TKit::DeallocateAligned(ptr);
 }
 void operator delete[](void *ptr, size_t, std::align_val_t) noexcept
 {
-    TKit::Memory::DeallocateAligned(ptr);
+    TKit::DeallocateAligned(ptr);
 }
 void operator delete(void *ptr, size_t, const std::nothrow_t &) noexcept
 {
-    TKit::Memory::Deallocate(ptr);
+    TKit::Deallocate(ptr);
 }
 void operator delete[](void *ptr, size_t, const std::nothrow_t &) noexcept
 {
-    TKit::Memory::Deallocate(ptr);
+    TKit::Deallocate(ptr);
 }
 
 #endif

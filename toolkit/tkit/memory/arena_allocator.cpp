@@ -8,17 +8,17 @@ namespace TKit
 ArenaAllocator::ArenaAllocator(void *buffer, const usize capacity, const usize alignment)
     : m_Buffer(static_cast<std::byte *>(buffer)), m_Capacity(capacity), m_Alignment(alignment), m_Provided(true)
 {
-    TKIT_ASSERT(Bit::IsPowerOfTwo(alignment),
+    TKIT_ASSERT(IsPowerOfTwo(alignment),
                 "[TOOLKIT][ARENA-ALLOC] Alignment must be a power of 2, but the value is {}", alignment);
-    TKIT_ASSERT(Memory::IsAligned(buffer, alignment),
+    TKIT_ASSERT(IsAligned(buffer, alignment),
                 "[TOOLKIT][ARENA-ALLOC] Provided buffer must be aligned to the given alignment of {}", alignment);
 }
 ArenaAllocator::ArenaAllocator(const usize capacity, const usize alignment)
     : m_Capacity(capacity), m_Alignment(alignment), m_Provided(false)
 {
-    TKIT_ASSERT(Bit::IsPowerOfTwo(alignment),
+    TKIT_ASSERT(IsPowerOfTwo(alignment),
                 "[TOOLKIT][ARENA-ALLOC] Alignment must be a power of 2, but the value is {}", alignment);
-    m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(static_cast<size_t>(capacity), alignment));
+    m_Buffer = static_cast<std::byte *>(AllocateAligned(static_cast<size_t>(capacity), alignment));
     TKIT_ASSERT(m_Buffer, "[TOOLKIT][ARENA-ALLOC] Failed to allocate memory");
 }
 ArenaAllocator::~ArenaAllocator()
@@ -60,7 +60,7 @@ ArenaAllocator &ArenaAllocator::operator=(ArenaAllocator &&other)
 void *ArenaAllocator::Allocate(const usize size)
 {
     TKIT_ASSERT(size != 0, "[TOOLKIT][ARENA-ALLOC] Cannot allocate 0 bytes");
-    const usize asize = Memory::NextAlignedSize(size, m_Alignment);
+    const usize asize = NextAlignedSize(size, m_Alignment);
     if (m_Top + asize > m_Capacity)
     {
         TKIT_LOG_WARNING(
@@ -71,7 +71,7 @@ void *ArenaAllocator::Allocate(const usize size)
 
     std::byte *ptr = m_Buffer + m_Top;
     m_Top += asize;
-    TKIT_ASSERT(Memory::IsAligned(ptr, m_Alignment),
+    TKIT_ASSERT(IsAligned(ptr, m_Alignment),
                 "[TOOLKIT][ARENA-ALLOC] Allocated memory is not aligned to specified alignment");
     return ptr;
 }
@@ -85,6 +85,6 @@ void ArenaAllocator::deallocateBuffer()
     //     "[TOOLKIT][ARENA-ALLOC] Deallocating an arena allocator with active allocations. If the elements are not "
     //     "trivially destructible, you will have to call "
     //     "Destroy() for each element to avoid undefined behaviour (this deallocation will not call the destructor)");
-    Memory::DeallocateAligned(m_Buffer);
+    DeallocateAligned(m_Buffer);
 }
 } // namespace TKit

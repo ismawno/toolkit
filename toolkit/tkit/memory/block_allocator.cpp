@@ -18,7 +18,7 @@ BlockAllocator::BlockAllocator(const usize bufferSize, const usize allocationSiz
     TKIT_ASSERT(allocationSize % alignment == 0, "[TOOLKIT][BLOCK-ALLOC] The allocation size must be a multiple of "
                                                  "the alignment to ensure every block of memory is aligned to it");
 
-    m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(bufferSize, alignment));
+    m_Buffer = static_cast<std::byte *>(AllocateAligned(bufferSize, alignment));
     TKIT_ASSERT(m_Buffer, "[TOOLKIT][BLOCK-ALLOC] Failed to allocate memory");
     setupMemoryLayout();
 }
@@ -123,7 +123,7 @@ void BlockAllocator::deallocateBuffer()
     //     "trivially destructible, you will have to call "
     //     "Destroy() for each element to avoid undefined behaviour (this deallocation will not call the destructor)");
 
-    Memory::DeallocateAligned(m_Buffer);
+    DeallocateAligned(m_Buffer);
 }
 
 } // namespace TKit

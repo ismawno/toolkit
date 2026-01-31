@@ -25,7 +25,7 @@ class Wide
     constexpr Wide() = default;
     constexpr explicit Wide(const T *data)
     {
-        Memory::ForwardCopy(m_Data.begin(), data, data + Lanes);
+        ForwardCopy(m_Data.begin(), data, data + Lanes);
     }
     template <typename Callable>
         requires std::invocable<Callable, usize>
@@ -79,7 +79,7 @@ class Wide
         Wide wide;
         const std::byte *data = reinterpret_cast<const std::byte *>(pdata);
         for (usize i = 0; i < Lanes; ++i)
-            Memory::ForwardCopy(&wide.m_Data[i], data + i * stride, sizeof(T));
+            ForwardCopy(&wide.m_Data[i], data + i * stride, sizeof(T));
         return wide;
     }
     constexpr void Scatter(T *pdata, const usize stride) const
@@ -91,7 +91,7 @@ class Wide
             "[TOOLKIT][SIMD] Stride of {} is equal to sizeof(T), which might as well be a contiguous store", stride);
         std::byte *data = reinterpret_cast<std::byte *>(pdata);
         for (usize i = 0; i < Lanes; ++i)
-            Memory::ForwardCopy(data + i * stride, &m_Data[i], sizeof(T));
+            ForwardCopy(data + i * stride, &m_Data[i], sizeof(T));
     }
 
     template <usize Count>
@@ -113,11 +113,11 @@ class Wide
 
     constexpr void StoreAligned(T *data) const
     {
-        Memory::ForwardCopy(data, m_Data.begin(), m_Data.end());
+        ForwardCopy(data, m_Data.begin(), m_Data.end());
     }
     constexpr void StoreUnaligned(T *data) const
     {
-        Memory::ForwardCopy(data, m_Data.begin(), m_Data.end());
+        ForwardCopy(data, m_Data.begin(), m_Data.end());
     }
 
 #define CREATE_MIN_MAX(name, fun)                                                                                      \

@@ -87,7 +87,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
                     "does not fit into an allocation",
                     m_AllocationSize, sizeof(T));
         T *ptr = static_cast<T *>(Allocate());
-        TKIT_ASSERT(!ptr || Memory::IsAligned(ptr, alignof(T)),
+        TKIT_ASSERT(!ptr || IsAligned(ptr, alignof(T)),
                     "[TOOLKIT][BLOCK-ALLOC] Type T has stronger memory alignment requirements than specified. Bump the "
                     "alignment of the allocator or prevent using it to allocate objects of such type");
         return ptr;
@@ -110,7 +110,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
     template <typename T, typename... Args> T *Create(Args &&...args)
     {
         T *ptr = Allocate<T>();
-        return ptr ? Memory::Construct(ptr, std::forward<Args>(args)...) : nullptr;
+        return ptr ? Construct(ptr, std::forward<Args>(args)...) : nullptr;
     }
 
     /**

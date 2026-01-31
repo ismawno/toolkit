@@ -14,7 +14,7 @@ static usize getTierIndex(const usize size, const usize minAllocation, const usi
     if (size <= minAllocation)
         return lastIndex;
 
-    const usize np2 = Bit::NextPowerOfTwo(size);
+    const usize np2 = NextPowerOfTwo(size);
 
     const usize grIndex = bitIndex(granularity);
     const usize incIndex = bitIndex(np2 >> grIndex);
@@ -35,14 +35,14 @@ TierAllocator::Description TierAllocator::CreateDescription(const usize maxTiers
                                                             const usize minAllocation, const usize granularity,
                                                             const f32 tierSlotDecay)
 {
-    return CreateDescription(TKit::Memory::GetArena(), maxTiers, maxAllocation, minAllocation, granularity,
+    return CreateDescription(TKit::GetArena(), maxTiers, maxAllocation, minAllocation, granularity,
                              tierSlotDecay);
 }
 TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *allocator, const usize maxTiers,
                                                             const usize maxAllocation, const usize minAllocation,
                                                             const usize granularity, const f32 tierSlotDecay)
 {
-    TKIT_ASSERT(Bit::IsPowerOfTwo(maxAllocation) && Bit::IsPowerOfTwo(minAllocation) && Bit::IsPowerOfTwo(granularity),
+    TKIT_ASSERT(IsPowerOfTwo(maxAllocation) && IsPowerOfTwo(minAllocation) && IsPowerOfTwo(granularity),
                 "[TOOLKIT][TIER-ALLOC] All integer arguments must be powers of two when creating a tier allocator "
                 "description, but the values where {}, {} and {}",
                 maxAllocation, minAllocation, granularity);
@@ -71,7 +71,7 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *allo
     usize prevSlots = 1;
 
     const auto nextAlloc = [granularity](const usize currentAlloc) {
-        const usize increment = Bit::NextPowerOfTwo(currentAlloc) / granularity;
+        const usize increment = NextPowerOfTwo(currentAlloc) / granularity;
         TKIT_ASSERT(increment % sizeof(void *) == 0,
                     "[TOOLKIT][TIER-ALLOC] Increments in memory between tiers must all be divisible by sizeof(void *) "
                     "= {}, but found an increment of {}. To avoid this error, ensure that minAllocation >= granularity "
@@ -92,7 +92,7 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *allo
     for (;;)
     {
         const usize psize = size;
-        const usize alignment = Bit::PrevPowerOfTwo(currentAlloc);
+        const usize alignment = PrevPowerOfTwo(currentAlloc);
         while (!enoughSlots() || (currentAlloc != minAllocation && size % alignment != 0))
         {
             ++currentSlots;
@@ -147,7 +147,7 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *allo
 }
 TierAllocator::TierAllocator(const usize maxTiers, const usize maxAllocation, const usize minAllocation,
                              const usize granularity, const f32 tierSlotDecay, const usize maxAlignment)
-    : TierAllocator(TKit::Memory::GetArena(), maxTiers, maxAllocation, minAllocation, granularity, tierSlotDecay,
+    : TierAllocator(TKit::GetArena(), maxTiers, maxAllocation, minAllocation, granularity, tierSlotDecay,
                     maxAlignment)
 {
 }
@@ -164,10 +164,10 @@ TierAllocator::TierAllocator(ArenaAllocator *allocator, const usize maxTiers, co
                              const usize maxAlignment)
     : m_Tiers(allocator, maxTiers), m_MinAllocation(description.MinAllocation), m_Granularity(description.Granularity)
 {
-    TKIT_ASSERT(Bit::IsPowerOfTwo(maxAlignment),
+    TKIT_ASSERT(IsPowerOfTwo(maxAlignment),
                 "[TOOLKIT][TIER-ALLOC] Maximum alignment must be a power of 2, but {} is not", maxAlignment);
 
-    m_Buffer = static_cast<std::byte *>(Memory::AllocateAligned(description.BufferSize, maxAlignment));
+    m_Buffer = static_cast<std::byte *>(AllocateAligned(description.BufferSize, maxAlignment));
     TKIT_ASSERT(m_Buffer,
                 "[TOOLKIT][TIER-ALLOC] Failed to allocate final allocator buffer of {} bytes aligned to {}. "
                 "Consider choosing another parameter combination",
@@ -231,17 +231,17 @@ void TierAllocator::setupMemoryLayout(const Description &description)
         tier.FreeList = reinterpret_cast<Allocation *>(tier.Buffer);
         const usize count = tinfo.Size / tinfo.AllocationSize;
 
-        TKIT_ASSERT(Memory::IsAligned(tier.Buffer, std::min(maxAlignment, Bit::PrevPowerOfTwo(tinfo.AllocationSize))),
+        TKIT_ASSERT(IsAligned(tier.Buffer, std::min(maxAlignment, PrevPowerOfTwo(tinfo.AllocationSize))),
                     "[TOOLKIT][TIER-ALLOC] Tier with size {} and buffer {} failed alignment check: it is not aligned "
                     "to either the maximum alignment ({}) or its previous power of 2 ({})",
                     tinfo.Size, static_cast<void *>(tier.Buffer), maxAlignment,
-                    Bit::PrevPowerOfTwo(tinfo.AllocationSize));
+                    PrevPowerOfTwo(tinfo.AllocationSize));
 
         Allocation *next = nullptr;
         for (usize i = count - 1; i < count; --i)
         {
             Allocation *alloc = reinterpret_cast<Allocation *>(tier.Buffer + i * tinfo.AllocationSize);
-            TKIT_ASSERT(Memory::IsAligned(alloc, alignof(Allocation)),
+            TKIT_ASSERT(IsAligned(alloc, alignof(Allocation)),
                         "[TOOLKIT][TIER-ALLOC] Allocation landed in a memory region where its alignment of {} is not "
                         "respected. This happened when using an allocation size of {}",
                         alignof(Allocation), tinfo.AllocationSize);
@@ -259,7 +259,7 @@ void TierAllocator::setupMemoryLayout(const Description &description)
 void TierAllocator::deallocateBuffer()
 {
     if (m_Buffer)
-        Memory::DeallocateAligned(m_Buffer);
+        DeallocateAligned(m_Buffer);
 }
 
 void *TierAllocator::Allocate(const usize size)

@@ -183,8 +183,8 @@ TEST_CASE("MoveAssignFromRange", "[MoveAssignFromRange]")
     {
         FixedArray<MoveOnly, 8> buf;
         // default‑construct first 2 slots in raw storage
-        Memory::Construct<MoveOnly>(&buf[0], 0);
-        Memory::Construct<MoveOnly>(&buf[1], 0);
+        Construct<MoveOnly>(&buf[0], 0);
+        Construct<MoveOnly>(&buf[1], 0);
 
         MoveOnly src[] = {11, 22, 33, 44};
         // move‑assign into 2‑slot region -> will construct 2 more at buf[2],buf[3]
@@ -242,8 +242,8 @@ TEST_CASE("Insert single element", "[Insert]")
         alignas(MoveOnly) std::byte storage[sizeof(MoveOnly) * 3];
         const auto arr = reinterpret_cast<MoveOnly *>(storage);
         // placement‐new first two
-        Memory::Construct<MoveOnly>(&arr[0], 5);
-        Memory::Construct<MoveOnly>(&arr[1], 6);
+        Construct<MoveOnly>(&arr[0], 5);
+        Construct<MoveOnly>(&arr[1], 6);
 
         MoveOnly val(7);
         // insert at position 1

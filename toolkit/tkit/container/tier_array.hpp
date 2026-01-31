@@ -55,7 +55,7 @@ template <typename T> struct TierAllocation
                     Capacity);
 
         if (!Allocator)
-            Allocator = Memory::GetTier();
+            Allocator = GetTier();
         TKIT_ASSERT(Allocator, "[TOOLKIT][TIER-ARRAY] Array must have a valid allocator to allocate memory");
         Data = Allocator->Allocate<T>(capacity);
         TKIT_ASSERT(Data, "[TOOLKIT][TIER-ARRAY] Failed to allocate {} bytes of memory", capacity * sizeof(T));
@@ -101,7 +101,7 @@ template <typename T> struct TierAllocation
         TKIT_ASSERT(newData, "[TOOLKIT][TIER-ARRAY] Failed to allocate {} bytes of memory", capacity * sizeof(T));
         Tools::MoveConstructFromRange(newData, Data, Data + Size);
         if constexpr (!std::is_trivially_destructible_v<T>)
-            Memory::DestructRange(Data, Data + Size);
+            DestructRange(Data, Data + Size);
         Allocator->Deallocate(Data, Capacity);
         Data = newData;
         Capacity = capacity;

@@ -38,7 +38,7 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
     {
         static_assert(sizeof(T) <= Size, "Object does not fit in the local buffer");
         static_assert(alignof(T) <= Alignment, "Object has incompatible alignment");
-        return Memory::Construct(Get<T>(), std::forward<Args>(args)...);
+        return TKit::Construct(Get<T>(), std::forward<Args>(args)...);
     }
 
     /**
@@ -57,7 +57,7 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
     template <typename T> constexpr void Destruct() const
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
-            Memory::Destruct(Get<T>());
+            TKit::Destruct(Get<T>());
     }
 
     /**

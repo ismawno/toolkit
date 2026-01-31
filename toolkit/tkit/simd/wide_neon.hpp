@@ -161,7 +161,7 @@ template <Arithmetic T> class Wide
         const std::byte *src = reinterpret_cast<const std::byte *>(data);
 
         for (usize i = 0; i < Lanes; ++i)
-            Memory::ForwardCopy(dst + i, src + i * stride, sizeof(T));
+            ForwardCopy(dst + i, src + i * stride, sizeof(T));
         return Wide{load1(dst)};
     }
     constexpr void Scatter(T *data, const usize stride) const
@@ -175,7 +175,7 @@ template <Arithmetic T> class Wide
         StoreAligned(tmp);
         std::byte *dst = reinterpret_cast<std::byte *>(data);
         for (usize i = 0; i < Lanes; ++i)
-            Memory::ForwardCopy(dst + i * stride, &tmp[i], sizeof(T));
+            ForwardCopy(dst + i * stride, &tmp[i], sizeof(T));
     }
 
     template <usize Count>
@@ -244,7 +244,7 @@ template <Arithmetic T> class Wide
 
     constexpr void StoreAligned(T *data) const
     {
-        TKIT_ASSERT(Memory::IsAligned(data, Alignment),
+        TKIT_ASSERT(IsAligned(data, Alignment),
                     "[TOOLKIT][NEON] Data must be aligned to {} bytes to use the NEON SIMD set", Alignment);
         store1(data, m_Data);
     }

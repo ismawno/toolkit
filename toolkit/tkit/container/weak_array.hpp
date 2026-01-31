@@ -99,7 +99,7 @@ template <typename T, usize Capacity = TKIT_USIZE_MAX> class WeakArray
     {
         TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Cannot Append(). Container is already at capacity ({})",
                     Capacity);
-        return *Memory::ConstructFromIterator(begin() + m_Size++, std::forward<Args>(args)...);
+        return *ConstructFromIterator(begin() + m_Size++, std::forward<Args>(args)...);
     }
 
     constexpr void Pop()
@@ -107,7 +107,7 @@ template <typename T, usize Capacity = TKIT_USIZE_MAX> class WeakArray
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][WEAK-ARRAY] Cannot Pop(). Container is already empty");
         --m_Size;
         if constexpr (!std::is_trivially_destructible_v<ElementType>)
-            Memory::DestructFromIterator(end());
+            DestructFromIterator(end());
     }
 
     template <typename ElementType>
@@ -198,11 +198,11 @@ template <typename T, usize Capacity = TKIT_USIZE_MAX> class WeakArray
 
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (size < m_Size)
-                Memory::DestructRange(begin() + size, end());
+                DestructRange(begin() + size, end());
 
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
             if (size > m_Size)
-                Memory::ConstructRange(begin() + m_Size, begin() + size, std::forward<Args>(args)...);
+                ConstructRange(begin() + m_Size, begin() + size, std::forward<Args>(args)...);
 
         m_Size = size;
     }
@@ -230,7 +230,7 @@ template <typename T, usize Capacity = TKIT_USIZE_MAX> class WeakArray
     constexpr void Clear()
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
-            Memory::DestructRange(begin(), end());
+            DestructRange(begin(), end());
         m_Size = 0;
     }
 
@@ -377,7 +377,7 @@ template <typename T> class WeakArray<T, TKIT_USIZE_MAX>
     constexpr ElementType &Append(Args &&...args)
     {
         TKIT_ASSERT(!IsFull(), "[TOOLKIT][WEAK-ARRAY] Cannot Append(). Container is at capacity ({})", m_Capacity);
-        return *Memory::ConstructFromIterator(begin() + m_Size++, std::forward<Args>(args)...);
+        return *ConstructFromIterator(begin() + m_Size++, std::forward<Args>(args)...);
     }
 
     constexpr void Pop()
@@ -385,7 +385,7 @@ template <typename T> class WeakArray<T, TKIT_USIZE_MAX>
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][WEAK-ARRAY] Cannot Pop(). Container is already empty");
         --m_Size;
         if constexpr (!std::is_trivially_destructible_v<ElementType>)
-            Memory::DestructFromIterator(end());
+            DestructFromIterator(end());
     }
 
     template <typename ElementType>
@@ -477,11 +477,11 @@ template <typename T> class WeakArray<T, TKIT_USIZE_MAX>
 
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (size < m_Size)
-                Memory::DestructRange(begin() + size, end());
+                DestructRange(begin() + size, end());
 
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
             if (size > m_Size)
-                Memory::ConstructRange(begin() + m_Size, begin() + size, std::forward<Args>(args)...);
+                ConstructRange(begin() + m_Size, begin() + size, std::forward<Args>(args)...);
 
         m_Size = size;
     }
@@ -509,7 +509,7 @@ template <typename T> class WeakArray<T, TKIT_USIZE_MAX>
     constexpr void Clear()
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
-            Memory::DestructRange(begin(), end());
+            DestructRange(begin(), end());
         m_Size = 0;
     }
 

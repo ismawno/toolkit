@@ -108,7 +108,7 @@ template <Arithmetic T> class Wide
         const std::byte *src = reinterpret_cast<const std::byte *>(data);
 
         for (usize i = 0; i < Lanes; ++i)
-            Memory::ForwardCopy(dst + i, src + i * stride, sizeof(T));
+            ForwardCopy(dst + i, src + i * stride, sizeof(T));
         return Wide{loadAligned(dst)};
 #    else
         const i32 idx = static_cast<i32>(stride);
@@ -140,7 +140,7 @@ template <Arithmetic T> class Wide
                 const std::byte *src = reinterpret_cast<const std::byte *>(data);
 
                 for (usize i = 0; i < Lanes; ++i)
-                    Memory::ForwardCopy(dst + i, src + i * stride, sizeof(T));
+                    ForwardCopy(dst + i, src + i * stride, sizeof(T));
                 return Wide{loadAligned(dst)};
             }
         }
@@ -159,7 +159,7 @@ template <Arithmetic T> class Wide
 
         std::byte *dst = reinterpret_cast<std::byte *>(data);
         for (usize i = 0; i < Lanes; ++i)
-            Memory::ForwardCopy(dst + i * stride, &src[i], sizeof(T));
+            ForwardCopy(dst + i * stride, &src[i], sizeof(T));
     }
 
     template <usize Count>
@@ -181,7 +181,7 @@ template <Arithmetic T> class Wide
 
     constexpr void StoreAligned(T *data) const
     {
-        TKIT_ASSERT(Memory::IsAligned(data, Alignment),
+        TKIT_ASSERT(IsAligned(data, Alignment),
                     "[TOOLKIT][SSE] Data must be aligned to {} bytes to use the SSE SIMD set", Alignment);
         if constexpr (s_Equals<__m128>)
             _mm_store_ps(data, m_Data);
@@ -546,21 +546,21 @@ template <Arithmetic T> class Wide
 
     static constexpr bool NoneOf(const Mask &mask)
     {
-        return Bit::NoneOf(PackMask(mask));
+        return NoneOf(PackMask(mask));
     }
     static constexpr bool AnyOf(const Mask &mask)
     {
-        return Bit::AnyOf(PackMask(mask));
+        return AnyOf(PackMask(mask));
     }
     static constexpr bool AllOf(const Mask &mask)
     {
-        return Bit::AllOf(PackMask(mask));
+        return AllOf(PackMask(mask));
     }
 
   private:
     static m128 loadAligned(const T *data)
     {
-        TKIT_ASSERT(Memory::IsAligned(data, Alignment),
+        TKIT_ASSERT(IsAligned(data, Alignment),
                     "[TOOLKIT][SSE] Data must be aligned to {} bytes to use the SSE SIMD set", Alignment);
 
         if constexpr (s_Equals<__m128>)

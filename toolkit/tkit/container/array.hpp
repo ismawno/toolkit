@@ -46,7 +46,7 @@ template <typename T, typename AllocState> class Array
         }
         m_State.Size = size;
         if constexpr (!std::is_trivially_default_constructible_v<T>)
-            Memory::ConstructRange(begin(), end());
+            ConstructRange(begin(), end());
     }
 
     template <std::input_iterator It, typename... Args>
@@ -241,12 +241,12 @@ template <typename T, typename AllocState> class Array
             const usize newSize = m_State.Size + 1;
             m_State.GrowCapacityIf(newSize > m_State.GetCapacity(), newSize);
             m_State.Size = newSize;
-            return *Memory::ConstructFromIterator(end() - 1, std::forward<Args>(args)...);
+            return *ConstructFromIterator(end() - 1, std::forward<Args>(args)...);
         }
         else
         {
             TKIT_ASSERT(!IsFull(), "[TOOLKIT][ARRAY] Container is already at capacity of {}", m_State.GetCapacity());
-            return *Memory::ConstructFromIterator(begin() + m_State.Size++, std::forward<Args>(args)...);
+            return *ConstructFromIterator(begin() + m_State.Size++, std::forward<Args>(args)...);
         }
     }
 
@@ -255,7 +255,7 @@ template <typename T, typename AllocState> class Array
         TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][ARRAY] Cannot Pop(). Container is already empty");
         --m_State.Size;
         if constexpr (!std::is_trivially_destructible_v<T>)
-            Memory::DestructFromIterator(end());
+            DestructFromIterator(end());
     }
 
     template <typename U>
@@ -401,7 +401,7 @@ template <typename T, typename AllocState> class Array
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (GetData())
-                Memory::DestructRange(begin(), end());
+                DestructRange(begin(), end());
         m_State.Size = 0;
     }
 
@@ -432,11 +432,11 @@ template <typename T, typename AllocState> class Array
 
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (size < m_State.Size)
-                Memory::DestructRange(begin() + size, end());
+                DestructRange(begin() + size, end());
 
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
             if (size > m_State.Size)
-                Memory::ConstructRange(begin() + m_State.Size, begin() + size, args...);
+                ConstructRange(begin() + m_State.Size, begin() + size, args...);
 
         m_State.Size = size;
     }
@@ -465,7 +465,7 @@ template <typename T, typename AllocState> class Array
         m_State.Allocate(size);
         m_State.Size = size;
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
-            Memory::ConstructRange(begin(), end(), std::forward<Args>(args)...);
+            ConstructRange(begin(), end(), std::forward<Args>(args)...);
     }
     template <typename Allocator>
     constexpr void Allocate(Allocator *allocator, const usize capacity)
@@ -486,7 +486,7 @@ template <typename T, typename AllocState> class Array
         m_State.Allocate(size);
         m_State.Size = size;
         if constexpr (sizeof...(Args) > 0 || !std::is_trivially_default_constructible_v<T>)
-            Memory::ConstructRange(begin(), end(), std::forward<Args>(args)...);
+            ConstructRange(begin(), end(), std::forward<Args>(args)...);
     }
 
     constexpr void Shrink()

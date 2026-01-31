@@ -20,8 +20,8 @@
                     "[TOOLKIT][MEMORY] Stack allocation size exceeded. Requested size was {}, but maximum is {}",      \
                     size, TKit::MaxStackAlloc)
 #else
-#    define TKIT_MEMORY_STACK_ALLOCATE(size) TKit::Memory::Allocate(size)
-#    define TKIT_MEMORY_STACK_DEALLOCATE(ptr) TKit::Memory::Deallocate(ptr)
+#    define TKIT_MEMORY_STACK_ALLOCATE(size) TKit::Allocate(size)
+#    define TKIT_MEMORY_STACK_DEALLOCATE(ptr) TKit::Deallocate(ptr)
 #    define TKIT_MEMORY_STACK_CHECK(size)
 #endif
 
@@ -32,7 +32,7 @@ class StackAllocator;
 class TierAllocator;
 }; // namespace TKit
 
-namespace TKit::Memory
+namespace TKit
 {
 void PushArena(ArenaAllocator *alloc);
 void PushStack(StackAllocator *alloc);
@@ -364,4 +364,4 @@ template <typename It> void DestructRange(const It begin, const It end)
         DestructFromIterator(it);
 }
 
-} // namespace TKit::Memory
+} // namespace TKit
