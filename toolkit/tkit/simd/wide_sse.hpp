@@ -22,7 +22,7 @@
 #    endif
 namespace TKit::Simd::SSE
 {
-template <Arithmetic T> struct TypeSelector;
+template <Numeric T> struct TypeSelector;
 
 template <> struct TypeSelector<f32>
 {
@@ -42,7 +42,7 @@ TKIT_COMPILER_WARNING_IGNORE_PUSH()
 TKIT_GCC_WARNING_IGNORE("-Wignored-attributes")
 TKIT_GCC_WARNING_IGNORE("-Wmaybe-uninitialized")
 TKIT_CLANG_WARNING_IGNORE("-Wignored-attributes")
-template <Arithmetic T> class Wide
+template <Numeric T> class Wide
 {
     using m128 = typename TypeSelector<T>::m128;
 

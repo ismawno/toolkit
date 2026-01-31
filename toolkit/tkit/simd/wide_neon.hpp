@@ -8,7 +8,7 @@
 
 namespace TKit::Simd::NEON
 {
-template <Arithmetic T> struct TypeSelector;
+template <Numeric T> struct TypeSelector;
 
 template <> struct TypeSelector<f32>
 {
@@ -91,7 +91,7 @@ template <> struct TypeSelector<i64>
 
 TKIT_COMPILER_WARNING_IGNORE_PUSH()
 TKIT_GCC_WARNING_IGNORE("-Wmaybe-uninitialized")
-template <Arithmetic T> class Wide
+template <Numeric T> class Wide
 {
     using wide1_t = typename TypeSelector<T>::wide1_t;
     using wide2_t = typename TypeSelector<T>::wide2_t;

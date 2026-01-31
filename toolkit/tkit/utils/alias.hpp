@@ -56,7 +56,7 @@ template <typename T>
 concept Integer = UnsignedInteger<T> || SignedInteger<T>;
 
 template <typename T>
-concept Arithmetic = Float<T> || Integer<T>;
+concept Numeric = Float<T> || Integer<T>;
 } // namespace TKit::Alias
 
 //... and use it immediately in the toolkit namespace

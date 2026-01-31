@@ -10,7 +10,7 @@ TKIT_MSVC_WARNING_IGNORE(4146)
 namespace TKit::Simd
 {
 template <typename T, usize L>
-    requires(L > 0 && Arithmetic<T>)
+    requires(L > 0 && Numeric<T>)
 class Wide
 {
   public:
