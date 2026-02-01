@@ -453,6 +453,13 @@ template <typename T, typename AllocState> class Array
             m_State.Allocate(capacity);
     }
 
+    // nullptr will grab the current pushed allocator on next Allocate()
+    template <typename Allocator> constexpr void ResetAllocator(Allocator *allocator = nullptr)
+    {
+        if (m_State.Allocator)
+            m_State.Deallocate();
+        m_State.Allocator = allocator;
+    }
     constexpr void Allocate(const usize capacity)
         requires(Type != Array_Static)
     {
@@ -471,8 +478,10 @@ template <typename T, typename AllocState> class Array
     constexpr void Allocate(Allocator *allocator, const usize capacity)
         requires(Type != Array_Static && Type != Array_Dynamic)
     {
-        TKIT_ASSERT(!m_State.Allocator, "[TOOLKIT][ARRAY] Array state has already an active allocator and cannot be "
-                                        "replaced. Use the Allocate() overload that does not accept an allocator");
+        // TKIT_ASSERT(!m_State.Allocator, "[TOOLKIT][ARRAY] Array state has already an active allocator and cannot be "
+        //                                 "replaced. Use the Allocate() overload that does not accept an allocator");
+        ResetAllocator(allocator);
+
         m_State.Allocator = allocator;
         m_State.Allocate(capacity);
     }
@@ -480,8 +489,10 @@ template <typename T, typename AllocState> class Array
     constexpr void Create(Allocator *allocator, const usize size, Args &&...args)
         requires(Type != Array_Static && Type != Array_Dynamic)
     {
-        TKIT_ASSERT(!m_State.Allocator, "[TOOLKIT][ARRAY] Array state has already an active allocator and cannot be "
-                                        "replaced. Use the Allocate() overload that does not accept an allocator");
+        // TKIT_ASSERT(!m_State.Allocator, "[TOOLKIT][ARRAY] Array state has already an active allocator and cannot be "
+        //                                 "replaced. Use the Allocate() overload that does not accept an allocator");
+        ResetAllocator(allocator);
+
         m_State.Allocator = allocator;
         m_State.Allocate(size);
         m_State.Size = size;
