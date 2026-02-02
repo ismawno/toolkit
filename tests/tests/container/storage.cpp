@@ -58,7 +58,8 @@ TEST_CASE("RawStorage: alignment correctness", "[RawStorage]")
 
 TEST_CASE("Storage: trivial type via constructor, destruct, reconstruct", "[Storage]")
 {
-    Storage<u32> s1(5);
+    Storage<u32> s1;
+    s1.Construct(5);
     REQUIRE(*s1 == 5);
 
     s1.Destruct();
@@ -80,7 +81,8 @@ TEST_CASE("Storage: type without default constructor", "[Storage]")
         {
         }
     };
-    Storage<NoDef> s1(99);
+    Storage<NoDef> s1;
+    s1.Construct(99);
     REQUIRE(s1->x == 99);
 
     s1.Destruct();
@@ -114,7 +116,8 @@ TEST_CASE("Storage: copy and move semantics", "[Storage]")
     // construct original
     g_CtorCount = g_DtorCount = 0;
     STrack::CtorCount = STrack::CopyCtorCount = STrack::MoveCtorCount = 0;
-    Storage<STrack> orig(55);
+    Storage<STrack> orig;
+    orig.Construct(55);
     REQUIRE(STrack::CtorCount == 1);
     REQUIRE(orig->Val == 55);
 

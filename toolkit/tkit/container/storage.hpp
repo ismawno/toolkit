@@ -135,13 +135,6 @@ template <typename T> class Storage
         return *this;
     }
 
-    template <typename... Args>
-        requires(!std::same_as<Storage, std::decay_t<Args>> && ...)
-    constexpr Storage(Args &&...args)
-    {
-        m_Storage.template Construct<T>(std::forward<Args>(args)...);
-    }
-
     /**
      * @brief Construct a new object of type `T` in the local buffer.
      *
