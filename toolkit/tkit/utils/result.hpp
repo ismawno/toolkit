@@ -4,20 +4,20 @@
 #include "tkit/container/storage.hpp"
 
 #define TKIT_RETURN_ON_ERROR(result, ...)                                                                              \
-    if (!result)                                                                                                       \
+    if (!(result))                                                                                                     \
     {                                                                                                                  \
         __VA_ARGS__;                                                                                                   \
-        return result;                                                                                                 \
+        return (result);                                                                                               \
     }
 
 #define TKIT_RETURN_IF_FAILED(expression, ...)                                                                         \
-    if (const auto __tkit_result = expression; !__tkit_result)                                                         \
+    if (const auto __tkit_result = (expression); !__tkit_result)                                                       \
     {                                                                                                                  \
         __VA_ARGS__;                                                                                                   \
         return __tkit_result;                                                                                          \
     }
 
-#define TKIT_OR_ELSE(result, fallback) result ? result.GetValue() : fallback
+#define TKIT_OR_ELSE(result, fallback) (result) ? (result).GetValue() : (fallback)
 
 namespace TKit
 {

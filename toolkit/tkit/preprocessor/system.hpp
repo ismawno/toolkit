@@ -2,10 +2,6 @@
 
 #ifdef _WIN32
 #    define TKIT_OS_WINDOWS
-#    undef min
-#    undef max
-#    undef TRANSPARENT
-#    define NOMINMAX
 #    if defined(_WIN64)
 #        define TKIT_OS_WINDOWS_64
 #    else
