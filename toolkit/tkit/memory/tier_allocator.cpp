@@ -35,8 +35,7 @@ TierAllocator::Description TierAllocator::CreateDescription(const usize maxTiers
                                                             const usize minAllocation, const usize granularity,
                                                             const f32 tierSlotDecay)
 {
-    return CreateDescription(TKit::GetArena(), maxTiers, maxAllocation, minAllocation, granularity,
-                             tierSlotDecay);
+    return CreateDescription(TKit::GetArena(), maxTiers, maxAllocation, minAllocation, granularity, tierSlotDecay);
 }
 TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *allocator, const usize maxTiers,
                                                             const usize maxAllocation, const usize minAllocation,
@@ -147,8 +146,7 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *allo
 }
 TierAllocator::TierAllocator(const usize maxTiers, const usize maxAllocation, const usize minAllocation,
                              const usize granularity, const f32 tierSlotDecay, const usize maxAlignment)
-    : TierAllocator(TKit::GetArena(), maxTiers, maxAllocation, minAllocation, granularity, tierSlotDecay,
-                    maxAlignment)
+    : TierAllocator(TKit::GetArena(), maxTiers, maxAllocation, minAllocation, granularity, tierSlotDecay, maxAlignment)
 {
 }
 TierAllocator::TierAllocator(ArenaAllocator *allocator, const usize maxTiers, const usize maxAllocation,
@@ -164,6 +162,9 @@ TierAllocator::TierAllocator(ArenaAllocator *allocator, const usize maxTiers, co
                              const usize maxAlignment)
     : m_Tiers(allocator, maxTiers), m_MinAllocation(description.MinAllocation), m_Granularity(description.Granularity)
 {
+#ifdef TKIT_ENABLE_ASSERTS
+    m_MaxAllocation = description.MaxAllocation;
+#endif
     TKIT_ASSERT(IsPowerOfTwo(maxAlignment),
                 "[TOOLKIT][TIER-ALLOC] Maximum alignment must be a power of 2, but {} is not", maxAlignment);
 
@@ -234,8 +235,7 @@ void TierAllocator::setupMemoryLayout(const Description &description)
         TKIT_ASSERT(IsAligned(tier.Buffer, std::min(maxAlignment, PrevPowerOfTwo(tinfo.AllocationSize))),
                     "[TOOLKIT][TIER-ALLOC] Tier with size {} and buffer {} failed alignment check: it is not aligned "
                     "to either the maximum alignment ({}) or its previous power of 2 ({})",
-                    tinfo.Size, static_cast<void *>(tier.Buffer), maxAlignment,
-                    PrevPowerOfTwo(tinfo.AllocationSize));
+                    tinfo.Size, static_cast<void *>(tier.Buffer), maxAlignment, PrevPowerOfTwo(tinfo.AllocationSize));
 
         Allocation *next = nullptr;
         for (usize i = count - 1; i < count; --i)
@@ -264,6 +264,9 @@ void TierAllocator::deallocateBuffer()
 
 void *TierAllocator::Allocate(const usize size)
 {
+    TKIT_ASSERT(size < m_MaxAllocation,
+                "[TOOLKIT][TIER-ALLOC] Allocation of size {} bytes exceeds max allocation size of {}", size,
+                m_MaxAllocation);
     const usize index = getTierIndex(size);
     Tier &tier = m_Tiers[index];
     if (!tier.FreeList)

@@ -213,6 +213,9 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     usize m_BufferSize;
     usize m_MinAllocation;
     usize m_Granularity;
+#ifdef TKIT_ENABLE_ASSERTS
+    usize m_MaxAllocation;
+#endif
 };
 TKIT_COMPILER_WARNING_IGNORE_POP()
 } // namespace TKit
