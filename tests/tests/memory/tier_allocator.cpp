@@ -41,7 +41,7 @@ TEST_CASE("Constructor and basic state", "[TierAllocator]")
     constexpr f32 decay = 0.9f;
     constexpr usize maxAlign = 64;
 
-    TierAllocator alloc(&s_Alloc, 32, maxAlloc, gran, decay, maxAlign);
+    TierAllocator alloc(&s_Alloc, 32, maxAlloc, decay, gran, maxAlign);
 
     REQUIRE(alloc.GetBufferSize() > 0);
 
@@ -56,7 +56,7 @@ TEST_CASE("Allocate/Deallocate across sizes", "[TierAllocator]")
     constexpr usize gran = 8;
     constexpr f32 decay = 0.9f;
 
-    TierAllocator alloc(&s_Alloc, 32, maxAlloc, gran, decay);
+    TierAllocator alloc(&s_Alloc, 32, maxAlloc, decay, gran);
 
     // Try a spread of request sizes (intentionally non powers-of-two too)
     const usize sizes[] = {1, 8, 9, 16, 24, 32, 48, 64, 96, 128, 192, 256};
@@ -104,7 +104,7 @@ TEST_CASE("Exhaust smallest tier and recover", "[TierAllocator]")
     constexpr usize gran = 4;
     constexpr f32 decay = 0.9f;
 
-    TierAllocator alloc(&s_Alloc, 32, maxAlloc, gran, decay);
+    TierAllocator alloc(&s_Alloc, 32, maxAlloc, decay, gran);
 
     // Repeatedly allocate the smallest request until it returns nullptr.
     // This validates exhaustion returns nullptr and that deallocation restores capacity.
@@ -135,7 +135,7 @@ TEST_CASE("Typed Allocate<T>(count) and Destroy<T>(count)", "[TierAllocator]")
     constexpr usize gran = 4;
     constexpr f32 decay = 0.9f;
 
-    TierAllocator alloc(&s_Alloc, 32, maxAlloc, gran, decay);
+    TierAllocator alloc(&s_Alloc, 32, maxAlloc, decay, gran);
 
     constexpr usize count = 10;
     u32 *arr = alloc.Allocate<u32>(count);
@@ -157,7 +157,7 @@ TEST_CASE("Create<T>, NCreate<T> and Destroy<T>", "[TierAllocator]")
     constexpr usize gran = 4;
     constexpr f32 decay = 0.9f;
 
-    TierAllocator alloc(&s_Alloc, 32, maxAlloc, gran, decay);
+    TierAllocator alloc(&s_Alloc, 32, maxAlloc, decay, gran);
 
     NonTrivialTA::CtorCount = 0;
     NonTrivialTA::DtorCount = 0;
@@ -191,7 +191,7 @@ TEST_CASE("Alignment guarantees (up to max alignment)", "[TierAllocator]")
     constexpr f32 decay = 0.9f;
     constexpr usize maxAlign = 64;
 
-    TierAllocator alloc(&s_Alloc, 32, maxAlloc, gran, decay, maxAlign);
+    TierAllocator alloc(&s_Alloc, 32, maxAlloc, decay, gran, maxAlign);
 
     // Allocate a strongly-aligned type; Allocate<T>() asserts internally too.
     Align64TA *p = alloc.Allocate<Align64TA>();
@@ -208,7 +208,7 @@ TEST_CASE("Belongs() only checks buffer boundaries (not allocation state)", "[Ti
     constexpr usize gran = 4;
     constexpr f32 decay = 0.9f;
 
-    TierAllocator alloc(&s_Alloc, 32, maxAlloc, gran, decay);
+    TierAllocator alloc(&s_Alloc, 32, maxAlloc, decay, gran);
 
     void *p = alloc.Allocate(64);
     REQUIRE(p);
@@ -225,7 +225,7 @@ TEST_CASE("Description::GetTierIndex sanity for min allocation", "[TierAllocator
     constexpr usize gran = 4;
     constexpr f32 decay = 0.9f;
 
-    auto desc = TierAllocator::CreateDescription(&s_Alloc, 32, maxAlloc, gran, decay);
+    auto desc = TierAllocator::CreateDescription(&s_Alloc, 32, maxAlloc, decay, gran);
 
     // For sizes <= MinAllocation, index should be the last tier
     const usize idxMin = desc.GetTierIndex(desc.MinAllocation);
