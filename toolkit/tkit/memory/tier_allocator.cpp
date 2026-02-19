@@ -128,17 +128,17 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *allo
     {
         const usize index = TKit::getTierIndex(mem, minAllocation, granularity, desc.Tiers.GetSize() - 1);
         TKIT_ASSERT(desc.Tiers[index].AllocationSize >= mem,
-                    "[TOOLKIT][TIER-ALLOC] Allocator is malformed. Found a size of {} being assigned a tier index of "
-                    "{} with a smaller allocation size of {}",
+                    "[TOOLKIT][TIER-ALLOC] Allocator is malformed. Found a size of {:L} being assigned a tier index of "
+                    "{} with a smaller allocation size of {:L}",
                     mem, index, desc.Tiers[index].AllocationSize);
         TKIT_ASSERT(index == desc.Tiers.GetSize() - 1 || desc.Tiers[index + 1].AllocationSize < mem,
-                    "[TOOLKIT][TIER-ALLOC] Allocator is malformed. Found a size of {} being assigned a tier index of "
-                    "{} with an allocation size of {}, but tier index {} has a big enough allocation size of {}",
+                    "[TOOLKIT][TIER-ALLOC] Allocator is malformed. Found a size of {:L} being assigned a tier index of "
+                    "{} with an allocation size of {:L}, but tier index {} has a big enough allocation size of {:L}",
                     mem, index, desc.Tiers[index].AllocationSize, index + 1, desc.Tiers[index + 1].AllocationSize);
         const usize sindex = slowIndex(mem);
         TKIT_ASSERT(sindex == index,
                     "[TOOLKIT][TIER-ALLOC] Allocator is malformed. Brute forced tier index discovery of {} for a size "
-                    "of {} bytes, while the fast approach computed {}",
+                    "of {:L} bytes, while the fast approach computed {}",
                     sindex, mem, index);
     }
 #endif
@@ -169,7 +169,7 @@ TierAllocator::TierAllocator(const Description &description, const usize maxAlig
 
     m_Buffer = static_cast<std::byte *>(AllocateAligned(description.BufferSize, maxAlignment));
     TKIT_ASSERT(m_Buffer,
-                "[TOOLKIT][TIER-ALLOC] Failed to allocate final allocator buffer of {} bytes aligned to {}. "
+                "[TOOLKIT][TIER-ALLOC] Failed to allocate final allocator buffer of {:L} bytes aligned to {}. "
                 "Consider choosing another parameter combination",
                 description.BufferSize, maxAlignment);
     m_BufferSize = description.BufferSize;
@@ -232,7 +232,7 @@ void TierAllocator::setupMemoryLayout(const Description &description)
         const usize count = tinfo.Size / tinfo.AllocationSize;
 
         TKIT_ASSERT(IsAligned(tier.Buffer, std::min(maxAlignment, PrevPowerOfTwo(tinfo.AllocationSize))),
-                    "[TOOLKIT][TIER-ALLOC] Tier with size {} and buffer {} failed alignment check: it is not aligned "
+                    "[TOOLKIT][TIER-ALLOC] Tier with size {:L} and buffer {} failed alignment check: it is not aligned "
                     "to either the maximum alignment ({}) or its previous power of 2 ({})",
                     tinfo.Size, static_cast<void *>(tier.Buffer), maxAlignment, PrevPowerOfTwo(tinfo.AllocationSize));
 
@@ -242,7 +242,7 @@ void TierAllocator::setupMemoryLayout(const Description &description)
             Allocation *alloc = reinterpret_cast<Allocation *>(tier.Buffer + i * tinfo.AllocationSize);
             TKIT_ASSERT(IsAligned(alloc, alignof(Allocation)),
                         "[TOOLKIT][TIER-ALLOC] Allocation landed in a memory region where its alignment of {} is not "
-                        "respected. This happened when using an allocation size of {}",
+                        "respected. This happened when using an allocation size of {:L}",
                         alignof(Allocation), tinfo.AllocationSize);
             alloc->Next = next;
             next = alloc;
@@ -264,20 +264,20 @@ void TierAllocator::deallocateBuffer()
 void *TierAllocator::Allocate(const usize size)
 {
     TKIT_ASSERT(size <= m_MaxAllocation,
-                "[TOOLKIT][TIER-ALLOC] Allocation of size {} bytes exceeds max allocation size of {}", size,
+                "[TOOLKIT][TIER-ALLOC] Allocation of size {:L} bytes exceeds max allocation size of {:L}", size,
                 m_MaxAllocation);
     const usize index = getTierIndex(size);
     Tier &tier = m_Tiers[index];
     if (!tier.FreeList)
     {
         TKIT_LOG_WARNING("[TOOLKIT][TIER-ALLOC] Allocator ran out of slots when trying to perform an allocation for "
-                         "tier index {} and size {}",
+                         "tier index {} and size {:L}",
                          index, size);
         return nullptr;
     }
     TKIT_ASSERT(
         (++tier.Allocations - tier.Deallocations) <= tier.Slots,
-        "[TOOLKIT][TIER-ALLOC] Allocator is malformed. Tier of index {} (with allocation of size {}) exceeded slots "
+        "[TOOLKIT][TIER-ALLOC] Allocator is malformed. Tier of index {} (with allocation of size {:L}) exceeded slots "
         "(allocations - deallocations) = ({} - {}) = {} > slots = {}, but allocator did not attempt to return nullptr",
         index, size, tier.Allocations, tier.Deallocations, tier.Allocations - tier.Deallocations, tier.Slots);
 
@@ -296,7 +296,7 @@ void TierAllocator::Deallocate(void *ptr, const usize size)
     Tier &tier = m_Tiers[index];
     TKIT_ASSERT(tier.Allocations >= ++tier.Deallocations,
                 "[TOOLKIT][TIER-ALLOC] Attempting to deallocate more times than the amount of active alocations there "
-                "are for the tier index {} and size {}, with {} allocations and {} deallocations",
+                "are for the tier index {} and size {:L}, with {} allocations and {} deallocations",
                 index, size, tier.Allocations, tier.Deallocations);
 
     Allocation *alloc = static_cast<Allocation *>(ptr);

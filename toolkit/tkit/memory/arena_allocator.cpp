@@ -8,16 +8,16 @@ namespace TKit
 ArenaAllocator::ArenaAllocator(void *buffer, const usize capacity, const usize alignment)
     : m_Buffer(static_cast<std::byte *>(buffer)), m_Capacity(capacity), m_Alignment(alignment), m_Provided(true)
 {
-    TKIT_ASSERT(IsPowerOfTwo(alignment),
-                "[TOOLKIT][ARENA-ALLOC] Alignment must be a power of 2, but the value is {}", alignment);
+    TKIT_ASSERT(IsPowerOfTwo(alignment), "[TOOLKIT][ARENA-ALLOC] Alignment must be a power of 2, but the value is {}",
+                alignment);
     TKIT_ASSERT(IsAligned(buffer, alignment),
                 "[TOOLKIT][ARENA-ALLOC] Provided buffer must be aligned to the given alignment of {}", alignment);
 }
 ArenaAllocator::ArenaAllocator(const usize capacity, const usize alignment)
     : m_Capacity(capacity), m_Alignment(alignment), m_Provided(false)
 {
-    TKIT_ASSERT(IsPowerOfTwo(alignment),
-                "[TOOLKIT][ARENA-ALLOC] Alignment must be a power of 2, but the value is {}", alignment);
+    TKIT_ASSERT(IsPowerOfTwo(alignment), "[TOOLKIT][ARENA-ALLOC] Alignment must be a power of 2, but the value is {}",
+                alignment);
     m_Buffer = static_cast<std::byte *>(AllocateAligned(static_cast<size_t>(capacity), alignment));
     TKIT_ASSERT(m_Buffer, "[TOOLKIT][ARENA-ALLOC] Failed to allocate memory");
 }
@@ -63,9 +63,9 @@ void *ArenaAllocator::Allocate(const usize size)
     const usize asize = NextAlignedSize(size, m_Alignment);
     if (m_Top + asize > m_Capacity)
     {
-        TKIT_LOG_WARNING(
-            "[TOOLKIT][ARENA-ALLOC] Allocator ran out of memory while trying to allocate {} bytes (only {} remaining)",
-            asize, m_Capacity - m_Top);
+        TKIT_LOG_WARNING("[TOOLKIT][ARENA-ALLOC] Allocator ran out of memory while trying to allocate {:L} bytes (only "
+                         "{} remaining)",
+                         asize, m_Capacity - m_Top);
         return nullptr;
     }
 

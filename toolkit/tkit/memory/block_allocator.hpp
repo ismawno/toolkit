@@ -82,10 +82,11 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
      */
     template <typename T> T *Allocate()
     {
-        TKIT_ASSERT(sizeof(T) <= m_AllocationSize,
-                    "[TOOLKIT][BLOCK-ALLOC] Block allocator allocation size is {}, but sizeof(T) is {} bytes, which "
-                    "does not fit into an allocation",
-                    m_AllocationSize, sizeof(T));
+        TKIT_ASSERT(
+            sizeof(T) <= m_AllocationSize,
+            "[TOOLKIT][BLOCK-ALLOC] Block allocator allocation size is {:L}, but sizeof(T) is {:L} bytes, which "
+            "does not fit into an allocation",
+            m_AllocationSize, sizeof(T));
         T *ptr = static_cast<T *>(Allocate());
         TKIT_ASSERT(!ptr || IsAligned(ptr, alignof(T)),
                     "[TOOLKIT][BLOCK-ALLOC] Type T has stronger memory alignment requirements than specified. Bump the "

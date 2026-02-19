@@ -8,8 +8,8 @@ namespace TKit
 StackAllocator::StackAllocator(void *buffer, const usize capacity, const usize alignment)
     : m_Buffer(static_cast<std::byte *>(buffer)), m_Capacity(capacity), m_Alignment(alignment), m_Provided(true)
 {
-    TKIT_ASSERT(IsPowerOfTwo(alignment),
-                "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2, but the value is {}", alignment);
+    TKIT_ASSERT(IsPowerOfTwo(alignment), "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2, but the value is {}",
+                alignment);
     TKIT_ASSERT(IsAligned(buffer, alignment),
                 "[TOOLKIT][STACK-ALLOC] Provided buffer must be aligned to the given alignment of {}", alignment);
 }
@@ -17,11 +17,11 @@ StackAllocator::StackAllocator(void *buffer, const usize capacity, const usize a
 StackAllocator::StackAllocator(const usize capacity, const usize alignment)
     : m_Capacity(capacity), m_Alignment(alignment), m_Provided(false)
 {
-    TKIT_ASSERT(IsPowerOfTwo(alignment),
-                "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2, but the value is {}", alignment);
-    m_Buffer = static_cast<std::byte *>(AllocateAligned(static_cast<size_t>(capacity), alignment));
-    TKIT_ASSERT(m_Buffer, "[TOOLKIT][STACK-ALLOC] Failed to allocate {} bytes of memory aligned to {} bytes", capacity,
+    TKIT_ASSERT(IsPowerOfTwo(alignment), "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2, but the value is {}",
                 alignment);
+    m_Buffer = static_cast<std::byte *>(AllocateAligned(static_cast<size_t>(capacity), alignment));
+    TKIT_ASSERT(m_Buffer, "[TOOLKIT][STACK-ALLOC] Failed to allocate {:L} bytes of memory aligned to {:L} bytes",
+                capacity, alignment);
 }
 
 StackAllocator::~StackAllocator()
@@ -67,9 +67,9 @@ void *StackAllocator::Allocate(const usize size)
     const usize asize = NextAlignedSize(size, m_Alignment);
     if (m_Top + asize > m_Capacity)
     {
-        TKIT_LOG_WARNING(
-            "[TOOLKIT][STACK-ALLOC] Allocator ran out of memory while trying to allocate {} bytes (only {} remaining)",
-            asize, m_Capacity - m_Top);
+        TKIT_LOG_WARNING("[TOOLKIT][STACK-ALLOC] Allocator ran out of memory while trying to allocate {:L} bytes (only "
+                         "{:L} remaining)",
+                         asize, m_Capacity - m_Top);
         return nullptr;
     }
 

@@ -62,7 +62,7 @@ template <typename T> struct ArenaAllocation
             Allocator = GetArena();
         TKIT_ASSERT(Allocator, "[TOOLKIT][ARENA-ARRAY] Array must have a valid allocator to allocate memory");
         Data = Allocator->Allocate<T>(capacity);
-        TKIT_ASSERT(Data, "[TOOLKIT][ARENA-ARRAY] Failed to allocate {} bytes of memory", capacity * sizeof(T));
+        TKIT_ASSERT(Data, "[TOOLKIT][ARENA-ARRAY] Failed to allocate {:L} bytes of memory", capacity * sizeof(T));
         Capacity = capacity;
     }
 

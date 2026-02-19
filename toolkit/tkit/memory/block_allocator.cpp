@@ -9,17 +9,21 @@ BlockAllocator::BlockAllocator(const usize bufferSize, const usize allocationSiz
     : m_BufferSize(bufferSize), m_AllocationSize(allocationSize), m_Provided(false)
 {
     TKIT_ASSERT(allocationSize >= sizeof(Allocation),
-                "[TOOLKIT][BLOCK-ALLOC] The allocation size must be at least {} bytes", sizeof(Allocation));
+                "[TOOLKIT][BLOCK-ALLOC] The allocation size must be at least {:L} bytes", sizeof(Allocation));
     TKIT_ASSERT(bufferSize % alignment == 0, "[TOOLKIT][BLOCK-ALLOC] The buffer size must be a multiple of the "
                                              "alignment to ensure every block of memory is aligned to it");
-    TKIT_ASSERT(
-        bufferSize % allocationSize == 0,
-        "[TOOLKIT][BLOCK-ALLOC] The buffer size must be a multiple of the allocation size to guarantee a tight fit");
-    TKIT_ASSERT(allocationSize % alignment == 0, "[TOOLKIT][BLOCK-ALLOC] The allocation size must be a multiple of "
-                                                 "the alignment to ensure every block of memory is aligned to it");
+    TKIT_ASSERT(bufferSize % allocationSize == 0,
+                "[TOOLKIT][BLOCK-ALLOC] The buffer size must be a multiple of the allocation size to guarantee a tight "
+                "fit, but got {:L}",
+                bufferSize);
+    TKIT_ASSERT(allocationSize % alignment == 0,
+                "[TOOLKIT][BLOCK-ALLOC] The allocation size must be a multiple of "
+                "the alignment to ensure every block of memory is aligned to it, but got {:L}",
+                allocationSize);
 
     m_Buffer = static_cast<std::byte *>(AllocateAligned(bufferSize, alignment));
-    TKIT_ASSERT(m_Buffer, "[TOOLKIT][BLOCK-ALLOC] Failed to allocate memory");
+    TKIT_ASSERT(m_Buffer, "[TOOLKIT][BLOCK-ALLOC] Failed to allocate {:L} bytes of memory aligned to {:L} bytes",
+                bufferSize, alignment);
     setupMemoryLayout();
 }
 
@@ -27,9 +31,10 @@ BlockAllocator::BlockAllocator(void *buffer, const usize bufferSize, const usize
     : m_Buffer(static_cast<std::byte *>(buffer)), m_BufferSize(bufferSize), m_AllocationSize(allocationSize),
       m_Provided(true)
 {
-    TKIT_ASSERT(
-        bufferSize % allocationSize == 0,
-        "[TOOLKIT][BLOCK-ALLOC] The buffer size must be a multiple of the allocation size to guarantee a tight fit");
+    TKIT_ASSERT(bufferSize % allocationSize == 0,
+                "[TOOLKIT][BLOCK-ALLOC] The buffer size ({:L}) must be a multiple of the allocation size to guarantee "
+                "a tight fit",
+                bufferSize);
     setupMemoryLayout();
 }
 
