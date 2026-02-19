@@ -32,15 +32,18 @@ static usize getTierIndex(const usize size, const usize minAllocation, const usi
     return lastIndex + ((offset - incIndex) << (grIndex - 1)) + (reference >> incIndex);
 }
 TierAllocator::Description TierAllocator::CreateDescription(const usize maxTiers, const usize maxAllocation,
-                                                            const usize minAllocation, const usize granularity,
-                                                            const f32 tierSlotDecay)
+                                                            const usize granularity, const f32 tierSlotDecay,
+                                                            const usize minAllocation)
 {
-    return CreateDescription(TKit::GetArena(), maxTiers, maxAllocation, minAllocation, granularity, tierSlotDecay);
+    return CreateDescription(TKit::GetArena(), maxTiers, maxAllocation, granularity, tierSlotDecay, minAllocation);
 }
 TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *allocator, const usize maxTiers,
-                                                            const usize maxAllocation, const usize minAllocation,
-                                                            const usize granularity, const f32 tierSlotDecay)
+                                                            const usize maxAllocation, const usize granularity,
+                                                            const f32 tierSlotDecay, usize minAllocation)
 {
+    if (minAllocation == 0)
+        minAllocation = granularity * sizeof(void *) / 2;
+
     TKIT_ASSERT(IsPowerOfTwo(maxAllocation) && IsPowerOfTwo(minAllocation) && IsPowerOfTwo(granularity),
                 "[TOOLKIT][TIER-ALLOC] All integer arguments must be powers of two when creating a tier allocator "
                 "description, but the values where {}, {} and {}",
@@ -144,15 +147,15 @@ TierAllocator::Description TierAllocator::CreateDescription(ArenaAllocator *allo
 #endif
     return desc;
 }
-TierAllocator::TierAllocator(const usize maxTiers, const usize maxAllocation, const usize minAllocation,
-                             const usize granularity, const f32 tierSlotDecay, const usize maxAlignment)
-    : TierAllocator(TKit::GetArena(), maxTiers, maxAllocation, minAllocation, granularity, tierSlotDecay, maxAlignment)
+TierAllocator::TierAllocator(const usize maxTiers, const usize maxAllocation, const usize granularity,
+                             const f32 tierSlotDecay, const usize maxAlignment, const usize minAllocation)
+    : TierAllocator(TKit::GetArena(), maxTiers, maxAllocation, granularity, tierSlotDecay, maxAlignment, minAllocation)
 {
 }
 TierAllocator::TierAllocator(ArenaAllocator *allocator, const usize maxTiers, const usize maxAllocation,
-                             const usize minAllocation, const usize granularity, const f32 tierSlotDecay,
-                             const usize maxAlignment)
-    : TierAllocator(CreateDescription(allocator, maxTiers, maxAllocation, minAllocation, granularity, tierSlotDecay),
+                             const usize granularity, const f32 tierSlotDecay, const usize maxAlignment,
+                             const usize minAllocation)
+    : TierAllocator(CreateDescription(allocator, maxTiers, maxAllocation, granularity, tierSlotDecay, minAllocation),
                     maxAlignment)
 {
 }

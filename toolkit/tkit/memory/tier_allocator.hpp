@@ -70,9 +70,6 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
      * the first tier (which is the one with the largest allocation size), meaning only one allocation of
      * `maxAllocation` bytes can be made.
      *
-     * @param minAllocation The minimum allowed allocation. Allocation requests smaller than this size will round up
-     * to `minAllocation`. It can never be smaller than `sizeof(void *)`.
-     *
      * @param granularity It controls how the size difference between tiers evolves, such that the difference between
      * the allocation sizes of tiers i and i + 1 is the next power of 2 from the allocation size i, divided by the
      * granularity. A small granularity causes tier sizes to shrink (remember, tiers are built from biggest to smallest)
@@ -85,20 +82,23 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
      * with smaller allocation sizes. A tier with index i + 1 will have at least the amount of slots tier i has divided
      * by this value. The tier with index 0 has always exactly one slot. Setting this value too low may cause the buffer
      * size to explode.
+     *
+     * @param minAllocation The minimum allowed allocation. Allocation requests smaller than this size will round up
+     * to `minAllocation`. It can never be smaller than `sizeof(void *)`. If zero, it will default to `granularity *
+     * sizeof(void *) / 2`
+     *
      */
     static Description CreateDescription(ArenaAllocator *allocator, usize maxTiers, usize maxAllocation,
-                                         usize minAllocation = 2 * sizeof(void *), usize granularity = 4,
-                                         f32 tierSlotDecay = 0.9f);
-    static Description CreateDescription(usize maxTiers, usize maxAllocation, usize minAllocation = 2 * sizeof(void *),
-                                         usize granularity = 4, f32 tierSlotDecay = 0.9f);
+                                         usize granularity = 4, f32 tierSlotDecay = 0.9f, usize minAllocation = 0);
+    static Description CreateDescription(usize maxTiers, usize maxAllocation, usize granularity = 4,
+                                         f32 tierSlotDecay = 0.9f, usize minAllocation = 0);
 
-    explicit TierAllocator(ArenaAllocator *allocator, usize maxTiers, usize maxAllocation,
-                           usize minAllocation = 2 * sizeof(void *), usize granularity = 4, f32 tierSlotDecay = 0.9f,
-                           usize maxAlignment = 64);
+    explicit TierAllocator(ArenaAllocator *allocator, usize maxTiers, usize maxAllocation, usize granularity = 4,
+                           f32 tierSlotDecay = 0.9f, usize maxAlignment = 64, usize minAllocation = 0);
     explicit TierAllocator(const Description &description, usize maxAlignment = 64);
 
-    explicit TierAllocator(usize maxTiers, usize maxAllocation, usize minAllocation = 2 * sizeof(void *),
-                           usize granularity = 4, f32 tierSlotDecay = 0.9f, usize maxAlignment = 64);
+    explicit TierAllocator(usize maxTiers, usize maxAllocation, usize granularity = 4, f32 tierSlotDecay = 0.9f,
+                           usize maxAlignment = 64, usize minAllocation = 0);
 
     ~TierAllocator();
 
