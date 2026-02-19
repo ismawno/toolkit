@@ -152,15 +152,14 @@ TierAllocator::TierAllocator(const usize maxTiers, const usize maxAllocation, co
 TierAllocator::TierAllocator(ArenaAllocator *allocator, const usize maxTiers, const usize maxAllocation,
                              const usize minAllocation, const usize granularity, const f32 tierSlotDecay,
                              const usize maxAlignment)
-    : TierAllocator(allocator, maxTiers,
-                    CreateDescription(allocator, maxTiers, maxAllocation, minAllocation, granularity, tierSlotDecay),
+    : TierAllocator(CreateDescription(allocator, maxTiers, maxAllocation, minAllocation, granularity, tierSlotDecay),
                     maxAlignment)
 {
 }
 
-TierAllocator::TierAllocator(ArenaAllocator *allocator, const usize maxTiers, const Description &description,
-                             const usize maxAlignment)
-    : m_Tiers(allocator, maxTiers), m_MinAllocation(description.MinAllocation), m_Granularity(description.Granularity)
+TierAllocator::TierAllocator(const Description &description, const usize maxAlignment)
+    : m_Tiers(description.Tiers.GetAllocator(), description.Tiers.GetCapacity()),
+      m_MinAllocation(description.MinAllocation), m_Granularity(description.Granularity)
 {
 #ifdef TKIT_ENABLE_ASSERTS
     m_MaxAllocation = description.MaxAllocation;
@@ -264,7 +263,7 @@ void TierAllocator::deallocateBuffer()
 
 void *TierAllocator::Allocate(const usize size)
 {
-    TKIT_ASSERT(size < m_MaxAllocation,
+    TKIT_ASSERT(size <= m_MaxAllocation,
                 "[TOOLKIT][TIER-ALLOC] Allocation of size {} bytes exceeds max allocation size of {}", size,
                 m_MaxAllocation);
     const usize index = getTierIndex(size);

@@ -515,6 +515,12 @@ template <typename T, typename AllocState> class Array
         m_State.Deallocate();
     }
 
+    constexpr auto GetAllocator() const
+        requires(Type != Array_Static && Type != Array_Dynamic)
+    {
+        return m_State.Allocator;
+    }
+
     constexpr const T *GetData() const
     {
         const T *ptr = reinterpret_cast<const T *>(std::addressof(m_State.Data[0]));

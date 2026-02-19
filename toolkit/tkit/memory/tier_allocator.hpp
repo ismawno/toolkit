@@ -95,12 +95,10 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     explicit TierAllocator(ArenaAllocator *allocator, usize maxTiers, usize maxAllocation,
                            usize minAllocation = 2 * sizeof(void *), usize granularity = 4, f32 tierSlotDecay = 0.9f,
                            usize maxAlignment = 64);
-    explicit TierAllocator(ArenaAllocator *allocator, usize maxTiers, const Description &description,
-                           usize maxAlignment = 64);
+    explicit TierAllocator(const Description &description, usize maxAlignment = 64);
 
     explicit TierAllocator(usize maxTiers, usize maxAllocation, usize minAllocation = 2 * sizeof(void *),
                            usize granularity = 4, f32 tierSlotDecay = 0.9f, usize maxAlignment = 64);
-    explicit TierAllocator(usize maxTiers, const Description &description, usize maxAlignment = 64);
 
     ~TierAllocator();
 
