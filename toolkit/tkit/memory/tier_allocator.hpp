@@ -9,9 +9,127 @@
 #include "tkit/memory/memory.hpp"
 #include "tkit/utils/non_copyable.hpp"
 #include "tkit/utils/debug.hpp"
+#include "tkit/utils/literals.hpp"
 
 namespace TKit
 {
+/**
+ * @brief Create a tier allocator description.
+ *
+ * The choice of description parameters heavily influences the layout of the tiers and how many allocations each
+ * tier supports. The default parameters are suited to create an allocator that supports allocations of up to 1 mb
+ * with a reasonable total buffer size. Check the description values to make sure the buffer size has a value that
+ * works for you.
+ *
+ * All integer parameters (except for `maxTiers`) must be powers of 2. The maximum alignment is provided at
+ * construction. Every allocation is guaranteed to be aligned to the maximum alignment or its natural alignment, so
+ * the allocator will respect alignment requirements (including the ones set by `alignas`) up to the specified
+ * maximum alignment.
+ *
+ * @param maxAllocation The maximum allocation size the allocator will support. This also equals to the size of
+ * the first tier (which is the one with the largest allocation size), meaning only one allocation of
+ * `maxAllocation` bytes can be made.
+ *
+ * @param tierSlotDecay A value between 0 and 1 that controls how the amount of slots scales when creating tiers
+ * with smaller allocation sizes. A tier with index i + 1 will have at least the amount of slots tier i has divided
+ * by this value. The tier with index 0 has always exactly one slot. Setting this value too low may cause the buffer
+ * size to explode.
+ *
+ * @param granularity It controls how the size difference between tiers evolves, such that the difference between
+ * the allocation sizes of tiers i and i + 1 is the next power of 2 from the allocation size i, divided by the
+ * granularity. A small granularity causes tier sizes to shrink (remember, tiers are built from biggest to smallest)
+ * fast in between tiers, reaching `minAllocation` from `maxAllocation` quicker and thus resulting in a smaller
+ * total buffer size, but fragmentation risk is higher. Bigger granularities prevent fragmentation but cause the
+ * total buffer size to explode very fast. A granularity of 2 for instance means that tiers always double their
+ * capacity with respect the previous one. It cannot be greater than `minAllocation`.
+ *
+ * @param minAllocation The minimum allowed allocation. Allocation requests smaller than this size will round up
+ * to `minAllocation`. It can never be smaller than `sizeof(void *)`. If zero, it will default to `granularity *
+ * sizeof(void *) / 2`
+ *
+ */
+struct TierSpecs
+{
+    ArenaAllocator *Allocator = nullptr;
+    usize MaxTiers = 64;
+    usize Granularity = 4;
+    usize MinAllocation = 0; // will default to Granularity * sizeof(void *) / 2
+    usize MaxAllocation = 1_kib;
+    f32 TierSlotDecay = 0.9f;
+};
+
+struct TierInfo
+{
+    usize Size;
+    usize AllocationSize;
+    usize Slots;
+};
+
+class TierDescriptions
+{
+  public:
+    TierDescriptions(const TierSpecs &specs = {});
+
+    usize GetTierIndex(usize size) const;
+
+    const ArenaArray<TierInfo> &GetTiers() const
+    {
+        return m_Tiers;
+    }
+    usize GetBufferSize() const
+    {
+        return m_BufferSize;
+    }
+    usize GetGranularity() const
+    {
+        return m_Granularity;
+    }
+    usize GetMinAllocation() const
+    {
+        return m_MinAllocation;
+    }
+    usize GetMaxAllocation() const
+    {
+        return m_MaxAllocation;
+    }
+
+    void SetMinSlotsForSize(const usize size, const usize slots)
+    {
+        SetMinSlotsForIndex(GetTierIndex(size), slots);
+    }
+    void SetMinSlotsForIndex(const usize index, const usize slots)
+    {
+        m_MinSlots[index] = slots;
+        buildTierLayout();
+    }
+
+    void SetGranularity(const usize granularity)
+    {
+        m_Granularity = granularity;
+        buildTierLayout();
+    }
+    void SetMinAllocation(const usize minAllocation)
+    {
+        m_MinAllocation = minAllocation;
+        buildTierLayout();
+    }
+    void SetMaxAllocation(const usize maxAllocation)
+    {
+        m_MaxAllocation = maxAllocation;
+        buildTierLayout();
+    }
+
+  private:
+    void buildTierLayout();
+
+    ArenaArray<TierInfo> m_Tiers;
+    ArenaArray<usize> m_MinSlots{};
+    usize m_BufferSize;
+    usize m_Granularity;
+    usize m_MinAllocation;
+    usize m_MaxAllocation;
+};
+
 /**
  * @brief A fast general purpose allocator consisting of multiple tiers that allow for different, fixed allocation
  * sizes.
@@ -32,73 +150,8 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 {
     TKIT_NON_COPYABLE(TierAllocator)
   public:
-    struct TierInfo
-    {
-        usize Size;
-        usize AllocationSize;
-        usize Slots;
-    };
-    struct Description
-    {
-        Description(ArenaAllocator *allocator, const usize maxTiers) : Tiers(allocator, maxTiers)
-        {
-        }
-        ArenaArray<TierInfo> Tiers;
-        usize BufferSize;
-        usize MaxAllocation;
-        usize MinAllocation;
-        usize Granularity;
-        f32 TierSlotDecay;
-
-        usize GetTierIndex(usize size) const;
-    };
-
-    /**
-     * @brief Create a tier allocator description.
-     *
-     * The choice of description parameters heavily influences the layout of the tiers and how many allocations each
-     * tier supports. The default parameters are suited to create an allocator that supports allocations of up to 1 mb
-     * with a reasonable total buffer size. Check the description values to make sure the buffer size has a value that
-     * works for you.
-     *
-     * All integer parameters (except for `maxTiers`) must be powers of 2. The maximum alignment is provided at
-     * construction. Every allocation is guaranteed to be aligned to the maximum alignment or its natural alignment, so
-     * the allocator will respect alignment requirements (including the ones set by `alignas`) up to the specified
-     * maximum alignment.
-     *
-     * @param maxAllocation The maximum allocation size the allocator will support. This also equals to the size of
-     * the first tier (which is the one with the largest allocation size), meaning only one allocation of
-     * `maxAllocation` bytes can be made.
-     *
-     * @param tierSlotDecay A value between 0 and 1 that controls how the amount of slots scales when creating tiers
-     * with smaller allocation sizes. A tier with index i + 1 will have at least the amount of slots tier i has divided
-     * by this value. The tier with index 0 has always exactly one slot. Setting this value too low may cause the buffer
-     * size to explode.
-     *
-     * @param granularity It controls how the size difference between tiers evolves, such that the difference between
-     * the allocation sizes of tiers i and i + 1 is the next power of 2 from the allocation size i, divided by the
-     * granularity. A small granularity causes tier sizes to shrink (remember, tiers are built from biggest to smallest)
-     * fast in between tiers, reaching `minAllocation` from `maxAllocation` quicker and thus resulting in a smaller
-     * total buffer size, but fragmentation risk is higher. Bigger granularities prevent fragmentation but cause the
-     * total buffer size to explode very fast. A granularity of 2 for instance means that tiers always double their
-     * capacity with respect the previous one. It cannot be greater than `minAllocation`.
-     *
-     * @param minAllocation The minimum allowed allocation. Allocation requests smaller than this size will round up
-     * to `minAllocation`. It can never be smaller than `sizeof(void *)`. If zero, it will default to `granularity *
-     * sizeof(void *) / 2`
-     *
-     */
-    static Description CreateDescription(ArenaAllocator *allocator, usize maxTiers, usize maxAllocation,
-                                         f32 tierSlotDecay = 0.9f, usize granularity = 4, usize minAllocation = 0);
-    static Description CreateDescription(usize maxTiers, usize maxAllocation, f32 tierSlotDecay = 0.9f,
-                                         usize granularity = 4, usize minAllocation = 0);
-
-    explicit TierAllocator(ArenaAllocator *allocator, usize maxTiers, usize maxAllocation, f32 tierSlotDecay = 0.9f,
-                           usize granularity = 4, usize maxAlignment = 64, usize minAllocation = 0);
-    explicit TierAllocator(const Description &description, usize maxAlignment = 64);
-
-    explicit TierAllocator(usize maxTiers, usize maxAllocation, f32 tierSlotDecay = 0.9f, usize granularity = 4,
-                           usize maxAlignment = 64, usize minAllocation = 0);
+    explicit TierAllocator(const TierDescriptions &tiers, usize maxAlignment = 64);
+    explicit TierAllocator(const TierSpecs &specs = {}, usize maxAlignment = 64);
 
     ~TierAllocator();
 
@@ -200,9 +253,9 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 
     usize getTierIndex(usize size) const;
 #ifdef TKIT_ENABLE_ASSERTS
-    void setupMemoryLayout(const Description &description, usize maxAlignment);
+    void setupMemoryLayout(const TierDescriptions &tiers, usize maxAlignment);
 #else
-    void setupMemoryLayout(const Description &description);
+    void setupMemoryLayout(const TierDescriptions &tiers);
 #endif
     void deallocateBuffer();
 

@@ -13,7 +13,7 @@ using namespace TKit::Alias;
 static u32 g_Constructions = 0;
 static u32 g_Destructions = 0;
 static ArenaAllocator s_Arena{10_kib};
-static TierAllocator s_Alloc{&s_Arena, 32, 16_kib};
+static TierAllocator s_Alloc{{.Allocator = &s_Arena, .MaxAllocation = 16_kib}};
 struct TTrackable
 {
     u32 Value;

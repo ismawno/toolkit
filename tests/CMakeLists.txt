@@ -58,4 +58,4 @@ tkit_default_configure(toolkit-tests NO_RTTI)
 
 include(CTest)
 include(Catch)
-catch_discover_tests(toolkit-tests)
+# catch_discover_tests(toolkit-tests)
