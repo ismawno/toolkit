@@ -252,29 +252,66 @@ void TierAllocator::deallocateBuffer()
         DeallocateAligned(m_Buffer);
 }
 
+void *TierAllocator::allocate(const usize tierIndex, const usize size)
+{
+    Tier &tier = m_Tiers[tierIndex];
+    if (!tier.FreeList)
+    {
+        void *ptr = tierIndex != 0 ? allocate(tierIndex - 1, size) : nullptr;
+#ifdef TKIT_ENABLE_ASSERTS
+        if (ptr)
+        {
+            ++tier.Slots;
+            TKIT_ASSERT((++tier.Allocations - tier.Deallocations) <= tier.Slots,
+                        "[TOOLKIT][TIER-ALLOC] Allocator is malformed. Tier of index {} (with allocation of size {:L}) "
+                        "exceeded slots "
+                        "(allocations - deallocations) = ({} - {}) = {} > slots = {}, but allocator did not attempt to "
+                        "return nullptr",
+                        tierIndex, size, tier.Allocations, tier.Deallocations, tier.Allocations - tier.Deallocations,
+                        tier.Slots);
+        }
+#endif
+        TKIT_LOG_WARNING_IF(ptr,
+                            "[TOOLKIT][TIER-ALLOC] Allocator ran out of slots when trying to perform an allocation for "
+                            "tier index {} and size {:L}. A slot was stolen from tier index {}",
+                            tierIndex, size, tierIndex - 1);
+        TKIT_LOG_ERROR_IF(tierIndex == 0 && !ptr,
+                          "[TOOLKIT][TIER-ALLOC] Allocator ran out of memory when trying to perform an allocation for "
+                          "tier index {} and size {:L}",
+                          tierIndex, size);
+        return ptr;
+    }
+#ifdef TKIT_ENABLE_ASSERTS
+    const usize index = getTierIndex(size);
+    TKIT_ASSERT(index >= tierIndex,
+                "[TOOLKIT][TIER-ALLOC] Trying to allocate {:L} bytes that map to the tier index {}, but are being "
+                "allocated in tier index {} which has insufficient capacity for it",
+                size, index, tierIndex);
+    if (index != tierIndex)
+        --tier.Slots; // we are being robbed
+    else
+    {
+        TKIT_ASSERT((++tier.Allocations - tier.Deallocations) <= tier.Slots,
+                    "[TOOLKIT][TIER-ALLOC] Allocator is malformed. Tier of index {} (with allocation of size {:L}) "
+                    "exceeded slots "
+                    "(allocations - deallocations) = ({} - {}) = {} > slots = {}, but allocator did not attempt to "
+                    "return nullptr",
+                    tierIndex, size, tier.Allocations, tier.Deallocations, tier.Allocations - tier.Deallocations,
+                    tier.Slots);
+    }
+#endif
+
+    Allocation *alloc = tier.FreeList;
+    tier.FreeList = alloc->Next;
+    return alloc;
+}
 void *TierAllocator::Allocate(const usize size)
 {
     TKIT_ASSERT(size <= m_MaxAllocation,
                 "[TOOLKIT][TIER-ALLOC] Allocation of size {:L} bytes exceeds max allocation size of {:L}", size,
                 m_MaxAllocation);
     const usize index = getTierIndex(size);
-    Tier &tier = m_Tiers[index];
-    if (!tier.FreeList)
-    {
-        TKIT_LOG_WARNING("[TOOLKIT][TIER-ALLOC] Allocator ran out of slots when trying to perform an allocation for "
-                         "tier index {} and size {:L}",
-                         index, size);
-        return nullptr;
-    }
-    TKIT_ASSERT(
-        (++tier.Allocations - tier.Deallocations) <= tier.Slots,
-        "[TOOLKIT][TIER-ALLOC] Allocator is malformed. Tier of index {} (with allocation of size {:L}) exceeded slots "
-        "(allocations - deallocations) = ({} - {}) = {} > slots = {}, but allocator did not attempt to return nullptr",
-        index, size, tier.Allocations, tier.Deallocations, tier.Allocations - tier.Deallocations, tier.Slots);
-
-    Allocation *alloc = tier.FreeList;
-    tier.FreeList = alloc->Next;
-    return alloc;
+    return allocate(index, size);
 }
 
 void TierAllocator::Deallocate(void *ptr, const usize size)

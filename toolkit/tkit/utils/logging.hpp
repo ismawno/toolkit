@@ -38,20 +38,37 @@
 
 namespace TKit::Detail
 {
-#ifdef TKIT_ENABLE_DEBUG_LOGS
-inline thread_local bool t_DisabledDebugLogs = false;
-#endif
+#define TKIT_DEBUG_LOGS_BIT (1 << 0)
+#define TKIT_INFO_LOGS_BIT (1 << 1)
+#define TKIT_WARNING_LOGS_BIT (1 << 2)
+#define TKIT_ERROR_LOGS_BIT (1 << 3)
 
-#ifdef TKIT_ENABLE_INFO_LOGS
-inline thread_local bool t_DisabledInfoLogs = false;
-#endif
+#if defined(TKIT_ENABLE_DEBUG_LOGS) || defined(TKIT_ENABLE_INFO_LOGS) || defined(TKIT_ENABLE_WARNING_LOGS) ||          \
+    defined(TKIT_ENABLE_ERROR_LOGS)
 
-#ifdef TKIT_ENABLE_WARNING_LOGS
-inline thread_local bool t_DisabledWarningLogs = false;
-#endif
+#    ifndef TKIT_LOGS_MAX_STACK
+#        define TKIT_LOGS_MAX_STACK 8
+#    endif
 
-#ifdef TKIT_ENABLE_ERROR_LOGS
-inline thread_local bool t_DisabledErrorLogs = false;
+inline thread_local u8 t_LogMask =
+    TKIT_DEBUG_LOGS_BIT | TKIT_INFO_LOGS_BIT | TKIT_WARNING_LOGS_BIT | TKIT_ERROR_LOGS_BIT;
+inline thread_local u8 t_LogStack[TKIT_LOGS_MAX_STACK];
+inline thread_local usize t_LogIndex = 0;
+
+#    define TKIT_LOGS_PUSH() TKit::Detail::t_LogStack[TKit::Detail::t_LogIndex++] = TKit::Detail::t_LogMask
+#    define TKIT_LOGS_POP() TKit::Detail::t_LogMask = TKit::Detail::t_LogStack[--TKit::Detail::t_LogIndex]
+
+#    define TKIT_LOGS_ENABLE(mask) TKit::Detail::t_LogMask |= (mask)
+#    define TKIT_LOGS_DISABLE(mask) TKit::Detail::t_LogMask &= ~(mask)
+
+#else
+
+#    define TKIT_LOGS_PUSH()
+#    define TKIT_LOGS_POP()
+
+#    define TKIT_LOGS_ENABLE(mask)
+#    define TKIT_LOGS_DISABLE(mask)
+
 #endif
 
 void Log(std::string_view message, const char *level, const char *color);
@@ -72,11 +89,11 @@ CREATE_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)
 
 #ifdef TKIT_ENABLE_DEBUG_LOGS
 #    define TKIT_LOG_DEBUG(...)                                                                                        \
-        if (!TKit::Detail::t_DisabledDebugLogs)                                                                        \
+        if (TKit::Detail::t_LogMask & TKIT_DEBUG_LOGS_BIT)                                                             \
         TKit::Detail::Log(TKit::Format(__VA_ARGS__), "DEBUG", TKIT_LOG_COLOR_DEBUG)
 
 #    define TKIT_LOG_DEBUG_IF(condition, ...)                                                                          \
-        if (!TKit::Detail::t_DisabledDebugLogs && (condition))                                                         \
+        if ((TKit::Detail::t_LogMask & TKIT_DEBUG_LOGS_BIT) && (condition))                                            \
         TKit::Detail::Log(TKit::Format(__VA_ARGS__), "DEBUG", TKIT_LOG_COLOR_DEBUG)
 
 #    define TKIT_LOG_DEBUG_IF_RETURNS(expression, expected, ...)                                                       \
@@ -84,25 +101,21 @@ CREATE_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)
 #    define TKIT_LOG_DEBUG_IF_NOT_RETURNS(expression, expected, ...)                                                   \
         TKIT_LOG_DEBUG_IF((expression) != (expected), __VA_ARGS__)
 
-#    define TKIT_IGNORE_DEBUG_LOGS(disable) TKit::Detail::t_DisabledDebugLogs = disable
-
 #else
 #    define TKIT_LOG_DEBUG(message, ...)
 #    define TKIT_LOG_DEBUG_IF(condition, message, ...)
 
 #    define TKIT_LOG_DEBUG_IF_RETURNS(expression, expected, ...) expression
 #    define TKIT_LOG_DEBUG_IF_NOT_RETURNS(expression, expected, ...) expression
-
-#    define TKIT_IGNORE_DEBUG_LOGS(disable)
 #endif
 
 #ifdef TKIT_ENABLE_INFO_LOGS
 #    define TKIT_LOG_INFO(...)                                                                                         \
-        if (!TKit::Detail::t_DisabledInfoLogs)                                                                         \
+        if (TKit::Detail::t_LogMask & TKIT_INFO_LOGS_BIT)                                                              \
         TKit::Detail::Log(TKit::Format(__VA_ARGS__), "INFO", TKIT_LOG_COLOR_INFO)
 
 #    define TKIT_LOG_INFO_IF(condition, ...)                                                                           \
-        if (!TKit::Detail::t_DisabledInfoLogs && (condition))                                                          \
+        if ((TKit::Detail::t_LogMask & TKIT_INFO_LOGS_BIT) && (condition))                                             \
         TKit::Detail::Log(TKit::Format(__VA_ARGS__), "INFO", TKIT_LOG_COLOR_INFO)
 
 #    define TKIT_LOG_INFO_IF_RETURNS(expression, expected, ...)                                                        \
@@ -110,25 +123,21 @@ CREATE_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)
 #    define TKIT_LOG_INFO_IF_NOT_RETURNS(expression, expected, ...)                                                    \
         TKIT_LOG_INFO_IF((expression) != (expected), __VA_ARGS__)
 
-#    define TKIT_IGNORE_INFO_LOGS(disable) TKit::Detail::t_DisabledInfoLogs = disable
-
 #else
 #    define TKIT_LOG_INFO(message, ...)
 #    define TKIT_LOG_INFO_IF(condition, message, ...)
 
 #    define TKIT_LOG_INFO_IF_RETURNS(expression, expected, ...) expression
 #    define TKIT_LOG_INFO_IF_NOT_RETURNS(expression, expected, ...) expression
-
-#    define TKIT_IGNORE_INFO_LOGS(disable)
 #endif
 
 #ifdef TKIT_ENABLE_WARNING_LOGS
 #    define TKIT_LOG_WARNING(...)                                                                                      \
-        if (!TKit::Detail::t_DisabledWarningLogs)                                                                      \
+        if (TKit::Detail::t_LogMask & TKIT_WARNING_LOGS_BIT)                                                           \
         TKit::Detail::Log(TKit::Format(__VA_ARGS__), "WARNING", TKIT_LOG_COLOR_WARNING)
 
 #    define TKIT_LOG_WARNING_IF(condition, ...)                                                                        \
-        if (!TKit::Detail::t_DisabledWarningLogs && (condition))                                                       \
+        if ((TKit::Detail::t_LogMask & TKIT_WARNING_LOGS_BIT) && (condition))                                          \
         TKit::Detail::Log(TKit::Format(__VA_ARGS__), "WARNING", TKIT_LOG_COLOR_WARNING)
 
 #    define TKIT_LOG_WARNING_IF_RETURNS(expression, expected, ...)                                                     \
@@ -136,25 +145,21 @@ CREATE_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)
 #    define TKIT_LOG_WARNING_IF_NOT_RETURNS(expression, expected, ...)                                                 \
         TKIT_LOG_WARNING_IF((expression) != (expected), __VA_ARGS__)
 
-#    define TKIT_IGNORE_WARNING_LOGS(disable) TKit::Detail::t_DisabledWarningLogs = disable
-
 #else
 #    define TKIT_LOG_WARNING(message, ...)
 #    define TKIT_LOG_WARNING_IF(condition, message, ...)
 
 #    define TKIT_LOG_WARNING_IF_RETURNS(expression, expected, ...) expression
 #    define TKIT_LOG_WARNING_IF_NOT_RETURNS(expression, expected, ...) expression
-
-#    define TKIT_IGNORE_WARNING_LOGS(disable)
 #endif
 
 #ifdef TKIT_ENABLE_ERROR_LOGS
 #    define TKIT_LOG_ERROR(...)                                                                                        \
-        if (!TKit::Detail::t_DisabledErrorLogs)                                                                        \
+        if (TKit::Detail::t_LogMask & TKIT_ERROR_LOGS_BIT)                                                             \
         TKit::Detail::Log(TKit::Format(__VA_ARGS__), "ERROR", TKIT_LOG_COLOR_ERROR)
 
 #    define TKIT_LOG_ERROR_IF(condition, ...)                                                                          \
-        if (!TKit::Detail::t_DisabledErrorLogs && (condition))                                                         \
+        if ((TKit::Detail::t_LogMask & TKIT_ERROR_LOGS_BIT) && (condition))                                            \
         TKit::Detail::Log(TKit::Format(__VA_ARGS__), "ERROR", TKIT_LOG_COLOR_ERROR)
 
 #    define TKIT_LOG_ERROR_IF_RETURNS(expression, expected, ...)                                                       \
@@ -162,16 +167,12 @@ CREATE_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)
 #    define TKIT_LOG_ERROR_IF_NOT_RETURNS(expression, expected, ...)                                                   \
         TKIT_LOG_ERROR_IF((expression) != (expected), __VA_ARGS__)
 
-#    define TKIT_IGNORE_ERROR_LOGS(disable) TKit::Detail::t_DisabledErrorLogs = disable
-
 #else
 #    define TKIT_LOG_ERROR(message, ...)
 #    define TKIT_LOG_ERROR_IF(condition, message, ...)
 
 #    define TKIT_LOG_ERROR_IF_RETURNS(expression, expected, ...) expression
 #    define TKIT_LOG_ERROR_IF_NOT_RETURNS(expression, expected, ...) expression
-
-#    define TKIT_IGNORE_ERROR_LOGS(disable)
 #endif
 #undef CREATE_LOGGING_FUNCTIONS
 } // namespace TKit
