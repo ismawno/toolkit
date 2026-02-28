@@ -55,10 +55,10 @@ void CheckOutOfBounds(const char *level, const char *color, const char *file, i3
 #    define TKIT_CHECK_NOT_RETURNS(expression, expected, ...)                                                          \
         TKIT_ASSERT((expression) != (expected)__VA_OPT__(, ) __VA_ARGS__)
 #else
-#    define TKIT_FATAL(message, ...)
-#    define TKIT_ASSERT(condition, message, ...)
+#    define TKIT_FATAL(...)
+#    define TKIT_ASSERT(...)
 
-#    define TKIT_CHECK_RETURNS(expression, expected, ...) expression
-#    define TKIT_CHECK_NOT_RETURNS(expression, expected, ...) expression
-#    define TKIT_CHECK_OUT_OF_BOUNDS(index, size, ...)
+#    define TKIT_CHECK_RETURNS(...) expression
+#    define TKIT_CHECK_NOT_RETURNS(...) expression
+#    define TKIT_CHECK_OUT_OF_BOUNDS(...)
 #endif
