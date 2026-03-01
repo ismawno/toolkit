@@ -57,18 +57,18 @@
  * A pair of macros that will allow you to customize how each field gets (de)serialized. The available options are the
  * following:
  *
- * - `skip-if-missing`: In deserialization, if the field is not found, skip it instead of raising a runtime error.
+ * - `--skip-if-missing`: In deserialization, if the field is not found, skip it instead of raising a runtime error.
  *
- * - `only-serialize`: Only serialize selected fields.
+ * - `--only-serialize`: Only serialize selected fields.
  *
- * - `only-deserialize`: Only deserialize selected fields.
+ * - `--only-deserialize`: Only deserialize selected fields.
  *
- * - `serialize-as` <type>: Override the field's type and use the provided one when serializing.
+ * - `--serialize-as` <type>: Override the field's type and use the provided one when serializing.
  *
- * - `deserialize-as` <type>: Override the field's type and use the provided one when deserializing.
+ * - `--deserialize-as` <type>: Override the field's type and use the provided one when deserializing.
  *
  * You may specify the above options with the group begin macro: `TKIT_YAML_SERIALIZE_GROUP_BEGIN("GroupName",
- * "--skip-if-missing", "serialize-as int")`.
+ * "--skip-if-missing", "--serialize-as int")`.
  */
 #define TKIT_YAML_SERIALIZE_GROUP_BEGIN(...)
 #define TKIT_YAML_SERIALIZE_GROUP_END()
