@@ -7,7 +7,7 @@
 
 #include "tkit/serialization/yaml/codec.hpp"
 #include "tkit/container/fixed_array.hpp"
-#include "tkit/container/static_array.hpp"
+#include "tkit/container/array.hpp"
 #include "tkit/container/span.hpp"
 #include "tkit/container/weak_array.hpp"
 
@@ -36,9 +36,9 @@ template <typename T, usize N> struct Codec<FixedArray<T, N>>
     }
 };
 
-template <typename T, usize N> struct Codec<StaticArray<T, N>>
+template <typename T, typename AllocState> struct Codec<Array<T, AllocState>>
 {
-    static Node Encode(const StaticArray<T, N> &instance)
+    static Node Encode(const Array<T, AllocState> &instance)
     {
         Node node;
         for (const T &element : instance)
@@ -46,32 +46,12 @@ template <typename T, usize N> struct Codec<StaticArray<T, N>>
         return node;
     }
 
-    static bool Decode(const Node &node, StaticArray<T, N> &instance)
-    {
-        if (!node.IsSequence() || node.size() > N)
-            return false;
-
-        for (const Node &element : node)
-            instance.Append(element.template as<T>());
-        return true;
-    }
-};
-
-template <typename T> struct Codec<DynamicArray<T>>
-{
-    static Node Encode(const DynamicArray<T> &instance)
-    {
-        Node node;
-        for (const T &element : instance)
-            node.push_back(element);
-        return node;
-    }
-
-    static bool Decode(const Node &node, DynamicArray<T> &instance)
+    static bool Decode(const Node &node, Array<T, AllocState> &instance)
     {
         if (!node.IsSequence())
             return false;
 
+        instance.Reserve(static_cast<usize>(node.size()));
         for (const Node &element : node)
             instance.Append(element.template as<T>());
         return true;
