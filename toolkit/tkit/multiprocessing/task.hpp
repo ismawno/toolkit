@@ -117,6 +117,12 @@ template <typename T = void> class Task final : public ITask
         return *this;
     }
 
+    constexpr Task &operator=(const std::nullptr_t nl)
+    {
+        m_Function = nl;
+        return *this;
+    }
+
     template <typename Callable, typename... Args>
         requires std::invocable<Callable, Args...>
     constexpr void Set(Callable &&callable, Args &&...args)
@@ -191,6 +197,12 @@ template <> class Task<void> final : public ITask
     constexpr Task &operator=(Callable &&callable)
     {
         m_Function = std::forward<Callable>(callable);
+        return *this;
+    }
+
+    constexpr Task &operator=(const std::nullptr_t nl)
+    {
+        m_Function = nl;
         return *this;
     }
 
