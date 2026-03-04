@@ -3,8 +3,8 @@
 #include "tkit/utils/non_copyable.hpp"
 #include "tkit/container/arena_array.hpp"
 #include "tkit/utils/bit.hpp"
+#include "tkit/utils/optional.hpp"
 #include <atomic>
-#include <optional>
 
 TKIT_COMPILER_WARNING_IGNORE_PUSH()
 TKIT_MSVC_WARNING_IGNORE(4324)
@@ -63,7 +63,7 @@ template <typename T> class ChaseLevDeque
      *
      * @reture If succeeded, a copy of the element. Otherwise null.
      */
-    constexpr std::optional<T> PopBack()
+    constexpr Optional<T> PopBack()
     {
         const u64 back = m_Back.fetch_sub(1, std::memory_order_relaxed) - 1;
         std::atomic_thread_fence(std::memory_order_seq_cst);
@@ -73,7 +73,7 @@ template <typename T> class ChaseLevDeque
         if (back < front)
         {
             m_Back.store(front, std::memory_order_relaxed);
-            return std::nullopt;
+            return Optional<T>::None();
         }
         if (back > front)
             return load(back);
@@ -81,7 +81,7 @@ template <typename T> class ChaseLevDeque
         if (!m_Front.compare_exchange_strong(front, front + 1, std::memory_order_seq_cst, std::memory_order_relaxed))
         {
             m_Back.store(back + 1, std::memory_order_relaxed);
-            return std::nullopt;
+            return Optional<T>::None();
         }
 
         return load(back);
@@ -95,18 +95,18 @@ template <typename T> class ChaseLevDeque
      *
      * @return If succeeded, a copy of the element. Otherwise null.
      */
-    constexpr std::optional<T> PopFront()
+    constexpr Optional<T> PopFront()
     {
         u64 front = m_Front.load(std::memory_order_acquire);
         std::atomic_thread_fence(std::memory_order_seq_cst);
         const u64 back = m_Back.load(std::memory_order_acquire);
 
         if (back <= front)
-            return std::nullopt;
+            return Optional<T>::None();
 
         const T value = load(front);
         if (!m_Front.compare_exchange_strong(front, front + 1, std::memory_order_seq_cst, std::memory_order_relaxed))
-            return std::nullopt;
+            return Optional<T>::None();
 
         return value;
     }
