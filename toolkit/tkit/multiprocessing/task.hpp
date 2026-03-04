@@ -117,7 +117,7 @@ template <typename T = void> class Task final : public ITask
         return *this;
     }
 
-    constexpr Task &operator=(const std::nullptr_t nl)
+    Task &operator=(const std::nullptr_t nl)
     {
         m_Function = nl;
         return *this;
@@ -200,7 +200,7 @@ template <> class Task<void> final : public ITask
         return *this;
     }
 
-    constexpr Task &operator=(const std::nullptr_t nl)
+    Task &operator=(const std::nullptr_t nl)
     {
         m_Function = nl;
         return *this;
