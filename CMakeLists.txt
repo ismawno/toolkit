@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.23...4.1.1)
+if(DEFINED ENV{VCPKG_ROOT})
+  set(CMAKE_TOOLCHAIN_FILE
+      "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      CACHE STRING "")
+endif()
 project(toolkit-root)
 
 set(NAME toolkit-root)
