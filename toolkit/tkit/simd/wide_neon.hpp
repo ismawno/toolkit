@@ -122,7 +122,7 @@ template <Numeric T> class Wide
     constexpr Wide(const wide1_t data) : m_Data(data)
     {
     }
-    template <std::convertible_to<T> U> constexpr Wide(const U data) : m_Data(set(static_cast<T>(data)))
+    template <std::convertible_to<T> U> constexpr Wide(const U data) : m_Data(set(T(data)))
     {
     }
     constexpr explicit Wide(const T *data) : m_Data(load1(data))
@@ -138,7 +138,7 @@ template <Numeric T> class Wide
 
     template <std::convertible_to<T> U> constexpr Wide &operator=(const U data)
     {
-        m_Data = set(static_cast<T>(data));
+        m_Data = set(T(data));
     }
 
     static constexpr Wide LoadAligned(const T *data)
@@ -158,7 +158,7 @@ template <Numeric T> class Wide
             "[TOOLKIT][SIMD] Stride of {} is equal to sizeof(T), which might as well be a contiguous load", stride);
 
         alignas(Alignment) T dst[Lanes];
-        const std::byte *src = reinterpret_cast<const std::byte *>(data);
+        const std::byte *src = rcast<const std::byte *>(data);
 
         for (usize i = 0; i < Lanes; ++i)
             ForwardCopy(dst + i, src + i * stride, sizeof(T));
@@ -173,7 +173,7 @@ template <Numeric T> class Wide
             "[TOOLKIT][SIMD] Stride of {} is equal to sizeof(T), which might as well be a contiguous store", stride);
         alignas(Alignment) T tmp[Lanes];
         StoreAligned(tmp);
-        std::byte *dst = reinterpret_cast<std::byte *>(data);
+        std::byte *dst = rcast<std::byte *>(data);
         for (usize i = 0; i < Lanes; ++i)
             ForwardCopy(dst + i * stride, &tmp[i], sizeof(T));
     }
@@ -395,7 +395,7 @@ template <Numeric T> class Wide
                               return Wide{                                                                             \
                                   ,                                                                                    \
                               },                                                                                       \
-                              left.m_Data, set(static_cast<T>(argName)));                                              \
+                              left.m_Data, set(T(argName)));                                                           \
         }
 
     CREATE_ARITHMETIC_OP(+, add)
@@ -435,7 +435,7 @@ template <Numeric T> class Wide
 
     friend constexpr Wide operator-(const Wide &other)
     {
-        return other * static_cast<T>(-1);
+        return other * T(-1);
     }
 
 #    define CREATE_SELF_OP(op, requires)                                                                               \
@@ -497,9 +497,9 @@ template <Numeric T> class Wide
         alignas(Alignment) Integer tmp[Lanes];
 
         for (usize i = 0; i < Lanes; ++i)
-            tmp[i] = (mask & (BitMask{1} << i)) ? static_cast<Integer>(-1) : Integer{0};
+            tmp[i] = (mask & (BitMask{1} << i)) ? Integer(-1) : Integer(0);
 
-        return load1(reinterpret_cast<const T *>(tmp));
+        return load1(rcast<const T *>(tmp));
     }
 
     static constexpr bool NoneOf(const Mask &mask)
@@ -606,7 +606,7 @@ template <Numeric T> class Wide
     template <typename Callable, usize... I>
     static constexpr wide1_t makeIntrinsic(Callable &&callable, std::integer_sequence<usize, I...>)
     {
-        alignas(Alignment) const T data[Lanes] = {static_cast<T>(std::forward<Callable>(callable)(I))...};
+        alignas(Alignment) const T data[Lanes] = {T(std::forward<Callable>(callable)(I))...};
         return load1(data);
     }
 

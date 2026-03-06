@@ -53,9 +53,9 @@ template <typename T> struct Codec
         {
             using Integer = std::underlying_type_t<T>;
             if constexpr (std::is_same_v<Integer, u8>)
-                node = Node{static_cast<u16>(instance)};
+                node = Node{u16(instance)};
             else
-                node = Node{static_cast<Integer>(instance)};
+                node = Node{Integer(instance)};
         }
 #else
         if constexpr (Reflect<T>::Implemented)
@@ -76,9 +76,9 @@ template <typename T> struct Codec
                 "and scripts available, which is the recommended approach.");
         using Integer = std::underlying_type_t<T>;
         if constexpr (std::is_same_v<Integer, u8>)
-            node = Node{static_cast<u16>(instance)};
+            node = Node{u16(instance)};
         else
-            node = Node{static_cast<Integer>(instance)};
+            node = Node{Integer(instance)};
 #endif
         return node;
     }
@@ -98,7 +98,7 @@ template <typename T> struct Codec
         else
         {
             using Integer = std::underlying_type_t<T>;
-            instance = static_cast<T>(node.as<Integer>());
+            instance = T(node.as<Integer>());
         }
 #else
         if constexpr (Reflect<T>::Implemented)
@@ -119,7 +119,7 @@ template <typename T> struct Codec
                 "and scripts available, which is the recommended approach.");
 
         using Integer = std::underlying_type_t<T>;
-        instance = static_cast<T>(node.as<Integer>());
+        instance = T(node.as<Integer>());
 #endif
         return true;
     }

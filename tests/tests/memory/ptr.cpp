@@ -58,7 +58,7 @@ TEST_CASE("Ref: move semantics", "[Ref]")
 TEST_CASE("Ref: boolean and get()", "[Ref]")
 {
     const auto ref1 = Ref<MyRefCounted>::Create(5);
-    REQUIRE(static_cast<bool>(ref1));
+    REQUIRE(bool(ref1));
     REQUIRE(ref1.Get()->Value == 5);
 
     Ref<MyRefCounted> ref2;

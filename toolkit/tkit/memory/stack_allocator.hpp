@@ -58,7 +58,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) StackAllocator
      */
     template <typename T> T *Allocate(const usize count = 1)
     {
-        T *ptr = static_cast<T *>(Allocate(count * sizeof(T)));
+        T *ptr = scast<T *>(Allocate(count * sizeof(T)));
         TKIT_ASSERT(IsAligned(ptr, alignof(T)),
                     "[TOOLKIT][STACK-ALLOC] Requested type T to be allocated has stricter alignment requirements than "
                     "the ones provided by this allocator. Considering bumping the alignment parameter");
@@ -80,7 +80,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) StackAllocator
         requires(!std::same_as<T, void>)
     void Deallocate(const T *ptr, const usize count = 1)
     {
-        Deallocate(static_cast<const void *>(ptr), count * sizeof(T));
+        Deallocate(scast<const void *>(ptr), count * sizeof(T));
     }
 
     /**
@@ -147,7 +147,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) StackAllocator
         TKIT_ASSERT(ptr, "[TOOLKIT][STACK-ALLOC] Cannot deallocate a null pointer");
         TKIT_ASSERT(m_Top != 0, "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is empty");
         TKIT_ASSERT(m_Buffer + m_Top - NextAlignedSize(sizeof(T) * count, m_Alignment) ==
-                        reinterpret_cast<const std::byte *>(ptr),
+                        rcast<const std::byte *>(ptr),
                     "[TOOLKIT][STACK-ALLOC] Elements must be deallocated in the reverse order they were allocated");
         if constexpr (!std::is_trivially_destructible_v<T>)
             for (usize i = 0; i < count; ++i)
@@ -163,7 +163,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) StackAllocator
      */
     bool Belongs(const void *ptr) const
     {
-        const std::byte *bptr = reinterpret_cast<const std::byte *>(ptr);
+        const std::byte *bptr = rcast<const std::byte *>(ptr);
         return bptr >= m_Buffer && bptr < m_Buffer + m_Top;
     }
 

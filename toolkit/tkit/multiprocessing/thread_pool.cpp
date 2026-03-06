@@ -11,7 +11,7 @@ static usize cheapRand(const usize workers)
     seed ^= seed >> 17;
     seed ^= seed << 5;
 
-    return static_cast<usize>((u64(seed) * u64(workers)) >> 32);
+    return usize((u64(seed) * u64(workers)) >> 32);
 }
 static void shuffleVictim(const usize workerIndex, const usize workers)
 {

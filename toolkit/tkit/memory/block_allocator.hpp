@@ -87,7 +87,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
             "[TOOLKIT][BLOCK-ALLOC] Block allocator allocation size is {:L}, but sizeof(T) is {:L} bytes, which "
             "does not fit into an allocation",
             m_AllocationSize, sizeof(T));
-        T *ptr = static_cast<T *>(Allocate());
+        T *ptr = scast<T *>(Allocate());
         TKIT_ASSERT(!ptr || IsAligned(ptr, alignof(T)),
                     "[TOOLKIT][BLOCK-ALLOC] Type T has stronger memory alignment requirements than specified. Bump the "
                     "alignment of the allocator or prevent using it to allocate objects of such type");
@@ -144,7 +144,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
      */
     bool Belongs(const void *ptr) const
     {
-        const std::byte *bptr = static_cast<const std::byte *>(ptr);
+        const std::byte *bptr = scast<const std::byte *>(ptr);
         return bptr >= m_Buffer && bptr < m_Buffer + m_BufferSize;
     }
 

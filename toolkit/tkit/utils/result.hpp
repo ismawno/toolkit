@@ -99,7 +99,7 @@ template <typename T = void, typename E = const char *> class Result
         TKIT_ASSERT(checkFlags(ResultFlag_Ok),
                     "[TOOLKIT] To copy results with different error types but same value types, "
                     "copy-from result must be a value");
-        m_Value.Construct(static_cast<T>(*other.m_Value.Get()));
+        m_Value.Construct(scast<T>(*other.m_Value.Get()));
     }
     template <typename Type, std::convertible_to<E> Error>
         requires(!std::same_as<T, Type>)
@@ -112,7 +112,7 @@ template <typename T = void, typename E = const char *> class Result
                     "[TOOLKIT] To copy results with different value types but same error types, "
                     "copy-from result must be an error");
 
-        m_Error.Construct(static_cast<E>(*other.m_Error.Get()));
+        m_Error.Construct(scast<E>(*other.m_Error.Get()));
     }
 
     constexpr Result(const Result &other)
@@ -177,7 +177,7 @@ template <typename T = void, typename E = const char *> class Result
         TKIT_ASSERT(checkFlags(ResultFlag_Ok),
                     "[TOOLKIT] To copy results with different error types but same value types, "
                     "copy-from result must be a value");
-        m_Value.Construct(static_cast<T>(*other.m_Value.Get()));
+        m_Value.Construct(scast<T>(*other.m_Value.Get()));
         return *this;
     }
     template <typename Type, std::convertible_to<E> Error>
@@ -193,7 +193,7 @@ template <typename T = void, typename E = const char *> class Result
                     "[TOOLKIT] To copy results with different value types but same error types, "
                     "copy-from result must be an error");
 
-        m_Error.Construct(static_cast<E>(*other.m_Error.Get()));
+        m_Error.Construct(scast<E>(*other.m_Error.Get()));
         return *this;
     }
 
@@ -400,7 +400,7 @@ template <typename E> class Result<void, E>
         TKIT_ASSERT(!checkFlags(ResultFlag_Ok),
                     "[TOOLKIT] To copy results with different value types but same error types, "
                     "copy-from result must be an error");
-        m_Error.Construct(static_cast<E>(*other.m_Error.Get()));
+        m_Error.Construct(scast<E>(*other.m_Error.Get()));
     }
 
     constexpr Result(const Result &other)
@@ -457,7 +457,7 @@ template <typename E> class Result<void, E>
         TKIT_ASSERT(!checkFlags(ResultFlag_Ok),
                     "[TOOLKIT] To copy results with different value types but same error types, "
                     "copy-from result must be an error");
-        m_Error.Construct(static_cast<E>(*other.m_Error.Get()));
+        m_Error.Construct(scast<E>(*other.m_Error.Get()));
         return *this;
     }
 
@@ -583,7 +583,7 @@ template <typename T> class Result<T, void>
                     "[TOOLKIT] To copy results with different error types but same value types, "
                     "copy-from result must be a value");
 
-        m_Value.Construct(static_cast<T>(*other.m_Value.Get()));
+        m_Value.Construct(scast<T>(*other.m_Value.Get()));
     }
     template <typename Type>
         requires(!std::same_as<T, Type>)
@@ -636,7 +636,7 @@ template <typename T> class Result<T, void>
         TKIT_ASSERT(checkFlags(ResultFlag_Some),
                     "[TOOLKIT] To copy results with different error types but same value types, "
                     "copy-from result must be a value");
-        m_Value.Construct(static_cast<T>(*other.m_Value.Get()));
+        m_Value.Construct(scast<T>(*other.m_Value.Get()));
         return *this;
     }
     template <typename Type>

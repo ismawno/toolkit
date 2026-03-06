@@ -7,7 +7,7 @@ namespace TKit
 {
 static usize bitIndex(const usize value)
 {
-    return static_cast<usize>(std::countr_zero(value));
+    return usize(std::countr_zero(value));
 }
 static usize getTierIndex(const usize size, const usize minAllocation, const usize granularity, const usize lastIndex)
 {
@@ -21,12 +21,12 @@ static usize getTierIndex(const usize size, const usize minAllocation, const usi
     const usize reference = np2 - size;
 
     // Signed code for a bit more correctness, but as final result is guaranteed to not exceed uint max, it is not
-    // strictly needed constexpr auto cast = [](const usize value) { return static_cast<ssize>(value); };
+    // strictly needed constexpr auto cast = [](const usize value) { return scast<ssize>(value); };
     //
     // const ssize offset = cast(bitIndex(minAllocation)) - cast(bitIndex(granularity));
     //
     // const ssize idx = cast(lastIndex) + cast(factor) * (offset - cast(incIndex)) + cast(reference / increment);
-    // return static_cast<usize>(idx);
+    // return usize(idx);
     const usize offset = bitIndex(minAllocation) - grIndex;
 
     return lastIndex + ((offset - incIndex) << (grIndex - 1)) + (reference >> incIndex);
@@ -41,7 +41,7 @@ static void createDefaultSlotRequests(ArenaArray<usize> &slots, const f32 tierSl
     for (usize i = 1; i < capacity; ++i)
     {
         const usize prev = slots[i - 1];
-        slots.Append(static_cast<usize>(prev / tierSlotDecay) + 1);
+        slots.Append(usize(prev / tierSlotDecay) + 1);
     }
 }
 
@@ -159,7 +159,7 @@ TierAllocator::TierAllocator(const TierDescriptions &tiers, const usize maxAlign
 #endif
     TKIT_ASSERT(IsPowerOfTwo(maxAlignment),
                 "[TOOLKIT][TIER-ALLOC] Maximum alignment must be a power of 2, but {} is not", maxAlignment);
-    m_Buffer = static_cast<std::byte *>(AllocateAligned(m_BufferSize, maxAlignment));
+    m_Buffer = scast<std::byte *>(AllocateAligned(m_BufferSize, maxAlignment));
 #ifdef TKIT_ENABLE_ASSERTS
     setupMemoryLayout(tiers, maxAlignment);
 #else
@@ -219,18 +219,18 @@ void TierAllocator::setupMemoryLayout(const TierDescriptions &tiers)
     {
         Tier tier{};
         tier.Buffer = m_Buffer + size;
-        tier.FreeList = reinterpret_cast<Allocation *>(tier.Buffer);
+        tier.FreeList = rcast<Allocation *>(tier.Buffer);
         const usize count = tinfo.Size / tinfo.AllocationSize;
 
         TKIT_ASSERT(IsAligned(tier.Buffer, std::min(maxAlignment, PrevPowerOfTwo(tinfo.AllocationSize))),
                     "[TOOLKIT][TIER-ALLOC] Tier with size {:L} and buffer {} failed alignment check: it is not aligned "
                     "to either the maximum alignment ({}) or its previous power of 2 ({})",
-                    tinfo.Size, static_cast<void *>(tier.Buffer), maxAlignment, PrevPowerOfTwo(tinfo.AllocationSize));
+                    tinfo.Size, scast<void *>(tier.Buffer), maxAlignment, PrevPowerOfTwo(tinfo.AllocationSize));
 
         Allocation *next = nullptr;
         for (usize i = count - 1; i < count; --i)
         {
-            Allocation *alloc = reinterpret_cast<Allocation *>(tier.Buffer + i * tinfo.AllocationSize);
+            Allocation *alloc = rcast<Allocation *>(tier.Buffer + i * tinfo.AllocationSize);
             TKIT_ASSERT(IsAligned(alloc, alignof(Allocation)),
                         "[TOOLKIT][TIER-ALLOC] Allocation landed in a memory region where its alignment of {} is not "
                         "respected. This happened when using an allocation size of {:L}",
@@ -327,7 +327,7 @@ void TierAllocator::Deallocate(void *ptr, const usize size)
                 "are for the tier index {} and size {:L}, with {} allocations and {} deallocations",
                 index, size, tier.Allocations, tier.Deallocations);
 
-    Allocation *alloc = static_cast<Allocation *>(ptr);
+    Allocation *alloc = scast<Allocation *>(ptr);
     alloc->Next = tier.FreeList;
     tier.FreeList = alloc;
 }

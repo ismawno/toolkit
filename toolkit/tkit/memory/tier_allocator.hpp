@@ -163,7 +163,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 
     template <typename T> T *Allocate(const usize count = 1)
     {
-        T *ptr = static_cast<T *>(Allocate(count * sizeof(T)));
+        T *ptr = scast<T *>(Allocate(count * sizeof(T)));
         TKIT_ASSERT(!ptr || IsAligned(ptr, alignof(T)),
                     "[TOOLKIT][TIER-ALLOC] Type T has stronger memory alignment requirements than specified. Bump the "
                     "alignment of the allocator or prevent using it to allocate objects of such type");
@@ -174,7 +174,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
         requires(!std::same_as<T, void>)
     void Deallocate(T *ptr, const usize count = 1)
     {
-        Deallocate(static_cast<void *>(ptr), count * sizeof(T));
+        Deallocate(scast<void *>(ptr), count * sizeof(T));
     }
 
     template <typename T, typename... Args> T *Create(Args &&...args)
@@ -225,7 +225,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
      */
     bool Belongs(const void *ptr) const
     {
-        const std::byte *bptr = static_cast<const std::byte *>(ptr);
+        const std::byte *bptr = scast<const std::byte *>(ptr);
         return bptr >= m_Buffer && bptr < m_Buffer + m_BufferSize;
     }
 

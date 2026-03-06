@@ -36,8 +36,8 @@ template <typename T> struct ArrayTools
     template <typename It>
     static constexpr void CopyAssignFromRange(T *dstBegin, T *dstEnd, const It srcBegin, const It srcEnd)
     {
-        const usize dstSize = static_cast<usize>(std::distance(dstBegin, dstEnd));
-        const usize srcSize = static_cast<usize>(std::distance(srcBegin, srcEnd));
+        const usize dstSize = usize(std::distance(dstBegin, dstEnd));
+        const usize srcSize = usize(std::distance(srcBegin, srcEnd));
 
         using U = decltype(*srcBegin);
         if constexpr (std::is_trivially_copyable_v<T> && std::is_same_v<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
@@ -63,8 +63,8 @@ template <typename T> struct ArrayTools
     template <typename It>
     static constexpr void MoveAssignFromRange(T *dstBegin, T *dstEnd, const It srcBegin, const It srcEnd)
     {
-        const usize dstSize = static_cast<usize>(std::distance(dstBegin, dstEnd));
-        const usize srcSize = static_cast<usize>(std::distance(srcBegin, srcEnd));
+        const usize dstSize = usize(std::distance(dstBegin, dstEnd));
+        const usize srcSize = usize(std::distance(srcBegin, srcEnd));
         if constexpr (std::is_trivially_copyable_v<T>)
         {
             ForwardMove(dstBegin, srcBegin, srcEnd);
@@ -113,10 +113,10 @@ template <typename T> struct ArrayTools
         if (pos == end)
         {
             CopyConstructFromRange(pos, srcBegin, srcEnd);
-            return static_cast<usize>(std::distance(srcBegin, srcEnd));
+            return usize(std::distance(srcBegin, srcEnd));
         }
-        const usize tail = static_cast<usize>(std::distance(pos, end));
-        const usize count = static_cast<usize>(std::distance(srcBegin, srcEnd));
+        const usize tail = usize(std::distance(pos, end));
+        const usize count = usize(std::distance(srcBegin, srcEnd));
         if (tail > count)
         {
             T *overflowSrcBegin = end - count;
@@ -177,7 +177,7 @@ template <typename T> struct ArrayTools
         // Copy/move the elements after the erased ones
         ForwardMove(remBegin, remEnd, end);
 
-        const usize count = static_cast<usize>(std::distance(remBegin, remEnd));
+        const usize count = usize(std::distance(remBegin, remEnd));
         // And destroy the last elements
         if constexpr (!std::is_trivially_destructible_v<T>)
             DestructRange(end - count, end);

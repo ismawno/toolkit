@@ -86,7 +86,7 @@ template <typename T> constexpr bool ApproachesZero(const T value)
     if constexpr (Float<T>)
         return std::abs(value) <= Limits<T>::Epsilon();
     else
-        return value == static_cast<T>(0);
+        return value == T(0);
 }
 
 template <typename T> constexpr bool Approximately(const T left, const T right)

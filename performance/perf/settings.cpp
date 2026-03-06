@@ -19,7 +19,7 @@ static std::string cliName(std::string name)
         if (std::isupper(*c) && c != ptr && !std::isupper(c[-1]))
             result.push_back('-');
 
-        result.push_back(static_cast<char>(std::tolower(*c)));
+        result.push_back(char(std::tolower(*c)));
     }
 
     return result;

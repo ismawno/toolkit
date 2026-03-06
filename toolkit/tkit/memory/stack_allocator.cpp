@@ -6,7 +6,7 @@
 namespace TKit
 {
 StackAllocator::StackAllocator(void *buffer, const usize capacity, const usize alignment)
-    : m_Buffer(static_cast<std::byte *>(buffer)), m_Capacity(capacity), m_Alignment(alignment), m_Provided(true)
+    : m_Buffer(scast<std::byte *>(buffer)), m_Capacity(capacity), m_Alignment(alignment), m_Provided(true)
 {
     TKIT_ASSERT(IsPowerOfTwo(alignment), "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2, but the value is {}",
                 alignment);
@@ -19,7 +19,7 @@ StackAllocator::StackAllocator(const usize capacity, const usize alignment)
 {
     TKIT_ASSERT(IsPowerOfTwo(alignment), "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2, but the value is {}",
                 alignment);
-    m_Buffer = static_cast<std::byte *>(AllocateAligned(static_cast<size_t>(capacity), alignment));
+    m_Buffer = scast<std::byte *>(AllocateAligned(size_t(capacity), alignment));
     TKIT_ASSERT(m_Buffer, "[TOOLKIT][STACK-ALLOC] Failed to allocate {:L} bytes of memory aligned to {:L} bytes",
                 capacity, alignment);
 }

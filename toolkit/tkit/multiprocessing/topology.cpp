@@ -82,7 +82,7 @@ static KindInfo getKindInfo(const hwloc_topology_t topology, const u32 PuIndex)
     if (err == -1)
         return kinfo;
 
-    const u32 nr = static_cast<u32>(err);
+    const u32 nr = u32(err);
     for (u32 i = 0; i < nr; ++i)
     {
         const hwloc_bitmap_t set = hwloc_bitmap_alloc();
@@ -94,7 +94,7 @@ static KindInfo getKindInfo(const hwloc_topology_t topology, const u32 PuIndex)
             hwloc_bitmap_isset(set, PuIndex))
         {
             kinfo.Rank = i;
-            kinfo.Efficiency = eff == -1 ? Unknown : static_cast<u32>(eff);
+            kinfo.Efficiency = eff == -1 ? Unknown : u32(eff);
             for (u32 j = 0; j < ninfos; j++)
             {
                 if (strcmp(infos[j].name, "CoreType") != 0)
@@ -156,7 +156,7 @@ static DynamicArray<u32> buildOrder(const hwloc_topology_t topology)
 
     DynamicArray<u32> order{};
 
-    const u32 nbpus = static_cast<u32>(hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU));
+    const u32 nbpus = u32(hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU));
     TKIT_LOG_DEBUG("[TOOLKIT][TOPOLOGY] Found {} PUs", nbpus);
     if (nbpus == 0)
         return order;

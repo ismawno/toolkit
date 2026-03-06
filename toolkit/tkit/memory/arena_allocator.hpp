@@ -56,7 +56,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) ArenaAllocator
      */
     template <typename T> T *Allocate(const usize count = 1)
     {
-        T *ptr = static_cast<T *>(Allocate(count * sizeof(T)));
+        T *ptr = scast<T *>(Allocate(count * sizeof(T)));
         TKIT_ASSERT(IsAligned(ptr, alignof(T)),
                     "[TOOLKIT][ARENA-ALLOC] Requested type T to be allocated has stricter alignment requirements than "
                     "the ones provided by this allocator. Considering bumping the alignment parameter");
@@ -119,7 +119,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) ArenaAllocator
      */
     bool Belongs(const void *ptr) const
     {
-        const std::byte *bptr = reinterpret_cast<const std::byte *>(ptr);
+        const std::byte *bptr = rcast<const std::byte *>(ptr);
         return bptr >= m_Buffer && bptr < m_Buffer + m_Top;
     }
 

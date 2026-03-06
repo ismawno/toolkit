@@ -47,7 +47,7 @@ TEST_CASE("NonBlockingForEach with output iterator collects and executes all", "
         [&](const usize start, const usize end) { totalSum.fetch_add(end - start, std::memory_order_relaxed); });
 
     // we should have one task per partition
-    REQUIRE(static_cast<usize>(tasks.size()) == partitionCount);
+    REQUIRE(usize(tasks.size()) == partitionCount);
 
     // wait for each task to finish
     for (const Task<> &task : tasks)
@@ -80,7 +80,7 @@ TEST_CASE("BlockingForEach with output iterator partitions and returns main resu
     // main partition [0,25) length = 25
     REQUIRE(mainLength == (lastIndex - firstIndex) / partitionCount);
     // should have enqueued partitionCount-1 tasks
-    REQUIRE(static_cast<usize>(tasks.size()) == partitionCount - 1);
+    REQUIRE(usize(tasks.size()) == partitionCount - 1);
 
     // wait all other partitions
     for (const Task<usize> &task : tasks)

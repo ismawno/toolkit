@@ -48,7 +48,7 @@ template <typename T> struct DynamicAllocation
                     "cannot exist if capacity is 0. Capacity: {}",
                     Capacity);
 
-        Data = static_cast<T *>(AllocateAligned(capacity * sizeof(T), alignof(T)));
+        Data = scast<T *>(AllocateAligned(capacity * sizeof(T), alignof(T)));
         TKIT_ASSERT(Data, "[TOOLKIT][DYN-ARRAY] Failed to allocate {:L} bytes of memory aligned to {:L} bytes",
                     capacity * sizeof(T), alignof(T));
         Capacity = capacity;
@@ -81,7 +81,7 @@ template <typename T> struct DynamicAllocation
         using Tools = Container::ArrayTools<T>;
         TKIT_ASSERT(capacity != 0, "[TOOLKIT][DYN-ARRAY] Capacity must be greater than 0");
         TKIT_ASSERT(capacity >= Size, "[TOOLKIT][DYN-ARRAY] Capacity ({}) is smaller than size ({})", capacity, Size);
-        T *newData = static_cast<T *>(AllocateAligned(capacity * sizeof(T), alignof(T)));
+        T *newData = scast<T *>(AllocateAligned(capacity * sizeof(T), alignof(T)));
         TKIT_ASSERT(newData, "[TOOLKIT][DYN-ARRAY] Failed to allocate {:L} bytes of memory aligned to {:L} bytes",
                     capacity * sizeof(T), alignof(T));
 

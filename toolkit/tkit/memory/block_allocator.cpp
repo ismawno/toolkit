@@ -21,15 +21,14 @@ BlockAllocator::BlockAllocator(const usize bufferSize, const usize allocationSiz
                 "the alignment to ensure every block of memory is aligned to it, but got {:L}",
                 allocationSize);
 
-    m_Buffer = static_cast<std::byte *>(AllocateAligned(bufferSize, alignment));
+    m_Buffer = scast<std::byte *>(AllocateAligned(bufferSize, alignment));
     TKIT_ASSERT(m_Buffer, "[TOOLKIT][BLOCK-ALLOC] Failed to allocate {:L} bytes of memory aligned to {:L} bytes",
                 bufferSize, alignment);
     setupMemoryLayout();
 }
 
 BlockAllocator::BlockAllocator(void *buffer, const usize bufferSize, const usize allocationSize)
-    : m_Buffer(static_cast<std::byte *>(buffer)), m_BufferSize(bufferSize), m_AllocationSize(allocationSize),
-      m_Provided(true)
+    : m_Buffer(scast<std::byte *>(buffer)), m_BufferSize(bufferSize), m_AllocationSize(allocationSize), m_Provided(true)
 {
     TKIT_ASSERT(bufferSize % allocationSize == 0,
                 "[TOOLKIT][BLOCK-ALLOC] The buffer size ({:L}) must be a multiple of the allocation size to guarantee "
@@ -94,7 +93,7 @@ void BlockAllocator::Deallocate(void *ptr)
     TKIT_ASSERT(Belongs(ptr),
                 "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a pointer that does not belong to the allocator");
 
-    Allocation *alloc = static_cast<Allocation *>(ptr);
+    Allocation *alloc = scast<Allocation *>(ptr);
     alloc->Next = m_FreeList;
     m_FreeList = alloc;
 }
@@ -107,12 +106,12 @@ void BlockAllocator::Reset()
 void BlockAllocator::setupMemoryLayout()
 {
     const usize count = GetAllocationCapacityCount();
-    m_FreeList = reinterpret_cast<Allocation *>(m_Buffer);
+    m_FreeList = rcast<Allocation *>(m_Buffer);
 
     Allocation *next = nullptr;
     for (usize i = count - 1; i < count; --i)
     {
-        Allocation *alloc = reinterpret_cast<Allocation *>(m_Buffer + i * m_AllocationSize);
+        Allocation *alloc = rcast<Allocation *>(m_Buffer + i * m_AllocationSize);
         alloc->Next = next;
         next = alloc;
     }

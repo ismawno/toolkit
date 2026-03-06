@@ -32,19 +32,19 @@ class Wide
     constexpr explicit Wide(Callable &&callable)
     {
         for (usize i = 0; i < Lanes; ++i)
-            m_Data[i] = static_cast<T>(std::forward<Callable>(callable)(i));
+            m_Data[i] = T(std::forward<Callable>(callable)(i));
     }
 
     template <std::convertible_to<T> U> constexpr Wide(const U data)
     {
         for (usize i = 0; i < Lanes; ++i)
-            m_Data[i] = static_cast<T>(data);
+            m_Data[i] = T(data);
     }
 
     template <std::convertible_to<T> U> constexpr Wide &operator=(const U data)
     {
         for (usize i = 0; i < Lanes; ++i)
-            m_Data[i] = static_cast<T>(data);
+            m_Data[i] = T(data);
     }
 
     constexpr T At(const usize index) const
@@ -77,7 +77,7 @@ class Wide
             stride == sizeof(T),
             "[TOOLKIT][SIMD] Stride of {} is equal to sizeof(T), which might as well be a contiguous load", stride);
         Wide wide;
-        const std::byte *data = reinterpret_cast<const std::byte *>(pdata);
+        const std::byte *data = rcast<const std::byte *>(pdata);
         for (usize i = 0; i < Lanes; ++i)
             ForwardCopy(&wide.m_Data[i], data + i * stride, sizeof(T));
         return wide;
@@ -89,7 +89,7 @@ class Wide
         TKIT_LOG_WARNING_IF(
             stride == sizeof(T),
             "[TOOLKIT][SIMD] Stride of {} is equal to sizeof(T), which might as well be a contiguous store", stride);
-        std::byte *data = reinterpret_cast<std::byte *>(pdata);
+        std::byte *data = rcast<std::byte *>(pdata);
         for (usize i = 0; i < Lanes; ++i)
             ForwardCopy(data + i * stride, &m_Data[i], sizeof(T));
     }
@@ -150,13 +150,13 @@ class Wide
     friend constexpr Wide operator op(const Wide &left, const U right) requires {                                      \
         Wide wide;                                                                                                     \
         for (usize i = 0; i < Lanes; ++i)                                                                              \
-            wide.m_Data[i] = left.m_Data[i] op static_cast<T>(right);                                                  \
+            wide.m_Data[i] = left.m_Data[i] op T(right);                                                               \
         return wide;                                                                                                   \
     } template <std::convertible_to<T> U>                                                                              \
     friend constexpr Wide operator op(const U left, const Wide &right) requires {                                      \
         Wide wide;                                                                                                     \
         for (usize i = 0; i < Lanes; ++i)                                                                              \
-            wide.m_Data[i] = static_cast<T>(left) op right.m_Data[i];                                                  \
+            wide.m_Data[i] = T(left) op right.m_Data[i];                                                               \
         return wide;                                                                                                   \
     } constexpr Wide &operator op## = (const Wide &other) requires {                                                   \
         *this = *this op other;                                                                                        \
@@ -185,7 +185,7 @@ class Wide
     {                                                                                                                  \
         Wide wide;                                                                                                     \
         for (usize i = 0; i < Lanes; ++i)                                                                              \
-            wide.m_Data[i] = left.m_Data[i] op static_cast<T>(shift);                                                  \
+            wide.m_Data[i] = left.m_Data[i] op T(shift);                                                               \
         return wide;                                                                                                   \
     }                                                                                                                  \
     constexpr Wide &operator op## = (const Wide &other)                                                                \
@@ -203,7 +203,7 @@ class Wide
         Mask m = 0;                                                                                                    \
         for (usize i = 0; i < Lanes; ++i)                                                                              \
         {                                                                                                              \
-            const Mask mustSet = static_cast<Mask>(left.m_Data[i] op right.m_Data[i]);                                 \
+            const Mask mustSet = Mask(left.m_Data[i] op right.m_Data[i]);                                              \
             m |= mustSet << i;                                                                                         \
         }                                                                                                              \
         return m;                                                                                                      \

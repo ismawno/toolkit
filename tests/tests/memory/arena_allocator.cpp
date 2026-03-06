@@ -75,8 +75,8 @@ TEST_CASE("Alignment behavior", "[ArenaAllocator]")
     const void *p2 = arena.Allocate(1);
     REQUIRE(p1);
     REQUIRE(p2);
-    REQUIRE(reinterpret_cast<uptr>(p1) % align == 0);
-    REQUIRE(reinterpret_cast<uptr>(p2) % align == 0);
+    REQUIRE(rcast<uptr>(p1) % align == 0);
+    REQUIRE(rcast<uptr>(p2) % align == 0);
     arena.Reset();
 }
 
@@ -122,7 +122,7 @@ TEST_CASE("Allocate until full and Reset", "[ArenaAllocator]")
     REQUIRE(arena.IsFull());
     REQUIRE(arena.GetRemainingBytes() == 0);
     REQUIRE(arena.Allocate(1) == nullptr);
-    REQUIRE(arena.GetAllocatedBytes() == static_cast<usize>(ptrs.size() * 8));
+    REQUIRE(arena.GetAllocatedBytes() == usize(ptrs.size() * 8));
 
     // Reset and allocate again
     arena.Reset();

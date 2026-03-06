@@ -151,10 +151,10 @@ TEST_CASE("Typed Allocate<T>(count) and Destroy<T>(count)", "[TierAllocator]")
     REQUIRE(alloc.Belongs(arr));
 
     for (usize i = 0; i < count; ++i)
-        arr[i] = static_cast<u32>(i * 3);
+        arr[i] = u32(i * 3);
 
     for (usize i = 0; i < count; ++i)
-        REQUIRE(arr[i] == static_cast<u32>(i * 3));
+        REQUIRE(arr[i] == u32(i * 3));
 
     alloc.NDestroy(arr, count);
 }
@@ -208,7 +208,7 @@ TEST_CASE("Alignment guarantees (up to max alignment)", "[TierAllocator]")
     Align64TA *p = alloc.Allocate<Align64TA>();
     REQUIRE(p);
     REQUIRE(alloc.Belongs(p));
-    REQUIRE(reinterpret_cast<uintptr_t>(p) % alignof(Align64TA) == 0);
+    REQUIRE(rcast<uintptr_t>(p) % alignof(Align64TA) == 0);
 
     alloc.Destroy(p);
 }

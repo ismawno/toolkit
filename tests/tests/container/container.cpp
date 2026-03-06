@@ -68,7 +68,7 @@ TEST_CASE("CopyConstructFromRange", "[CopyConstructFromRange]")
         const CopyOnly src[] = {10, 20, 30};
         // raw uninitialized storage for 3 CopyOnly
         alignas(CopyOnly) std::byte storage[sizeof(CopyOnly) * 3];
-        const auto dst = reinterpret_cast<CopyOnly *>(storage);
+        const auto dst = rcast<CopyOnly *>(storage);
 
         Tools<CopyOnly>::CopyConstructFromRange(dst, src, src + 3);
         for (u32 i = 0; i < 3; ++i)
@@ -98,7 +98,7 @@ TEST_CASE("MoveConstructFromRange", "[MoveConstructFromRange]")
     {
         MoveOnly src[] = {MoveOnly(7), MoveOnly(14), MoveOnly(21)};
         alignas(MoveOnly) std::byte storage[sizeof(MoveOnly) * 3];
-        const auto dst = reinterpret_cast<MoveOnly *>(storage);
+        const auto dst = rcast<MoveOnly *>(storage);
 
         Tools<MoveOnly>::MoveConstructFromRange(dst, src, src + 3);
 
@@ -240,7 +240,7 @@ TEST_CASE("Insert single element", "[Insert]")
     {
         // raw buffer for 3 MoveOnly
         alignas(MoveOnly) std::byte storage[sizeof(MoveOnly) * 3];
-        const auto arr = reinterpret_cast<MoveOnly *>(storage);
+        const auto arr = rcast<MoveOnly *>(storage);
         // placement‐new first two
         Construct<MoveOnly>(&arr[0], 5);
         Construct<MoveOnly>(&arr[1], 6);

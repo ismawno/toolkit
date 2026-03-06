@@ -14,7 +14,7 @@ struct ExampleData
     void SetValues()
     {
         for (usize i = 0; i < 16; ++i)
-            Values[i] = static_cast<f64>(i);
+            Values[i] = f64(i);
     }
 };
 
@@ -68,7 +68,7 @@ void RecordStackAllocator(const AllocationSettings &settings)
     DynamicArray<ExampleData *> allocated{settings.MaxPasses};
     file << "passes,stack_alloc (ns),stack_dealloc (ns)\n";
 
-    StackAllocator allocator{static_cast<usize>(settings.MaxPasses * sizeof(ExampleData))};
+    StackAllocator allocator{usize(settings.MaxPasses * sizeof(ExampleData))};
     for (usize passes = settings.MinPasses; passes <= settings.MaxPasses; passes += settings.PassIncrement)
     {
         Clock clock;
@@ -91,7 +91,7 @@ void RecordArenaAllocator(const AllocationSettings &settings)
     DynamicArray<ExampleData *> allocated{settings.MaxPasses};
     file << "passes,arena_alloc (ns)\n";
 
-    ArenaAllocator allocator{static_cast<usize>(settings.MaxPasses * sizeof(ExampleData))};
+    ArenaAllocator allocator{usize(settings.MaxPasses * sizeof(ExampleData))};
     for (usize passes = settings.MinPasses; passes <= settings.MaxPasses; passes += settings.PassIncrement)
     {
         Clock clock;

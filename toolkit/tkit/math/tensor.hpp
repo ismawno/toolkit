@@ -53,7 +53,7 @@ template <typename T> constexpr T SquareRoot(const T value)
     else if constexpr (std::same_as<T, f64>)
         return std::sqrt(value);
     else
-        return std::sqrtf(static_cast<f32>(value));
+        return std::sqrtf(f32(value));
 #else
     return std::sqrt(value);
 #endif
@@ -97,18 +97,18 @@ struct Tensor
     template <std::convertible_to<T> U> explicit constexpr Tensor(const U value)
     {
         for (usize i = 0; i < Size; ++i)
-            Flat[i] = static_cast<T>(value);
+            Flat[i] = T(value);
     }
 
     template <typename... Args>
         requires((sizeof...(Args) == Size) && ... && std::convertible_to<Args, T>)
-    constexpr explicit Tensor(const Args... args) : Flat{static_cast<T>(args)...}
+    constexpr explicit Tensor(const Args... args) : Flat{T(args)...}
     {
     }
     template <typename... Args>
     constexpr explicit Tensor(const Args &...args)
         requires(!std::same_as<ChildType, T> && sizeof...(Args) == N0 && (std::convertible_to<Args, ChildType> && ...))
-        : Ranked{static_cast<ChildType>(args)...}
+        : Ranked{scast<ChildType>(args)...}
     {
     }
 
@@ -120,8 +120,8 @@ struct Tensor
     {
         usize i = 0;
         for (; i < N0 - sizeof...(Args); ++i)
-            Ranked[i] = static_cast<ChildType>(tensor[i]);
-        ((Ranked[i++] = static_cast<ChildType>(args)), ...);
+            Ranked[i] = scast<ChildType>(tensor[i]);
+        ((Ranked[i++] = scast<ChildType>(args)), ...);
     }
 #else
     template <typename Ten, typename... Args>
@@ -132,8 +132,8 @@ struct Tensor
     {
         usize i = 0;
         for (; i < N0 - sizeof...(Args); ++i)
-            Ranked[i] = static_cast<ChildType>(tensor[i]);
-        ((Ranked[i++] = static_cast<ChildType>(args)), ...);
+            Ranked[i] = scast<ChildType>(tensor[i]);
+        ((Ranked[i++] = scast<ChildType>(args)), ...);
     }
 #endif
 
@@ -141,9 +141,9 @@ struct Tensor
     constexpr Tensor(const C &value, const Tensor<U, N0 - 1, N...> &tensor)
         requires(N0 > 1)
     {
-        Ranked[0] = static_cast<ChildType>(value);
+        Ranked[0] = scast<ChildType>(value);
         for (usize i = 0; i < N0 - 1; ++i)
-            Ranked[i + 1] = static_cast<ChildType>(tensor[i]);
+            Ranked[i + 1] = scast<ChildType>(tensor[i]);
     }
 
     constexpr Tensor &operator=(const Tensor &) = default;
@@ -164,10 +164,10 @@ struct Tensor
 
     template <std::convertible_to<T> U> static constexpr Tensor Identity(const U value)
     {
-        Tensor tensor{static_cast<T>(0)};
+        Tensor tensor{T(0)};
         constexpr usize stride = Detail::GetDiagonalStride<N0, N...>();
         for (usize i = 0; i < Size; i += stride)
-            tensor.Flat[i] = static_cast<T>(value);
+            tensor.Flat[i] = T(value);
         return tensor;
     }
 
@@ -232,13 +232,13 @@ struct Tensor
     friend constexpr Tensor operator op(const Tensor &left, const U right) requires {                                  \
         Tensor tensor;                                                                                                 \
         for (usize i = 0; i < Size; ++i)                                                                               \
-            tensor.Flat[i] = left.Flat[i] op static_cast<T>(right);                                                    \
+            tensor.Flat[i] = left.Flat[i] op T(right);                                                                 \
         return tensor;                                                                                                 \
     } template <std::convertible_to<T> U>                                                                              \
     friend constexpr Tensor operator op(const U left, const Tensor &right) requires {                                  \
         Tensor tensor;                                                                                                 \
         for (usize i = 0; i < Size; ++i)                                                                               \
-            tensor.Flat[i] = static_cast<T>(left) op right.Flat[i];                                                    \
+            tensor.Flat[i] = T(left) op right.Flat[i];                                                                 \
         return tensor;                                                                                                 \
     }
 
@@ -256,7 +256,7 @@ struct Tensor
     {                                                                                                                  \
         Tensor tensor;                                                                                                 \
         for (usize i = 0; i < Size; ++i)                                                                               \
-            tensor.Flat[i] = left.Flat[i] op static_cast<T>(shift);                                                    \
+            tensor.Flat[i] = left.Flat[i] op T(shift);                                                                 \
         return tensor;                                                                                                 \
     }
 
@@ -313,7 +313,7 @@ struct Tensor
 template <typename T, usize N0, usize... N>
 constexpr T Dot(const Tensor<T, N0, N...> &left, const Tensor<T, N0, N...> &right)
 {
-    T result{static_cast<T>(0)};
+    T result{T(0)};
 
     for (usize i = 0; i < SIZE; ++i)
         result += left.Flat[i] * right.Flat[i];
@@ -361,7 +361,7 @@ constexpr void SubTensorImpl(const Tensor<T, N0, N...> &tensor, Tensor<T, N0 - 1
                              const I... rest)
     requires((N0 > 1) && ... && (N0 == N))
 {
-    const usize first = static_cast<usize>(pfirst);
+    const usize first = usize(pfirst);
     TKIT_CHECK_OUT_OF_BOUNDS(first, N0, "[TOOLKIT][TENSOR] ");
     for (usize i = 0, j = 0; i < N0; ++i)
         if (i != first)
@@ -424,7 +424,7 @@ constexpr void SliceImpl(const Tensor<T, N0, N...> &tensor, Tensor<U, M0, M...> 
 {
     for (usize i = 0; i < M0; ++i)
         if constexpr (sizeof...(M) == 0)
-            sliced.Flat[i] = static_cast<U>(tensor.Flat[i]);
+            sliced.Flat[i] = U(tensor.Flat[i]);
         else
             SliceImpl(tensor[i], sliced[i]);
 }
@@ -696,7 +696,7 @@ constexpr mat<T, C2, R1> operator*(const mat<T, N, R1> &left, const mat<T, C2, N
     for (usize i = 0; i < C2; ++i)
         for (usize j = 0; j < R1; ++j)
         {
-            T sum{static_cast<T>(0)};
+            T sum{T(0)};
             for (usize k = 0; k < N; ++k)
                 sum += left[k][j] * right[i][k];
             result[i][j] = sum;
@@ -709,7 +709,7 @@ template <typename T, usize N, usize R> constexpr vec<T, R> operator*(const mat<
     vec<T, R> result;
     for (usize i = 0; i < R; ++i)
     {
-        T sum{static_cast<T>(0)};
+        T sum{T(0)};
         for (usize j = 0; j < N; ++j)
             sum += left[j][i] * right.Flat[j];
         result.Flat[i] = sum;
@@ -746,7 +746,7 @@ constexpr auto Cross(const vec<T, N> &left, const vec<T, N> &right)
 }
 template <typename T, usize N> constexpr T DiagonalDeterminant(const mat<T, N> &matrix)
 {
-    T sum = static_cast<T>(1);
+    T sum = T(1);
     for (usize i = 0; i < N; ++i)
         sum *= matrix[i][i];
     return sum;
@@ -779,7 +779,7 @@ template <typename T, usize N> constexpr T Determinant(const mat<T, N> &matrix)
     }
     else
     {
-        T determinant{static_cast<T>(0)};
+        T determinant{T(0)};
         for (usize i = 0; i < N; i += 2)
             determinant += matrix[0][i] * Determinant(SubTensor(matrix, 0, i));
         for (usize i = 1; i < N; i += 2)
@@ -793,7 +793,7 @@ template <typename T, usize N> constexpr mat<T, N> Cofactors(const mat<T, N> &ma
     mat<T, N> cofactors;
     for (usize i = 0; i < N; ++i)
         for (usize j = 0; j < N; ++j)
-            cofactors[i][j] = (1 - 2 * (static_cast<i32>(i + j) & 1)) * Determinant(SubTensor(matrix, i, j));
+            cofactors[i][j] = (1 - 2 * (i32(i + j) & 1)) * Determinant(SubTensor(matrix, i, j));
     return cofactors;
 }
 
@@ -803,7 +803,7 @@ template <typename T, usize N> constexpr mat<T, N> Inverse(const mat<T, N> &matr
         return 1.f / matrix.Flat[0];
     else if constexpr (N == 2)
     {
-        const T idet = static_cast<T>(1) / Determinant(matrix);
+        const T idet = T(1) / Determinant(matrix);
         mat2<T> inverse;
         inverse.Flat[0] = idet * matrix.Flat[3];
         inverse.Flat[1] = -idet * matrix.Flat[1];
@@ -813,7 +813,7 @@ template <typename T, usize N> constexpr mat<T, N> Inverse(const mat<T, N> &matr
     }
     else if constexpr (N == 3)
     {
-        const T idet = static_cast<T>(1) / Determinant(matrix);
+        const T idet = T(1) / Determinant(matrix);
         mat3<T> inverse;
 
         inverse[0][0] = (matrix[1][1] * matrix[2][2] - matrix[2][1] * matrix[1][2]) * idet;
@@ -880,13 +880,13 @@ template <typename T, usize N> constexpr mat<T, N> Inverse(const mat<T, N> &matr
         const vec4<T> dot0{matrix[0] * row0};
         T Dot1 = (dot0.Flat[0] + dot0.Flat[1]) + (dot0.Flat[2] + dot0.Flat[3]);
 
-        const T idet = static_cast<T>(1) / Dot1;
+        const T idet = T(1) / Dot1;
 
         return inverse * idet;
     }
     else
     {
-        const T idet = static_cast<T>(1) / Determinant(matrix);
+        const T idet = T(1) / Determinant(matrix);
         return Transpose(Cofactors(matrix)) * idet;
     }
 }

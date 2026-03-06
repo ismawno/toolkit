@@ -171,7 +171,7 @@ template <typename It1, typename It2> constexpr auto BackwardMove(It1 dst, It2 b
 
 inline bool IsAligned(const void *ptr, const size_t alignment)
 {
-    const uptr addr = reinterpret_cast<uptr>(ptr);
+    const uptr addr = rcast<uptr>(ptr);
     return (addr & (alignment - 1)) == 0;
 }
 inline bool IsAligned(const size_t address, const size_t alignment)
@@ -221,7 +221,7 @@ template <typename T> class STLAllocator
 
     pointer allocate(size_type n)
     {
-        return static_cast<pointer>(Allocate(n * sizeof(T)));
+        return scast<pointer>(Allocate(n * sizeof(T)));
     }
 
     void deallocate(pointer ptr, size_type)

@@ -44,6 +44,19 @@ using ssize = TKIT_SSIZE_TYPE;
 using uptr = std::uintptr_t;
 using idiff = TKIT_DIFFERENCE_TYPE;
 
+template <typename T, typename U> constexpr T scast(const U from)
+{
+    return static_cast<T>(from);
+}
+template <typename T, typename U> constexpr T rcast(const U from)
+{
+    return reinterpret_cast<T>(from);
+}
+template <typename T, typename U> constexpr T dcast(const U from)
+{
+    return dynamic_cast<T>(from);
+}
+
 template <typename T>
 concept Float = std::same_as<T, f32> || std::same_as<T, f64>;
 

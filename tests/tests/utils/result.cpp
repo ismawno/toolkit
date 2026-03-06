@@ -10,7 +10,7 @@ TEST_CASE("Ok and Error static constructors, basic accessors", "[Result]")
     {
         const auto r = Result<u32>::Ok(42);
         REQUIRE(r.IsOk());
-        REQUIRE(static_cast<bool>(r));
+        REQUIRE(bool(r));
         REQUIRE(r.GetValue() == 42);
         REQUIRE(*r == 42);
         REQUIRE(&r.GetValue() == r.operator->());
@@ -19,7 +19,7 @@ TEST_CASE("Ok and Error static constructors, basic accessors", "[Result]")
     {
         const auto e = Result<u32>::Error("failure");
         REQUIRE(!e.IsOk());
-        REQUIRE(!static_cast<bool>(e));
+        REQUIRE(!bool(e));
         REQUIRE(std::string(e.GetError()) == "failure");
     }
 }
@@ -116,11 +116,11 @@ TEST_CASE("Result<void> Ok and Error basic", "[Result][void]")
 {
     const auto okRes = Result<>::Ok();
     REQUIRE(okRes.IsOk());
-    REQUIRE(static_cast<bool>(okRes));
+    REQUIRE(bool(okRes));
 
     const auto errRes = Result<>::Error("failure");
     REQUIRE(!errRes.IsOk());
-    REQUIRE(!static_cast<bool>(errRes));
+    REQUIRE(!bool(errRes));
     REQUIRE(std::string(errRes.GetError()) == "failure");
 }
 

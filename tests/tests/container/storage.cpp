@@ -51,7 +51,7 @@ TEST_CASE("RawStorage: alignment correctness", "[RawStorage]")
 
     RawStorage<sizeof(A16), 16> storage;
     const A16 *pA = storage.Construct<A16>();
-    const uptr addr = reinterpret_cast<uintptr_t>(pA);
+    const uptr addr = rcast<uintptr_t>(pA);
     REQUIRE((addr % alignof(A16)) == 0);
     storage.Destruct<A16>();
 }

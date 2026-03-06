@@ -31,7 +31,7 @@ template <typename T, typename AllocState> class Array
     template <std::convertible_to<usize> U, typename... Args>
     constexpr explicit Array(const U psize, Args &&...args) : m_State(std::forward<Args>(args)...)
     {
-        const usize size = static_cast<usize>(psize);
+        const usize size = usize(psize);
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
             m_State.GrowCapacityIf(size > 0, size);
         else
@@ -52,7 +52,7 @@ template <typename T, typename AllocState> class Array
     template <std::input_iterator It, typename... Args>
     constexpr Array(const It pbegin, const It pend, Args &&...args) : m_State(std::forward<Args>(args)...)
     {
-        const usize size = static_cast<usize>(std::distance(pbegin, pend));
+        const usize size = usize(std::distance(pbegin, pend));
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
             m_State.GrowCapacityIf(size > 0, size);
         else
@@ -72,7 +72,7 @@ template <typename T, typename AllocState> class Array
     template <typename... Args>
     constexpr Array(const std::initializer_list<T> list, Args &&...args) : m_State(std::forward<Args>(args)...)
     {
-        const usize size = static_cast<usize>(list.size());
+        const usize size = usize(list.size());
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
             m_State.GrowCapacityIf(size > 0, size);
         else
@@ -268,7 +268,7 @@ template <typename T, typename AllocState> class Array
             const usize newSize = m_State.Size + 1;
             if (newSize > m_State.GetCapacity())
             {
-                const usize pos = static_cast<usize>(std::distance(begin(), ppos));
+                const usize pos = usize(std::distance(begin(), ppos));
                 m_State.GrowCapacity(newSize);
                 ppos = begin() + pos;
             }
@@ -289,10 +289,10 @@ template <typename T, typename AllocState> class Array
         TKIT_ASSERT(ppos >= begin() && ppos <= end(), "[TOOLKIT][ARRAY] Iterator is out of bounds");
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
         {
-            const usize newSize = m_State.Size + static_cast<usize>(std::distance(pbegin, pend));
+            const usize newSize = m_State.Size + usize(std::distance(pbegin, pend));
             if (newSize > m_State.GetCapacity())
             {
-                const usize pos = static_cast<usize>(std::distance(begin(), ppos));
+                const usize pos = usize(std::distance(begin(), ppos));
                 m_State.GrowCapacity(newSize);
                 ppos = begin() + pos;
             }
@@ -523,7 +523,7 @@ template <typename T, typename AllocState> class Array
 
     constexpr const T *GetData() const
     {
-        const T *ptr = reinterpret_cast<const T *>(std::addressof(m_State.Data[0]));
+        const T *ptr = rcast<const T *>(std::addressof(m_State.Data[0]));
         TKIT_ASSERT(ptr || m_State.Size == 0,
                     "[TOOLKIT][ARRAY] If the data of an array is null, its size must be zero");
         TKIT_ASSERT(ptr || m_State.GetCapacity() == 0,
@@ -535,7 +535,7 @@ template <typename T, typename AllocState> class Array
 
     constexpr T *GetData()
     {
-        T *ptr = reinterpret_cast<T *>(std::addressof(m_State.Data[0]));
+        T *ptr = rcast<T *>(std::addressof(m_State.Data[0]));
         TKIT_ASSERT(ptr || m_State.Size == 0,
                     "[TOOLKIT][ARRAY] If the data of an array is null, its size must be zero");
         TKIT_ASSERT(ptr || m_State.GetCapacity() == 0,

@@ -15,8 +15,7 @@ template <Float T> struct Quaternion
     constexpr Quaternion(const Quaternion &) = default;
 
     template <std::convertible_to<T> U>
-    constexpr Quaternion(const U w, const U x, const U y, const U z)
-        : w(static_cast<T>(w)), x(static_cast<T>(x)), y(static_cast<T>(y)), z(static_cast<T>(z))
+    constexpr Quaternion(const U w, const U x, const U y, const U z) : w(T(w)), x(T(x)), y(T(y)), z(T(z))
     {
     }
     constexpr Quaternion(const T w, const T x, const T y, const T z) : w(w), x(x), y(y), z(z)
@@ -25,8 +24,7 @@ template <Float T> struct Quaternion
 
     template <std::convertible_to<T> U>
     constexpr Quaternion(const Quaternion<U> &quaternion)
-        : w(static_cast<T>(quaternion.w)), x(static_cast<T>(quaternion.x)), y(static_cast<T>(quaternion.y)),
-          z(static_cast<T>(quaternion.z))
+        : w(T(quaternion.w)), x(T(quaternion.x)), y(T(quaternion.y)), z(T(quaternion.z))
 
     {
     }
@@ -49,14 +47,12 @@ template <Float T> struct Quaternion
     }
 
     template <std::convertible_to<T> U>
-    constexpr Quaternion(const vec3<T> &vector, const U value)
-        : w(vector[0]), x(vector[1]), y(vector[2]), z(static_cast<T>(value))
+    constexpr Quaternion(const vec3<T> &vector, const U value) : w(vector[0]), x(vector[1]), y(vector[2]), z(T(value))
     {
     }
 
     template <std::convertible_to<T> U>
-    constexpr Quaternion(const U value, const vec3<T> &vector)
-        : w(static_cast<T>(value)), x(vector[0]), y(vector[1]), z(vector[2])
+    constexpr Quaternion(const U value, const vec3<T> &vector) : w(T(value)), x(vector[0]), y(vector[1]), z(vector[2])
     {
     }
 
@@ -64,16 +60,16 @@ template <Float T> struct Quaternion
 
     template <std::convertible_to<T> U> constexpr Quaternion &operator=(const Quaternion<U> &quaternion)
     {
-        w = static_cast<T>(quaternion.w);
-        x = static_cast<T>(quaternion.x);
-        y = static_cast<T>(quaternion.y);
-        z = static_cast<T>(quaternion.z);
+        w = T(quaternion.w);
+        x = T(quaternion.x);
+        y = T(quaternion.y);
+        z = T(quaternion.z);
     }
 
     static constexpr Quaternion FromEulerAngles(const vec3<T> &eulerAngles)
     {
         Quaternion q;
-        const vec3<T> half = static_cast<T>(0.5) * eulerAngles;
+        const vec3<T> half = T(0.5) * eulerAngles;
         const vec3<T> c = Cosine(half);
         const vec3<T> s = Sine(half);
 
@@ -108,8 +104,8 @@ template <Float T> struct Quaternion
             biggestIndex = 3;
         }
 
-        const T biggestVal = sqrt(fourBiggestSquaredMinus1 + static_cast<T>(1)) * static_cast<T>(0.5);
-        const T mult = static_cast<T>(0.25) / biggestVal;
+        const T biggestVal = sqrt(fourBiggestSquaredMinus1 + T(1)) * T(0.5);
+        const T mult = T(0.25) / biggestVal;
 
         switch (biggestIndex)
         {
@@ -138,7 +134,7 @@ template <Float T> struct Quaternion
 
     static constexpr Quaternion FromAngleAxis(const T angle, const vec3<T> &axis)
     {
-        constexpr T half = static_cast<T>(0.5);
+        constexpr T half = T(0.5);
         const T s = Sine(angle * half);
 
         return Quaternion{Cosine(angle * half), axis * s};
@@ -205,7 +201,7 @@ template <Float T> struct Quaternion
         const vec3<T> uv{Cross(q, right)};
         const vec3<T> uuv{Cross(q, uv)};
 
-        return right + ((uv * left.w) + uuv) * static_cast<T>(2);
+        return right + ((uv * left.w) + uuv) * T(2);
     }
     friend constexpr vec3<T> operator*(const vec3<T> &left, const Quaternion &right)
     {
@@ -317,9 +313,9 @@ template <typename T> constexpr T Cross(const Quaternion<T> &left, const Quatern
 }
 template <typename T> constexpr T GetAngle(const Quaternion<T> &quaternion)
 {
-    constexpr T cosOneOverTwo = static_cast<T>(0.877582561890372716130286068203503191);
-    constexpr T zero = static_cast<T>(0);
-    constexpr T two = static_cast<T>(2);
+    constexpr T cosOneOverTwo = T(0.877582561890372716130286068203503191);
+    constexpr T zero = T(0);
+    constexpr T two = T(2);
     if (Absolute(quaternion.w) > cosOneOverTwo)
     {
         T const a = AntiSine(SquareRoot(quaternion.x * quaternion.x + quaternion.y * quaternion.y +
@@ -335,8 +331,8 @@ template <typename T> constexpr T GetAngle(const Quaternion<T> &quaternion)
 
 template <typename T> constexpr vec3<T> GetAxis(const Quaternion<T> &quaternion)
 {
-    constexpr T zero = static_cast<T>(0);
-    constexpr T one = static_cast<T>(1);
+    constexpr T zero = T(0);
+    constexpr T one = T(1);
     const T tmp1 = one - quaternion.w * quaternion.w;
     if (tmp1 <= zero)
         return vec3<T>{zero, zero, one};
@@ -346,7 +342,7 @@ template <typename T> constexpr vec3<T> GetAxis(const Quaternion<T> &quaternion)
 
 template <typename T> constexpr T Pitch(const Quaternion<T> &quaternion)
 {
-    constexpr T two = static_cast<T>(2);
+    constexpr T two = T(2);
     const T y = two * (quaternion.y * quaternion.z + quaternion.w * quaternion.x);
     const T x = quaternion.w * quaternion.w - quaternion.x * quaternion.x - quaternion.y * quaternion.y +
                 quaternion.z * quaternion.z;
@@ -357,18 +353,17 @@ template <typename T> constexpr T Pitch(const Quaternion<T> &quaternion)
 }
 template <typename T> constexpr T Yaw(const Quaternion<T> &quaternion)
 {
-    return AntiSine(Clamp(static_cast<T>(-2) * (quaternion.x * quaternion.z - quaternion.w * quaternion.y),
-                          static_cast<T>(-1), static_cast<T>(1)));
+    return AntiSine(Clamp(T(-2) * (quaternion.x * quaternion.z - quaternion.w * quaternion.y), T(-1), T(1)));
 }
 template <typename T> constexpr T Roll(const Quaternion<T> &quaternion)
 {
-    constexpr T two = static_cast<T>(2);
+    constexpr T two = T(2);
     const T y = two * (quaternion.x * quaternion.y + quaternion.w * quaternion.z);
     const T x = quaternion.w * quaternion.w + quaternion.x * quaternion.x - quaternion.y * quaternion.y -
                 quaternion.z * quaternion.z;
 
     if (ApproachesZero(x) && ApproachesZero(y))
-        return static_cast<T>(0);
+        return T(0);
     return AntiTangent(y, x);
 }
 
@@ -390,8 +385,8 @@ template <typename T> constexpr mat3<T> ToMat3(const Quaternion<T> &quaternion)
     const T qwy(quaternion.w * quaternion.y);
     const T qwz(quaternion.w * quaternion.z);
 
-    constexpr T one = static_cast<T>(1);
-    constexpr T two = static_cast<T>(2);
+    constexpr T one = T(1);
+    constexpr T two = T(2);
 
     result[0][0] = one - two * (qyy + qzz);
     result[0][1] = two * (qxy + qwz);

@@ -6,7 +6,7 @@
 namespace TKit
 {
 ArenaAllocator::ArenaAllocator(void *buffer, const usize capacity, const usize alignment)
-    : m_Buffer(static_cast<std::byte *>(buffer)), m_Capacity(capacity), m_Alignment(alignment), m_Provided(true)
+    : m_Buffer(scast<std::byte *>(buffer)), m_Capacity(capacity), m_Alignment(alignment), m_Provided(true)
 {
     TKIT_ASSERT(IsPowerOfTwo(alignment), "[TOOLKIT][ARENA-ALLOC] Alignment must be a power of 2, but the value is {}",
                 alignment);
@@ -18,7 +18,7 @@ ArenaAllocator::ArenaAllocator(const usize capacity, const usize alignment)
 {
     TKIT_ASSERT(IsPowerOfTwo(alignment), "[TOOLKIT][ARENA-ALLOC] Alignment must be a power of 2, but the value is {}",
                 alignment);
-    m_Buffer = static_cast<std::byte *>(AllocateAligned(static_cast<size_t>(capacity), alignment));
+    m_Buffer = scast<std::byte *>(AllocateAligned(size_t(capacity), alignment));
     TKIT_ASSERT(m_Buffer, "[TOOLKIT][ARENA-ALLOC] Failed to allocate memory");
 }
 ArenaAllocator::~ArenaAllocator()

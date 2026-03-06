@@ -61,7 +61,7 @@ template <typename T> class RefCounted
     // the default
     void selfDestruct() const
     {
-        delete static_cast<const T *>(this);
+        delete scast<const T *>(this);
     }
 
   private:
@@ -73,7 +73,7 @@ template <typename T> class RefCounted
     void decreaseRef() const
     {
         if (m_RefCount.fetch_sub(1, std::memory_order_acq_rel) == 1)
-            static_cast<const T *>(this)->selfDestruct();
+            scast<const T *>(this)->selfDestruct();
     }
 
     mutable std::atomic_uint32_t m_RefCount;
@@ -230,15 +230,13 @@ template <typename T> class Ref
   private:
     void increaseRef() const
     {
-        // Must static_cast to RefCounted to access increaseRef
         if (m_Ptr)
-            static_cast<const RefCounted<typename T::CountedType> *>(m_Ptr)->increaseRef();
+            scast<const RefCounted<typename T::CountedType> *>(m_Ptr)->increaseRef();
     }
     void decreaseRef() const
     {
-        // Must static_cast to RefCounted to access decreaseRef
         if (m_Ptr)
-            static_cast<const RefCounted<typename T::CountedType> *>(m_Ptr)->decreaseRef();
+            scast<const RefCounted<typename T::CountedType> *>(m_Ptr)->decreaseRef();
     }
 
     T *m_Ptr = nullptr;

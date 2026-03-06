@@ -8,9 +8,9 @@ namespace TKit::Detail
 template <typename It> constexpr usize Distance(const It first, const It last)
 {
     if constexpr (std::integral<It>)
-        return static_cast<usize>(last - first);
+        return usize(last - first);
     else
-        return static_cast<usize>(std::distance(first, last));
+        return usize(std::distance(first, last));
 }
 } // namespace TKit::Detail
 

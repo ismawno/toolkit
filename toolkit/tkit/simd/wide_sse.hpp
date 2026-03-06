@@ -68,7 +68,7 @@ template <Numeric T> class Wide
     constexpr Wide(const m128 data) : m_Data(data)
     {
     }
-    template <std::convertible_to<T> U> constexpr Wide(const U data) : m_Data(set(static_cast<T>(data)))
+    template <std::convertible_to<T> U> constexpr Wide(const U data) : m_Data(set(T(data)))
     {
     }
     constexpr explicit Wide(const T *data) : m_Data(loadAligned(data))
@@ -84,7 +84,7 @@ template <Numeric T> class Wide
 
     template <std::convertible_to<T> U> constexpr Wide &operator=(const U data)
     {
-        m_Data = set(static_cast<T>(data));
+        m_Data = set(T(data));
     }
 
     static constexpr Wide LoadAligned(const T *data)
@@ -105,13 +105,13 @@ template <Numeric T> class Wide
 
 #    ifndef TKIT_SIMD_AVX2
         alignas(Alignment) T dst[Lanes];
-        const std::byte *src = reinterpret_cast<const std::byte *>(data);
+        const std::byte *src = rcast<const std::byte *>(data);
 
         for (usize i = 0; i < Lanes; ++i)
             ForwardCopy(dst + i, src + i * stride, sizeof(T));
         return Wide{loadAligned(dst)};
 #    else
-        const i32 idx = static_cast<i32>(stride);
+        const i32 idx = i32(stride);
         if constexpr (s_Equals<__m128>)
         {
             const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
@@ -127,17 +127,17 @@ template <Numeric T> class Wide
             if constexpr (s_IsSize<8>)
             {
                 const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
-                return Wide{_mm_i32gather_epi64(reinterpret_cast<const long long int *>(data), indices, 1)};
+                return Wide{_mm_i32gather_epi64(rcast<const long long int *>(data), indices, 1)};
             }
             else if constexpr (s_IsSize<4>)
             {
                 const __m128i indices = _mm_setr_epi32(0, idx, 2 * idx, 3 * idx);
-                return Wide{_mm_i32gather_epi32(reinterpret_cast<const i32 *>(data), indices, 1)};
+                return Wide{_mm_i32gather_epi32(rcast<const i32 *>(data), indices, 1)};
             }
             else
             {
                 alignas(Alignment) T dst[Lanes];
-                const std::byte *src = reinterpret_cast<const std::byte *>(data);
+                const std::byte *src = rcast<const std::byte *>(data);
 
                 for (usize i = 0; i < Lanes; ++i)
                     ForwardCopy(dst + i, src + i * stride, sizeof(T));
@@ -157,7 +157,7 @@ template <Numeric T> class Wide
         alignas(Alignment) T src[Lanes];
         StoreAligned(src);
 
-        std::byte *dst = reinterpret_cast<std::byte *>(data);
+        std::byte *dst = rcast<std::byte *>(data);
         for (usize i = 0; i < Lanes; ++i)
             ForwardCopy(dst + i * stride, &src[i], sizeof(T));
     }
@@ -188,7 +188,7 @@ template <Numeric T> class Wide
         else if constexpr (s_Equals<__m128d>)
             _mm_store_pd(data, m_Data);
         else if constexpr (s_Equals<__m128i>)
-            _mm_store_si128(reinterpret_cast<__m128i *>(data), m_Data);
+            _mm_store_si128(rcast<__m128i *>(data), m_Data);
         CREATE_BAD_BRANCH()
     }
     constexpr void StoreUnaligned(T *data) const
@@ -198,7 +198,7 @@ template <Numeric T> class Wide
         else if constexpr (s_Equals<__m128d>)
             _mm_storeu_pd(data, m_Data);
         else if constexpr (s_Equals<__m128i>)
-            _mm_storeu_si128(reinterpret_cast<__m128i *>(data), m_Data);
+            _mm_storeu_si128(rcast<__m128i *>(data), m_Data);
         CREATE_BAD_BRANCH()
     }
 
@@ -321,7 +321,7 @@ template <Numeric T> class Wide
 
     friend constexpr Wide operator-(const Wide &other)
     {
-        return other * static_cast<T>(-1);
+        return other * T(-1);
     }
 
 #    define CREATE_SELF_OP(op, requires)                                                                               \
@@ -348,7 +348,7 @@ template <Numeric T> class Wide
     friend constexpr Wide operator>>(const Wide &left, const U pshift)
         requires(Integer<T>)
     {
-        const i32 shift = static_cast<i32>(pshift);
+        const i32 shift = i32(pshift);
         if constexpr (s_IsSize<8>)
         {
             if constexpr (std::is_signed_v<T>)
@@ -382,7 +382,7 @@ template <Numeric T> class Wide
     friend constexpr Wide operator<<(const Wide &left, const U pshift)
         requires(Integer<T>)
     {
-        const i32 shift = static_cast<i32>(pshift);
+        const i32 shift = i32(pshift);
         if constexpr (s_IsSize<8>)
             return Wide{_mm_sll_epi64(left.m_Data, _mm_cvtsi32_si128(shift))};
         else if constexpr (s_IsSize<4>)
@@ -484,7 +484,7 @@ template <Numeric T> class Wide
                 tmp = _mm_srli_si128(sum, 8);
                 sum = _mm_add_epi16(sum, tmp);
 
-                return static_cast<T>(_mm_cvtsi128_si32(sum));
+                return T(_mm_cvtsi128_si32(sum));
             }
             else if constexpr (s_IsSize<1>)
             {
@@ -497,7 +497,7 @@ template <Numeric T> class Wide
                 tmp = _mm_srli_si128(sum, 8);
                 sum = _mm_add_epi8(sum, tmp);
 
-                return static_cast<T>(_mm_cvtsi128_si32(sum));
+                return T(_mm_cvtsi128_si32(sum));
             }
         }
     }
@@ -505,21 +505,21 @@ template <Numeric T> class Wide
     static constexpr BitMask PackMask(const Mask &mask)
     {
         if constexpr (s_Equals<__m128>)
-            return static_cast<BitMask>(_mm_movemask_ps(mask));
+            return BitMask(_mm_movemask_ps(mask));
         else if constexpr (s_Equals<__m128d>)
-            return static_cast<BitMask>(_mm_movemask_pd(mask));
+            return BitMask(_mm_movemask_pd(mask));
         else if constexpr (s_Equals<__m128i>)
         {
-            const u32 byteMask = static_cast<u32>(_mm_movemask_epi8(mask));
+            const u32 byteMask = u32(_mm_movemask_epi8(mask));
             if constexpr (s_IsSize<1>)
-                return static_cast<BitMask>(byteMask);
+                return BitMask(byteMask);
 #    ifdef TKIT_BMI2
             else if constexpr (s_IsSize<2>)
-                return static_cast<BitMask>(_pext_u32(byteMask, 0x55555555u));
+                return BitMask(_pext_u32(byteMask, 0x55555555u));
             else if constexpr (s_IsSize<4>)
-                return static_cast<BitMask>(_pext_u32(byteMask, 0x11111111u));
+                return BitMask(_pext_u32(byteMask, 0x11111111u));
             else if constexpr (s_IsSize<8>)
-                return static_cast<BitMask>(_pext_u32(byteMask, 0x01010101u));
+                return BitMask(_pext_u32(byteMask, 0x01010101u));
 #    endif
             else
             {
@@ -539,9 +539,9 @@ template <Numeric T> class Wide
         alignas(Alignment) Integer tmp[Lanes];
 
         for (usize i = 0; i < Lanes; ++i)
-            tmp[i] = (mask & (BitMask{1} << i)) ? static_cast<Integer>(-1) : Integer{0};
+            tmp[i] = (mask & (BitMask{1} << i)) ? Integer(-1) : Integer(0);
 
-        return loadAligned(reinterpret_cast<const T *>(tmp));
+        return loadAligned(rcast<const T *>(tmp));
     }
 
     static constexpr bool NoneOf(const Mask &mask)
@@ -568,7 +568,7 @@ template <Numeric T> class Wide
         else if constexpr (s_Equals<__m128d>)
             return _mm_load_pd(data);
         else if constexpr (s_Equals<__m128i>)
-            return _mm_load_si128(reinterpret_cast<const __m128i *>(data));
+            return _mm_load_si128(rcast<const __m128i *>(data));
         CREATE_BAD_BRANCH()
     }
     static m128 loadUnaligned(const T *data)
@@ -578,7 +578,7 @@ template <Numeric T> class Wide
         else if constexpr (s_Equals<__m128d>)
             return _mm_loadu_pd(data);
         else if constexpr (s_Equals<__m128i>)
-            return _mm_loadu_si128(reinterpret_cast<const __m128i *>(data));
+            return _mm_loadu_si128(rcast<const __m128i *>(data));
         CREATE_BAD_BRANCH()
     }
 
@@ -607,19 +607,19 @@ template <Numeric T> class Wide
     static constexpr m128 makeIntrinsic(Callable &&callable, std::integer_sequence<usize, I...>)
     {
         if constexpr (s_Equals<__m128>)
-            return _mm_setr_ps(static_cast<T>(std::forward<Callable>(callable)(I))...);
+            return _mm_setr_ps(T(std::forward<Callable>(callable)(I))...);
         else if constexpr (s_Equals<__m128d>)
-            return _mm_setr_pd(static_cast<T>(std::forward<Callable>(callable)(I))...);
+            return _mm_setr_pd(T(std::forward<Callable>(callable)(I))...);
         else if constexpr (s_Equals<__m128i>)
         {
             if constexpr (s_IsSize<8>)
-                return _mm_set_epi64x(static_cast<T>(std::forward<Callable>(callable)(Lanes - I - 1))...);
+                return _mm_set_epi64x(T(std::forward<Callable>(callable)(Lanes - I - 1))...);
             else if constexpr (s_IsSize<4>)
-                return _mm_setr_epi32(static_cast<T>(std::forward<Callable>(callable)(I))...);
+                return _mm_setr_epi32(T(std::forward<Callable>(callable)(I))...);
             else if constexpr (s_IsSize<2>)
-                return _mm_setr_epi16(static_cast<T>(std::forward<Callable>(callable)(I))...);
+                return _mm_setr_epi16(T(std::forward<Callable>(callable)(I))...);
             else if constexpr (s_IsSize<1>)
-                return _mm_setr_epi8(static_cast<T>(std::forward<Callable>(callable)(I))...);
+                return _mm_setr_epi8(T(std::forward<Callable>(callable)(I))...);
         }
         CREATE_BAD_BRANCH()
     }
@@ -646,8 +646,8 @@ template <Numeric T> class Wide
     {
         const __m128i shifted = _mm_srl_epi16(data, _mm_cvtsi32_si128(shift));
 
-        const __m128i mask1 = _mm_set1_epi16(static_cast<i16>(0x00FF >> shift));
-        const __m128i mask2 = _mm_set1_epi16(static_cast<i16>(0xFF00));
+        const __m128i mask1 = _mm_set1_epi16(i16(0x00FF >> shift));
+        const __m128i mask2 = _mm_set1_epi16(i16(0xFF00));
 
         const __m128i lo = _mm_and_si128(shifted, mask1);
         const __m128i hi = _mm_and_si128(shifted, mask2);
@@ -657,8 +657,8 @@ template <Numeric T> class Wide
     {
         const __m128i shifted = _mm_sll_epi16(data, _mm_cvtsi32_si128(shift));
 
-        const __m128i mask1 = _mm_set1_epi16(static_cast<i16>(0xFF00 << shift));
-        const __m128i mask2 = _mm_set1_epi16(static_cast<i16>(0x00FF));
+        const __m128i mask1 = _mm_set1_epi16(i16(0xFF00 << shift));
+        const __m128i mask2 = _mm_set1_epi16(i16(0x00FF));
 
         const __m128i lo = _mm_and_si128(shifted, mask1);
         const __m128i hi = _mm_and_si128(shifted, mask2);
@@ -763,9 +763,9 @@ template <Numeric T> class Wide
 #    ifndef TKIT_SIMD_SSE4_2
         __m128i sign;
         if constexpr (!std::is_signed_v<T>)
-            sign = _mm_set1_epi64x(static_cast<i64>(1ull << 63 | 1ull << 31));
+            sign = _mm_set1_epi64x(i64(1ull << 63 | 1ull << 31));
         else
-            sign = _mm_set1_epi64x(static_cast<i64>(1ull << 31));
+            sign = _mm_set1_epi64x(i64(1ull << 31));
 
         left = _mm_xor_si128(left, sign);
         right = _mm_xor_si128(right, sign);
@@ -782,7 +782,7 @@ template <Numeric T> class Wide
 #    else
         if constexpr (!std::is_signed_v<T>)
         {
-            const __m128i sign = _mm_set1_epi64x(static_cast<i64>(1ull << 63));
+            const __m128i sign = _mm_set1_epi64x(i64(1ull << 63));
             left = _mm_xor_si128(left, sign);
             right = _mm_xor_si128(right, sign);
         }
@@ -795,7 +795,7 @@ template <Numeric T> class Wide
             return ::_mm_cmpgt_epi32(left, right);
         else
         {
-            const __m128i offset = _mm_set1_epi32(static_cast<i32>(1 << 31));
+            const __m128i offset = _mm_set1_epi32(i32(1 << 31));
             return ::_mm_cmpgt_epi32(_mm_xor_si128(left, offset), _mm_xor_si128(right, offset));
         }
     }
@@ -805,7 +805,7 @@ template <Numeric T> class Wide
             return ::_mm_cmpgt_epi16(left, right);
         else
         {
-            const __m128i offset = _mm_set1_epi16(static_cast<i16>(1 << 15));
+            const __m128i offset = _mm_set1_epi16(i16(1 << 15));
             return ::_mm_cmpgt_epi16(_mm_xor_si128(left, offset), _mm_xor_si128(right, offset));
         }
     }
@@ -815,7 +815,7 @@ template <Numeric T> class Wide
             return ::_mm_cmpgt_epi8(left, right);
         else
         {
-            const __m128i offset = _mm_set1_epi8(static_cast<i8>(1 << 7));
+            const __m128i offset = _mm_set1_epi8(i8(1 << 7));
             return ::_mm_cmpgt_epi8(_mm_xor_si128(left, offset), _mm_xor_si128(right, offset));
         }
     }
@@ -829,7 +829,7 @@ template <Numeric T> class Wide
             return ::_mm_cmplt_epi32(left, right);
         else
         {
-            const __m128i offset = _mm_set1_epi32(static_cast<i32>(1 << 31));
+            const __m128i offset = _mm_set1_epi32(i32(1 << 31));
             return ::_mm_cmplt_epi32(_mm_xor_si128(left, offset), _mm_xor_si128(right, offset));
         }
     }
@@ -839,7 +839,7 @@ template <Numeric T> class Wide
             return ::_mm_cmplt_epi16(left, right);
         else
         {
-            const __m128i offset = _mm_set1_epi16(static_cast<i16>(1 << 15));
+            const __m128i offset = _mm_set1_epi16(i16(1 << 15));
             return ::_mm_cmplt_epi16(_mm_xor_si128(left, offset), _mm_xor_si128(right, offset));
         }
     }
@@ -849,22 +849,22 @@ template <Numeric T> class Wide
             return ::_mm_cmplt_epi8(left, right);
         else
         {
-            const __m128i offset = _mm_set1_epi8(static_cast<i8>(1 << 7));
+            const __m128i offset = _mm_set1_epi8(i8(1 << 7));
             return ::_mm_cmplt_epi8(_mm_xor_si128(left, offset), _mm_xor_si128(right, offset));
         }
     }
 #    define CREATE_INT_CMP(type, name)                                                                                 \
         static constexpr __m128i _mm_cmpneq_ep##type(const __m128i left, const __m128i right)                          \
         {                                                                                                              \
-            return _mm_xor_si128(_mm_cmpeq_ep##type(left, right), _mm_set1_ep##name(static_cast<type>(-1)));           \
+            return _mm_xor_si128(_mm_cmpeq_ep##type(left, right), _mm_set1_ep##name(type(-1)));                        \
         }                                                                                                              \
         static constexpr __m128i _mm_cmpge_ep##type(const __m128i left, const __m128i right)                           \
         {                                                                                                              \
-            return _mm_xor_si128(_mm_cmplt_ep##type(left, right), _mm_set1_ep##name(static_cast<type>(-1)));           \
+            return _mm_xor_si128(_mm_cmplt_ep##type(left, right), _mm_set1_ep##name(type(-1)));                        \
         }                                                                                                              \
         static constexpr __m128i _mm_cmple_ep##type(const __m128i left, const __m128i right)                           \
         {                                                                                                              \
-            return _mm_xor_si128(_mm_cmpgt_ep##type(left, right), _mm_set1_ep##name(static_cast<type>(-1)));           \
+            return _mm_xor_si128(_mm_cmpgt_ep##type(left, right), _mm_set1_ep##name(type(-1)));                        \
         }
 
     CREATE_INT_CMP(i8, i8)

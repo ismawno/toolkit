@@ -52,7 +52,7 @@ template <typename T, usize N0, usize... N> constexpr T Min(const ten<T, N0, N..
 }
 template <typename T, usize N0, usize... N> constexpr T Max(const ten<T, N0, N...> &tensor)
 {
-    T mx{static_cast<T>(0)};
+    T mx{T(0)};
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
         if (mx < tensor.Flat[i])
@@ -89,19 +89,18 @@ constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &tensor, const ten<T, N0
     return result;
 }
 template <typename T, std::convertible_to<T> U, usize N0, usize... N>
-constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &tensor, U &&min, U &&max)
+constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &tensor, const U min, const U max)
 {
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] =
-            Clamp(tensor.Flat[i], static_cast<T>(std::forward<U>(min)), static_cast<T>(std::forward<U>(max)));
+        result.Flat[i] = Clamp(tensor.Flat[i], T(min), T(max));
     return result;
 }
 
 template <typename T> constexpr T Pi()
 {
-    return static_cast<T>(3.14159265358979323846);
+    return T(3.14159265358979323846);
 }
 template <typename T> constexpr T Radians(const T degrees)
 {

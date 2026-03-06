@@ -51,7 +51,7 @@ template <typename T, typename AllocState> struct Codec<Array<T, AllocState>>
         if (!node.IsSequence())
             return false;
 
-        instance.Reserve(static_cast<usize>(node.size()));
+        instance.Reserve(usize(node.size()));
         for (const Node &element : node)
             instance.Append(element.template as<T>());
         return true;

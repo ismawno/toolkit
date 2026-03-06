@@ -63,27 +63,27 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
     /**
      * @brief Get a pointer to the object in the local buffer.
      *
-     * Calling `Get()` with a different type `T` will cause undefined behavior (uses reinterpret_cast under the hood).
+     * Calling `Get()` with a different type `T` will cause undefined behavior (uses rcast under the hood).
      *
      * @tparam T The type of the object to get.
      * @return A pointer to the object in the local buffer.
      */
     template <typename T> constexpr const T *Get() const
     {
-        return reinterpret_cast<const T *>(m_Data);
+        return rcast<const T *>(m_Data);
     }
 
     /**
      * @brief Get a pointer to the object in the local buffer.
      *
-     * Calling `Get()` with a different type `T` will cause undefined behavior (uses reinterpret_cast under the hood).
+     * Calling `Get()` with a different type `T` will cause undefined behavior (uses rcast under the hood).
      *
      * @tparam T The type of the object to get.
      * @return A pointer to the object in the local buffer.
      */
     template <typename T> constexpr T *Get()
     {
-        return reinterpret_cast<T *>(m_Data);
+        return rcast<T *>(m_Data);
     }
 
   private:

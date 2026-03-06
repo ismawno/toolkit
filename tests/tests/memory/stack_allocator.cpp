@@ -82,8 +82,8 @@ TEST_CASE("Alignment behavior", "[StackAllocator]")
     const void *p2 = stack.Allocate(1);
     REQUIRE(p1);
     REQUIRE(p2);
-    REQUIRE(reinterpret_cast<uptr>(p1) % align == 0);
-    REQUIRE(reinterpret_cast<uptr>(p2) % align == 0);
+    REQUIRE(rcast<uptr>(p1) % align == 0);
+    REQUIRE(rcast<uptr>(p2) % align == 0);
     stack.Deallocate(p2, 1);
     stack.Deallocate(p1, 1);
     REQUIRE(stack.IsEmpty());
@@ -136,7 +136,7 @@ TEST_CASE("Allocate until full and LIFO deallocate", "[StackAllocator]")
     REQUIRE(stack.GetRemainingBytes() == 0);
 
     // deallocate all in reverse
-    for (usize i = static_cast<usize>(ptrs.size()); i > 0; --i)
+    for (usize i = usize(ptrs.size()); i > 0; --i)
         stack.Deallocate(ptrs[i - 1], blockSize);
     REQUIRE(stack.IsEmpty());
 }

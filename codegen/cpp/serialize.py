@@ -226,7 +226,7 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                         if vtype is None:
                             hpp(f'node["{field.name}"] = instance.{field.name};')
                         else:
-                            hpp(f'node["{field.name}"] = static_cast<{vtype}>(instance.{field.name});')
+                            hpp(f'node["{field.name}"] = scast<{vtype}>(instance.{field.name});')
                     hpp("return node;")
 
                 with hpp.doc():
