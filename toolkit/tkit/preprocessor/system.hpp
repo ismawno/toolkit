@@ -35,42 +35,46 @@
 #    define TKIT_ARM64
 #endif
 
-#if defined(__clang__) && !defined(_MSC_VER)
+#ifdef __clang__
 #    define TKIT_COMPILER_CLANG
 #    define TKIT_COMPILER_CLANG_VERSION (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__)
+#endif
+#ifdef _MSC_VER
+#    define TKIT_COMPILER_MSVC
+#    define TKIT_COMPILER_MSVC_VERSION _MSC_VER
+#    define TKIT_COMPILER_MSVC_VERSION_FULL _MSC_FULL_VER
+#endif
+#if defined(__clang__) && !defined(_MSC_VER)
+#    define TKIT_COMPILER_CLANG_GNU
 #endif
 #if defined(__GNUC__) && !defined(__clang__)
 #    define TKIT_COMPILER_GCC
 #    define TKIT_COMPILER_GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
 #endif
 #if defined(_MSC_VER) && !defined(__clang__)
-#    define TKIT_COMPILER_MSVC
-#    define TKIT_COMPILER_MSVC_VERSION _MSC_VER
-#    define TKIT_COMPILER_MSVC_VERSION_FULL _MSC_FULL_VER
+#    define TKIT_COMPILER_MSVC_CL
 #endif
 #if defined(_MSC_VER) && defined(__clang__)
-#    define TKIT_COMPILER_CLANGCL
-#    define TKIT_COMPILER_CLANGCL_VERSION _MSC_VER
-#    define TKIT_COMPILER_CLANGCL_VERSION_FULL _MSC_FULL_VER
+#    define TKIT_COMPILER_CLANG_CL
 #endif
 
 #ifdef TKIT_COMPILER_CLANG
-#    define TKIT_PRAGMA(arg) _Pragma(#arg)
+#    define TKIT_PRAGMA(x) _Pragma(#x)
 #    define TKIT_COMPILER_WARNING_IGNORE_PUSH() TKIT_PRAGMA(clang diagnostic push)
 #    define TKIT_COMPILER_WARNING_IGNORE_POP() TKIT_PRAGMA(clang diagnostic pop)
-#    define TKIT_CLANG_WARNING_IGNORE(warning) TKIT_PRAGMA(clang diagnostic ignored warning)
+#    define TKIT_CLANG_WARNING_IGNORE(w) TKIT_PRAGMA(clang diagnostic ignored w)
 #else
-#    define TKIT_CLANG_WARNING_IGNORE(warning)
+#    define TKIT_CLANG_WARNING_IGNORE(w)
 #endif
 #ifdef TKIT_COMPILER_GCC
 #    define TKIT_PRAGMA(x) _Pragma(#x)
 #    define TKIT_COMPILER_WARNING_IGNORE_PUSH() TKIT_PRAGMA(GCC diagnostic push)
 #    define TKIT_COMPILER_WARNING_IGNORE_POP() TKIT_PRAGMA(GCC diagnostic pop)
-#    define TKIT_GCC_WARNING_IGNORE(warning) TKIT_PRAGMA(GCC diagnostic ignored warning)
+#    define TKIT_GCC_WARNING_IGNORE(w) TKIT_PRAGMA(GCC diagnostic ignored w)
 #else
-#    define TKIT_GCC_WARNING_IGNORE(warning)
+#    define TKIT_GCC_WARNING_IGNORE(w)
 #endif
-#ifdef TKIT_COMPILER_MSVC
+#ifdef TKIT_COMPILER_MSVC_CL
 #    define TKIT_PRAGMA(x) __pragma(x)
 #    define TKIT_COMPILER_WARNING_IGNORE_PUSH() TKIT_PRAGMA(warning(push))
 #    define TKIT_COMPILER_WARNING_IGNORE_POP() TKIT_PRAGMA(warning(pop))
@@ -78,16 +82,8 @@
 #else
 #    define TKIT_MSVC_WARNING_IGNORE(w)
 #endif
-#ifdef TKIT_COMPILER_CLANGCL
-#    define TKIT_PRAGMA(x) __pragma(x)
-#    define TKIT_COMPILER_WARNING_IGNORE_PUSH() TKIT_PRAGMA(warning(push))
-#    define TKIT_COMPILER_WARNING_IGNORE_POP() TKIT_PRAGMA(warning(pop))
-#    define TKIT_CLANGCL_WARNING_IGNORE(w) TKIT_PRAGMA(warning(disable : w))
-#else
-#    define TKIT_CLANGCL_WARNING_IGNORE(w)
-#endif
 
-#if defined(TKIT_COMPILER_MSVC) || defined(TKIT_COMPILER_CLANGCL)
+#if defined(TKIT_COMPILER_MSVC)
 #    define TKIT_NO_RETURN __declspec(noreturn)
 #else
 #    define TKIT_NO_RETURN __attribute__((noreturn))
@@ -102,11 +98,11 @@
 #    define TKIT_CONSTEVAL constexpr
 #endif
 
-#if defined(TKIT_COMPILER_GCC) || defined(TKIT_COMPILER_CLANG) || defined(TKIT_COMPILER_CLANGCL)
+#if defined(TKIT_COMPILER_GCC) || defined(TKIT_COMPILER_CLANG)
 #    define TKIT_UNREACHABLE() __builtin_unreachable()
 #    define TKIT_FORCE_INLINE inline __attribute__((always_inline))
 #    define TKIT_NO_INLINE __attribute__((noinline))
-#elif defined(TKIT_COMPILER_MSVC)
+#elif defined(TKIT_COMPILER_MSVC_CL)
 #    define TKIT_UNREACHABLE() __assume(false)
 #    define TKIT_FORCE_INLINE __forceinline
 #    define TKIT_NO_INLINE __declspec(noinline)

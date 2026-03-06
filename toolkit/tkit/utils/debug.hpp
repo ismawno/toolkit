@@ -3,11 +3,11 @@
 #include "tkit/preprocessor/system.hpp"
 #include "tkit/utils/logging.hpp"
 
-#ifdef TKIT_COMPILER_CLANG
+#ifdef TKIT_COMPILER_CLANG_GNU
 #    define TKIT_DEBUG_BREAK() __builtin_debugtrap()
 #elif defined(TKIT_COMPILER_GCC)
 #    define TKIT_DEBUG_BREAK() __builtin_trap()
-#elif defined(TKIT_COMPILER_MSVC) || defined(TKIT_COMPILER_CLANGCL)
+#elif defined(TKIT_COMPILER_MSVC)
 #    define TKIT_DEBUG_BREAK() __debugbreak()
 #elif defined(SIGTRAP)
 #    define TKIT_DEBUG_BREAK() raise(SIGTRAP)
