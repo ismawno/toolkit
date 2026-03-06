@@ -7,11 +7,14 @@
 #    else
 #        define TKIT_OS_WINDOWS_32
 #    endif
-#elif defined(__linux__)
+#endif
+#if defined(__linux__)
 #    define TKIT_OS_LINUX
-#elif defined(__APPLE__)
+#endif
+#if defined(__APPLE__)
 #    define TKIT_OS_APPLE
-#elif defined(__ANDROID__)
+#endif
+#if defined(__ANDROID__)
 #    define TKIT_OS_ANDROID
 #endif
 
@@ -21,43 +24,35 @@
 
 #if defined(_M_IX86) || defined(__i386__)
 #    define TKIT_32_BIT_ARCH
-#elif defined(_M_X64) || defined(__x86_64__)
+#endif
+#if defined(_M_X64) || defined(__x86_64__)
 #    define TKIT_64_BIT_ARCH
-#elif defined(__arm__) || defined(_M_ARM)
+#endif
+#if defined(__arm__) || defined(_M_ARM)
 #    define TKIT_ARM
-#elif defined(__aarch64__) || defined(_M_ARM64)
+#endif
+#if defined(__aarch64__) || defined(_M_ARM64)
 #    define TKIT_ARM64
 #endif
 
 #ifdef __clang__
 #    define TKIT_COMPILER_CLANG
 #    define TKIT_COMPILER_CLANG_VERSION (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__)
-#elif defined(__GNUC__)
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
 #    define TKIT_COMPILER_GCC
 #    define TKIT_COMPILER_GCC_VERSION (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
-#elif defined(_MSC_VER)
+#endif
+#if defined(_MSC_VER) && !defined(__clang__)
 #    define TKIT_COMPILER_MSVC
 #    define TKIT_COMPILER_MSVC_VERSION _MSC_VER
 #    define TKIT_COMPILER_MSVC_VERSION_FULL _MSC_FULL_VER
 #endif
-
-// #ifdef TKIT_OS_WINDOWS
-// #    ifdef TKIT_SHARED_LIBRARY
-// #        ifdef TKIT_EXPORT
-// #            define TKIT_API __declspec(dllexport)
-// #        else
-// #            define TKIT_API __declspec(dllimport)
-// #        endif
-// #    else
-// #        define TKIT_API
-// #    endif
-// #elif defined(TKIT_OS_LINUX) || defined(TKIT_OS_APPLE)
-// #    if defined(TKIT_SHARED_LIBRARY) && defined(TKIT_EXPORT)
-// #        define TKIT_API __attribute__((visibility("default")))
-// #    else
-// #        define TKIT_API
-// #    endif
-// #endif
+#if defined(_MSC_VER) && defined(__clang__)
+#    define TKIT_COMPILER_CLANGCL
+#    define TKIT_COMPILER_CLANGCL_VERSION _MSC_VER
+#    define TKIT_COMPILER_CLANGCL_VERSION_FULL _MSC_FULL_VER
+#endif
 
 #ifdef TKIT_COMPILER_CLANG
 #    define TKIT_PRAGMA(arg) _Pragma(#arg)
@@ -83,8 +78,16 @@
 #else
 #    define TKIT_MSVC_WARNING_IGNORE(w)
 #endif
+#ifdef TKIT_COMPILER_CLANGCL
+#    define TKIT_PRAGMA(x) __pragma(x)
+#    define TKIT_COMPILER_WARNING_IGNORE_PUSH() TKIT_PRAGMA(warning(push))
+#    define TKIT_COMPILER_WARNING_IGNORE_POP() TKIT_PRAGMA(warning(pop))
+#    define TKIT_CLANGCL_WARNING_IGNORE(w) TKIT_PRAGMA(warning(disable : w))
+#else
+#    define TKIT_CLANGCL_WARNING_IGNORE(w)
+#endif
 
-#ifdef TKIT_COMPILER_MSVC
+#if defined(TKIT_COMPILER_MSVC) || defined(TKIT_COMPILER_CLANGCL)
 #    define TKIT_NO_RETURN __declspec(noreturn)
 #else
 #    define TKIT_NO_RETURN __attribute__((noreturn))
@@ -99,7 +102,7 @@
 #    define TKIT_CONSTEVAL constexpr
 #endif
 
-#if defined(TKIT_COMPILER_GCC) || defined(TKIT_COMPILER_CLANG)
+#if defined(TKIT_COMPILER_GCC) || defined(TKIT_COMPILER_CLANG) || defined(TKIT_COMPILER_CLANGCL)
 #    define TKIT_UNREACHABLE() __builtin_unreachable()
 #    define TKIT_FORCE_INLINE inline __attribute__((always_inline))
 #    define TKIT_NO_INLINE __attribute__((noinline))
