@@ -35,7 +35,7 @@
 #    define TKIT_ARM64
 #endif
 
-#ifdef __clang__
+#if defined(__clang__) && !defined(_MSC_VER)
 #    define TKIT_COMPILER_CLANG
 #    define TKIT_COMPILER_CLANG_VERSION (__clang_major__ * 10000 + __clang_minor__ * 100 + __clang_patchlevel__)
 #endif
