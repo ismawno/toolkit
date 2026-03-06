@@ -7,7 +7,7 @@
 #    define TKIT_DEBUG_BREAK() __builtin_debugtrap()
 #elif defined(TKIT_COMPILER_GCC)
 #    define TKIT_DEBUG_BREAK() __builtin_trap()
-#elif defined(TKIT_COMPILER_MSVC)
+#elif defined(TKIT_COMPILER_MSVC) || defined(TKIT_COMPILER_CLANGCL)
 #    define TKIT_DEBUG_BREAK() __debugbreak()
 #elif defined(SIGTRAP)
 #    define TKIT_DEBUG_BREAK() raise(SIGTRAP)
