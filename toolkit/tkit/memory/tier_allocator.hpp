@@ -144,8 +144,6 @@ class TierDescriptions
  * index total tier size.
  *
  */
-TKIT_COMPILER_WARNING_IGNORE_PUSH()
-TKIT_MSVC_WARNING_IGNORE(4324)
 class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 {
     TKIT_NON_COPYABLE(TierAllocator)
@@ -269,5 +267,4 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     usize m_MaxAllocation;
 #endif
 };
-TKIT_COMPILER_WARNING_IGNORE_POP()
 } // namespace TKit

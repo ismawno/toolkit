@@ -6,9 +6,6 @@
 #include <atomic>
 #include <concepts>
 
-TKIT_COMPILER_WARNING_IGNORE_PUSH()
-TKIT_MSVC_WARNING_IGNORE(4324)
-
 namespace TKit
 {
 /**
@@ -187,5 +184,4 @@ template <typename T> class MpmcStack
 
     static inline thread_local FreeList t_FreeList{};
 };
-TKIT_COMPILER_WARNING_IGNORE_POP()
 } // namespace TKit

@@ -27,8 +27,6 @@ namespace TKit
  * A multithreaded environment has the exact opposite property, so this allocator is not thread safe.
  *
  */
-TKIT_COMPILER_WARNING_IGNORE_PUSH()
-TKIT_MSVC_WARNING_IGNORE(4324)
 class alignas(TKIT_CACHE_LINE_SIZE) StackAllocator
 {
     TKIT_NON_COPYABLE(StackAllocator)
@@ -146,8 +144,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) StackAllocator
     {
         TKIT_ASSERT(ptr, "[TOOLKIT][STACK-ALLOC] Cannot deallocate a null pointer");
         TKIT_ASSERT(m_Top != 0, "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is empty");
-        TKIT_ASSERT(m_Buffer + m_Top - NextAlignedSize(sizeof(T) * count, m_Alignment) ==
-                        rcast<const std::byte *>(ptr),
+        TKIT_ASSERT(m_Buffer + m_Top - NextAlignedSize(sizeof(T) * count, m_Alignment) == rcast<const std::byte *>(ptr),
                     "[TOOLKIT][STACK-ALLOC] Elements must be deallocated in the reverse order they were allocated");
         if constexpr (!std::is_trivially_destructible_v<T>)
             for (usize i = 0; i < count; ++i)
@@ -199,5 +196,4 @@ class alignas(TKIT_CACHE_LINE_SIZE) StackAllocator
     usize m_Alignment = 0;
     bool m_Provided;
 };
-TKIT_COMPILER_WARNING_IGNORE_POP()
 } // namespace TKit

@@ -33,8 +33,6 @@ namespace TKit
  * lead to errors and problems, especially with thread indices.
  *
  */
-TKIT_COMPILER_WARNING_IGNORE_PUSH()
-TKIT_MSVC_WARNING_IGNORE(4324)
 class ThreadPool final : public ITaskManager
 {
   public:
@@ -97,5 +95,4 @@ class ThreadPool final : public ITaskManager
     alignas(TKIT_CACHE_LINE_SIZE) std::atomic_flag m_ReadySignal = ATOMIC_FLAG_INIT;
     const Topology::Handle *m_Handle;
 };
-TKIT_COMPILER_WARNING_IGNORE_POP()
 } // namespace TKit
