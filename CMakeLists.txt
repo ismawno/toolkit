@@ -436,6 +436,7 @@ function(tkit_default_configure target)
       /wd4324
       /wd4244
       /wd4661
+      /wd4310
       NO_EXCEPTIONS
       NO_RTTI)
   elseif((UNIX AND APPLE) OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
