@@ -181,6 +181,7 @@ if(TOOLKIT_ENABLE_INSTRUMENTATION OR TOOLKIT_ENABLE_SAMPLING)
       target_compile_definitions(toolkit
                                  PUBLIC TKIT_ENABLE_VULKAN_INSTRUMENTATION)
     endif()
+    target_link_libraries(toolkit PUBLIC TracyClient)
   else()
     message(STATUS "TOOLKIT - Tracy found")
     target_link_libraries(toolkit INTERFACE Tracy::TracyClient)
