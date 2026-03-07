@@ -62,7 +62,6 @@ if(TOOLKIT_ENABLE_YAML_SERIALIZATION)
   list(APPEND SOURCES tkit/serialization/yaml/codec.cpp)
 endif()
 
-# Create the library
 add_library(toolkit STATIC ${SOURCES})
 target_compile_definitions(toolkit PUBLIC TKIT_VERSION=\"v0.8.x\")
 
