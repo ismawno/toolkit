@@ -178,7 +178,7 @@ inline bool IsAligned(const usz address, const usz alignment)
 {
     return (address & (alignment - 1)) == 0;
 }
-inline usize NextAlignedSize(const usz size, const usz alignment)
+inline usz NextAlignedSize(const usz size, const usz alignment)
 {
     return (size + alignment - 1) & ~(alignment - 1);
 }

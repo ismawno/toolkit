@@ -18,7 +18,7 @@ static usize getTierIndex(const usz size, const usz minAllocation, const usize g
     const usz np2 = NextPowerOfTwo(size);
 
     const usize grIndex = bitIndex(granularity);
-    const usize incIndex = bitIndex(np2 >> grIndex);
+    const usize incIndex = usize(bitIndex(np2 >> grIndex));
     const usz reference = np2 - size;
 
     // Signed code for a bit more correctness, but as final result is guaranteed to not exceed uint max, it is not
@@ -28,7 +28,7 @@ static usize getTierIndex(const usz size, const usz minAllocation, const usize g
     //
     // const ssize idx = cast(lastIndex) + cast(factor) * (offset - cast(incIndex)) + cast(reference / increment);
     // return usize(idx);
-    const usize offset = bitIndex(minAllocation) - grIndex;
+    const usize offset = usize(bitIndex(minAllocation)) - grIndex;
 
     return lastIndex + ((offset - incIndex) << (grIndex - 1)) + (reference >> incIndex);
 }
@@ -83,7 +83,7 @@ void TierDescriptions::buildTierLayout()
     m_Tiers.Clear();
 
     const auto nextAlloc = [this](const usz currentAlloc) {
-        const usize increment = NextPowerOfTwo(currentAlloc) / m_Granularity;
+        const usize increment = usize(NextPowerOfTwo(currentAlloc) / m_Granularity);
         TKIT_ASSERT(increment % sizeof(void *) == 0,
                     "[TOOLKIT][TIER-ALLOC] Increments in memory between tiers must all be divisible by sizeof(void *) "
                     "= {}, but found an increment of {}. To avoid this error, ensure that minAllocation >= granularity "
@@ -98,7 +98,7 @@ void TierDescriptions::buildTierLayout()
     m_Tiers.Append(TierInfo{.Size = m_MaxAllocation, .AllocationSize = m_MaxAllocation, .Slots = 1});
     for (;;)
     {
-        const usize alignment = PrevPowerOfTwo(currentAlloc);
+        const usize alignment = usize(PrevPowerOfTwo(currentAlloc));
 
         usize slots = m_MinSlots[m_Tiers.GetSize()];
         usz size = slots * currentAlloc;
@@ -116,7 +116,7 @@ void TierDescriptions::buildTierLayout()
                     "[TOOLKIT][TIER-ALLOC] Tier with size {} is not a perfect fit for the allocation size {}",
                     tier.Size, tier.AllocationSize);
 
-        tier.Slots = tier.Size / tier.AllocationSize;
+        tier.Slots = usize(tier.Size / tier.AllocationSize);
         m_Tiers.Append(tier);
 
         if (currentAlloc == m_MinAllocation)
