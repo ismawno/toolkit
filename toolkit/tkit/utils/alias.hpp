@@ -22,7 +22,7 @@ namespace TKit::Alias
 // this convention in many c++ projects around, so Im not sure if its the best option, especially for the size_t
 // case, which doesnt have an immediate alias I can think of.
 
-// Regarding container types, its nice to have some of them aliases in case you want to quickly change the container
+// Regarding container types, its nice to have some of them aliased in case you want to quickly change the container
 // type or allocator. This is not the case for std::string or std::byte, which dont have a meaningful justification
 // for an alias, but I have added them for "increased" consistency.
 
@@ -39,10 +39,12 @@ using i16 = std::int16_t;
 using i32 = std::int32_t;
 using i64 = std::int64_t;
 
+using usz = std::size_t;
+using isz = u64;
+
 using usize = TKIT_USIZE_TYPE;
 using ssize = TKIT_SSIZE_TYPE;
 using uptr = std::uintptr_t;
-using idiff = TKIT_DIFFERENCE_TYPE;
 
 template <typename T, typename U> constexpr T scast(const U from)
 {

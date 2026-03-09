@@ -5,7 +5,7 @@
 
 namespace TKit
 {
-StackAllocator::StackAllocator(void *buffer, const usize capacity, const usize alignment)
+StackAllocator::StackAllocator(void *buffer, const usz capacity, const usize alignment)
     : m_Buffer(scast<std::byte *>(buffer)), m_Capacity(capacity), m_Alignment(alignment), m_Provided(true)
 {
     TKIT_ASSERT(IsPowerOfTwo(alignment), "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2, but the value is {}",
@@ -14,12 +14,12 @@ StackAllocator::StackAllocator(void *buffer, const usize capacity, const usize a
                 "[TOOLKIT][STACK-ALLOC] Provided buffer must be aligned to the given alignment of {}", alignment);
 }
 
-StackAllocator::StackAllocator(const usize capacity, const usize alignment)
+StackAllocator::StackAllocator(const usz capacity, const usize alignment)
     : m_Capacity(capacity), m_Alignment(alignment), m_Provided(false)
 {
     TKIT_ASSERT(IsPowerOfTwo(alignment), "[TOOLKIT][STACK-ALLOC] Alignment must be a power of 2, but the value is {}",
                 alignment);
-    m_Buffer = scast<std::byte *>(AllocateAligned(size_t(capacity), alignment));
+    m_Buffer = scast<std::byte *>(AllocateAligned(capacity, alignment));
     TKIT_ASSERT(m_Buffer, "[TOOLKIT][STACK-ALLOC] Failed to allocate {:L} bytes of memory aligned to {:L} bytes",
                 capacity, alignment);
 }
@@ -61,10 +61,10 @@ StackAllocator &StackAllocator::operator=(StackAllocator &&other)
     return *this;
 }
 
-void *StackAllocator::Allocate(const usize size)
+void *StackAllocator::Allocate(const usz size)
 {
     TKIT_ASSERT(size != 0, "[TOOLKIT][STACK-ALLOC] Cannot allocate 0 bytes");
-    const usize asize = NextAlignedSize(size, m_Alignment);
+    const usz asize = NextAlignedSize(size, m_Alignment);
     if (m_Top + asize > m_Capacity)
     {
         TKIT_LOG_WARNING("[TOOLKIT][STACK-ALLOC] Allocator ran out of memory while trying to allocate {:L} bytes (only "
@@ -80,7 +80,7 @@ void *StackAllocator::Allocate(const usize size)
     return ptr;
 }
 
-void StackAllocator::Deallocate([[maybe_unused]] const void *ptr, const usize size)
+void StackAllocator::Deallocate([[maybe_unused]] const void *ptr, const usz size)
 {
     TKIT_ASSERT(ptr, "[TOOLKIT][STACK-ALLOC] Cannot deallocate a null pointer");
     TKIT_ASSERT(m_Top != 0, "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is empty");

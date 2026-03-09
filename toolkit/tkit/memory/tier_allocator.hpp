@@ -51,17 +51,17 @@ namespace TKit
 struct TierSpecs
 {
     ArenaAllocator *Allocator = nullptr;
+    usz MaxAllocation = 1_kib;
+    usz MinAllocation = 0; // will default to Granularity * sizeof(void *) / 2
     usize MaxTiers = 64;
     usize Granularity = 4;
-    usize MinAllocation = 0; // will default to Granularity * sizeof(void *) / 2
-    usize MaxAllocation = 1_kib;
     f32 TierSlotDecay = 0.9f;
 };
 
 struct TierInfo
 {
-    usize Size;
-    usize AllocationSize;
+    usz Size;
+    usz AllocationSize;
     usize Slots;
 };
 
@@ -70,13 +70,13 @@ class TierDescriptions
   public:
     TierDescriptions(const TierSpecs &specs = {});
 
-    usize GetTierIndex(usize size) const;
+    usize GetTierIndex(usz size) const;
 
     const ArenaArray<TierInfo> &GetTiers() const
     {
         return m_Tiers;
     }
-    usize GetBufferSize() const
+    usz GetBufferSize() const
     {
         return m_BufferSize;
     }
@@ -84,20 +84,20 @@ class TierDescriptions
     {
         return m_Granularity;
     }
-    usize GetMinAllocation() const
+    usz GetMinAllocation() const
     {
         return m_MinAllocation;
     }
-    usize GetMaxAllocation() const
+    usz GetMaxAllocation() const
     {
         return m_MaxAllocation;
     }
 
-    void SetMinSlotsForSize(const usize size, const usize slots)
+    void SetMinSlotsForSize(const usz size, const usize slots)
     {
         SetMinSlotsForIndex(GetTierIndex(size), slots);
     }
-    void SetMinSlotsForIndex(const usize index, const usize slots)
+    void SetMinSlotsForIndex(const usz index, const usize slots)
     {
         m_MinSlots[index] = slots;
         buildTierLayout();
@@ -108,12 +108,12 @@ class TierDescriptions
         m_Granularity = granularity;
         buildTierLayout();
     }
-    void SetMinAllocation(const usize minAllocation)
+    void SetMinAllocation(const usz minAllocation)
     {
         m_MinAllocation = minAllocation;
         buildTierLayout();
     }
-    void SetMaxAllocation(const usize maxAllocation)
+    void SetMaxAllocation(const usz maxAllocation)
     {
         m_MaxAllocation = maxAllocation;
         buildTierLayout();
@@ -124,10 +124,10 @@ class TierDescriptions
 
     ArenaArray<TierInfo> m_Tiers;
     ArenaArray<usize> m_MinSlots{};
-    usize m_BufferSize;
+    usz m_BufferSize;
+    usz m_MinAllocation;
+    usz m_MaxAllocation;
     usize m_Granularity;
-    usize m_MinAllocation;
-    usize m_MaxAllocation;
 };
 
 /**
@@ -156,8 +156,8 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     TierAllocator(TierAllocator &&other);
     TierAllocator &operator=(TierAllocator &&other);
 
-    void *Allocate(usize size);
-    void Deallocate(void *ptr, usize size);
+    void *Allocate(usz size);
+    void Deallocate(void *ptr, usz size);
 
     template <typename T> T *Allocate(const usize count = 1)
     {
@@ -227,7 +227,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
         return bptr >= m_Buffer && bptr < m_Buffer + m_BufferSize;
     }
 
-    usize GetBufferSize() const
+    usz GetBufferSize() const
     {
         return m_BufferSize;
     }
@@ -249,8 +249,8 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 #endif
     };
 
-    void *allocate(usize tierIndex, usize size);
-    usize getTierIndex(usize size) const;
+    void *allocate(usize tierIndex, usz size);
+    usize getTierIndex(usz size) const;
 #ifdef TKIT_ENABLE_ASSERTS
     void setupMemoryLayout(const TierDescriptions &tiers, usize maxAlignment);
 #else
@@ -260,8 +260,8 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 
     ArenaArray<Tier> m_Tiers;
     std::byte *m_Buffer;
-    usize m_BufferSize;
-    usize m_MinAllocation;
+    usz m_BufferSize;
+    usz m_MinAllocation;
     usize m_Granularity;
 #ifdef TKIT_ENABLE_ASSERTS
     usize m_MaxAllocation;

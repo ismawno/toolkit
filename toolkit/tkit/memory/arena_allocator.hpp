@@ -29,10 +29,10 @@ class alignas(TKIT_CACHE_LINE_SIZE) ArenaAllocator
 {
     TKIT_NON_COPYABLE(ArenaAllocator)
   public:
-    explicit ArenaAllocator(usize capacity, usize alignment = alignof(std::max_align_t));
+    explicit ArenaAllocator(usz capacity, usize alignment = alignof(std::max_align_t));
 
     // This constructor is NOT owning the buffer, so it will not deallocate it. Up to the user to manage the memory
-    ArenaAllocator(void *buffer, usize capacity, usize alignment = alignof(std::max_align_t));
+    ArenaAllocator(void *buffer, usz capacity, usize alignment = alignof(std::max_align_t));
     ~ArenaAllocator();
 
     ArenaAllocator(ArenaAllocator &&other);
@@ -44,7 +44,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) ArenaAllocator
      * @param size The size of the block to allocate.
      * @return A pointer to the allocated block.
      */
-    void *Allocate(usize size);
+    void *Allocate(usz size);
 
     /**
      * @brief Allocate a new block of memory into the arena allocator and casts the result to `T`.
@@ -131,15 +131,15 @@ class alignas(TKIT_CACHE_LINE_SIZE) ArenaAllocator
         return m_Top == m_Capacity;
     }
 
-    usize GetCapacity() const
+    usz GetCapacity() const
     {
         return m_Capacity;
     }
-    usize GetAllocatedBytes() const
+    usz GetAllocatedBytes() const
     {
         return m_Top;
     }
-    usize GetRemainingBytes() const
+    usz GetRemainingBytes() const
     {
         return m_Capacity - m_Top;
     }
@@ -148,9 +148,9 @@ class alignas(TKIT_CACHE_LINE_SIZE) ArenaAllocator
     void deallocateBuffer();
 
     std::byte *m_Buffer = nullptr;
-    usize m_Top = 0;
-    usize m_Capacity = 0;
-    usize m_Alignment = 0;
+    usz m_Top = 0;
+    usz m_Capacity = 0;
+    usz m_Alignment = 0;
     bool m_Provided;
 };
 } // namespace TKit

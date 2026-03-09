@@ -380,7 +380,7 @@ template <typename T> class Scope
 
 template <typename T> struct std::hash<TKit::Ref<T>>
 {
-    std::size_t operator()(const TKit::Ref<T> &ref) const
+    TKit::usz operator()(const TKit::Ref<T> &ref) const
     {
         return std::hash<T *>()(ref.Get());
     }
@@ -388,7 +388,7 @@ template <typename T> struct std::hash<TKit::Ref<T>>
 
 template <typename T> struct std::hash<TKit::Scope<T>>
 {
-    std::size_t operator()(const TKit::Scope<T> &scope) const
+    TKit::usz operator()(const TKit::Scope<T> &scope) const
     {
         return std::hash<T *>()(scope.Get());
     }

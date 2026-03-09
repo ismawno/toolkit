@@ -57,7 +57,7 @@ void PopTier();
  * @param size The size of the memory to allocate.
  * @return A pointer to the allocated memory.
  */
-void *Allocate(size_t size);
+void *Allocate(usz size);
 
 /**
  * @brief Deallocate a chunk of memory
@@ -78,7 +78,7 @@ void Deallocate(void *ptr);
  * @param alignment The alignment of the memory to allocate.
  * @return A pointer to the allocated memory.
  */
-void *AllocateAligned(size_t size, size_t alignment);
+void *AllocateAligned(usz size, usize alignment);
 
 /**
  * @brief Deallocate a chunk of memory with a given alignment.
@@ -100,7 +100,7 @@ void DeallocateAligned(void *ptr);
  * @param src A pointer to the source memory.
  * @param size The size of the memory to copy, in bytes.
  */
-void *ForwardCopy(void *dst, const void *src, size_t size);
+void *ForwardCopy(void *dst, const void *src, usz size);
 
 /**
  * @brief Copy a chunk of memory from one location to another in reverse order.
@@ -111,7 +111,7 @@ void *ForwardCopy(void *dst, const void *src, size_t size);
  * @param src A pointer to the source memory.
  * @param size The size of the memory to copy, in bytes.
  */
-void *BackwardCopy(void *dst, const void *src, size_t size);
+void *BackwardCopy(void *dst, const void *src, usz size);
 
 /**
  * @brief Copy a range of elements from one iterator to another.
@@ -169,16 +169,16 @@ template <typename It1, typename It2> constexpr auto BackwardMove(It1 dst, It2 b
     return std::move_backward(begin, end, dst);
 }
 
-inline bool IsAligned(const void *ptr, const size_t alignment)
+inline bool IsAligned(const void *ptr, const usize alignment)
 {
     const uptr addr = rcast<uptr>(ptr);
     return (addr & (alignment - 1)) == 0;
 }
-inline bool IsAligned(const size_t address, const size_t alignment)
+inline bool IsAligned(const usz address, const usize alignment)
 {
     return (address & (alignment - 1)) == 0;
 }
-inline usize NextAlignedSize(const usize size, const usize alignment)
+inline usize NextAlignedSize(const usz size, const usize alignment)
 {
     return (size + alignment - 1) & ~(alignment - 1);
 }
@@ -206,7 +206,7 @@ template <typename T> class STLAllocator
     using pointer = T *;
     using const_pointer = const T *;
     using size_type = usize;
-    using difference_type = idiff;
+    using difference_type = TKIT_DIFFERENCE_TYPE;
 
     template <typename U> struct rebind
     {

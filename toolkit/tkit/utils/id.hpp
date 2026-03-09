@@ -27,7 +27,7 @@ template <Hashable ID = u64> struct Id
 
 template <TKit::Hashable ID> struct std::hash<TKit::Id<ID>>
 {
-    std::size_t operator()(const TKit::Id<ID> &uuid) const
+    TKit::usz operator()(const TKit::Id<ID> &uuid) const
     {
         return std::hash<ID>()(uuid.Value);
     }

@@ -31,10 +31,10 @@ class alignas(TKIT_CACHE_LINE_SIZE) StackAllocator
 {
     TKIT_NON_COPYABLE(StackAllocator)
   public:
-    explicit StackAllocator(usize capacity, usize alignment = alignof(std::max_align_t));
+    explicit StackAllocator(usz capacity, usize alignment = alignof(std::max_align_t));
 
     // This constructor is NOT owning the buffer, so it will not deallocate it. Up to the user to manage the memory
-    StackAllocator(void *buffer, usize capacity, usize alignment = alignof(std::max_align_t));
+    StackAllocator(void *buffer, usz capacity, usize alignment = alignof(std::max_align_t));
     ~StackAllocator();
 
     StackAllocator(StackAllocator &&other);
@@ -46,7 +46,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) StackAllocator
      * @param size The size of the block to allocate.
      * @return A pointer to the allocated block.
      */
-    void *Allocate(usize size);
+    void *Allocate(usz size);
 
     /**
      * @brief Allocate a new block of memory into the stack allocator and casts the result to `T`.
@@ -72,7 +72,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) StackAllocator
      *
      * @param ptr The pointer to the block to deallocate.
      */
-    void Deallocate(const void *ptr, usize size);
+    void Deallocate(const void *ptr, usz size);
 
     template <typename T>
         requires(!std::same_as<T, void>)
@@ -174,15 +174,15 @@ class alignas(TKIT_CACHE_LINE_SIZE) StackAllocator
         return m_Top == m_Capacity;
     }
 
-    usize GetCapacity() const
+    usz GetCapacity() const
     {
         return m_Capacity;
     }
-    usize GetAllocatedBytes() const
+    usz GetAllocatedBytes() const
     {
         return m_Top;
     }
-    usize GetRemainingBytes() const
+    usz GetRemainingBytes() const
     {
         return m_Capacity - m_Top;
     }
@@ -191,8 +191,8 @@ class alignas(TKIT_CACHE_LINE_SIZE) StackAllocator
     void deallocateBuffer();
 
     std::byte *m_Buffer = nullptr;
-    usize m_Top = 0;
-    usize m_Capacity = 0;
+    usz m_Top = 0;
+    usz m_Capacity = 0;
     usize m_Alignment = 0;
     bool m_Provided;
 };

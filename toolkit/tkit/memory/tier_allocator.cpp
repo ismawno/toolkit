@@ -2,6 +2,7 @@
 #include "tkit/memory/tier_allocator.hpp"
 #include "tkit/utils/bit.hpp"
 #include "tkit/utils/debug.hpp"
+#include "tkit/math/math.hpp"
 
 namespace TKit
 {
@@ -9,16 +10,16 @@ static usize bitIndex(const usize value)
 {
     return usize(std::countr_zero(value));
 }
-static usize getTierIndex(const usize size, const usize minAllocation, const usize granularity, const usize lastIndex)
+static usize getTierIndex(const usz size, const usz minAllocation, const usize granularity, const usize lastIndex)
 {
     if (size <= minAllocation)
         return lastIndex;
 
-    const usize np2 = NextPowerOfTwo(size);
+    const usz np2 = NextPowerOfTwo(size);
 
     const usize grIndex = bitIndex(granularity);
     const usize incIndex = bitIndex(np2 >> grIndex);
-    const usize reference = np2 - size;
+    const usz reference = np2 - size;
 
     // Signed code for a bit more correctness, but as final result is guaranteed to not exceed uint max, it is not
     // strictly needed constexpr auto cast = [](const usize value) { return scast<ssize>(value); };
@@ -41,15 +42,14 @@ static void createDefaultSlotRequests(ArenaArray<usize> &slots, const f32 tierSl
     for (usize i = 1; i < capacity; ++i)
     {
         const usize prev = slots[i - 1];
-        slots.Append(usize(prev / tierSlotDecay) + 1);
+        slots.Append(usize(f32(prev) / tierSlotDecay) + 1);
     }
 }
 
 TierDescriptions::TierDescriptions(const TierSpecs &specs)
     : m_Tiers(specs.Allocator, specs.MaxTiers), m_MinSlots(specs.Allocator, specs.MaxTiers),
-      m_Granularity(specs.Granularity),
       m_MinAllocation(specs.MinAllocation ? specs.MinAllocation : (specs.Granularity * sizeof(void *) / 2)),
-      m_MaxAllocation(specs.MaxAllocation)
+      m_MaxAllocation(specs.MaxAllocation), m_Granularity(specs.Granularity)
 {
     TKIT_ASSERT(IsPowerOfTwo(m_MaxAllocation) && IsPowerOfTwo(m_MinAllocation) && IsPowerOfTwo(m_Granularity),
                 "[TOOLKIT][TIER-ALLOC] All integer arguments must be powers of two when creating a tier allocator "
@@ -73,7 +73,7 @@ TierDescriptions::TierDescriptions(const TierSpecs &specs)
     buildTierLayout();
 }
 
-usize TierDescriptions::GetTierIndex(const usize size) const
+usize TierDescriptions::GetTierIndex(const usz size) const
 {
     return TKit::getTierIndex(size, m_MinAllocation, m_Granularity, m_Tiers.GetSize() - 1);
 }
@@ -82,7 +82,7 @@ void TierDescriptions::buildTierLayout()
 {
     m_Tiers.Clear();
 
-    const auto nextAlloc = [this](const usize currentAlloc) {
+    const auto nextAlloc = [this](const usz currentAlloc) {
         const usize increment = NextPowerOfTwo(currentAlloc) / m_Granularity;
         TKIT_ASSERT(increment % sizeof(void *) == 0,
                     "[TOOLKIT][TIER-ALLOC] Increments in memory between tiers must all be divisible by sizeof(void *) "
@@ -93,7 +93,7 @@ void TierDescriptions::buildTierLayout()
     };
 
     m_BufferSize = m_MaxAllocation;
-    usize currentAlloc = nextAlloc(m_MaxAllocation);
+    usz currentAlloc = nextAlloc(m_MaxAllocation);
 
     m_Tiers.Append(TierInfo{.Size = m_MaxAllocation, .AllocationSize = m_MaxAllocation, .Slots = 1});
     for (;;)
@@ -101,7 +101,7 @@ void TierDescriptions::buildTierLayout()
         const usize alignment = PrevPowerOfTwo(currentAlloc);
 
         usize slots = m_MinSlots[m_Tiers.GetSize()];
-        usize size = slots * currentAlloc;
+        usz size = slots * currentAlloc;
         while (size % alignment != 0)
         {
             ++slots;
@@ -124,13 +124,13 @@ void TierDescriptions::buildTierLayout()
         currentAlloc = nextAlloc(currentAlloc);
     }
 #ifdef TKIT_ENABLE_ASSERTS
-    const auto slowIndex = [this](const usize size) {
+    const auto slowIndex = [this](const usz size) {
         for (usize i = m_Tiers.GetSize() - 1; i < m_Tiers.GetSize(); --i)
             if (m_Tiers[i].AllocationSize >= size)
                 return i;
         return m_Tiers.GetSize();
     };
-    for (usize mem = m_MinAllocation; mem <= m_MaxAllocation; ++mem)
+    for (usz mem = m_MinAllocation; mem <= m_MaxAllocation; ++mem)
     {
         const usize index = GetTierIndex(mem);
         TKIT_ASSERT(m_Tiers[index].AllocationSize >= mem,
@@ -214,7 +214,7 @@ void TierAllocator::setupMemoryLayout(const TierDescriptions &tiers, const usize
 void TierAllocator::setupMemoryLayout(const TierDescriptions &tiers)
 #endif
 {
-    usize size = 0;
+    usz size = 0;
     for (const TierInfo &tinfo : tiers.GetTiers())
     {
         Tier tier{};
@@ -222,7 +222,7 @@ void TierAllocator::setupMemoryLayout(const TierDescriptions &tiers)
         tier.FreeList = rcast<Allocation *>(tier.Buffer);
         const usize count = tinfo.Size / tinfo.AllocationSize;
 
-        TKIT_ASSERT(IsAligned(tier.Buffer, std::min(maxAlignment, PrevPowerOfTwo(tinfo.AllocationSize))),
+        TKIT_ASSERT(IsAligned(tier.Buffer, Math::Min(usz(maxAlignment), PrevPowerOfTwo(tinfo.AllocationSize))),
                     "[TOOLKIT][TIER-ALLOC] Tier with size {:L} and buffer {} failed alignment check: it is not aligned "
                     "to either the maximum alignment ({}) or its previous power of 2 ({})",
                     tinfo.Size, scast<void *>(tier.Buffer), maxAlignment, PrevPowerOfTwo(tinfo.AllocationSize));
@@ -252,7 +252,7 @@ void TierAllocator::deallocateBuffer()
         DeallocateAligned(m_Buffer);
 }
 
-void *TierAllocator::allocate(const usize tierIndex, const usize size)
+void *TierAllocator::allocate(const usize tierIndex, const usz size)
 {
     Tier &tier = m_Tiers[tierIndex];
     if (!tier.FreeList)
@@ -305,7 +305,7 @@ void *TierAllocator::allocate(const usize tierIndex, const usize size)
     tier.FreeList = alloc->Next;
     return alloc;
 }
-void *TierAllocator::Allocate(const usize size)
+void *TierAllocator::Allocate(const usz size)
 {
     TKIT_ASSERT(size <= m_MaxAllocation,
                 "[TOOLKIT][TIER-ALLOC] Allocation of size {:L} bytes exceeds max allocation size of {:L}", size,
@@ -314,7 +314,7 @@ void *TierAllocator::Allocate(const usize size)
     return allocate(index, size);
 }
 
-void TierAllocator::Deallocate(void *ptr, const usize size)
+void TierAllocator::Deallocate(void *ptr, const usz size)
 {
     TKIT_ASSERT(ptr, "[TOOLKIT][TIER-ALLOC] Cannot deallocate a null pointer");
     TKIT_ASSERT(Belongs(ptr),
@@ -332,7 +332,7 @@ void TierAllocator::Deallocate(void *ptr, const usize size)
     tier.FreeList = alloc;
 }
 
-usize TierAllocator::getTierIndex(const usize size) const
+usize TierAllocator::getTierIndex(const usz size) const
 {
     return TKit::getTierIndex(size, m_MinAllocation, m_Granularity, m_Tiers.GetSize() - 1);
 }

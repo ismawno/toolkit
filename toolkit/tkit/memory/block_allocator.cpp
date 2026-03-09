@@ -5,7 +5,7 @@
 
 namespace TKit
 {
-BlockAllocator::BlockAllocator(const usize bufferSize, const usize allocationSize, const usize alignment)
+BlockAllocator::BlockAllocator(const usz bufferSize, const usz allocationSize, const usize alignment)
     : m_BufferSize(bufferSize), m_AllocationSize(allocationSize), m_Provided(false)
 {
     TKIT_ASSERT(allocationSize >= sizeof(Allocation),
@@ -27,7 +27,7 @@ BlockAllocator::BlockAllocator(const usize bufferSize, const usize allocationSiz
     setupMemoryLayout();
 }
 
-BlockAllocator::BlockAllocator(void *buffer, const usize bufferSize, const usize allocationSize)
+BlockAllocator::BlockAllocator(void *buffer, const usz bufferSize, const usz allocationSize)
     : m_Buffer(scast<std::byte *>(buffer)), m_BufferSize(bufferSize), m_AllocationSize(allocationSize), m_Provided(true)
 {
     TKIT_ASSERT(bufferSize % allocationSize == 0,

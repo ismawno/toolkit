@@ -37,10 +37,10 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
     // The alignment parameter specifies the alignment of all consecuent allocations. Thus, the buffer size must be a
     // multiple of the alignment
 
-    BlockAllocator(usize bufferSize, usize allocationSize, usize alignment = alignof(std::max_align_t));
+    BlockAllocator(usz bufferSize, usz allocationSize, usize alignment = alignof(std::max_align_t));
 
     // This constructor is NOT owning the buffer, so it will not deallocate it. Up to the user to manage the memory
-    BlockAllocator(void *buffer, usize bufferSize, usize allocationSize);
+    BlockAllocator(void *buffer, usz bufferSize, usz allocationSize);
     ~BlockAllocator();
 
     BlockAllocator(BlockAllocator &&other);
@@ -55,7 +55,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
      */
     template <typename T> static BlockAllocator CreateFromType(const usize count)
     {
-        const usize size = sizeof(T) > sizeof(Allocation) ? sizeof(T) : sizeof(Allocation);
+        const usz size = sizeof(T) > sizeof(Allocation) ? sizeof(T) : sizeof(Allocation);
         return BlockAllocator{count * size, size, alignof(T)};
     }
 
@@ -151,11 +151,11 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
         return !m_FreeList;
     }
 
-    usize GetBufferSize() const
+    usz GetBufferSize() const
     {
         return m_BufferSize;
     }
-    usize GetAllocationSize() const
+    usz GetAllocationSize() const
     {
         return m_AllocationSize;
     }
@@ -176,8 +176,8 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
 
     std::byte *m_Buffer;
     Allocation *m_FreeList;
-    usize m_BufferSize;
-    usize m_AllocationSize;
+    usz m_BufferSize;
+    usz m_AllocationSize;
     bool m_Provided;
 };
 } // namespace TKit

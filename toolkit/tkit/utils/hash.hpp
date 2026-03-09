@@ -19,7 +19,7 @@ concept Hashable = requires(T a) {
 
 namespace TKit::Detail
 {
-template <Hashable H> constexpr void CombineHashes(size_t &seed, H &&hashable)
+template <Hashable H> constexpr void CombineHashes(usz &seed, H &&hashable)
 {
     const std::hash<std::remove_cvref_t<H>> hasher;
     seed ^= hasher(std::forward<H>(hashable)) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
@@ -28,27 +28,27 @@ template <Hashable H> constexpr void CombineHashes(size_t &seed, H &&hashable)
 
 namespace TKit
 {
-template <Hashable H> constexpr size_t Hash(H &&hashable)
+template <Hashable H> constexpr usz Hash(H &&hashable)
 {
     return std::hash<std::remove_cvref_t<H>>()(std::forward<H>(hashable));
 }
 
-template <Hashable... H> constexpr size_t Hash(H &&...hashables)
+template <Hashable... H> constexpr usz Hash(H &&...hashables)
 {
-    size_t seed = TKIT_HASH_SEED;
+    usz seed = TKIT_HASH_SEED;
     (Detail::CombineHashes(seed, std::forward<H>(hashables)), ...);
     return seed;
 }
 
-template <typename It> constexpr size_t HashRange(const It begin, const It end)
+template <typename It> constexpr usz HashRange(const It begin, const It end)
 {
-    size_t seed = TKIT_HASH_SEED;
+    usz seed = TKIT_HASH_SEED;
     for (It it = begin; it != end; ++it)
         Detail::CombineHashes(seed, *it);
     return seed;
 }
 
-template <Hashable... H> constexpr void HashCombine(size_t &seed, H &&...hashables)
+template <Hashable... H> constexpr void HashCombine(usz &seed, H &&...hashables)
 {
     (Detail::CombineHashes(seed, std::forward<H>(hashables)), ...);
 }

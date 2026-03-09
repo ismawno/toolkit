@@ -60,7 +60,7 @@ void PopTier()
     --s_TierSize;
 }
 
-void *Allocate(const size_t size)
+void *Allocate(const usz size)
 {
     void *ptr = malloc(size);
     TKIT_PROFILE_MARK_ALLOCATION(ptr, size);
@@ -73,7 +73,7 @@ void Deallocate(void *ptr)
     free(ptr);
 }
 
-void *AllocateAligned(const size_t size, size_t alignment)
+void *AllocateAligned(const usz size, usize alignment)
 {
     void *ptr = nullptr;
     alignment = (alignment + sizeof(void *) - 1) & ~(sizeof(void *) - 1);
@@ -97,11 +97,11 @@ void DeallocateAligned(void *ptr)
 #endif
 }
 
-void *ForwardCopy(void *dst, const void *src, size_t size)
+void *ForwardCopy(void *dst, const void *src, usz size)
 {
     return std::memcpy(dst, src, size);
 }
-void *BackwardCopy(void *dst, const void *src, size_t size)
+void *BackwardCopy(void *dst, const void *src, usz size)
 {
     return std::memmove(dst, src, size);
 }
