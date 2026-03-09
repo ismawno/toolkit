@@ -264,7 +264,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     usz m_MinAllocation;
     usize m_Granularity;
 #ifdef TKIT_ENABLE_ASSERTS
-    usize m_MaxAllocation;
+    usz m_MaxAllocation;
 #endif
 };
 } // namespace TKit
