@@ -19,7 +19,7 @@ static usize getTierIndex(const usz size, const usz minAllocation, const usize g
 
     const usize grIndex = bitIndex(granularity);
     const usize incIndex = bitIndex(np2 >> grIndex);
-    const usz reference = np2 - size;
+    const usize reference = usize(np2 - size);
 
     // Signed code for a bit more correctness, but as final result is guaranteed to not exceed uint max, it is not
     // strictly needed constexpr auto cast = [](const usize value) { return scast<ssize>(value); };

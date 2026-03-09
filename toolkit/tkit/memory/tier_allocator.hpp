@@ -97,7 +97,7 @@ class TierDescriptions
     {
         SetMinSlotsForIndex(GetTierIndex(size), slots);
     }
-    void SetMinSlotsForIndex(const usz index, const usize slots)
+    void SetMinSlotsForIndex(const usize index, const usize slots)
     {
         m_MinSlots[index] = slots;
         buildTierLayout();
