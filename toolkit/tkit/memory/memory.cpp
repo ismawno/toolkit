@@ -119,11 +119,11 @@ void *operator new[](const size_t size)
 }
 void *operator new(const size_t size, const std::align_val_t alignment)
 {
-    return TKit::AllocateAligned(size, size_t(alignment));
+    return TKit::AllocateAligned(size, TKit::usize(alignment));
 }
 void *operator new[](const size_t size, const std::align_val_t alignment)
 {
-    return TKit::AllocateAligned(size, size_t(alignment));
+    return TKit::AllocateAligned(size, TKit::usize(alignment));
 }
 void *operator new(const size_t size, const std::nothrow_t &) noexcept
 {

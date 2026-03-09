@@ -6,7 +6,7 @@
 
 namespace TKit
 {
-static usize bitIndex(const usize value)
+static usize bitIndex(const usz value)
 {
     return usize(std::countr_zero(value));
 }
@@ -18,7 +18,7 @@ static usize getTierIndex(const usz size, const usz minAllocation, const usize g
     const usz np2 = NextPowerOfTwo(size);
 
     const usize grIndex = bitIndex(granularity);
-    const usize incIndex = usize(bitIndex(np2 >> grIndex));
+    const usize incIndex = bitIndex(np2 >> grIndex);
     const usz reference = np2 - size;
 
     // Signed code for a bit more correctness, but as final result is guaranteed to not exceed uint max, it is not
@@ -28,7 +28,7 @@ static usize getTierIndex(const usz size, const usz minAllocation, const usize g
     //
     // const ssize idx = cast(lastIndex) + cast(factor) * (offset - cast(incIndex)) + cast(reference / increment);
     // return usize(idx);
-    const usize offset = usize(bitIndex(minAllocation)) - grIndex;
+    const usize offset = bitIndex(minAllocation) - grIndex;
 
     return lastIndex + ((offset - incIndex) << (grIndex - 1)) + (reference >> incIndex);
 }

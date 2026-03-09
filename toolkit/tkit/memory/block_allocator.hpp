@@ -162,7 +162,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
 
     usize GetAllocationCapacityCount() const
     {
-        return m_BufferSize / m_AllocationSize;
+        return usize(m_BufferSize / m_AllocationSize);
     }
 
   private:
