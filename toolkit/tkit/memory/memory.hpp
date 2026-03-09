@@ -169,16 +169,16 @@ template <typename It1, typename It2> constexpr auto BackwardMove(It1 dst, It2 b
     return std::move_backward(begin, end, dst);
 }
 
-inline bool IsAligned(const void *ptr, const usize alignment)
+inline bool IsAligned(const void *ptr, const usz alignment)
 {
     const uptr addr = rcast<uptr>(ptr);
     return (addr & (alignment - 1)) == 0;
 }
-inline bool IsAligned(const usz address, const usize alignment)
+inline bool IsAligned(const usz address, const usz alignment)
 {
     return (address & (alignment - 1)) == 0;
 }
-inline usize NextAlignedSize(const usz size, const usize alignment)
+inline usize NextAlignedSize(const usz size, const usz alignment)
 {
     return (size + alignment - 1) & ~(alignment - 1);
 }

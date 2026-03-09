@@ -220,7 +220,7 @@ void TierAllocator::setupMemoryLayout(const TierDescriptions &tiers)
         Tier tier{};
         tier.Buffer = m_Buffer + size;
         tier.FreeList = rcast<Allocation *>(tier.Buffer);
-        const usize count = tinfo.Size / tinfo.AllocationSize;
+        const usize count = usize(tinfo.Size / tinfo.AllocationSize);
 
         TKIT_ASSERT(IsAligned(tier.Buffer, Math::Min(usz(maxAlignment), PrevPowerOfTwo(tinfo.AllocationSize))),
                     "[TOOLKIT][TIER-ALLOC] Tier with size {:L} and buffer {} failed alignment check: it is not aligned "
