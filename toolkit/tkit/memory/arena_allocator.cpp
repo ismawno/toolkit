@@ -64,7 +64,7 @@ void *ArenaAllocator::Allocate(const usz size)
     if (m_Top + asize > m_Capacity)
     {
         TKIT_LOG_WARNING("[TOOLKIT][ARENA-ALLOC] Allocator ran out of memory while trying to allocate {:L} bytes (only "
-                         "{} remaining)",
+                         "{:L} remaining)",
                          asize, m_Capacity - m_Top);
         return nullptr;
     }
