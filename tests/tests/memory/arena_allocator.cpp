@@ -44,7 +44,7 @@ TEST_CASE("Constructor and initial state", "[ArenaAllocator]")
 TEST_CASE("Allocate blocks and invariants", "[ArenaAllocator]")
 {
     ArenaAllocator arena(256);
-    const usize beforeRem = arena.GetRemainingBytes();
+    const usz beforeRem = arena.GetRemainingBytes();
 
     // allocate 64 bytes
     const void *p = arena.Allocate(64);
