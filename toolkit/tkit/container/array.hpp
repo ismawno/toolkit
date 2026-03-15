@@ -16,7 +16,6 @@ enum ArrayType : u8
 template <typename T, typename AllocState> class Array
 {
   public:
-    static constexpr bool Safeguard = true;
     static constexpr ArrayType Type = AllocState::Type;
 
     using ValueType = T;
@@ -24,7 +23,7 @@ template <typename T, typename AllocState> class Array
 
     template <typename... Args>
         requires(sizeof...(Args) > 1 || ((!std::is_same_v<Array, std::remove_cvref_t<Args>>) && ... && true))
-    constexpr Array(Args &&...args) : m_State(std::forward<Args>(args)...)
+    constexpr explicit Array(Args &&...args) : m_State(std::forward<Args>(args)...)
     {
     }
 

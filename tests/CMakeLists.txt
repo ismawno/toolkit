@@ -16,6 +16,7 @@ set(SOURCES
     tests/container/tier_array.cpp
     tests/container/static_array.cpp
     tests/container/dynamic_array.cpp
+    tests/container/hive.cpp
     tests/container/container.cpp
     tests/container/weak_array.cpp
     tests/container/span.cpp
