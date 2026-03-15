@@ -21,6 +21,7 @@ template <typename T, typename AllocState> class Array
     using ValueType = T;
     using Tools = Container::ArrayTools<T>;
 
+    constexpr Array() = default;
     template <typename... Args>
         requires(sizeof...(Args) > 1 || ((!std::is_same_v<Array, std::remove_cvref_t<Args>>) && ... && true))
     constexpr explicit Array(Args &&...args) : m_State(std::forward<Args>(args)...)
