@@ -94,9 +94,22 @@ template <typename T, typename AllocState> class Hive
         return id < m_Indices.GetSize() && m_Indices[id] < m_Data.GetSize();
     }
 
+    constexpr const Array<usize, AllocState> &GetIndices() const
+    {
+        return m_Indices;
+    }
     constexpr const Array<usize, AllocState> &GetIds() const
     {
         return m_Ids;
+    }
+
+    constexpr usize GetIndex(const usize id)
+    {
+        return m_Indices[id];
+    }
+    constexpr usize GetId(const usize index)
+    {
+        return m_Ids[index];
     }
 
     constexpr const T *GetData() const
