@@ -64,12 +64,24 @@ template <typename T, typename AllocState> class Hive
     }
     constexpr const T &At(const usize id) const
     {
-        TKIT_ASSERT(Contains(id), "[TOOLKIT][HIVE] The id {} was not found", id);
+        TKIT_ASSERT(id < m_Indices.GetSize(),
+                    "[TOOLKIT][HIVE] The id {} does not exist in the hive, as it exceeds the indices size ({})", id,
+                    m_Indices.GetSize());
+        TKIT_ASSERT(
+            m_Indices[id] < m_Data.GetSize(),
+            "[TOOLKIT][HIVE] The id {} does not exist in the hive, as indices[id = {}] = {} exceeds data size ({})", id,
+            id, m_Indices[id], m_Data.GetSize());
         return m_Data[m_Indices[id]];
     }
     constexpr T &At(const usize id)
     {
-        TKIT_ASSERT(Contains(id), "[TOOLKIT][HIVE] The id {} was not found", id);
+        TKIT_ASSERT(id < m_Indices.GetSize(),
+                    "[TOOLKIT][HIVE] The id {} does not exist in the hive, as it exceeds the indices size ({})", id,
+                    m_Indices.GetSize());
+        TKIT_ASSERT(
+            m_Indices[id] < m_Data.GetSize(),
+            "[TOOLKIT][HIVE] The id {} does not exist in the hive, as indices[id = {}] = {} exceeds data size ({})", id,
+            id, m_Indices[id], m_Data.GetSize());
         return m_Data[m_Indices[id]];
     }
 
@@ -181,7 +193,13 @@ template <typename T, typename AllocState> class Hive
 
     constexpr void Remove(const usize id)
     {
-        TKIT_ASSERT(Contains(id), "[TOOLKIT][HIVE] The id {} was not found", id);
+        TKIT_ASSERT(id < m_Indices.GetSize(),
+                    "[TOOLKIT][HIVE] The id {} does not exist in the hive, as it exceeds the indices size ({})", id,
+                    m_Indices.GetSize());
+        TKIT_ASSERT(
+            m_Indices[id] < m_Data.GetSize(),
+            "[TOOLKIT][HIVE] The id {} does not exist in the hive, as indices[id = {}] = {} exceeds data size ({})", id,
+            id, m_Indices[id], m_Data.GetSize());
         const usize idx = m_Indices[id];
         const usize last = m_Data.GetSize() - 1;
         if (idx == last)
