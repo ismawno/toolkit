@@ -211,7 +211,7 @@ template <typename T, typename AllocState> class Hive
         m_Data.RemoveUnordered(m_Data.begin() + idx);
         m_Indices[id] = last;
         m_Indices[lid] = idx;
-        std::swap(m_Ids[idx], m_Ids[lid]);
+        std::swap(m_Ids[idx], m_Ids[last]);
     }
 
   private:
