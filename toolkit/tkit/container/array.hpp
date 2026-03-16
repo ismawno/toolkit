@@ -303,7 +303,8 @@ template <typename T, typename AllocState> class Array
         else
         {
             TKIT_ASSERT(std::distance(pbegin, pend) + m_State.Size <= m_State.GetCapacity(),
-                        "[TOOLKIT][ARRAY] New size exceeds capacity");
+                        "[TOOLKIT][ARRAY] New size ({}) exceeds capacity of {}",
+                        std::distance(pbegin, pend) + m_State.Size, m_State.GetCapacity());
 
             m_State.Size += Tools::Insert(end(), ppos, pbegin, pend);
         }
