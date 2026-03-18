@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tkit/container/array.hpp"
+#include "tkit/container/span.hpp"
 
 namespace TKit
 {
@@ -113,6 +114,10 @@ template <typename T, typename AllocState> class Hive
     constexpr const Array<usize, AllocState> &GetIds() const
     {
         return m_Ids;
+    }
+    constexpr Span<const usize> GetValidIds() const
+    {
+        return Span<const usize>{m_Ids.GetData(), m_Data.GetSize()};
     }
 
     constexpr usize GetIndex(const usize id)
