@@ -40,6 +40,11 @@ template <typename T> constexpr T Clamp(const T value, const T min, const T max)
     return std::clamp(value, min, max);
 }
 
+template <typename T> constexpr T Map(const T value, const T min0, const T max0, const T min1, const T max1)
+{
+    return min1 + (value - min0) * (max1 - min1) / (max0 - min0);
+}
+
 // TODO: Adapt so SIMD
 template <typename T, usize N0, usize... N> constexpr T Min(const ten<T, N0, N...> &tensor)
 {
@@ -96,6 +101,17 @@ constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &tensor, const U min, co
     for (usize i = 0; i < size; ++i)
         result.Flat[i] = Clamp(tensor.Flat[i], T(min), T(max));
     return result;
+}
+template <typename T, usize N0, usize... N>
+constexpr ten<T, N0, N...> Map(const ten<T, N0, N...> &tensor, const ten<T, N0, N...> &min0,
+                               const ten<T, N0, N...> &max0, const ten<T, N0, N...> &min1, const ten<T, N0, N...> &max1)
+{
+    return min1 + (tensor - min0) * (max1 - min1) / (max0 - min0);
+}
+template <typename T, std::convertible_to<T> U, usize N0, usize... N>
+constexpr ten<T, N0, N...> Map(const ten<T, N0, N...> &tensor, const U min0, const U max0, const U min1, const U max1)
+{
+    return min1 + (tensor - min0) * (max1 - min1) / (max0 - min0);
 }
 
 template <typename T> constexpr T Pi()
