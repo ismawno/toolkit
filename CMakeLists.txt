@@ -447,6 +447,8 @@ function(tkit_default_configure target)
       -Wextra
       -Wpedantic
       -Werror
+      -Wno-unknown-warning-option
+      -Wno-unknown-pragmas
       NO_EXCEPTIONS
       NO_RTTI)
   else()
@@ -457,6 +459,8 @@ function(tkit_default_configure target)
       -Wextra
       -Wpedantic
       -Werror
+      -Wno-unknown-warning-option
+      -Wno-unknown-pragmas
       -Wno-changes-meaning
       NO_EXCEPTIONS
       NO_RTTI)
