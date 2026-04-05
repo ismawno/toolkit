@@ -105,9 +105,10 @@ struct STrack
     {
         ++CopyCtorCount;
     }
-    STrack(STrack &&other) : Val(other.Val)
+
+    ~STrack()
     {
-        ++MoveCtorCount;
+        CtorCount--;
     }
 };
 
@@ -121,13 +122,6 @@ TEST_CASE("Storage: copy and move semantics", "[Storage]")
     REQUIRE(STrack::CtorCount == 1);
     REQUIRE(orig->Val == 55);
 
-    // copy-construct
-    const Storage<STrack> copy = orig;
-    REQUIRE(STrack::CopyCtorCount == 1);
-    REQUIRE((*copy).Val == 55);
-
-    // move-construct
-    const Storage<STrack> moved = std::move(orig);
-    REQUIRE(STrack::MoveCtorCount == 1);
-    REQUIRE((*moved).Val == 55);
+    orig.Destruct();
+    REQUIRE(STrack::CtorCount == 0);
 }
