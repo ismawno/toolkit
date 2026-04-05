@@ -6,6 +6,11 @@
 #endif
 
 #include "tkit/profiling/timespan.hpp"
+#include "tkit/utils/logging.hpp"
+
+#ifdef TKIT_ENABLE_DEBUG_LOGS
+#else
+#endif
 
 namespace TKit
 {

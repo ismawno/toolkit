@@ -6,7 +6,6 @@
 #endif
 
 #include "tkit/utils/alias.hpp"
-#include "tkit/preprocessor/system.hpp"
 #include <chrono>
 
 namespace TKit::Detail
