@@ -252,9 +252,13 @@ template <typename T, usize Capacity = TKIT_USIZE_MAX> class WeakArray
     {
         return m_Size;
     }
-    constexpr usize capacity() const
+    constexpr usize GetCapacity() const
     {
         return Capacity;
+    }
+    constexpr usz GetBytes() const
+    {
+        return m_Size * sizeof(T);
     }
     constexpr bool IsEmpty() const
     {
@@ -262,7 +266,7 @@ template <typename T, usize Capacity = TKIT_USIZE_MAX> class WeakArray
     }
     constexpr bool IsFull() const
     {
-        return m_Size == capacity();
+        return m_Size == GetCapacity();
     }
 
     constexpr operator bool() const
@@ -534,6 +538,10 @@ template <typename T> class WeakArray<T, TKIT_USIZE_MAX>
     constexpr usize GetCapacity() const
     {
         return m_Capacity;
+    }
+    constexpr usz GetBytes() const
+    {
+        return m_Size * sizeof(T);
     }
     constexpr bool IsEmpty() const
     {

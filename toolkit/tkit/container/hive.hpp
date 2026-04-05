@@ -164,6 +164,10 @@ template <typename T, typename AllocState> class Hive
     {
         return m_Data.GetCapacity();
     }
+    constexpr usz GetBytes() const
+    {
+        return m_Data.GetSize() * sizeof(T);
+    }
 
     constexpr bool IsEmpty() const
     {

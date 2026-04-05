@@ -570,6 +570,10 @@ template <typename T, typename AllocState> class Array
     {
         return m_State.Size;
     }
+    constexpr usz GetBytes() const
+    {
+        return m_State.Size * sizeof(T);
+    }
 
     constexpr usize GetCapacity() const
     {

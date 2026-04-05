@@ -60,6 +60,10 @@ template <typename T, usize Capacity> struct FixedArray
     {
         return Capacity;
     }
+    constexpr usz GetBytes() const
+    {
+        return Capacity * sizeof(T);
+    }
 
     constexpr const T *GetData() const
     {

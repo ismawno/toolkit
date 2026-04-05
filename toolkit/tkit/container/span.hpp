@@ -57,6 +57,10 @@ class Span
     {
         return Extent;
     }
+    constexpr usz GetBytes() const
+    {
+        return Extent * sizeof(T);
+    }
 
     constexpr T &operator[](const usize index) const
     {
@@ -166,6 +170,10 @@ template <typename T> class Span<T, TKIT_USIZE_MAX>
     constexpr usize GetSize() const
     {
         return m_Size;
+    }
+    constexpr usz GetBytes() const
+    {
+        return m_Size * sizeof(T);
     }
 
     constexpr T &operator[](const usize index) const
