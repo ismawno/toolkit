@@ -14,9 +14,9 @@ TKIT_YAML_SERIALIZE_DECLARE_ENUM(Dimension)
 
 enum Dimension : u8
 {
-    D2,
-    D3,
-    D_Count
+    D2 = 2,
+    D3 = 3,
+    D_Count = 2
 };
 
 template <typename T, T Value>
