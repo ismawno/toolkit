@@ -45,6 +45,15 @@ template <typename T> constexpr T Map(const T value, const T min0, const T max0,
     return min1 + (value - min0) * (max1 - min1) / (max0 - min0);
 }
 
+template <typename T> constexpr T Pow(const T value, const T power)
+{
+    return pow(value, power);
+}
+template <typename T> constexpr T Lerp(const T v0, const T v1, const T t)
+{
+    return v0 + (v1 - v0) * t;
+}
+
 // TODO: Adapt so SIMD
 template <typename T, usize N0, usize... N> constexpr T Min(const ten<T, N0, N...> &tensor)
 {
@@ -112,6 +121,40 @@ template <typename T, std::convertible_to<T> U, usize N0, usize... N>
 constexpr ten<T, N0, N...> Map(const ten<T, N0, N...> &tensor, const U min0, const U max0, const U min1, const U max1)
 {
     return min1 + (tensor - min0) * (max1 - min1) / (max0 - min0);
+}
+
+template <typename T, usize N0, usize... N>
+constexpr ten<T, N0, N...> Pow(const ten<T, N0, N...> &tensor, const ten<T, N0, N...> &power)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result.Flat[i] = Pow(tensor.Flat[i], power.Flat[i]);
+}
+template <typename T, usize N0, usize... N>
+constexpr ten<T, N0, N...> Pow(const ten<T, N0, N...> &tensor, const T power)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result.Flat[i] = Pow(tensor.Flat[i], power);
+}
+template <typename T, usize N0, usize... N>
+constexpr ten<T, N0, N...> Lerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1,
+                                const ten<T, N0, N...> &t)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result.Flat[i] = Lerp(tensor0.Flat[i], tensor1.Flat[i], t.Flat[i]);
+}
+template <typename T, usize N0, usize... N>
+constexpr ten<T, N0, N...> Lerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1, const T t)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result.Flat[i] = Lerp(tensor0.Flat[i], tensor1.Flat[i], t);
 }
 
 template <typename T> constexpr T Pi()
