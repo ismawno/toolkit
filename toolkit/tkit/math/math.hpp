@@ -49,9 +49,13 @@ template <typename T> constexpr T Pow(const T value, const T power)
 {
     return pow(value, power);
 }
-template <typename T> constexpr T Lerp(const T v0, const T v1, const T t)
+template <typename T> constexpr T LinearLerp(const T v0, const T v1, const T t)
 {
     return v0 + (v1 - v0) * t;
+}
+template <typename T> constexpr T LogLerp(const T v0, const T v1, const T t)
+{
+    return v0 * Pow(v1 / v0, t);
 }
 
 // TODO: Adapt so SIMD
@@ -140,21 +144,38 @@ constexpr ten<T, N0, N...> Pow(const ten<T, N0, N...> &tensor, const T power)
         result.Flat[i] = Pow(tensor.Flat[i], power);
 }
 template <typename T, usize N0, usize... N>
-constexpr ten<T, N0, N...> Lerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1,
-                                const ten<T, N0, N...> &t)
+constexpr ten<T, N0, N...> LinearLerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1,
+                                      const ten<T, N0, N...> &t)
 {
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = Lerp(tensor0.Flat[i], tensor1.Flat[i], t.Flat[i]);
+        result.Flat[i] = LinearLerp(tensor0.Flat[i], tensor1.Flat[i], t.Flat[i]);
 }
 template <typename T, usize N0, usize... N>
-constexpr ten<T, N0, N...> Lerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1, const T t)
+constexpr ten<T, N0, N...> LinearLerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1, const T t)
 {
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = Lerp(tensor0.Flat[i], tensor1.Flat[i], t);
+        result.Flat[i] = LinearLerp(tensor0.Flat[i], tensor1.Flat[i], t);
+}
+template <typename T, usize N0, usize... N>
+constexpr ten<T, N0, N...> LogLerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1,
+                                   const ten<T, N0, N...> &t)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result.Flat[i] = LogLerp(tensor0.Flat[i], tensor1.Flat[i], t.Flat[i]);
+}
+template <typename T, usize N0, usize... N>
+constexpr ten<T, N0, N...> LogLerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1, const T t)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result.Flat[i] = LogLerp(tensor0.Flat[i], tensor1.Flat[i], t);
 }
 
 template <typename T> constexpr T Pi()
