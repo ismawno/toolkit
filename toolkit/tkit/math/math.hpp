@@ -55,7 +55,10 @@ template <typename T> constexpr T LinearLerp(const T v0, const T v1, const T t)
 }
 template <typename T> constexpr T LogLerp(const T v0, const T v1, const T t)
 {
-    return v0 * Pow(v1 / v0, t);
+    const T offset = T(1) - Min(v0, v1);
+    const T a = v0 + offset;
+    const T b = v1 + offset;
+    return a * Pow(b / a, t) - offset;
 }
 
 // TODO: Adapt so SIMD
