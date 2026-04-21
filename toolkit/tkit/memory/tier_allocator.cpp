@@ -249,7 +249,24 @@ void TierAllocator::setupMemoryLayout(const TierDescriptions &tiers)
 void TierAllocator::deallocateBuffer()
 {
     if (m_Buffer)
+    {
+#ifdef TKIT_ENABLE_ASSERTS
+        for (u32 i = 0; i < m_Tiers.GetSize(); ++i)
+        {
+            const Tier &tier = m_Tiers[i];
+            TKIT_ASSERT(tier.Allocations >= tier.Deallocations,
+                        "[ONYX][TIER-ALLOC] Found tier index {} to have more deallocations ({}) than deallocations "
+                        "({}), meaning a "
+                        "double free likely happened and this allocator became corrupted",
+                        i, tier.Allocations, tier.Deallocations);
+            TKIT_ASSERT(tier.Allocations == tier.Deallocations,
+                        "[ONYX][TIER-ALLOC] Found tier index {} to have {} allocations and {} deallocations, meaning "
+                        "{} active allocations remain when destroying this allocator",
+                        i, tier.Allocations, tier.Deallocations, tier.Allocations - tier.Deallocations);
+        }
+#endif
         DeallocateAligned(m_Buffer);
+    }
 }
 
 void *TierAllocator::allocate(const usize tierIndex, const usz size)
@@ -261,8 +278,13 @@ void *TierAllocator::allocate(const usize tierIndex, const usz size)
 #ifdef TKIT_ENABLE_ASSERTS
         if (ptr)
         {
-            ++tier.Slots;
-            TKIT_ASSERT((++tier.Allocations - tier.Deallocations) <= tier.Slots,
+            const usize index = getTierIndex(size);
+            if (index == tierIndex)
+            {
+                ++tier.Slots;
+                ++tier.Allocations;
+            }
+            TKIT_ASSERT((tier.Allocations - tier.Deallocations) <= tier.Slots,
                         "[TOOLKIT][TIER-ALLOC] Allocator is malformed. Tier of index {} (with allocation of size {:L}) "
                         "exceeded slots "
                         "(allocations - deallocations) = ({} - {}) = {} > slots = {}, but allocator did not attempt to "
