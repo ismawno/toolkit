@@ -115,7 +115,7 @@ TEST_CASE("Quaternion multiplication", "[Quaternion]")
 TEST_CASE("Quaternion rotate vector", "[Quaternion]")
 {
     const f32v3 axis(0.0f, 0.0f, 1.0f);
-    const f32 angle = Pi<f32>() / 2.0f;
+    const f32 angle = Pi() / 2.0f;
 
     const f32q q = f32q::FromAngleAxis(angle, axis);
 
@@ -130,7 +130,7 @@ TEST_CASE("Quaternion rotate vector", "[Quaternion]")
 TEST_CASE("Quaternion conversions Mat3 and Mat4", "[Quaternion][Matrix]")
 {
     const f32v3 axis(0.0f, 1.0f, 0.0f);
-    const f32 angle = Pi<f32>() / 3.0f;
+    const f32 angle = Pi() / 3.0f;
 
     const f32q q = f32q::FromAngleAxis(angle, axis);
 
@@ -152,7 +152,7 @@ TEST_CASE("Quaternion conversions Mat3 and Mat4", "[Quaternion][Matrix]")
 TEST_CASE("Quaternion angle and axis extraction", "[Quaternion]")
 {
     const f32v3 axis(1.0f, 0.0f, 0.0f);
-    const f32 angle = Pi<f32>() * 0.5f;
+    const f32 angle = Pi() * 0.5f;
 
     const f32q q = f32q::FromAngleAxis(angle, axis);
 

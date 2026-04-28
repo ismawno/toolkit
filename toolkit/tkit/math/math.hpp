@@ -187,7 +187,7 @@ constexpr ten<T, N0, N...> LogLerp(const ten<T, N0, N...> &tensor0, const ten<T,
     return result;
 }
 
-template <typename T> constexpr T Pi()
+template <typename T = f32> constexpr T Pi()
 {
     return T(3.14159265358979323846);
 }
