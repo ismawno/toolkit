@@ -58,7 +58,7 @@ void CheckOutOfBounds(const char *level, const char *color, const char *file, i3
 #    define TKIT_FATAL(...)
 #    define TKIT_ASSERT(...)
 
-#    define TKIT_CHECK_RETURNS(...) expression
-#    define TKIT_CHECK_NOT_RETURNS(...) expression
+#    define TKIT_CHECK_RETURNS(expression, expected, ...) expression
+#    define TKIT_CHECK_NOT_RETURNS(expression, expected, ...) expression
 #    define TKIT_CHECK_OUT_OF_BOUNDS(...)
 #endif
