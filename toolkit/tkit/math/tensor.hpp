@@ -102,11 +102,11 @@ struct Tensor
 
     template <typename... Args>
         requires((sizeof...(Args) == Size) && ... && std::convertible_to<Args, T>)
-    constexpr explicit Tensor(const Args... args) : Flat{T(args)...}
+    constexpr Tensor(const Args... args) : Flat{T(args)...}
     {
     }
     template <typename... Args>
-    constexpr explicit Tensor(const Args &...args)
+    constexpr Tensor(const Args &...args)
         requires(!std::same_as<ChildType, T> && sizeof...(Args) == N0 && (std::convertible_to<Args, ChildType> && ...))
         : Ranked{scast<ChildType>(args)...}
     {
