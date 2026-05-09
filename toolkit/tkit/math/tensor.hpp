@@ -94,7 +94,7 @@ struct Tensor
         *this = Slice<T, N0, N...>(tensor);
     }
 
-    template <std::convertible_to<T> U> explicit constexpr Tensor(const U value)
+    template <std::convertible_to<T> U> constexpr Tensor(const U value)
     {
         for (usize i = 0; i < Size; ++i)
             Flat[i] = T(value);
