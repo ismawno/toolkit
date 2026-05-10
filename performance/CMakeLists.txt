@@ -19,6 +19,8 @@ tkit_register_for_yaml_serialization(toolkit-performance SOURCES
                                      perf/settings.hpp)
 tkit_register_for_reflection(toolkit-performance SOURCES perf/settings.hpp)
 
+target_compile_definitions(toolkit-performance
+                           PRIVATE TKIT_ROOT_PATH="${TOOLKIT_ROOT_PATH}")
 target_link_libraries(toolkit-performance PRIVATE toolkit argparse)
 target_include_directories(toolkit-performance
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
