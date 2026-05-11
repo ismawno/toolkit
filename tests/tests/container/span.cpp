@@ -50,13 +50,11 @@ TEST_CASE("Span dynamic extent: default and pointer+size ctor", "[Span]")
     REQUIRE(span2.At(3) == 7);
 }
 
-TEST_CASE("Span dynamic extent: from FixedArray, StaticArray, WeakArray, DynamicArray", "[Span]")
+TEST_CASE("Span dynamic extent: from FixedArray, StaticArray, DynamicArray", "[Span]")
 {
     FixedArray<u32, 3> arr = {2u, 4u, 6u};
     StaticArray<u32, 3> sarr{{7u, 8u}};
     DynamicArray<u32> darr{{9u, 10u, 11u}};
-    FixedArray<u32, 4> backing = {1u, 2u, 3u, 4u};
-    const WeakArray<u32, 4> warr(backing.GetData(), 2);
 
     const Span<u32> span1(arr);
     REQUIRE(span1.GetSize() == 3);
@@ -66,9 +64,6 @@ TEST_CASE("Span dynamic extent: from FixedArray, StaticArray, WeakArray, Dynamic
 
     const Span<u32> span3(darr);
     REQUIRE(span3.GetSize() == 3);
-
-    const Span<u32> span4(warr);
-    REQUIRE(span4.GetSize() == 2);
 
     // conversion from Span<U,?>
     const Span<const u32> span5 = span3;

@@ -9,7 +9,6 @@
 #include "tkit/container/fixed_array.hpp"
 #include "tkit/container/array.hpp"
 #include "tkit/container/span.hpp"
-#include "tkit/container/weak_array.hpp"
 
 // Alias to the std are not included as yaml-cpp already includes them
 
@@ -61,17 +60,6 @@ template <typename T, typename AllocState> struct Codec<Array<T, AllocState>>
 template <typename T, usize N> struct Codec<Span<T, N>>
 {
     static Node Encode(const Span<const T, N> &instance)
-    {
-        Node node;
-        for (const T &element : instance)
-            node.push_back(element);
-        return node;
-    }
-};
-
-template <typename T, usize N> struct Codec<WeakArray<T, N>>
-{
-    static Node Encode(const WeakArray<const T, N> &instance)
     {
         Node node;
         for (const T &element : instance)

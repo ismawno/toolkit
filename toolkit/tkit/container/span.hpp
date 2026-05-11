@@ -1,6 +1,8 @@
 #pragma once
 
-#include "tkit/container/weak_array.hpp"
+#include "tkit/container/fixed_array.hpp"
+#include "tkit/container/array.hpp"
+#include "tkit/utils/limits.hpp"
 #include "tkit/container/array.hpp"
 
 namespace TKit
@@ -140,19 +142,6 @@ template <typename T> class Span<T, TKIT_USIZE_MAX>
     }
     template <typename AllocState>
     constexpr Span(Array<ElementType, AllocState> &array) : m_Data(array.GetData()), m_Size(array.GetSize())
-    {
-    }
-
-    template <typename ElementType, usize Capacity>
-        requires(std::convertible_to<ElementType *, T *> &&
-                 std::same_as<std::remove_cvref_t<ElementType>, std::remove_cvref_t<T>>)
-    constexpr Span(const WeakArray<ElementType, Capacity> &array) : m_Data(array.GetData()), m_Size(array.GetSize())
-    {
-    }
-    template <typename ElementType, usize Capacity>
-        requires(std::convertible_to<ElementType *, T *> &&
-                 std::same_as<std::remove_cvref_t<ElementType>, std::remove_cvref_t<T>>)
-    constexpr Span(WeakArray<ElementType, Capacity> &array) : m_Data(array.GetData()), m_Size(array.GetSize())
     {
     }
 

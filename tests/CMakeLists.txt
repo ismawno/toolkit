@@ -18,7 +18,6 @@ set(SOURCES
     tests/container/dynamic_array.cpp
     tests/container/hive.cpp
     tests/container/container.cpp
-    tests/container/weak_array.cpp
     tests/container/span.cpp
     tests/container/storage.cpp
     tests/multiprocessing/task.cpp
