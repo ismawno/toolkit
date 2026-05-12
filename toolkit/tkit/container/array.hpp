@@ -30,9 +30,6 @@ template <typename T, typename AllocState> class Array
                                          ... && true))
     constexpr explicit Array(Args &&...args) : m_State(std::forward<Args>(args)...)
     {
-        if constexpr (IsString)
-            Append(); // Append on purely empty just adds a null terminator and ignores the input. A side-efect bug im
-                      // kind of using to fix the bug it causes
     }
 
     template <std::convertible_to<usize> U, typename... Args>
@@ -142,8 +139,6 @@ template <typename T, typename AllocState> class Array
 
     constexpr Array(const Array &other)
     {
-        TKIT_ASSERT(!IsString || other.m_State.Size != 0,
-                    "[TOOLKIT][ARRAY] All string arrays must have allocated at least a null terminator");
         const usize otherSize = other.m_State.Size;
         if constexpr (Type == Array_Dynamic)
             m_State.GrowCapacityIf(otherSize != 0, otherSize);
@@ -193,8 +188,6 @@ template <typename T, typename AllocState> class Array
 
     constexpr Array(Array &&other)
     {
-        TKIT_ASSERT(!IsString || other.m_State.Size != 0,
-                    "[TOOLKIT][ARRAY] All string arrays must have allocated at least a null terminator");
         if constexpr (Type == Array_Static)
         {
             m_State.Size = other.m_State.Size;
@@ -214,8 +207,6 @@ template <typename T, typename AllocState> class Array
 
     constexpr Array &operator=(const Array &other)
     {
-        TKIT_ASSERT(!IsString || other.m_State.Size != 0,
-                    "[TOOLKIT][ARRAY] All string arrays must have allocated at least a null terminator");
         if (this == &other)
             return *this;
 
@@ -305,21 +296,21 @@ template <typename T, typename AllocState> class Array
         requires std::constructible_from<T, Args...>
     constexpr T &Append(Args &&...args)
     {
+        usize newSize = m_State.Size + 1;
+        if constexpr (IsString)
+            if (mustAddTwo())
+                ++newSize;
+
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
-        {
-            const usize newSize = m_State.Size + 1;
             m_State.GrowCapacityIf(newSize > m_State.GetCapacity(), newSize);
-            m_State.Size = newSize;
-            writeNullTerminatorIfString();
-            return *ConstructFromIterator(end() - 1, std::forward<Args>(args)...);
-        }
         else
         {
             TKIT_ASSERT(!IsFull(), "[TOOLKIT][ARRAY] Container is already at capacity of {}", m_State.GetCapacity());
-            ++m_State.Size;
-            writeNullTerminatorIfString();
-            return *ConstructFromIterator(end() - 1, std::forward<Args>(args)...);
         }
+
+        m_State.Size = newSize;
+        writeNullTerminatorIfString();
+        return *ConstructFromIterator(end() - 1, std::forward<Args>(args)...);
     }
 
     constexpr void Pop()
@@ -336,9 +327,13 @@ template <typename T, typename AllocState> class Array
     constexpr void Insert(T *ppos, U &&value)
     {
         TKIT_ASSERT(ppos >= begin() && ppos <= end(), "[TOOLKIT][ARRAY] Iterator is out of bounds");
+        usize newSize = m_State.Size + 1;
+        if constexpr (IsString)
+            if (mustAddTwo())
+                ++newSize;
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
         {
-            const usize newSize = m_State.Size + 1;
+
             if (newSize > m_State.GetCapacity())
             {
                 const usize pos = usize(std::distance(begin(), ppos));
@@ -347,6 +342,7 @@ template <typename T, typename AllocState> class Array
             }
 
             Tools::Insert(end(), ppos, std::forward<U>(value));
+
             m_State.Size = newSize;
             writeNullTerminatorIfString();
         }
@@ -354,7 +350,7 @@ template <typename T, typename AllocState> class Array
         {
             TKIT_ASSERT(!IsFull(), "[TOOLKIT][ARRAY] Container is already full");
             Tools::Insert(end(), ppos, std::forward<U>(value));
-            ++m_State.Size;
+            m_State.Size = newSize;
             writeNullTerminatorIfString();
         }
     }
@@ -362,9 +358,13 @@ template <typename T, typename AllocState> class Array
     template <std::input_iterator It> constexpr void Insert(T *ppos, const It pbegin, const It pend)
     {
         TKIT_ASSERT(ppos >= begin() && ppos <= end(), "[TOOLKIT][ARRAY] Iterator is out of bounds");
+        usize newSize = m_State.Size + usize(std::distance(pbegin, pend));
+        if constexpr (IsString)
+            if (mustAddTwo())
+                ++newSize;
+
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
         {
-            const usize newSize = m_State.Size + usize(std::distance(pbegin, pend));
             if (newSize > m_State.GetCapacity())
             {
                 const usize pos = usize(std::distance(begin(), ppos));
@@ -382,7 +382,8 @@ template <typename T, typename AllocState> class Array
                         "[TOOLKIT][ARRAY] New size ({}) exceeds capacity of {}",
                         std::distance(pbegin, pend) + m_State.Size, m_State.GetCapacity());
 
-            m_State.Size += Tools::Insert(end(), ppos, pbegin, pend);
+            Tools::Insert(end(), ppos, pbegin, pend);
+            m_State.Size = newSize;
             writeNullTerminatorIfString();
         }
     }
@@ -404,7 +405,6 @@ template <typename T, typename AllocState> class Array
         TKIT_ASSERT(pos >= begin() && pos < end(), "[TOOLKIT][ARRAY] Iterator is out of bounds");
         Tools::RemoveOrdered(end(), pos);
         --m_State.Size;
-        writeNullTerminatorIfString();
     }
 
     /**
@@ -422,7 +422,6 @@ template <typename T, typename AllocState> class Array
         TKIT_ASSERT(m_State.Size >= std::distance(pbegin, pend), "[TOOLKIT][ARRAY] Range overflows array");
 
         m_State.Size -= Tools::RemoveOrdered(end(), pbegin, pend);
-        writeNullTerminatorIfString();
     }
 
     /**
@@ -670,7 +669,7 @@ template <typename T, typename AllocState> class Array
 
     constexpr bool IsEmpty() const
     {
-        return m_State.Size == 0;
+        return GetSize() == 0;
     }
 
     constexpr bool IsFull() const
@@ -1191,11 +1190,19 @@ template <typename T, typename AllocState> class Array
   private:
     AllocState m_State{};
 
-    void writeNullTerminatorIfString()
+    constexpr void writeNullTerminatorIfString()
     {
         if constexpr (IsString)
             if (m_State.Size != 0)
                 *end() = 0;
+    }
+
+    constexpr bool mustAddTwo()
+    {
+        if constexpr (!IsString)
+            return false;
+        else
+            return m_State.Size == 0;
     }
 
     static constexpr usize addOneIfString(const usize size)
