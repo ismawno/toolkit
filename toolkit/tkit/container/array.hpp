@@ -818,11 +818,39 @@ template <typename T, typename AllocState> class Array
             return 1;
         return 0;
     }
+    constexpr i32 Compare(const Array &other) const
+        requires(IsString)
+    {
+        const usize minLen = GetSize() < other.GetSize() ? GetSize() : other.GetSize();
+        const i32 result = std::char_traits<T>::compare(begin(), other.GetData(), minLen);
+        if (result != 0)
+            return result;
+        if (GetSize() < other.GetSize())
+            return -1;
+        if (GetSize() > other.GetSize())
+            return 1;
+        return 0;
+    }
 
     constexpr bool operator==(const T *str) const
         requires(IsString)
     {
         return Compare(str) == 0;
+    }
+    constexpr bool operator==(const Array &other) const
+        requires(IsString)
+    {
+        return Compare(other) == 0;
+    }
+    constexpr bool operator!=(const T *str) const
+        requires(IsString)
+    {
+        return Compare(str) != 0;
+    }
+    constexpr bool operator!=(const Array &other) const
+        requires(IsString)
+    {
+        return Compare(other) != 0;
     }
 
     // === Trimming ===
