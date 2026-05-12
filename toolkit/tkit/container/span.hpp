@@ -283,6 +283,32 @@ template <typename T> class Span
 
     // === Comparison ===
 
+    constexpr i32 Compare(const Span<const ElementType> &other) const
+        requires(IsString)
+    {
+        const usize minLen = GetSize() < other.GetSize() ? GetSize() : other.GetSize();
+        const i32 result = std::char_traits<ElementType>::compare(begin(), other.begin(), minLen);
+        if (result != 0)
+            return result;
+        if (GetSize() < other.GetSize())
+            return -1;
+        if (GetSize() > other.GetSize())
+            return 1;
+        return 0;
+    }
+
+    constexpr bool operator==(const Span<const ElementType> &other) const
+        requires(IsString)
+    {
+        return Compare(other) == 0;
+    }
+
+    constexpr bool operator!=(const Span<const ElementType> &other) const
+        requires(IsString)
+    {
+        return Compare(other) != 0;
+    }
+
     constexpr i32 Compare(const T *str) const
         requires(IsString)
     {
@@ -297,39 +323,16 @@ template <typename T> class Span
             return 1;
         return 0;
     }
-    constexpr i32 Compare(const Span &other) const
-        requires(IsString)
-    {
-        const usize minLen = GetSize() < other.GetSize() ? GetSize() : other.GetSize();
-        const i32 result = std::char_traits<T>::compare(begin(), other.GetData(), minLen);
-        if (result != 0)
-            return result;
-        if (GetSize() < other.GetSize())
-            return -1;
-        if (GetSize() > other.GetSize())
-            return 1;
-        return 0;
-    }
 
     constexpr bool operator==(const T *str) const
         requires(IsString)
     {
         return Compare(str) == 0;
     }
-    constexpr bool operator==(const Span &other) const
-        requires(IsString)
-    {
-        return Compare(other) == 0;
-    }
     constexpr bool operator!=(const T *str) const
         requires(IsString)
     {
         return Compare(str) != 0;
-    }
-    constexpr bool operator!=(const Span &other) const
-        requires(IsString)
-    {
-        return Compare(other) != 0;
     }
 
     // === Count ===
@@ -439,34 +442,6 @@ template <typename T> class Span
             if (*(begin() + i) == from)
                 *(begin() + i) = to;
         return *this;
-    }
-
-    // === Comparison ===
-
-    constexpr i32 Compare(const Span<const ElementType> &other) const
-        requires(IsString)
-    {
-        const usize minLen = GetSize() < other.GetSize() ? GetSize() : other.GetSize();
-        const i32 result = std::char_traits<ElementType>::compare(begin(), other.begin(), minLen);
-        if (result != 0)
-            return result;
-        if (GetSize() < other.GetSize())
-            return -1;
-        if (GetSize() > other.GetSize())
-            return 1;
-        return 0;
-    }
-
-    constexpr bool operator==(const Span<const ElementType> &other) const
-        requires(IsString)
-    {
-        return Compare(other) == 0;
-    }
-
-    constexpr bool operator!=(const Span<const ElementType> &other) const
-        requires(IsString)
-    {
-        return Compare(other) != 0;
     }
 
     // === Friend operators: Span <-> Array ===
