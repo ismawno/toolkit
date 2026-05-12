@@ -82,6 +82,18 @@ template <typename T, typename AllocState> class Array
         : Array(str, usize(std::char_traits<T>::length(str)), std::forward<Args>(args)...)
     {
     }
+    template <typename... Args>
+    constexpr Array(const std::string &str, Args &&...args)
+        requires(IsString)
+        : Array(str.c_str(), str.size(), std::forward<Args>(args)...)
+    {
+    }
+    template <typename... Args>
+    constexpr Array(const std::string_view str, Args &&...args)
+        requires(IsString)
+        : Array(str.data(), str.size(), std::forward<Args>(args)...)
+    {
+    }
 
     template <std::input_iterator It, typename... Args>
     constexpr Array(const It pbegin, const It pend, Args &&...args) : m_State(std::forward<Args>(args)...)
@@ -1150,6 +1162,15 @@ template <typename T, typename AllocState> class Array
         requires(IsString)
     {
         return Compare(other.begin()) >= 0;
+    }
+
+    operator std::string() const
+    {
+        return std::string{GetData(), GetSize()};
+    }
+    operator std::string_view() const
+    {
+        return std::string_view{GetData(), GetSize()};
     }
 
   private:

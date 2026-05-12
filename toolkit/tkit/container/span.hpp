@@ -85,6 +85,11 @@ template <typename T> class Span
         : m_Data(view.data()), m_Size(usize(view.size()))
     {
     }
+    constexpr Span(const std::string &str)
+        requires(IsString)
+        : m_Data(str.data()), m_Size(usize(str.size()))
+    {
+    }
 
     constexpr T *GetData() const
     {
