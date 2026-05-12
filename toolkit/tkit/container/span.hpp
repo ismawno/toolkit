@@ -474,6 +474,30 @@ template <typename T> class Span
         return !(lhs == rhs);
     }
 
+    constexpr bool operator<(const Span<const ElementType> &other) const
+        requires(IsString)
+    {
+        return Compare(other.begin()) < 0;
+    }
+
+    constexpr bool operator>(const Span<const ElementType> &other) const
+        requires(IsString)
+    {
+        return Compare(other.begin()) > 0;
+    }
+
+    constexpr bool operator<=(const Span<const ElementType> &other) const
+        requires(IsString)
+    {
+        return Compare(other.begin()) <= 0;
+    }
+
+    constexpr bool operator>=(const Span<const ElementType> &other) const
+        requires(IsString)
+    {
+        return Compare(other.begin()) >= 0;
+    }
+
     // === Friend concatenation: Span + Array / Array + Span ===
 
     template <typename AllocState>

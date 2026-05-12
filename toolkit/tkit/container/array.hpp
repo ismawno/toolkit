@@ -1128,6 +1128,30 @@ template <typename T, typename AllocState> class Array
         return os.write(s.begin(), s.GetSize());
     }
 
+    constexpr bool operator<(const Array &other) const
+        requires(IsString)
+    {
+        return Compare(other.begin()) < 0;
+    }
+
+    constexpr bool operator>(const Array &other) const
+        requires(IsString)
+    {
+        return Compare(other.begin()) > 0;
+    }
+
+    constexpr bool operator<=(const Array &other) const
+        requires(IsString)
+    {
+        return Compare(other.begin()) <= 0;
+    }
+
+    constexpr bool operator>=(const Array &other) const
+        requires(IsString)
+    {
+        return Compare(other.begin()) >= 0;
+    }
+
   private:
     AllocState m_State{};
 
