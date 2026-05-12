@@ -531,3 +531,10 @@ template <> struct fmt::formatter<TKit::Span<const char>> : fmt::formatter<fmt::
         return fmt::formatter<fmt::string_view>::format(fmt::string_view(s.begin(), s.GetSize()), ctx);
     }
 };
+template <> struct std::hash<TKit::Span<const char>>
+{
+    std::size_t operator()(const TKit::Span<const char> &s) const noexcept
+    {
+        return std::hash<std::string_view>{}(std::string_view(s.begin(), s.GetSize()));
+    }
+};

@@ -1176,3 +1176,11 @@ template <typename AllocState> struct fmt::formatter<TKit::Array<char, AllocStat
         return fmt::formatter<fmt::string_view>::format(fmt::string_view(s.begin(), s.GetSize()), ctx);
     }
 };
+
+template <typename AllocState> struct std::hash<TKit::Array<char, AllocState>>
+{
+    std::size_t operator()(const TKit::Array<char, AllocState> &s) const noexcept
+    {
+        return std::hash<std::string_view>{}(std::string_view(s.begin(), s.GetSize()));
+    }
+};
