@@ -30,15 +30,14 @@ void LogSettings(const Settings &settings)
 {
     TKit::Reflect<Settings>::ForEachMemberField([&settings](const auto &field1) {
         using Type1 = TKIT_REFLECT_FIELD_TYPE(field1);
-        const std::string name = field1.Name;
+        const char *name = field1.Name;
         TKIT_LOG_INFO("{}: ", name);
         const auto &setting = field1.Get(settings);
 
         TKit::Reflect<Type1>::ForEachMemberField([&setting](const auto &field2) {
             using Type2 = TKIT_REFLECT_FIELD_TYPE(field2);
-            const std::string name = field2.Name;
-            const std::string value = std::to_string(field2.Get(setting));
-            TKIT_LOG_INFO("     {}: {}", name, value);
+            const char *name = field2.Name;
+            TKIT_LOG_INFO("     {}: {}", name, field2.Get(setting));
         });
     });
 }
