@@ -7,6 +7,7 @@ namespace TKit
 template <typename T> struct DynamicAllocation
 {
     static constexpr ArrayType Type = Array_Dynamic;
+    template <typename U> using Rebind = DynamicAllocation<U>;
 
     DynamicAllocation() = default;
     DynamicAllocation(const usize capacity)
@@ -107,4 +108,5 @@ template <typename T> struct DynamicAllocation
     usize Capacity = 0;
 };
 template <typename T> using DynamicArray = Array<T, DynamicAllocation<T>>;
+using DynamicString = Array<char, DynamicAllocation<char>>;
 } // namespace TKit

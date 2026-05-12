@@ -8,6 +8,7 @@ namespace TKit
 template <typename T> struct ArenaAllocation
 {
     static constexpr ArrayType Type = Array_Arena;
+    template <typename U> using Rebind = ArenaAllocation<U>;
 
     ArenaAllocation() = default;
     ArenaAllocation(const usize capacity, ArenaAllocator *allocator = nullptr) : Allocator(allocator)

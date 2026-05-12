@@ -8,6 +8,7 @@ namespace TKit
 template <typename T> struct StackAllocation
 {
     static constexpr ArrayType Type = Array_Stack;
+    template <typename U> using Rebind = StackAllocation<U>;
 
     StackAllocation() = default;
     StackAllocation(StackAllocator *allocator) : Allocator(allocator)
@@ -87,4 +88,5 @@ template <typename T> struct StackAllocation
     usize Capacity = 0;
 };
 template <typename T> using StackArray = Array<T, StackAllocation<T>>;
+using StackString = Array<char, StackAllocation<char>>;
 } // namespace TKit

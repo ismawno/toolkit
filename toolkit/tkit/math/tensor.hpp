@@ -114,7 +114,7 @@ struct Tensor
 
 #ifndef TKIT_COMPILER_MSVC
     template <std::convertible_to<T> U, typename... Args>
-        requires((sizeof...(Args) > 0 && sizeof...(Args) < N0) && ... && std::convertible_to<Args, ChildType>)
+        requires((sizeof...(Args) != 0 && sizeof...(Args) < N0) && ... && std::convertible_to<Args, ChildType>)
     constexpr Tensor(const Tensor<U, N0 - sizeof...(Args), N...> &tensor, const Args &...args)
         requires(N0 > 1)
     {
@@ -125,7 +125,7 @@ struct Tensor
     }
 #else
     template <typename Ten, typename... Args>
-        requires((sizeof...(Args) > 0 && sizeof...(Args) < N0 && Ten::ChildSize == N0 - sizeof...(Args)) && ... &&
+        requires((sizeof...(Args) != 0 && sizeof...(Args) < N0 && Ten::ChildSize == N0 - sizeof...(Args)) && ... &&
                  std::convertible_to<Args, ChildType>)
     constexpr Tensor(const Ten &tensor, const Args &...args)
         requires(N0 > 1)
@@ -397,7 +397,7 @@ constexpr typename Tensor<T, N0, N...>::template Permuted<I0, I...> Permute(cons
     FixedArray<usize, RANK> pstride;
     stride[RANK - 1] = 1;
     pstride[RANK - 1] = 1;
-    for (usize i = RANK - 1; i > 0; --i)
+    for (usize i = RANK - 1; i != 0; --i)
     {
         stride[i - 1] = stride[i] * dims[i];
         pstride[i - 1] = pstride[i] * pdims[i];

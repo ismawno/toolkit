@@ -8,6 +8,7 @@ namespace TKit
 template <typename T> struct TierAllocation
 {
     static constexpr ArrayType Type = Array_Tier;
+    template <typename U> using Rebind = TierAllocation<U>;
 
     TierAllocation() = default;
     TierAllocation(TierAllocator *allocator) : Allocator(allocator)
@@ -118,5 +119,7 @@ template <typename T> struct TierAllocation
     usize Size = 0;
     usize Capacity = 0;
 };
+
 template <typename T> using TierArray = Array<T, TierAllocation<T>>;
+using TierString = Array<char, TierAllocation<char>>;
 } // namespace TKit

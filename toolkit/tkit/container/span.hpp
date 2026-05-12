@@ -113,7 +113,9 @@ class Span
 template <typename T> class Span<T, TKIT_USIZE_MAX>
 {
   public:
+    using ValueType = T;
     using ElementType = std::remove_cvref_t<T>;
+    static constexpr bool IsString = std::is_same_v<ElementType, char>;
 
     constexpr Span() : m_Data(nullptr), m_Size(0)
     {
@@ -124,6 +126,11 @@ template <typename T> class Span<T, TKIT_USIZE_MAX>
     constexpr Span(T &&data) = delete;
 
     constexpr Span(T *data, const usize size) : m_Data(data), m_Size(size)
+    {
+    }
+    constexpr Span(T *data)
+        requires(IsString)
+        : m_Data(data), m_Size(std::char_traits<T>::length(data))
     {
     }
 
@@ -137,18 +144,21 @@ template <typename T> class Span<T, TKIT_USIZE_MAX>
     }
 
     template <typename AllocState>
-    constexpr Span(const Array<ElementType, AllocState> &array) : m_Data(array.GetData()), m_Size(array.GetSize())
+    constexpr Span(const Array<ElementType, AllocState> &array)
+        : m_Data(array.GetData()), m_Size(addOneIfString(array.GetSize()))
     {
     }
     template <typename AllocState>
-    constexpr Span(Array<ElementType, AllocState> &array) : m_Data(array.GetData()), m_Size(array.GetSize())
+    constexpr Span(Array<ElementType, AllocState> &array)
+        : m_Data(array.GetData()), m_Size(addOneIfString(array.GetSize()))
     {
     }
 
     template <typename ElementType, usize Extent>
         requires(std::convertible_to<ElementType *, T *> &&
                  std::same_as<std::remove_cvref_t<ElementType>, std::remove_cvref_t<T>>)
-    constexpr Span(const Span<ElementType, Extent> &other) : m_Data(other.GetData()), m_Size(other.GetSize())
+    constexpr Span(const Span<ElementType, Extent> &other)
+        : m_Data(other.GetData()), m_Size(addOneIfString(other.GetSize()))
     {
     }
 
@@ -158,21 +168,21 @@ template <typename T> class Span<T, TKIT_USIZE_MAX>
     }
     constexpr usize GetSize() const
     {
-        return m_Size;
+        return subOneIfString(m_Size);
     }
     constexpr usz GetBytes() const
     {
-        return m_Size * sizeof(T);
+        return GetSize() * sizeof(T);
     }
 
     constexpr T &operator[](const usize index) const
     {
-        TKIT_CHECK_OUT_OF_BOUNDS(index, m_Size, "[TOOLKIT][SPAN] ");
+        TKIT_CHECK_OUT_OF_BOUNDS(index, GetSize(), "[TOOLKIT][SPAN] ");
         return m_Data[index];
     }
     constexpr T &At(const usize index) const
     {
-        TKIT_CHECK_OUT_OF_BOUNDS(index, m_Size, "[TOOLKIT][SPAN] ");
+        TKIT_CHECK_OUT_OF_BOUNDS(index, GetSize(), "[TOOLKIT][SPAN] ");
         return m_Data[index];
     }
 
@@ -191,7 +201,7 @@ template <typename T> class Span<T, TKIT_USIZE_MAX>
     }
     constexpr T *end() const
     {
-        return m_Data + m_Size;
+        return m_Data + GetSize();
     }
 
     constexpr bool IsEmpty() const
@@ -205,7 +215,28 @@ template <typename T> class Span<T, TKIT_USIZE_MAX>
     }
 
   private:
+    static constexpr usize addOneIfString(const usize size)
+    {
+        if constexpr (IsString)
+            return size + 1;
+        else
+            return size;
+    }
+    static constexpr usize subOneIfString(const usize size)
+    {
+        if constexpr (IsString)
+        {
+            if (size != 0)
+                return size - 1;
+            return 0;
+        }
+        else
+            return size;
+    }
     T *m_Data;
     usize m_Size;
 };
+
+using StringView = Span<const char>;
+
 } // namespace TKit
