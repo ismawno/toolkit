@@ -78,4 +78,5 @@ template <typename T> struct ArenaAllocation
     usize Capacity = 0;
 };
 template <typename T> using ArenaArray = Array<T, ArenaAllocation<T>>;
+using ArenaString = Array<char, ArenaAllocation<char>>;
 } // namespace TKit
