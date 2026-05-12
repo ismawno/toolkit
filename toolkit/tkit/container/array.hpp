@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tkit/container/container.hpp"
+#include <ostream>
 
 namespace TKit
 {
@@ -1139,3 +1140,8 @@ template <typename AllocState> struct fmt::formatter<TKit::Array<char, AllocStat
         return fmt::formatter<fmt::string_view>::format(fmt::string_view(s.begin(), s.GetSize()), ctx);
     }
 };
+
+template <typename AllocState> std::ostream &operator<<(std::ostream &os, const TKit::Array<char, AllocState> &s)
+{
+    return os.write(s.begin(), s.GetSize());
+}
