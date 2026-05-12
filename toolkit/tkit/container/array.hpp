@@ -1052,6 +1052,7 @@ template <typename T, typename AllocState> class Array
         Array<Array, typename AllocState::template Rebind<Array>> parts;
         if constexpr (Type != Array_Static && Type != Array_Dynamic)
             parts.ResetAllocator(m_State.Allocator);
+        parts.Reserve(GetSize());
         usize start = 0;
 
         for (usize i = 0; i < GetSize(); ++i)
@@ -1073,6 +1074,7 @@ template <typename T, typename AllocState> class Array
         Array<Array, typename AllocState::template Rebind<Array>> parts;
         if constexpr (Type != Array_Static && Type != Array_Dynamic)
             parts.ResetAllocator(m_State.Allocator);
+        parts.Reserve(GetSize());
 
         if (delimLen == 0)
         {
