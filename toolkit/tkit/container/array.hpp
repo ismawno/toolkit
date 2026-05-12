@@ -653,7 +653,7 @@ template <typename T, typename AllocState> class Array
 
     template <typename... Args> static constexpr Array Format(const fmt::format_string<Args...> str, Args &&...args)
     {
-        const usize fsize = fmt::formatted_size(str, std::forward<Args>(args)...);
+        const usize fsize = usize(fmt::formatted_size(str, std::forward<Args>(args)...));
         Array fstr{fsize};
         fmt::format_to(fstr.begin(), str, std::forward<Args>(args)...);
         return fstr;

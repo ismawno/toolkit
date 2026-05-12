@@ -37,7 +37,7 @@ template <typename T> class Span
     }
     constexpr Span(T *data)
         requires(IsString)
-        : m_Data(data), m_Size(usize(std::char_traits<T>::length(data)))
+        : m_Data(data), m_Size(usize(std::char_traits<ElementType>::length(data)))
     {
     }
 
@@ -145,8 +145,8 @@ template <typename T> class Span
     constexpr bool StartsWith(const T *str) const
         requires(IsString)
     {
-        const usize len = usize(std::char_traits<T>::length(str));
-        return GetSize() >= len && std::char_traits<T>::compare(begin(), str, len) == 0;
+        const usize len = usize(std::char_traits<ElementType>::length(str));
+        return GetSize() >= len && std::char_traits<ElementType>::compare(begin(), str, len) == 0;
     }
 
     constexpr bool StartsWith(const T ch) const
@@ -158,8 +158,8 @@ template <typename T> class Span
     constexpr bool EndsWith(const T *str) const
         requires(IsString)
     {
-        const usize len = usize(std::char_traits<T>::length(str));
-        return GetSize() >= len && std::char_traits<T>::compare(end() - len, str, len) == 0;
+        const usize len = usize(std::char_traits<ElementType>::length(str));
+        return GetSize() >= len && std::char_traits<ElementType>::compare(end() - len, str, len) == 0;
     }
 
     constexpr bool EndsWith(const T ch) const
@@ -196,13 +196,13 @@ template <typename T> class Span
     constexpr usize Find(const T *str, const usize from = 0) const
         requires(IsString)
     {
-        const usize len = usize(std::char_traits<T>::length(str));
+        const usize len = usize(std::char_traits<ElementType>::length(str));
         if (len == 0)
             return from <= GetSize() ? from : npos;
         if (len > GetSize())
             return npos;
         for (usize i = from; i <= GetSize() - len; ++i)
-            if (std::char_traits<T>::compare(begin() + i, str, len) == 0)
+            if (std::char_traits<ElementType>::compare(begin() + i, str, len) == 0)
                 return i;
         return npos;
     }
@@ -219,13 +219,13 @@ template <typename T> class Span
     constexpr usize FindLast(const T *str) const
         requires(IsString)
     {
-        const usize len = usize(std::char_traits<T>::length(str));
+        const usize len = usize(std::char_traits<ElementType>::length(str));
         if (len == 0)
             return GetSize();
         if (len > GetSize())
             return npos;
         for (usize i = GetSize() - len + 1; i > 0; --i)
-            if (std::char_traits<T>::compare(begin() + i - 1, str, len) == 0)
+            if (std::char_traits<ElementType>::compare(begin() + i - 1, str, len) == 0)
                 return i - 1;
         return npos;
     }
@@ -233,7 +233,7 @@ template <typename T> class Span
     constexpr usize FindFirstOf(const T *chars, const usize from = 0) const
         requires(IsString)
     {
-        const usize len = usize(std::char_traits<T>::length(chars));
+        const usize len = usize(std::char_traits<ElementType>::length(chars));
         for (usize i = from; i < GetSize(); ++i)
             for (usize j = 0; j < len; ++j)
                 if (*(begin() + i) == chars[j])
@@ -244,7 +244,7 @@ template <typename T> class Span
     constexpr usize FindLastOf(const T *chars) const
         requires(IsString)
     {
-        const usize len = usize(std::char_traits<T>::length(chars));
+        const usize len = usize(std::char_traits<ElementType>::length(chars));
         for (usize i = GetSize(); i > 0; --i)
             for (usize j = 0; j < len; ++j)
                 if (*(begin() + i - 1) == chars[j])
@@ -255,7 +255,7 @@ template <typename T> class Span
     constexpr usize FindFirstNotOf(const T *chars, const usize from = 0) const
         requires(IsString)
     {
-        const usize len = usize(std::char_traits<T>::length(chars));
+        const usize len = usize(std::char_traits<ElementType>::length(chars));
         for (usize i = from; i < GetSize(); ++i)
         {
             bool found = false;
@@ -312,9 +312,9 @@ template <typename T> class Span
     constexpr i32 Compare(const T *str) const
         requires(IsString)
     {
-        const usize len = usize(std::char_traits<T>::length(str));
+        const usize len = usize(std::char_traits<ElementType>::length(str));
         const usize minLen = GetSize() < len ? GetSize() : len;
-        const i32 result = std::char_traits<T>::compare(begin(), str, minLen);
+        const i32 result = std::char_traits<ElementType>::compare(begin(), str, minLen);
         if (result != 0)
             return result;
         if (GetSize() < len)
@@ -350,7 +350,7 @@ template <typename T> class Span
     constexpr usize Count(const T *str) const
         requires(IsString)
     {
-        const usize len = std::char_traits<ElementType>::length(str);
+        const usize len = usize(std::char_traits<ElementType>::length(str));
         if (len == 0 || len > GetSize())
             return 0;
         usize count = 0;
@@ -392,7 +392,7 @@ template <typename T> class Span
     constexpr Span &TrimRight(const T *chars = " \t\n\r")
         requires(IsString)
     {
-        const usize len = std::char_traits<ElementType>::length(chars);
+        const usize len = usize(std::char_traits<ElementType>::length(chars));
         usize i = GetSize();
         while (i > 0)
         {
