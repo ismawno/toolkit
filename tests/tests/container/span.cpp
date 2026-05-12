@@ -8,33 +8,6 @@ using namespace TKit;
 using namespace TKit::Container;
 using namespace TKit::Alias;
 
-TEST_CASE("Span static extent: default and pointer ctor", "[Span]")
-{
-    u32 raw[3] = {1, 2, 3};
-
-    const Span<u32, 3> span1;
-    REQUIRE(!span1);
-
-    const Span<u32, 3> span2(raw);
-    REQUIRE(span2);
-    REQUIRE(span2.GetData() == raw);
-    REQUIRE(span2.GetSize() == 3);
-    REQUIRE(span2[0] == 1);
-    REQUIRE(span2.At(2) == 3);
-    REQUIRE(span2.GetFront() == 1);
-    REQUIRE(span2.GetBack() == 3);
-
-    // construction from FixedArray<T,Extent>
-    FixedArray<u32, 3> arr = {10u, 20u, 30u};
-    const Span<u32, 3> span3(arr);
-    REQUIRE(span3.GetSize() == 3);
-    REQUIRE(span3[1] == 20u);
-
-    // conversion from Span<U,Extent>
-    const Span<const u32, 3> span4 = span3;
-    REQUIRE(span4.GetData() == span3.GetData());
-}
-
 TEST_CASE("Span dynamic extent: default and pointer+size ctor", "[Span]")
 {
     const Span<u32> span1;
@@ -85,4 +58,125 @@ TEST_CASE("Span dynamic extent: iteration and bool", "[Span]")
     span = Span<std::string>(nullptr, 0);
     REQUIRE(!span);
     REQUIRE(span.IsEmpty());
+}
+TEST_CASE("Span string: Count", "[Span]")
+{
+    const StringView sv("hello world");
+    REQUIRE(sv.Count('l') == 3);
+    REQUIRE(sv.Count('o') == 2);
+    REQUIRE(sv.Count('z') == 0);
+    REQUIRE(sv.Count("ll") == 1);
+    REQUIRE(sv.Count("l") == 3);
+    REQUIRE(sv.Count("xyz") == 0);
+    REQUIRE(sv.Count("") == 0);
+}
+
+TEST_CASE("Span string: TrimLeft", "[Span]")
+{
+    const StringView sv("  \t hello ");
+    const StringView trimmed = sv.TrimLeft();
+    REQUIRE(trimmed.Compare("hello ") == 0);
+
+    const StringView noLeft("hello ");
+    REQUIRE(noLeft.TrimLeft() == "hello ");
+
+    const StringView allSpaces("   ");
+    const StringView empty = allSpaces.TrimLeft();
+    REQUIRE(empty.GetSize() == 0);
+
+    const StringView custom("xxyhello");
+    REQUIRE(custom.TrimLeft("xy") == "hello");
+}
+
+TEST_CASE("Span string: TrimRight", "[Span]")
+{
+    const StringView sv(" hello  \t ");
+    const StringView trimmed = sv.TrimRight();
+    REQUIRE(trimmed == " hello");
+
+    const StringView noRight(" hello");
+    REQUIRE(noRight.TrimRight() == " hello");
+
+    const StringView allSpaces("   ");
+    const StringView empty = allSpaces.TrimRight();
+    REQUIRE(empty.GetSize() == 0);
+
+    const StringView custom("helloxyyx");
+    REQUIRE(custom.TrimRight("xy") == "hello");
+}
+
+TEST_CASE("Span string: Trim", "[Span]")
+{
+    const StringView sv("  hello  ");
+    REQUIRE(sv.Trim() == "hello");
+
+    const StringView clean("hello");
+    REQUIRE(clean.Trim() == "hello");
+
+    const StringView allSpaces("  \t\n ");
+    REQUIRE(allSpaces.Trim().GetSize() == 0);
+}
+
+TEST_CASE("Span string: TrimLeft/TrimRight mutating", "[Span]")
+{
+    char buf[] = "  hello  ";
+    Span<char> sv(buf, 9);
+    sv.TrimLeft();
+    REQUIRE(sv == "hello  ");
+    sv.TrimRight();
+    REQUIRE(sv == "hello");
+}
+
+TEST_CASE("Span string: Replace (mutable)", "[Span]")
+{
+    char buf[] = "hello world";
+    Span<char> sv(buf, 11);
+    sv.Replace('l', 'L');
+    REQUIRE(sv == "heLLo worLd");
+
+    char buf2[] = "aabbcc";
+    Span<char> sv2(buf2, 6);
+    sv2.Replace('z', 'x');
+    REQUIRE(sv2 == "aabbcc");
+}
+
+TEST_CASE("Span string: Compare and equality with Span", "[Span]")
+{
+    const StringView a("abc");
+    const StringView b("abc");
+    const StringView c("abd");
+    const StringView d("ab");
+
+    REQUIRE(a.Compare(b) == 0);
+    REQUIRE(a == b);
+    REQUIRE(a != c);
+    REQUIRE(a != d);
+    REQUIRE(a.Compare(c) < 0);
+    REQUIRE(c.Compare(a) > 0);
+    REQUIRE(a.Compare(d) > 0);
+    REQUIRE(d.Compare(a) < 0);
+}
+
+TEST_CASE("Span string: equality with Array", "[Span]")
+{
+    DynamicString arr("hello");
+    const StringView sv("hello");
+    const StringView other("world");
+
+    REQUIRE(sv == arr);
+    REQUIRE(arr == sv);
+    REQUIRE(other != arr);
+    REQUIRE(arr != other);
+}
+
+TEST_CASE("Span string: concatenation with Array", "[Span]")
+{
+    DynamicString arr("hello");
+    const StringView sv(" world");
+
+    const DynamicString result1 = arr + sv;
+    REQUIRE(result1 == "hello world");
+
+    const DynamicString result2 = sv + arr;
+    REQUIRE(result2 == " worldhello");
 }

@@ -78,7 +78,7 @@ template <typename T, typename AllocState> class Array
     template <typename... Args>
     constexpr Array(const T *str, Args &&...args)
         requires(IsString)
-        : Array(str, std::char_traits<T>::length(str), std::forward<Args>(args)...)
+        : Array(str, usize(std::char_traits<T>::length(str)), std::forward<Args>(args)...)
     {
     }
 
@@ -501,13 +501,14 @@ template <typename T, typename AllocState> class Array
     constexpr void Reserve(const usize capacity)
         requires(Type != Array_Static)
     {
+        const usize c = addOneIfString(capacity);
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
         {
-            if (capacity > m_State.Capacity)
-                m_State.ModifyCapacity(capacity);
+            if (c > m_State.Capacity)
+                m_State.ModifyCapacity(c);
         }
-        else if (capacity != 0)
-            m_State.Allocate(capacity);
+        else if (c != 0)
+            m_State.Allocate(c);
     }
 
     // nullptr will grab the current pushed allocator on next Allocate()
@@ -664,7 +665,7 @@ template <typename T, typename AllocState> class Array
     constexpr bool StartsWith(const T *str) const
         requires(IsString)
     {
-        const usize len = std::char_traits<T>::length(str);
+        const usize len = usize(std::char_traits<T>::length(str));
         return GetSize() >= len && std::char_traits<T>::compare(begin(), str, len) == 0;
     }
 
@@ -677,7 +678,7 @@ template <typename T, typename AllocState> class Array
     constexpr bool EndsWith(const T *str) const
         requires(IsString)
     {
-        const usize len = std::char_traits<T>::length(str);
+        const usize len = usize(std::char_traits<T>::length(str));
         return GetSize() >= len && std::char_traits<T>::compare(end() - len, str, len) == 0;
     }
 
@@ -715,7 +716,7 @@ template <typename T, typename AllocState> class Array
     constexpr usize Find(const T *str, const usize from = 0) const
         requires(IsString)
     {
-        const usize len = std::char_traits<T>::length(str);
+        const usize len = usize(std::char_traits<T>::length(str));
         if (len == 0)
             return from <= GetSize() ? from : npos;
         if (len > GetSize())
@@ -738,7 +739,7 @@ template <typename T, typename AllocState> class Array
     constexpr usize FindLast(const T *str) const
         requires(IsString)
     {
-        const usize len = std::char_traits<T>::length(str);
+        const usize len = usize(std::char_traits<T>::length(str));
         if (len == 0)
             return GetSize();
         if (len > GetSize())
@@ -752,7 +753,7 @@ template <typename T, typename AllocState> class Array
     constexpr usize FindFirstOf(const T *chars, const usize from = 0) const
         requires(IsString)
     {
-        const usize len = std::char_traits<T>::length(chars);
+        const usize len = usize(std::char_traits<T>::length(chars));
         for (usize i = from; i < GetSize(); ++i)
             for (usize j = 0; j < len; ++j)
                 if (*(begin() + i) == chars[j])
@@ -763,7 +764,7 @@ template <typename T, typename AllocState> class Array
     constexpr usize FindLastOf(const T *chars) const
         requires(IsString)
     {
-        const usize len = std::char_traits<T>::length(chars);
+        const usize len = usize(std::char_traits<T>::length(chars));
         for (usize i = GetSize(); i > 0; --i)
             for (usize j = 0; j < len; ++j)
                 if (*(begin() + i - 1) == chars[j])
@@ -774,7 +775,7 @@ template <typename T, typename AllocState> class Array
     constexpr usize FindFirstNotOf(const T *chars, const usize from = 0) const
         requires(IsString)
     {
-        const usize len = std::char_traits<T>::length(chars);
+        const usize len = usize(std::char_traits<T>::length(chars));
         for (usize i = from; i < GetSize(); ++i)
         {
             bool found = false;
@@ -805,7 +806,7 @@ template <typename T, typename AllocState> class Array
     constexpr i32 Compare(const T *str) const
         requires(IsString)
     {
-        const usize len = std::char_traits<T>::length(str);
+        const usize len = usize(std::char_traits<T>::length(str));
         const usize minLen = GetSize() < len ? GetSize() : len;
         const i32 result = std::char_traits<T>::compare(begin(), str, minLen);
         if (result != 0)
@@ -847,7 +848,7 @@ template <typename T, typename AllocState> class Array
         requires(IsString)
     {
         usize i = GetSize();
-        const usize len = std::char_traits<T>::length(chars);
+        const usize len = usize(std::char_traits<T>::length(chars));
         while (i > 0)
         {
             bool isWhitespace = false;
@@ -891,7 +892,7 @@ template <typename T, typename AllocState> class Array
     constexpr Array &operator+=(const T *str)
         requires(IsString)
     {
-        const usize len = std::char_traits<T>::length(str);
+        const usize len = usize(std::char_traits<T>::length(str));
         Insert(end(), str, str + len);
         return *this;
     }
@@ -918,7 +919,7 @@ template <typename T, typename AllocState> class Array
     friend constexpr Array operator+(const Array &lhs, const T *rhs)
         requires(IsString)
     {
-        const usize rhsLen = std::char_traits<T>::length(rhs);
+        const usize rhsLen = usize(std::char_traits<T>::length(rhs));
         const usize totalLen = lhs.GetSize() + rhsLen;
         Array result = lhs.createWithAllocator(totalLen);
         std::char_traits<T>::copy(result.begin(), lhs.begin(), lhs.GetSize());
@@ -930,7 +931,7 @@ template <typename T, typename AllocState> class Array
     friend constexpr Array operator+(const T *lhs, const Array &rhs)
         requires(IsString)
     {
-        const usize lhsLen = std::char_traits<T>::length(lhs);
+        const usize lhsLen = usize(std::char_traits<T>::length(lhs));
         const usize totalLen = lhsLen + rhs.GetSize();
         Array result = rhs.createWithAllocator(totalLen);
         std::char_traits<T>::copy(result.begin(), lhs, lhsLen);
@@ -960,8 +961,8 @@ template <typename T, typename AllocState> class Array
     constexpr Array Replace(const T *from, const T *to) const
         requires(IsString)
     {
-        const usize fromLen = std::char_traits<T>::length(from);
-        const usize toLen = std::char_traits<T>::length(to);
+        const usize fromLen = usize(std::char_traits<T>::length(from));
+        const usize toLen = usize(std::char_traits<T>::length(to));
 
         if (fromLen == 0)
             return *this;
@@ -1033,7 +1034,7 @@ template <typename T, typename AllocState> class Array
     constexpr Array<Array, typename AllocState::template Rebind<Array>> Split(const T *delimiter) const
         requires(IsString)
     {
-        const usize delimLen = std::char_traits<T>::length(delimiter);
+        const usize delimLen = usize(std::char_traits<T>::length(delimiter));
         Array<Array, typename AllocState::template Rebind<Array>> parts;
         if constexpr (Type != Array_Static && Type != Array_Dynamic)
             parts.ResetAllocator(m_State.Allocator);
@@ -1071,7 +1072,7 @@ template <typename T, typename AllocState> class Array
     constexpr usize Count(const T *str) const
         requires(IsString)
     {
-        const usize len = std::char_traits<T>::length(str);
+        const usize len = usize(std::char_traits<T>::length(str));
         if (len == 0 || len > GetSize())
             return 0;
         usize count = 0;
@@ -1124,3 +1125,11 @@ template <typename T, typename AllocState> class Array
     template <typename U, typename OtherAlloc> friend class Array;
 };
 } // namespace TKit
+
+template <typename AllocState> struct fmt::formatter<TKit::Array<char, AllocState>> : fmt::formatter<fmt::string_view>
+{
+    auto format(const TKit::Array<char, AllocState> &s, fmt::format_context &ctx) const
+    {
+        return fmt::formatter<fmt::string_view>::format(fmt::string_view(s.begin(), s.GetSize()), ctx);
+    }
+};

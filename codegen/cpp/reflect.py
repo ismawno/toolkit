@@ -53,11 +53,10 @@ orchestrator = CPPOrchestrator.from_cli_arguments(args, macros=macros, reserved_
 
 
 def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> None:
-    hpp.include("tkit/container/fixed_array.hpp", quotes=True)
+    hpp.include("tkit/container/span.hpp", quotes=True)
     hpp.include("tkit/reflection/reflect.hpp", quotes=True)
     hpp.include("tkit/utils/debug.hpp", quotes=True)
     hpp.include("tuple")
-    hpp.include("string_view")
 
     with hpp.scope("namespace TKit", indent=0):
         for enum in classes.enums:
@@ -81,7 +80,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                     hpp.brief("Get an enum value from a string.")
                     hpp("If no valid enum value is found, the first enum value will be returned. Take care.")
 
-                with hpp.scope(f"static constexpr {enum.id.identifier} FromString(const std::string_view value)"):
+                with hpp.scope(f"static constexpr {enum.id.identifier} FromString(const StringView value)"):
                     vals = list(enum.values.keys())
                     for val in vals:
                         with hpp.scope(f'if (value == "{val}")', delimiters=False):
@@ -250,7 +249,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                         hpp.param("field", "The name of the field.")
 
                     with hpp.scope(
-                        f"template <typename Ref_Type> static auto Get{modifier}Field(const std::string_view field)"
+                        f"template <typename Ref_Type> static auto Get{modifier}Field(const StringView field)"
                     ):
 
                         def generator(fields: list[Field], vtype: str, /) -> None:
@@ -263,7 +262,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                             generator, f"{modifier}Field<u8>{{}}", as_sequence=False, delimiters=True
                         )
 
-                    with hpp.scope(f"static bool Has{modifier}Field(const std::string field)"):
+                    with hpp.scope(f"static bool Has{modifier}Field(const StringView field)"):
                         for vtype in fcollection.per_type:
                             with hpp.scope(f"if (Get{modifier}Field<{vtype}>(field))", delimiters=False):
                                 hpp("return true;")

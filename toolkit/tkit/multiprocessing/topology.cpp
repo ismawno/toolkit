@@ -121,7 +121,7 @@ static std::string toString(const u32 value)
         return "Unknown";
     return std::to_string(value);
 }
-static std::string toString(const KindInfo::CoreType cType)
+static const char *toString(const KindInfo::CoreType cType)
 {
     switch (cType)
     {

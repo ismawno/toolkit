@@ -78,7 +78,7 @@ Settings CreateSettings(int argc, char **argv)
     parser.parse_args(argc, argv);
 
     if (const auto path = parser.present("--settings"))
-        settings = TKit::Yaml::Deserialize<Settings>(*path);
+        settings = TKit::Yaml::Deserialize<Settings>(path->c_str());
 
     TKit::Reflect<Settings>::ForEachMemberField([&](const auto &field1) {
         using Type1 = TKIT_REFLECT_FIELD_TYPE(field1);
@@ -92,7 +92,7 @@ Settings CreateSettings(int argc, char **argv)
     });
 
     if (parser.get<bool>("--export"))
-        TKit::Yaml::Serialize(spath, settings);
+        TKit::Yaml::Serialize(spath.c_str(), settings);
 
     return settings;
 }

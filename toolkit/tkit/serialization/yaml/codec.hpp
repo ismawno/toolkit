@@ -8,6 +8,7 @@
 #include "tkit/reflection/reflect.hpp"
 #include "tkit/preprocessor/system.hpp"
 #include "tkit/utils/alias.hpp"
+#include "tkit/container/span.hpp"
 
 TKIT_COMPILER_WARNING_IGNORE_PUSH()
 TKIT_GCC_WARNING_IGNORE("-Wunused-parameter")
@@ -125,17 +126,32 @@ template <typename T> struct Codec
     }
 };
 
-Node FromString(std::string_view string);
-Node FromFile(std::string_view path);
+Node FromString(const char *string);
+Node FromFile(const char *path);
 
-void ToFile(std::string_view path, const Node &node);
+Node FromString(const std::string &string);
+Node FromFile(const std::string &path);
 
-template <typename T> void Serialize(const std::string_view path, const T &instance)
+void ToFile(const char *path, const Node &node);
+void ToFile(const std::string &path, const Node &node);
+
+template <typename T> void Serialize(const char *path, const T &instance)
 {
     const Node node{instance};
     ToFile(path, node);
 }
-template <typename T> T Deserialize(const std::string_view path)
+template <typename T> T Deserialize(const char *path)
+{
+    const Node node = FromFile(path);
+    return node.as<T>();
+}
+
+template <typename T> void Serialize(const std::string &path, const T &instance)
+{
+    const Node node{instance};
+    ToFile(path, node);
+}
+template <typename T> T Deserialize(const std::string &path)
 {
     const Node node = FromFile(path);
     return node.as<T>();

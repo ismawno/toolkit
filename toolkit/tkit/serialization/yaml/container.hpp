@@ -40,30 +40,49 @@ template <typename T, typename AllocState> struct Codec<Array<T, AllocState>>
     static Node Encode(const Array<T, AllocState> &instance)
     {
         Node node;
-        for (const T &element : instance)
-            node.push_back(element);
+        if constexpr (Array<T, AllocState>::IsString)
+            node = instance.GetData();
+        else
+            for (const T &element : instance)
+                node.push_back(element);
         return node;
     }
 
     static bool Decode(const Node &node, Array<T, AllocState> &instance)
     {
-        if (!node.IsSequence())
-            return false;
+        if constexpr (Array<T, AllocState>::IsString)
+        {
+            if (!node.IsScalar())
+                return false;
 
-        instance.Reserve(usize(node.size()));
-        for (const Node &element : node)
-            instance.Append(element.template as<T>());
+            const std::string str = node.as<std::string>();
+            instance.Reserve(usize(str.size()));
+            for (const char c : str)
+                instance.Append(c);
+        }
+        else
+        {
+            if (!node.IsSequence())
+                return false;
+
+            instance.Reserve(usize(node.size()));
+            for (const Node &element : node)
+                instance.Append(element.template as<T>());
+        }
         return true;
     }
 };
 
-template <typename T, usize N> struct Codec<Span<T, N>>
+template <typename T> struct Codec<Span<T>>
 {
-    static Node Encode(const Span<const T, N> &instance)
+    static Node Encode(const Span<const T> &instance)
     {
         Node node;
-        for (const T &element : instance)
-            node.push_back(element);
+        if constexpr (Span<T>::IsString)
+            node = instance.GetData();
+        else
+            for (const T &element : instance)
+                node.push_back(element);
         return node;
     }
 };
