@@ -8,7 +8,7 @@
 
 #include "tkit/utils/alias.hpp"
 #include <limits>
-#include <math.h>
+#include <cmath>
 
 #define TKIT_F32_MIN TKit::Limits<f32>::Min()
 #define TKIT_F64_MIN TKit::Limits<f64>::Min()

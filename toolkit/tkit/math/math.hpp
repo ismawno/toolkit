@@ -2,6 +2,7 @@
 
 #include "tkit/math/tensor.hpp"
 #include <concepts>
+#include <cmath>
 
 namespace TKit::Math
 {
