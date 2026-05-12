@@ -904,6 +904,12 @@ template <typename T, typename AllocState> class Array
         return *this;
     }
 
+    constexpr Array &operator+=(const Array &arr)
+    {
+        Insert(end(), arr.begin(), arr.end());
+        return *this;
+    }
+
     // Array + Array
     friend constexpr Array operator+(const Array &lhs, const Array &rhs)
         requires(IsString)
