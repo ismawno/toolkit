@@ -1120,6 +1120,12 @@ template <typename T, typename AllocState> class Array
         return count;
     }
 
+    friend std::ostream &operator<<(std::ostream &os, const Array &s)
+        requires(IsString)
+    {
+        return os.write(s.begin(), s.GetSize());
+    }
+
   private:
     AllocState m_State{};
 
@@ -1168,8 +1174,3 @@ template <typename AllocState> struct fmt::formatter<TKit::Array<char, AllocStat
         return fmt::formatter<fmt::string_view>::format(fmt::string_view(s.begin(), s.GetSize()), ctx);
     }
 };
-
-template <typename AllocState> std::ostream &operator<<(std::ostream &os, const TKit::Array<char, AllocState> &s)
-{
-    return os.write(s.begin(), s.GetSize());
-}

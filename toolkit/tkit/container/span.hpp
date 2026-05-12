@@ -500,6 +500,11 @@ template <typename T> class Span
         return result;
     }
 
+    friend std::ostream &operator<<(std::ostream &os, const Span &s)
+        requires(IsString)
+    {
+        return os.write(s.begin(), s.GetSize());
+    }
     operator std::span<T>() const
     {
         return std::span<T>{m_Data, m_Size};
@@ -526,8 +531,3 @@ template <> struct fmt::formatter<TKit::Span<const char>> : fmt::formatter<fmt::
         return fmt::formatter<fmt::string_view>::format(fmt::string_view(s.begin(), s.GetSize()), ctx);
     }
 };
-
-inline std::ostream &operator<<(std::ostream &os, const TKit::Span<const char> &s)
-{
-    return os.write(s.begin(), s.GetSize());
-}
