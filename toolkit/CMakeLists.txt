@@ -63,7 +63,7 @@ if(TOOLKIT_ENABLE_YAML_SERIALIZATION)
 endif()
 
 add_library(toolkit STATIC ${SOURCES})
-target_compile_definitions(toolkit PUBLIC TKIT_VERSION=\"v0.9.x\")
+target_compile_definitions(toolkit PUBLIC TKIT_VERSION=\"v0.10.x\")
 
 if(TOOLKIT_ENABLE_MIMALLOC)
   find_package(mimalloc QUIET)
