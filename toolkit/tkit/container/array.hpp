@@ -30,6 +30,9 @@ template <typename T, typename AllocState> class Array
                                          ... && true))
     constexpr explicit Array(Args &&...args) : m_State(std::forward<Args>(args)...)
     {
+        if constexpr (IsString)
+            Append(); // Append on purely empty just adds a null terminator and ignores the input. A side-efect bug im
+                      // kind of using to fix the bug it causes
     }
 
     template <std::convertible_to<usize> U, typename... Args>
@@ -139,6 +142,8 @@ template <typename T, typename AllocState> class Array
 
     constexpr Array(const Array &other)
     {
+        TKIT_ASSERT(!IsString || other.m_State.Size != 0,
+                    "[TOOLKIT][ARRAY] All string arrays must have allocated at least a null terminator");
         const usize otherSize = other.m_State.Size;
         if constexpr (Type == Array_Dynamic)
             m_State.GrowCapacityIf(otherSize != 0, otherSize);
@@ -163,6 +168,8 @@ template <typename T, typename AllocState> class Array
 
     template <typename OtherAlloc> constexpr Array(const Array<T, OtherAlloc> &other)
     {
+        TKIT_ASSERT(!IsString || other.m_State.Size != 0,
+                    "[TOOLKIT][ARRAY] All string arrays must have allocated at least a null terminator");
         const usize otherSize = other.m_State.Size;
         if constexpr (Type == Array_Dynamic)
             m_State.GrowCapacityIf(otherSize != 0, otherSize);
@@ -186,6 +193,8 @@ template <typename T, typename AllocState> class Array
 
     constexpr Array(Array &&other)
     {
+        TKIT_ASSERT(!IsString || other.m_State.Size != 0,
+                    "[TOOLKIT][ARRAY] All string arrays must have allocated at least a null terminator");
         if constexpr (Type == Array_Static)
         {
             m_State.Size = other.m_State.Size;
@@ -205,6 +214,8 @@ template <typename T, typename AllocState> class Array
 
     constexpr Array &operator=(const Array &other)
     {
+        TKIT_ASSERT(!IsString || other.m_State.Size != 0,
+                    "[TOOLKIT][ARRAY] All string arrays must have allocated at least a null terminator");
         if (this == &other)
             return *this;
 
@@ -245,6 +256,8 @@ template <typename T, typename AllocState> class Array
 
     template <typename OtherAlloc> constexpr Array &operator=(const Array<T, OtherAlloc> &other)
     {
+        TKIT_ASSERT(!IsString || other.m_State.Size != 0,
+                    "[TOOLKIT][ARRAY] All string arrays must have allocated at least a null terminator");
         const usize otherSize = other.m_State.Size;
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
             m_State.GrowCapacityIf(otherSize > m_State.Capacity, otherSize);
@@ -267,6 +280,8 @@ template <typename T, typename AllocState> class Array
 
     constexpr Array &operator=(Array &&other)
     {
+        TKIT_ASSERT(!IsString || other.m_State.Size != 0,
+                    "[TOOLKIT][ARRAY] All string arrays must have allocated at least a null terminator");
         if (this == &other)
             return *this;
 
