@@ -792,7 +792,7 @@ template <Valid T> class Wide
     {
         if constexpr (!std::is_signed_v<T>)
         {
-            const __m256i offset = _mm256_set1_epi64x(i64(1ull << 63));
+            const __m256i offset = _mm256_set1_epi64x(i64(1ULL << 63));
             left = _mm256_xor_si256(left, offset);
             right = _mm256_xor_si256(right, offset);
         }
@@ -804,7 +804,7 @@ template <Valid T> class Wide
             return ::_mm256_cmpgt_epi32(left, right);
         else
         {
-            const __m256i offset = _mm256_set1_epi32(i32(1 << 31));
+            const __m256i offset = _mm256_set1_epi32(i32(1U << 31));
             return ::_mm256_cmpgt_epi32(_mm256_xor_si256(left, offset), _mm256_xor_si256(right, offset));
         }
     }
@@ -814,7 +814,7 @@ template <Valid T> class Wide
             return ::_mm256_cmpgt_epi16(left, right);
         else
         {
-            const __m256i offset = _mm256_set1_epi16(i16(1 << 15));
+            const __m256i offset = _mm256_set1_epi16(i16(1U << 15));
             return ::_mm256_cmpgt_epi16(_mm256_xor_si256(left, offset), _mm256_xor_si256(right, offset));
         }
     }
@@ -824,7 +824,7 @@ template <Valid T> class Wide
             return ::_mm256_cmpgt_epi8(left, right);
         else
         {
-            const __m256i offset = _mm256_set1_epi8(i8(1 << 7));
+            const __m256i offset = _mm256_set1_epi8(i8(1U << 7));
             return ::_mm256_cmpgt_epi8(_mm256_xor_si256(left, offset), _mm256_xor_si256(right, offset));
         }
     }

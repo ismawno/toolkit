@@ -763,9 +763,9 @@ template <Numeric T> class Wide
 #    ifndef TKIT_SIMD_SSE4_2
         __m128i sign;
         if constexpr (!std::is_signed_v<T>)
-            sign = _mm_set1_epi64x(i64(1ull << 63 | 1ull << 31));
+            sign = _mm_set1_epi64x(i64(1ULL << 63 | 1ULL << 31));
         else
-            sign = _mm_set1_epi64x(i64(1ull << 31));
+            sign = _mm_set1_epi64x(i64(1ULL << 31));
 
         left = _mm_xor_si128(left, sign);
         right = _mm_xor_si128(right, sign);
@@ -782,7 +782,7 @@ template <Numeric T> class Wide
 #    else
         if constexpr (!std::is_signed_v<T>)
         {
-            const __m128i sign = _mm_set1_epi64x(i64(1ull << 63));
+            const __m128i sign = _mm_set1_epi64x(i64(1ULL << 63));
             left = _mm_xor_si128(left, sign);
             right = _mm_xor_si128(right, sign);
         }
@@ -795,7 +795,7 @@ template <Numeric T> class Wide
             return ::_mm_cmpgt_epi32(left, right);
         else
         {
-            const __m128i offset = _mm_set1_epi32(i32(1 << 31));
+            const __m128i offset = _mm_set1_epi32(i32(1U << 31));
             return ::_mm_cmpgt_epi32(_mm_xor_si128(left, offset), _mm_xor_si128(right, offset));
         }
     }
@@ -805,7 +805,7 @@ template <Numeric T> class Wide
             return ::_mm_cmpgt_epi16(left, right);
         else
         {
-            const __m128i offset = _mm_set1_epi16(i16(1 << 15));
+            const __m128i offset = _mm_set1_epi16(i16(1U << 15));
             return ::_mm_cmpgt_epi16(_mm_xor_si128(left, offset), _mm_xor_si128(right, offset));
         }
     }
@@ -815,7 +815,7 @@ template <Numeric T> class Wide
             return ::_mm_cmpgt_epi8(left, right);
         else
         {
-            const __m128i offset = _mm_set1_epi8(i8(1 << 7));
+            const __m128i offset = _mm_set1_epi8(i8(1U << 7));
             return ::_mm_cmpgt_epi8(_mm_xor_si128(left, offset), _mm_xor_si128(right, offset));
         }
     }
@@ -829,7 +829,7 @@ template <Numeric T> class Wide
             return ::_mm_cmplt_epi32(left, right);
         else
         {
-            const __m128i offset = _mm_set1_epi32(i32(1 << 31));
+            const __m128i offset = _mm_set1_epi32(i32(1U << 31));
             return ::_mm_cmplt_epi32(_mm_xor_si128(left, offset), _mm_xor_si128(right, offset));
         }
     }
@@ -839,7 +839,7 @@ template <Numeric T> class Wide
             return ::_mm_cmplt_epi16(left, right);
         else
         {
-            const __m128i offset = _mm_set1_epi16(i16(1 << 15));
+            const __m128i offset = _mm_set1_epi16(i16(1U << 15));
             return ::_mm_cmplt_epi16(_mm_xor_si128(left, offset), _mm_xor_si128(right, offset));
         }
     }
@@ -849,7 +849,7 @@ template <Numeric T> class Wide
             return ::_mm_cmplt_epi8(left, right);
         else
         {
-            const __m128i offset = _mm_set1_epi8(i8(1 << 7));
+            const __m128i offset = _mm_set1_epi8(i8(1U << 7));
             return ::_mm_cmplt_epi8(_mm_xor_si128(left, offset), _mm_xor_si128(right, offset));
         }
     }

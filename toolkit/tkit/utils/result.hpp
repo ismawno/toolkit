@@ -24,8 +24,8 @@ namespace TKit
 using ResultFlags = u8;
 enum ResultFlagBit : ResultFlags
 {
-    ResultFlag_Ok = 1 << 0,
-    ResultFlag_Engaged = 1 << 1,
+    ResultFlag_Ok = 1U << 0,
+    ResultFlag_Engaged = 1U << 1,
     ResultFlag_Some = ResultFlag_Ok
 };
 /**

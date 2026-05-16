@@ -38,10 +38,10 @@
 
 namespace TKit::Detail
 {
-#define TKIT_DEBUG_LOGS_BIT (1 << 0)
-#define TKIT_INFO_LOGS_BIT (1 << 1)
-#define TKIT_WARNING_LOGS_BIT (1 << 2)
-#define TKIT_ERROR_LOGS_BIT (1 << 3)
+#define TKIT_DEBUG_LOGS_BIT (1U << 0)
+#define TKIT_INFO_LOGS_BIT (1U << 1)
+#define TKIT_WARNING_LOGS_BIT (1U << 2)
+#define TKIT_ERROR_LOGS_BIT (1U << 3)
 
 #if defined(TKIT_ENABLE_DEBUG_LOGS) || defined(TKIT_ENABLE_INFO_LOGS) || defined(TKIT_ENABLE_WARNING_LOGS) ||          \
     defined(TKIT_ENABLE_ERROR_LOGS)
