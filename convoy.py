@@ -8,6 +8,7 @@ import glob
 from time import perf_counter
 from pathlib import Path
 from typing import NoReturn, TypeVar
+from collections.abc import Callable
 
 T = TypeVar("T")
 
@@ -408,7 +409,13 @@ class _MetaConvoy(type):
         input(msg)
 
     def run_process(
-        self, command: str | list[str], /, *args, exit_on_decline: bool = True, log: bool = True, **kwargs
+        self,
+        command: str | list[str],
+        /,
+        *args,
+        exit_on_decline: bool = True,
+        log: Callable[[str], None] | None = None,
+        **kwargs,
     ) -> subprocess.CompletedProcess | None:
         if self.safe and not self.prompt(
             f"The command <bold>{command if isinstance(command, str) else ' '.join(command)}</bold> is about to be executed. Do you wish to continue?"
@@ -417,8 +424,8 @@ class _MetaConvoy(type):
                 self.exit_declined()
             return None
 
-        if not self.safe and log:
-            self.log(f"Executing command <bold>{command if isinstance(command, str) else ' '.join(command)}</bold>.")
+        if not self.safe and log is not None:
+            log(f"Executing command <bold>{command if isinstance(command, str) else ' '.join(command)}</bold>.")
 
         return subprocess.run(command, *args, **kwargs)
 

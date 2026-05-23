@@ -5,7 +5,7 @@ from pathlib import Path
 import sys
 import re
 
-sys.path.append(str(Path(__file__).parent.parent.parent))
+sys.path.append(str(Path(__file__).parent.parent))
 
 from convoy import Convoy
 

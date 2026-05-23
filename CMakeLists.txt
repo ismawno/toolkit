@@ -187,8 +187,7 @@ function(tkit_register_for_reflection target)
   cmake_parse_arguments(PARSE_ARGV 1 ARG "" "" "${multi_value_args}")
   foreach(src ${ARG_SOURCES})
     tkit_register_code_generation_target(
-      reflection ${target} toolkit/tkit/reflection ${src}
-      codegen/cpp/reflect.py "")
+      reflection ${target} toolkit/tkit/reflection ${src} codegen/reflect.py "")
   endforeach()
 endfunction()
 
@@ -207,7 +206,7 @@ function(tkit_register_for_yaml_serialization target)
   foreach(src ${ARG_SOURCES})
     tkit_register_code_generation_target(
       yaml_serialization ${target} toolkit/tkit/serialization/yaml ${src}
-      codegen/cpp/serialize.py "-b yaml")
+      codegen/serialize.py "-b yaml")
   endforeach()
 endfunction()
 
