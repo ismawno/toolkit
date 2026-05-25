@@ -288,21 +288,25 @@ class _MetaConvoy(type):
     def to_camel_case(self, s: str, /) -> str:
         result = []
         s = s[:1].lower() + s[1:]
+        must_upper = False
         for c in s:
-            if c == "_" or c == "-":
-                result.append(c.upper())
+            if c != "_" and c != "-":
+                result.append(c if not must_upper else c.upper())
+                must_upper = False
             else:
-                result.append(c)
+                must_upper = True
         return "".join(result)
 
     def to_pascal_case(self, s: str, /) -> str:
         result = []
         s = s.capitalize()
+        must_upper = False
         for c in s:
-            if c == "_" or c == "-":
-                result.append(c.upper())
+            if c != "_" and c != "-":
+                result.append(c if not must_upper else c.upper())
+                must_upper = False
             else:
-                result.append(c)
+                must_upper = True
         return "".join(result)
 
     def to_dyphen_case(self, s: str, /) -> str:

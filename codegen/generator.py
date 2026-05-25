@@ -93,23 +93,23 @@ class CPPGenerator:
             if delimiters and closer:
                 self(closer)
 
-    def write(self, path: Path, /) -> None:
+    def write(self, path: Path, /, *, format: bool = True) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         with path.open("w") as file:
             file.write(self.__code)
 
-        Convoy.log(
-            f"Exported generated code to <underline>{path.resolve()}</underline>. Attempting to format with <bold>clang-format</bold>."
-        )
-        cfpath = shutil.which("clang-format")
-        if cfpath is None:
-            Convoy.warning("<bold>clang-format</bold> was not found.")
-            return
+        Convoy.log(f"Exported generated code to <underline>{path.resolve()}</underline>.")
+        if format:
+            Convoy.log(f"Attempting to format exported file with <bold>clang-format</bold>.")
+            cfpath = shutil.which("clang-format")
+            if cfpath is None:
+                Convoy.warning("<bold>clang-format</bold> was not found.")
+                return
 
-        if Convoy.run_process_success([str(cfpath), "-i", str(path)]):
-            Convoy.log("Successfully formatted.")
-        else:
-            Convoy.warning("Failed to run <bold>clang-format</bold>.")
+            if Convoy.run_process_success([str(cfpath), "-i", str(path)]):
+                Convoy.log("Successfully formatted.")
+            else:
+                Convoy.warning("Failed to run <bold>clang-format</bold>.")
 
     def __assert_doc(self) -> None:
         if not self.__doc:
