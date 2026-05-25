@@ -426,19 +426,7 @@ function(tkit_configure_compile_link_options target)
 endfunction()
 
 function(tkit_default_configure target)
-  if(MSVC)
-    tkit_configure_compile_link_options(
-      ${target}
-      COMPILER_FLAGS
-      /W4
-      /WX
-      /wd4324
-      /wd4244
-      /wd4661
-      /wd4310
-      NO_EXCEPTIONS
-      NO_RTTI)
-  elseif((UNIX AND APPLE) OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+  if((UNIX AND APPLE) OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     tkit_configure_compile_link_options(
       ${target}
       COMPILER_FLAGS
@@ -448,6 +436,18 @@ function(tkit_default_configure target)
       -Werror
       -Wno-unknown-warning-option
       -Wno-unknown-pragmas
+      NO_EXCEPTIONS
+      NO_RTTI)
+  elseif(MSVC)
+    tkit_configure_compile_link_options(
+      ${target}
+      COMPILER_FLAGS
+      /W4
+      /WX
+      /wd4324
+      /wd4244
+      /wd4661
+      /wd4310
       NO_EXCEPTIONS
       NO_RTTI)
   else()
