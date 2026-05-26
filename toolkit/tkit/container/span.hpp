@@ -557,13 +557,21 @@ template <> struct fmt::formatter<TKit::Span<const char>> : fmt::formatter<fmt::
 {
     auto format(const TKit::Span<const char> &s, fmt::format_context &ctx) const
     {
-        return fmt::formatter<fmt::string_view>::format(fmt::string_view(s.begin(), s.GetSize()), ctx);
+        return fmt::formatter<fmt::string_view>::format(fmt::string_view(s.GetData(), s.GetSize()), ctx);
     }
 };
 template <> struct std::hash<TKit::Span<const char>>
 {
     std::size_t operator()(const TKit::Span<const char> &s) const noexcept
     {
-        return std::hash<std::string_view>{}(std::string_view(s.begin(), s.GetSize()));
+        return std::hash<std::string_view>{}(std::string_view(s.GetData(), s.GetSize()));
     }
 };
+
+namespace TKit::Literals
+{
+TKIT_CONSTEVAL StringView operator""_sv(const char *str, const usz len)
+{
+    return StringView{str, usize(len)};
+}
+} // namespace TKit::Literals
