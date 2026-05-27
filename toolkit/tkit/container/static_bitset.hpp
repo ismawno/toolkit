@@ -5,7 +5,6 @@
 
 namespace TKit
 {
-
 template <usize Capacity> using StaticBitSet = BitSet<StaticAllocation<u64, 1 + Capacity / 64>>;
 using StaticBitSet256 = StaticBitSet<256>;
 using StaticBitSet512 = StaticBitSet<512>;

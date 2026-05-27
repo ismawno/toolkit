@@ -12,10 +12,9 @@ template <typename AllocState> class BitSet
     static constexpr usize BitMask = (1 << Exponent) - 1;
 
     BitSet() = default;
-    BitSet(const usize bits) : m_Bits(asLane(bits) + 1)
+    BitSet(const usize bits) : m_Bits(bits == 0 ? 0 : (asLane(bits - 1) + 1))
     {
-        for (u64 &b : m_Bits)
-            b = 0;
+        ClearAll();
     }
 
     constexpr BitSet(const BitSet &) = default;
@@ -84,13 +83,28 @@ template <typename AllocState> class BitSet
                     m_Bits.GetSize());
         m_Bits[lane] &= ~(1ULL << bit);
     }
+    constexpr void Clear()
+    {
+        m_Bits.Clear();
+    }
+    constexpr void ClearAll()
+    {
+        for (u64 &b : m_Bits)
+            b = 0;
+    }
 
     constexpr void Reserve(const usize capacity)
     {
-        m_Bits.Reserve(asLane(capacity) + 1);
+        if (capacity != 0)
+            m_Bits.Reserve(asLane(capacity - 1) + 1);
     }
     constexpr void Resize(const usize size)
     {
+        if (size == 0)
+        {
+            m_Bits.Clear();
+            return;
+        }
         const usize old = m_Bits.GetSize();
         m_Bits.Resize(asLane(size) + 1);
         for (usize i = old; i < m_Bits.GetSize(); ++i)
