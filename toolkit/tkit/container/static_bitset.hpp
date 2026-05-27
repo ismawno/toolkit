@@ -5,17 +5,16 @@
 
 namespace TKit
 {
-template <usize Capacity> using StaticBitSet = BitSet<StaticAllocation<u64, Capacity>>;
-template <typename T> using StaticBitSet4 = StaticBitSet<4>;
-template <typename T> using StaticBitSet8 = StaticBitSet<8>;
-template <typename T> using StaticBitSet16 = StaticBitSet<16>;
-template <typename T> using StaticBitSet32 = StaticBitSet<32>;
-template <typename T> using StaticBitSet64 = StaticBitSet<64>;
-template <typename T> using StaticBitSet128 = StaticBitSet<128>;
-template <typename T> using StaticBitSet196 = StaticBitSet<196>;
-template <typename T> using StaticBitSet256 = StaticBitSet<256>;
-template <typename T> using StaticBitSet384 = StaticBitSet<384>;
-template <typename T> using StaticBitSet512 = StaticBitSet<512>;
-template <typename T> using StaticBitSet768 = StaticBitSet<768>;
-template <typename T> using StaticBitSet1024 = StaticBitSet<1024>;
+
+template <usize Capacity> using StaticBitSet = BitSet<StaticAllocation<u64, 1 + Capacity / 64>>;
+using StaticBitSet256 = StaticBitSet<256>;
+using StaticBitSet512 = StaticBitSet<512>;
+using StaticBitSet1024 = StaticBitSet<1024>;
+using StaticBitSet2048 = StaticBitSet<2048>;
+using StaticBitSet4096 = StaticBitSet<4096>;
+using StaticBitSet8192 = StaticBitSet<8192>;
+using StaticBitSet16384 = StaticBitSet<16384>;
+using StaticBitSet32768 = StaticBitSet<32768>;
+using StaticBitSet65536 = StaticBitSet<65536>;
+
 } // namespace TKit
