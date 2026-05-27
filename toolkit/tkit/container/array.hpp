@@ -477,9 +477,7 @@ template <typename T, typename AllocState> class Array
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (GetData())
-                for (u32 i = GetSize() - 1; i < GetSize(); --i)
-                    Destruct(GetData() + i);
-        // DestructRange(begin(), end());
+                DestructRange(begin(), end());
         m_State.Size = 0;
     }
 
