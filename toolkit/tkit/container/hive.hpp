@@ -55,14 +55,6 @@ template <typename T, typename AllocState> class Hive
         return *this;
     }
 
-    constexpr const T &operator[](const usize id) const
-    {
-        return At(id);
-    }
-    constexpr T &operator[](const usize id)
-    {
-        return At(id);
-    }
     constexpr const T &At(const usize id) const
     {
         TKIT_ASSERT(id < m_Indices.GetSize(),
@@ -84,6 +76,15 @@ template <typename T, typename AllocState> class Hive
             "[TOOLKIT][HIVE] The id {} does not exist in the hive, as indices[id = {}] = {} exceeds data size ({})", id,
             id, m_Indices[id], m_Data.GetSize());
         return m_Data[m_Indices[id]];
+    }
+
+    constexpr const T &operator[](const usize id) const
+    {
+        return At(id);
+    }
+    constexpr T &operator[](const usize id)
+    {
+        return At(id);
     }
 
     constexpr const T *Get(const usize id) const
