@@ -629,6 +629,17 @@ template <typename T, typename AllocState> class Array
         return ptr;
     }
 
+    constexpr const T *CString() const
+        requires(IsString)
+    {
+        return GetData();
+    }
+    constexpr T *CString()
+        requires(IsString)
+    {
+        return GetData();
+    }
+
     constexpr T *begin()
     {
         return GetData();
