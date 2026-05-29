@@ -1,4 +1,4 @@
-#include "tkit/container/stack_hive.hpp"
+#include "tkit/container/hive.hpp"
 #include "tkit/utils/literals.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <string>
