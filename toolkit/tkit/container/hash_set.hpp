@@ -158,6 +158,7 @@ template <typename K, typename AllocState> class HashSet
         {
             m_Buckets = std::move(other.m_Buckets);
             m_Size = other.m_Size;
+            other.m_Size = 0;
         }
     }
 
@@ -184,7 +185,14 @@ template <typename K, typename AllocState> class HashSet
     constexpr HashSet &operator=(HashSet &&other)
     {
         Clear();
-        copyOp(other.m_Buckets);
+        if constexpr (Type == Array_Static)
+            copyOp(other.m_Buckets);
+        else
+        {
+            m_Buckets = std::move(other.m_Buckets);
+            m_Size = other.m_Size;
+            other.m_Size = 0;
+        }
         return *this;
     }
     template <typename OtherAlloc> constexpr HashSet &operator=(const HashSet<K, OtherAlloc> &other)
@@ -205,12 +213,14 @@ template <typename K, typename AllocState> class HashSet
         if (m_Size == 0)
             return;
         for (Node &n : m_Buckets)
+        {
             if (n.State == HashNode_Occupied)
             {
                 if constexpr (!std::is_trivially_destructible_v<K>)
                     Destruct(n.GetKey());
-                n.State = HashNode_Tombstone;
             }
+            n.State = HashNode_Free;
+        }
         m_Size = 0;
     }
 
@@ -350,9 +360,9 @@ template <typename K, typename AllocState> class HashSet
         return found;
     }
 
-    constexpr const K *insert(const usz hash, const K &key)
+    template <bool Rehash = true> constexpr const K *insert(const usz hash, const K &key)
     {
-        const usize buckets = maybeRehash();
+        const usize buckets = Rehash ? maybeRehash() : m_Buckets.GetSize();
         const usize idx = usize(hash & (buckets - 1));
         ++m_Size;
         TKIT_ASSERT(
@@ -393,15 +403,19 @@ template <typename K, typename AllocState> class HashSet
     {
         TKIT_ASSERT(nbuckets != 0, "[TOOLKIT][HASH-MAP] The bucket count must not be zero");
         HashSet old = std::move(*this);
-        Clear();
 
         TKIT_ASSERT(IsPowerOfTwo(nbuckets), "[TOOLKIT][HASH-SET] The bucket count must be a power of 2, but is {}",
                     nbuckets);
         m_Buckets.Resize(nbuckets);
+
+        if constexpr (Type == Array_Static)
+            Clear();
+        else
+            setEmpty();
         for (Node &n : old.m_Buckets)
         {
             const K *key = n.GetKey();
-            insert(n.Hash, *key);
+            insert<false>(n.Hash, *key);
         }
         return nbuckets;
     }

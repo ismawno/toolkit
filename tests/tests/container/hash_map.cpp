@@ -34,6 +34,7 @@ template <template <typename> typename A, typename... Args> void TestMapInsertFi
     REQUIRE(map.GetSize() == 3);
 
     // operator[] on existing key mutates in place
+    REQUIRE(map.Find(3u)->Value == 300u);
     map[3u] = 250u;
     REQUIRE(map.Find(3u)->Value == 250u);
     REQUIRE(map.GetSize() == 3); // no new entry

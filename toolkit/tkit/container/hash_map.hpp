@@ -172,11 +172,15 @@ template <typename K, typename V, typename AllocState> class HashMap
     constexpr HashMap(HashMap &&other)
     {
         if constexpr (Type == Array_Static)
+        {
             moveOp(other.m_Buckets);
+            other.m_Size = 0;
+        }
         else
         {
             m_Buckets = std::move(other.m_Buckets);
             m_Size = other.m_Size;
+            other.m_Size = 0;
         }
     }
 
@@ -187,6 +191,7 @@ template <typename K, typename V, typename AllocState> class HashMap
     template <typename OtherAlloc> constexpr HashMap(HashMap<K, V, OtherAlloc> &&other)
     {
         moveOp(other.m_Buckets);
+        other.m_Size = 0;
     }
 
     ~HashMap()
@@ -203,7 +208,17 @@ template <typename K, typename V, typename AllocState> class HashMap
     constexpr HashMap &operator=(HashMap &&other)
     {
         Clear();
-        moveOp(other.m_Buckets);
+        if constexpr (Type == Array_Static)
+        {
+            moveOp(other.m_Buckets);
+            other.m_Size = 0;
+        }
+        else
+        {
+            m_Buckets = std::move(other.m_Buckets);
+            m_Size = other.m_Size;
+            other.m_Size = 0;
+        }
         return *this;
     }
     template <typename OtherAlloc> constexpr HashMap &operator=(const HashMap<K, V, OtherAlloc> &other)
@@ -216,6 +231,7 @@ template <typename K, typename V, typename AllocState> class HashMap
     {
         Clear();
         moveOp(other.m_Buckets);
+        other.m_Size = 0;
         return *this;
     }
 
@@ -224,12 +240,14 @@ template <typename K, typename V, typename AllocState> class HashMap
         if (m_Size == 0)
             return;
         for (Node &n : m_Buckets)
+        {
             if (n.State == HashNode_Occupied)
             {
                 if constexpr (!std::is_trivially_destructible_v<K> || !std::is_trivially_destructible_v<V>)
                     Destruct(n.GetEntry());
-                n.State = HashNode_Tombstone;
             }
+            n.State = HashNode_Free;
+        }
         m_Size = 0;
     }
 
@@ -237,7 +255,7 @@ template <typename K, typename V, typename AllocState> class HashMap
         requires std::constructible_from<V, Args...>
     constexpr V &Insert(const K &key, Args &&...args)
     {
-        return *insert(Hash(key), key, std::forward<Args>(args)...);
+        return *insert<true>(Hash(key), key, std::forward<Args>(args)...);
     }
     constexpr V &Insert(const Pair &pair)
     {
@@ -406,11 +424,11 @@ template <typename K, typename V, typename AllocState> class HashMap
         return found;
     }
 
-    template <typename... Args>
+    template <bool Rehash, typename... Args>
         requires std::constructible_from<V, Args...>
     constexpr V *insert(const usz hash, const K &key, Args &&...args)
     {
-        const usize buckets = maybeRehash();
+        const usize buckets = Rehash ? maybeRehash() : m_Buckets.GetSize();
         const usize idx = usize(hash & (buckets - 1));
         ++m_Size;
         TKIT_ASSERT(m_Size <= buckets,
@@ -449,16 +467,25 @@ template <typename K, typename V, typename AllocState> class HashMap
     {
         TKIT_ASSERT(nbuckets != 0, "[TOOLKIT][HASH-MAP] The bucket count must not be zero");
         HashMap old = std::move(*this);
-        Clear();
 
         TKIT_ASSERT(IsPowerOfTwo(nbuckets), "[TOOLKIT][HASH-MAP] The bucket count must be a power of 2, but is {}",
                     nbuckets);
+
         m_Buckets.Resize(nbuckets);
+
+        if constexpr (Type == Array_Static)
+            Clear();
+        else
+            setEmpty();
+
         for (Node &n : old.m_Buckets)
-        {
-            const Entry *e = n.GetEntry();
-            insert(n.Hash, e->Key, std::move(e->Value));
-        }
+            if (n.State == HashNode_Occupied)
+            {
+                const Entry *e = n.GetEntry();
+                insert<false>(n.Hash, e->Key, std::move(e->Value));
+            }
+
+        TKit::PrintLine("{}", m_Size);
         return nbuckets;
     }
 
@@ -480,17 +507,20 @@ template <typename K, typename V, typename AllocState> class HashMap
             if (n.State == HashNode_Occupied)
             {
                 const Entry *entry = n.GetEntry();
-                insert(n.Hash, entry->Key, entry->Value);
+                insert<true>(n.Hash, entry->Key, entry->Value);
             }
     }
     template <typename OtherAlloc> constexpr void moveOp(Array<Node, OtherAlloc> &buckets)
     {
         for (Node &n : buckets)
+        {
             if (n.State == HashNode_Occupied)
             {
                 Entry *entry = n.GetEntry();
-                insert(n.Hash, entry->Key, std::move(entry->Value));
+                insert<true>(n.Hash, entry->Key, std::move(entry->Value));
             }
+            n.State = HashNode_Free;
+        }
     }
 
     Array<Node, AllocState> m_Buckets{};
