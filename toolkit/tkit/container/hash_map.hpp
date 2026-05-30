@@ -431,7 +431,8 @@ template <typename K, typename V, typename AllocState> class HashMap
 
     constexpr usize rehash()
     {
-        return rehash(m_Buckets.GetSize() * 2);
+        const usize size = m_Buckets.GetSize();
+        return rehash(size == 0 ? 16 : (2 * size));
     }
 
     constexpr usize rehash(const usize nbuckets)
