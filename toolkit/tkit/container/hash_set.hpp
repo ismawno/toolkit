@@ -210,25 +210,24 @@ template <typename K, typename AllocState> class HashSet
         m_Size = 0;
     }
 
-    constexpr const K *Insert(const K &key)
+    constexpr const K &Insert(const K &key)
     {
-        return insert(Hash(key), key);
+        return *insert(Hash(key), key);
     }
 
-    template <typename... Args> constexpr K *TryInsert(const K &key)
+    template <typename... Args> constexpr const K &TryInsert(const K &key)
     {
         const usz hash = Hash(key);
-        const usize buckets = m_Buckets.GetSize();
-        const usize idx = usize(hash & (buckets - 1));
+        const usize idx = find<true>(key, hash);
 
-        Node &node = m_Buckets->At(idx);
+        Node &node = m_Buckets[idx];
         if (node.State == HashNode_Occupied)
-            return nullptr;
+            return *node.GetKey();
 
         ++m_Size;
         node.Hash = hash;
         node.State = HashNode_Occupied;
-        return Construct(node.GetKey(), key);
+        return *Construct(node.GetKey(), key);
     }
 
     constexpr ConstIterator Find(const K &key) const
@@ -247,10 +246,10 @@ template <typename K, typename AllocState> class HashSet
 
     constexpr void Remove(const Iterator iter)
     {
-        TKIT_ASSERT(m_Size != 0, "[TOOLKIT][HASH-MAP] Cannot remove an element when the size is 0");
+        TKIT_ASSERT(m_Size != 0, "[TOOLKIT][HASH-SET] Cannot remove an element when the size is 0");
         Node &node = iter.m_Buckets->At(iter.m_Index);
         TKIT_ASSERT(node.State == HashNode_Occupied,
-                    "[TOOLKIT][HASH-MAP] Iterator must point to an occupied slot to be removed");
+                    "[TOOLKIT][HASH-SET] Iterator must point to an occupied slot to be removed");
 
         node.State = HashNode_Tombstone;
         Destruct(node.GetKey());
@@ -310,7 +309,7 @@ template <typename K, typename AllocState> class HashSet
         for (Node &n : m_Buckets)
             n.State = HashNode_Free;
     }
-    usize find(const K &key, const usz hash) const
+    template <bool GetFreeSpot = false> usize find(const K &key, const usz hash) const
     {
         const usize buckets = m_Buckets.GetSize();
         const usize idx = usize(hash & (buckets - 1));
@@ -319,7 +318,11 @@ template <typename K, typename AllocState> class HashSet
         const auto tryFind = [&](const usize i) {
             const Node &node = m_Buckets[i];
             if (node.State == HashNode_Free)
+            {
+                if constexpr (GetFreeSpot)
+                    found = i;
                 return true;
+            }
             if (node.State == HashNode_Tombstone || node.Hash != hash || key != *node.GetKey())
                 return false;
 
@@ -344,7 +347,7 @@ template <typename K, typename AllocState> class HashSet
         ++m_Size;
         TKIT_ASSERT(
             m_Size <= buckets,
-            "[TOOLKIT][HASH-MAP] The size of the hash map ({}) exceeds the buckets of the underlying array ({})",
+            "[TOOLKIT][HASH-SET] The size of the hash map ({}) exceeds the buckets of the underlying array ({})",
             m_Size, buckets);
 
         const auto tryInsert = [&](const usize i) -> const K * {
@@ -365,7 +368,7 @@ template <typename K, typename AllocState> class HashSet
             if (const K *elm = tryInsert(i))
                 return elm;
 
-        TKIT_FATAL("[TOOLKIT][HASH-MAP] Failed to insert element (this should not be possible)");
+        TKIT_FATAL("[TOOLKIT][HASH-SET] Failed to insert element (this should not be possible)");
         return nullptr;
     }
 
@@ -380,7 +383,7 @@ template <typename K, typename AllocState> class HashSet
         HashSet old = std::move(*this);
         Clear();
 
-        TKIT_ASSERT(IsPowerOfTwo(nbuckets), "[TOOLKIT][HASH-MAP] The bucket count must be a power of 2, but is {}",
+        TKIT_ASSERT(IsPowerOfTwo(nbuckets), "[TOOLKIT][HASH-SET] The bucket count must be a power of 2, but is {}",
                     nbuckets);
         m_Buckets.Resize(nbuckets);
         for (Node &n : old.m_Buckets)

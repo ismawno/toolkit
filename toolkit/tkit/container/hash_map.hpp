@@ -87,6 +87,10 @@ template <typename K, typename V, typename AllocState> class HashMap
         {
             return *m_Buckets->At(m_Index).GetEntry();
         }
+        auto *operator->() const
+        {
+            return m_Buckets->At(m_Index).GetEntry();
+        }
 
         IteratorImpl &operator++()
         {
@@ -227,33 +231,32 @@ template <typename K, typename V, typename AllocState> class HashMap
 
     template <typename... Args>
         requires std::constructible_from<V, Args...>
-    constexpr V *Insert(const K &key, Args &&...args)
+    constexpr V &Insert(const K &key, Args &&...args)
     {
-        return insert(Hash(key), key, std::forward<Args>(args)...);
+        return *insert(Hash(key), key, std::forward<Args>(args)...);
     }
-    constexpr V *Insert(const Pair &pair)
+    constexpr V &Insert(const Pair &pair)
     {
-        return Insert(pair.Key, pair.Value);
+        return *Insert(pair.Key, pair.Value);
     }
 
     template <typename... Args>
         requires std::constructible_from<V, Args...>
-    constexpr V *TryInsert(const K &key, Args &&...args)
+    constexpr V &TryInsert(const K &key, Args &&...args)
     {
         const usz hash = Hash(key);
-        const usize buckets = m_Buckets.GetSize();
-        const usize idx = usize(hash & (buckets - 1));
+        const usize idx = find<true>(key, hash);
 
-        Node &node = m_Buckets->At(idx);
+        Node &node = m_Buckets[idx];
         if (node.State == HashNode_Occupied)
-            return nullptr;
+            return node.GetEntry()->Value;
 
         ++m_Size;
         node.Hash = hash;
         node.State = HashNode_Occupied;
-        return Construct(node.GetEntry(), key, std::forward<Args>(args)...);
+        return Construct(node.GetEntry(), key, std::forward<Args>(args)...)->Value;
     }
-    constexpr V *TryInsert(const Pair &pair)
+    constexpr V &TryInsert(const Pair &pair)
     {
         return TryInsert(pair.Key, pair.Value);
     }
@@ -270,6 +273,28 @@ template <typename K, typename V, typename AllocState> class HashMap
     constexpr bool Contains(const K &key) const
     {
         return Find(key) != end();
+    }
+
+    constexpr const V &At(const K &key) const
+    {
+        const auto it = Find(key);
+        TKIT_ASSERT(it != end(), "[TOOLKIT][HASH-MAP] The key was not found");
+        return it->Value;
+    }
+    constexpr V &At(const K &key)
+    {
+        const auto it = Find(key);
+        TKIT_ASSERT(it != end(), "[TOOLKIT][HASH-MAP] The key was not found");
+        return it->Value;
+    }
+
+    constexpr const V &operator[](const K &key) const
+    {
+        return At(key);
+    }
+    constexpr V &operator[](const K &key)
+    {
+        return TryInsert(key);
     }
 
     constexpr void Remove(const Iterator iter)
@@ -337,7 +362,7 @@ template <typename K, typename V, typename AllocState> class HashMap
         for (Node &n : m_Buckets)
             n.State = HashNode_Free;
     }
-    usize find(const K &key, const usz hash) const
+    template <bool GetFreeSpot = false> usize find(const K &key, const usz hash) const
     {
         const usize buckets = m_Buckets.GetSize();
         const usize idx = usize(hash & (buckets - 1));
@@ -346,7 +371,11 @@ template <typename K, typename V, typename AllocState> class HashMap
         const auto tryFind = [&](const usize i) {
             const Node &node = m_Buckets[i];
             if (node.State == HashNode_Free)
+            {
+                if constexpr (GetFreeSpot)
+                    found = i;
                 return true;
+            }
             if (node.State == HashNode_Tombstone || node.Hash != hash || key != node.GetEntry()->Key)
                 return false;
 
