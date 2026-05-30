@@ -423,7 +423,7 @@ template <template <typename> typename A, typename... Args> void TestConstructio
     const Str str{"hello", A<char>{args...}};
     REQUIRE(str.GetSize() == 5);
     REQUIRE(str == "hello");
-    REQUIRE(std::strlen(str.GetData()) == 5);
+    REQUIRE(std::strlen(str.CString()) == 5);
 }
 
 template <template <typename> typename A, typename... Args> void TestEmptyString(Args... args)
@@ -447,13 +447,13 @@ template <template <typename> typename A, typename... Args> void TestNullTermina
     using Str = Array<char, A<char>>;
     Str str{"hello", A<char>{args...}};
     str += " world";
-    REQUIRE(std::strlen(str.GetData()) == str.GetSize());
+    REQUIRE(std::strlen(str.CString()) == str.GetSize());
 
     str.TrimRight();
-    REQUIRE(std::strlen(str.GetData()) == str.GetSize());
+    REQUIRE(std::strlen(str.CString()) == str.GetSize());
 
     str.Replace('o', '0');
-    REQUIRE(std::strlen(str.GetData()) == str.GetSize());
+    REQUIRE(std::strlen(str.CString()) == str.GetSize());
 }
 
 // ---------------------------------------------------------------------------
