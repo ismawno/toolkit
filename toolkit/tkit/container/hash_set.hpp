@@ -179,21 +179,25 @@ template <typename K, typename AllocState> class HashSet
     {
         Clear();
         copyOp(other.m_Buckets);
+        return *this;
     }
     constexpr HashSet &operator=(HashSet &&other)
     {
         Clear();
         copyOp(other.m_Buckets);
+        return *this;
     }
     template <typename OtherAlloc> constexpr HashSet &operator=(const HashSet<K, OtherAlloc> &other)
     {
         Clear();
         copyOp(other.m_Buckets);
+        return *this;
     }
     template <typename OtherAlloc> constexpr HashSet &operator=(HashSet<K, OtherAlloc> &&other)
     {
         Clear();
         copyOp(other.m_Buckets);
+        return *this;
     }
 
     constexpr void Clear()

@@ -198,21 +198,25 @@ template <typename K, typename V, typename AllocState> class HashMap
     {
         Clear();
         copyOp(other.m_Buckets);
+        return *this;
     }
     constexpr HashMap &operator=(HashMap &&other)
     {
         Clear();
         moveOp(other.m_Buckets);
+        return *this;
     }
     template <typename OtherAlloc> constexpr HashMap &operator=(const HashMap<K, V, OtherAlloc> &other)
     {
         Clear();
         copyOp(other.m_Buckets);
+        return *this;
     }
     template <typename OtherAlloc> constexpr HashMap &operator=(HashMap<K, V, OtherAlloc> &&other)
     {
         Clear();
         moveOp(other.m_Buckets);
+        return *this;
     }
 
     constexpr void Clear()
