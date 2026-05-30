@@ -438,6 +438,7 @@ template <typename K, typename V, typename AllocState> class HashMap
     constexpr usize rehash(const usize nbuckets)
         requires(Type != Array_Arena && Type != Array_Stack)
     {
+        TKIT_ASSERT(nbuckets != 0, "[TOOLKIT][HASH-MAP] The bucket count must not be zero");
         HashMap old = std::move(*this);
         Clear();
 

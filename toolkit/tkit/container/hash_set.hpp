@@ -378,12 +378,14 @@ template <typename K, typename AllocState> class HashSet
 
     constexpr usize rehash()
     {
-        return rehash(m_Buckets.GetSize() * 2);
+        const usize size = m_Buckets.GetSize();
+        return rehash(size == 0 ? 16 : (2 * size));
     }
 
     constexpr usize rehash(const usize nbuckets)
         requires(Type != Array_Arena && Type != Array_Stack)
     {
+        TKIT_ASSERT(nbuckets != 0, "[TOOLKIT][HASH-MAP] The bucket count must not be zero");
         HashSet old = std::move(*this);
         Clear();
 
