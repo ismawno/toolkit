@@ -485,7 +485,6 @@ template <typename K, typename V, typename AllocState> class HashMap
                 insert<false>(n.Hash, e->Key, std::move(e->Value));
             }
 
-        TKit::PrintLine("{}", m_Size);
         return nbuckets;
     }
 
