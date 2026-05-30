@@ -361,6 +361,11 @@ template <typename K, typename V, typename AllocState> class HashMap
         return Iterator{&m_Buckets, TKIT_USIZE_MAX};
     }
 
+    constexpr bool IsEmpty() const
+    {
+        return m_Size == 0;
+    }
+
   private:
     void setEmpty()
     {

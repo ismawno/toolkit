@@ -308,6 +308,11 @@ template <typename K, typename AllocState> class HashSet
         return Iterator{&m_Buckets, TKIT_USIZE_MAX};
     }
 
+    constexpr bool IsEmpty() const
+    {
+        return m_Size == 0;
+    }
+
   private:
     void setEmpty()
     {
