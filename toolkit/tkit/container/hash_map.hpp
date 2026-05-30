@@ -182,7 +182,6 @@ template <typename K, typename V, typename AllocState> class HashMap
     }
     constexpr HashMap(HashMap &&other)
     {
-        constexpr ArrayType Type = AllocState::Type;
         if constexpr (Type == Array_Static)
             moveOp(other.m_Buckets);
         else
