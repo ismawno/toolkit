@@ -413,10 +413,11 @@ template <typename K, typename AllocState> class HashSet
         else
             setEmpty();
         for (Node &n : old.m_Buckets)
-        {
-            const K *key = n.GetKey();
-            insert<false>(n.Hash, *key);
-        }
+            if (n.State == HashNode_Occupied)
+            {
+                const K *key = n.GetKey();
+                insert<false>(n.Hash, *key);
+            }
         return nbuckets;
     }
 
