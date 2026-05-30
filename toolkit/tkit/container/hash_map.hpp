@@ -237,7 +237,7 @@ template <typename K, typename V, typename AllocState> class HashMap
     }
     constexpr V &Insert(const Pair &pair)
     {
-        return *Insert(pair.Key, pair.Value);
+        return Insert(pair.Key, pair.Value);
     }
 
     template <typename... Args>
