@@ -11,6 +11,8 @@ static ArenaAllocator s_Arena{1_mib};
 static StackAllocator s_Stack{1_mib};
 static TierAllocator s_Tier{{.Allocator = &s_Arena, .MaxAllocation = 16_kib}};
 
+static constexpr usize initialSize = 4;
+
 template <typename T> using StaticAlloc16 = StaticAllocation<T, 16>;
 template <typename T> using StaticAlloc32 = StaticAllocation<T, 32>;
 
@@ -21,7 +23,7 @@ template <typename T> using StaticAlloc32 = StaticAllocation<T, 32>;
 template <template <typename> typename A, typename... Args> void TestMapInsertFind(Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{16, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
 
     u32 *v0 = map.Insert(1u, 100u);
     u32 *v1 = map.Insert(2u, 200u);
@@ -50,7 +52,7 @@ template <template <typename> typename A, typename... Args> void TestMapInsertFi
 template <template <typename> typename A, typename... Args> void TestMapContains(Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{16, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
 
     map.Insert(10u, 1u);
     map.Insert(20u, 2u);
@@ -64,7 +66,7 @@ template <template <typename> typename A, typename... Args> void TestMapContains
 template <template <typename> typename A, typename... Args> void TestMapRemoveByKey(Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{16, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
 
     map.Insert(1u, 10u);
     map.Insert(2u, 20u);
@@ -87,7 +89,7 @@ template <template <typename> typename A, typename... Args> void TestMapRemoveBy
 template <template <typename> typename A, typename... Args> void TestMapRemoveByIterator(Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{16, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
 
     map.Insert(5u, 50u);
     map.Insert(6u, 60u);
@@ -104,7 +106,7 @@ template <template <typename> typename A, typename... Args> void TestMapRemoveBy
 template <template <typename> typename A, typename... Args> void TestMapClear(Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{16, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
 
     map.Insert(1u, 1u);
     map.Insert(2u, 2u);
@@ -121,7 +123,7 @@ template <template <typename> typename A, typename... Args> void TestMapClear(Ar
 template <template <typename> typename A, typename... Args> void TestMapIteration(Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{16, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
 
     map.Insert(1u, 10u);
     map.Insert(2u, 20u);
@@ -144,7 +146,7 @@ template <template <typename> typename A, typename... Args> void TestMapIteratio
 template <template <typename> typename A, typename... Args> void TestMapMutation(Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{16, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
 
     map.Insert(1u, 100u);
     REQUIRE((*map.Find(1u)).Value == 100u);
@@ -162,7 +164,7 @@ template <template <typename> typename A, typename... Args> void TestMapMutation
 template <template <typename> typename A, typename... Args> void TestMapInsertAfterRemove(Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{16, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
 
     map.Insert(1u, 10u);
     map.Insert(2u, 20u);
@@ -181,7 +183,7 @@ template <template <typename> typename A, typename... Args> void TestMapInsertAf
 template <template <typename> typename A, typename... Args> void TestMapStringKV(Args... args)
 {
     using Node = MapNode<std::string, std::string>;
-    HashMap<std::string, std::string, A<Node>> map{16, A<Node>{args...}};
+    HashMap<std::string, std::string, A<Node>> map{initialSize, A<Node>{args...}};
 
     map.Insert(std::string("name"), std::string("Alice"));
     map.Insert(std::string("city"), std::string("Madrid"));
@@ -202,7 +204,7 @@ template <template <typename> typename A, typename... Args> void TestMapStringKV
 template <template <typename> typename A, typename... Args> void TestMapMixedKV(Args... args)
 {
     using Node = MapNode<std::string, u32>;
-    HashMap<std::string, u32, A<Node>> map{16, A<Node>{args...}};
+    HashMap<std::string, u32, A<Node>> map{initialSize, A<Node>{args...}};
 
     map.Insert(std::string("alpha"), 1u);
     map.Insert(std::string("beta"), 2u);

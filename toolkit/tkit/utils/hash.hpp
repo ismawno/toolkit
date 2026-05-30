@@ -53,4 +53,15 @@ template <Hashable... H> constexpr void HashCombine(usz &seed, H &&...hashables)
     (Detail::CombineHashes(seed, std::forward<H>(hashables)), ...);
 }
 
+enum HashNodeState : u8
+{
+    HashNode_Free,
+    HashNode_Occupied,
+    HashNode_Tombstone
+};
+
+#ifndef TKIT_HASH_LOAD_FACTOR_THRESHOLD
+#    define TKIT_HASH_LOAD_FACTOR_THRESHOLD 0.7f
+#endif
+
 } // namespace TKit

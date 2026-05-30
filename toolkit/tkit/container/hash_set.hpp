@@ -11,46 +11,31 @@
 
 namespace TKit
 {
-template <typename K, typename V> struct KeyValuePair
-{
-    template <typename... Args>
-    KeyValuePair(const K &key, Args &&...args) : Key(key), Value(std::forward<Args>(args)...)
-    {
-    }
-    K Key;
-    V Value;
-};
-
 // NOTE(Isma): This is missing some features like custom comparison/hasher and heterogeneous lookup
 // NOTE(Isma): Consider implementing a SwissTable
-template <typename K, typename V> struct MapNode
+template <typename K> struct SetNode
 {
-    using Entry = KeyValuePair<const K, V>;
-
     usz Hash;
-    alignas(Entry) std::byte Data[sizeof(Entry)];
+    alignas(K) std::byte Data[sizeof(K)];
     HashNodeState State = HashNode_Free;
 
-    constexpr const Entry *GetEntry() const
+    constexpr const K *GetKey() const
     {
-        return rcast<const Entry *>(Data);
+        return rcast<const K *>(Data);
     }
-    constexpr Entry *GetEntry()
+    constexpr K *GetKey()
     {
-        return rcast<Entry *>(Data);
+        return rcast<K *>(Data);
     }
 };
 
-template <typename K, typename V, typename AllocState> class HashMap
+template <typename K, typename AllocState> class HashSet
 {
   public:
     static constexpr ArrayType Type = AllocState::Type;
-    using KeyType = K;
-    using ValueType = V;
 
-    using Node = MapNode<K, V>;
-    using Pair = KeyValuePair<K, V>;
-    using Entry = typename Node::Entry;
+    using KeyType = K;
+    using Node = SetNode<K>;
 
     template <typename T> class IteratorImpl
     {
@@ -83,9 +68,9 @@ template <typename K, typename V, typename AllocState> class HashMap
             return m_Buckets;
         }
 
-        auto &operator*() const
+        const K &operator*() const
         {
-            return *m_Buckets->At(m_Index).GetEntry();
+            return *m_Buckets->At(m_Index).GetKey();
         }
 
         IteratorImpl &operator++()
@@ -130,45 +115,45 @@ template <typename K, typename V, typename AllocState> class HashMap
         usize m_Index;
 
         template <typename U> friend class IteratorImpl;
-        friend class HashMap;
+        friend class HashSet;
     };
 
-    using Iterator = IteratorImpl<Entry>;
-    using ConstIterator = IteratorImpl<const Entry>;
+    using Iterator = IteratorImpl<K>;
+    using ConstIterator = IteratorImpl<const K>;
 
-    constexpr HashMap() = default;
-    constexpr HashMap(const usize buckets) : m_Buckets(NextPowerOfTwo(buckets))
+    constexpr HashSet() = default;
+    constexpr HashSet(const usize buckets) : m_Buckets(NextPowerOfTwo(buckets))
     {
         setEmpty();
     }
-    constexpr HashMap(AllocState &&state) : m_Buckets(std::move(state))
+    constexpr HashSet(AllocState &&state) : m_Buckets(std::move(state))
     {
     }
-    constexpr HashMap(const usize capacity, AllocState &&state) : m_Buckets(NextPowerOfTwo(capacity), std::move(state))
+    constexpr HashSet(const usize buckets, AllocState &&state) : m_Buckets(NextPowerOfTwo(buckets), std::move(state))
     {
         setEmpty();
     }
 
-    template <std::input_iterator It> constexpr HashMap(const It pbegin, const It pend)
+    template <std::input_iterator It> constexpr HashSet(const It pbegin, const It pend)
     {
         for (const It it = pbegin; it != pend; ++it)
             Insert(*it);
     }
 
-    constexpr HashMap(const std::initializer_list<Pair> list)
+    constexpr HashSet(const std::initializer_list<K> list)
     {
-        for (const Pair &pair : list)
+        for (const K &pair : list)
             Insert(pair);
     }
 
-    constexpr HashMap(const HashMap &other)
+    constexpr HashSet(const HashSet &other)
     {
         copyOp(other.m_Buckets);
     }
-    constexpr HashMap(HashMap &&other)
+    constexpr HashSet(HashSet &&other)
     {
         if constexpr (Type == Array_Static)
-            moveOp(other.m_Buckets);
+            copyOp(other.m_Buckets);
         else
         {
             m_Buckets = std::move(other.m_Buckets);
@@ -176,39 +161,39 @@ template <typename K, typename V, typename AllocState> class HashMap
         }
     }
 
-    template <typename OtherAlloc> constexpr HashMap(const HashMap<K, V, OtherAlloc> &other)
+    template <typename OtherAlloc> constexpr HashSet(const HashSet<K, OtherAlloc> &other)
     {
         copyOp(other.m_Buckets);
     }
-    template <typename OtherAlloc> constexpr HashMap(HashMap<K, V, OtherAlloc> &&other)
+    template <typename OtherAlloc> constexpr HashSet(HashSet<K, OtherAlloc> &&other)
     {
-        moveOp(other.m_Buckets);
+        copyOp(other.m_Buckets);
     }
 
-    ~HashMap()
+    ~HashSet()
     {
         Clear();
     }
 
-    constexpr HashMap &operator=(const HashMap &other)
+    constexpr HashSet &operator=(const HashSet &other)
     {
         Clear();
         copyOp(other.m_Buckets);
     }
-    constexpr HashMap &operator=(HashMap &&other)
-    {
-        Clear();
-        moveOp(other.m_Buckets);
-    }
-    template <typename OtherAlloc> constexpr HashMap &operator=(const HashMap<K, V, OtherAlloc> &other)
+    constexpr HashSet &operator=(HashSet &&other)
     {
         Clear();
         copyOp(other.m_Buckets);
     }
-    template <typename OtherAlloc> constexpr HashMap &operator=(HashMap<K, V, OtherAlloc> &&other)
+    template <typename OtherAlloc> constexpr HashSet &operator=(const HashSet<K, OtherAlloc> &other)
     {
         Clear();
-        moveOp(other.m_Buckets);
+        copyOp(other.m_Buckets);
+    }
+    template <typename OtherAlloc> constexpr HashSet &operator=(HashSet<K, OtherAlloc> &&other)
+    {
+        Clear();
+        copyOp(other.m_Buckets);
     }
 
     constexpr void Clear()
@@ -218,27 +203,19 @@ template <typename K, typename V, typename AllocState> class HashMap
         for (Node &n : m_Buckets)
             if (n.State == HashNode_Occupied)
             {
-                if constexpr (!std::is_trivially_destructible_v<K> || !std::is_trivially_destructible_v<V>)
-                    Destruct(n.GetEntry());
+                if constexpr (!std::is_trivially_destructible_v<K>)
+                    Destruct(n.GetKey());
                 n.State = HashNode_Tombstone;
             }
         m_Size = 0;
     }
 
-    template <typename... Args>
-        requires std::constructible_from<V, Args...>
-    constexpr V *Insert(const K &key, Args &&...args)
+    constexpr const K *Insert(const K &key)
     {
-        return insert(Hash(key), key, std::forward<Args>(args)...);
-    }
-    constexpr V *Insert(const Pair &pair)
-    {
-        return Insert(pair.Key, pair.Value);
+        return insert(Hash(key), key);
     }
 
-    template <typename... Args>
-        requires std::constructible_from<V, Args...>
-    constexpr V *TryInsert(const K &key, Args &&...args)
+    template <typename... Args> constexpr K *TryInsert(const K &key)
     {
         const usz hash = Hash(key);
         const usize buckets = m_Buckets.GetSize();
@@ -251,11 +228,7 @@ template <typename K, typename V, typename AllocState> class HashMap
         ++m_Size;
         node.Hash = hash;
         node.State = HashNode_Occupied;
-        return Construct(node.GetEntry(), key, std::forward<Args>(args)...);
-    }
-    constexpr V *TryInsert(const Pair &pair)
-    {
-        return TryInsert(pair.Key, pair.Value);
+        return Construct(node.GetKey(), key);
     }
 
     constexpr ConstIterator Find(const K &key) const
@@ -280,7 +253,7 @@ template <typename K, typename V, typename AllocState> class HashMap
                     "[TOOLKIT][HASH-MAP] Iterator must point to an occupied slot to be removed");
 
         node.State = HashNode_Tombstone;
-        Destruct(node.GetEntry());
+        Destruct(node.GetKey());
         --m_Size;
     }
 
@@ -292,7 +265,7 @@ template <typename K, typename V, typename AllocState> class HashMap
 
         Node &node = m_Buckets[idx];
         node.State = HashNode_Tombstone;
-        Destruct(node.GetEntry());
+        Destruct(node.GetKey());
         --m_Size;
         return true;
     }
@@ -347,7 +320,7 @@ template <typename K, typename V, typename AllocState> class HashMap
             const Node &node = m_Buckets[i];
             if (node.State == HashNode_Free)
                 return true;
-            if (node.State == HashNode_Tombstone || node.Hash != hash || key != node.GetEntry()->Key)
+            if (node.State == HashNode_Tombstone || node.Hash != hash || key != *node.GetKey())
                 return false;
 
             found = i;
@@ -364,32 +337,32 @@ template <typename K, typename V, typename AllocState> class HashMap
         return found;
     }
 
-    template <typename... Args>
-        requires std::constructible_from<V, Args...>
-    constexpr V *insert(const usz hash, const K &key, Args &&...args)
+    constexpr const K *insert(const usz hash, const K &key)
     {
         const usize buckets = maybeRehash();
         const usize idx = usize(hash & (buckets - 1));
         ++m_Size;
-        TKIT_ASSERT(m_Size <= buckets,
-                    "[TOOLKIT][HASH-MAP] The size of the hash map ({}) exceeds the bucket count ({})", m_Size, buckets);
+        TKIT_ASSERT(
+            m_Size <= buckets,
+            "[TOOLKIT][HASH-MAP] The size of the hash map ({}) exceeds the buckets of the underlying array ({})",
+            m_Size, buckets);
 
-        const auto tryInsert = [&](const usize i) -> V * {
+        const auto tryInsert = [&](const usize i) -> const K * {
             Node &node = m_Buckets[i];
             if (node.State == HashNode_Occupied)
                 return nullptr;
 
             node.Hash = hash;
             node.State = HashNode_Occupied;
-            return &Construct(node.GetEntry(), key, std::forward<Args>(args)...)->Value;
+            return Construct(node.GetKey(), key);
         };
 
         for (u32 i = idx; i < buckets; ++i)
-            if (V *elm = tryInsert(i))
+            if (const K *elm = tryInsert(i))
                 return elm;
 
         for (u32 i = 0; i < idx; ++i)
-            if (V *elm = tryInsert(i))
+            if (const K *elm = tryInsert(i))
                 return elm;
 
         TKIT_FATAL("[TOOLKIT][HASH-MAP] Failed to insert element (this should not be possible)");
@@ -404,7 +377,7 @@ template <typename K, typename V, typename AllocState> class HashMap
     constexpr usize rehash(const usize nbuckets)
         requires(Type != Array_Arena && Type != Array_Stack)
     {
-        HashMap old = std::move(*this);
+        HashSet old = std::move(*this);
         Clear();
 
         TKIT_ASSERT(IsPowerOfTwo(nbuckets), "[TOOLKIT][HASH-MAP] The bucket count must be a power of 2, but is {}",
@@ -412,8 +385,8 @@ template <typename K, typename V, typename AllocState> class HashMap
         m_Buckets.Resize(nbuckets);
         for (Node &n : old.m_Buckets)
         {
-            const Entry *e = n.GetEntry();
-            insert(n.Hash, e->Key, std::move(e->Value));
+            const K *key = n.GetKey();
+            insert(n.Hash, *key);
         }
         return nbuckets;
     }
@@ -435,17 +408,8 @@ template <typename K, typename V, typename AllocState> class HashMap
         for (const Node &n : buckets)
             if (n.State == HashNode_Occupied)
             {
-                const Entry *entry = n.GetEntry();
-                insert(n.Hash, entry->Key, entry->Value);
-            }
-    }
-    template <typename OtherAlloc> constexpr void moveOp(Array<Node, OtherAlloc> &buckets)
-    {
-        for (Node &n : buckets)
-            if (n.State == HashNode_Occupied)
-            {
-                Entry *entry = n.GetEntry();
-                insert(n.Hash, entry->Key, std::move(entry->Value));
+                const K *key = n.GetKey();
+                insert(n.Hash, *key);
             }
     }
 
@@ -453,23 +417,22 @@ template <typename K, typename V, typename AllocState> class HashMap
     usize m_Size = 0;
 };
 
-template <typename K, typename V> using ArenaHashMap = HashMap<K, V, ArenaAllocation<MapNode<K, V>>>;
-template <typename K, typename V> using DynamicHashMap = HashMap<K, V, DynamicAllocation<MapNode<K, V>>>;
-template <typename K, typename V> using StackHashMap = HashMap<K, V, StackAllocation<MapNode<K, V>>>;
-template <typename K, typename V> using TierHashMap = HashMap<K, V, TierAllocation<MapNode<K, V>>>;
+template <typename K> using ArenaHashSet = HashSet<K, ArenaAllocation<SetNode<K>>>;
+template <typename K> using DynamicHashSet = HashSet<K, DynamicAllocation<SetNode<K>>>;
+template <typename K> using StackHashSet = HashSet<K, StackAllocation<SetNode<K>>>;
+template <typename K> using TierHashSet = HashSet<K, TierAllocation<SetNode<K>>>;
 
-template <typename K, typename V, usize Capacity>
-using StaticHashMap = HashMap<K, V, StaticAllocation<MapNode<K, V>, Capacity>>;
-template <typename K, typename V> using StaticHashMap4 = StaticHashMap<K, V, 4>;
-template <typename K, typename V> using StaticHashMap8 = StaticHashMap<K, V, 8>;
-template <typename K, typename V> using StaticHashMap16 = StaticHashMap<K, V, 16>;
-template <typename K, typename V> using StaticHashMap32 = StaticHashMap<K, V, 32>;
-template <typename K, typename V> using StaticHashMap64 = StaticHashMap<K, V, 64>;
-template <typename K, typename V> using StaticHashMap128 = StaticHashMap<K, V, 128>;
-template <typename K, typename V> using StaticHashMap196 = StaticHashMap<K, V, 196>;
-template <typename K, typename V> using StaticHashMap256 = StaticHashMap<K, V, 256>;
-template <typename K, typename V> using StaticHashMap384 = StaticHashMap<K, V, 384>;
-template <typename K, typename V> using StaticHashMap512 = StaticHashMap<K, V, 512>;
-template <typename K, typename V> using StaticHashMap768 = StaticHashMap<K, V, 768>;
-template <typename K, typename V> using StaticHashMap1024 = StaticHashMap<K, V, 1024>;
+template <typename K, usize Capacity> using StaticHashSet = HashSet<K, StaticAllocation<SetNode<K>, Capacity>>;
+template <typename K> using StaticHashSet4 = StaticHashSet<K, 4>;
+template <typename K> using StaticHashSet8 = StaticHashSet<K, 8>;
+template <typename K> using StaticHashSet16 = StaticHashSet<K, 16>;
+template <typename K> using StaticHashSet32 = StaticHashSet<K, 32>;
+template <typename K> using StaticHashSet64 = StaticHashSet<K, 64>;
+template <typename K> using StaticHashSet128 = StaticHashSet<K, 128>;
+template <typename K> using StaticHashSet196 = StaticHashSet<K, 196>;
+template <typename K> using StaticHashSet256 = StaticHashSet<K, 256>;
+template <typename K> using StaticHashSet384 = StaticHashSet<K, 384>;
+template <typename K> using StaticHashSet512 = StaticHashSet<K, 512>;
+template <typename K> using StaticHashSet768 = StaticHashSet<K, 768>;
+template <typename K> using StaticHashSet1024 = StaticHashSet<K, 1024>;
 } // namespace TKit
