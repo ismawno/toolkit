@@ -248,6 +248,7 @@ template <typename K, typename V, typename AllocState> class HashMap
         requires std::constructible_from<V, Args...>
     constexpr V &TryInsert(const K &key, Args &&...args)
     {
+        maybeRehash();
         const usz hash = Hash(key);
         const usize idx = find<true>(key, hash);
 
@@ -255,7 +256,6 @@ template <typename K, typename V, typename AllocState> class HashMap
         if (node.State == HashNode_Occupied)
             return node.GetEntry()->Value;
 
-        maybeRehash();
         ++m_Size;
         node.Hash = hash;
         node.State = HashNode_Occupied;
@@ -370,6 +370,9 @@ template <typename K, typename V, typename AllocState> class HashMap
     template <bool GetFreeSpot = false> usize find(const K &key, const usz hash) const
     {
         const usize buckets = m_Buckets.GetSize();
+        if (buckets == 0)
+            return TKIT_USIZE_MAX;
+
         const usize idx = usize(hash & (buckets - 1));
 
         usize found = TKIT_USIZE_MAX;
