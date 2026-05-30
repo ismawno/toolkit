@@ -255,6 +255,7 @@ template <typename K, typename V, typename AllocState> class HashMap
         if (node.State == HashNode_Occupied)
             return node.GetEntry()->Value;
 
+        maybeRehash();
         ++m_Size;
         node.Hash = hash;
         node.State = HashNode_Occupied;

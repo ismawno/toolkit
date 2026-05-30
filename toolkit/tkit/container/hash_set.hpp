@@ -228,6 +228,7 @@ template <typename K, typename AllocState> class HashSet
         if (node.State == HashNode_Occupied)
             return *node.GetKey();
 
+        maybeRehash();
         ++m_Size;
         node.Hash = hash;
         node.State = HashNode_Occupied;
