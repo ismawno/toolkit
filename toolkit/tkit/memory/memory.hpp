@@ -364,4 +364,10 @@ template <typename It> void DestructRange(const It begin, const It end)
         DestructFromIterator(it);
 }
 
+template <typename It> void DestructRangeReverse(const It begin, const It end)
+{
+    for (auto it = end - 1; it != begin - 1; --it)
+        DestructFromIterator(it);
+}
+
 } // namespace TKit

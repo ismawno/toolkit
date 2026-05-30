@@ -15,14 +15,10 @@ template <typename T, typename AllocState> class Hive
     using ValueType = T;
     using Id = usize;
 
-    template <typename... Args>
-    constexpr explicit Hive(Args &&...args)
-        : m_Data(std::forward<Args>(args)...), m_Indices(std::forward<Args>(args)...),
-          m_Ids(std::forward<Args>(args)...)
+    constexpr Hive() = default;
+    constexpr Hive(AllocState &&data, AllocState &&indices, AllocState &&ids)
+        : m_Data(std::move(data)), m_Indices(std::move(indices)), m_Ids(std::move(ids))
     {
-        TKIT_ASSERT(
-            m_Data.IsEmpty() && m_Indices.IsEmpty() && m_Ids.IsEmpty(),
-            "[TOOLKIT][HIVE] Only allocator state constructors that leave the container empty are allowed to be used");
     }
 
     constexpr Hive(const Hive &) = default;

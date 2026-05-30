@@ -26,7 +26,6 @@ template <typename T> struct DynamicAllocation
     DynamicAllocation &operator=(const DynamicAllocation &) = delete;
     DynamicAllocation &operator=(DynamicAllocation &&other)
     {
-
         Data = other.Data;
         Size = other.Size;
         Capacity = other.Capacity;

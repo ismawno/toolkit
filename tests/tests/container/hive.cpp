@@ -4,13 +4,26 @@
 #include <string>
 
 using namespace TKit;
+using namespace TKit::Container;
 using namespace TKit::Alias;
 
-static StackAllocator s_HiveAlloc{1_mib};
+static ArenaAllocator s_Arena{1_mib};
+static StackAllocator s_Stack{1_mib};
+static TierAllocator s_Tier{{.Allocator = &s_Arena, .MaxAllocation = 16_kib}};
 
-TEST_CASE("StackHive: basic capacity/size queries", "[StackHive]")
+template <typename T> using StaticAlloc4 = StaticAllocation<T, 4>;
+template <typename T> using StaticAlloc8 = StaticAllocation<T, 8>;
+
+// ---------------------------------------------------------------------------
+// Test functions
+// ---------------------------------------------------------------------------
+
+template <template <typename> typename A, typename... Args> void TestHiveBasic(Args... args)
 {
-    StackHive<u32> hive{&s_HiveAlloc, 4};
+    A<u32> st1{args...};
+    A<u32> st2{args...};
+    A<u32> st3{args...};
+    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
     REQUIRE(hive.GetSize() == 0);
     REQUIRE(hive.IsEmpty());
     REQUIRE_FALSE(hive.IsFull());
@@ -23,9 +36,12 @@ TEST_CASE("StackHive: basic capacity/size queries", "[StackHive]")
     REQUIRE(hive.Contains(id1));
 }
 
-TEST_CASE("StackHive: Insert and lookup", "[StackHive]")
+template <template <typename> typename A, typename... Args> void TestHiveInsertLookup(Args... args)
 {
-    StackHive<u32> hive{&s_HiveAlloc, 8};
+    A<u32> st1{args...};
+    A<u32> st2{args...};
+    A<u32> st3{args...};
+    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     const usize id0 = hive.Insert(100u);
     const usize id1 = hive.Insert(200u);
@@ -35,16 +51,18 @@ TEST_CASE("StackHive: Insert and lookup", "[StackHive]")
     REQUIRE(hive[id1] == 200u);
     REQUIRE(hive[id2] == 300u);
 
-    // mutation via reference
     hive[id1] = 999u;
     REQUIRE(hive[id1] == 999u);
 
     REQUIRE(hive.GetSize() == 3);
 }
 
-TEST_CASE("StackHive: Remove invalidates id and compacts dense array", "[StackHive]")
+template <template <typename> typename A, typename... Args> void TestHiveRemoveCompact(Args... args)
 {
-    StackHive<u32> hive{&s_HiveAlloc, 8};
+    A<u32> st1{args...};
+    A<u32> st2{args...};
+    A<u32> st3{args...};
+    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     const usize id0 = hive.Insert(1u);
     const usize id1 = hive.Insert(2u);
@@ -57,25 +75,26 @@ TEST_CASE("StackHive: Remove invalidates id and compacts dense array", "[StackHi
     REQUIRE(hive.Contains(id0));
     REQUIRE(hive.Contains(id2));
 
-    // surviving elements still have correct values
     REQUIRE(hive[id0] == 1u);
     REQUIRE(hive[id2] == 3u);
 
-    // dense array holds exactly the two survivors
     u32 sum = 0;
     for (const u32 x : hive)
         sum += x;
     REQUIRE(sum == 4u);
 }
 
-TEST_CASE("StackHive: Remove last element", "[StackHive]")
+template <template <typename> typename A, typename... Args> void TestHiveRemoveLast(Args... args)
 {
-    StackHive<u32> hive{&s_HiveAlloc, 4};
+    A<u32> st1{args...};
+    A<u32> st2{args...};
+    A<u32> st3{args...};
+    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     const usize id0 = hive.Insert(42u);
     const usize id1 = hive.Insert(43u);
 
-    hive.Remove(id1); // last in dense array, early-return branch
+    hive.Remove(id1);
 
     REQUIRE(hive.GetSize() == 1);
     REQUIRE(hive.Contains(id0));
@@ -83,15 +102,18 @@ TEST_CASE("StackHive: Remove last element", "[StackHive]")
     REQUIRE(hive[id0] == 42u);
 }
 
-TEST_CASE("StackHive: Remove first element", "[StackHive]")
+template <template <typename> typename A, typename... Args> void TestHiveRemoveFirst(Args... args)
 {
-    StackHive<u32> hive{&s_HiveAlloc, 4};
+    A<u32> st1{args...};
+    A<u32> st2{args...};
+    A<u32> st3{args...};
+    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     const usize id0 = hive.Insert(10u);
     const usize id1 = hive.Insert(20u);
     const usize id2 = hive.Insert(30u);
 
-    hive.Remove(id0); // swap branch: id0 is at dense[0], last is id2
+    hive.Remove(id0);
 
     REQUIRE(hive.GetSize() == 2);
     REQUIRE_FALSE(hive.Contains(id0));
@@ -101,9 +123,12 @@ TEST_CASE("StackHive: Remove first element", "[StackHive]")
     REQUIRE(hive[id2] == 30u);
 }
 
-TEST_CASE("StackHive: id reuse after Remove", "[StackHive]")
+template <template <typename> typename A, typename... Args> void TestHiveIdReuse(Args... args)
 {
-    StackHive<u32> hive{&s_HiveAlloc, 8};
+    A<u32> st1{args...};
+    A<u32> st2{args...};
+    A<u32> st3{args...};
+    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     const usize id0 = hive.Insert(1u);
     const usize id1 = hive.Insert(2u);
@@ -112,21 +137,22 @@ TEST_CASE("StackHive: id reuse after Remove", "[StackHive]")
     hive.Remove(id1);
     REQUIRE_FALSE(hive.Contains(id1));
 
-    // next Insert should reclaim id1
     const usize id3 = hive.Insert(99u);
     REQUIRE(id3 == id1);
     REQUIRE(hive.Contains(id3));
     REQUIRE(hive[id3] == 99u);
 
-    // all three live ids are valid
     REQUIRE(hive.GetSize() == 3);
     REQUIRE(hive.Contains(id0));
     REQUIRE(hive.Contains(id2));
 }
 
-TEST_CASE("StackHive: multiple Removes then Inserts reuse ids in order", "[StackHive]")
+template <template <typename> typename A, typename... Args> void TestHiveMultipleRemoves(Args... args)
 {
-    StackHive<u32> hive{&s_HiveAlloc, 8};
+    A<u32> st1{args...};
+    A<u32> st2{args...};
+    A<u32> st3{args...};
+    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     const usize id0 = hive.Insert(10u);
     const usize id1 = hive.Insert(20u);
@@ -140,7 +166,6 @@ TEST_CASE("StackHive: multiple Removes then Inserts reuse ids in order", "[Stack
     const usize nid0 = hive.Insert(55u);
     const usize nid1 = hive.Insert(66u);
 
-    // both recycled ids come from the freed slots
     REQUIRE((nid0 == id1 || nid0 == id2));
     REQUIRE((nid1 == id1 || nid1 == id2));
     REQUIRE(nid0 != nid1);
@@ -152,9 +177,12 @@ TEST_CASE("StackHive: multiple Removes then Inserts reuse ids in order", "[Stack
     REQUIRE(hive.Contains(nid1));
 }
 
-TEST_CASE("StackHive: dense iteration is contiguous and order-independent", "[StackHive]")
+template <template <typename> typename A, typename... Args> void TestHiveDenseIteration(Args... args)
 {
-    StackHive<u32> hive{&s_HiveAlloc, 8};
+    A<u32> st1{args...};
+    A<u32> st2{args...};
+    A<u32> st3{args...};
+    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     hive.Insert(1u);
     hive.Insert(2u);
@@ -164,7 +192,6 @@ TEST_CASE("StackHive: dense iteration is contiguous and order-independent", "[St
 
     hive.Remove(mid);
 
-    // dense array has exactly 4 elements summing to 12
     u32 sum = 0;
     u32 count = 0;
     for (const u32 x : hive)
@@ -176,41 +203,47 @@ TEST_CASE("StackHive: dense iteration is contiguous and order-independent", "[St
     REQUIRE(sum == 12u);
 }
 
-TEST_CASE("StackHive: Reserve does not change size", "[StackHive]")
+template <template <typename> typename A, typename... Args> void TestHiveReserve(Args... args)
 {
-    StackHive<u32> hive{&s_HiveAlloc};
+    A<u32> st1{args...};
+    A<u32> st2{args...};
+    A<u32> st3{args...};
+    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
     hive.Reserve(8);
     REQUIRE(hive.GetSize() == 0);
     REQUIRE(hive.IsEmpty());
     REQUIRE(hive.GetCapacity() >= 8);
 }
 
-TEST_CASE("StackHive: copy and move", "[StackHive]")
+template <template <typename> typename A, typename... Args> void TestHiveCopyMove(Args... args)
 {
-    StackHive<u32> hive{&s_HiveAlloc, 8};
+    A<u32> st1{args...};
+    A<u32> st2{args...};
+    A<u32> st3{args...};
+    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
     const usize id0 = hive.Insert(7u);
     const usize id1 = hive.Insert(8u);
 
-    // copy
-    StackHive<u32> copy = hive;
+    Hive<u32, A<u32>> copy = hive;
     REQUIRE(copy.GetSize() == 2);
     REQUIRE(copy[id0] == 7u);
     REQUIRE(copy[id1] == 8u);
 
-    // mutation of copy does not affect original
     copy[id0] = 77u;
     REQUIRE(hive[id0] == 7u);
 
-    // move
-    StackHive<u32> moved = std::move(copy);
+    Hive<u32, A<u32>> moved = std::move(copy);
     REQUIRE(moved.GetSize() == 2);
     REQUIRE(moved[id0] == 77u);
     REQUIRE(moved[id1] == 8u);
 }
 
-TEST_CASE("StackHive<std::string>: Insert, Remove and id reuse", "[StackHive][string]")
+template <template <typename> typename A, typename... Args> void TestHiveStringOps(Args... args)
 {
-    StackHive<std::string> hive{&s_HiveAlloc, 8};
+    A<std::string> st1{args...};
+    A<std::string> st2{args...};
+    A<std::string> st3{args...};
+    Hive<std::string, A<std::string>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     const usize id0 = hive.Insert("alpha");
     const usize id1 = hive.Insert("beta");
@@ -224,22 +257,122 @@ TEST_CASE("StackHive<std::string>: Insert, Remove and id reuse", "[StackHive][st
     REQUIRE_FALSE(hive.Contains(id1));
     REQUIRE(hive.GetSize() == 2);
 
-    // survivors intact
     REQUIRE(hive[id0] == "alpha");
     REQUIRE(hive[id2] == "gamma");
 
-    // id reuse
     const usize id3 = hive.Insert("delta");
     REQUIRE(id3 == id1);
     REQUIRE(hive[id3] == "delta");
     REQUIRE(hive.GetSize() == 3);
 
-    // dense iteration sees all three strings
     std::string concat;
     for (const std::string &s : hive)
         concat += s;
-    REQUIRE(concat.size() == 5 + 5 + 5); // "alpha"+"gamma"+"delta" = 15 (or any order)
+    REQUIRE(concat.size() == 5 + 5 + 5);
     REQUIRE(concat.find("alpha") != std::string::npos);
     REQUIRE(concat.find("gamma") != std::string::npos);
     REQUIRE(concat.find("delta") != std::string::npos);
+}
+
+// ---------------------------------------------------------------------------
+// TEST_CASEs
+// ---------------------------------------------------------------------------
+
+TEST_CASE("Hive: basic capacity/size queries", "[Hive]")
+{
+    TestHiveBasic<ArenaAllocation>(&s_Arena, usize(4));
+    TestHiveBasic<DynamicAllocation>(usize(4));
+    TestHiveBasic<StackAllocation>(&s_Stack, usize(4));
+    TestHiveBasic<StaticAlloc4>();
+    TestHiveBasic<TierAllocation>(&s_Tier, usize(4));
+}
+
+TEST_CASE("Hive: Insert and lookup", "[Hive]")
+{
+    TestHiveInsertLookup<ArenaAllocation>(&s_Arena, usize(8));
+    TestHiveInsertLookup<DynamicAllocation>(usize(8));
+    TestHiveInsertLookup<StackAllocation>(&s_Stack, usize(8));
+    TestHiveInsertLookup<StaticAlloc8>();
+    TestHiveInsertLookup<TierAllocation>(&s_Tier, usize(8));
+}
+
+TEST_CASE("Hive: Remove invalidates id and compacts dense array", "[Hive]")
+{
+    TestHiveRemoveCompact<ArenaAllocation>(&s_Arena, usize(8));
+    TestHiveRemoveCompact<DynamicAllocation>(usize(8));
+    TestHiveRemoveCompact<StackAllocation>(&s_Stack, usize(8));
+    TestHiveRemoveCompact<StaticAlloc8>();
+    TestHiveRemoveCompact<TierAllocation>(&s_Tier, usize(8));
+}
+
+TEST_CASE("Hive: Remove last element", "[Hive]")
+{
+    TestHiveRemoveLast<ArenaAllocation>(&s_Arena, usize(4));
+    TestHiveRemoveLast<DynamicAllocation>(usize(4));
+    TestHiveRemoveLast<StackAllocation>(&s_Stack, usize(4));
+    TestHiveRemoveLast<StaticAlloc4>();
+    TestHiveRemoveLast<TierAllocation>(&s_Tier, usize(4));
+}
+
+TEST_CASE("Hive: Remove first element", "[Hive]")
+{
+    TestHiveRemoveFirst<ArenaAllocation>(&s_Arena, usize(4));
+    TestHiveRemoveFirst<DynamicAllocation>(usize(4));
+    TestHiveRemoveFirst<StackAllocation>(&s_Stack, usize(4));
+    TestHiveRemoveFirst<StaticAlloc4>();
+    TestHiveRemoveFirst<TierAllocation>(&s_Tier, usize(4));
+}
+
+TEST_CASE("Hive: id reuse after Remove", "[Hive]")
+{
+    TestHiveIdReuse<ArenaAllocation>(&s_Arena, usize(8));
+    TestHiveIdReuse<DynamicAllocation>(usize(8));
+    TestHiveIdReuse<StackAllocation>(&s_Stack, usize(8));
+    TestHiveIdReuse<StaticAlloc8>();
+    TestHiveIdReuse<TierAllocation>(&s_Tier, usize(8));
+}
+
+TEST_CASE("Hive: multiple Removes then Inserts reuse ids in order", "[Hive]")
+{
+    TestHiveMultipleRemoves<ArenaAllocation>(&s_Arena, usize(8));
+    TestHiveMultipleRemoves<DynamicAllocation>(usize(8));
+    TestHiveMultipleRemoves<StackAllocation>(&s_Stack, usize(8));
+    TestHiveMultipleRemoves<StaticAlloc8>();
+    TestHiveMultipleRemoves<TierAllocation>(&s_Tier, usize(8));
+}
+
+TEST_CASE("Hive: dense iteration is contiguous and order-independent", "[Hive]")
+{
+    TestHiveDenseIteration<ArenaAllocation>(&s_Arena, usize(8));
+    TestHiveDenseIteration<DynamicAllocation>(usize(8));
+    TestHiveDenseIteration<StackAllocation>(&s_Stack, usize(8));
+    TestHiveDenseIteration<StaticAlloc8>();
+    TestHiveDenseIteration<TierAllocation>(&s_Tier, usize(8));
+}
+
+TEST_CASE("Hive: Reserve does not change size", "[Hive]")
+{
+    TestHiveReserve<ArenaAllocation>(&s_Arena, usize(0));
+    TestHiveReserve<DynamicAllocation>(usize(0));
+    TestHiveReserve<StackAllocation>(&s_Stack, usize(0));
+    // TestHiveReserve<StaticAlloc8>();
+    TestHiveReserve<TierAllocation>(&s_Tier, usize(0));
+}
+
+TEST_CASE("Hive: copy and move", "[Hive]")
+{
+    TestHiveCopyMove<ArenaAllocation>(&s_Arena, usize(8));
+    TestHiveCopyMove<DynamicAllocation>(usize(8));
+    TestHiveCopyMove<StackAllocation>(&s_Stack, usize(8));
+    TestHiveCopyMove<StaticAlloc8>();
+    TestHiveCopyMove<TierAllocation>(&s_Tier, usize(8));
+}
+
+TEST_CASE("Hive<std::string>: Insert, Remove and id reuse", "[Hive][string]")
+{
+    TestHiveStringOps<ArenaAllocation>(&s_Arena, usize(8));
+    TestHiveStringOps<DynamicAllocation>(usize(8));
+    TestHiveStringOps<StackAllocation>(&s_Stack, usize(8));
+    TestHiveStringOps<StaticAlloc8>();
+    TestHiveStringOps<TierAllocation>(&s_Tier, usize(8));
 }

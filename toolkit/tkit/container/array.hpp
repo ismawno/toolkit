@@ -477,7 +477,7 @@ template <typename T, typename AllocState> class Array
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
             if (GetData())
-                DestructRange(begin(), end());
+                DestructRangeReverse(begin(), end());
         m_State.Size = 0;
     }
 
@@ -535,10 +535,20 @@ template <typename T, typename AllocState> class Array
     }
 
     // nullptr will grab the current pushed allocator on next Allocate()
-    template <typename Allocator> constexpr void ResetAllocator(Allocator *allocator = nullptr)
+    template <typename Allocator>
+    constexpr void ResetAllocator(Allocator *allocator = nullptr)
+        requires(Type != Array_Dynamic && Type != Array_Static)
     {
-        if (m_State.Allocator)
-            m_State.Deallocate();
+        if constexpr (Type != Array_Arena)
+        {
+            if (m_State.Allocator)
+                m_State.Deallocate();
+        }
+        else
+        {
+            TKIT_ASSERT(m_State.Size == 0,
+                        "[TOOLKIT][ARRAY] Cannot reset an arena allocator with an active allocation");
+        }
         m_State.Allocator = allocator;
     }
     constexpr void Allocate(const usize capacity)
@@ -1020,6 +1030,7 @@ template <typename T, typename AllocState> class Array
     }
 
     constexpr Array Replace(const T from, const T to) const
+        requires(Type != Array_Stack)
     {
         Array copy = *this;
         return copy.Replace(from, to);
@@ -1085,7 +1096,8 @@ template <typename T, typename AllocState> class Array
         Array<Array, typename AllocState::template Rebind<Array>> parts;
         if constexpr (Type != Array_Static && Type != Array_Dynamic)
             parts.ResetAllocator(m_State.Allocator);
-        parts.Reserve(GetSize());
+        if constexpr (Type != Array_Static)
+            parts.Reserve(GetSize() + 1);
         usize start = 0;
 
         for (usize i = 0; i < GetSize(); ++i)
@@ -1107,7 +1119,8 @@ template <typename T, typename AllocState> class Array
         Array<Array, typename AllocState::template Rebind<Array>> parts;
         if constexpr (Type != Array_Static && Type != Array_Dynamic)
             parts.ResetAllocator(m_State.Allocator);
-        parts.Reserve(GetSize());
+        if constexpr (Type != Array_Static)
+            parts.Reserve(GetSize());
 
         if (delimLen == 0)
         {
@@ -1186,10 +1199,12 @@ template <typename T, typename AllocState> class Array
     }
 
     operator std::string() const
+        requires(IsString)
     {
         return std::string{GetData(), GetSize()};
     }
     operator std::string_view() const
+        requires(IsString)
     {
         return std::string_view{GetData(), GetSize()};
     }
