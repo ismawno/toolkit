@@ -320,7 +320,7 @@ template <typename T, typename AllocState> class Array
 
     template <typename U>
         requires(std::convertible_to<std::remove_cvref_t<T>, std::remove_cvref_t<U>>)
-    constexpr void Insert(T *ppos, U &&value)
+    constexpr T &Insert(T *ppos, U &&value)
     {
         TKIT_ASSERT(ppos >= begin() && ppos <= end(), "[TOOLKIT][ARRAY] Iterator is out of bounds");
         usize newSize = m_State.Size + 1;
@@ -329,7 +329,6 @@ template <typename T, typename AllocState> class Array
                 ++newSize;
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
         {
-
             if (newSize > m_State.GetCapacity())
             {
                 const usize pos = usize(std::distance(begin(), ppos));
@@ -349,6 +348,7 @@ template <typename T, typename AllocState> class Array
             m_State.Size = newSize;
             writeNullTerminatorIfString();
         }
+        return *ppos;
     }
 
     template <std::input_iterator It> constexpr void Insert(T *ppos, const It pbegin, const It pend)
