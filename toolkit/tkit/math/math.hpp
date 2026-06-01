@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tkit/math/tensor.hpp"
+#include "tkit/utils/limits.hpp"
 #include <concepts>
 #include <cmath>
 
@@ -261,6 +262,39 @@ constexpr ten<T, N0, N...> AntiTangent(const ten<T, N0, N...> &y, const ten<T, N
     for (usize i = 0; i < size; ++i)
         sn.Flat[i] = AntiTangent(y.Flat[i], x.Flat[i]);
     return sn;
+}
+
+template <typename T> constexpr bool ApproachesZero(const T value, const T epsilon = Limits<T>::Epsilon())
+{
+    if constexpr (Float<T>)
+        return Absolute(value) <= epsilon;
+    else
+        return value == T(0);
+}
+
+template <typename T> constexpr bool Approximately(const T left, const T right, const T epsilon = Limits<T>::Epsilon())
+{
+    return ApproachesZero(left - right, epsilon);
+}
+
+template <typename T, usize N0, usize... N>
+constexpr bool ApproachesZero(const ten<T, N0, N...> &tensor, const T epsilon = Limits<T>::Epsilon())
+{
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        if (!ApproachesZero(tensor[i], epsilon))
+            return false;
+    return true;
+}
+template <typename T, usize N0, usize... N>
+constexpr bool Approximately(const ten<T, N0, N...> &lhs, const ten<T, N0, N...> &rhs,
+                             const T epsilon = Limits<T>::Epsilon())
+{
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        if (!Approximately(lhs[i], rhs[i], epsilon))
+            return false;
+    return true;
 }
 
 // LU reduction

@@ -86,17 +86,4 @@ template <typename T> struct Limits
 constexpr usize MaxStackAlloc = TKIT_MEMORY_MAX_STACK_ALLOCATION;
 constexpr usize MaxThreads = TKIT_MAX_THREADS;
 constexpr usize MaxAllocatorPushDepth = TKIT_MAX_ALLOCATOR_PUSH_DEPTH;
-
-template <typename T> constexpr bool ApproachesZero(const T value)
-{
-    if constexpr (Float<T>)
-        return std::abs(value) <= Limits<T>::Epsilon();
-    else
-        return value == T(0);
-}
-
-template <typename T> constexpr bool Approximately(const T left, const T right)
-{
-    return ApproachesZero(left - right);
-}
 } // namespace TKit
