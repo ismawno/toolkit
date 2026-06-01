@@ -159,8 +159,9 @@ template <template <typename> typename A, typename... Args> void TestCopyMove(Ar
 template <template <typename> typename A, typename... Args> void TestInsert(Args... args)
 {
     Array<u32, A<u32>> arr{{1, 2, 4, 5}, A<u32>{args...}};
-    arr.Insert(arr.begin() + 2, 3u);
+    u32 &ref = arr.Insert(arr.begin() + 2, 3u);
     REQUIRE(arr.GetSize() == 5);
+    REQUIRE(ref == 3);
 
     FixedArray<u32, 2> extra = {7, 8};
     arr.Insert(arr.begin() + 5, extra.begin(), extra.end());
