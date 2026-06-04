@@ -1,19 +1,11 @@
 cmake_minimum_required(VERSION 3.23...4.1.1)
 project(toolkit-root)
 
-set(NAME toolkit-root)
-
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release")
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-  set(TOOLKIT_MSVC_COMPILER TRUE)
-else()
-  set(TOOLKIT_MSVC_COMPILER FALSE)
-endif()
 
 set(CMAKE_BUILD_TYPE
     "Debug"
@@ -444,7 +436,7 @@ function(tkit_default_configure target)
       -Wno-unknown-pragmas
       NO_EXCEPTIONS
       NO_RTTI)
-  elseif(TOOLKIT_MSVC_COMPILER)
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     tkit_configure_compile_link_options(
       ${target}
       COMPILER_FLAGS
