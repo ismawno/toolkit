@@ -82,7 +82,7 @@ CREATE_DETAIL_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)
 
 namespace TKit
 {
-fmt::runtime_format_string<> RuntimeString(std::string_view string);
+fmt::runtime_format_string<> RuntimeFormatString(std::string_view string);
 
 CREATE_LOGGING_FUNCTIONS(fmt::format_string<Args...>)
 CREATE_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)

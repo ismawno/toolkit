@@ -21,7 +21,7 @@ void Log(const std::string_view message, const char *level, const char *color, c
 
 namespace TKit
 {
-fmt::runtime_format_string<> RuntimeString(const std::string_view string)
+fmt::runtime_format_string<> RuntimeFormatString(const std::string_view string)
 {
     return fmt::runtime(string);
 }
