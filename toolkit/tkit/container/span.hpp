@@ -37,7 +37,7 @@ template <typename T> class Span
     }
     constexpr Span(T *data)
         requires(IsString)
-        : m_Data(data), m_Size(usize(std::char_traits<ElementType>::length(data)))
+        : m_Data(data), m_Size(usize(data ? std::char_traits<ElementType>::length(data) : 0))
     {
     }
 
