@@ -142,11 +142,6 @@ template <typename T> class Span
         return m_Size == 0;
     }
 
-    constexpr operator bool() const
-    {
-        return m_Data != nullptr;
-    }
-
     // these are ia generated. wasnt feeling like implementing string methods
 
     // === Querying ===

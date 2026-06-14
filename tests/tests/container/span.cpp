@@ -11,12 +11,10 @@ using namespace TKit::Alias;
 TEST_CASE("Span dynamic extent: default and pointer+size ctor", "[Span]")
 {
     const Span<u32> span1;
-    REQUIRE(!span1);
     REQUIRE(span1.IsEmpty());
 
     u32 raw[4] = {4, 5, 6, 7};
     const Span<u32> span2(raw, 4);
-    REQUIRE(span2);
     REQUIRE(!span2.IsEmpty());
     REQUIRE(span2.GetSize() == 4);
     REQUIRE(span2[0] == 4);
@@ -47,7 +45,6 @@ TEST_CASE("Span dynamic extent: iteration and bool", "[Span]")
 {
     DynamicArray<std::string> vec = {{"a", "b", "c"}};
     Span<std::string> span(vec.GetData(), vec.GetSize());
-    REQUIRE(span);
     REQUIRE(!span.IsEmpty());
 
     std::string concat;
@@ -56,7 +53,6 @@ TEST_CASE("Span dynamic extent: iteration and bool", "[Span]")
     REQUIRE(concat == "abc");
 
     span = Span<std::string>(nullptr, 0);
-    REQUIRE(!span);
     REQUIRE(span.IsEmpty());
 }
 TEST_CASE("Span string: Count", "[Span]")
