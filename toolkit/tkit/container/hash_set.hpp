@@ -332,6 +332,9 @@ template <typename K, typename AllocState> class HashSet
     template <bool GetFreeSpot = false> usize find(const K &key, const usz hash) const
     {
         const usize buckets = m_Buckets.GetSize();
+        if (buckets == 0)
+            return TKIT_USIZE_MAX;
+
         const usize idx = usize(hash & (buckets - 1));
 
         usize found = TKIT_USIZE_MAX;
