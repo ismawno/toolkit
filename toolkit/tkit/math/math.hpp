@@ -46,6 +46,14 @@ template <Float T> constexpr T Power(const T value, const T power)
 {
     return std::pow(value, power);
 }
+template <Float T> constexpr T Log(const T value)
+{
+    return std::log(value);
+}
+template <Float T> constexpr T Log(const T value, const T base)
+{
+    return Log(value) / Log(base);
+}
 template <Float T> constexpr T Round(const T value)
 {
     return std::round(value);
@@ -63,6 +71,10 @@ template <Float T> constexpr T LinearLerp(const T v0, const T v1, const T t)
 {
     return v0 + (v1 - v0) * t;
 }
+template <Float T> constexpr T InverseLinearLerp(const T v0, const T v1, const T v)
+{
+    return (v - v0) / (v1 - v0);
+}
 template <Float T> constexpr T LogLerp(const T v0, const T v1, const T t)
 {
     const T offset = T(1) - Min(v0, v1);
@@ -70,13 +82,28 @@ template <Float T> constexpr T LogLerp(const T v0, const T v1, const T t)
     const T b = v1 + offset;
     return a * Power(b / a, t) - offset;
 }
+template <Float T> constexpr T InverseLogLerp(const T v0, const T v1, const T value)
+{
+    const T offset = T(1) - Min(v0, v1);
+    const T a = v0 + offset;
+    const T b = v1 + offset;
+    return Log((value + offset) / a, b / a);
+}
+
 template <typename T> constexpr T LinearMap(const T value, const T min0, const T max0, const T min1, const T max1)
 {
-    return LinearLerp(min1, max1, (value - min0) / (max0 - min0));
+    const T t = InverseLinearLerp(min0, max0, value);
+    return LinearLerp(min1, max1, t);
 }
 template <typename T> constexpr T LogMap(const T value, const T min0, const T max0, const T min1, const T max1)
 {
-    return LogLerp(min1, max1, (value - min0) / (max0 - min0));
+    const T t = InverseLinearLerp(min0, max0, value);
+    return LogLerp(min1, max1, t);
+}
+template <typename T> constexpr T InverseLogMap(const T value, const T min0, const T max0, const T min1, const T max1)
+{
+    const T t = InverseLogLerp(min0, max0, value);
+    return LinearLerp(min1, max1, t);
 }
 
 // TODO: Adapt so SIMD
@@ -183,6 +210,35 @@ constexpr ten<T, N0, N...> LinearLerp(const T v0, const T v1, const ten<T, N0, N
     return result;
 }
 template <Float T, usize N0, usize... N>
+constexpr ten<T, N0, N...> InverseLinearLerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1,
+                                             const ten<T, N0, N...> &v)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result.Flat[i] = InverseLinearLerp(tensor0.Flat[i], tensor1.Flat[i], v.Flat[i]);
+    return result;
+}
+template <Float T, usize N0, usize... N>
+constexpr ten<T, N0, N...> InverseLinearLerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1,
+                                             const T v)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result.Flat[i] = InverseLinearLerp(tensor0.Flat[i], tensor1.Flat[i], v);
+    return result;
+}
+template <Float T, usize N0, usize... N>
+constexpr ten<T, N0, N...> InverseLinearLerp(const T v0, const T v1, const ten<T, N0, N...> &v)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result.Flat[i] = InverseLinearLerp(v0, v1, v.Flat[i]);
+    return result;
+}
+template <Float T, usize N0, usize... N>
 constexpr ten<T, N0, N...> LogLerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1,
                                    const ten<T, N0, N...> &t)
 {
@@ -211,6 +267,34 @@ constexpr ten<T, N0, N...> LogLerp(const T v0, const T v1, const ten<T, N0, N...
     return result;
 }
 template <Float T, usize N0, usize... N>
+constexpr ten<T, N0, N...> InverseLogLerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1,
+                                          const ten<T, N0, N...> &v)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result.Flat[i] = InverseLogLerp(tensor0.Flat[i], tensor1.Flat[i], v.Flat[i]);
+    return result;
+}
+template <Float T, usize N0, usize... N>
+constexpr ten<T, N0, N...> InverseLogLerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1, const T v)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result.Flat[i] = InverseLogLerp(tensor0.Flat[i], tensor1.Flat[i], v);
+    return result;
+}
+template <Float T, usize N0, usize... N>
+constexpr ten<T, N0, N...> InverseLogLerp(const T v0, const T v1, const ten<T, N0, N...> &v)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result.Flat[i] = InverseLogLerp(v0, v1, v.Flat[i]);
+    return result;
+}
+template <Float T, usize N0, usize... N>
 constexpr ten<T, N0, N...> LinearMap(const ten<T, N0, N...> &tensor, const ten<T, N0, N...> &min0,
                                      const ten<T, N0, N...> &max0, const ten<T, N0, N...> &min1,
                                      const ten<T, N0, N...> &max1)
@@ -228,13 +312,26 @@ constexpr ten<T, N0, N...> LogMap(const ten<T, N0, N...> &tensor, const ten<T, N
                                   const ten<T, N0, N...> &max0, const ten<T, N0, N...> &min1,
                                   const ten<T, N0, N...> &max1)
 {
-    return LogLerp(min1, max1, (tensor - min0) / (max0 - min0));
+    return LogMap(min1, max1, (tensor - min0) / (max0 - min0));
 }
 template <Float T, std::convertible_to<T> U, usize N0, usize... N>
 constexpr ten<T, N0, N...> LogMap(const ten<T, N0, N...> &tensor, const U min0, const U max0, const U min1,
                                   const U max1)
 {
-    return LogLerp(min1, max1, (tensor - min0) / (max0 - min0));
+    return LogMap(min1, max1, (tensor - min0) / (max0 - min0));
+}
+template <Float T, usize N0, usize... N>
+constexpr ten<T, N0, N...> InverseLogMap(const ten<T, N0, N...> &tensor, const ten<T, N0, N...> &min0,
+                                         const ten<T, N0, N...> &max0, const ten<T, N0, N...> &min1,
+                                         const ten<T, N0, N...> &max1)
+{
+    return InverseLogMap(min1, max1, (tensor - min0) / (max0 - min0));
+}
+template <Float T, std::convertible_to<T> U, usize N0, usize... N>
+constexpr ten<T, N0, N...> InverseLogMap(const ten<T, N0, N...> &tensor, const U min0, const U max0, const U min1,
+                                         const U max1)
+{
+    return InverseLogMap(min1, max1, (tensor - min0) / (max0 - min0));
 }
 
 template <Float T = f32> constexpr T Pi()
