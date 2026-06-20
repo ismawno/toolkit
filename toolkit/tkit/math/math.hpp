@@ -10,7 +10,7 @@ namespace TKit::Math
 using Detail::SquareRoot;
 
 // TODO: Adapt so SIMD
-template <typename T, usize N0, usize... N> constexpr ten<T, N0, N...> SquareRoot(const ten<T, N0, N...> &tensor)
+template <Float T, usize N0, usize... N> constexpr ten<T, N0, N...> SquareRoot(const ten<T, N0, N...> &tensor)
 {
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
@@ -47,20 +47,33 @@ template <typename T> constexpr T Map(const T value, const T min0, const T max0,
     return min1 + (value - min0) * (max1 - min1) / (max0 - min0);
 }
 
-template <typename T> constexpr T Pow(const T value, const T power)
+template <Float T> constexpr T Power(const T value, const T power)
 {
-    return pow(value, power);
+    return std::pow(value, power);
 }
-template <typename T> constexpr T LinearLerp(const T v0, const T v1, const T t)
+template <Float T> constexpr T Round(const T value)
+{
+    return std::round(value);
+}
+template <Float T> constexpr T Round(const T value, const T step)
+{
+    return Round(value / step) * step;
+}
+template <Float T> constexpr T Round(const T value, const u32 decimals)
+{
+    const T scale = Power(T(10), T(decimals));
+    return Round(value * scale) / scale;
+}
+template <Float T> constexpr T LinearLerp(const T v0, const T v1, const T t)
 {
     return v0 + (v1 - v0) * t;
 }
-template <typename T> constexpr T LogLerp(const T v0, const T v1, const T t)
+template <Float T> constexpr T LogLerp(const T v0, const T v1, const T t)
 {
     const T offset = T(1) - Min(v0, v1);
     const T a = v0 + offset;
     const T b = v1 + offset;
-    return a * Pow(b / a, t) - offset;
+    return a * Power(b / a, t) - offset;
 }
 
 // TODO: Adapt so SIMD
@@ -120,37 +133,36 @@ constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &tensor, const U min, co
         result.Flat[i] = Clamp(tensor.Flat[i], T(min), T(max));
     return result;
 }
-template <typename T, usize N0, usize... N>
+template <Float T, usize N0, usize... N>
 constexpr ten<T, N0, N...> Map(const ten<T, N0, N...> &tensor, const ten<T, N0, N...> &min0,
                                const ten<T, N0, N...> &max0, const ten<T, N0, N...> &min1, const ten<T, N0, N...> &max1)
 {
     return min1 + (tensor - min0) * (max1 - min1) / (max0 - min0);
 }
-template <typename T, std::convertible_to<T> U, usize N0, usize... N>
+template <Float T, std::convertible_to<T> U, usize N0, usize... N>
 constexpr ten<T, N0, N...> Map(const ten<T, N0, N...> &tensor, const U min0, const U max0, const U min1, const U max1)
 {
     return min1 + (tensor - min0) * (max1 - min1) / (max0 - min0);
 }
 
-template <typename T, usize N0, usize... N>
-constexpr ten<T, N0, N...> Pow(const ten<T, N0, N...> &tensor, const ten<T, N0, N...> &power)
+template <Float T, usize N0, usize... N>
+constexpr ten<T, N0, N...> Power(const ten<T, N0, N...> &tensor, const ten<T, N0, N...> &power)
 {
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = Pow(tensor.Flat[i], power.Flat[i]);
+        result.Flat[i] = Power(tensor.Flat[i], power.Flat[i]);
     return result;
 }
-template <typename T, usize N0, usize... N>
-constexpr ten<T, N0, N...> Pow(const ten<T, N0, N...> &tensor, const T power)
+template <Float T, usize N0, usize... N> constexpr ten<T, N0, N...> Power(const ten<T, N0, N...> &tensor, const T power)
 {
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = Pow(tensor.Flat[i], power);
+        result.Flat[i] = Power(tensor.Flat[i], power);
     return result;
 }
-template <typename T, usize N0, usize... N>
+template <Float T, usize N0, usize... N>
 constexpr ten<T, N0, N...> LinearLerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1,
                                       const ten<T, N0, N...> &t)
 {
@@ -160,7 +172,7 @@ constexpr ten<T, N0, N...> LinearLerp(const ten<T, N0, N...> &tensor0, const ten
         result.Flat[i] = LinearLerp(tensor0.Flat[i], tensor1.Flat[i], t.Flat[i]);
     return result;
 }
-template <typename T, usize N0, usize... N>
+template <Float T, usize N0, usize... N>
 constexpr ten<T, N0, N...> LinearLerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1, const T t)
 {
     ten<T, N0, N...> result;
@@ -169,7 +181,7 @@ constexpr ten<T, N0, N...> LinearLerp(const ten<T, N0, N...> &tensor0, const ten
         result.Flat[i] = LinearLerp(tensor0.Flat[i], tensor1.Flat[i], t);
     return result;
 }
-template <typename T, usize N0, usize... N>
+template <Float T, usize N0, usize... N>
 constexpr ten<T, N0, N...> LogLerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1,
                                    const ten<T, N0, N...> &t)
 {
@@ -179,7 +191,7 @@ constexpr ten<T, N0, N...> LogLerp(const ten<T, N0, N...> &tensor0, const ten<T,
         result.Flat[i] = LogLerp(tensor0.Flat[i], tensor1.Flat[i], t.Flat[i]);
     return result;
 }
-template <typename T, usize N0, usize... N>
+template <Float T, usize N0, usize... N>
 constexpr ten<T, N0, N...> LogLerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1, const T t)
 {
     ten<T, N0, N...> result;
@@ -189,15 +201,15 @@ constexpr ten<T, N0, N...> LogLerp(const ten<T, N0, N...> &tensor0, const ten<T,
     return result;
 }
 
-template <typename T = f32> constexpr T Pi()
+template <Float T = f32> constexpr T Pi()
 {
     return T(3.14159265358979323846);
 }
-template <typename T> constexpr T Radians(const T degrees)
+template <Float T> constexpr T Radians(const T degrees)
 {
     return degrees * (Pi<T>() / 180.f);
 }
-template <typename T> constexpr T Degrees(const T radians)
+template <Float T> constexpr T Degrees(const T radians)
 {
     return radians * (180.f / Pi<T>());
 }
@@ -205,37 +217,37 @@ template <typename T> constexpr T Absolute(const T value)
 {
     return std::abs(value);
 }
-template <typename T> constexpr T Cosine(const T value)
+template <Float T> constexpr T Cosine(const T value)
 {
     return std::cos(value);
 }
-template <typename T> constexpr T Sine(const T value)
+template <Float T> constexpr T Sine(const T value)
 {
     return std::sin(value);
 }
-template <typename T> constexpr T Tangent(const T value)
+template <Float T> constexpr T Tangent(const T value)
 {
     return std::tan(value);
 }
-template <typename T> constexpr T AntiCosine(const T value)
+template <Float T> constexpr T AntiCosine(const T value)
 {
     return std::acos(value);
 }
-template <typename T> constexpr T AntiSine(const T value)
+template <Float T> constexpr T AntiSine(const T value)
 {
     return std::asin(value);
 }
-template <typename T> constexpr T AntiTangent(const T value)
+template <Float T> constexpr T AntiTangent(const T value)
 {
     return std::atan(value);
 }
-template <typename T> constexpr T AntiTangent(const T y, const T x)
+template <Float T> constexpr T AntiTangent(const T y, const T x)
 {
     return std::atan2(y, x);
 }
 
 #define CREATE_MATH_TENSOR_FUNC(name)                                                                                  \
-    template <typename T, usize N0, usize... N> constexpr ten<T, N0, N...> name(const ten<T, N0, N...> &tensor)        \
+    template <Float T, usize N0, usize... N> constexpr ten<T, N0, N...> name(const ten<T, N0, N...> &tensor)           \
     {                                                                                                                  \
         ten<T, N0, N...> result;                                                                                       \
         constexpr usize size = N0 * (N * ... * 1);                                                                     \
@@ -254,7 +266,7 @@ CREATE_MATH_TENSOR_FUNC(AntiCosine)
 CREATE_MATH_TENSOR_FUNC(AntiSine)
 CREATE_MATH_TENSOR_FUNC(AntiTangent)
 
-template <typename T, usize N0, usize... N>
+template <Float T, usize N0, usize... N>
 constexpr ten<T, N0, N...> AntiTangent(const ten<T, N0, N...> &y, const ten<T, N0, N...> &x)
 {
     ten<T, N0, N...> sn;
@@ -264,7 +276,7 @@ constexpr ten<T, N0, N...> AntiTangent(const ten<T, N0, N...> &y, const ten<T, N
     return sn;
 }
 
-template <typename T> constexpr bool ApproachesZero(const T value, const T epsilon = Limits<T>::Epsilon())
+template <Float T> constexpr bool ApproachesZero(const T value, const T epsilon = Limits<T>::Epsilon())
 {
     if constexpr (Float<T>)
         return Absolute(value) <= epsilon;
@@ -272,12 +284,12 @@ template <typename T> constexpr bool ApproachesZero(const T value, const T epsil
         return value == T(0);
 }
 
-template <typename T> constexpr bool Approximately(const T left, const T right, const T epsilon = Limits<T>::Epsilon())
+template <Float T> constexpr bool Approximately(const T left, const T right, const T epsilon = Limits<T>::Epsilon())
 {
     return ApproachesZero(left - right, epsilon);
 }
 
-template <typename T, usize N0, usize... N>
+template <Float T, usize N0, usize... N>
 constexpr bool ApproachesZero(const ten<T, N0, N...> &tensor, const T epsilon = Limits<T>::Epsilon())
 {
     constexpr usize size = (N0 * ... * N);
@@ -286,7 +298,7 @@ constexpr bool ApproachesZero(const ten<T, N0, N...> &tensor, const T epsilon = 
             return false;
     return true;
 }
-template <typename T, usize N0, usize... N>
+template <Float T, usize N0, usize... N>
 constexpr bool Approximately(const ten<T, N0, N...> &lhs, const ten<T, N0, N...> &rhs,
                              const T epsilon = Limits<T>::Epsilon())
 {

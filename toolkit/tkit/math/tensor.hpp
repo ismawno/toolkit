@@ -45,7 +45,7 @@ template <typename T, usize N0, usize... N> struct Parent
     using Type = Math::Tensor<T, N0, N...>;
 };
 
-template <typename T> constexpr T SquareRoot(const T value)
+template <Float T> constexpr T SquareRoot(const T value)
 {
 #ifdef TKIT_COMPILER_MSVC
     if constexpr (std::same_as<T, f32>)
