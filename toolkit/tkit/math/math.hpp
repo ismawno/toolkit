@@ -42,11 +42,6 @@ template <typename T> constexpr T Clamp(const T value, const T min, const T max)
     return std::clamp(value, min, max);
 }
 
-template <typename T> constexpr T Map(const T value, const T min0, const T max0, const T min1, const T max1)
-{
-    return min1 + (value - min0) * (max1 - min1) / (max0 - min0);
-}
-
 template <Float T> constexpr T Power(const T value, const T power)
 {
     return std::pow(value, power);
@@ -74,6 +69,14 @@ template <Float T> constexpr T LogLerp(const T v0, const T v1, const T t)
     const T a = v0 + offset;
     const T b = v1 + offset;
     return a * Power(b / a, t) - offset;
+}
+template <typename T> constexpr T LinearMap(const T value, const T min0, const T max0, const T min1, const T max1)
+{
+    return LinearLerp(min1, max1, (value - min0) / (max0 - min0));
+}
+template <typename T> constexpr T LogMap(const T value, const T min0, const T max0, const T min1, const T max1)
+{
+    return LogLerp(min1, max1, (value - min0) / (max0 - min0));
 }
 
 // TODO: Adapt so SIMD
@@ -133,17 +136,6 @@ constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &tensor, const U min, co
         result.Flat[i] = Clamp(tensor.Flat[i], T(min), T(max));
     return result;
 }
-template <Float T, usize N0, usize... N>
-constexpr ten<T, N0, N...> Map(const ten<T, N0, N...> &tensor, const ten<T, N0, N...> &min0,
-                               const ten<T, N0, N...> &max0, const ten<T, N0, N...> &min1, const ten<T, N0, N...> &max1)
-{
-    return min1 + (tensor - min0) * (max1 - min1) / (max0 - min0);
-}
-template <Float T, std::convertible_to<T> U, usize N0, usize... N>
-constexpr ten<T, N0, N...> Map(const ten<T, N0, N...> &tensor, const U min0, const U max0, const U min1, const U max1)
-{
-    return min1 + (tensor - min0) * (max1 - min1) / (max0 - min0);
-}
 
 template <Float T, usize N0, usize... N>
 constexpr ten<T, N0, N...> Power(const ten<T, N0, N...> &tensor, const ten<T, N0, N...> &power)
@@ -182,6 +174,15 @@ constexpr ten<T, N0, N...> LinearLerp(const ten<T, N0, N...> &tensor0, const ten
     return result;
 }
 template <Float T, usize N0, usize... N>
+constexpr ten<T, N0, N...> LinearLerp(const T v0, const T v1, const ten<T, N0, N...> &t)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result.Flat[i] = LinearLerp(v0, v1, t.Flat[i]);
+    return result;
+}
+template <Float T, usize N0, usize... N>
 constexpr ten<T, N0, N...> LogLerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1,
                                    const ten<T, N0, N...> &t)
 {
@@ -199,6 +200,41 @@ constexpr ten<T, N0, N...> LogLerp(const ten<T, N0, N...> &tensor0, const ten<T,
     for (usize i = 0; i < size; ++i)
         result.Flat[i] = LogLerp(tensor0.Flat[i], tensor1.Flat[i], t);
     return result;
+}
+template <Float T, usize N0, usize... N>
+constexpr ten<T, N0, N...> LogLerp(const T v0, const T v1, const ten<T, N0, N...> &t)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result.Flat[i] = LogLerp(v0, v1, t.Flat[i]);
+    return result;
+}
+template <Float T, usize N0, usize... N>
+constexpr ten<T, N0, N...> LinearMap(const ten<T, N0, N...> &tensor, const ten<T, N0, N...> &min0,
+                                     const ten<T, N0, N...> &max0, const ten<T, N0, N...> &min1,
+                                     const ten<T, N0, N...> &max1)
+{
+    return LinearLerp(min1, max1, (tensor - min0) / (max0 - min0));
+}
+template <Float T, std::convertible_to<T> U, usize N0, usize... N>
+constexpr ten<T, N0, N...> LinearMap(const ten<T, N0, N...> &tensor, const U min0, const U max0, const U min1,
+                                     const U max1)
+{
+    return LinearLerp(min1, max1, (tensor - min0) / (max0 - min0));
+}
+template <Float T, usize N0, usize... N>
+constexpr ten<T, N0, N...> LogMap(const ten<T, N0, N...> &tensor, const ten<T, N0, N...> &min0,
+                                  const ten<T, N0, N...> &max0, const ten<T, N0, N...> &min1,
+                                  const ten<T, N0, N...> &max1)
+{
+    return LogLerp(min1, max1, (tensor - min0) / (max0 - min0));
+}
+template <Float T, std::convertible_to<T> U, usize N0, usize... N>
+constexpr ten<T, N0, N...> LogMap(const ten<T, N0, N...> &tensor, const U min0, const U max0, const U min1,
+                                  const U max1)
+{
+    return LogLerp(min1, max1, (tensor - min0) / (max0 - min0));
 }
 
 template <Float T = f32> constexpr T Pi()
