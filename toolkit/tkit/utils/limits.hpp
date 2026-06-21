@@ -12,8 +12,6 @@
 
 #define TKIT_F32_MIN TKit::Limits<f32>::Min()
 #define TKIT_F64_MIN TKit::Limits<f64>::Min()
-#define TKIT_F32_LOWEST TKit::Limits<f32>::Lowest()
-#define TKIT_F64_LOWEST TKit::Limits<f64>::Lowest()
 
 #define TKIT_U8_MIN TKit::Limits<u8>::Min()
 #define TKIT_U16_MIN TKit::Limits<u16>::Min()
@@ -51,7 +49,10 @@ template <typename T> struct Limits
 {
     static constexpr T Min()
     {
-        return std::numeric_limits<T>::min();
+        if constexpr (Float<T>)
+            return std::numeric_limits<T>::lowest();
+        else
+            return std::numeric_limits<T>::min();
     }
     static constexpr T Max()
     {
@@ -63,7 +64,10 @@ template <typename T> struct Limits
     }
     static constexpr T Lowest()
     {
-        return std::numeric_limits<T>::lowest();
+        if constexpr (Float<T>)
+            return std::numeric_limits<T>::min();
+        else
+            return std::numeric_limits<T>::lowest();
     }
 };
 
