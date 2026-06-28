@@ -360,6 +360,10 @@ template <typename K, typename V, typename AllocState> class HashMap
     {
         return m_Size;
     }
+    constexpr usize GetBucketCount() const
+    {
+        return m_Buckets.GetSize();
+    }
 
     constexpr ConstIterator begin() const
     {
