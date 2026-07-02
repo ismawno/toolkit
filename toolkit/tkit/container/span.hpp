@@ -277,6 +277,7 @@ template <typename T> class Span
 
     // === Substrings / Slicing ===
 
+    // TODO(Isma, 02/07/26): Should maybe implement a general "SubView()" method
     constexpr Span SubString(const usize pos, const usize count = npos) const
         requires(IsString)
     {
