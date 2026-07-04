@@ -26,12 +26,18 @@
 #ifdef TKIT_ENABLE_ASSERTS
 namespace TKit::Detail
 {
+#    ifdef TKIT_ENABLE_STACK_TRACE
 void PrintStackTrace();
+#        define TKIT_PRINT_STACK_TRACE() TKit::Detail::PrintStackTrace()
+#    else
+#        define TKIT_PRINT_STACK_TRACE()
+#    endif
+
 template <typename... Args>
 void LogAndBreak(const char *level, const char *color, const char *file, const i32 line,
                  const fmt::format_string<Args...> message, Args &&...args)
 {
-    PrintStackTrace();
+    TKIT_PRINT_STACK_TRACE();
     Log(message, level, color, file, line, std::forward<Args>(args)...);
     TKIT_DEBUG_BREAK();
 }
