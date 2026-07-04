@@ -27,17 +27,17 @@
 namespace TKit::Detail
 {
 #    ifdef TKIT_ENABLE_STACK_TRACE
-void PrintStackTrace();
-#        define TKIT_PRINT_STACK_TRACE() TKit::Detail::PrintStackTrace()
+void PrintStackTrace(u32 skip);
+#        define TKIT_PRINT_STACK_TRACE(skip) TKit::Detail::PrintStackTrace(skip)
 #    else
-#        define TKIT_PRINT_STACK_TRACE()
+#        define TKIT_PRINT_STACK_TRACE(skip)
 #    endif
 
 template <typename... Args>
 void LogAndBreak(const char *level, const char *color, const char *file, const i32 line,
                  const fmt::format_string<Args...> message, Args &&...args)
 {
-    TKIT_PRINT_STACK_TRACE();
+    TKIT_PRINT_STACK_TRACE(1);
     Log(message, level, color, file, line, std::forward<Args>(args)...);
     TKIT_DEBUG_BREAK();
 }

@@ -8,22 +8,22 @@
 namespace TKit::Detail
 {
 #ifdef TKIT_ENABLE_STACK_TRACE
-void PrintStackTrace()
+void PrintStackTrace(const u32 skip)
 {
-    cpptrace::generate_trace(2).print_with_snippets();
+    cpptrace::generate_trace(skip).print_with_snippets();
 }
 #endif
 
 void LogAndBreak(const char *level, const char *color, const char *file, const i32 line)
 {
-    TKIT_PRINT_STACK_TRACE();
+    TKIT_PRINT_STACK_TRACE(2);
     Log("[TOOLKIT] Assertion failed!", level, color, file, line);
     TKIT_DEBUG_BREAK();
 }
 void CheckOutOfBounds(const char *level, const char *color, const char *file, const i32 line, const usize index,
                       const usize size, const std::string_view head)
 {
-    TKIT_PRINT_STACK_TRACE();
+    TKIT_PRINT_STACK_TRACE(2);
     if (size > 0)
         Log("{}Out of bounds error. Trying to access a container with an illegal index ({} >= {}). Index must be "
             "smaller than size",
