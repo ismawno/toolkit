@@ -26,10 +26,12 @@
 #ifdef TKIT_ENABLE_ASSERTS
 namespace TKit::Detail
 {
+void PrintStackTrace();
 template <typename... Args>
 void LogAndBreak(const char *level, const char *color, const char *file, const i32 line,
                  const fmt::format_string<Args...> message, Args &&...args)
 {
+    PrintStackTrace();
     Log(message, level, color, file, line, std::forward<Args>(args)...);
     TKIT_DEBUG_BREAK();
 }

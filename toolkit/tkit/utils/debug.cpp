@@ -1,16 +1,23 @@
 #include "tkit/core/pch.hpp"
 #include "tkit/utils/debug.hpp"
+#include <cpptrace/cpptrace.hpp>
 
 namespace TKit::Detail
 {
+void PrintStackTrace()
+{
+    cpptrace::generate_trace(2).print_with_snippets();
+}
 void LogAndBreak(const char *level, const char *color, const char *file, const i32 line)
 {
+    PrintStackTrace();
     Log("[TOOLKIT] Assertion failed!", level, color, file, line);
     TKIT_DEBUG_BREAK();
 }
 void CheckOutOfBounds(const char *level, const char *color, const char *file, const i32 line, const usize index,
                       const usize size, const std::string_view head)
 {
+    PrintStackTrace();
     if (size > 0)
         Log("{}Out of bounds error. Trying to access a container with an illegal index ({} >= {}). Index must be "
             "smaller than size",
