@@ -3,6 +3,7 @@
 #include "tkit/utils/bit.hpp"
 #include "tkit/utils/debug.hpp"
 #include "tkit/math/math.hpp"
+#include "tkit/profiling/macros.hpp"
 
 namespace TKit
 {
@@ -325,6 +326,8 @@ void *TierAllocator::allocate(const usize tierIndex, const usz size)
 
     Allocation *alloc = tier.FreeList;
     tier.FreeList = alloc->Next;
+
+    TKIT_PROFILE_MARK_POOL_ALLOCATION("tier-allocator", alloc, size);
     return alloc;
 }
 void *TierAllocator::Allocate(const usz size)
@@ -350,6 +353,7 @@ void TierAllocator::Deallocate(void *ptr, const usz size)
                 index, size, tier.Allocations, tier.Deallocations);
 
     Allocation *alloc = scast<Allocation *>(ptr);
+    TKIT_PROFILE_MARK_POOL_DEALLOCATION("tier-allocator", alloc);
     alloc->Next = tier.FreeList;
     tier.FreeList = alloc;
 }

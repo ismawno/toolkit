@@ -2,6 +2,7 @@
 #include "tkit/memory/stack_allocator.hpp"
 #include "tkit/memory/memory.hpp"
 #include "tkit/utils/bit.hpp"
+#include "tkit/profiling/macros.hpp"
 
 namespace TKit
 {
@@ -77,6 +78,7 @@ void *StackAllocator::Allocate(const usz size)
     m_Top += asize;
     TKIT_ASSERT(IsAligned(ptr, m_Alignment),
                 "[TOOLKIT][STACK-ALLOC] Allocated memory is not aligned to specified alignment");
+    TKIT_PROFILE_MARK_POOL_ALLOCATION("stack-allocator", ptr, asize);
     return ptr;
 }
 
@@ -84,6 +86,7 @@ void StackAllocator::Deallocate([[maybe_unused]] const void *ptr, const usz size
 {
     TKIT_ASSERT(ptr, "[TOOLKIT][STACK-ALLOC] Cannot deallocate a null pointer");
     TKIT_ASSERT(m_Top != 0, "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is empty");
+    TKIT_PROFILE_MARK_POOL_DEALLOCATION("stack-allocator", ptr);
     m_Top -= NextAlignedSize(size, m_Alignment);
     TKIT_ASSERT(m_Buffer + m_Top == ptr,
                 "[TOOLKIT][STACK-ALLOC] Elements must be deallocated in the reverse order they were allocated");

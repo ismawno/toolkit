@@ -63,13 +63,13 @@ void PopTier()
 void *Allocate(const usz size)
 {
     void *ptr = malloc(size);
-    TKIT_PROFILE_MARK_ALLOCATION(ptr, size);
+    TKIT_PROFILE_MARK_HEAP_ALLOCATION(ptr, size);
     return ptr;
 }
 
 void Deallocate(void *ptr)
 {
-    TKIT_PROFILE_MARK_DEALLOCATION(ptr);
+    TKIT_PROFILE_MARK_HEAP_DEALLOCATION(ptr);
     free(ptr);
 }
 
@@ -83,13 +83,13 @@ void *AllocateAligned(const usz size, usize alignment)
     int result = posix_memalign(&ptr, alignment, size);
     TKIT_UNUSED(result); // Sould do something with this at some point
 #endif
-    TKIT_PROFILE_MARK_ALLOCATION(ptr, size);
+    TKIT_PROFILE_MARK_HEAP_ALLOCATION(ptr, size);
     return ptr;
 }
 
 void DeallocateAligned(void *ptr)
 {
-    TKIT_PROFILE_MARK_DEALLOCATION(ptr);
+    TKIT_PROFILE_MARK_HEAP_DEALLOCATION(ptr);
 #ifdef TKIT_OS_WINDOWS
     _aligned_free(ptr);
 #else

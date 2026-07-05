@@ -43,11 +43,11 @@ using ProfilingPlotFormat = tracy::PlotFormatType;
 #    define TKIT_PROFILE_DECLARE_SHARED_MUTEX(type, mutexName) TracySharedLockable(type, mutexName)
 #    define TKIT_PROFILE_MARK_LOCK(lock) LockMark(lock)
 
-#    define TKIT_PROFILE_MARK_ALLOCATION(ptr, size) TracyAlloc(ptr, size)
-#    define TKIT_PROFILE_MARK_DEALLOCATION(ptr) TracyFree(ptr)
+#    define TKIT_PROFILE_MARK_HEAP_ALLOCATION(ptr, size) TracyAlloc(ptr, size)
+#    define TKIT_PROFILE_MARK_HEAP_DEALLOCATION(ptr) TracyFree(ptr)
 
-#    define TKIT_PROFILE_MARK_POOLED_ALLOCATION(name, ptr, size) TracyAllocN(ptr, size, name)
-#    define TKIT_PROFILE_MARK_POOLED_DEALLOCATION(name, ptr) TracyFreeN(ptr, name)
+#    define TKIT_PROFILE_MARK_POOL_ALLOCATION(name, ptr, size) TracyAllocN(ptr, size, name)
+#    define TKIT_PROFILE_MARK_POOL_DEALLOCATION(name, ptr) TracyFreeN(ptr, name)
 
 #    define TKIT_PROFILE_PLOT(name, value) TracyPlot(name, value)
 #    define TKIT_PROFILE_PLOT_CONFIG(name, format, step, fill, color) TracyPlotConfig(name, format, step, fill, color)
@@ -81,11 +81,11 @@ using ProfilingPlotFormat = tracy::PlotFormatType;
 
 #    define TKIT_PROFILE_MARK_LOCK(lock)
 
-#    define TKIT_PROFILE_MARK_ALLOCATION(ptr, size)
-#    define TKIT_PROFILE_MARK_DEALLOCATION(ptr)
+#    define TKIT_PROFILE_MARK_HEAP_ALLOCATION(ptr, size)
+#    define TKIT_PROFILE_MARK_HEAP_DEALLOCATION(ptr)
 
-#    define TKIT_PROFILE_MARK_POOLED_ALLOCATION(name, ptr, size)
-#    define TKIT_PROFILE_MARK_POOLED_DEALLOCATION(name, ptr)
+#    define TKIT_PROFILE_MARK_POOL_ALLOCATION(name, ptr, size)
+#    define TKIT_PROFILE_MARK_POOL_DEALLOCATION(name, ptr)
 
 #    define TKIT_PROFILE_PLOT(name, value)
 #    define TKIT_PROFILE_PLOT_CONFIG(name, format, step, fill, color)

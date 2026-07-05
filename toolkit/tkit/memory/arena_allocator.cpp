@@ -2,6 +2,7 @@
 #include "tkit/memory/arena_allocator.hpp"
 #include "tkit/utils/debug.hpp"
 #include "tkit/utils/bit.hpp"
+#include "tkit/profiling/macros.hpp"
 
 namespace TKit
 {
@@ -73,6 +74,7 @@ void *ArenaAllocator::Allocate(const usz size)
     m_Top += asize;
     TKIT_ASSERT(IsAligned(ptr, m_Alignment),
                 "[TOOLKIT][ARENA-ALLOC] Allocated memory is not aligned to specified alignment");
+    TKIT_PROFILE_MARK_POOL_ALLOCATION("arena-allocator", ptr, asize);
     return ptr;
 }
 
