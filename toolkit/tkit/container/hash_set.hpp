@@ -416,7 +416,8 @@ template <typename K, typename AllocState> class HashSet
 
     constexpr usize rehash()
     {
-        return rehash(Container::GrowthFactor(m_Buckets.GetSize()));
+        const usize size = m_Buckets.GetSize();
+        return rehash(size == 0 ? 16 : (2 * size));
     }
 
     constexpr usize rehash(const usize nbuckets)
