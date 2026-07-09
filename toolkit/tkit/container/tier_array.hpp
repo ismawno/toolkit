@@ -109,8 +109,7 @@ template <typename T> struct TierAllocation
     }
     void GrowCapacity(const usize size)
     {
-        using Tools = Container::ArrayTools<T>;
-        const usize capacity = Tools::GrowthFactor(size);
+        const usize capacity = Container::GrowthFactor(size);
         ModifyCapacity(capacity);
     }
 

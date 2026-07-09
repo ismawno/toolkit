@@ -244,6 +244,21 @@ template <typename K, typename AllocState> class HashSet
         node.State = HashNode_Occupied;
         return *Construct(node.GetKey(), key);
     }
+    template <typename... Args> constexpr const K *ShyInsert(const K &key)
+    {
+        const usz hash = Hash(key);
+        const usize idx = find<true>(key, hash);
+
+        Node &node = m_Buckets[idx];
+        if (node.State == HashNode_Occupied)
+            return nullptr;
+
+        maybeRehash();
+        ++m_Size;
+        node.Hash = hash;
+        node.State = HashNode_Occupied;
+        return Construct(node.GetKey(), key);
+    }
 
     constexpr ConstIterator Find(const K &key) const
     {
@@ -401,8 +416,7 @@ template <typename K, typename AllocState> class HashSet
 
     constexpr usize rehash()
     {
-        const usize size = m_Buckets.GetSize();
-        return rehash(size == 0 ? 16 : (2 * size));
+        return rehash(Container::GrowthFactor(m_Buckets.GetSize()));
     }
 
     constexpr usize rehash(const usize nbuckets)

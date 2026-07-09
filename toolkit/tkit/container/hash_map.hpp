@@ -284,6 +284,28 @@ template <typename K, typename V, typename AllocState> class HashMap
         return TryInsert(pair.Key, pair.Value);
     }
 
+    template <typename... Args>
+        requires std::constructible_from<V, Args...>
+    constexpr V *ShyInsert(const K &key, Args &&...args)
+    {
+        maybeRehash();
+        const usz hash = Hash(key);
+        const usize idx = find<true>(key, hash);
+
+        Node &node = m_Buckets[idx];
+        if (node.State == HashNode_Occupied)
+            return nullptr;
+
+        ++m_Size;
+        node.Hash = hash;
+        node.State = HashNode_Occupied;
+        return &Construct(node.GetEntry(), key, std::forward<Args>(args)...)->Value;
+    }
+    constexpr V *ShyInsert(const Pair &pair)
+    {
+        return ShyInsert(pair.Key, pair.Value);
+    }
+
     constexpr ConstIterator Find(const K &key) const
     {
         return ConstIterator{&m_Buckets, find(key, Hash(key))};
@@ -462,8 +484,7 @@ template <typename K, typename V, typename AllocState> class HashMap
 
     constexpr usize rehash()
     {
-        const usize size = m_Buckets.GetSize();
-        return rehash(size == 0 ? 16 : (2 * size));
+        return rehash(Container::GrowthFactor(m_Buckets.GetSize()));
     }
 
     constexpr usize rehash(const usize nbuckets)

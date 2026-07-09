@@ -11,6 +11,11 @@ concept Iterable = requires(T a) {
     { a.end() } -> std::input_iterator;
 };
 
+static constexpr usize GrowthFactor(const usize size)
+{
+    return 1 + size + size / 2;
+}
+
 template <typename T> struct ArrayTools
 {
     using ValueType = T;
@@ -155,11 +160,6 @@ template <typename T> struct ArrayTools
             ForwardCopy(pos, srcBegin, srcEnd);
         }
         return count;
-    }
-
-    static constexpr usize GrowthFactor(const usize size)
-    {
-        return 1 + size + size / 2;
     }
 
     static constexpr void RemoveOrdered(T *end, T *pos)
