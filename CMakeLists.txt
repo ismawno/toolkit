@@ -449,6 +449,7 @@ function(tkit_default_configure target)
       /wd4244
       /wd4661
       /wd4310
+      /wd4127
       NO_EXCEPTIONS
       NO_RTTI)
   else()
