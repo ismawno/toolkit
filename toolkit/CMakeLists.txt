@@ -281,7 +281,7 @@ if(TOOLKIT_ENABLE_ASSERTS)
       GIT_TAG v1.0.4
       GIT_SHALLOW TRUE)
 
-    FetchContent_MakeAvailable(cpptrace)
+    FetchContent_Populate(cpptrace)
     file(READ "${cpptrace_SOURCE_DIR}/CMakeLists.txt" cpptrace_cmake)
 
     # it is absolutely crazy we have to go all this way to disable modules (it
