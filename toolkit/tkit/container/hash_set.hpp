@@ -263,9 +263,11 @@ template <typename K, typename AllocState> class HashSet
         return Find(key) != end();
     }
 
-    constexpr void Remove(const Iterator iter)
+    constexpr Iterator Remove(const Iterator iter)
     {
         TKIT_ASSERT(m_Size != 0, "[TOOLKIT][HASH-SET] Cannot remove an element when the size is 0");
+        const Iterator next = iter.Next();
+
         Node &node = iter.m_Buckets->At(iter.m_Index);
         TKIT_ASSERT(node.State == HashNode_Occupied,
                     "[TOOLKIT][HASH-SET] Iterator must point to an occupied slot to be removed");
@@ -273,6 +275,7 @@ template <typename K, typename AllocState> class HashSet
         node.State = HashNode_Tombstone;
         Destruct(node.GetKey());
         --m_Size;
+        return next;
     }
 
     constexpr bool Remove(const K &key)
