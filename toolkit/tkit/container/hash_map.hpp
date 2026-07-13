@@ -60,7 +60,9 @@ template <typename K, typename V, typename AllocState> class HashMap
 
         IteratorImpl(BucketArray *buckets) : m_Buckets(buckets), m_Index(0)
         {
-            if (m_Buckets->At(m_Index).State != HashNode_Occupied)
+            if (m_Buckets->IsEmpty())
+                m_Index = TKIT_U32_MAX;
+            else if (m_Buckets->At(m_Index).State != HashNode_Occupied)
                 ++(*this);
         }
         IteratorImpl(BucketArray *buckets, const usize idx) : m_Buckets(buckets), m_Index(idx)
