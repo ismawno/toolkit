@@ -229,13 +229,17 @@ template <typename K, typename AllocState> class HashSet
         return *insert(Hash(key), key);
     }
 
-    template <typename... Args> constexpr const K &TryInsert(const K &key)
+    template <typename... Args> constexpr const K &TryInsert(const K &key, bool *didExist = nullptr)
     {
         const usz hash = Hash(key);
         const usize idx = find<true>(key, hash);
 
         Node &node = m_Buckets[idx];
-        if (node.State == HashNode_Occupied)
+        const bool occupied = node.State == HashNode_Occupied;
+        if (didExist)
+            *didExist = occupied;
+
+        if (occupied)
             return *node.GetKey();
 
         maybeRehash();
@@ -243,21 +247,6 @@ template <typename K, typename AllocState> class HashSet
         node.Hash = hash;
         node.State = HashNode_Occupied;
         return *Construct(node.GetKey(), key);
-    }
-    template <typename... Args> constexpr const K *ShyInsert(const K &key)
-    {
-        const usz hash = Hash(key);
-        const usize idx = find<true>(key, hash);
-
-        Node &node = m_Buckets[idx];
-        if (node.State == HashNode_Occupied)
-            return nullptr;
-
-        maybeRehash();
-        ++m_Size;
-        node.Hash = hash;
-        node.State = HashNode_Occupied;
-        return Construct(node.GetKey(), key);
     }
 
     constexpr ConstIterator Find(const K &key) const

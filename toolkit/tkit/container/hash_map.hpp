@@ -264,14 +264,18 @@ template <typename K, typename V, typename AllocState> class HashMap
 
     template <typename... Args>
         requires std::constructible_from<V, Args...>
-    constexpr V &TryInsert(const K &key, Args &&...args)
+    constexpr V &TryInsert(bool *didExist, const K &key, Args &&...args)
     {
         maybeRehash();
         const usz hash = Hash(key);
         const usize idx = find<true>(key, hash);
 
         Node &node = m_Buckets[idx];
-        if (node.State == HashNode_Occupied)
+        const bool occupied = node.State == HashNode_Occupied;
+        if (didExist)
+            *didExist = occupied;
+
+        if (occupied)
             return node.GetEntry()->Value;
 
         ++m_Size;
@@ -279,31 +283,15 @@ template <typename K, typename V, typename AllocState> class HashMap
         node.State = HashNode_Occupied;
         return Construct(node.GetEntry(), key, std::forward<Args>(args)...)->Value;
     }
-    constexpr V &TryInsert(const Pair &pair)
-    {
-        return TryInsert(pair.Key, pair.Value);
-    }
-
     template <typename... Args>
         requires std::constructible_from<V, Args...>
-    constexpr V *ShyInsert(const K &key, Args &&...args)
+    constexpr V &TryInsert(const K &key, Args &&...args)
     {
-        maybeRehash();
-        const usz hash = Hash(key);
-        const usize idx = find<true>(key, hash);
-
-        Node &node = m_Buckets[idx];
-        if (node.State == HashNode_Occupied)
-            return nullptr;
-
-        ++m_Size;
-        node.Hash = hash;
-        node.State = HashNode_Occupied;
-        return &Construct(node.GetEntry(), key, std::forward<Args>(args)...)->Value;
+        return TryInsert(nullptr, key, std::forward<Args>(args)...);
     }
-    constexpr V *ShyInsert(const Pair &pair)
+    constexpr V &TryInsert(const Pair &pair, bool *didExist = nullptr)
     {
-        return ShyInsert(pair.Key, pair.Value);
+        return TryInsert(didExist, pair.Key, pair.Value);
     }
 
     constexpr ConstIterator Find(const K &key) const
