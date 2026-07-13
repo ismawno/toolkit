@@ -68,6 +68,12 @@ template <typename K, typename AllocState> class HashSet
             return m_Buckets;
         }
 
+        IteratorImpl Next() const
+        {
+            IteratorImpl cpy = *this;
+            return ++cpy;
+        }
+
         const K &operator*() const
         {
             return *m_Buckets->At(m_Index).GetKey();
