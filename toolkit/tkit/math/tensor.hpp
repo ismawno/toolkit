@@ -187,12 +187,12 @@ struct Tensor
 
     constexpr const ChildType &At(const usize index) const
     {
-        TKIT_CHECK_OUT_OF_BOUNDS(index, N0, "[TOOLKIT][TENSOR] ");
+        TKIT_ASSERT_BOUNDS(index, N0, "[TOOLKIT][TENSOR] ");
         return Ranked[index];
     }
     constexpr ChildType &At(const usize index)
     {
-        TKIT_CHECK_OUT_OF_BOUNDS(index, N0, "[TOOLKIT][TENSOR] ");
+        TKIT_ASSERT_BOUNDS(index, N0, "[TOOLKIT][TENSOR] ");
         return Ranked[index];
     }
 
@@ -362,7 +362,7 @@ constexpr void SubTensorImpl(const Tensor<T, N0, N...> &tensor, Tensor<T, N0 - 1
     requires((N0 > 1) && ... && (N0 == N))
 {
     const usize first = usize(pfirst);
-    TKIT_CHECK_OUT_OF_BOUNDS(first, N0, "[TOOLKIT][TENSOR] ");
+    TKIT_ASSERT_BOUNDS(first, N0, "[TOOLKIT][TENSOR] ");
     for (usize i = 0, j = 0; i < N0; ++i)
         if (i != first)
         {

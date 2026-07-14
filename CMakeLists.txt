@@ -80,6 +80,12 @@ set(TOOLKIT_ENABLE_ERROR_LOGS
 set(TOOLKIT_ENABLE_ASSERTS
     OFF
     CACHE BOOL "")
+set(TOOLKIT_ASSERT_IS_ASSUME
+    OFF
+    CACHE BOOL "")
+set(TOOLKIT_ENABLE_ENSURE
+    OFF
+    CACHE BOOL "")
 set(TOOLKIT_ENABLE_STACK_TRACE
     OFF
     CACHE BOOL "")
@@ -437,6 +443,7 @@ function(tkit_default_configure target)
       -Werror
       -Wno-unknown-warning-option
       -Wno-unknown-pragmas
+      -Wno-assume
       NO_EXCEPTIONS
       NO_RTTI)
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")

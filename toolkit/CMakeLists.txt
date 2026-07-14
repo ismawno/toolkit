@@ -5,7 +5,7 @@ set(NAME toolkit)
 
 set(SOURCES tkit/core/pch.cpp tkit/memory/memory.cpp tkit/utils/logging.cpp)
 
-if(TOOLKIT_ENABLE_ASSERTS)
+if(TOOLKIT_ENABLE_ENSURE)
   list(APPEND SOURCES tkit/utils/debug.cpp)
 endif()
 
@@ -256,6 +256,14 @@ endif()
 
 if(TOOLKIT_ENABLE_ASSERTS)
   target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ASSERTS)
+endif()
+
+if(TOOLKIT_ENABLE_ASSERT_IS_ASSUME)
+  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ASSERT_IS_ASSUME)
+endif()
+
+if(TOOLKIT_ENABLE_ENSURE)
+  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ENSURE)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(toolkit PUBLIC /Zc:preprocessor)
   endif()

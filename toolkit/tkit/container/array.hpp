@@ -446,12 +446,12 @@ template <typename T, typename AllocState> class Array
     }
     constexpr const T &At(const usize index) const
     {
-        TKIT_CHECK_OUT_OF_BOUNDS(index, GetSize(), "[TOOLKIT][ARRAY] ");
+        TKIT_ASSERT_BOUNDS(index, GetSize(), "[TOOLKIT][ARRAY] ");
         return *(begin() + index);
     }
     constexpr T &At(const usize index)
     {
-        TKIT_CHECK_OUT_OF_BOUNDS(index, GetSize(), "[TOOLKIT][ARRAY] ");
+        TKIT_ASSERT_BOUNDS(index, GetSize(), "[TOOLKIT][ARRAY] ");
         return *(begin() + index);
     }
 

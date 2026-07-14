@@ -47,12 +47,12 @@ template <typename T, usize Capacity> struct FixedArray
 
     constexpr const T &At(const usize p_Index) const
     {
-        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, Capacity, "[TOOLKIT][ARRAY] ");
+        TKIT_ASSERT_BOUNDS(p_Index, Capacity, "[TOOLKIT][ARRAY] ");
         return Elements[p_Index];
     }
     constexpr T &At(const usize p_Index)
     {
-        TKIT_CHECK_OUT_OF_BOUNDS(p_Index, Capacity, "[TOOLKIT][ARRAY] ");
+        TKIT_ASSERT_BOUNDS(p_Index, Capacity, "[TOOLKIT][ARRAY] ");
         return Elements[p_Index];
     }
 

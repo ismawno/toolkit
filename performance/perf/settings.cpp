@@ -35,7 +35,6 @@ void LogSettings(const Settings &settings)
         const auto &setting = field1.Get(settings);
 
         TKit::Reflect<Type1>::ForEachMemberField([&setting](const auto &field2) {
-            using Type2 = TKIT_REFLECT_FIELD_TYPE(field2);
             const char *name = field2.Name;
             TKIT_LOG_INFO("     {}: {}", name, field2.Get(setting));
         });
@@ -66,11 +65,10 @@ Settings CreateSettings(int argc, char **argv)
         const auto &setting = field1.Get(settings);
 
         TKit::Reflect<Type1>::ForEachMemberField([&](const auto &field2) {
-            using Type2 = TKIT_REFLECT_FIELD_TYPE(field2);
             const std::string value = std::to_string(field2.Get(setting));
-            argparse::Argument &arg = parser.add_argument(cliName(name + field2.Name))
-                                          .template scan<'i', usize>()
-                                          .help("Auto generated settings argument. Default: " + value);
+            parser.add_argument(cliName(name + field2.Name))
+                .template scan<'i', usize>()
+                .help("Auto generated settings argument. Default: " + value);
         });
     });
 

@@ -11,9 +11,9 @@ void ITask::WaitUntilFinished() const
 
 void ITask::notifyCompleted()
 {
-#ifdef TKIT_ENABLE_ASSERTS
+#ifdef TKIT_ENABLE_ENSURE
     const bool flag = m_Finished.test_and_set(std::memory_order_release);
-    TKIT_ASSERT(!flag, "[TOOLKIT][TASK] Notifying an already completed task");
+    TKIT_ENSURE(!flag, "[TOOLKIT][TASK] Notifying an already completed task");
 #else
     m_Finished.test_and_set(std::memory_order_release);
 #endif

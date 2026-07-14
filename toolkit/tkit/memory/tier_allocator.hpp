@@ -242,7 +242,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     {
         std::byte *Buffer;
         Allocation *FreeList;
-#ifdef TKIT_ENABLE_ASSERTS
+#ifdef TKIT_ENABLE_ENSURE
         u64 Allocations = 0;
         u64 Deallocations = 0;
         usize Slots = 0;
@@ -251,7 +251,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 
     void *allocate(usize tierIndex, usz size);
     usize getTierIndex(usz size) const;
-#ifdef TKIT_ENABLE_ASSERTS
+#ifdef TKIT_ENABLE_ENSURE
     void setupMemoryLayout(const TierDescriptions &tiers, usize maxAlignment);
 #else
     void setupMemoryLayout(const TierDescriptions &tiers);
@@ -263,7 +263,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     usz m_BufferSize;
     usz m_MinAllocation;
     usize m_Granularity;
-#ifdef TKIT_ENABLE_ASSERTS
+#ifdef TKIT_ENABLE_ENSURE
     usz m_MaxAllocation;
 #endif
 };

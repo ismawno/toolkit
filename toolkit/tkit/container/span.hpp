@@ -110,12 +110,12 @@ template <typename T> class Span
 
     constexpr T &operator[](const usize index) const
     {
-        TKIT_CHECK_OUT_OF_BOUNDS(index, GetSize(), "[TOOLKIT][SPAN] ");
+        TKIT_ASSERT_BOUNDS(index, GetSize(), "[TOOLKIT][SPAN] ");
         return m_Data[index];
     }
     constexpr T &At(const usize index) const
     {
-        TKIT_CHECK_OUT_OF_BOUNDS(index, GetSize(), "[TOOLKIT][SPAN] ");
+        TKIT_ASSERT_BOUNDS(index, GetSize(), "[TOOLKIT][SPAN] ");
         return m_Data[index];
     }
 
