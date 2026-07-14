@@ -332,7 +332,7 @@ void *TierAllocator::allocate(const usize tierIndex, const usz size)
 }
 void *TierAllocator::Allocate(const usz size)
 {
-    TKIT_ASSERT(size <= m_MaxAllocation,
+    TKIT_ENSURE(size <= m_MaxAllocation,
                 "[TOOLKIT][TIER-ALLOC] Allocation of size {:L} bytes exceeds max allocation size of {:L}", size,
                 m_MaxAllocation);
     const usize index = getTierIndex(size);
