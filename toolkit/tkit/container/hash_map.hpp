@@ -415,7 +415,7 @@ template <typename K, typename V, typename AllocState> class HashMap
         for (Node &n : m_Buckets)
             n.State = HashNode_Free;
     }
-    template <bool GetFreeSpot = false> usize find(const K &key, const usz hash) const
+    template <bool GetInsertSpot = false> usize find(const K &key, const usz hash) const
     {
         const usize buckets = m_Buckets.GetSize();
         if (buckets == 0)
@@ -428,10 +428,15 @@ template <typename K, typename V, typename AllocState> class HashMap
             const Node &node = m_Buckets[i];
             if (node.State == HashNode_Free)
             {
-                if constexpr (GetFreeSpot)
-                    found = i;
+                if constexpr (GetInsertSpot)
+                    if (found == TKIT_USIZE_MAX)
+                        found = i;
                 return true;
             }
+            if constexpr (GetInsertSpot)
+                if (node.State == HashNode_Tombstone && found == TKIT_USIZE_MAX)
+                    found = i;
+
             if (node.State == HashNode_Tombstone || node.Hash != hash || key != node.GetEntry()->Key)
                 return false;
 
