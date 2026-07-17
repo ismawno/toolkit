@@ -35,6 +35,7 @@ using ProfilingPlotFormat = tracy::PlotFormatType;
 #    define TKIT_PROFILE_SCOPE_TEXT(text, size) ZoneTextV(__tkit_perf_scope##__LINE__, text, size)
 #    define TKIT_PROFILE_SCOPE_NAME(name, size) ZoneNameV(__tkit_perf_scope##__LINE__, name, size)
 #    define TKIT_PROFILE_SCOPE_COLOR(color) ZoneColorV(__tkit_perf_scope##__LINE__, color)
+#    define TKIT_PROFILE_SCOPE_VALUE(value) ZoneValueV(__tkit_perf_scope##__LINE__, value)
 
 #    define TKIT_PROFILE_MESSAGE(message) TracyMessageL(message)
 #    define TKIT_PROFILE_NMESSAGE(message, size) TracyMessage(message, size)
@@ -72,6 +73,7 @@ using ProfilingPlotFormat = tracy::PlotFormatType;
 #    define TKIT_PROFILE_SCOPE_TEXT(text, size)
 #    define TKIT_PROFILE_SCOPE_NAME(name, size)
 #    define TKIT_PROFILE_SCOPE_COLOR(color)
+#    define TKIT_PROFILE_SCOPE_VALUE(value)
 
 #    define TKIT_PROFILE_MESSAGE(message)
 #    define TKIT_PROFILE_NMESSAGE(message, size)
