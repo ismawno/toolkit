@@ -194,7 +194,7 @@ class _MetaConvoy(type):
         return sys.platform
 
     @property
-    def architecure(self) -> str:
+    def architecture(self) -> str:
         similars = {"i386": "x86", "amd64": "x86_64", "x32": "x86", "x64": "x86_64"}
         try:
             return similars[platform.machine().lower()]
