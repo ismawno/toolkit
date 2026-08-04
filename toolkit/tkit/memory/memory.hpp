@@ -254,7 +254,7 @@ template <typename T, typename... Args> T *Construct(T *ptr, Args &&...args)
         IsAligned(ptr, alignof(T)),
         "[TOOLKIT][MEMORY] The address used to construct an object is not correctly aligned to its alignment of {}",
         alignof(T));
-    return std::launder(::new (ptr) T(std::forward<Args>(args)...));
+    return std::launder(std::construct_at(ptr, std::forward<Args>(args)...));
 }
 
 /**
@@ -266,7 +266,7 @@ template <typename T, typename... Args> T *Construct(T *ptr, Args &&...args)
  */
 template <typename T> void Destruct(T *ptr)
 {
-    ptr->~T();
+    std::destroy_at(ptr);
 }
 
 /**
