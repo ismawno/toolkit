@@ -1256,6 +1256,8 @@ template <typename T, typename AllocState> class Array
 
     template <typename U, typename OtherAlloc> friend class Array;
 };
+
+template <typename AllocState> using String = Array<char, AllocState>;
 } // namespace TKit
 
 template <typename AllocState> struct fmt::formatter<TKit::Array<char, AllocState>> : fmt::formatter<fmt::string_view>
