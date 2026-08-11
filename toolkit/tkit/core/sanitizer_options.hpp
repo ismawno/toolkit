@@ -1,8 +1,9 @@
+#pragma once
+
 #include "tkit/preprocessor/system.hpp"
 
 #define TKIT_SANITIZER_HOOK extern "C" __attribute__((visibility("default")))
 
-// AddressSanitizer runtime flags.
 #if defined(TKIT_ASAN_ENABLED) && defined(TKIT_ASAN_OPTIONS)
 TKIT_SANITIZER_HOOK const char *__asan_default_options()
 {
