@@ -85,8 +85,6 @@ TEST_CASE("Reset after all deallocations", "[BlockAllocator]")
     alloc.Deallocate(b);
     alloc.Deallocate(c);
 
-    alloc.Reset();
-
     // can allocate again to full capacity
     for (usize i = 0; i < capacity; ++i)
         REQUIRE(alloc.Allocate());

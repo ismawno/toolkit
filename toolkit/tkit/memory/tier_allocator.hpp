@@ -245,6 +245,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 #ifdef TKIT_ENABLE_ENSURE
         u64 Allocations = 0;
         u64 Deallocations = 0;
+        usz Size = 0;
         usize Slots = 0;
 #endif
     };

@@ -241,10 +241,13 @@ void TierAllocator::setupMemoryLayout(const TierDescriptions &tiers)
         }
 #ifdef TKIT_ENABLE_ENSURE
         tier.Slots = tinfo.Slots;
+        tier.Size = tinfo.Size;
 #endif
         m_Tiers.Append(tier);
         size += tinfo.Size;
     }
+
+    TKIT_POISON_MEMORY_REGION(m_Buffer, m_BufferSize);
 }
 
 void TierAllocator::deallocateBuffer()
@@ -325,6 +328,7 @@ void *TierAllocator::allocate(const usize tierIndex, const usz size)
 #endif
 
     Allocation *alloc = tier.FreeList;
+    TKIT_UNPOISON_MEMORY_REGION(alloc, Math::Max(size, sizeof(Allocation)));
     tier.FreeList = alloc->Next;
 
     TKIT_PROFILE_MARK_POOL_ALLOCATION("tier-allocator", alloc, size);
@@ -355,6 +359,7 @@ void TierAllocator::Deallocate(void *ptr, const usz size)
     Allocation *alloc = scast<Allocation *>(ptr);
     TKIT_PROFILE_MARK_POOL_DEALLOCATION("tier-allocator", alloc);
     alloc->Next = tier.FreeList;
+    TKIT_POISON_MEMORY_REGION(alloc, size);
     tier.FreeList = alloc;
 }
 

@@ -129,8 +129,6 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
         Deallocate(ptr);
     }
 
-    void Reset();
-
     /**
      * @brief Check if a pointer belongs to the block allocator.
      *
