@@ -225,3 +225,20 @@
 #ifdef __BMI__
 #    define TKIT_BMI
 #endif
+
+#if !defined(__has_feature)
+#    define __has_feature(x) 0
+#endif
+
+#if __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
+#    define TKIT_ASAN_ENABLED
+#endif
+#if __has_feature(thread_sanitizer) || defined(__SANITIZE_THREAD__)
+#    define TKIT_TSAN_ENABLED
+#endif
+#if __has_feature(undefined_behavior_sanitizer)
+#    define TKIT_UBSAN_ENABLED
+#endif
+#if __has_feature(memory_sanitizer)
+#    define TKIT_MSAN_ENABLED
+#endif
