@@ -27,8 +27,14 @@
 
 #ifdef TKIT_ASAN_ENABLED
 #    include <sanitizer/asan_interface.h>
-#    define TKIT_POISON_MEMORY_REGION(addr, size) ASAN_POISON_MEMORY_REGION(addr, size)
-#    define TKIT_UNPOISON_MEMORY_REGION(addr, size) ASAN_UNPOISON_MEMORY_REGION(addr, size)
+#    define TKIT_POISON_MEMORY_REGION(addr, size)                                                                      \
+        if ((size) != 0)                                                                                               \
+        ASAN_POISON_MEMORY_REGION(addr, size)
+
+#    define TKIT_UNPOISON_MEMORY_REGION(addr, size)                                                                    \
+        if ((size) != 0)                                                                                               \
+        ASAN_UNPOISON_MEMORY_REGION(addr, size)
+
 #else
 #    define TKIT_POISON_MEMORY_REGION(addr, size)
 #    define TKIT_UNPOISON_MEMORY_REGION(addr, size)

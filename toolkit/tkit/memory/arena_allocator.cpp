@@ -13,6 +13,7 @@ ArenaAllocator::ArenaAllocator(void *buffer, const usz capacity, const usize ali
                 alignment);
     TKIT_ASSERT(IsAligned(buffer, alignment),
                 "[TOOLKIT][ARENA-ALLOC] Provided buffer must be aligned to the given alignment of {}", alignment);
+    TKIT_POISON_MEMORY_REGION(buffer, capacity);
 }
 ArenaAllocator::ArenaAllocator(const usz capacity, const usize alignment)
     : m_Capacity(capacity), m_Alignment(alignment), m_Provided(false)
@@ -21,6 +22,7 @@ ArenaAllocator::ArenaAllocator(const usz capacity, const usize alignment)
                 alignment);
     m_Buffer = scast<std::byte *>(AllocateAligned(capacity, alignment));
     TKIT_ASSERT(m_Buffer, "[TOOLKIT][ARENA-ALLOC] Failed to allocate memory");
+    TKIT_POISON_MEMORY_REGION(m_Buffer, capacity);
 }
 ArenaAllocator::~ArenaAllocator()
 {
@@ -75,6 +77,8 @@ void *ArenaAllocator::Allocate(const usz size)
     TKIT_ASSERT(IsAligned(ptr, m_Alignment),
                 "[TOOLKIT][ARENA-ALLOC] Allocated memory is not aligned to specified alignment");
     TKIT_PROFILE_MARK_POOL_ALLOCATION("arena-allocator", ptr, asize);
+
+    TKIT_UNPOISON_MEMORY_REGION(ptr, size);
     return ptr;
 }
 

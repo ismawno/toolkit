@@ -13,6 +13,7 @@ StackAllocator::StackAllocator(void *buffer, const usz capacity, const usize ali
                 alignment);
     TKIT_ASSERT(IsAligned(buffer, alignment),
                 "[TOOLKIT][STACK-ALLOC] Provided buffer must be aligned to the given alignment of {}", alignment);
+    TKIT_POISON_MEMORY_REGION(buffer, capacity);
 }
 
 StackAllocator::StackAllocator(const usz capacity, const usize alignment)
@@ -23,6 +24,7 @@ StackAllocator::StackAllocator(const usz capacity, const usize alignment)
     m_Buffer = scast<std::byte *>(AllocateAligned(capacity, alignment));
     TKIT_ASSERT(m_Buffer, "[TOOLKIT][STACK-ALLOC] Failed to allocate {:L} bytes of memory aligned to {:L} bytes",
                 capacity, alignment);
+    TKIT_POISON_MEMORY_REGION(m_Buffer, capacity);
 }
 
 StackAllocator::~StackAllocator()
@@ -79,6 +81,7 @@ void *StackAllocator::Allocate(const usz size)
     TKIT_ASSERT(IsAligned(ptr, m_Alignment),
                 "[TOOLKIT][STACK-ALLOC] Allocated memory is not aligned to specified alignment");
     TKIT_PROFILE_MARK_POOL_ALLOCATION("stack-allocator", ptr, asize);
+    TKIT_UNPOISON_MEMORY_REGION(ptr, size);
     return ptr;
 }
 
@@ -86,6 +89,7 @@ void StackAllocator::Deallocate([[maybe_unused]] const void *ptr, const usz size
 {
     TKIT_ASSERT(ptr, "[TOOLKIT][STACK-ALLOC] Cannot deallocate a null pointer");
     TKIT_ASSERT(m_Top != 0, "[TOOLKIT][STACK-ALLOC] Unable to deallocate because the stack allocator is empty");
+    TKIT_POISON_MEMORY_REGION(ptr, size);
     TKIT_PROFILE_MARK_POOL_DEALLOCATION("stack-allocator", ptr);
     m_Top -= NextAlignedSize(size, m_Alignment);
     TKIT_ASSERT(m_Buffer + m_Top == ptr,

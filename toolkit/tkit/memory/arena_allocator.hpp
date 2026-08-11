@@ -70,6 +70,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) ArenaAllocator
     void Reset()
     {
         m_Top = 0;
+        TKIT_POISON_MEMORY_REGION(m_Buffer, m_Capacity);
     }
 
     /**

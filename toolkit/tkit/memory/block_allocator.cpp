@@ -84,6 +84,7 @@ void *BlockAllocator::Allocate()
 
     Allocation *alloc = m_FreeList;
     m_FreeList = m_FreeList->Next;
+    TKIT_UNPOISON_MEMORY_REGION(alloc + 1, m_AllocationSize - sizeof(Allocation));
     return alloc;
 }
 
@@ -94,6 +95,7 @@ void BlockAllocator::Deallocate(void *ptr)
                 "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a pointer that does not belong to the allocator");
 
     Allocation *alloc = scast<Allocation *>(ptr);
+    TKIT_POISON_MEMORY_REGION(alloc + 1, m_AllocationSize - sizeof(Allocation));
     alloc->Next = m_FreeList;
     m_FreeList = alloc;
 }
@@ -113,6 +115,7 @@ void BlockAllocator::setupMemoryLayout()
     {
         Allocation *alloc = rcast<Allocation *>(m_Buffer + i * m_AllocationSize);
         alloc->Next = next;
+        TKIT_POISON_MEMORY_REGION(alloc + 1, m_AllocationSize - sizeof(Allocation));
         next = alloc;
     }
 }
