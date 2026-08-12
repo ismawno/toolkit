@@ -1,0 +1,37 @@
+# .clang-tidy
+Checks: >
+  -*,
+  misc-const-correctness,
+  readability-non-const-parameter,
+  cppcoreguidelines-pro-type-const-cast,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-implicit-widening-of-multiplication-result,
+  -bugprone-narrowing-conversions,
+  clang-analyzer-*,
+  performance-*,
+  -performance-avoid-endl,
+  cert-*,
+  -cert-err58-cpp,
+  -cert-dcl37-c,
+  -cert-dcl51-cpp,
+  concurrency-*,
+  cppcoreguidelines-slicing,
+  cppcoreguidelines-virtual-class-destructor,
+  cppcoreguidelines-pro-type-static-cast-downcast,
+  misc-redundant-expression,
+  misc-unconventional-assign-operator,
+  misc-uniqueptr-reset-release,
+  misc-use-after-move,
+WarningsAsErrors: ''
+HeaderFilterRegex: '.*'
+FormatStyle: none
+CheckOptions:
+  - key: misc-const-correctness.AnalyzeValues
+    value: true
+  - key: misc-const-correctness.AnalyzeReferences
+    value: true
+  - key: misc-const-correctness.WarnPointersAsValues
+    value: false
+  - key: misc-const-correctness.TransformValues
+    value: false

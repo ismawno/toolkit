@@ -94,7 +94,7 @@ void RecordArenaAllocator(const AllocationSettings &settings)
     ArenaAllocator allocator{usize(settings.MaxPasses * sizeof(ExampleData))};
     for (usize passes = settings.MinPasses; passes <= settings.MaxPasses; passes += settings.PassIncrement)
     {
-        Clock clock;
+        const Clock clock;
         for (usize i = 0; i < passes; ++i)
             allocated[i] = allocator.Create<ExampleData>();
         const Timespan allocTime = clock.GetElapsed();
