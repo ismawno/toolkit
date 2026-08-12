@@ -902,4 +902,44 @@ template <typename T, usize C, usize R> constexpr mat<T, R, C> Transpose(const m
 
 } // namespace Math
 } // namespace TKit
+
+template <typename T, TKit::usize N0, TKit::usize... N> struct fmt::formatter<TKit::ten<T, N0, N...>>
+{
+    fmt::formatter<T> elem_fmt;
+    constexpr auto parse(fmt::format_parse_context &ctx)
+    {
+        return elem_fmt.parse(ctx);
+    }
+
+    template <TKit::usize Depth = 0> auto formatImpl(const TKit::ten<T, N0, N...> &t, fmt::format_context &ctx) const
+    {
+        for (TKit::usize i = 0; i < N0; ++i)
+        {
+            if (i > 0)
+                fmt::format_to(ctx.out(), ", ");
+            if constexpr (sizeof...(N) == 0)
+            {
+                fmt::format_to(ctx.out(), "[{}] = ", i);
+                elem_fmt.format(t[i], ctx);
+            }
+            else
+            {
+                fmt::format_to(ctx.out(), "\n");
+                for (TKit::usize d = 0; d < Depth; ++d)
+                    fmt::format_to(ctx.out(), " ");
+                fmt::format_to(ctx.out(), "[{}] = {{ ", i);
+                fmt::formatter<TKit::Math::Tensor<T, N...>> child_fmt;
+                child_fmt.template formatImpl<Depth + 1>(t[i], ctx);
+                fmt::format_to(ctx.out(), " }}");
+            }
+        }
+        return ctx.out();
+    }
+
+    auto format(const TKit::ten<T, N0, N...> &t, fmt::format_context &ctx) const
+    {
+        return formatImpl<0>(t, ctx);
+    }
+};
+
 TKIT_COMPILER_WARNING_IGNORE_POP()
