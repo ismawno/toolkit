@@ -55,10 +55,10 @@ TEST_CASE("Allocate and Deallocate blocks", "[BlockAllocator]")
     constexpr usize capacity = 4;
     auto alloc = BlockAllocator::CreateFromType<u32>(capacity);
 
-    std::vector<void *> ptrs;
+    std::vector<const void *> ptrs;
     for (usize i = 0; i < capacity; ++i)
     {
-        void *p = alloc.Allocate();
+        const void *p = alloc.Allocate();
         REQUIRE(p);
         REQUIRE(alloc.Belongs(p));
         ptrs.push_back(p);
@@ -78,9 +78,9 @@ TEST_CASE("Reset after all deallocations", "[BlockAllocator]")
     auto alloc = BlockAllocator::CreateFromType<u32>(capacity);
 
     // allocate and deallocate all
-    void *a = alloc.Allocate();
-    void *b = alloc.Allocate();
-    void *c = alloc.Allocate();
+    const void *a = alloc.Allocate();
+    const void *b = alloc.Allocate();
+    const void *c = alloc.Allocate();
     alloc.Deallocate(a);
     alloc.Deallocate(b);
     alloc.Deallocate(c);
@@ -94,7 +94,7 @@ TEST_CASE("Reset after all deallocations", "[BlockAllocator]")
 TEST_CASE("Move constructor and move assignment", "[BlockAllocator]")
 {
     auto a1 = BlockAllocator::CreateFromType<u32>(5);
-    void *ptr = a1.Allocate();
+    const void *ptr = a1.Allocate();
     REQUIRE(a1.Belongs(ptr));
 
     // move-construct

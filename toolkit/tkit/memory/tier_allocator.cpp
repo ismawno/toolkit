@@ -343,7 +343,7 @@ void *TierAllocator::Allocate(const usz size)
     return allocate(index, size);
 }
 
-void TierAllocator::Deallocate(void *ptr, const usz size)
+void TierAllocator::Deallocate(const void *ptr, const usz size)
 {
     TKIT_ASSERT(ptr, "[TOOLKIT][TIER-ALLOC] Cannot deallocate a null pointer");
     TKIT_ASSERT(Belongs(ptr),
@@ -356,7 +356,7 @@ void TierAllocator::Deallocate(void *ptr, const usz size)
                 "are for the tier index {} and size {:L}, with {} allocations and {} deallocations",
                 index, size, tier.Allocations, tier.Deallocations);
 
-    Allocation *alloc = scast<Allocation *>(ptr);
+    Allocation *alloc = scast<Allocation *>(ccast<void *>(ptr));
     TKIT_PROFILE_MARK_POOL_DEALLOCATION("tier-allocator", alloc);
     alloc->Next = tier.FreeList;
     TKIT_POISON_MEMORY_REGION(alloc, size);

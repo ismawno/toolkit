@@ -88,13 +88,13 @@ void *BlockAllocator::Allocate()
     return alloc;
 }
 
-void BlockAllocator::Deallocate(void *ptr)
+void BlockAllocator::Deallocate(const void *ptr)
 {
     TKIT_ASSERT(ptr, "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a null pointer");
     TKIT_ASSERT(Belongs(ptr),
                 "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a pointer that does not belong to the allocator");
 
-    Allocation *alloc = scast<Allocation *>(ptr);
+    Allocation *alloc = scast<Allocation *>(ccast<void *>(ptr));
     alloc->Next = m_FreeList;
     TKIT_POISON_MEMORY_REGION(alloc, m_AllocationSize);
     m_FreeList = alloc;

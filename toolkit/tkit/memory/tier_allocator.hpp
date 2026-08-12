@@ -157,7 +157,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     TierAllocator &operator=(TierAllocator &&other);
 
     void *Allocate(usz size);
-    void Deallocate(void *ptr, usz size);
+    void Deallocate(const void *ptr, usz size);
 
     template <typename T> T *Allocate(const usize count = 1)
     {
@@ -170,9 +170,9 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 
     template <typename T>
         requires(!std::same_as<T, void>)
-    void Deallocate(T *ptr, const usize count = 1)
+    void Deallocate(const T *ptr, const usize count = 1)
     {
-        Deallocate(scast<void *>(ptr), count * sizeof(T));
+        Deallocate(scast<const void *>(ptr), count * sizeof(T));
     }
 
     template <typename T, typename... Args> T *Create(Args &&...args)
@@ -194,10 +194,10 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 
     template <typename T>
         requires(!std::same_as<T, void>)
-    constexpr void Destroy(T *ptr)
+    constexpr void Destroy(const T *ptr)
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
-            ptr->~T();
+            Destruct(ptr);
         Deallocate(ptr);
     }
 

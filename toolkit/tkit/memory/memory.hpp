@@ -275,7 +275,7 @@ template <typename T, typename... Args> T *Construct(T *ptr, Args &&...args)
  *
  * @param ptr A pointer to the memory location where the object should be destroyed.
  */
-template <typename T> void Destruct(T *ptr)
+template <typename T> void Destruct(const T *ptr)
 {
     std::destroy_at(ptr);
 }

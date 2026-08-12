@@ -97,7 +97,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
      *
      * @param ptr A pointer to the block to deallocate.
      */
-    void Deallocate(void *ptr);
+    void Deallocate(const void *ptr);
 
     /**
      * @brief Allocate a new block of memory and create a new object of type `T` out of it.
@@ -118,7 +118,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) BlockAllocator
      * @tparam T The type of object to deallocate.
      * @param ptr The pointer to the block to deallocate.
      */
-    template <typename T> void Destroy(T *ptr)
+    template <typename T> void Destroy(const T *ptr)
     {
         TKIT_ASSERT(ptr, "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate a null pointer");
         // TKIT_ASSERT(!IsEmpty(), "[TOOLKIT][BLOCK-ALLOC] Cannot deallocate from an empty allocator");

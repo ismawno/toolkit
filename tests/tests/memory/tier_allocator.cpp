@@ -64,12 +64,12 @@ TEST_CASE("Allocate/Deallocate across sizes", "[TierAllocator]")
     // Try a spread of request sizes (intentionally non powers-of-two too)
     const usize sizes[] = {1, 8, 9, 16, 24, 32, 48, 64, 96, 128, 192, 256};
 
-    std::vector<void *> ptrs;
+    std::vector<const void *> ptrs;
     ptrs.reserve(std::size(sizes));
 
     for (usize i = 0; i < std::size(sizes); ++i)
     {
-        void *p = alloc.Allocate(sizes[i]);
+        const void *p = alloc.Allocate(sizes[i]);
         // Requests up to maxAlloc should generally succeed. If a particular tier
         // is already full in this configuration, nullptr is acceptable — so just
         // assert Belongs() when non-null.
@@ -95,7 +95,7 @@ TEST_CASE("Allocate/Deallocate across sizes", "[TierAllocator]")
     }
 
     // Re-allocate one representative size to check reuse happens
-    void *again = alloc.Allocate(32);
+    const void *again = alloc.Allocate(32);
     REQUIRE(again);
     REQUIRE(alloc.Belongs(again));
     alloc.Deallocate(again, 32);
@@ -112,12 +112,12 @@ TEST_CASE("Exhaust smallest tier and recover", "[TierAllocator]")
 
     // Repeatedly allocate the smallest request until it returns nullptr.
     // This validates exhaustion returns nullptr and that deallocation restores capacity.
-    std::vector<void *> ptrs;
+    std::vector<const void *> ptrs;
     TKIT_LOGS_PUSH();
     TKIT_LOGS_DISABLE(TKIT_WARNING_LOGS_BIT);
     for (;;)
     {
-        void *p = alloc.Allocate(1); // should map to the smallest tier (>= minAlloc)
+        const void *p = alloc.Allocate(1); // should map to the smallest tier (>= minAlloc)
         if (!p)
             break;
         REQUIRE(alloc.Belongs(p));
@@ -126,11 +126,11 @@ TEST_CASE("Exhaust smallest tier and recover", "[TierAllocator]")
     TKIT_LOGS_POP();
     REQUIRE(!ptrs.empty());
 
-    for (void *p : ptrs)
+    for (const void *p : ptrs)
         alloc.Deallocate(p, 1);
 
     // Should be able to allocate again after freeing all
-    void *p = alloc.Allocate(1);
+    const void *p = alloc.Allocate(1);
     REQUIRE(p);
     REQUIRE(alloc.Belongs(p));
     alloc.Deallocate(p, 1);
@@ -205,7 +205,7 @@ TEST_CASE("Alignment guarantees (up to max alignment)", "[TierAllocator]")
         maxAlign);
 
     // Allocate a strongly-aligned type; Allocate<T>() asserts internally too.
-    Align64TA *p = alloc.Allocate<Align64TA>();
+    const Align64TA *p = alloc.Allocate<Align64TA>();
     REQUIRE(p);
     REQUIRE(alloc.Belongs(p));
     REQUIRE(rcast<uintptr_t>(p) % alignof(Align64TA) == 0);
@@ -222,7 +222,7 @@ TEST_CASE("Belongs() only checks buffer boundaries (not allocation state)", "[Ti
     TierAllocator alloc(
         TierSpecs{.Allocator = &s_Alloc, .MaxAllocation = maxAlloc, .Granularity = gran, .TierSlotDecay = decay});
 
-    void *p = alloc.Allocate(64);
+    const void *p = alloc.Allocate(64);
     REQUIRE(p);
     REQUIRE(alloc.Belongs(p));
 

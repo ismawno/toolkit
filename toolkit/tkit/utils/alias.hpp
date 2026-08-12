@@ -58,6 +58,10 @@ template <typename T, typename U> constexpr T dcast(const U from)
 {
     return dynamic_cast<T>(from);
 }
+template <typename T, typename U> constexpr T ccast(const U from)
+{
+    return const_cast<T>(from);
+}
 
 template <typename T>
 concept Float = std::same_as<T, f32> || std::same_as<T, f64>;
