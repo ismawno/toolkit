@@ -15,7 +15,7 @@ template <Float T, usize N0, usize... N> constexpr ten<T, N0, N...> SquareRoot(c
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = SquareRoot(tensor.Flat[i]);
+        result(i) = SquareRoot(tensor(i));
 
     return result;
 }
@@ -120,8 +120,8 @@ template <typename T, usize N0, usize... N> constexpr T Min(const ten<T, N0, N..
     T mn{std::numeric_limits<T>::max()};
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        if (mn > tensor.Flat[i])
-            mn = tensor.Flat[i];
+        if (mn > tensor(i))
+            mn = tensor(i);
     return mn;
 }
 template <typename T, usize N0, usize... N> constexpr T Max(const ten<T, N0, N...> &tensor)
@@ -129,8 +129,8 @@ template <typename T, usize N0, usize... N> constexpr T Max(const ten<T, N0, N..
     T mx{T(0)};
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        if (mx < tensor.Flat[i])
-            mx = tensor.Flat[i];
+        if (mx < tensor(i))
+            mx = tensor(i);
     return mx;
 }
 
@@ -140,7 +140,7 @@ constexpr ten<T, N0, N...> Min(const ten<T, N0, N...> &left, const ten<T, N0, N.
     ten<T, N0, N...> mn;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        mn.Flat[i] = Min(left.Flat[i], right.Flat[i]);
+        mn(i) = Min(left(i), right(i));
     return mn;
 }
 template <typename T, usize N0, usize... N>
@@ -149,7 +149,7 @@ constexpr ten<T, N0, N...> Max(const ten<T, N0, N...> &left, const ten<T, N0, N.
     ten<T, N0, N...> mx;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        mx.Flat[i] = Max(left.Flat[i], right.Flat[i]);
+        mx(i) = Max(left(i), right(i));
     return mx;
 }
 template <typename T, usize N0, usize... N>
@@ -159,7 +159,7 @@ constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &tensor, const ten<T, N0
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = Clamp(tensor.Flat[i], min.Flat[i], max.Flat[i]);
+        result(i) = Clamp(tensor(i), min(i), max(i));
     return result;
 }
 template <typename T, std::convertible_to<T> U, usize N0, usize... N>
@@ -168,7 +168,7 @@ constexpr ten<T, N0, N...> Clamp(const ten<T, N0, N...> &tensor, const U min, co
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = Clamp(tensor.Flat[i], T(min), T(max));
+        result(i) = Clamp(tensor(i), T(min), T(max));
     return result;
 }
 
@@ -178,7 +178,7 @@ constexpr ten<T, N0, N...> Power(const ten<T, N0, N...> &tensor, const ten<T, N0
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = Power(tensor.Flat[i], power.Flat[i]);
+        result(i) = Power(tensor(i), power(i));
     return result;
 }
 template <Float T, usize N0, usize... N> constexpr ten<T, N0, N...> Power(const ten<T, N0, N...> &tensor, const T power)
@@ -186,7 +186,7 @@ template <Float T, usize N0, usize... N> constexpr ten<T, N0, N...> Power(const 
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = Power(tensor.Flat[i], power);
+        result(i) = Power(tensor(i), power);
     return result;
 }
 template <typename T, usize N0, usize... N>
@@ -196,7 +196,7 @@ constexpr ten<T, N0, N...> LinearLerp(const ten<T, N0, N...> &tensor0, const ten
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = LinearLerp(tensor0.Flat[i], tensor1.Flat[i], t.Flat[i]);
+        result(i) = LinearLerp(tensor0(i), tensor1(i), t(i));
     return result;
 }
 template <typename T, usize N0, usize... N>
@@ -205,7 +205,7 @@ constexpr ten<T, N0, N...> LinearLerp(const ten<T, N0, N...> &tensor0, const ten
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = LinearLerp(tensor0.Flat[i], tensor1.Flat[i], t);
+        result(i) = LinearLerp(tensor0(i), tensor1(i), t);
     return result;
 }
 template <typename T, usize N0, usize... N>
@@ -214,7 +214,7 @@ constexpr ten<T, N0, N...> LinearLerp(const T v0, const T v1, const ten<T, N0, N
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = LinearLerp(v0, v1, t.Flat[i]);
+        result(i) = LinearLerp(v0, v1, t(i));
     return result;
 }
 template <typename T, usize N0, usize... N>
@@ -224,7 +224,7 @@ constexpr ten<T, N0, N...> InverseLinearLerp(const ten<T, N0, N...> &tensor0, co
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = InverseLinearLerp(tensor0.Flat[i], tensor1.Flat[i], v.Flat[i]);
+        result(i) = InverseLinearLerp(tensor0(i), tensor1(i), v(i));
     return result;
 }
 template <typename T, usize N0, usize... N>
@@ -234,7 +234,7 @@ constexpr ten<T, N0, N...> InverseLinearLerp(const ten<T, N0, N...> &tensor0, co
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = InverseLinearLerp(tensor0.Flat[i], tensor1.Flat[i], v);
+        result(i) = InverseLinearLerp(tensor0(i), tensor1(i), v);
     return result;
 }
 template <typename T, usize N0, usize... N>
@@ -243,7 +243,7 @@ constexpr ten<T, N0, N...> InverseLinearLerp(const T v0, const T v1, const ten<T
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = InverseLinearLerp(v0, v1, v.Flat[i]);
+        result(i) = InverseLinearLerp(v0, v1, v(i));
     return result;
 }
 template <Float T, usize N0, usize... N>
@@ -253,7 +253,7 @@ constexpr ten<T, N0, N...> LogLerp(const ten<T, N0, N...> &tensor0, const ten<T,
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = LogLerp(tensor0.Flat[i], tensor1.Flat[i], t.Flat[i]);
+        result(i) = LogLerp(tensor0(i), tensor1(i), t(i));
     return result;
 }
 template <Float T, usize N0, usize... N>
@@ -262,7 +262,7 @@ constexpr ten<T, N0, N...> LogLerp(const ten<T, N0, N...> &tensor0, const ten<T,
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = LogLerp(tensor0.Flat[i], tensor1.Flat[i], t);
+        result(i) = LogLerp(tensor0(i), tensor1(i), t);
     return result;
 }
 template <Float T, usize N0, usize... N>
@@ -271,7 +271,7 @@ constexpr ten<T, N0, N...> LogLerp(const T v0, const T v1, const ten<T, N0, N...
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = LogLerp(v0, v1, t.Flat[i]);
+        result(i) = LogLerp(v0, v1, t(i));
     return result;
 }
 template <Float T, usize N0, usize... N>
@@ -281,7 +281,7 @@ constexpr ten<T, N0, N...> InverseLogLerp(const ten<T, N0, N...> &tensor0, const
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = InverseLogLerp(tensor0.Flat[i], tensor1.Flat[i], v.Flat[i]);
+        result(i) = InverseLogLerp(tensor0(i), tensor1(i), v(i));
     return result;
 }
 template <Float T, usize N0, usize... N>
@@ -290,7 +290,7 @@ constexpr ten<T, N0, N...> InverseLogLerp(const ten<T, N0, N...> &tensor0, const
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = InverseLogLerp(tensor0.Flat[i], tensor1.Flat[i], v);
+        result(i) = InverseLogLerp(tensor0(i), tensor1(i), v);
     return result;
 }
 template <Float T, usize N0, usize... N>
@@ -299,7 +299,7 @@ constexpr ten<T, N0, N...> InverseLogLerp(const T v0, const T v1, const ten<T, N
     ten<T, N0, N...> result;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        result.Flat[i] = InverseLogLerp(v0, v1, v.Flat[i]);
+        result(i) = InverseLogLerp(v0, v1, v(i));
     return result;
 }
 template <typename T, usize N0, usize... N>
@@ -393,7 +393,7 @@ template <Float T> constexpr T AntiTangent(const T y, const T x)
         ten<T, N0, N...> result;                                                                                       \
         constexpr usize size = N0 * (N * ... * 1);                                                                     \
         for (usize i = 0; i < size; ++i)                                                                               \
-            result.Flat[i] = name(tensor.Flat[i]);                                                                     \
+            result(i) = name(tensor(i));                                                                               \
         return result;                                                                                                 \
     }
 
@@ -413,7 +413,7 @@ constexpr ten<T, N0, N...> AntiTangent(const ten<T, N0, N...> &y, const ten<T, N
     ten<T, N0, N...> sn;
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        sn.Flat[i] = AntiTangent(y.Flat[i], x.Flat[i]);
+        sn(i) = AntiTangent(y(i), x(i));
     return sn;
 }
 

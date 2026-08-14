@@ -97,13 +97,15 @@ struct Tensor
     template <std::convertible_to<T> U> constexpr Tensor(const U value)
     {
         for (usize i = 0; i < Size; ++i)
-            Flat[i] = T(value);
+            Flat(i) = T(value);
     }
 
     template <typename... Args>
         requires((sizeof...(Args) == Size) && ... && std::convertible_to<Args, T>)
-    constexpr Tensor(const Args... args) : Flat{T(args)...}
+    constexpr Tensor(const Args... args)
     {
+        usize i = 0;
+        ((Flat(i++) = T(args)), ...);
     }
     template <typename... Args>
     constexpr Tensor(const Args &...args)
@@ -167,7 +169,7 @@ struct Tensor
         Tensor tensor{T(0)};
         constexpr usize stride = Detail::GetDiagonalStride<N0, N...>();
         for (usize i = 0; i < Size; i += stride)
-            tensor.Flat[i] = T(value);
+            tensor(i) = T(value);
         return tensor;
     }
 
@@ -178,11 +180,11 @@ struct Tensor
 
     constexpr const T *GetData() const
     {
-        return &Flat[0];
+        return &Flat(0);
     }
     constexpr T *GetData()
     {
-        return &Flat[0];
+        return &Flat(0);
     }
 
     constexpr const ChildType &At(const usize index) const
@@ -205,11 +207,28 @@ struct Tensor
         return At(index);
     }
 
+    constexpr const T &Flat(const usize index) const
+    {
+        return rcast<const T *>(Ranked)[index];
+    }
+    constexpr T &Flat(const usize index)
+    {
+        return rcast<T *>(Ranked)[index];
+    }
+    constexpr const T &operator()(const usize index) const
+    {
+        return Flat(index);
+    }
+    constexpr T &operator()(const usize index)
+    {
+        return Flat(index);
+    }
+
     friend constexpr Tensor operator-(const Tensor &ptensor)
     {
         Tensor tensor;
         for (usize i = 0; i < Size; ++i)
-            tensor.Flat[i] = -ptensor.Flat[i];
+            tensor(i) = -ptensor(i);
         return tensor;
     }
 
@@ -217,7 +236,7 @@ struct Tensor
     friend constexpr Tensor operator op(const Tensor &left, const Tensor &right) requires {                            \
         Tensor tensor;                                                                                                 \
         for (usize i = 0; i < Size; ++i)                                                                               \
-            tensor.Flat[i] = left.Flat[i] op right.Flat[i];                                                            \
+            tensor(i) = left(i) op right(i);                                                                           \
         return tensor;                                                                                                 \
     }
 
@@ -232,13 +251,13 @@ struct Tensor
     friend constexpr Tensor operator op(const Tensor &left, const U right) requires {                                  \
         Tensor tensor;                                                                                                 \
         for (usize i = 0; i < Size; ++i)                                                                               \
-            tensor.Flat[i] = left.Flat[i] op T(right);                                                                 \
+            tensor(i) = left(i) op T(right);                                                                           \
         return tensor;                                                                                                 \
     } template <std::convertible_to<T> U>                                                                              \
     friend constexpr Tensor operator op(const U left, const Tensor &right) requires {                                  \
         Tensor tensor;                                                                                                 \
         for (usize i = 0; i < Size; ++i)                                                                               \
-            tensor.Flat[i] = T(left) op right.Flat[i];                                                                 \
+            tensor(i) = T(left) op right(i);                                                                           \
         return tensor;                                                                                                 \
     }
 
@@ -256,7 +275,7 @@ struct Tensor
     {                                                                                                                  \
         Tensor tensor;                                                                                                 \
         for (usize i = 0; i < Size; ++i)                                                                               \
-            tensor.Flat[i] = left.Flat[i] op T(shift);                                                                 \
+            tensor(i) = left(i) op T(shift);                                                                           \
         return tensor;                                                                                                 \
     }
 
@@ -268,7 +287,8 @@ struct Tensor
     {                                                                                                                  \
         bool result = start;                                                                                           \
         for (usize i = 0; i < Size; ++i)                                                                               \
-            result cmp left.Flat[i] op right.Flat[i];                                                                  \
+            result cmp left(i)                                                                                         \
+        op right(i);                                                                                                   \
         return result;                                                                                                 \
     }
 
@@ -295,10 +315,7 @@ struct Tensor
     CREATE_SELF_OP(>>, requires(Integer<T>))
     CREATE_SELF_OP(<<, requires(Integer<T>))
 
-    union {
-        ChildType Ranked[N0];
-        T Flat[Size];
-    };
+    ChildType Ranked[N0];
 };
 
 #undef CREATE_ARITHMETIC_OP
@@ -316,7 +333,7 @@ constexpr T Dot(const Tensor<T, N0, N...> &left, const Tensor<T, N0, N...> &righ
     T result{T(0)};
 
     for (usize i = 0; i < SIZE; ++i)
-        result += left.Flat[i] * right.Flat[i];
+        result += left(i) * right(i);
     return result;
 }
 
@@ -351,7 +368,7 @@ constexpr Tensor<T, R0, R...> Reshape(const Tensor<T, N0, N...> &tensor)
 {
     Tensor<T, R0, R...> reshaped;
     for (usize i = 0; i < SIZE; ++i)
-        reshaped.Flat[i] = tensor.Flat[i];
+        reshaped(i) = tensor(i);
     return reshaped;
 }
 
@@ -367,7 +384,7 @@ constexpr void SubTensorImpl(const Tensor<T, N0, N...> &tensor, Tensor<T, N0 - 1
         if (i != first)
         {
             if constexpr (sizeof...(I) == 0)
-                minor.Flat[j] = tensor.Flat[i];
+                minor(j) = tensor(i);
             else
                 SubTensorImpl(tensor[i], minor[j], rest...);
             ++j;
@@ -413,7 +430,7 @@ constexpr typename Tensor<T, N0, N...>::template Permuted<I0, I...> Permute(cons
         for (usize j = 0; j < RANK; ++j)
             pindex += indices[perm[j]] * pstride[j];
 
-        permuted.Flat[pindex] = tensor.Flat[i];
+        permuted(pindex) = tensor(i);
     }
     return permuted;
 }
@@ -424,7 +441,7 @@ constexpr void SliceImpl(const Tensor<T, N0, N...> &tensor, Tensor<U, M0, M...> 
 {
     for (usize i = 0; i < M0; ++i)
         if constexpr (sizeof...(M) == 0)
-            sliced.Flat[i] = U(tensor.Flat[i]);
+            sliced(i) = U(tensor(i));
         else
             SliceImpl(tensor[i], sliced[i]);
 }
@@ -439,11 +456,11 @@ constexpr Tensor<U, M0, M...> Slice(const Tensor<T, N0, N...> &tensor)
 }
 template <typename T, usize N0, usize... N> constexpr const T *AsPointer(const Tensor<T, N0, N...> &tensor)
 {
-    return &tensor.Flat[0];
+    return &tensor(0);
 }
 template <typename T, usize N0, usize... N> constexpr T *AsPointer(Tensor<T, N0, N...> &tensor)
 {
-    return &tensor.Flat[0];
+    return &tensor(0);
 }
 
 } // namespace TKit::Math
@@ -711,8 +728,8 @@ template <typename T, usize N, usize R> constexpr vec<T, R> operator*(const mat<
     {
         T sum{T(0)};
         for (usize j = 0; j < N; ++j)
-            sum += left[j][i] * right.Flat[j];
-        result.Flat[i] = sum;
+            sum += left[j][i] * right[j];
+        result(i) = sum;
     }
     return result;
 }
@@ -721,7 +738,7 @@ template <typename T, usize N> constexpr vec<T, N> operator*(const vec<T, N> &le
 {
     vec<T, N> result;
     for (usize i = 0; i < N; ++i)
-        result.Flat[i] = left.Flat[i] * right.Flat[i];
+        result(i) = left(i) * right(i);
     return result;
 }
 
@@ -730,13 +747,13 @@ template <typename T, usize N>
 constexpr auto Cross(const vec<T, N> &left, const vec<T, N> &right)
 {
     if constexpr (N == 2)
-        return left.Flat[0] * right.Flat[1] - left.Flat[1] * right.Flat[0];
+        return left[0] * right[1] - left[1] * right[0];
     else if constexpr (N == 3)
     {
         vec<T, 3> result;
-        result.Flat[0] = left.Flat[1] * right.Flat[2] - left.Flat[2] * right.Flat[1];
-        result.Flat[1] = left.Flat[2] * right.Flat[0] - left.Flat[0] * right.Flat[2];
-        result.Flat[2] = left.Flat[0] * right.Flat[1] - left.Flat[1] * right.Flat[0];
+        result[0] = left[1] * right[2] - left[2] * right[1];
+        result[1] = left[2] * right[0] - left[0] * right[2];
+        result[2] = left[0] * right[1] - left[1] * right[0];
         return result;
     }
     else
@@ -754,13 +771,13 @@ template <typename T, usize N> constexpr T DiagonalDeterminant(const mat<T, N> &
 template <typename T, usize N> constexpr T Determinant(const mat<T, N> &matrix)
 {
     if constexpr (N == 1)
-        return matrix.Flat[0];
+        return matrix(0);
     else if constexpr (N == 2)
-        return matrix.Flat[0] * matrix.Flat[3] - matrix.Flat[1] * matrix.Flat[2];
+        return matrix(0) * matrix(3) - matrix(1) * matrix(2);
     else if constexpr (N == 3)
-        return matrix.Flat[0] * matrix.Flat[4] * matrix.Flat[8] + matrix.Flat[3] * matrix.Flat[7] * matrix.Flat[2] +
-               matrix.Flat[1] * matrix.Flat[5] * matrix.Flat[6] - matrix.Flat[6] * matrix.Flat[4] * matrix.Flat[2] -
-               matrix.Flat[1] * matrix.Flat[3] * matrix.Flat[8] - matrix.Flat[0] * matrix.Flat[7] * matrix.Flat[5];
+        return matrix(0) * matrix(4) * matrix(8) + matrix(3) * matrix(7) * matrix(2) +
+               matrix(1) * matrix(5) * matrix(6) - matrix(6) * matrix(4) * matrix(2) -
+               matrix(1) * matrix(3) * matrix(8) - matrix(0) * matrix(7) * matrix(5);
     else if constexpr (N == 4)
     {
         const T factor0 = matrix[2][2] * matrix[3][3] - matrix[3][2] * matrix[2][3];
@@ -800,15 +817,15 @@ template <typename T, usize N> constexpr mat<T, N> Cofactors(const mat<T, N> &ma
 template <typename T, usize N> constexpr mat<T, N> Inverse(const mat<T, N> &matrix)
 {
     if constexpr (N == 1)
-        return 1.f / matrix.Flat[0];
+        return 1.f / matrix(0);
     else if constexpr (N == 2)
     {
         const T idet = T(1) / Determinant(matrix);
         mat2<T> inverse;
-        inverse.Flat[0] = idet * matrix.Flat[3];
-        inverse.Flat[1] = -idet * matrix.Flat[1];
-        inverse.Flat[2] = -idet * matrix.Flat[2];
-        inverse.Flat[3] = idet * matrix.Flat[0];
+        inverse(0) = idet * matrix(3);
+        inverse(1) = -idet * matrix(1);
+        inverse(2) = -idet * matrix(2);
+        inverse(3) = idet * matrix(0);
         return inverse;
     }
     else if constexpr (N == 3)
@@ -870,15 +887,15 @@ template <typename T, usize N> constexpr mat<T, N> Inverse(const mat<T, N> &matr
         const vec4<T> inv2(vec0 * fac1 - vec1 * fac3 + vec3 * fac5);
         const vec4<T> inv3(vec0 * fac2 - vec1 * fac4 + vec2 * fac5);
 
-        const vec4<T> signA(+1, -1, +1, -1);
-        const vec4<T> signB(-1, +1, -1, +1);
+        const vec4<T> signA{+1, -1, +1, -1};
+        const vec4<T> signB{-1, +1, -1, +1};
 
         const mat4<T> inverse{inv0 * signA, inv1 * signB, inv2 * signA, inv3 * signB};
 
         const vec4<T> row0(inverse[0][0], inverse[1][0], inverse[2][0], inverse[3][0]);
 
         const vec4<T> dot0{matrix[0] * row0};
-        T Dot1 = (dot0.Flat[0] + dot0.Flat[1]) + (dot0.Flat[2] + dot0.Flat[3]);
+        T Dot1 = (dot0[0] + dot0[1]) + (dot0[2] + dot0[3]);
 
         const T idet = T(1) / Dot1;
 
