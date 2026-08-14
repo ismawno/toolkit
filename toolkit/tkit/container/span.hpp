@@ -41,7 +41,7 @@ template <typename T> class Span
     {
     }
 
-    constexpr Span(const std::initializer_list<ElementType> list) : m_Data(list.begin()), m_Size(list.size())
+    constexpr Span(const std::initializer_list<ElementType> list) : m_Data(list.begin()), m_Size(usize(list.size()))
     {
     }
 
