@@ -61,6 +61,29 @@ template <Float T> constexpr T SquareRoot(const T value)
 
 } // namespace TKit::Detail
 
+namespace TKit
+{
+template <usize N0, usize... N, typename F, typename... Args>
+    requires(TKit::Integer<Args> && ... && true)
+void IterateMultiIndex(F &&func, Args... indices)
+{
+    for (usize i = 0; i < N0; ++i)
+        if constexpr (sizeof...(N) == 0)
+        {
+            constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, Args..., usize>, bool>;
+            if constexpr (hasRet)
+            {
+                if (!std::forward<F>(func)(indices..., i))
+                    return;
+            }
+            else
+                std::forward<F>(func)(indices..., i);
+        }
+        else
+            IterateMultiIndex<N...>(std::forward<F>(func), indices..., i);
+}
+} // namespace TKit
+
 namespace TKit::Math
 {
 template <typename T, usize N0, usize... N>
@@ -226,22 +249,9 @@ struct Tensor
 
     template <typename F, typename... Args>
         requires(TKit::Integer<Args> && ... && true)
-    void IterateByRank(F &&func, Args... indices) const
+    static void IterateMultiIndex(F &&func, Args... indices)
     {
-        for (u32 i = 0; i < N0; ++i)
-            if constexpr (Rank == 1)
-            {
-                constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, Args..., usize>, bool>;
-                if constexpr (hasRet)
-                {
-                    if (!std::forward<F>(func)(indices..., i))
-                        return;
-                }
-                else
-                    std::forward<F>(func)(indices..., i);
-            }
-            else
-                Ranked[i].IterateByRank(std::forward<F>(func), indices..., i);
+        TKit::IterateMultiIndex<N0, N...>(std::forward<F>(func), indices...);
     }
 
     constexpr const T &Flat(const usize index) const
