@@ -128,7 +128,7 @@ struct Tensor
     constexpr Tensor(const Args... args)
     {
         usize i = 0;
-        ((Flat(i++) = T(args)), ...);
+        ((SetFlat(i++, T(args))), ...);
     }
     template <typename... Args>
     constexpr Tensor(const Args &...args)
@@ -269,6 +269,17 @@ struct Tensor
     constexpr T &operator()(const usize index)
     {
         return Flat(index);
+    }
+
+    constexpr void SetFlat(const usize index, const T &value)
+    {
+        if constexpr (sizeof...(N) == 0)
+            Ranked[index] = value;
+        else
+        {
+            constexpr usize stride = Size / N0;
+            Ranked[index / stride].SetFlat(index % stride, value);
+        }
     }
 
     friend constexpr Tensor operator-(const Tensor &ptensor)
