@@ -64,11 +64,11 @@ template <typename T> class Span
     }
 
     template <usize N0, usize... N>
-    constexpr Span(const ten<ElementType, N0, N...> &tensor) : m_Data(tensor.GetData(), m_Size(tensor.Size))
+    constexpr Span(const ten<ElementType, N0, N...> &tensor) : m_Data(tensor.GetData()), m_Size(tensor.Size)
     {
     }
     template <usize N0, usize... N>
-    constexpr Span(ten<ElementType, N0, N...> &tensor) : m_Data(tensor.GetData(), m_Size(tensor.Size))
+    constexpr Span(ten<ElementType, N0, N...> &tensor) : m_Data(tensor.GetData()), m_Size(tensor.Size)
     {
     }
 
