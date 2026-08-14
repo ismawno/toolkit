@@ -2,7 +2,7 @@
 
 #include "tkit/container/fixed_array.hpp"
 #include "tkit/container/array.hpp"
-#include "tkit/container/array.hpp"
+#include "tkit/math/tensor.hpp"
 #include <span>
 #include <vector>
 #include <array>
@@ -60,6 +60,15 @@ template <typename T> class Span
     }
     template <typename AllocState>
     constexpr Span(Array<ElementType, AllocState> &array) : m_Data(array.GetData()), m_Size(array.GetSize())
+    {
+    }
+
+    template <usize N0, usize... N>
+    constexpr Span(const ten<ElementType, N0, N...> &tensor) : m_Data(tensor.GetData(), m_Size(tensor.Size))
+    {
+    }
+    template <usize N0, usize... N>
+    constexpr Span(ten<ElementType, N0, N...> &tensor) : m_Data(tensor.GetData(), m_Size(tensor.Size))
     {
     }
 
