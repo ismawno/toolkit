@@ -187,6 +187,23 @@ struct Tensor
         return &Flat(0);
     }
 
+    constexpr const T *begin() const
+    {
+        return GetData();
+    }
+    constexpr const T *end() const
+    {
+        return GetData() + Size;
+    }
+    constexpr T *begin()
+    {
+        return GetData();
+    }
+    constexpr T *end()
+    {
+        return GetData() + Size;
+    }
+
     constexpr const ChildType &At(const usize index) const
     {
         TKIT_ASSERT_BOUNDS(index, N0, "[TOOLKIT][TENSOR] ");
