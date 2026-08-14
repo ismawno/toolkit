@@ -224,6 +224,26 @@ struct Tensor
         return At(index);
     }
 
+    template <typename F, typename... Args>
+        requires(TKit::Integer<Args> && ... && true)
+    void IterateByRank(F &&func, Args... indices) const
+    {
+        for (u32 i = 0; i < N0; ++i)
+            if constexpr (Rank == 1)
+            {
+                constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, Args..., usize>, bool>;
+                if constexpr (hasRet)
+                {
+                    if (!std::forward<F>(func)(indices..., i))
+                        return;
+                }
+                else
+                    std::forward<F>(func)(indices..., i);
+            }
+            else
+                Ranked[i].IterateByRank(std::forward<F>(func), indices..., i);
+    }
+
     constexpr const T &Flat(const usize index) const
     {
         return rcast<const T *>(Ranked)[index];
