@@ -11,7 +11,7 @@ template <typename T, usize N0, usize... N> struct Codec<ten<T, N0, N...>>
     {
         Node node;
         for (usize i = 0; i < (N0 * ... * N); ++i)
-            node.push_back(instance.Flat[i]);
+            node.push_back(instance(i));
         node.SetStyle(YAML::EmitterStyle::Flow);
         return node;
     }
@@ -22,7 +22,7 @@ template <typename T, usize N0, usize... N> struct Codec<ten<T, N0, N...>>
             return false;
 
         for (usize i = 0; i < (N0 * ... * N); ++i)
-            instance.Flat[i] = node[i].as<T>();
+            instance.Flat(i) = node[i].as<T>();
         return true;
     }
 };
