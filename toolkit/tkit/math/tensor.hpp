@@ -124,12 +124,18 @@ struct Tensor
     }
 
     template <typename... Args>
-        requires((sizeof...(Args) == Size) && ... && std::convertible_to<Args, T>)
+        requires(((sizeof...(Args) == Size) && ... && std::convertible_to<Args, T>) && Rank != 1)
     constexpr Tensor(const Args... args)
     {
         usize i = 0;
         ((SetFlat(i++, T(args))), ...);
     }
+    template <typename... Args>
+        requires(((sizeof...(Args) == Size) && ... && std::convertible_to<Args, T>) && Rank == 1)
+    constexpr Tensor(const Args... args) : Ranked{scast<ChildType>(args)...}
+    {
+    }
+
     template <typename... Args>
     constexpr Tensor(const Args &...args)
         requires(!std::same_as<ChildType, T> && sizeof...(Args) == N0 && (std::convertible_to<Args, ChildType> && ...))
