@@ -289,7 +289,7 @@ template <typename T, typename AllocState> class Array
     }
 
     template <typename... Args>
-        requires std::constructible_from<T, Args...>
+        requires(std::constructible_from<T, Args...> && sizeof...(Args) != 1)
     constexpr T &Append(Args &&...args)
     {
         usize newSize = m_State.Size + 1;
@@ -307,6 +307,39 @@ template <typename T, typename AllocState> class Array
         m_State.Size = newSize;
         writeNullTerminatorIfString();
         return *ConstructFromIterator(end() - 1, std::forward<Args>(args)...);
+    }
+    template <typename U> constexpr T &Append(U &&value)
+    {
+        usize newSize = m_State.Size + 1;
+        if constexpr (IsString)
+            if (mustAddTwo())
+                ++newSize;
+
+        if constexpr (Type == Array_Dynamic || Type == Array_Tier)
+        {
+            if constexpr (std::is_same_v<T, std::remove_cvref_t<U>> && std::is_reference_v<U>)
+            {
+                const T *ptr = &value;
+                if (newSize > m_State.GetCapacity() && ptr >= begin() && ptr < end())
+                {
+                    const T *bgn = begin();
+                    const usize pos = usize(std::distance(bgn, ptr));
+                    m_State.GrowCapacity(newSize);
+                    m_State.Size = newSize;
+                    writeNullTerminatorIfString();
+                    return *ConstructFromIterator(end() - 1, *(begin() + pos));
+                }
+            }
+            m_State.GrowCapacityIf(newSize > m_State.GetCapacity(), newSize);
+        }
+        else
+        {
+            TKIT_ASSERT(!IsFull(), "[TOOLKIT][ARRAY] Container is already at capacity of {}", m_State.GetCapacity());
+        }
+
+        m_State.Size = newSize;
+        writeNullTerminatorIfString();
+        return *ConstructFromIterator(end() - 1, std::forward<U>(value));
     }
 
     constexpr void Pop()
@@ -351,7 +384,7 @@ template <typename T, typename AllocState> class Array
         return *ppos;
     }
 
-    template <std::input_iterator It> constexpr void Insert(T *ppos, const It pbegin, const It pend)
+    template <std::input_iterator It> constexpr void Insert(T *ppos, It pbegin, It pend)
     {
         TKIT_ASSERT(ppos >= begin() && ppos <= end(), "[TOOLKIT][ARRAY] Iterator is out of bounds");
         usize newSize = m_State.Size + usize(std::distance(pbegin, pend));
@@ -364,8 +397,29 @@ template <typename T, typename AllocState> class Array
             if (newSize > m_State.GetCapacity())
             {
                 const usize pos = usize(std::distance(begin(), ppos));
-                m_State.GrowCapacity(newSize);
-                ppos = begin() + pos;
+                if constexpr (std::is_same_v<T *, std::remove_cvref_t<It>>)
+                {
+                    const T *bg = begin();
+                    if (pbegin >= bg && pbegin < end())
+                    {
+                        const usize boff = usize(pbegin - bg);
+                        const usize eoff = usize(pend - bg);
+                        m_State.GrowCapacity(newSize);
+                        pbegin = begin() + boff;
+                        pend = begin() + eoff;
+                        ppos = begin() + pos;
+                    }
+                    else
+                    {
+                        m_State.GrowCapacity(newSize);
+                        ppos = begin() + pos;
+                    }
+                }
+                else
+                {
+                    m_State.GrowCapacity(newSize);
+                    ppos = begin() + pos;
+                }
             }
 
             Tools::Insert(end(), ppos, pbegin, pend);
@@ -401,6 +455,7 @@ template <typename T, typename AllocState> class Array
         TKIT_ASSERT(pos >= begin() && pos < end(), "[TOOLKIT][ARRAY] Iterator is out of bounds");
         Tools::RemoveOrdered(end(), pos);
         --m_State.Size;
+        writeNullTerminatorIfString();
     }
 
     /**
@@ -418,6 +473,7 @@ template <typename T, typename AllocState> class Array
         TKIT_ASSERT(m_State.Size >= std::distance(pbegin, pend), "[TOOLKIT][ARRAY] Range overflows array");
 
         m_State.Size -= Tools::RemoveOrdered(end(), pbegin, pend);
+        writeNullTerminatorIfString();
     }
 
     /**

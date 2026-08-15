@@ -99,16 +99,32 @@ template <typename T> struct ArrayTools
             return;
         }
 
-        if constexpr (!std::is_trivially_constructible_v<T>)
-        { // Current end pointer is uninitialized, so it must be handled manually
-            ConstructFromIterator(end, std::move(*(end - 1)));
+        if constexpr (std::is_same_v<T, std::remove_cvref_t<U>> && std::is_lvalue_reference_v<U>)
+        {
+            const T *ptr = &value;
+            if (ptr >= pos && ptr < end)
+            {
+                if constexpr (!std::is_trivially_constructible_v<T>)
+                {
+                    ConstructFromIterator(end, std::move(*(end - 1)));
+                    if (T *shiftedEnd = end - 1; pos < shiftedEnd)
+                        BackwardMove(end, pos, shiftedEnd);
+                }
+                else
+                    BackwardMove(end + 1, pos, end);
+                *pos = std::move(*(ptr + 1));
+                return;
+            }
+        }
 
+        if constexpr (!std::is_trivially_constructible_v<T>)
+        {
+            ConstructFromIterator(end, std::move(*(end - 1)));
             if (T *shiftedEnd = end - 1; pos < shiftedEnd)
                 BackwardMove(end, pos, shiftedEnd);
         }
         else
             BackwardMove(end + 1, pos, end);
-
         *pos = std::forward<U>(value);
     }
 

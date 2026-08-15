@@ -391,3 +391,87 @@ TEST_CASE("Array<std::string>: basic operations", "[Array][string]")
     TestStringOps<StaticAlloc15>();
     TestStringOps<TierAllocation>(&s_Tier, usize(15));
 }
+TEST_CASE("Bug1: RemoveOrdered single missing null terminator", "[Array][string][bug]")
+{
+    using DynStr = Array<char, DynamicAllocation<char>>;
+    DynStr s("abcde");
+    REQUIRE(std::string(s.CString()) == "abcde");
+
+    s.RemoveOrdered(s.begin() + 2); // remove 'c'
+    REQUIRE(s.GetSize() == 4);
+    // CString() should read "abde", but no null was written at position 4.
+    // The old 'e' still sits there, so CString() returns "abdee" or worse
+    // depending on what happened to be in memory.
+    REQUIRE(std::string(s.CString()) == "abde"); // FAILS
+}
+TEST_CASE("Bug2: RemoveOrdered range missing null terminator", "[Array][string][bug]")
+{
+    using DynStr = Array<char, DynamicAllocation<char>>;
+    DynStr s("abcdef");
+
+    s.RemoveOrdered(s.begin() + 1, s.begin() + 4); // remove "bcd"
+    REQUIRE(s.GetSize() == 3);
+    // Should be "aef", but stale characters remain after the logical end
+    REQUIRE(std::string(s.CString()) == "aef"); // FAILS
+}
+TEST_CASE("Bug3: Append self-ref dangles on realloc", "[Array][bug]")
+{
+    Array<std::string, DynamicAllocation<std::string>> arr{};
+    arr.Append("first");
+    arr.Append("second");
+    REQUIRE(arr.IsFull());
+
+    // arr[0] references into the current buffer.
+    // Append grows capacity, freeing that buffer before reading the reference.
+    arr.Append(arr[0]);
+    REQUIRE(arr.GetSize() == 3);
+    REQUIRE(arr[2] == "first"); // FAILS or UB: reads freed memory
+}
+
+TEST_CASE("Bug3b: Append self-ref dangles on realloc (Tier)", "[Array][tier][bug]")
+{
+    ArenaAllocator arena{1_mib};
+    TierAllocator tier{{.Allocator = &arena, .MaxAllocation = 16_kib}};
+    {
+        Array<std::string, TierAllocation<std::string>> arr(&tier);
+        arr.Append("hello");
+        arr.Append("world");
+        REQUIRE(arr.IsFull());
+
+        arr.Append(arr[0]);
+        REQUIRE(arr.GetSize() == 3);
+        REQUIRE(arr[2] == "hello"); // FAILS or UB
+    }
+}
+TEST_CASE("Bug4: Range Insert self-iterators dangle on realloc", "[Array][bug]")
+{
+    Array<u32, DynamicAllocation<u32>> arr{};
+    arr.Append(1);
+    arr.Append(2);
+    arr.Append(3);
+    arr.Append(4);
+    arr.Append(5);
+    REQUIRE(arr.IsFull());
+
+    // Source iterators point into arr. Insert triggers realloc.
+    // ppos is adjusted, pbegin/pend are not.
+    arr.Insert(arr.begin() + 2, arr.begin(), arr.begin() + 2);
+    REQUIRE(arr.GetSize() == 7);
+    REQUIRE(arr[2] == 1); // FAILS or UB
+    REQUIRE(arr[3] == 2);
+}
+TEST_CASE("Bug5: Insert single element from shifted range", "[Array][bug]")
+{
+    Array<std::string, DynamicAllocation<std::string>> arr{};
+    arr.Append("A");
+    arr.Append("B");
+    arr.Append("C");
+    arr.Append("D");
+
+    // Insert arr[2] ("C") at position 0.
+    // Shift moves "A","B","C","D" → _,"A","B","C","D"
+    // arr[2] now holds "B" (shifted from index 1), not the original "C"
+    arr.Insert(arr.begin(), arr[2]);
+    REQUIRE(arr.GetSize() == 5);
+    REQUIRE(arr[0] == "C"); // FAILS: gets "B" or empty string
+}

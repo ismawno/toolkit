@@ -280,6 +280,14 @@ template <typename T> void Destruct(const T *ptr)
     std::destroy_at(ptr);
 }
 
+template <typename It> auto AddressFromIterator(const It it)
+{
+    if constexpr (std::is_pointer_v<It>)
+        return it;
+    else
+        return &*it;
+}
+
 /**
  * @brief Construct an object of type `T` in the memory location an iterator points to.
  *
@@ -293,10 +301,7 @@ template <typename T> void Destruct(const T *ptr)
  */
 template <typename It, typename... Args> auto ConstructFromIterator(const It it, Args &&...args)
 {
-    if constexpr (std::is_pointer_v<It>)
-        return Construct(it, std::forward<Args>(args)...);
-    else
-        return Construct(&*it, std::forward<Args>(args)...);
+    return Construct(AddressFromIterator(it), std::forward<Args>(args)...);
 }
 
 /**
