@@ -275,5 +275,10 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     u64 m_Allocations = 0;
     u64 m_Deallocations = 0;
 #endif
+  public:
+    const ArenaArray<Tier> &GetTiers() const
+    {
+        return m_Tiers;
+    }
 };
 } // namespace TKit
