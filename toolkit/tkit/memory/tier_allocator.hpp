@@ -148,8 +148,10 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 {
     TKIT_NON_COPYABLE(TierAllocator)
   public:
-    explicit TierAllocator(const TierDescriptions &tiers, usize maxAlignment = alignof(std::max_align_t));
-    explicit TierAllocator(const TierSpecs &specs = {}, usize maxAlignment = alignof(std::max_align_t));
+    explicit TierAllocator(const TierDescriptions &tiers, usize maxAlignment = alignof(std::max_align_t),
+                           usize headerAllocsAlignment = alignof(std::max_align_t));
+    explicit TierAllocator(const TierSpecs &specs = {}, usize maxAlignment = alignof(std::max_align_t),
+                           usize headerAllocsAlignment = alignof(std::max_align_t));
 
     ~TierAllocator();
 
@@ -270,6 +272,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     usz m_BufferSize;
     usz m_MinAllocation;
     usize m_Granularity;
+    usize m_HeaderAllocationsAlignment;
 #ifdef TKIT_ENABLE_ENSURE
     usz m_MaxAllocation;
     u64 m_Allocations = 0;

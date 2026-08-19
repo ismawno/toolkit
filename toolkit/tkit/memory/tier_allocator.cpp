@@ -151,9 +151,10 @@ void TierDescriptions::buildTierLayout()
 #endif
 }
 
-TierAllocator::TierAllocator(const TierDescriptions &tiers, const usize maxAlignment)
+TierAllocator::TierAllocator(const TierDescriptions &tiers, const usize maxAlignment, const usize headerAllocsAlignment)
     : m_Tiers(tiers.GetTiers().GetAllocator(), tiers.GetTiers().GetCapacity()), m_BufferSize(tiers.GetBufferSize()),
-      m_MinAllocation(tiers.GetMinAllocation()), m_Granularity(tiers.GetGranularity())
+      m_MinAllocation(tiers.GetMinAllocation()), m_Granularity(tiers.GetGranularity()),
+      m_HeaderAllocationsAlignment(headerAllocsAlignment)
 {
 #ifdef TKIT_ENABLE_ENSURE
     m_MaxAllocation = tiers.GetMaxAllocation();
@@ -162,6 +163,12 @@ TierAllocator::TierAllocator(const TierDescriptions &tiers, const usize maxAlign
                 "[TOOLKIT][TIER-ALLOC] Maximum alignment must be a power of 2, but {} is not", maxAlignment);
     TKIT_ASSERT(maxAlignment >= alignof(std::max_align_t),
                 "[TOOLKIT][TIER-ALLOC] Maximum alignment must be greater or equal than alignof(std::max_align_t)");
+    TKIT_ASSERT(IsPowerOfTwo(headerAllocsAlignment),
+                "[TOOLKIT][TIER-ALLOC] Header allocations alignment must be a power of 2, but {} is not",
+                headerAllocsAlignment);
+    TKIT_ASSERT(
+        headerAllocsAlignment >= alignof(std::max_align_t),
+        "[TOOLKIT][TIER-ALLOC] Header allocations alignment must be greater or equal than alignof(std::max_align_t)");
     m_Buffer = scast<std::byte *>(AllocateAligned(m_BufferSize, maxAlignment));
 #ifdef TKIT_ENABLE_ENSURE
     setupMemoryLayout(tiers, maxAlignment);
@@ -170,8 +177,8 @@ TierAllocator::TierAllocator(const TierDescriptions &tiers, const usize maxAlign
 #endif
 }
 
-TierAllocator::TierAllocator(const TierSpecs &specs, const usize maxAlignment)
-    : TierAllocator(TierDescriptions{specs}, maxAlignment)
+TierAllocator::TierAllocator(const TierSpecs &specs, const usize maxAlignment, const usize headerAllocsAlignment)
+    : TierAllocator(TierDescriptions{specs}, maxAlignment, headerAllocsAlignment)
 {
 }
 
@@ -376,19 +383,9 @@ void TierAllocator::Deallocate(const void *ptr, const usz size)
 #endif
 }
 
-static constexpr usz getHeaderSize()
-{
-    usz headerSize;
-    if constexpr (sizeof(usz) > alignof(std::max_align_t))
-        headerSize = sizeof(usz);
-    else
-        headerSize = alignof(std::max_align_t);
-    return headerSize;
-}
-
 void *TierAllocator::AllocateWithHeader(const usz size)
 {
-    constexpr usz headerSize = getHeaderSize();
+    const usz headerSize = (sizeof(usz) + m_HeaderAllocationsAlignment - 1) & ~(m_HeaderAllocationsAlignment - 1);
     void *ptr = Allocate(size + headerSize);
     if (!ptr)
         return nullptr;
@@ -401,7 +398,7 @@ void *TierAllocator::AllocateWithHeader(const usz size)
 void TierAllocator::DeallocateWithHeader(const void *ptr)
 {
     TKIT_ASSERT(ptr, "[TOOLKIT][TIER-ALLOC] Cannot deallocate a null pointer");
-    constexpr usz headerSize = getHeaderSize();
+    const usz headerSize = (sizeof(usz) + m_HeaderAllocationsAlignment - 1) & ~(m_HeaderAllocationsAlignment - 1);
 
     std::byte *mem = rcast<std::byte *>(ccast<void *>(ptr));
     usz *header = rcast<usz *>(mem - headerSize);
