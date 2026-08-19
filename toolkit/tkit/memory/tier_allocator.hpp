@@ -174,7 +174,10 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 
         const std::byte *mem = rcast<const std::byte *>(ptr);
         const usz *header = rcast<const usz *>(mem - headerSize);
-        return *header;
+        TKIT_UNPOISON_MEMORY_REGION(header, headerSize);
+        const usz size = *header;
+        TKIT_POISON_MEMORY_REGION(header, headerSize);
+        return size;
     }
 
     template <typename T> T *Allocate(const usize count = 1)
