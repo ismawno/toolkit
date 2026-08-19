@@ -19,35 +19,35 @@ static ArenaAllocator s_Arena{1_mib};
 static StackAllocator s_Stack{1_mib};
 static TierAllocator s_Tier{{.Allocator = &s_Arena, .MaxAllocation = 16_kib}};
 
-struct Tracker
+struct Test_Tracker
 {
     u32 Value;
-    Tracker() : Value(0)
+    Test_Tracker() : Value(0)
     {
         ++g_Constructions;
     }
-    Tracker(const u32 value) : Value(value)
+    Test_Tracker(const u32 value) : Value(value)
     {
         ++g_Constructions;
     }
-    Tracker(const Tracker &other) : Value(other.Value)
+    Test_Tracker(const Test_Tracker &other) : Value(other.Value)
     {
         ++g_Constructions;
     }
-    Tracker(Tracker &&other) : Value(other.Value)
+    Test_Tracker(Test_Tracker &&other) : Value(other.Value)
     {
         ++g_Constructions;
     }
-    ~Tracker()
+    ~Test_Tracker()
     {
         ++g_Destructions;
     }
-    Tracker &operator=(const Tracker &other)
+    Test_Tracker &operator=(const Test_Tracker &other)
     {
         Value = other.Value;
         return *this;
     }
-    Tracker &operator=(Tracker &&other)
+    Test_Tracker &operator=(Test_Tracker &&other)
     {
         Value = other.Value;
         return *this;
@@ -88,7 +88,7 @@ template <template <typename> typename A, typename... Args> void TestBasic(Args.
 
 template <template <typename> typename A, typename... Args> void TestAppendPop(Args... args)
 {
-    Array<Tracker, A<Tracker>> arr{A<Tracker>{args...}};
+    Array<Test_Tracker, A<Test_Tracker>> arr{A<Test_Tracker>{args...}};
     g_Constructions = g_Destructions = 0;
 
     auto &r0 = arr.Append();
@@ -116,7 +116,7 @@ template <template <typename> typename A, typename... Args> void TestSizeFillCto
     REQUIRE(arr.GetSize() == 3);
 
     g_Constructions = g_Destructions = 0;
-    const Array<Tracker, A<Tracker>> nt{2, A<Tracker>{args...}};
+    const Array<Test_Tracker, A<Test_Tracker>> nt{2, A<Test_Tracker>{args...}};
     REQUIRE(nt.GetSize() == 2);
     REQUIRE(g_Constructions == 2);
 }
@@ -194,7 +194,7 @@ template <template <typename> typename A, typename... Args> void TestRemove(Args
 
 template <template <typename> typename A, typename... Args> void TestResize(Args... args)
 {
-    Array<Tracker, A<Tracker>> arr{A<Tracker>{args...}};
+    Array<Test_Tracker, A<Test_Tracker>> arr{A<Test_Tracker>{args...}};
     g_Constructions = g_Destructions = 0;
 
     arr.Resize(3);

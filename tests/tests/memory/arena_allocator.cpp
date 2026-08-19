@@ -6,24 +6,24 @@
 using namespace TKit;
 
 // A helper non-trivial type to test Create/NCreate
-struct NonTrivialAA
+struct Test_NonTrivialAA
 {
     static inline u32 CtorCount = 0;
     static inline u32 DtorCount = 0;
     u32 Value;
 
-    NonTrivialAA(const u32 value) : Value(value)
+    Test_NonTrivialAA(const u32 value) : Value(value)
     {
         ++CtorCount;
     }
-    ~NonTrivialAA()
+    ~Test_NonTrivialAA()
     {
         ++DtorCount;
     }
 
     // non-copyable to force Create path
-    NonTrivialAA(const NonTrivialAA &) = delete;
-    NonTrivialAA &operator=(const NonTrivialAA &) = delete;
+    Test_NonTrivialAA(const Test_NonTrivialAA &) = delete;
+    Test_NonTrivialAA &operator=(const Test_NonTrivialAA &) = delete;
 };
 
 TEST_CASE("Constructor and initial state", "[ArenaAllocator]")
@@ -89,19 +89,19 @@ TEST_CASE("Create<T> and NCreate<T>", "[ArenaAllocator]")
     REQUIRE(pi != nullptr);
     REQUIRE(*pi == 42);
 
-    // Create an array of NonTrivialAA, track ctor/dtor
-    NonTrivialAA::CtorCount = 0;
-    NonTrivialAA::DtorCount = 0;
-    const auto ptr = arena.NCreate<NonTrivialAA>(3, 7);
+    // Create an array of Test_NonTrivialAA, track ctor/dtor
+    Test_NonTrivialAA::CtorCount = 0;
+    Test_NonTrivialAA::DtorCount = 0;
+    const auto ptr = arena.NCreate<Test_NonTrivialAA>(3, 7);
     REQUIRE(ptr);
-    REQUIRE(NonTrivialAA::CtorCount == 3);
+    REQUIRE(Test_NonTrivialAA::CtorCount == 3);
     for (u32 i = 0; i < 3; ++i)
         REQUIRE(ptr[i].Value == 7);
 
     // manually destroy them since ArenaAllocator won't call dtors
     for (u32 i = 0; i < 3; ++i)
-        ptr[i].~NonTrivialAA();
-    REQUIRE(NonTrivialAA::DtorCount == 3);
+        ptr[i].~Test_NonTrivialAA();
+    REQUIRE(Test_NonTrivialAA::DtorCount == 3);
     arena.Reset();
 }
 

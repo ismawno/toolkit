@@ -6,51 +6,38 @@
 
 using namespace TKit;
 using namespace TKit::Alias;
-// simple payload
-struct STTask
-{
-    u32 Value{0};
-    STTask() = default;
-    STTask(u32 v) : Value(v)
-    {
-    }
-    bool operator==(const STTask &o) const
-    {
-        return Value == o.Value;
-    }
-};
 
 static std::atomic<u32> g_Constructions{0};
 static std::atomic<u32> g_Destructions{0};
-struct STTrackable
+struct Test_STTrackable
 {
     u32 Value;
-    STTrackable() : Value(0)
+    Test_STTrackable() : Value(0)
     {
         g_Constructions.fetch_add(1, std::memory_order_relaxed);
     }
-    STTrackable(const u32 value) : Value(value)
+    Test_STTrackable(const u32 value) : Value(value)
     {
         g_Constructions.fetch_add(1, std::memory_order_relaxed);
     }
-    STTrackable(const STTrackable &other) : Value(other.Value)
+    Test_STTrackable(const Test_STTrackable &other) : Value(other.Value)
     {
         g_Constructions.fetch_add(1, std::memory_order_relaxed);
     }
-    STTrackable(STTrackable &&other) : Value(other.Value)
+    Test_STTrackable(Test_STTrackable &&other) : Value(other.Value)
     {
         g_Constructions.fetch_add(1, std::memory_order_relaxed);
     }
-    ~STTrackable()
+    ~Test_STTrackable()
     {
         g_Destructions.fetch_add(1, std::memory_order_relaxed);
     }
-    STTrackable &operator=(const STTrackable &other)
+    Test_STTrackable &operator=(const Test_STTrackable &other)
     {
         Value = other.Value;
         return *this;
     }
-    STTrackable &operator=(STTrackable &&other)
+    Test_STTrackable &operator=(Test_STTrackable &&other)
     {
         Value = other.Value;
         return *this;
@@ -63,9 +50,9 @@ TEST_CASE("MpmcStack: single-thread owner push/claim/recycle", "[MpmcStack]")
     g_Destructions.store(0, std::memory_order_relaxed);
 
     {
-        MpmcStack<STTrackable> stack{};
+        MpmcStack<Test_STTrackable> stack{};
         constexpr u32 elements = 1000;
-        using Node = MpmcStack<STTrackable>::Node;
+        using Node = MpmcStack<Test_STTrackable>::Node;
 
         for (u32 i = 0; i < elements; ++i)
             stack.Push(i);
@@ -95,9 +82,9 @@ TEST_CASE("MpmcStack: single-thread owner push many/claim/recycle", "[MpmcStack]
     g_Destructions.store(0, std::memory_order_relaxed);
 
     {
-        MpmcStack<STTrackable> stack{};
+        MpmcStack<Test_STTrackable> stack{};
         constexpr u32 elements = 1000;
-        using Node = MpmcStack<STTrackable>::Node;
+        using Node = MpmcStack<Test_STTrackable>::Node;
 
         Node *head = stack.CreateNode(0u);
         Node *tail = head;
@@ -133,13 +120,13 @@ TEST_CASE("MpmcStack: multi-thread owner push/claim/recycle", "[MpmcStack]")
     g_Constructions.store(0, std::memory_order_relaxed);
     g_Destructions.store(0, std::memory_order_relaxed);
 
-    MpmcStack<STTrackable> stack{};
+    MpmcStack<Test_STTrackable> stack{};
     constexpr u32 elements = 1000;
     constexpr u32 threads = 4;
     std::vector<std::thread> producers;
     std::vector<std::thread> consumers;
 
-    using Node = MpmcStack<STTrackable>::Node;
+    using Node = MpmcStack<Test_STTrackable>::Node;
 
     std::atomic<u32> signal{0};
     std::atomic<u32> sum{0};
@@ -187,13 +174,13 @@ TEST_CASE("MpmcStack: multi-thread owner many push/claim/recycle", "[MpmcStack]"
     g_Constructions.store(0, std::memory_order_relaxed);
     g_Destructions.store(0, std::memory_order_relaxed);
 
-    MpmcStack<STTrackable> stack{};
+    MpmcStack<Test_STTrackable> stack{};
     constexpr u32 elements = 1000;
     constexpr u32 threads = 4;
     std::vector<std::thread> producers;
     std::vector<std::thread> consumers;
 
-    using Node = MpmcStack<STTrackable>::Node;
+    using Node = MpmcStack<Test_STTrackable>::Node;
 
     std::atomic<u32> signal{0};
     std::atomic<u32> sum{0};

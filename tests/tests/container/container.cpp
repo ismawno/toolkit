@@ -11,41 +11,41 @@ using namespace TKit::Alias;
 
 template <typename T> using Tools = ArrayTools<T>;
 
-struct CopyOnly
+struct Test_CopyOnly
 {
     u32 Value;
-    CopyOnly() : Value(0)
+    Test_CopyOnly() : Value(0)
     {
     }
-    CopyOnly(const u32 value) : Value(value)
+    Test_CopyOnly(const u32 value) : Value(value)
     {
     }
-    CopyOnly(const CopyOnly &other) : Value(other.Value)
+    Test_CopyOnly(const Test_CopyOnly &other) : Value(other.Value)
     {
     }
-    CopyOnly &operator=(const CopyOnly &other)
+    Test_CopyOnly &operator=(const Test_CopyOnly &other)
     {
         Value = other.Value;
         return *this;
     }
 };
 
-struct MoveOnly
+struct Test_MoveOnly
 {
     u32 Value;
-    MoveOnly() : Value(0)
+    Test_MoveOnly() : Value(0)
     {
     }
-    MoveOnly(const u32 value) : Value(value)
+    Test_MoveOnly(const u32 value) : Value(value)
     {
     }
-    MoveOnly(const MoveOnly &) = delete;
-    MoveOnly &operator=(const MoveOnly &) = delete;
-    MoveOnly(MoveOnly &&other) : Value(other.Value)
+    Test_MoveOnly(const Test_MoveOnly &) = delete;
+    Test_MoveOnly &operator=(const Test_MoveOnly &) = delete;
+    Test_MoveOnly(Test_MoveOnly &&other) : Value(other.Value)
     {
         other.Value = TKIT_U32_MAX;
     }
-    MoveOnly &operator=(MoveOnly &&other)
+    Test_MoveOnly &operator=(Test_MoveOnly &&other)
     {
         Value = other.Value;
         other.Value = TKIT_U32_MAX;
@@ -65,18 +65,18 @@ TEST_CASE("CopyConstructFromRange", "[CopyConstructFromRange]")
 
     SECTION("non-trivial copyable type")
     {
-        const CopyOnly src[] = {10, 20, 30};
-        // raw uninitialized storage for 3 CopyOnly
-        alignas(CopyOnly) std::byte storage[sizeof(CopyOnly) * 3];
-        const auto dst = rcast<CopyOnly *>(storage);
+        const Test_CopyOnly src[] = {10, 20, 30};
+        // raw uninitialized storage for 3 Test_CopyOnly
+        alignas(Test_CopyOnly) std::byte storage[sizeof(Test_CopyOnly) * 3];
+        const auto dst = rcast<Test_CopyOnly *>(storage);
 
-        Tools<CopyOnly>::CopyConstructFromRange(dst, src, src + 3);
+        Tools<Test_CopyOnly>::CopyConstructFromRange(dst, src, src + 3);
         for (u32 i = 0; i < 3; ++i)
             REQUIRE(dst[i].Value == src[i].Value);
 
         // manually destroy
         for (u32 i = 0; i < 3; ++i)
-            dst[i].~CopyOnly();
+            dst[i].~Test_CopyOnly();
     }
 }
 
@@ -96,11 +96,11 @@ TEST_CASE("MoveConstructFromRange", "[MoveConstructFromRange]")
 
     SECTION("move-only type")
     {
-        MoveOnly src[] = {MoveOnly(7), MoveOnly(14), MoveOnly(21)};
-        alignas(MoveOnly) std::byte storage[sizeof(MoveOnly) * 3];
-        const auto dst = rcast<MoveOnly *>(storage);
+        Test_MoveOnly src[] = {Test_MoveOnly(7), Test_MoveOnly(14), Test_MoveOnly(21)};
+        alignas(Test_MoveOnly) std::byte storage[sizeof(Test_MoveOnly) * 3];
+        const auto dst = rcast<Test_MoveOnly *>(storage);
 
-        Tools<MoveOnly>::MoveConstructFromRange(dst, src, src + 3);
+        Tools<Test_MoveOnly>::MoveConstructFromRange(dst, src, src + 3);
 
         // dest values correct
         REQUIRE(dst[0].Value == 7);
@@ -112,7 +112,7 @@ TEST_CASE("MoveConstructFromRange", "[MoveConstructFromRange]")
         REQUIRE(src[2].Value == TKIT_U32_MAX);
 
         for (u32 i = 0; i < 3; ++i)
-            dst[i].~MoveOnly();
+            dst[i].~Test_MoveOnly();
     }
 }
 
@@ -143,14 +143,14 @@ TEST_CASE("CopyAssignFromRange", "[CopyAssignFromRange]")
     SECTION("non-trivial copyable: src > dst")
     {
         // use FixedArray with extra capacity
-        FixedArray<CopyOnly, 10> buf;
+        FixedArray<Test_CopyOnly, 10> buf;
         // initialize first 3 slots
         for (u32 i = 0; i < 3; ++i)
-            buf[i] = CopyOnly(i + 1);
-        const CopyOnly src[] = {100, 200, 300, 400, 500};
+            buf[i] = Test_CopyOnly(i + 1);
+        const Test_CopyOnly src[] = {100, 200, 300, 400, 500};
 
         // assign into 3‑slot region, but src is length 5 -> will construct 2 more
-        Tools<CopyOnly>::CopyAssignFromRange(buf.begin(), buf.begin() + 3, src, src + 5);
+        Tools<Test_CopyOnly>::CopyAssignFromRange(buf.begin(), buf.begin() + 3, src, src + 5);
 
         // now buf[0..4] == src[0..4]
         for (u32 i = 0; i < 5; ++i)
@@ -181,14 +181,14 @@ TEST_CASE("MoveAssignFromRange", "[MoveAssignFromRange]")
 
     SECTION("move-only: src > dst")
     {
-        FixedArray<MoveOnly, 8> buf;
+        FixedArray<Test_MoveOnly, 8> buf;
         // default‑construct first 2 slots in raw storage
-        Construct<MoveOnly>(&buf[0], 0);
-        Construct<MoveOnly>(&buf[1], 0);
+        Construct<Test_MoveOnly>(&buf[0], 0);
+        Construct<Test_MoveOnly>(&buf[1], 0);
 
-        MoveOnly src[] = {11, 22, 33, 44};
+        Test_MoveOnly src[] = {11, 22, 33, 44};
         // move‑assign into 2‑slot region -> will construct 2 more at buf[2],buf[3]
-        Tools<MoveOnly>::MoveAssignFromRange(buf.begin(), buf.begin() + 2, src, src + 4);
+        Tools<Test_MoveOnly>::MoveAssignFromRange(buf.begin(), buf.begin() + 2, src, src + 4);
 
         REQUIRE(buf[0].Value == 11);
         REQUIRE(buf[1].Value == 22);
@@ -238,23 +238,23 @@ TEST_CASE("Insert single element", "[Insert]")
 
     SECTION("move-only in raw buffer")
     {
-        // raw buffer for 3 MoveOnly
-        alignas(MoveOnly) std::byte storage[sizeof(MoveOnly) * 3];
-        const auto arr = rcast<MoveOnly *>(storage);
+        // raw buffer for 3 Test_MoveOnly
+        alignas(Test_MoveOnly) std::byte storage[sizeof(Test_MoveOnly) * 3];
+        const auto arr = rcast<Test_MoveOnly *>(storage);
         // placement‐new first two
-        Construct<MoveOnly>(&arr[0], 5);
-        Construct<MoveOnly>(&arr[1], 6);
+        Construct<Test_MoveOnly>(&arr[0], 5);
+        Construct<Test_MoveOnly>(&arr[1], 6);
 
-        MoveOnly val(7);
+        Test_MoveOnly val(7);
         // insert at position 1
-        Tools<MoveOnly>::Insert(arr + 2, arr + 1, std::move(val));
+        Tools<Test_MoveOnly>::Insert(arr + 2, arr + 1, std::move(val));
 
         REQUIRE(arr[1].Value == 7);
         REQUIRE(arr[2].Value == 6);
 
         // destroy all three
         for (u32 i = 0; i < 3; ++i)
-            arr[i].~MoveOnly();
+            arr[i].~Test_MoveOnly();
     }
 }
 
@@ -308,12 +308,12 @@ TEST_CASE("Insert range of elements", "[Insert][Range]")
 
     SECTION("non-trivial copyable tail > count")
     {
-        FixedArray<CopyOnly, 8> arr;
+        FixedArray<Test_CopyOnly, 8> arr;
         // init first 4 slots
         for (u32 i = 0; i < 4; ++i)
-            arr[i] = CopyOnly(i + 1);
-        const CopyOnly src[] = {100, 200};
-        const auto added = Tools<CopyOnly>::Insert(arr.begin() + 4, arr.begin() + 1, src, src + 2);
+            arr[i] = Test_CopyOnly(i + 1);
+        const Test_CopyOnly src[] = {100, 200};
+        const auto added = Tools<Test_CopyOnly>::Insert(arr.begin() + 4, arr.begin() + 1, src, src + 2);
         REQUIRE(added == 2);
         REQUIRE(arr[1].Value == 100);
         REQUIRE(arr[2].Value == 200);
@@ -323,12 +323,12 @@ TEST_CASE("Insert range of elements", "[Insert][Range]")
 
     SECTION("non-trivial copyable tail < count")
     {
-        FixedArray<CopyOnly, 8> arr;
+        FixedArray<Test_CopyOnly, 8> arr;
         // init first 3 slots
         for (u32 i = 0; i < 3; ++i)
-            arr[i] = CopyOnly(i + 1);
-        const CopyOnly src[] = {100, 200, 300, 400, 500};
-        const auto added = Tools<CopyOnly>::Insert(arr.begin() + 3, arr.begin() + 1, src, src + 5);
+            arr[i] = Test_CopyOnly(i + 1);
+        const Test_CopyOnly src[] = {100, 200, 300, 400, 500};
+        const auto added = Tools<Test_CopyOnly>::Insert(arr.begin() + 3, arr.begin() + 1, src, src + 5);
         REQUIRE(added == 5);
         REQUIRE(arr[0].Value == 1);
         REQUIRE(arr[1].Value == 100);
@@ -341,12 +341,12 @@ TEST_CASE("Insert range of elements", "[Insert][Range]")
     }
     SECTION("non-trivial copyable tail == count")
     {
-        FixedArray<CopyOnly, 6> arr;
+        FixedArray<Test_CopyOnly, 6> arr;
         // init first 3 slots
         for (u32 i = 0; i < 3; ++i)
-            arr[i] = CopyOnly(i + 1);
-        const CopyOnly src[] = {100, 200, 300};
-        const auto added = Tools<CopyOnly>::Insert(arr.begin() + 3, arr.begin() + 1, src, src + 3);
+            arr[i] = Test_CopyOnly(i + 1);
+        const Test_CopyOnly src[] = {100, 200, 300};
+        const auto added = Tools<Test_CopyOnly>::Insert(arr.begin() + 3, arr.begin() + 1, src, src + 3);
         REQUIRE(added == 3);
         REQUIRE(arr[0].Value == 1);
         REQUIRE(arr[1].Value == 100);
@@ -373,10 +373,10 @@ TEST_CASE("RemoveOrdered single element", "[RemoveOrdered]")
 
     SECTION("non-trivial copyable")
     {
-        FixedArray<CopyOnly, 5> arr;
+        FixedArray<Test_CopyOnly, 5> arr;
         for (u32 i = 0; i < 5; ++i)
-            arr[i] = CopyOnly(i + 1);
-        Tools<CopyOnly>::RemoveOrdered(arr.begin() + 5, arr.begin() + 2);
+            arr[i] = Test_CopyOnly(i + 1);
+        Tools<Test_CopyOnly>::RemoveOrdered(arr.begin() + 5, arr.begin() + 2);
         // element 2 removed: arr[2] was 3, now becomes 4
         REQUIRE(arr[2].Value == 4);
         REQUIRE(arr[3].Value == 5);
@@ -399,10 +399,10 @@ TEST_CASE("RemoveOrdered range of elements", "[RemoveOrdered][Range]")
 
     SECTION("non-trivial copyable")
     {
-        FixedArray<CopyOnly, 6> arr;
+        FixedArray<Test_CopyOnly, 6> arr;
         for (u32 i = 0; i < 6; ++i)
-            arr[i] = CopyOnly(i + 1);
-        const auto removed = Tools<CopyOnly>::RemoveOrdered(arr.begin() + 6, arr.begin() + 2, arr.begin() + 5);
+            arr[i] = Test_CopyOnly(i + 1);
+        const auto removed = Tools<Test_CopyOnly>::RemoveOrdered(arr.begin() + 6, arr.begin() + 2, arr.begin() + 5);
         REQUIRE(removed == 3);
         // removed 3 elements at [2,5) → element at 2 becomes old 5
         REQUIRE(arr[2].Value == 6);
@@ -422,10 +422,10 @@ TEST_CASE("RemoveUnordered", "[RemoveUnordered]")
 
     SECTION("non-trivial copyable")
     {
-        FixedArray<CopyOnly, 4> arr;
+        FixedArray<Test_CopyOnly, 4> arr;
         for (u32 i = 0; i < 4; ++i)
-            arr[i] = CopyOnly(i + 1);
-        Tools<CopyOnly>::RemoveUnordered(arr.begin() + 4, arr.begin() + 0);
+            arr[i] = Test_CopyOnly(i + 1);
+        Tools<Test_CopyOnly>::RemoveUnordered(arr.begin() + 4, arr.begin() + 0);
         // arr[0] should now hold old arr[3]
         REQUIRE(arr[0].Value == 4);
     }

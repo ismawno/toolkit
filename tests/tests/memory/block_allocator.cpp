@@ -6,23 +6,23 @@
 using namespace TKit;
 
 // A helper non-trivial type to test Create<T> and Destroy<T>
-struct NonTrivialBA
+struct Test_NonTrivialBA
 {
     static inline u32 CtorCount = 0;
     static inline u32 DtorCount = 0;
     u32 value;
 
-    NonTrivialBA(const u32 value) : value(value)
+    Test_NonTrivialBA(const u32 value) : value(value)
     {
         ++CtorCount;
     }
-    ~NonTrivialBA()
+    ~Test_NonTrivialBA()
     {
         ++DtorCount;
     }
 
-    NonTrivialBA(const NonTrivialBA &) = delete;
-    NonTrivialBA &operator=(const NonTrivialBA &) = delete;
+    Test_NonTrivialBA(const Test_NonTrivialBA &) = delete;
+    Test_NonTrivialBA &operator=(const Test_NonTrivialBA &) = delete;
 };
 
 TEST_CASE("Constructor and initial state", "[BlockAllocator]")
@@ -112,16 +112,16 @@ TEST_CASE("Move constructor and move assignment", "[BlockAllocator]")
 
 TEST_CASE("Create<T> and Destroy<T>", "[BlockAllocator]")
 {
-    auto alloc = BlockAllocator::CreateFromType<NonTrivialBA>(3);
+    auto alloc = BlockAllocator::CreateFromType<Test_NonTrivialBA>(3);
 
-    NonTrivialBA::CtorCount = 0;
-    NonTrivialBA::DtorCount = 0;
+    Test_NonTrivialBA::CtorCount = 0;
+    Test_NonTrivialBA::DtorCount = 0;
 
-    // Create three NonTrivialBA instances
-    NonTrivialBA *a = alloc.Create<NonTrivialBA>(7);
-    NonTrivialBA *b = alloc.Create<NonTrivialBA>(8);
-    NonTrivialBA *c = alloc.Create<NonTrivialBA>(9);
-    REQUIRE(NonTrivialBA::CtorCount == 3);
+    // Create three Test_NonTrivialBA instances
+    Test_NonTrivialBA *a = alloc.Create<Test_NonTrivialBA>(7);
+    Test_NonTrivialBA *b = alloc.Create<Test_NonTrivialBA>(8);
+    Test_NonTrivialBA *c = alloc.Create<Test_NonTrivialBA>(9);
+    REQUIRE(Test_NonTrivialBA::CtorCount == 3);
     REQUIRE(a->value == 7);
     REQUIRE(b->value == 8);
     REQUIRE(c->value == 9);
@@ -130,7 +130,7 @@ TEST_CASE("Create<T> and Destroy<T>", "[BlockAllocator]")
     alloc.Destroy(a);
     alloc.Destroy(b);
     alloc.Destroy(c);
-    REQUIRE(NonTrivialBA::DtorCount == 3);
+    REQUIRE(Test_NonTrivialBA::DtorCount == 3);
 }
 
 TEST_CASE("User-provided buffer constructor", "[BlockAllocator]")

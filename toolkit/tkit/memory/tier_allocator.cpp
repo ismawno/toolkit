@@ -160,6 +160,8 @@ TierAllocator::TierAllocator(const TierDescriptions &tiers, const usize maxAlign
 #endif
     TKIT_ASSERT(IsPowerOfTwo(maxAlignment),
                 "[TOOLKIT][TIER-ALLOC] Maximum alignment must be a power of 2, but {} is not", maxAlignment);
+    TKIT_ASSERT(maxAlignment >= alignof(std::max_align_t),
+                "[TOOLKIT][TIER-ALLOC] Maximum alignment must be greater or equal than alignof(std::max_align_t)");
     m_Buffer = scast<std::byte *>(AllocateAligned(m_BufferSize, maxAlignment));
 #ifdef TKIT_ENABLE_ENSURE
     setupMemoryLayout(tiers, maxAlignment);
@@ -242,6 +244,7 @@ void TierAllocator::setupMemoryLayout(const TierDescriptions &tiers)
 #ifdef TKIT_ENABLE_ENSURE
         tier.Slots = tinfo.Slots;
         tier.Size = tinfo.Size;
+        tier.AllocationSize = tinfo.AllocationSize;
 #endif
         m_Tiers.Append(tier);
         size += tinfo.Size;
@@ -286,6 +289,7 @@ void *TierAllocator::allocate(const usize tierIndex, const usz size)
             if (index == tierIndex)
             {
                 ++tier.Slots;
+                ++tier.SlotsStolen;
                 ++tier.Allocations;
             }
             TKIT_ENSURE((tier.Allocations - tier.Deallocations) <= tier.Slots,
@@ -314,7 +318,10 @@ void *TierAllocator::allocate(const usize tierIndex, const usz size)
                 "allocated in tier index {} which has insufficient capacity for it",
                 size, index, tierIndex);
     if (index != tierIndex)
+    {
         --tier.Slots; // we are being robbed
+        ++tier.SlotsRemoved;
+    }
     else
     {
         TKIT_ENSURE((++tier.Allocations - tier.Deallocations) <= tier.Slots,
@@ -332,6 +339,9 @@ void *TierAllocator::allocate(const usize tierIndex, const usz size)
     tier.FreeList = alloc->Next;
 
     TKIT_PROFILE_MARK_POOL_ALLOCATION("tier-allocator", alloc, size);
+#ifdef TKIT_ENABLE_ENSURE
+    ++m_Allocations;
+#endif
     return alloc;
 }
 void *TierAllocator::Allocate(const usz size)
@@ -361,6 +371,41 @@ void TierAllocator::Deallocate(const void *ptr, const usz size)
     alloc->Next = tier.FreeList;
     TKIT_POISON_MEMORY_REGION(alloc, size);
     tier.FreeList = alloc;
+#ifdef TKIT_ENABLE_ENSURE
+    ++m_Deallocations;
+#endif
+}
+
+static constexpr usz getHeaderSize()
+{
+    usz headerSize;
+    if constexpr (sizeof(usz) > alignof(std::max_align_t))
+        headerSize = sizeof(usz);
+    else
+        headerSize = alignof(std::max_align_t);
+    return headerSize;
+}
+
+void *TierAllocator::AllocateWithHeader(const usz size)
+{
+    constexpr usz headerSize = getHeaderSize();
+    void *ptr = Allocate(size + headerSize);
+    if (!ptr)
+        return nullptr;
+
+    usz *header = rcast<usz *>(ptr);
+    *header = size + headerSize;
+    return rcast<std::byte *>(ptr) + headerSize;
+}
+
+void TierAllocator::DeallocateWithHeader(const void *ptr)
+{
+    TKIT_ASSERT(ptr, "[TOOLKIT][TIER-ALLOC] Cannot deallocate a null pointer");
+    constexpr usz headerSize = getHeaderSize();
+
+    std::byte *mem = rcast<std::byte *>(ccast<void *>(ptr));
+    usz *header = rcast<usz *>(mem - headerSize);
+    Deallocate(ptr, *header);
 }
 
 usize TierAllocator::getTierIndex(const usz size) const

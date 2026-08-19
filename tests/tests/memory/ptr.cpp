@@ -5,14 +5,14 @@ using namespace TKit;
 using namespace TKit::Alias;
 
 // A RefCounted type to track destructor calls
-struct MyRefCounted : public RefCounted<MyRefCounted>
+struct Test_MyRefCounted : public RefCounted<Test_MyRefCounted>
 {
     u32 Value;
     static inline u32 DtorCount = 0;
-    MyRefCounted(const u32 value) : Value(value)
+    Test_MyRefCounted(const u32 value) : Value(value)
     {
     }
-    ~MyRefCounted()
+    ~Test_MyRefCounted()
     {
         ++DtorCount;
     }
@@ -20,31 +20,31 @@ struct MyRefCounted : public RefCounted<MyRefCounted>
 
 TEST_CASE("Ref: basic reference counting", "[Ref]")
 {
-    MyRefCounted::DtorCount = 0;
+    Test_MyRefCounted::DtorCount = 0;
 
     {
-        const auto ref1 = Ref<MyRefCounted>::Create(42);
+        const auto ref1 = Ref<Test_MyRefCounted>::Create(42);
         REQUIRE(ref1->Value == 42);
         REQUIRE(ref1->RefCount() == 1);
 
         const auto ref2 = ref1;
         REQUIRE(ref1->RefCount() == 2);
 
-        Ref<MyRefCounted> ref3;
+        Ref<Test_MyRefCounted> ref3;
         ref3 = ref1;
         REQUIRE(ref1->RefCount() == 3);
     }
 
     // all Refs destroyed, object should have been deleted once
-    REQUIRE(MyRefCounted::DtorCount == 1);
+    REQUIRE(Test_MyRefCounted::DtorCount == 1);
 }
 
 TEST_CASE("Ref: move semantics", "[Ref]")
 {
-    MyRefCounted::DtorCount = 0;
+    Test_MyRefCounted::DtorCount = 0;
 
     {
-        auto ref1 = Ref<MyRefCounted>::Create(7);
+        auto ref1 = Ref<Test_MyRefCounted>::Create(7);
         REQUIRE(ref1->RefCount() == 1);
 
         const auto ref2 = std::move(ref1);
@@ -52,24 +52,24 @@ TEST_CASE("Ref: move semantics", "[Ref]")
         REQUIRE(!ref1);
     }
 
-    REQUIRE(MyRefCounted::DtorCount == 1);
+    REQUIRE(Test_MyRefCounted::DtorCount == 1);
 }
 
 TEST_CASE("Ref: boolean and get()", "[Ref]")
 {
-    const auto ref1 = Ref<MyRefCounted>::Create(5);
+    const auto ref1 = Ref<Test_MyRefCounted>::Create(5);
     REQUIRE(bool(ref1));
     REQUIRE(ref1.Get()->Value == 5);
 
-    Ref<MyRefCounted> ref2;
+    Ref<Test_MyRefCounted> ref2;
     REQUIRE(!ref2);
 }
 
 TEST_CASE("Ref: hashing equal pointers", "[Ref]")
 {
-    const auto ref1 = Ref<MyRefCounted>::Create(1);
+    const auto ref1 = Ref<Test_MyRefCounted>::Create(1);
     const auto ref2 = ref1;
-    std::hash<Ref<MyRefCounted>> hasher;
+    std::hash<Ref<Test_MyRefCounted>> hasher;
     REQUIRE(hasher(ref1) == hasher(ref2));
 }
 
@@ -123,10 +123,10 @@ TEST_CASE("Scope: Reset and Release", "[Scope]")
 
 TEST_CASE("Scope: move to Ref via AsRef and conversion", "[Scope]")
 {
-    MyRefCounted::DtorCount = 0;
+    Test_MyRefCounted::DtorCount = 0;
 
     {
-        auto scope1 = Scope<MyRefCounted>::Create(99);
+        auto scope1 = Scope<Test_MyRefCounted>::Create(99);
         REQUIRE(scope1->Value == 99);
 
         const auto ref1 = scope1.AsRef();
@@ -134,7 +134,7 @@ TEST_CASE("Scope: move to Ref via AsRef and conversion", "[Scope]")
         REQUIRE(ref1->Value == 99);
     }
     // ref went out of scope, underlying object deleted
-    REQUIRE(MyRefCounted::DtorCount == 1);
+    REQUIRE(Test_MyRefCounted::DtorCount == 1);
 }
 
 TEST_CASE("Scope: move semantics and bool", "[Scope]")

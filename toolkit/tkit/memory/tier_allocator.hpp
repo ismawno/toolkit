@@ -148,8 +148,8 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 {
     TKIT_NON_COPYABLE(TierAllocator)
   public:
-    explicit TierAllocator(const TierDescriptions &tiers, usize maxAlignment = 64);
-    explicit TierAllocator(const TierSpecs &specs = {}, usize maxAlignment = 64);
+    explicit TierAllocator(const TierDescriptions &tiers, usize maxAlignment = alignof(std::max_align_t));
+    explicit TierAllocator(const TierSpecs &specs = {}, usize maxAlignment = alignof(std::max_align_t));
 
     ~TierAllocator();
 
@@ -158,6 +158,9 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 
     void *Allocate(usz size);
     void Deallocate(const void *ptr, usz size);
+
+    void *AllocateWithHeader(usz size);
+    void DeallocateWithHeader(const void *ptr);
 
     template <typename T> T *Allocate(const usize count = 1)
     {
@@ -246,7 +249,10 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
         u64 Allocations = 0;
         u64 Deallocations = 0;
         usz Size = 0;
+        usz AllocationSize = 0;
         usize Slots = 0;
+        usize SlotsStolen = 0;
+        usize SlotsRemoved = 0;
 #endif
     };
 
@@ -266,6 +272,8 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     usize m_Granularity;
 #ifdef TKIT_ENABLE_ENSURE
     usz m_MaxAllocation;
+    u64 m_Allocations = 0;
+    u64 m_Deallocations = 0;
 #endif
 };
 } // namespace TKit

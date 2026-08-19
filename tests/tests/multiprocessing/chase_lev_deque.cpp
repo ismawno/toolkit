@@ -9,14 +9,14 @@ using namespace TKit::Alias;
 // simple payload
 
 static ArenaAllocator s_Alloc{16_kib, TKIT_CACHE_LINE_SIZE};
-struct DTask
+struct Test_DTask
 {
     u32 Value{0};
-    DTask() = default;
-    DTask(u32 v) : Value(v)
+    Test_DTask() = default;
+    Test_DTask(u32 v) : Value(v)
     {
     }
-    bool operator==(const DTask &o) const
+    bool operator==(const Test_DTask &o) const
     {
         return Value == o.Value;
     }
@@ -24,7 +24,7 @@ struct DTask
 
 TEST_CASE("ChaseLevDeque: single-thread owner push/pop back", "[ChaseLevDeque]")
 {
-    ChaseLevDeque<DTask> q{&s_Alloc, 16};
+    ChaseLevDeque<Test_DTask> q{&s_Alloc, 16};
 
     for (u32 i = 0; i < 8; ++i)
         q.PushBack(i);
@@ -40,7 +40,7 @@ TEST_CASE("ChaseLevDeque: single-thread owner push/pop back", "[ChaseLevDeque]")
 
 TEST_CASE("ChaseLevDeque: uniqueness", "[ChaseLevDeque][uniqueness]")
 {
-    ChaseLevDeque<DTask> q{&s_Alloc, 1};
+    ChaseLevDeque<Test_DTask> q{&s_Alloc, 1};
     q.PushBack(3u);
 
     std::atomic<u32> winners{0};
@@ -59,10 +59,10 @@ TEST_CASE("ChaseLevDeque: uniqueness", "[ChaseLevDeque][uniqueness]")
     REQUIRE(winners.load(std::memory_order_relaxed) == 1);
 }
 
-static void sort(std::vector<DTask> &vector)
+static void sort(std::vector<Test_DTask> &vector)
 {
     std::sort(vector.begin(), vector.end(),
-              [](const DTask &task1, const DTask &task2) { return task1.Value < task2.Value; });
+              [](const Test_DTask &task1, const Test_DTask &task2) { return task1.Value < task2.Value; });
 }
 
 TEST_CASE("ChaseLevDeque: many thieves steal while owner pushes", "[ChaseLevDeque][wrap]")
@@ -72,12 +72,12 @@ TEST_CASE("ChaseLevDeque: many thieves steal while owner pushes", "[ChaseLevDequ
     constexpr u32 total = 3000;
     constexpr u32 thieves = 4;
 
-    ChaseLevDeque<DTask> q{&s_Alloc, cap};
+    ChaseLevDeque<Test_DTask> q{&s_Alloc, cap};
 
     std::atomic<bool> run{true};
     std::atomic<u32> remaining{cap};
 
-    std::vector<std::vector<DTask>> stolen(thieves);
+    std::vector<std::vector<Test_DTask>> stolen(thieves);
     std::vector<std::thread> ts;
 
     ts.reserve(thieves);
@@ -111,7 +111,7 @@ TEST_CASE("ChaseLevDeque: many thieves steal while owner pushes", "[ChaseLevDequ
         std::this_thread::yield();
     }
 
-    std::vector<DTask> all;
+    std::vector<Test_DTask> all;
     for (;;)
         if (const auto val = q.PopBack())
             all.push_back(*val);

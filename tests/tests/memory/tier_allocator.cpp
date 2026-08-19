@@ -8,24 +8,24 @@ using namespace TKit;
 static ArenaAllocator s_Alloc{1_mib};
 
 // A helper non-trivial type to test Create<T>, NCreate<T>, Destroy<T>
-struct NonTrivialTA
+struct Test_NonTrivialTA
 {
     static inline u32 CtorCount = 0;
     static inline u32 DtorCount = 0;
 
     u32 value;
 
-    NonTrivialTA(const u32 value) : value(value)
+    Test_NonTrivialTA(const u32 value) : value(value)
     {
         ++CtorCount;
     }
-    ~NonTrivialTA()
+    ~Test_NonTrivialTA()
     {
         ++DtorCount;
     }
 
-    NonTrivialTA(const NonTrivialTA &) = delete;
-    NonTrivialTA &operator=(const NonTrivialTA &) = delete;
+    Test_NonTrivialTA(const Test_NonTrivialTA &) = delete;
+    Test_NonTrivialTA &operator=(const Test_NonTrivialTA &) = delete;
 };
 
 // A strongly-aligned type to validate alignment guarantees
@@ -168,29 +168,29 @@ TEST_CASE("Create<T>, NCreate<T> and Destroy<T>", "[TierAllocator]")
     TierAllocator alloc(
         TierSpecs{.Allocator = &s_Alloc, .MaxAllocation = maxAlloc, .Granularity = gran, .TierSlotDecay = decay});
 
-    NonTrivialTA::CtorCount = 0;
-    NonTrivialTA::DtorCount = 0;
+    Test_NonTrivialTA::CtorCount = 0;
+    Test_NonTrivialTA::DtorCount = 0;
 
     // Single object Create/Destroy
-    NonTrivialTA *a = alloc.Create<NonTrivialTA>(7);
+    Test_NonTrivialTA *a = alloc.Create<Test_NonTrivialTA>(7);
     REQUIRE(a);
     REQUIRE(alloc.Belongs(a));
-    REQUIRE(NonTrivialTA::CtorCount == 1);
+    REQUIRE(Test_NonTrivialTA::CtorCount == 1);
     REQUIRE(a->value == 7);
     alloc.Destroy(a);
-    REQUIRE(NonTrivialTA::DtorCount == 1);
+    REQUIRE(Test_NonTrivialTA::DtorCount == 1);
 
     // NCreate / Destroy(count)
     constexpr usize n = 5;
-    NonTrivialTA *many = alloc.NCreate<NonTrivialTA>(n, 42);
+    Test_NonTrivialTA *many = alloc.NCreate<Test_NonTrivialTA>(n, 42);
     REQUIRE(many);
     REQUIRE(alloc.Belongs(many));
-    REQUIRE(NonTrivialTA::CtorCount == 1 + n);
+    REQUIRE(Test_NonTrivialTA::CtorCount == 1 + n);
     for (usize i = 0; i < n; ++i)
         REQUIRE(many[i].value == 42);
 
     alloc.NDestroy(many, n);
-    REQUIRE(NonTrivialTA::DtorCount == 1 + n);
+    REQUIRE(Test_NonTrivialTA::DtorCount == 1 + n);
 }
 
 TEST_CASE("Alignment guarantees (up to max alignment)", "[TierAllocator]")
@@ -222,12 +222,12 @@ TEST_CASE("Belongs() only checks buffer boundaries (not allocation state)", "[Ti
     TierAllocator alloc(
         TierSpecs{.Allocator = &s_Alloc, .MaxAllocation = maxAlloc, .Granularity = gran, .TierSlotDecay = decay});
 
-    const void *p = alloc.Allocate(64);
+    const void *p = alloc.AllocateWithHeader(64);
     REQUIRE(p);
     REQUIRE(alloc.Belongs(p));
 
     // After freeing, the pointer is still within the allocator's buffer.
-    alloc.Deallocate(p, 64);
+    alloc.DeallocateWithHeader(p);
     REQUIRE(alloc.Belongs(p));
 }
 

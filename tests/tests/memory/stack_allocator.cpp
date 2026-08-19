@@ -6,21 +6,21 @@
 using namespace TKit;
 
 // A helper non-trivial type for Create/Destroy tests
-struct NonTrivialSA
+struct Test_NonTrivialSA
 {
     static inline u32 CtorCount = 0;
     static inline u32 DtorCount = 0;
     u32 value;
-    NonTrivialSA(const u32 value) : value(value)
+    Test_NonTrivialSA(const u32 value) : value(value)
     {
         ++CtorCount;
     }
-    ~NonTrivialSA()
+    ~Test_NonTrivialSA()
     {
         ++DtorCount;
     }
-    NonTrivialSA(const NonTrivialSA &) = delete;
-    NonTrivialSA &operator=(const NonTrivialSA &) = delete;
+    Test_NonTrivialSA(const Test_NonTrivialSA &) = delete;
+    Test_NonTrivialSA &operator=(const Test_NonTrivialSA &) = delete;
 };
 
 TEST_CASE("Constructor and initial state", "[StackAllocator]")
@@ -94,28 +94,28 @@ TEST_CASE("Create<T> and NCreate<T> with NDestroy<T>", "[StackAllocator]")
     StackAllocator stack(256);
 
     // single Create
-    NonTrivialSA::CtorCount = 0;
-    NonTrivialSA::DtorCount = 0;
-    const NonTrivialSA *p = stack.Create<NonTrivialSA>(42);
+    Test_NonTrivialSA::CtorCount = 0;
+    Test_NonTrivialSA::DtorCount = 0;
+    const Test_NonTrivialSA *p = stack.Create<Test_NonTrivialSA>(42);
     REQUIRE(p);
-    REQUIRE(NonTrivialSA::CtorCount == 1);
+    REQUIRE(Test_NonTrivialSA::CtorCount == 1);
     REQUIRE(p->value == 42);
 
     stack.Destroy(p);
-    REQUIRE(NonTrivialSA::DtorCount == 1);
+    REQUIRE(Test_NonTrivialSA::DtorCount == 1);
 
     // array NCreate
-    NonTrivialSA::CtorCount = 0;
-    NonTrivialSA::DtorCount = 0;
-    const NonTrivialSA *arr = stack.NCreate<NonTrivialSA>(3, 7);
+    Test_NonTrivialSA::CtorCount = 0;
+    Test_NonTrivialSA::DtorCount = 0;
+    const Test_NonTrivialSA *arr = stack.NCreate<Test_NonTrivialSA>(3, 7);
     REQUIRE(arr);
-    REQUIRE(NonTrivialSA::CtorCount == 3);
+    REQUIRE(Test_NonTrivialSA::CtorCount == 3);
     for (u32 i = 0; i < 3; ++i)
         REQUIRE(arr[i].value == 7);
 
     // Destroy all (LIFO)
     stack.NDestroy(arr, 3);
-    REQUIRE(NonTrivialSA::DtorCount == 3);
+    REQUIRE(Test_NonTrivialSA::DtorCount == 3);
     REQUIRE(stack.IsEmpty());
 }
 
