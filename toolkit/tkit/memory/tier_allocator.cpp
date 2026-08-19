@@ -392,6 +392,7 @@ void *TierAllocator::AllocateWithHeader(const usz size)
 
     usz *header = rcast<usz *>(ptr);
     *header = size + headerSize;
+    TKIT_POISON_MEMORY_REGION(ptr, headerSize);
     return rcast<std::byte *>(ptr) + headerSize;
 }
 
@@ -402,6 +403,7 @@ void TierAllocator::DeallocateWithHeader(const void *ptr)
 
     const std::byte *mem = rcast<const std::byte *>(ptr);
     const usz *header = rcast<const usz *>(mem - headerSize);
+    TKIT_UNPOISON_MEMORY_REGION(header, headerSize);
     Deallocate(scast<const void *>(header), *header);
 }
 
