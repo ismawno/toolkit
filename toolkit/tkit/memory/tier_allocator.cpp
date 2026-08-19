@@ -385,7 +385,7 @@ void TierAllocator::Deallocate(const void *ptr, const usz size)
 
 void *TierAllocator::AllocateWithHeader(const usz size)
 {
-    const usz headerSize = (sizeof(usz) + m_HeaderAllocationsAlignment - 1) & ~(m_HeaderAllocationsAlignment - 1);
+    const usz headerSize = GetHeaderSize();
     void *ptr = Allocate(size + headerSize);
     if (!ptr)
         return nullptr;
@@ -398,11 +398,11 @@ void *TierAllocator::AllocateWithHeader(const usz size)
 void TierAllocator::DeallocateWithHeader(const void *ptr)
 {
     TKIT_ASSERT(ptr, "[TOOLKIT][TIER-ALLOC] Cannot deallocate a null pointer");
-    const usz headerSize = (sizeof(usz) + m_HeaderAllocationsAlignment - 1) & ~(m_HeaderAllocationsAlignment - 1);
+    const usz headerSize = GetHeaderSize();
 
-    std::byte *mem = rcast<std::byte *>(ccast<void *>(ptr));
-    usz *header = rcast<usz *>(mem - headerSize);
-    Deallocate(ptr, *header);
+    const std::byte *mem = rcast<const std::byte *>(ptr);
+    const usz *header = rcast<const usz *>(mem - headerSize);
+    Deallocate(scast<const void *>(header), *header);
 }
 
 usize TierAllocator::getTierIndex(const usz size) const

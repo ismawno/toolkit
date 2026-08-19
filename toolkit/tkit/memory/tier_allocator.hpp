@@ -164,6 +164,19 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     void *AllocateWithHeader(usz size);
     void DeallocateWithHeader(const void *ptr);
 
+    usz GetHeaderSize() const
+    {
+        return (sizeof(usz) + m_HeaderAllocationsAlignment - 1) & ~(m_HeaderAllocationsAlignment - 1);
+    }
+    usz GetHeaderSizeValue(const void *ptr) const
+    {
+        const usz headerSize = GetHeaderSize();
+
+        const std::byte *mem = rcast<const std::byte *>(ptr);
+        const usz *header = rcast<const usz *>(mem - headerSize);
+        return *header;
+    }
+
     template <typename T> T *Allocate(const usize count = 1)
     {
         T *ptr = scast<T *>(Allocate(count * sizeof(T)));
