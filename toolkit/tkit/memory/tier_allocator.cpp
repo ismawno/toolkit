@@ -2,7 +2,6 @@
 #include "tkit/memory/tier_allocator.hpp"
 #include "tkit/utils/bit.hpp"
 #include "tkit/utils/debug.hpp"
-#include "tkit/math/math.hpp"
 #include "tkit/profiling/macros.hpp"
 
 namespace TKit
