@@ -3,34 +3,72 @@
 #include "tkit/utils/bit.hpp"
 #include "tkit/utils/debug.hpp"
 #include "tkit/profiling/macros.hpp"
+#include "tkit/math/math.hpp"
 
 namespace TKit
 {
-static usize bitIndex(const usz value)
+static usize logp2(const usz value)
 {
     return usize(std::countr_zero(value));
 }
+// the idea of this allocator is to, from a given size, derive its tier with very simple operations (avoid iterating all
+// tiers). turns out that it is possible. we can define the allocation size of a given tier as:
+//
+// - T_{i+1} = T_{i} - NextPowerOfTwo(T_{i}) / G;
+//
+// where
+//
+// - T_{i} is the size of tier at index i (i goes from 0 to n-1)
+// - G is the granularity, which is a provided power of 2
+//
+// such that T{i+1} < T{i}. T_{0} is provided by the user as the maximum allocation size.
+// each tier may have any number of slots available, such that you can fit N allocations
+// of course, an allocation of size S will belong to the tier such that T_{i} > S and T_{i+1} < S
+//
+// the total size of a tier T_{i} is straightforward: ST_{i} = N * T_{i}
+//
+// once we define this relationship, we can control the granularity of each tier and how much each tier differs from its
+// neighbor. however, when allocating, we are provided a size, and we must identify (quickly) what tier it belongs to.
+// luckily, because the relationship we have between tiers is well-defined, i was able to derive a little formula that,
+// given a size, returns the tier index it belongs to
+//
+// I(S) = (n-1) - ( log2(Np2(S)) - log2(minAlloc) ) * granularity / 2 + granularity * (Np2(S) - S) / Np2(S)
+//
+// where
+//
+// - I is the tier index
+// - S is the requested allocation size
+// - Np2() returns the next power of 2
+// - minAlloc is the minimum tier allocation size this allocator supports, provided by user
+// - granularity is how close in allocation size each tier is from its neighbors
 static usize getTierIndex(const usz size, const usz minAllocation, const usize granularity, const usize lastIndex)
 {
     if (size <= minAllocation)
         return lastIndex;
 
     const usz np2 = NextPowerOfTwo(size);
+    const usize lognp2 = logp2(np2);
 
-    const usize grIndex = bitIndex(granularity);
-    const usize incIndex = bitIndex(np2 >> grIndex);
-    const usize reference = usize(np2 - size);
+    return lastIndex - (lognp2 - logp2(minAllocation)) * (granularity >> 1) +
+           ((granularity * usize(np2 - size)) >> lognp2);
 
-    // Signed code for a bit more correctness, but as final result is guaranteed to not exceed uint max, it is not
-    // strictly needed constexpr auto cast = [](const usize value) { return scast<ssize>(value); };
+    // this is the old rusty implementation i had where i hadnt formalized the expression well :(
+    // const usz np2 = NextPowerOfTwo(size);
     //
-    // const ssize offset = cast(bitIndex(minAllocation)) - cast(bitIndex(granularity));
+    // const usize grIndex = bitIndex(granularity);
+    // const usize incIndex = bitIndex(np2 >> grIndex);
+    // const usize reference = usize(np2 - size);
     //
-    // const ssize idx = cast(lastIndex) + cast(factor) * (offset - cast(incIndex)) + cast(reference / increment);
-    // return usize(idx);
-    const usize offset = bitIndex(minAllocation) - grIndex;
-
-    return lastIndex + ((offset - incIndex) << (grIndex - 1)) + (reference >> incIndex);
+    // // Signed code for a bit more correctness, but as final result is guaranteed to not exceed uint max, it is not
+    // // strictly needed constexpr auto cast = [](const usize value) { return scast<ssize>(value); };
+    // //
+    // // const ssize offset = cast(bitIndex(minAllocation)) - cast(bitIndex(granularity));
+    // //
+    // // const ssize idx = cast(lastIndex) + cast(factor) * (offset - cast(incIndex)) + cast(reference / increment);
+    // // return usize(idx);
+    // const usize offset = bitIndex(minAllocation) - grIndex;
+    //
+    // return lastIndex + ((offset - incIndex) << (grIndex - 1)) + (reference >> incIndex);
 }
 
 static void createDefaultSlotRequests(ArenaArray<usize> &slots, const f32 tierSlotDecay)
