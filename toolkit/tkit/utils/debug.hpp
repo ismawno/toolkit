@@ -30,15 +30,19 @@
 
 #define TKIT_LOG_COLOR_PANIC "\033[1;31m"
 
+namespace TKit::Detail
+{
+#ifdef TKIT_ENABLE_STACK_TRACE
+void PrintStackTrace(u32 skip);
+#    define TKIT_PRINT_STACK_TRACE(skip) TKit::Detail::PrintStackTrace(skip)
+#else
+#    define TKIT_PRINT_STACK_TRACE(skip)
+#endif
+} // namespace TKit::Detail
+
 #ifdef TKIT_ENABLE_ENSURE
 namespace TKit::Detail
 {
-#    ifdef TKIT_ENABLE_STACK_TRACE
-void PrintStackTrace(u32 skip);
-#        define TKIT_PRINT_STACK_TRACE(skip) TKit::Detail::PrintStackTrace(skip)
-#    else
-#        define TKIT_PRINT_STACK_TRACE(skip)
-#    endif
 
 template <typename... Args>
 void LogAndBreak(const char *level, const char *color, const char *file, const i32 line,

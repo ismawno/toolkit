@@ -1,0 +1,191 @@
+#include "tkit/core/pch.hpp"
+#include "tkit/container/ecs.hpp"
+
+namespace TKit
+{
+Entity Registry::CreateEntity()
+{
+    if (m_FreeEntities.IsEmpty())
+    {
+        const usize idx = m_Entities.GetSize();
+        m_Entities.Append();
+        return {idx};
+    }
+
+    Entity e = m_FreeEntities.GetBack();
+    m_FreeEntities.Pop();
+
+    EntityRecord &record = m_Entities[e.Index];
+    record.Row = 0;
+
+    TKIT_ENSURE(!record.Alive, "[TOOLKIT][ECS] Recycled entity record must not be alive");
+
+#ifdef TKIT_ENABLE_ENSURE
+    ++record.Generation;
+    record.Alive = true;
+    e.Generation = record.Generation;
+#endif
+
+    return e;
+}
+
+void ComponentColumn::Append(void *component)
+{
+    if (m_RowCount == m_RowCapacity)
+    {
+        m_RowCapacity = Container::GrowthFactor(m_RowCount);
+        void *ndata = TKit::AllocateAligned(m_Info.Size * m_RowCapacity, m_Info.Alignment);
+        for (u32 r = 0; r < m_RowCount; ++r)
+        {
+            void *src = Get(r);
+            void *dst = scast<std::byte *>(ndata) + r * m_Info.Size;
+            m_Info.MoveCtor(dst, src);
+        }
+        TKit::DeallocateAligned(m_Data);
+        m_Data = ndata;
+    }
+
+    const usize row = m_RowCount++;
+    void *dst = Get(row);
+    m_Info.MoveCtor(dst, component);
+}
+
+void ComponentColumn::Pop()
+{
+    const usize lidx = m_RowCount - 1;
+    void *component = Get(lidx);
+    m_Info.Destroy(component);
+    m_RowCount = lidx;
+}
+void ComponentColumn::Remove(const usize row)
+{
+    const usize lidx = m_RowCount - 1;
+    void *component = Get(row);
+    void *last = Get(lidx);
+    m_Info.MoveAssign(component, last);
+    m_Info.Destroy(last);
+    m_RowCount = lidx;
+}
+
+void Archetype::AddColumn(const ComponentInfo &cinfo)
+{
+    TKIT_ASSERT(m_Entities.IsEmpty(), "[TOOLKIT][ECS] Can only add columns to an archetype if it is empty");
+    TKIT_ASSERT(m_Id == TKIT_USZ_MAX,
+                "[TOOLKIT][ECS] Can only add columns to an archetype if it has not been finalized");
+    m_ColumnByComponent[cinfo.Id] = m_Columns.GetSize();
+    m_Columns.Append(cinfo);
+    for (u32 i = 0; i < m_ComponentIdSet.GetSize(); ++i)
+        if (m_ComponentIdSet[i] > cinfo.Id)
+        {
+            m_ComponentIdSet.Insert(m_ComponentIdSet.begin() + i, cinfo.Id);
+            return;
+        }
+    m_ComponentIdSet.Append(cinfo.Id);
+}
+
+usz Archetype::ComputeArchetypeIdToAdd(const ComponentId cid) const
+{
+    StackArray<ComponentId> extSet = m_ComponentIdSet;
+    for (u32 i = 0; i < extSet.GetSize(); ++i)
+        if (extSet[i] > cid)
+        {
+            extSet.Insert(extSet.begin() + i, cid);
+            return CreateIdFromComponents(extSet);
+        }
+    extSet.Append(cid);
+    return CreateIdFromComponents(extSet);
+}
+usz Archetype::ComputeArchetypeIdToRemove(const ComponentId cid) const
+{
+    StackArray<ComponentId> extSet{};
+    extSet.Reserve(m_ComponentIdSet.GetSize() - 1);
+    for (const ComponentId c : m_ComponentIdSet)
+        if (c != cid)
+            extSet.Append(c);
+    return CreateIdFromComponents(extSet);
+}
+
+Entity Archetype::RemoveRowWithTransfer(const ComponentId cid, Archetype *dst, const usize srcRow)
+{
+    TKIT_ASSERT(
+        m_ColumnByComponent.Contains(cid),
+        "[TOOLKIT][ECS] When removing a row, the associated component must be contained in the source archetype");
+
+    TKIT_ASSERT(dst->m_Columns.GetSize() == m_Columns.GetSize() - 1,
+                "[TOOLKIT][ECS] When removing a row for a destination archetype, the "
+                "destination archetype must exactly have one less column than the current archetype, but "
+                "destination has {} "
+                "columns and current has {}",
+                dst->m_Columns.GetSize(), m_Columns.GetSize());
+
+    for (ComponentColumn &dstCol : dst->m_Columns)
+    {
+        ComponentColumn &srcCol = getColumnForTransfer(dstCol);
+        TKIT_ASSERT(cid != srcCol.GetInfo().Id, "[TOOLKIT][ECS] When transferring rows, the component that "
+                                                "triggered such transfer must not be part of the transfer");
+        transferComponent(srcRow, dstCol, srcCol);
+    }
+
+    m_RemoveEdges[cid] = dst;
+    const usize idx = m_ColumnByComponent[cid];
+    m_Columns[idx].Remove(srcRow);
+
+    m_RemoveEdges[cid] = dst;
+    return transferEntity(srcRow, dst, this);
+}
+
+ComponentColumn &Archetype::getColumnForTransfer(const ComponentColumn &other)
+{
+    const ComponentId cid = other.GetInfo().Id;
+    TKIT_ASSERT(m_ColumnByComponent.Contains(cid), "[TOOLKIT][ECS] When transfering a row, all components "
+                                                   "must be registered in both archetypes");
+
+    const usize cidx = m_ColumnByComponent[cid];
+    return m_Columns[cidx];
+}
+
+void Archetype::transferComponent(const usize srcRow, ComponentColumn &dst, ComponentColumn &src)
+{
+    void *srcComp = src.Get(srcRow);
+    dst.Append(srcComp);
+    src.Remove(srcRow);
+}
+
+Entity Archetype::transferEntity(const usize srcRow, Archetype *dst, Archetype *src)
+{
+    dst->m_Entities.Append(src->m_Entities[srcRow]);
+    src->m_Entities.RemoveUnordered(src->m_Entities.begin() + srcRow);
+    return srcRow != src->GetRowCount() ? src->m_Entities[srcRow] : NullEntity;
+}
+
+Archetype *Registry::createArchetype()
+{
+    TierAllocator *tier = GetTier();
+    Archetype *arch = tier->Create<Archetype>();
+    return m_Archetypes.Append(arch);
+}
+
+Registry::~Registry()
+{
+    for (Archetype *arch : m_Archetypes)
+        destroyArchetype(arch);
+}
+
+void Registry::destroyArchetype(const Archetype *arch)
+{
+    TierAllocator *tier = GetTier();
+    tier->Destroy(arch);
+}
+
+void Registry::removeArchetype(const Archetype *arch)
+{
+    for (u32 i = 0; i < m_Archetypes.GetSize(); ++i)
+        if (m_Archetypes[i] == arch)
+        {
+            destroyArchetype(arch);
+            return;
+        }
+    TKIT_FATAL("[TOOLKIT][ECS] Archetype to remove was not found!");
+}
+
+} // namespace TKit

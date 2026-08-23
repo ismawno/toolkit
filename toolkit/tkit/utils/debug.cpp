@@ -14,6 +14,7 @@ void PrintStackTrace(const u32 skip)
 }
 #endif
 
+#ifdef TKIT_ENABLE_ENSURE
 void LogAndBreak(const char *level, const char *color, const char *file, const i32 line)
 {
     TKIT_PRINT_STACK_TRACE(2);
@@ -34,4 +35,5 @@ void CheckOutOfBounds(const char *level, const char *color, const char *file, co
             level, color, file, line, head, index, size);
     TKIT_DEBUG_BREAK();
 }
+#endif
 } // namespace TKit::Detail

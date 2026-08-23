@@ -5,7 +5,7 @@ set(NAME toolkit)
 
 set(SOURCES tkit/core/pch.cpp tkit/memory/memory.cpp tkit/utils/logging.cpp)
 
-if(TOOLKIT_ENABLE_ENSURE)
+if(TOOLKIT_ENABLE_ENSURE OR TOOLKIT_ENABLE_STACK_TRACE)
   list(APPEND SOURCES tkit/utils/debug.cpp)
 endif()
 
@@ -23,6 +23,10 @@ endif()
 
 if(TOOLKIT_ENABLE_TIER_ALLOCATOR)
   list(APPEND SOURCES tkit/memory/tier_allocator.cpp)
+endif()
+
+if(TOOLKIT_ENABLE_ECS)
+  list(APPEND SOURCES tkit/container/ecs.cpp)
 endif()
 
 if(TOOLKIT_ENABLE_MULTIPROCESSING)
@@ -230,6 +234,10 @@ if(TOOLKIT_ENABLE_TIER_ALLOCATOR)
   target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_TIER_ALLOCATOR)
 endif()
 
+if(TOOLKIT_ENABLE_ECS)
+  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ECS)
+endif()
+
 if(TOOLKIT_ENABLE_MULTIPROCESSING)
   target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_MULTIPROCESSING)
 endif()
@@ -267,49 +275,48 @@ if(TOOLKIT_ENABLE_ENSURE)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     target_compile_options(toolkit PUBLIC /Zc:preprocessor)
   endif()
+endif()
 
-  if(TOOLKIT_ENABLE_STACK_TRACE)
-    target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_STACK_TRACE)
+if(TOOLKIT_ENABLE_STACK_TRACE)
+  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_STACK_TRACE)
 
-    set(CPPTRACE_BUILD_SHARED OFF)
-    set(CPPTRACE_BUILD_TESTING OFF)
-    set(CPPTRACE_BUILD_TOOLS OFF)
-    set(CPPTRACE_HARD_MAX_FRAMES 32)
-    set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
-    set(HAS_CXX20_MODULES
-        OFF
-        CACHE BOOL "" FORCE)
-    set(HAS_CXX_EXCEPTION_TYPE
-        OFF
-        CACHE BOOL "" FORCE)
+  set(CPPTRACE_BUILD_SHARED OFF)
+  set(CPPTRACE_BUILD_TESTING OFF)
+  set(CPPTRACE_BUILD_TOOLS OFF)
+  set(CPPTRACE_HARD_MAX_FRAMES 32)
+  set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+  set(HAS_CXX20_MODULES
+      OFF
+      CACHE BOOL "" FORCE)
+  set(HAS_CXX_EXCEPTION_TYPE
+      OFF
+      CACHE BOOL "" FORCE)
 
-    FetchContent_Declare(
-      cpptrace
-      GIT_REPOSITORY https://github.com/jeremy-rifkin/cpptrace.git
-      GIT_TAG v1.0.4
-      GIT_SHALLOW TRUE)
+  FetchContent_Declare(
+    cpptrace
+    GIT_REPOSITORY https://github.com/jeremy-rifkin/cpptrace.git
+    GIT_TAG v1.0.4
+    GIT_SHALLOW TRUE)
 
-    FetchContent_Populate(cpptrace)
-    file(READ "${cpptrace_SOURCE_DIR}/CMakeLists.txt" cpptrace_cmake)
+  FetchContent_Populate(cpptrace)
+  file(READ "${cpptrace_SOURCE_DIR}/CMakeLists.txt" cpptrace_cmake)
 
-    # it is absolutely crazy we have to go all this way to disable modules (it
-    # just wont compile otherwise) because no option was exposed
-    string(
-      REPLACE
-        "if(HAS_CXX20_MODULES AND CMAKE_VERSION VERSION_GREATER_EQUAL \"3.23\")"
-        "if(FALSE)" cpptrace_cmake "${cpptrace_cmake}")
-    file(WRITE "${cpptrace_SOURCE_DIR}/CMakeLists.txt" "${cpptrace_cmake}")
+  # it is absolutely crazy we have to go all this way to disable modules (it
+  # just wont compile otherwise) because no option was exposed
+  string(
+    REPLACE
+      "if(HAS_CXX20_MODULES AND CMAKE_VERSION VERSION_GREATER_EQUAL \"3.23\")"
+      "if(FALSE)" cpptrace_cmake "${cpptrace_cmake}")
+  file(WRITE "${cpptrace_SOURCE_DIR}/CMakeLists.txt" "${cpptrace_cmake}")
 
-    add_subdirectory(${cpptrace_SOURCE_DIR} ${cpptrace_BINARY_DIR})
+  add_subdirectory(${cpptrace_SOURCE_DIR} ${cpptrace_BINARY_DIR})
 
-    # we dont even try using tkit_configure_compile_link_options bc it will most
-    # likely fail, and because this is a debug/only library, i dont care that
-    # much about configurations/optimizations
-    # tkit_configure_compile_link_options(cpptrace NO_EXCEPTIONS NO_RTTI)
+  # we dont even try using tkit_configure_compile_link_options bc it will most
+  # likely fail, and because this is a debug/only library, i dont care that much
+  # about configurations/optimizations
+  # tkit_configure_compile_link_options(cpptrace NO_EXCEPTIONS NO_RTTI)
 
-    target_link_libraries(toolkit PRIVATE cpptrace::cpptrace)
-  endif()
-
+  target_link_libraries(toolkit PRIVATE cpptrace::cpptrace)
 endif()
 
 if(TOOLKIT_ENABLE_REFLECTION)

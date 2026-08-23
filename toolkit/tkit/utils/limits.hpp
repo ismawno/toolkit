@@ -18,6 +18,7 @@
 #define TKIT_U32_MIN TKit::Limits<u32>::Min()
 #define TKIT_U64_MIN TKit::Limits<u64>::Min()
 #define TKIT_USIZE_MIN TKit::Limits<usize>::Min()
+#define TKIT_USZ_MIN TKit::Limits<usz>::Min()
 
 #define TKIT_I8_MIN TKit::Limits<i8>::Min()
 #define TKIT_I16_MIN TKit::Limits<i16>::Min()
@@ -33,6 +34,7 @@
 #define TKIT_U32_MAX TKit::Limits<u32>::Max()
 #define TKIT_U64_MAX TKit::Limits<u64>::Max()
 #define TKIT_USIZE_MAX TKit::Limits<usize>::Max()
+#define TKIT_USZ_MAX TKit::Limits<usz>::Max()
 
 #define TKIT_I8_MAX TKit::Limits<i8>::Max()
 #define TKIT_I16_MAX TKit::Limits<i16>::Max()
