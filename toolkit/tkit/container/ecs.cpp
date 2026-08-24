@@ -191,7 +191,6 @@ Archetype *Registry::createArchetype(const usz archId)
 {
     TierAllocator *tier = GetTier();
     Archetype *arch = tier->Create<Archetype>();
-    TKit::PrintLine("CREATINNNNG {:#018x}", archId);
     m_ArchetypeById[archId] = arch;
     return m_Archetypes.Append(arch);
 }
