@@ -301,14 +301,14 @@ template <Numeric T> class Wide
         else if constexpr (s_Equals<__m128i>)
         {
 #    ifdef TKIT_ALLOW_SCALAR_SIMD_FALLBACKS
-            alignas(Alignment) T left[Lanes];
-            alignas(Alignment) T right[Lanes];
+            alignas(Alignment) T l[Lanes];
+            alignas(Alignment) T r[Lanes];
             alignas(Alignment) T result[Lanes];
 
-            left.StoreAligned(left);
-            right.StoreAligned(right);
+            left.StoreAligned(l);
+            right.StoreAligned(r);
             for (usize i = 0; i < Lanes; ++i)
-                result[i] = left[i] / right[i];
+                result[i] = l[i] / r[i];
 
             return Wide{result};
 #    else

@@ -420,11 +420,14 @@ template <Numeric T> class Wide
         else
         {
 #    ifdef TKIT_ALLOW_SCALAR_SIMD_FALLBACKS
-            alignas(Alignment) T left[Lanes], right[Lanes], result[Lanes];
-            left.StoreAligned(left);
-            right.StoreAligned(right);
+            alignas(Alignment) T l[Lanes];
+            alignas(Alignment) T r[Lanes];
+            alignas(Alignment) T result[Lanes];
+
+            left.StoreAligned(l);
+            right.StoreAligned(r);
             for (usize i = 0; i < Lanes; ++i)
-                result[i] = left[i] / right[i];
+                result[i] = l[i] / r[i];
             return Wide{loadAligned(result)};
 #    else
             static_assert(!std::is_integral_v<T>, "[TOOLKIT][SIMD] NEON does not support integer division."
