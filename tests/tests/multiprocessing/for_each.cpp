@@ -10,7 +10,7 @@ using namespace TKit::Alias;
 
 static ArenaAllocator s_Alloc{16_kib, TKIT_CACHE_LINE_SIZE};
 
-TEST_CASE("NonBlockingForEach (void) with ThreadPool sums all elements", "[NonBlockingForEach][ThreadPool]")
+TEST_CASE("AsyncForEach (void) with ThreadPool sums all elements", "[AsyncForEach][ThreadPool]")
 {
     ThreadPool pool(&s_Alloc, 4);
     constexpr usize firstIndex = 0;
@@ -21,9 +21,9 @@ TEST_CASE("NonBlockingForEach (void) with ThreadPool sums all elements", "[NonBl
     // Partition [0,100) into 5 chunks; each chunk adds its length to totalSum
     std::array<Task<>, partitionCount> tasks{};
 
-    NonBlockingForEach(
-        pool, firstIndex, lastIndex, tasks.begin(), partitionCount,
-        [&](const usize start, const usize end) { totalSum.fetch_add(end - start, std::memory_order_relaxed); });
+    AsyncForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount, [&](const usize start, const usize end) {
+        totalSum.fetch_add(end - start, std::memory_order_relaxed);
+    });
 
     for (const Task<> &task : tasks)
         pool.WaitUntilFinished(task);
@@ -31,7 +31,7 @@ TEST_CASE("NonBlockingForEach (void) with ThreadPool sums all elements", "[NonBl
     REQUIRE(totalSum.load(std::memory_order_relaxed) == lastIndex - firstIndex);
 }
 
-TEST_CASE("NonBlockingForEach with output iterator collects and executes all", "[NonBlockingForEach][ThreadPool]")
+TEST_CASE("AsyncForEach with output iterator collects and executes all", "[AsyncForEach][ThreadPool]")
 {
     ThreadPool pool(&s_Alloc, 3);
     constexpr usize firstIndex = 10;
@@ -42,9 +42,9 @@ TEST_CASE("NonBlockingForEach with output iterator collects and executes all", "
     std::array<Task<>, partitionCount> tasks{};
 
     // Partition [10,25) into 5 chunks; capture tasks and sum chunk sizes
-    NonBlockingForEach(
-        pool, firstIndex, lastIndex, tasks.begin(), partitionCount,
-        [&](const usize start, const usize end) { totalSum.fetch_add(end - start, std::memory_order_relaxed); });
+    AsyncForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount, [&](const usize start, const usize end) {
+        totalSum.fetch_add(end - start, std::memory_order_relaxed);
+    });
 
     // we should have one task per partition
     REQUIRE(usize(tasks.size()) == partitionCount);
@@ -56,7 +56,7 @@ TEST_CASE("NonBlockingForEach with output iterator collects and executes all", "
     REQUIRE(totalSum.load(std::memory_order_relaxed) == lastIndex - firstIndex);
 }
 
-TEST_CASE("BlockingForEach with output iterator partitions and returns main result", "[BlockingForEach][ThreadPool]")
+TEST_CASE("SyncForEach with output iterator partitions and returns main result", "[SyncForEach][ThreadPool]")
 {
     ThreadPool pool(&s_Alloc, 3);
     const usize firstIndex = 0;
@@ -75,7 +75,7 @@ TEST_CASE("BlockingForEach with output iterator partitions and returns main resu
         return end - start;
     };
 
-    const usize mainLength = BlockingForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount, callable);
+    const usize mainLength = SyncForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount, callable);
 
     // main partition [0,25) length = 25
     REQUIRE(mainLength == (lastIndex - firstIndex) / partitionCount);
@@ -90,7 +90,7 @@ TEST_CASE("BlockingForEach with output iterator partitions and returns main resu
     REQUIRE(otherSum.load(std::memory_order_relaxed) == (lastIndex - firstIndex) - mainLength);
 }
 
-TEST_CASE("BlockingForEach without output iterator executes all partitions", "[BlockingForEach][ThreadPool]")
+TEST_CASE("SyncForEach without output iterator executes all partitions", "[SyncForEach][ThreadPool]")
 {
     ThreadPool pool(&s_Alloc, 2);
     const usize firstIndex = 10;
@@ -105,7 +105,7 @@ TEST_CASE("BlockingForEach without output iterator executes all partitions", "[B
     };
 
     // This overload does not return a value
-    BlockingForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount, callable);
+    SyncForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount, callable);
 
     for (const Task<> &task : tasks)
         pool.WaitUntilFinished(task);

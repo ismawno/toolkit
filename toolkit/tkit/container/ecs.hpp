@@ -9,10 +9,12 @@
 #include "tkit/container/hash_map.hpp"
 #include "tkit/container/span.hpp"
 #include "tkit/memory/memory.hpp"
+#include "tkit/multiprocessing/for_each.hpp"
 #include "tkit/utils/utils.hpp"
 
 namespace TKit
 {
+class ITaskManager;
 using ComponentId = usize;
 
 inline ComponentId NextComponentId()
@@ -376,6 +378,19 @@ class ComponentQuery
             return cpy;
         }
 
+        template <typename U>
+            requires(std::convertible_to<U, usize>)
+        friend RowView operator+(const RowView &lhs, const U rhs)
+        {
+            return RowView{lhs.m_ArchInfo, lhs.m_Row + rhs};
+        }
+        template <typename U>
+            requires(std::convertible_to<U, usize>)
+        friend RowView operator+(const U lhs, const RowView &rhs)
+        {
+            return RowView{rhs.m_ArchInfo, rhs.m_Row + lhs};
+        }
+
         friend bool operator==(const RowView &lhs, const RowView &rhs)
         {
             return lhs.m_Row == rhs.m_Row && lhs.m_ArchInfo == rhs.m_ArchInfo;
@@ -458,7 +473,27 @@ class ComponentQuery
     template <typename F> void Each(F &&func) const
     {
         for (usize i = 0; i < m_ArchetypeInfo.GetSize(); ++i)
-            eachForArchetype(std::forward<F>(func), i, std::make_integer_sequence<usize, Count>{});
+            eachPerArchetype(std::forward<F>(func), i, std::make_integer_sequence<usize, Count>{});
+    }
+
+    template <std::derived_from<ITaskManager> TManager, typename It, typename F>
+    void AsyncEach(TManager &manager, const It dest, const usize partitions, F &&func) const
+    {
+        for (usize i = 0; i < m_ArchetypeInfo.GetSize(); ++i)
+            asyncEachPerArchetype(manager, dest + i * partitions, partitions, std::forward<F>(func), i,
+                                  std::make_integer_sequence<usize, Count>{});
+    }
+
+    usize GetArchetypeCount() const
+    {
+        return m_ArchetypeInfo.GetSize();
+    }
+    usize ComputeRowCount() const
+    {
+        usize count = 0;
+        for (const ArchetypeQueryInterface &arch : m_ArchetypeInfo)
+            count += GetRowCount(arch.Columns);
+        return count;
     }
 
     RowIterator begin() const
@@ -477,7 +512,7 @@ class ComponentQuery
 
   private:
     template <typename F, usize... I>
-    void eachForArchetype(F &&func, const usize idx, const std::integer_sequence<usize, I...>) const
+    void eachPerArchetype(F &&func, const usize idx, const std::integer_sequence<usize, I...>) const
     {
         const ArchetypeQueryInterface &interface = m_ArchetypeInfo[idx];
         const ArchetypeQueryColumns<Count> &columns = interface.Columns;
@@ -487,6 +522,22 @@ class ComponentQuery
                 std::forward<F>(func)(interface.Archetype->GetEntity(r), *columns[I]->template Get<Cs>(r)...);
             else
                 std::forward<F>(func)(*columns[I]->template Get<Cs>(r)...);
+    }
+
+    template <std::derived_from<ITaskManager> TManager, typename It, typename F, usize... I>
+    void asyncEachPerArchetype(TManager &manager, const It dest, const usize partitions, F &&func, const usize idx,
+                               const std::integer_sequence<usize, I...>) const
+    {
+        const ArchetypeQueryInterface &interface = m_ArchetypeInfo[idx];
+        const ArchetypeQueryColumns<Count> &columns = interface.Columns;
+        const usize rcount = GetRowCount(columns);
+        AsyncForEach(manager, usize(0), rcount, dest, partitions, [&](const usize start, const usize end) {
+            for (usize r = start; r < end; ++r)
+                if constexpr (std::is_invocable_v<F, Entity, Cs &...>)
+                    std::forward<F>(func)(interface.Archetype->GetEntity(r), *columns[I]->template Get<Cs>(r)...);
+                else
+                    std::forward<F>(func)(*columns[I]->template Get<Cs>(r)...);
+        });
     }
 
     void addArchetype(Archetype *arch)

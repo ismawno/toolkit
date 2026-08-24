@@ -39,8 +39,8 @@ namespace TKit
  * index.
  */
 template <std::derived_from<ITaskManager> TManager, typename It1, typename It2, typename Callable, typename... Args>
-void NonBlockingForEach(TManager &manager, const It1 first, const It1 last, It2 dest, const usize partitions,
-                        Callable &&callable, Args &&...args)
+void AsyncForEach(TManager &manager, const It1 first, const It1 last, It2 dest, const usize partitions,
+                  Callable &&callable)
 {
     const usize size = Detail::Distance(first, last);
     usize start = 0;
@@ -51,7 +51,10 @@ void NonBlockingForEach(TManager &manager, const It1 first, const It1 last, It2 
         const usize end = (i + 1) * size / partitions;
         TKIT_ASSERT(end <= size, "[TOOLKIT][FOR-EACH] Partition exceeds container size");
         auto &task = *(dest++);
-        task.Set(std::forward<Callable>(callable), first + start, first + end, std::forward<Args>(args)...);
+        if constexpr (std::is_invocable_v<Callable, usize, usize, usize>)
+            task.Set(std::forward<Callable>(callable), i, first + start, first + end);
+        else
+            task.Set(std::forward<Callable>(callable), first + start, first + end);
 
         sindex = manager.SubmitTask(&task, sindex);
         start = end;
@@ -81,13 +84,21 @@ void NonBlockingForEach(TManager &manager, const It1 first, const It1 last, It2 
  * index.
  */
 template <std::derived_from<ITaskManager> TManager, typename It1, typename It2, typename Callable, typename... Args>
-auto BlockingForEach(TManager &manager, const It1 first, const It1 last, It2 dest, const usize partitions,
-                     Callable &&callable, Args &&...args) -> std::invoke_result_t<Callable, Args..., It1, It1>
+auto SyncForEach(TManager &manager, const It1 first, const It1 last, It2 dest, const usize partitions,
+                 Callable &&callable) -> std::invoke_result_t<Callable, Args..., It1, It1>
 {
     const usize size = Detail::Distance(first, last);
     usize start = size / partitions;
+
+    constexpr bool partArg = std::is_invocable_v<Callable, usize, usize, usize>;
+
     if (partitions == 1)
-        return callable(first, first + start, std::forward<Args>(args)...);
+    {
+        if constexpr (partArg)
+            return std::forward<Callable>(callable)(0, first, first + start);
+        else
+            return std::forward<Callable>(callable)(first, first + start);
+    }
 
     usize sindex = 0;
     for (usize i = 1; i < partitions; ++i)
@@ -96,13 +107,19 @@ auto BlockingForEach(TManager &manager, const It1 first, const It1 last, It2 des
         TKIT_ASSERT(end <= size, "[TOOLKIT][FOR-EACH] Partition exceeds container size");
 
         auto &task = *(dest++);
-        task.Set(std::forward<Callable>(callable), first + start, first + end, std::forward<Args>(args)...);
+        if constexpr (partArg)
+            task.Set(std::forward<Callable>(callable), i, first + start, first + end);
+        else
+            task.Set(std::forward<Callable>(callable), first + start, first + end);
         sindex = manager.SubmitTask(&task, sindex);
 
         start = end;
     }
 
     const usize end = size / partitions;
-    return callable(first, first + end, std::forward<Args>(args)...);
+    if constexpr (partArg)
+        return std::forward<Callable>(callable)(0, first, first + end);
+    else
+        return std::forward<Callable>(callable)(first, first + end);
 }
 } // namespace TKit

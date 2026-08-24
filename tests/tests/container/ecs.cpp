@@ -1,4 +1,5 @@
 #include "tkit/container/ecs.hpp"
+#include "tkit/multiprocessing/thread_pool.hpp"
 #include <catch2/catch_test_macros.hpp>
 
 using namespace TKit;
@@ -472,6 +473,238 @@ TEST_CASE("ECS: Many entities stress test", "[ECS]")
                 REQUIRE(r.GetComponent<Test_ComponentB>(entities[i].Ent)->Data0 == i * 10);
                 REQUIRE(r.GetComponent<Test_ComponentB>(entities[i].Ent)->Data1 == i * 10 + 1);
             }
+        }
+    }
+    PopStack();
+    PopTier();
+}
+
+TEST_CASE("ECS: Query AsyncEach", "[ECS]")
+{
+    ArenaAllocator arena{1_mib, TKIT_CACHE_LINE_SIZE};
+    PushTier(&s_Tier);
+    PushStack(&s_Stack);
+    {
+        ThreadPool pool(&arena, 4);
+        Registry r{};
+        r.RegisterComponents<Test_ComponentA, Test_ComponentB, Test_ComponentC>();
+
+        constexpr u32 N = 500;
+        constexpr usize partitions = 4;
+
+        for (u32 i = 0; i < N; ++i)
+        {
+            const Entity e = r.CreateEntity();
+            r.AddComponent<Test_ComponentA>(e, i);
+            if (i % 2 == 0)
+                r.AddComponent<Test_ComponentB>(e, i * 10, i * 10 + 1);
+        }
+
+        SECTION("AsyncEach processes all matching entities (components only)")
+        {
+            std::atomic<u32> count{0};
+            const auto &query = r.Query<Test_ComponentA>();
+            std::array<Task<>, N> tasks{};
+
+            query.AsyncEach(pool, tasks.begin(), partitions,
+                            [&](Test_ComponentA &) { count.fetch_add(1, std::memory_order_relaxed); });
+
+            const usize taskCount = partitions * query.GetArchetypeCount();
+            for (usize i = 0; i < taskCount; ++i)
+                pool.WaitUntilFinished(tasks[i]);
+
+            REQUIRE(count.load(std::memory_order_relaxed) == N);
+        }
+
+        SECTION("AsyncEach processes all matching entities (with entity)")
+        {
+            std::atomic<u32> count{0};
+            const auto &query = r.Query<Test_ComponentA, Test_ComponentB>();
+            std::array<Task<>, N> tasks{};
+
+            query.AsyncEach(pool, tasks.begin(), partitions, [&](const Entity, Test_ComponentA &, Test_ComponentB &) {
+                count.fetch_add(1, std::memory_order_relaxed);
+            });
+
+            const usize taskCount = partitions * query.GetArchetypeCount();
+            for (usize i = 0; i < taskCount; ++i)
+                pool.WaitUntilFinished(tasks[i]);
+
+            REQUIRE(count.load(std::memory_order_relaxed) == N / 2);
+        }
+
+        SECTION("AsyncEach can mutate components")
+        {
+            const auto &query = r.Query<Test_ComponentA>();
+            std::array<Task<>, N> tasks{};
+
+            query.AsyncEach(pool, tasks.begin(), partitions, [](Test_ComponentA &a) { a.Data += 1000; });
+
+            const usize taskCount = partitions * query.GetArchetypeCount();
+            for (usize i = 0; i < taskCount; ++i)
+                pool.WaitUntilFinished(tasks[i]);
+
+            r.Query<Test_ComponentA>().Each([](const Test_ComponentA &a) { REQUIRE(a.Data >= 1000); });
+        }
+    }
+    PopStack();
+    PopTier();
+}
+
+TEST_CASE("ECS: Query AsyncEach across multiple archetypes", "[ECS]")
+{
+    ArenaAllocator arena{1_mib, TKIT_CACHE_LINE_SIZE};
+    PushTier(&s_Tier);
+    PushStack(&s_Stack);
+    {
+        ThreadPool pool(&arena, 4);
+        Registry r{};
+        r.RegisterComponents<Test_ComponentA, Test_ComponentB, Test_ComponentC>();
+
+        constexpr u32 N = 300;
+        constexpr usize partitions = 4;
+
+        for (u32 i = 0; i < N; ++i)
+        {
+            const Entity e = r.CreateEntity();
+            r.AddComponent<Test_ComponentA>(e, i);
+            if (i % 3 == 0)
+                r.AddComponent<Test_ComponentB>(e, i, i);
+            if (i % 3 == 1)
+            {
+                r.AddComponent<Test_ComponentB>(e, i, i);
+                r.AddComponent<Test_ComponentC>(e, std::vector<u32>{i});
+            }
+        }
+
+        std::atomic<u32> count{0};
+        const auto &query = r.Query<Test_ComponentA, Test_ComponentB>();
+        std::array<Task<>, N> tasks{};
+
+        query.AsyncEach(pool, tasks.begin(), partitions,
+                        [&](Test_ComponentA &, Test_ComponentB &) { count.fetch_add(1, std::memory_order_relaxed); });
+
+        const usize taskCount = partitions * query.GetArchetypeCount();
+        for (usize i = 0; i < taskCount; ++i)
+            pool.WaitUntilFinished(tasks[i]);
+
+        const u32 expected = (N + 2) / 3 + (N + 1) / 3;
+        REQUIRE(count.load(std::memory_order_relaxed) == expected);
+    }
+    PopStack();
+    PopTier();
+}
+
+TEST_CASE("ECS: Component alignment", "[ECS]")
+{
+    struct alignas(64) Test_AlignedComponent
+    {
+        u32 Data;
+    };
+
+    struct alignas(128) Test_HeavyAlignedComponent
+    {
+        u32 X;
+        u32 Y;
+    };
+
+    PushTier(&s_Tier);
+    PushStack(&s_Stack);
+    {
+        Registry r{};
+        r.RegisterComponents<Test_AlignedComponent, Test_HeavyAlignedComponent>();
+
+        SECTION("Single aligned component respects alignment")
+        {
+            constexpr u32 N = 32;
+            std::vector<Entity> entities{};
+            for (u32 i = 0; i < N; ++i)
+            {
+                const Entity e = r.CreateEntity();
+                r.AddComponent<Test_AlignedComponent>(e, i);
+                entities.push_back(e);
+            }
+
+            for (u32 i = 0; i < N; ++i)
+            {
+                Test_AlignedComponent *c = r.GetComponent<Test_AlignedComponent>(entities[i]);
+                REQUIRE(c->Data == i);
+                REQUIRE(rcast<uintptr_t>(c) % alignof(Test_AlignedComponent) == 0);
+            }
+        }
+
+        SECTION("Heavy aligned component respects alignment")
+        {
+            constexpr u32 N = 32;
+            std::vector<Entity> entities{};
+            for (u32 i = 0; i < N; ++i)
+            {
+                const Entity e = r.CreateEntity();
+                r.AddComponent<Test_HeavyAlignedComponent>(e, i, i * 2);
+                entities.push_back(e);
+            }
+
+            for (u32 i = 0; i < N; ++i)
+            {
+                Test_HeavyAlignedComponent *c = r.GetComponent<Test_HeavyAlignedComponent>(entities[i]);
+                REQUIRE(c->X == i);
+                REQUIRE(c->Y == i * 2);
+                REQUIRE(rcast<uintptr_t>(c) % alignof(Test_HeavyAlignedComponent) == 0);
+            }
+        }
+
+        SECTION("Alignment preserved after archetype transition")
+        {
+            constexpr u32 N = 16;
+            std::vector<Entity> entities{};
+            for (u32 i = 0; i < N; ++i)
+            {
+                const Entity e = r.CreateEntity();
+                r.AddComponent<Test_AlignedComponent>(e, i);
+                r.AddComponent<Test_HeavyAlignedComponent>(e, i * 10, i * 20);
+                entities.push_back(e);
+            }
+
+            for (u32 i = 0; i < N; ++i)
+            {
+                Test_AlignedComponent *a = r.GetComponent<Test_AlignedComponent>(entities[i]);
+                Test_HeavyAlignedComponent *b = r.GetComponent<Test_HeavyAlignedComponent>(entities[i]);
+                REQUIRE(rcast<uintptr_t>(a) % alignof(Test_AlignedComponent) == 0);
+                REQUIRE(rcast<uintptr_t>(b) % alignof(Test_HeavyAlignedComponent) == 0);
+                REQUIRE(a->Data == i);
+                REQUIRE(b->X == i * 10);
+                REQUIRE(b->Y == i * 20);
+            }
+
+            for (u32 i = 0; i < N; i += 2)
+                r.RemoveComponent<Test_AlignedComponent>(entities[i]);
+
+            for (u32 i = 0; i < N; ++i)
+            {
+                Test_HeavyAlignedComponent *b = r.GetComponent<Test_HeavyAlignedComponent>(entities[i]);
+                REQUIRE(rcast<uintptr_t>(b) % alignof(Test_HeavyAlignedComponent) == 0);
+                REQUIRE(b->X == i * 10);
+            }
+        }
+
+        SECTION("Alignment holds through query iteration")
+        {
+            constexpr u32 N = 32;
+            for (u32 i = 0; i < N; ++i)
+            {
+                const Entity e = r.CreateEntity();
+                r.AddComponent<Test_AlignedComponent>(e, i);
+                r.AddComponent<Test_HeavyAlignedComponent>(e, i, i);
+            }
+
+            u32 count = 0;
+            r.Query<Test_AlignedComponent, Test_HeavyAlignedComponent>().Each(
+                [&](Test_AlignedComponent &a, Test_HeavyAlignedComponent &b) {
+                    REQUIRE(rcast<uintptr_t>(&a) % alignof(Test_AlignedComponent) == 0);
+                    REQUIRE(rcast<uintptr_t>(&b) % alignof(Test_HeavyAlignedComponent) == 0);
+                    ++count;
+                });
+            REQUIRE(count == N);
         }
     }
     PopStack();
