@@ -19,6 +19,7 @@ set(SOURCES
     tests/container/container.cpp
     tests/container/span.cpp
     tests/container/storage.cpp
+    tests/container/ecs.cpp
     tests/multiprocessing/task.cpp
     tests/multiprocessing/thread_pool.cpp
     tests/multiprocessing/for_each.cpp

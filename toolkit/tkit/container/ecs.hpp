@@ -9,6 +9,7 @@
 #include "tkit/container/hash_map.hpp"
 #include "tkit/container/span.hpp"
 #include "tkit/memory/memory.hpp"
+#include "tkit/utils/utils.hpp"
 
 namespace TKit
 {
@@ -20,14 +21,14 @@ inline ComponentId NextComponentId()
     return counter++;
 }
 
-template <typename T> ComponentId GetComponentId()
+template <typename C> ComponentId GetComponentId()
 {
     static const ComponentId id = NextComponentId();
     return id;
 }
-template <typename... T> void RegisterComponentIds()
+template <typename... C> void RegisterComponentIds()
 {
-    (GetComponentId<T>(), ...);
+    (GetComponentId<C>(), ...);
 }
 
 struct ComponentInfo
@@ -45,17 +46,17 @@ struct ComponentInfo
     bool Registered = false;
 #endif
 
-    template <typename T> static ComponentInfo Create()
+    template <typename C> static ComponentInfo Create()
     {
         ComponentInfo info;
-        info.Id = GetComponentId<T>();
-        info.Size = sizeof(T);
-        info.Alignment = alignof(T);
+        info.Id = GetComponentId<C>();
+        info.Size = sizeof(C);
+        info.Alignment = alignof(C);
 
-        info.Destroy = [](const void *ptr) { Destruct(scast<const T *>(ptr)); };
-        // info.CopyCtor = [](const void *dst, void *src) { Construct(scast<T *>(dst), *scast<const T *>(src)); };
-        info.MoveCtor = [](void *dst, void *src) { Construct(scast<T *>(dst), std::move(*scast<T *>(src))); };
-        info.MoveAssign = [](void *dst, void *src) { *scast<T *>(dst) = std::move(*scast<T *>(src)); };
+        info.Destroy = [](const void *ptr) { Destruct(scast<const C *>(ptr)); };
+        // info.CopyCtor = [](const void *dst, void *src) { Construct(scast<C *>(dst), *scast<const C *>(src)); };
+        info.MoveCtor = [](void *dst, void *src) { Construct(scast<C *>(dst), std::move(*scast<C *>(src))); };
+        info.MoveAssign = [](void *dst, void *src) { *scast<C *>(dst) = std::move(*scast<C *>(src)); };
 #ifdef TKIT_ENABLE_ENSURE
         info.Registered = true;
 #endif
@@ -74,11 +75,12 @@ class ComponentColumn
         m_Data = AllocateAligned(StartingCapacity * info.Size, info.Alignment);
     }
 
-    template <typename T, typename... Args> T *Append(Args &&...args)
+    template <typename C, typename... Args> C *Append(Args &&...args)
     {
+        resizeIfNeeded();
         const usize row = m_RowCount;
         ++m_RowCount;
-        return Construct(Get<T>(row), std::forward<Args>(args)...);
+        return Construct(Get<C>(row), std::forward<Args>(args)...);
     }
 
     void Append(void *component);
@@ -96,12 +98,12 @@ class ComponentColumn
         return scast<std::byte *>(m_Data) + row * m_Info.Size;
     }
 
-    template <typename T> T *Get(const usize row)
+    template <typename C> C *Get(const usize row)
     {
-        TKIT_ASSERT(sizeof(T) == m_Info.Size,
-                    "[TOOLKIT][ECS] Size mismatch between sizeof(T) = {} and element size = {}", sizeof(T),
+        TKIT_ASSERT(sizeof(C) == m_Info.Size,
+                    "[TOOLKIT][ECS] Size mismatch between sizeof(C) = {} and element size = {}", sizeof(C),
                     m_Info.Size);
-        return scast<T *>(Get(row));
+        return scast<C *>(Get(row));
     }
 
     usize GetRowCount() const
@@ -115,6 +117,8 @@ class ComponentColumn
     }
 
   private:
+    void resizeIfNeeded();
+
     void *m_Data;
 
     usize m_RowCount = 0;
@@ -159,9 +163,9 @@ struct EntityRecord
 class Archetype
 {
   public:
-    template <typename T> struct TransferResult
+    template <typename C> struct TransferResult
     {
-        T *Added;
+        C *Added;
         Entity ShuffledEntity;
     };
 
@@ -179,24 +183,24 @@ class Archetype
     usz ComputeArchetypeIdToAdd(ComponentId cid) const;
     usz ComputeArchetypeIdToRemove(ComponentId cid) const;
 
-    template <typename T, typename... Args> T *AddRow(const Entity e, Args &&...args)
+    template <typename C, typename... Args> C *AddRow(const Entity e, Args &&...args)
     {
         TKIT_ASSERT(m_Columns.GetSize() == 1,
                     "[TOOLKIT][ECS] If adding a row from a single component, the column count of the archetype must be "
                     "exactly one, but is {}",
                     m_Columns.GetSize());
         TKIT_ASSERT(
-            m_ColumnByComponent.Contains(GetComponentId<T>()),
+            m_ColumnByComponent.Contains(GetComponentId<C>()),
             "[TOOLKIT][ECS] When adding a row with one component, the archetype must have that component as a row");
 
         m_Entities.Append(e);
-        return emplaceAtColumn<T>(0, std::forward<Args>(args)...);
+        return emplaceAtColumn<C>(0, std::forward<Args>(args)...);
     }
 
-    template <typename T, typename... Args>
-    TransferResult<T> AddRowWithTransfer(Archetype *src, const usize srcRow, Args &&...args)
+    template <typename C, typename... Args>
+    TransferResult<C> AddRowWithTransfer(Archetype *src, const usize srcRow, Args &&...args)
     {
-        const ComponentId cid = GetComponentId<T>();
+        const ComponentId cid = GetComponentId<C>();
         TKIT_ASSERT(m_ColumnByComponent.Contains(cid), "[TOOLKIT][ECS] When adding a row, all source components "
                                                        "must be registered in the destination archetype");
 
@@ -218,7 +222,7 @@ class Archetype
         const Entity e = transferEntity(srcRow, this, src);
 
         const usize idx = m_ColumnByComponent[cid];
-        return {emplaceAtColumn<T>(idx, std::forward<Args>(args)...), e};
+        return {emplaceAtColumn<C>(idx, std::forward<Args>(args)...), e};
     }
 
     Entity RemoveRowWithTransfer(ComponentId cid, Archetype *dst, usize srcRow);
@@ -239,12 +243,18 @@ class Archetype
         return it->Value;
     }
 
-    ComponentColumn *GetColumn(const ComponentId cid)
+    ComponentColumn *QueryColumn(const ComponentId cid)
     {
         const auto it = m_ColumnByComponent.Find(cid);
         if (it == m_ColumnByComponent.end())
             return nullptr;
         return &m_Columns[it->Value];
+    }
+    ComponentColumn &GetColumn(const ComponentId cid)
+    {
+        TKIT_ASSERT(m_ColumnByComponent.Contains(cid), "[TOOLKIT][ECS] Archetype does not contain component with id {}",
+                    cid);
+        return m_Columns[m_ColumnByComponent[cid]];
     }
 
     const TierArray<ComponentId> &GetComponentIds() const
@@ -256,10 +266,20 @@ class Archetype
     {
         return m_Entities.GetSize();
     }
+    Entity GetEntity(const usize row) const
+    {
+        return m_Entities[row];
+    }
+
+    bool HasComponents(const Span<const ComponentId> ids) const;
 
     static usz CreateIdFromComponents(const Span<const ComponentId> ids)
     {
         return HashRange(ids.begin(), ids.end());
+    }
+    template <typename... C> static usz CreateIdFromComponents()
+    {
+        return Hash(GetComponentId<C>()...);
     }
     static usz CreateIdFromComponent(const ComponentId id)
     {
@@ -267,13 +287,13 @@ class Archetype
     }
 
   private:
-    template <typename T, typename... Args> T *emplaceAtColumn(const usize idx, Args &&...args)
+    template <typename C, typename... Args> C *emplaceAtColumn(const usize idx, Args &&...args)
     {
         TKIT_ASSERT(m_Columns[idx].GetRowCount() == GetRowCount() - 1,
                     "[TOOLKIT][ECS] The row count of all the columns must match the archetype's row count. Column row "
                     "count is {} when it should be {}",
                     m_Columns[idx].GetRowCount(), GetRowCount() - 1);
-        return m_Columns[idx].Append<T>(std::forward<Args>(args)...);
+        return m_Columns[idx].Append<C>(std::forward<Args>(args)...);
     }
     void transferRow(Archetype *source, usize srcRow);
 
@@ -291,6 +311,215 @@ class Archetype
     TierHashMap<ComponentId, Archetype *> m_RemoveEdges{};
 };
 
+template <usize N>
+    requires(N != 0)
+using ArchetypeQueryColumns = FixedArray<ComponentColumn *, N>;
+
+template <usize N>
+    requires(N != 0)
+constexpr usize GetRowCount(const ArchetypeQueryColumns<N> &info)
+{
+#ifdef TKIT_ENABLE_ENSURE
+    for (usize i = 1; i < N; ++i)
+    {
+        TKIT_ENSURE(info[0]->GetRowCount() == info[i]->GetRowCount(),
+                    "[TOOLKIT][ECS] All archetype columns must have matching row counts, but found column 0 has {} "
+                    "rows while column {} has {}",
+                    info[0]->GetRowCount(), i, info[i]->GetRowCount());
+    }
+#endif
+    return info[0]->GetRowCount();
+}
+
+template <typename... Cs>
+    requires(!HasDuplicateTypes<Cs...>() && sizeof...(Cs) != 0)
+class ComponentQuery
+{
+    static constexpr usize Count = sizeof...(Cs);
+
+  public:
+    struct ArchetypeQueryInterface;
+
+    class RowView
+    {
+        static constexpr usize Count = sizeof...(Cs);
+
+      public:
+        RowView(const ArchetypeQueryInterface *archInfo, const usize row) : m_ArchInfo(archInfo), m_Row(row)
+        {
+        }
+
+        template <typename C>
+            requires(IsTypeContained<C, Cs...>())
+        C &GetComponent() const;
+
+        Entity GetEntity() const;
+
+        const RowView &operator*() const
+        {
+            return *this;
+        }
+        RowView &operator*()
+        {
+            return *this;
+        }
+
+        RowView &operator++()
+        {
+            ++m_Row;
+            return *this;
+        }
+        RowView operator++(int)
+        {
+            const RowView cpy = *this;
+            ++(*this);
+            return cpy;
+        }
+
+        friend bool operator==(const RowView &lhs, const RowView &rhs)
+        {
+            return lhs.m_Row == rhs.m_Row && lhs.m_ArchInfo == rhs.m_ArchInfo;
+        }
+        friend bool operator!=(const RowView &lhs, const RowView &rhs)
+        {
+            return lhs.m_Row != rhs.m_Row || lhs.m_ArchInfo != rhs.m_ArchInfo;
+        }
+
+      private:
+        const ArchetypeQueryInterface *m_ArchInfo;
+        usize m_Row;
+    };
+
+    struct ArchetypeQueryInterface
+    {
+        RowView begin() const
+        {
+            return RowView{this, 0};
+        }
+        RowView end() const
+        {
+            return RowView{this, Columns.GetSize()};
+        }
+
+        Archetype *Archetype;
+        ArchetypeQueryColumns<Count> Columns;
+    };
+
+    class RowIterator
+    {
+      public:
+        RowIterator(const TierArray<ArchetypeQueryInterface> *archInfo, const usize archetype)
+            : m_ArchInfo(archInfo), m_Archetype(archetype)
+        {
+        }
+
+        RowView operator*() const
+        {
+            return RowView{&m_ArchInfo->At(m_Archetype), m_Row};
+        }
+
+        RowIterator &operator++()
+        {
+            const ArchetypeQueryColumns<Count> &columns = m_ArchInfo->At(m_Archetype).Columns;
+            const usize rcount = GetRowCount(columns);
+            if (++m_Row < rcount)
+                return *this;
+
+            m_Row = 0;
+            if (++m_Archetype < m_ArchInfo->GetSize())
+                return *this;
+
+            m_Archetype = TKIT_USIZE_MAX;
+            return *this;
+        }
+
+        RowIterator operator++(int)
+        {
+            const RowIterator cpy = *this;
+            ++(*this);
+            return cpy;
+        }
+
+        friend bool operator==(const RowIterator &lhs, const RowIterator &rhs)
+        {
+            return lhs.m_Archetype == rhs.m_Archetype && lhs.m_Row == rhs.m_Row && lhs.m_ArchInfo == rhs.m_ArchInfo;
+        }
+        friend bool operator!=(const RowIterator &lhs, const RowIterator &rhs)
+        {
+            return lhs.m_Archetype != rhs.m_Archetype || lhs.m_Row != rhs.m_Row || lhs.m_ArchInfo != rhs.m_ArchInfo;
+        }
+
+      private:
+        const TierArray<ArchetypeQueryInterface> *m_ArchInfo;
+        usize m_Archetype;
+        usize m_Row = 0;
+    };
+
+    template <typename F> void Each(F &&func) const
+    {
+        for (usize i = 0; i < m_ArchetypeInfo.GetSize(); ++i)
+            eachForArchetype(std::forward<F>(func), i, std::make_integer_sequence<usize, Count>{});
+    }
+
+    RowIterator begin() const
+    {
+        return RowIterator{&m_ArchetypeInfo, 0};
+    }
+    RowIterator end() const
+    {
+        return RowIterator{&m_ArchetypeInfo, TKIT_USIZE_MAX};
+    }
+
+    const TierArray<ArchetypeQueryInterface> &Archetypes() const
+    {
+        return m_ArchetypeInfo;
+    }
+
+  private:
+    template <typename F, usize... I>
+    void eachForArchetype(F &&func, const usize idx, const std::integer_sequence<usize, I...>) const
+    {
+        const ArchetypeQueryInterface &interface = m_ArchetypeInfo[idx];
+        const ArchetypeQueryColumns<Count> &columns = interface.Columns;
+        const usize rcount = GetRowCount(columns);
+        for (usize r = 0; r < rcount; ++r)
+            if constexpr (std::is_invocable_v<F, Entity, Cs &...>)
+                std::forward<F>(func)(interface.Archetype->GetEntity(r), *columns[I]->template Get<Cs>(r)...);
+            else
+                std::forward<F>(func)(*columns[I]->template Get<Cs>(r)...);
+    }
+
+    void addArchetype(Archetype *arch)
+    {
+        ArchetypeQueryInterface &interface = m_ArchetypeInfo.Append();
+        interface.Archetype = arch;
+        interface.Columns = ArchetypeQueryColumns<Count>{&arch->GetColumn(GetComponentId<Cs>())...};
+    }
+
+    TierArray<ArchetypeQueryInterface> m_ArchetypeInfo{};
+
+    FixedArray<ComponentId, Count> m_ComponentIds{};
+    usize m_CheckedArchetypes;
+    friend class Registry;
+};
+
+template <typename... Cs>
+    requires(!HasDuplicateTypes<Cs...>() && sizeof...(Cs) != 0)
+template <typename C>
+    requires(IsTypeContained<C, Cs...>())
+C &ComponentQuery<Cs...>::RowView::GetComponent() const
+{
+    constexpr usize idx = GetTypeIndex<C, Cs...>();
+    return *m_ArchInfo->Columns.At(idx)->template Get<C>(m_Row);
+}
+
+template <typename... Cs>
+    requires(!HasDuplicateTypes<Cs...>() && sizeof...(Cs) != 0)
+Entity ComponentQuery<Cs...>::RowView::GetEntity() const
+{
+    return m_ArchInfo->Archetype->GetEntity(m_Row);
+}
+
 class Registry
 {
     TKIT_NON_COPYABLE(Registry)
@@ -300,22 +529,22 @@ class Registry
 
     Entity CreateEntity();
 
-    template <typename T> void RegisterComponent()
+    template <typename C> void RegisterComponent()
     {
-        const ComponentId cid = GetComponentId<T>();
+        const ComponentId cid = GetComponentId<C>();
         if (cid >= m_Components.GetSize())
             m_Components.Resize(cid + 1);
 
         TKIT_ENSURE(!m_Components[cid].Registered, "[TOOLKIT][ECS] Cannot register an already registered component");
-        m_Components[cid] = ComponentInfo::Create<T>();
+        m_Components[cid] = ComponentInfo::Create<C>();
     }
 
-    template <typename... T> void RegisterComponents()
+    template <typename... C> void RegisterComponents()
     {
-        (RegisterComponent<T>(), ...);
+        (RegisterComponent<C>(), ...);
     }
 
-    template <typename T> T *GetComponent(const Entity e) const
+    template <typename C> C *GetComponent(const Entity e) const
     {
         TKIT_ENSURE(IsAlive(e), "[TOOLKIT][ECS] The entity with index {} is not alive and cannot be queried", e.Index);
         const EntityRecord &r = m_Entities[e.Index];
@@ -323,9 +552,9 @@ class Registry
         if (!arch)
             return nullptr;
 
-        const ComponentId cid = GetComponentId<T>();
+        const ComponentId cid = GetComponentId<C>();
 
-        ComponentColumn *column = arch->GetColumn(cid);
+        ComponentColumn *column = arch->QueryColumn(cid);
         if (!column)
             return nullptr;
 
@@ -333,15 +562,19 @@ class Registry
                     "[TOOLKIT][ECS] Found entity having a row ({}) greater or equal to its archetype's row count ({})",
                     r.Row, arch->GetRowCount());
 
-        return column->Get<T>(r.Row);
+        return column->Get<C>(r.Row);
+    }
+    template <typename C> bool HasComponent(const Entity e) const
+    {
+        return GetComponent<C>(e) != nullptr;
     }
 
-    template <typename T, typename... Args> T *AddComponent(const Entity e, Args &&...args)
+    template <typename C, typename... Args> C *AddComponent(const Entity e, Args &&...args)
     {
-        const ComponentId cid = GetComponentId<T>();
+        const ComponentId cid = GetComponentId<C>();
 
         TKIT_ENSURE(IsAlive(e), "[TOOLKIT][ECS] The entity with index {} is not alive and cannot be queried", e.Index);
-        TKIT_ASSERT(!GetComponent<T>(e), "[TOOLKIT][ECS] The entity with index {} already has a component with id {}",
+        TKIT_ASSERT(!GetComponent<C>(e), "[TOOLKIT][ECS] The entity with index {} already has a component with id {}",
                     e.Index, cid);
         EntityRecord &r = m_Entities[e.Index];
         Archetype *arch = r.Archetype;
@@ -355,14 +588,16 @@ class Registry
             const auto it = m_ArchetypeById.Find(archId);
             if (it == m_ArchetypeById.end())
             {
-                arch = createArchetype();
+                arch = createArchetype(archId);
                 arch->AddColumn(m_Components[cid]);
                 arch->FinalizeColumns(archId);
             }
+            else
+                arch = it->Value;
 
             r.Archetype = arch;
             r.Row = arch->GetRowCount();
-            return arch->AddRow<T>(e, std::forward<Args>(args)...);
+            return arch->AddRow<C>(e, std::forward<Args>(args)...);
         }
 
         Archetype *src = arch;
@@ -374,7 +609,7 @@ class Registry
             const auto it = m_ArchetypeById.Find(archId);
             if (it == m_ArchetypeById.end())
             {
-                dst = createArchetype();
+                dst = createArchetype(archId);
 
                 for (const ComponentId c : src->GetComponentIds())
                     dst->AddColumn(m_Components[c]);
@@ -382,10 +617,12 @@ class Registry
 
                 dst->FinalizeColumns(archId);
             }
+            else
+                dst = it->Value;
         }
 
         const usize nrow = dst->GetRowCount();
-        const Archetype::TransferResult<T> result = dst->AddRowWithTransfer<T>(src, r.Row, std::forward<Args>(args)...);
+        const Archetype::TransferResult<C> result = dst->AddRowWithTransfer<C>(src, r.Row, std::forward<Args>(args)...);
         if (result.ShuffledEntity != NullEntity)
         {
             TKIT_ASSERT(result.ShuffledEntity != e,
@@ -398,22 +635,30 @@ class Registry
         return result.Added;
     }
 
-    template <typename T> void RemoveComponent(const Entity e)
+    template <typename C> void RemoveComponent(const Entity e)
     {
         TKIT_ENSURE(IsAlive(e), "[TOOLKIT][ECS] The entity with index {} is not alive and cannot be queried", e.Index);
         EntityRecord &r = m_Entities[e.Index];
         Archetype *src = r.Archetype;
         TKIT_ASSERT(src, "[TOOLKIT][ECS] To remove a component, target entity must have a valid archetype");
 
-        const ComponentId cid = GetComponentId<T>();
+        const ComponentId cid = GetComponentId<C>();
         Archetype *dst = src->GetArchetypeToRemove(cid);
         if (!dst)
         {
             const usz archId = src->ComputeArchetypeIdToRemove(cid);
-            TKIT_ASSERT(m_ArchetypeById.Contains(archId),
-                        "[TOOLKIT][ECS] When removing an entity, the archetype id to remove must be already present, "
-                        "as it is not possible to add multiple components simultaneously");
-            dst = m_ArchetypeById[archId];
+            const auto it = m_ArchetypeById.Find(archId);
+            if (it == m_ArchetypeById.end())
+            {
+                dst = createArchetype(archId);
+
+                for (const ComponentId c : src->GetComponentIds())
+                    if (c != cid)
+                        dst->AddColumn(m_Components[c]);
+                dst->FinalizeColumns(archId);
+            }
+            else
+                dst = it->Value;
         }
 
         const usize nrow = dst->GetRowCount();
@@ -428,6 +673,40 @@ class Registry
         r.Archetype = dst;
     }
 
+    template <typename... Cs>
+        requires(!HasDuplicateTypes<Cs...>() && sizeof...(Cs) != 0)
+    const ComponentQuery<Cs...> &Query()
+    {
+        const usz id = Archetype::CreateIdFromComponents<Cs...>();
+        const auto it = m_Queries.Find(id);
+        if (it == m_Queries.end())
+        {
+            TierAllocator *tier = GetTier();
+            ComponentQuery<Cs...> *q = tier->Create<ComponentQuery<Cs...>>();
+
+            TKit::FixedArray<ComponentId, sizeof...(Cs)> cids{GetComponentId<Cs>()...};
+            std::sort(cids.begin(), cids.end());
+
+            q->m_ComponentIds = cids;
+            q->m_CheckedArchetypes = m_Archetypes.GetSize();
+            for (Archetype *arch : m_Archetypes)
+                if (arch->HasComponents(cids))
+                    q->addArchetype(arch);
+
+            m_Queries[id] = {q, [](const void *p) { GetTier()->Destroy(scast<const ComponentQuery<Cs...> *>(p)); }};
+            return *q;
+        }
+
+        ComponentQuery<Cs...> *q = scast<ComponentQuery<Cs...> *>(it->Value.Query);
+
+        for (u32 i = q->m_CheckedArchetypes; i < m_Archetypes.GetSize(); ++i)
+            if (m_Archetypes[i]->HasComponents(q->m_ComponentIds))
+                q->addArchetype(m_Archetypes[i]);
+
+        q->m_CheckedArchetypes = m_Archetypes.GetSize();
+        return *q;
+    }
+
 #ifdef TKIT_ENABLE_ENSURE
     bool IsAlive(const Entity e) const
     {
@@ -436,7 +715,7 @@ class Registry
 #endif
 
   private:
-    Archetype *createArchetype();
+    Archetype *createArchetype(usz archId);
     void destroyArchetype(const Archetype *arch);
     void removeArchetype(const Archetype *arch);
 
@@ -446,6 +725,12 @@ class Registry
     TierArray<Archetype *> m_Archetypes{};
 
     TierHashMap<usz, Archetype *> m_ArchetypeById{};
+    struct CachedQuery
+    {
+        void *Query;
+        void (*Destroy)(const void *);
+    };
+    TierHashMap<usz, CachedQuery> m_Queries{};
 };
 
 } // namespace TKit

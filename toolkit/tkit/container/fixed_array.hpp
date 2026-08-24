@@ -2,6 +2,7 @@
 
 #include "tkit/container/container.hpp"
 #include "tkit/utils/debug.hpp"
+#include <tuple>
 
 namespace TKit
 {
@@ -95,6 +96,15 @@ template <typename T, usize Capacity> struct FixedArray
     T Elements[Capacity];
 };
 
+template <usize I, typename T, usize N> constexpr const T &get(const FixedArray<T, N> &arr)
+{
+    return arr[I];
+}
+template <usize I, typename T, usize N> constexpr T &get(FixedArray<T, N> &arr)
+{
+    return arr[I];
+}
+
 template <typename T> using FixedArray4 = FixedArray<T, 4>;
 template <typename T> using FixedArray8 = FixedArray<T, 8>;
 template <typename T> using FixedArray16 = FixedArray<T, 16>;
@@ -112,3 +122,13 @@ template <typename T> using FixedArray1024 = FixedArray<T, 1024>;
 #undef CREATE_BITSHIFT_OP
 
 } // namespace TKit
+
+template <typename T, TKit::usize N>
+struct std::tuple_size<TKit::FixedArray<T, N>> : std::integral_constant<TKit::usize, N>
+{
+};
+
+template <TKit::usize I, typename T, TKit::usize N> struct std::tuple_element<I, TKit::FixedArray<T, N>>
+{
+    using type = T;
+};

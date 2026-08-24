@@ -31,20 +31,7 @@ Entity Registry::CreateEntity()
 
 void ComponentColumn::Append(void *component)
 {
-    if (m_RowCount == m_RowCapacity)
-    {
-        m_RowCapacity = Container::GrowthFactor(m_RowCount);
-        void *ndata = TKit::AllocateAligned(m_Info.Size * m_RowCapacity, m_Info.Alignment);
-        for (u32 r = 0; r < m_RowCount; ++r)
-        {
-            void *src = Get(r);
-            void *dst = scast<std::byte *>(ndata) + r * m_Info.Size;
-            m_Info.MoveCtor(dst, src);
-        }
-        TKit::DeallocateAligned(m_Data);
-        m_Data = ndata;
-    }
-
+    resizeIfNeeded();
     const usize row = m_RowCount++;
     void *dst = Get(row);
     m_Info.MoveCtor(dst, component);
@@ -67,11 +54,29 @@ void ComponentColumn::Remove(const usize row)
     m_RowCount = lidx;
 }
 
+void ComponentColumn::resizeIfNeeded()
+{
+    if (m_RowCount == m_RowCapacity)
+    {
+        m_RowCapacity = Container::GrowthFactor(m_RowCount);
+        void *ndata = TKit::AllocateAligned(m_Info.Size * m_RowCapacity, m_Info.Alignment);
+        for (u32 r = 0; r < m_RowCount; ++r)
+        {
+            void *src = Get(r);
+            void *dst = scast<std::byte *>(ndata) + r * m_Info.Size;
+            m_Info.MoveCtor(dst, src);
+        }
+        TKit::DeallocateAligned(m_Data);
+        m_Data = ndata;
+    }
+}
+
 void Archetype::AddColumn(const ComponentInfo &cinfo)
 {
     TKIT_ASSERT(m_Entities.IsEmpty(), "[TOOLKIT][ECS] Can only add columns to an archetype if it is empty");
     TKIT_ASSERT(m_Id == TKIT_USZ_MAX,
                 "[TOOLKIT][ECS] Can only add columns to an archetype if it has not been finalized");
+
     m_ColumnByComponent[cinfo.Id] = m_Columns.GetSize();
     m_Columns.Append(cinfo);
     for (u32 i = 0; i < m_ComponentIdSet.GetSize(); ++i)
@@ -85,7 +90,10 @@ void Archetype::AddColumn(const ComponentInfo &cinfo)
 
 usz Archetype::ComputeArchetypeIdToAdd(const ComponentId cid) const
 {
-    StackArray<ComponentId> extSet = m_ComponentIdSet;
+    StackArray<ComponentId> extSet{};
+    extSet.Reserve(m_ComponentIdSet.GetSize() + 1);
+    extSet = m_ComponentIdSet;
+
     for (u32 i = 0; i < extSet.GetSize(); ++i)
         if (extSet[i] > cid)
         {
@@ -134,6 +142,27 @@ Entity Archetype::RemoveRowWithTransfer(const ComponentId cid, Archetype *dst, c
     return transferEntity(srcRow, dst, this);
 }
 
+bool Archetype::HasComponents(const Span<const ComponentId> ids) const
+{
+    usize i = 0;
+    usize j = 0;
+    const usize ni = m_ComponentIdSet.GetSize();
+    const usize nj = ids.GetSize();
+    while (i < ni && j < nj)
+    {
+        if (m_ComponentIdSet[i] == ids[j])
+        {
+            ++i;
+            ++j;
+        }
+        else if (m_ComponentIdSet[i] < ids[j])
+            ++i;
+        else
+            return false;
+    }
+    return j == nj;
+}
+
 ComponentColumn &Archetype::getColumnForTransfer(const ComponentColumn &other)
 {
     const ComponentId cid = other.GetInfo().Id;
@@ -158,10 +187,12 @@ Entity Archetype::transferEntity(const usize srcRow, Archetype *dst, Archetype *
     return srcRow != src->GetRowCount() ? src->m_Entities[srcRow] : NullEntity;
 }
 
-Archetype *Registry::createArchetype()
+Archetype *Registry::createArchetype(const usz archId)
 {
     TierAllocator *tier = GetTier();
     Archetype *arch = tier->Create<Archetype>();
+    TKit::PrintLine("CREATINNNNG {:#018x}", archId);
+    m_ArchetypeById[archId] = arch;
     return m_Archetypes.Append(arch);
 }
 
@@ -169,6 +200,11 @@ Registry::~Registry()
 {
     for (Archetype *arch : m_Archetypes)
         destroyArchetype(arch);
+    for (const KeyValuePair<const usz, CachedQuery> &pair : m_Queries)
+    {
+        const CachedQuery &q = pair.Value;
+        q.Destroy(q.Query);
+    }
 }
 
 void Registry::destroyArchetype(const Archetype *arch)

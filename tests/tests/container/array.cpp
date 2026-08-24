@@ -44,12 +44,18 @@ struct Test_Tracker
     }
     Test_Tracker &operator=(const Test_Tracker &other)
     {
-        Value = other.Value;
+        if (this != &other)
+        {
+            Value = other.Value;
+        }
         return *this;
     }
     Test_Tracker &operator=(Test_Tracker &&other)
     {
-        Value = other.Value;
+        if (this != &other)
+        {
+            Value = other.Value;
+        }
         return *this;
     }
 };

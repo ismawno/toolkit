@@ -527,6 +527,15 @@ template <typename T, usize N0, usize... N> constexpr T *AsPointer(Tensor<T, N0,
     return &tensor(0);
 }
 
+template <usize I, typename T, usize N0, usize... N> constexpr const T &get(const Tensor<T, N0, N...> &t)
+{
+    return t[I];
+}
+template <usize I, typename T, usize N0, usize... N> constexpr T &get(Tensor<T, N0, N...> &t)
+{
+    return t[I];
+}
+
 } // namespace TKit::Math
 namespace TKit
 {
@@ -1021,6 +1030,17 @@ template <typename T, TKit::usize N0, TKit::usize... N> struct fmt::formatter<TK
     {
         return formatImpl<0>(t, ctx);
     }
+};
+
+template <typename T, TKit::usize N0, TKit::usize... N>
+struct std::tuple_size<TKit::Math::Tensor<T, N0, N...>> : std::integral_constant<TKit::usize, N0>
+{
+};
+
+template <TKit::usize I, typename T, TKit::usize N0, TKit::usize... N>
+struct std::tuple_element<I, TKit::Math::Tensor<T, N0, N...>>
+{
+    using type = T;
 };
 
 TKIT_COMPILER_WARNING_IGNORE_POP()
