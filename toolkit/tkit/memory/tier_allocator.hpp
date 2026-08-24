@@ -166,7 +166,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 
     usz GetHeaderSize() const
     {
-        return (sizeof(usz) + m_HeaderAllocationsAlignment - 1) & ~(m_HeaderAllocationsAlignment - 1);
+        return (sizeof(usz) + usz(m_HeaderAllocationsAlignment) - 1) & ~(usz(m_HeaderAllocationsAlignment) - 1);
     }
     usz GetHeaderSizeValue(const void *ptr) const
     {
