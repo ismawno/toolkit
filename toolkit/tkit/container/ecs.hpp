@@ -562,10 +562,7 @@ class Registry
     {
         return m_Entities.Insert();
     }
-    void DestroyEntity(const Entity e)
-    {
-        m_Entities.Remove(e);
-    }
+    void DestroyEntity(Entity e);
 
     template <typename C> void RegisterComponent()
     {

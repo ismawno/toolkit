@@ -191,6 +191,18 @@ Registry::~Registry()
     }
 }
 
+void Registry::DestroyEntity(const Entity e)
+{
+    const EntityRecord &record = m_Entities[e];
+    if (record.Archetype)
+    {
+        const Entity shuffled = record.Archetype->RemoveRow(record.Row);
+        if (shuffled != NullEntity)
+            m_Entities[shuffled].Row = record.Row;
+    }
+    m_Entities.Remove(e);
+}
+
 void Registry::destroyArchetype(const Archetype *arch)
 {
     TierAllocator *tier = GetTier();
