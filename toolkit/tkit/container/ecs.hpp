@@ -6,6 +6,7 @@
 #endif
 
 #include "tkit/container/tier_array.hpp"
+#include "tkit/container/hive.hpp"
 #include "tkit/container/hash_map.hpp"
 #include "tkit/container/span.hpp"
 #include "tkit/memory/memory.hpp"
@@ -16,6 +17,7 @@ namespace TKit
 {
 class ITaskManager;
 using ComponentId = usize;
+using Entity = usize;
 
 inline ComponentId NextComponentId()
 {
@@ -128,38 +130,13 @@ class ComponentColumn
     ComponentInfo m_Info;
 };
 
-struct Entity
-{
-    usize Index;
-#ifdef TKIT_ENABLE_ENSURE
-    usize Generation = 0;
-#endif
-};
-
-#ifdef TKIT_ENABLE_ENSURE
-constexpr Entity NullEntity = {TKIT_USIZE_MAX, TKIT_USIZE_MAX};
-#else
-constexpr Entity NullEntity = {TKIT_USIZE_MAX};
-#endif
-
-constexpr bool operator==(const Entity &lhs, const Entity &rhs)
-{
-#ifdef TKIT_ENABLE_ENSURE
-    return lhs.Index == rhs.Index && lhs.Generation == rhs.Generation;
-#else
-    return lhs.Index == rhs.Index;
-#endif
-}
+constexpr Entity NullEntity = TKIT_USIZE_MAX;
 
 class Archetype;
 struct EntityRecord
 {
     Archetype *Archetype = nullptr;
     usize Row = TKIT_USIZE_MAX;
-#ifdef TKIT_ENABLE_ENSURE
-    usize Generation = 0;
-    bool Alive = true;
-#endif
 };
 
 class Archetype
@@ -228,6 +205,7 @@ class Archetype
     }
 
     Entity RemoveRowWithTransfer(ComponentId cid, Archetype *dst, usize srcRow);
+    Entity RemoveRow(usize row);
 
     Archetype *GetArchetypeToAdd(const ComponentId cid) const
     {
@@ -301,7 +279,9 @@ class Archetype
 
     ComponentColumn &getColumnForTransfer(const ComponentColumn &other);
     void transferComponent(usize srcRow, ComponentColumn &dst, ComponentColumn &src);
+
     static Entity transferEntity(usize srcRow, Archetype *dst, Archetype *src);
+    Entity removeEntity(usize row);
 
     usz m_Id = TKIT_USZ_MAX;
     TierArray<ComponentId> m_ComponentIdSet{};
@@ -578,7 +558,14 @@ class Registry
     Registry() = default;
     ~Registry();
 
-    Entity CreateEntity();
+    Entity CreateEntity()
+    {
+        return m_Entities.Insert();
+    }
+    void DestroyEntity(const Entity e)
+    {
+        m_Entities.Remove(e);
+    }
 
     template <typename C> void RegisterComponent()
     {
@@ -597,8 +584,7 @@ class Registry
 
     template <typename C> C *GetComponent(const Entity e) const
     {
-        TKIT_ENSURE(IsAlive(e), "[TOOLKIT][ECS] The entity with index {} is not alive and cannot be queried", e.Index);
-        const EntityRecord &r = m_Entities[e.Index];
+        const EntityRecord &r = m_Entities[e];
         Archetype *arch = r.Archetype;
         if (!arch)
             return nullptr;
@@ -624,10 +610,9 @@ class Registry
     {
         const ComponentId cid = GetComponentId<C>();
 
-        TKIT_ENSURE(IsAlive(e), "[TOOLKIT][ECS] The entity with index {} is not alive and cannot be queried", e.Index);
-        TKIT_ASSERT(!GetComponent<C>(e), "[TOOLKIT][ECS] The entity with index {} already has a component with id {}",
-                    e.Index, cid);
-        EntityRecord &r = m_Entities[e.Index];
+        TKIT_ASSERT(!GetComponent<C>(e), "[TOOLKIT][ECS] The entity with id {} already has a component with id {}", e,
+                    cid);
+        EntityRecord &r = m_Entities[e];
         Archetype *arch = r.Archetype;
 
         if (!arch)
@@ -678,7 +663,7 @@ class Registry
         {
             TKIT_ASSERT(result.ShuffledEntity != e,
                         "[TOOLKIT][ECS] Target and shuffled entity cannot possibly be the same");
-            m_Entities[result.ShuffledEntity.Index].Row = r.Row;
+            m_Entities[result.ShuffledEntity].Row = r.Row;
         }
 
         r.Row = nrow;
@@ -688,8 +673,7 @@ class Registry
 
     template <typename C> void RemoveComponent(const Entity e)
     {
-        TKIT_ENSURE(IsAlive(e), "[TOOLKIT][ECS] The entity with index {} is not alive and cannot be queried", e.Index);
-        EntityRecord &r = m_Entities[e.Index];
+        EntityRecord &r = m_Entities[e];
         Archetype *src = r.Archetype;
         TKIT_ASSERT(src, "[TOOLKIT][ECS] To remove a component, target entity must have a valid archetype");
 
@@ -718,7 +702,7 @@ class Registry
         if (shuffled != NullEntity)
         {
             TKIT_ASSERT(shuffled != e, "[TOOLKIT][ECS] Target and shuffled entity cannot possibly be the same");
-            m_Entities[shuffled.Index].Row = r.Row;
+            m_Entities[shuffled].Row = r.Row;
         }
         r.Row = nrow;
         r.Archetype = dst;
@@ -758,20 +742,17 @@ class Registry
         return *q;
     }
 
-#ifdef TKIT_ENABLE_ENSURE
-    bool IsAlive(const Entity e) const
+    Span<const Entity> GetEntities() const
     {
-        return e != NullEntity && m_Entities[e.Index].Generation == e.Generation;
+        return m_Entities.GetValidIds();
     }
-#endif
 
   private:
     Archetype *createArchetype(usz archId);
     void destroyArchetype(const Archetype *arch);
     void removeArchetype(const Archetype *arch);
 
-    TierArray<EntityRecord> m_Entities{};
-    TierArray<Entity> m_FreeEntities{};
+    TierHive<EntityRecord> m_Entities{};
     TierArray<ComponentInfo> m_Components{};
     TierArray<Archetype *> m_Archetypes{};
 

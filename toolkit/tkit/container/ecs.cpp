@@ -3,32 +3,6 @@
 
 namespace TKit
 {
-Entity Registry::CreateEntity()
-{
-    if (m_FreeEntities.IsEmpty())
-    {
-        const usize idx = m_Entities.GetSize();
-        m_Entities.Append();
-        return {idx};
-    }
-
-    Entity e = m_FreeEntities.GetBack();
-    m_FreeEntities.Pop();
-
-    EntityRecord &record = m_Entities[e.Index];
-    record.Row = 0;
-
-    TKIT_ENSURE(!record.Alive, "[TOOLKIT][ECS] Recycled entity record must not be alive");
-
-#ifdef TKIT_ENABLE_ENSURE
-    ++record.Generation;
-    record.Alive = true;
-    e.Generation = record.Generation;
-#endif
-
-    return e;
-}
-
 void ComponentColumn::Append(void *component)
 {
     resizeIfNeeded();
@@ -142,6 +116,13 @@ Entity Archetype::RemoveRowWithTransfer(const ComponentId cid, Archetype *dst, c
     return transferEntity(srcRow, dst, this);
 }
 
+Entity Archetype::RemoveRow(const usize row)
+{
+    for (ComponentColumn &col : m_Columns)
+        col.Remove(row);
+    return removeEntity(row);
+}
+
 bool Archetype::HasComponents(const Span<const ComponentId> ids) const
 {
     usize i = 0;
@@ -183,8 +164,12 @@ void Archetype::transferComponent(const usize srcRow, ComponentColumn &dst, Comp
 Entity Archetype::transferEntity(const usize srcRow, Archetype *dst, Archetype *src)
 {
     dst->m_Entities.Append(src->m_Entities[srcRow]);
-    src->m_Entities.RemoveUnordered(src->m_Entities.begin() + srcRow);
-    return srcRow != src->GetRowCount() ? src->m_Entities[srcRow] : NullEntity;
+    return src->removeEntity(srcRow);
+}
+Entity Archetype::removeEntity(const usize row)
+{
+    m_Entities.RemoveUnordered(m_Entities.begin() + row);
+    return row != GetRowCount() ? m_Entities[row] : NullEntity;
 }
 
 Archetype *Registry::createArchetype(const usz archId)

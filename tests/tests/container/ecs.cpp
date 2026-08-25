@@ -35,28 +35,7 @@ TEST_CASE("ECS: Entity creation and recycling", "[ECS]")
         {
             const Entity e0 = r.CreateEntity();
             const Entity e1 = r.CreateEntity();
-            REQUIRE(e0.Index != e1.Index);
-#ifdef TKIT_ENABLE_ENSURE
-            REQUIRE(r.IsAlive(e0));
-            REQUIRE(r.IsAlive(e1));
-#endif
-        }
-
-#ifdef TKIT_ENABLE_ENSURE
-        SECTION("Null entity is not alive")
-        {
-            REQUIRE_FALSE(r.IsAlive(NullEntity));
-        }
-#endif
-
-        SECTION("Multiple entities have sequential indices")
-        {
-            const Entity e0 = r.CreateEntity();
-            const Entity e1 = r.CreateEntity();
-            const Entity e2 = r.CreateEntity();
-            REQUIRE(e0.Index == 0);
-            REQUIRE(e1.Index == 1);
-            REQUIRE(e2.Index == 2);
+            REQUIRE(e0 != e1);
         }
     }
     PopStack();
