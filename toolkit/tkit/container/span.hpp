@@ -560,6 +560,19 @@ template <typename T> class Span
 
 using StringView = Span<const char>;
 
+template <typename T, typename AllocState>
+template <typename... Args>
+constexpr Array<T, AllocState>::Array(const Span<const T> &span, Args &&...args)
+    : Array(span.GetData(), span.GetData() + span.GetSize(), std::forward<Args>(args)...)
+{
+}
+template <typename T, typename AllocState>
+template <typename... Args>
+constexpr Array<T, AllocState>::Array(const Span<T> &span, Args &&...args)
+    : Array(span.GetData(), span.GetData() + span.GetSize(), std::forward<Args>(args)...)
+{
+}
+
 } // namespace TKit
 
 template <> struct fmt::formatter<TKit::Span<const char>> : fmt::formatter<fmt::string_view>

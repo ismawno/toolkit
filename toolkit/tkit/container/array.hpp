@@ -5,6 +5,7 @@
 
 namespace TKit
 {
+template <typename T> class Span;
 enum ArrayType : u8
 {
     Array_Static,
@@ -115,6 +116,9 @@ template <typename T, typename AllocState> class Array
         Tools::CopyConstructFromRange(begin(), pbegin, pend);
         writeNullTerminatorIfString();
     }
+
+    template <typename... Args> constexpr Array(const Span<const T> &span, Args &&...args);
+    template <typename... Args> constexpr Array(const Span<T> &span, Args &&...args);
 
     template <typename... Args>
     constexpr Array(const std::initializer_list<T> list, Args &&...args) : m_State(std::forward<Args>(args)...)
