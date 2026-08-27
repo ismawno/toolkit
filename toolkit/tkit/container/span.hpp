@@ -562,12 +562,14 @@ using StringView = Span<const char>;
 
 template <typename T, typename AllocState>
 template <typename... Args>
+    requires(std::constructible_from<AllocState, Args...>)
 constexpr Array<T, AllocState>::Array(const Span<const T> &span, Args &&...args)
     : Array(span.GetData(), span.GetData() + span.GetSize(), std::forward<Args>(args)...)
 {
 }
 template <typename T, typename AllocState>
 template <typename... Args>
+    requires(std::constructible_from<AllocState, Args...>)
 constexpr Array<T, AllocState>::Array(const Span<T> &span, Args &&...args)
     : Array(span.GetData(), span.GetData() + span.GetSize(), std::forward<Args>(args)...)
 {

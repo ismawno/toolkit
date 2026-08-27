@@ -34,6 +34,7 @@ template <typename T, typename AllocState> class Array
     }
 
     template <std::convertible_to<usize> U, typename... Args>
+        requires(std::constructible_from<AllocState, Args...>)
     constexpr explicit Array(const U psize, Args &&...args) : m_State(std::forward<Args>(args)...)
     {
         const usize size = addOneIfString(usize(psize));
@@ -56,6 +57,7 @@ template <typename T, typename AllocState> class Array
     }
 
     template <std::convertible_to<usize> U, typename... Args>
+        requires(std::constructible_from<AllocState, Args...>)
     constexpr Array(const T *str, const U psize, Args &&...args)
         requires(IsString)
         : m_State(std::forward<Args>(args)...)
@@ -78,18 +80,21 @@ template <typename T, typename AllocState> class Array
         writeNullTerminatorIfString();
     }
     template <typename... Args>
+        requires(std::constructible_from<AllocState, Args...>)
     constexpr Array(const T *str, Args &&...args)
         requires(IsString)
         : Array(str, usize(std::char_traits<T>::length(str)), std::forward<Args>(args)...)
     {
     }
     template <typename... Args>
+        requires(std::constructible_from<AllocState, Args...>)
     constexpr Array(const std::string &str, Args &&...args)
         requires(IsString)
         : Array(str.c_str(), str.size(), std::forward<Args>(args)...)
     {
     }
     template <typename... Args>
+        requires(std::constructible_from<AllocState, Args...>)
     constexpr Array(const std::string_view str, Args &&...args)
         requires(IsString)
         : Array(str.data(), str.size(), std::forward<Args>(args)...)
@@ -97,6 +102,7 @@ template <typename T, typename AllocState> class Array
     }
 
     template <std::input_iterator It, typename... Args>
+        requires(std::constructible_from<AllocState, Args...>)
     constexpr Array(const It pbegin, const It pend, Args &&...args) : m_State(std::forward<Args>(args)...)
     {
         const usize size = addOneIfString(usize(std::distance(pbegin, pend)));
@@ -117,8 +123,12 @@ template <typename T, typename AllocState> class Array
         writeNullTerminatorIfString();
     }
 
-    template <typename... Args> constexpr Array(const Span<const T> &span, Args &&...args);
-    template <typename... Args> constexpr Array(const Span<T> &span, Args &&...args);
+    template <typename... Args>
+        requires(std::constructible_from<AllocState, Args...>)
+    constexpr Array(const Span<const T> &span, Args &&...args);
+    template <typename... Args>
+        requires(std::constructible_from<AllocState, Args...>)
+    constexpr Array(const Span<T> &span, Args &&...args);
 
     template <typename... Args>
     constexpr Array(const std::initializer_list<T> list, Args &&...args) : m_State(std::forward<Args>(args)...)
