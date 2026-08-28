@@ -26,7 +26,7 @@ Node FromString(const std::string &string)
 }
 Node FromFile(const std::string &path)
 {
-    TKIT_ASSERT(std::filesystem::exists(std::string(path)), "File does not exist: {}", path);
+    TKIT_ASSERT(std::filesystem::exists(path), "File does not exist: {}", path);
     return YAML::LoadFile(path);
 }
 void ToFile(const std::string &path, const Node &node)
