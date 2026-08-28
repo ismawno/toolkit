@@ -75,6 +75,9 @@ template <typename T>
 concept Integer = UnsignedInteger<T> || SignedInteger<T>;
 
 template <typename T>
+concept IntegerOrEnum = UnsignedInteger<T> || SignedInteger<T> || std::is_enum_v<T>;
+
+template <typename T>
 concept Numeric = Float<T> || Integer<T>;
 } // namespace TKit::Alias
 
