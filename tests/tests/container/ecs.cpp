@@ -689,3 +689,148 @@ TEST_CASE("ECS: Component alignment", "[ECS]")
     PopStack();
     PopTier();
 }
+
+TEST_CASE("ECS: Registry copy semantics", "[ECS]")
+{
+    PushTier(&s_Tier);
+    PushStack(&s_Stack);
+    {
+        Registry r{};
+        r.RegisterComponents<Test_ComponentA, Test_ComponentB, Test_ComponentC>();
+
+        const Entity e0 = r.CreateEntity();
+        const Entity e1 = r.CreateEntity();
+        const Entity e2 = r.CreateEntity();
+
+        r.AddComponent<Test_ComponentA>(e0, 10);
+        r.AddComponent<Test_ComponentB>(e0, 20, 30);
+
+        r.AddComponent<Test_ComponentA>(e1, 40);
+
+        r.AddComponent<Test_ComponentC>(e2, std::vector<u32>{1, 2, 3});
+
+        SECTION("Copy constructor preserves all data")
+        {
+            Registry copy{r};
+
+            REQUIRE(copy.GetComponent<Test_ComponentA>(e0)->Data == 10);
+            REQUIRE(copy.GetComponent<Test_ComponentB>(e0)->Data0 == 20);
+            REQUIRE(copy.GetComponent<Test_ComponentB>(e0)->Data1 == 30);
+            REQUIRE(copy.GetComponent<Test_ComponentA>(e1)->Data == 40);
+            REQUIRE(copy.GetComponent<Test_ComponentC>(e2)->Elements.size() == 3);
+            REQUIRE(copy.GetComponent<Test_ComponentC>(e2)->Elements[2] == 3);
+        }
+
+        SECTION("Copy is independent from original")
+        {
+            Registry copy{r};
+
+            r.GetComponent<Test_ComponentA>(e0)->Data = 999;
+            REQUIRE(copy.GetComponent<Test_ComponentA>(e0)->Data == 10);
+
+            copy.GetComponent<Test_ComponentA>(e1)->Data = 888;
+            REQUIRE(r.GetComponent<Test_ComponentA>(e1)->Data == 40);
+        }
+
+        SECTION("Copy assignment preserves all data")
+        {
+            Registry copy{};
+            copy.RegisterComponents<Test_ComponentA, Test_ComponentB, Test_ComponentC>();
+            const Entity dummy = copy.CreateEntity();
+            copy.AddComponent<Test_ComponentA>(dummy, 777);
+
+            copy = r;
+
+            REQUIRE(copy.GetComponent<Test_ComponentA>(e0)->Data == 10);
+            REQUIRE(copy.GetComponent<Test_ComponentB>(e0)->Data0 == 20);
+            REQUIRE(copy.GetComponent<Test_ComponentA>(e1)->Data == 40);
+            REQUIRE(copy.GetComponent<Test_ComponentC>(e2)->Elements.size() == 3);
+        }
+
+        SECTION("Copy preserves query results")
+        {
+            Registry copy{r};
+
+            u32 count = 0;
+            copy.Query<Test_ComponentA, Test_ComponentB>().Each([&](Test_ComponentA &a, Test_ComponentB &b) {
+                REQUIRE(a.Data == 10);
+                REQUIRE(b.Data0 == 20);
+                ++count;
+            });
+            REQUIRE(count == 1);
+
+            count = 0;
+            copy.Query<Test_ComponentA>().Each([&](Test_ComponentA &) { ++count; });
+            REQUIRE(count == 2);
+        }
+
+        SECTION("Mutations on copy don't affect original")
+        {
+            Registry copy{r};
+
+            copy.AddComponent<Test_ComponentB>(e1, 50, 60);
+            REQUIRE_FALSE(r.HasComponent<Test_ComponentB>(e1));
+            REQUIRE(copy.HasComponent<Test_ComponentB>(e1));
+
+            copy.RemoveComponent<Test_ComponentA>(e0);
+            REQUIRE(r.HasComponent<Test_ComponentA>(e0));
+            REQUIRE_FALSE(copy.HasComponent<Test_ComponentA>(e0));
+        }
+    }
+    PopStack();
+    PopTier();
+}
+
+TEST_CASE("ECS: Registry move semantics", "[ECS]")
+{
+    PushTier(&s_Tier);
+    PushStack(&s_Stack);
+    {
+        Registry r{};
+        r.RegisterComponents<Test_ComponentA, Test_ComponentB, Test_ComponentC>();
+
+        const Entity e0 = r.CreateEntity();
+        const Entity e1 = r.CreateEntity();
+
+        r.AddComponent<Test_ComponentA>(e0, 10);
+        r.AddComponent<Test_ComponentB>(e0, 20, 30);
+        r.AddComponent<Test_ComponentA>(e1, 40);
+        r.AddComponent<Test_ComponentC>(e1, std::vector<u32>{5, 6, 7});
+
+        SECTION("Move constructor transfers data")
+        {
+            Registry moved{std::move(r)};
+
+            REQUIRE(moved.GetComponent<Test_ComponentA>(e0)->Data == 10);
+            REQUIRE(moved.GetComponent<Test_ComponentB>(e0)->Data0 == 20);
+            REQUIRE(moved.GetComponent<Test_ComponentA>(e1)->Data == 40);
+            REQUIRE(moved.GetComponent<Test_ComponentC>(e1)->Elements.size() == 3);
+        }
+
+        SECTION("Move assignment transfers data")
+        {
+            Registry moved{};
+            moved.RegisterComponents<Test_ComponentA>();
+            const Entity dummy = moved.CreateEntity();
+            moved.AddComponent<Test_ComponentA>(dummy, 999);
+
+            moved = std::move(r);
+
+            REQUIRE(moved.GetComponent<Test_ComponentA>(e0)->Data == 10);
+            REQUIRE(moved.GetComponent<Test_ComponentB>(e0)->Data0 == 20);
+            REQUIRE(moved.GetComponent<Test_ComponentA>(e1)->Data == 40);
+            REQUIRE(moved.GetComponent<Test_ComponentC>(e1)->Elements.size() == 3);
+        }
+
+        SECTION("Move preserves query results")
+        {
+            Registry moved{std::move(r)};
+
+            u32 count = 0;
+            moved.Query<Test_ComponentA>().Each([&](Test_ComponentA &) { ++count; });
+            REQUIRE(count == 2);
+        }
+    }
+    PopStack();
+    PopTier();
+}

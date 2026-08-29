@@ -23,7 +23,8 @@ template <typename T> struct ArrayTools
     template <typename It> static constexpr void CopyConstructFromRange(T *dstBegin, const It srcBegin, const It srcEnd)
     {
         using U = decltype(*srcBegin);
-        if constexpr (std::is_trivially_copyable_v<T> && std::is_same_v<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
+        if constexpr (std::is_trivially_copy_constructible_v<T> &&
+                      std::is_same_v<std::remove_cvref_t<U>, std::remove_cvref_t<T>>)
             ForwardCopy(dstBegin, srcBegin, srcEnd);
         else
             ConstructRangeCopy(dstBegin, srcBegin, srcEnd);

@@ -306,15 +306,17 @@ void TierAllocator::deallocateBuffer()
         {
             const Tier &tier = m_Tiers[i];
             TKIT_ENSURE(tier.Allocations >= tier.Deallocations,
-                        "[TOOLKIT][TIER-ALLOC] Found tier index {} to have more deallocations ({}) than deallocations "
+                        "[TOOLKIT][TIER-ALLOC] Found tier index {} with allocation size of {} to have more "
+                        "deallocations ({}) than deallocations "
                         "({}), meaning a "
                         "double free likely happened and this allocator became corrupted",
-                        i, tier.Allocations, tier.Deallocations);
-            TKIT_ENSURE(
-                tier.Allocations == tier.Deallocations,
-                "[TOOLKIT][TIER-ALLOC] Found tier index {} to have {} allocations and {} deallocations, meaning "
-                "{} active allocations remain when destroying this allocator",
-                i, tier.Allocations, tier.Deallocations, tier.Allocations - tier.Deallocations);
+                        i, tier.AllocationSize, tier.Allocations, tier.Deallocations);
+            TKIT_ENSURE(tier.Allocations == tier.Deallocations,
+                        "[TOOLKIT][TIER-ALLOC] Found tier index {} with allocation size of {} to have {} allocations "
+                        "and {} deallocations, meaning "
+                        "{} active allocations remain when destroying this allocator",
+                        i, tier.AllocationSize, tier.Allocations, tier.Deallocations,
+                        tier.Allocations - tier.Deallocations);
         }
 #endif
         DeallocateAligned(m_Buffer);

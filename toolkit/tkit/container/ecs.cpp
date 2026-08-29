@@ -3,19 +3,82 @@
 
 namespace TKit
 {
+void ComponentInfo::CopyConstructFromRange(std::byte *dstBegin, const std::byte *srcBegin,
+                                           const std::byte *srcEnd) const
+{
+    if (CopyCtor)
+    {
+        std::byte *dst = dstBegin;
+        for (const std::byte *src = srcBegin; src != srcEnd; src += Size, dst += Size)
+            CopyCtor(dst, src);
+    }
+    else
+        ForwardCopy(dstBegin, srcBegin, srcEnd);
+}
+
+void ComponentInfo::CopyAssignFromRange(std::byte *dstBegin, std::byte *dstEnd, const std::byte *srcBegin,
+                                        const std::byte *srcEnd) const
+{
+    const usize dstSize = usize(std::distance(dstBegin, dstEnd));
+    const usize srcSize = usize(std::distance(srcBegin, srcEnd));
+
+    const auto destroyLeftovers = [&] {
+        if (Destroy && srcSize < dstSize)
+        {
+            for (const std::byte *dst = dstBegin + srcSize; dst != dstEnd; dst += Size)
+                Destroy(dst);
+            return true;
+        }
+        return false;
+    };
+
+    if (!CopyCtor && !CopyAssigner)
+    {
+        ForwardCopy(dstBegin, srcBegin, srcEnd);
+        destroyLeftovers();
+    }
+    else
+    {
+        if (CopyAssigner)
+        {
+            std::byte *dst = dstBegin;
+            const std::byte *src = srcBegin;
+            for (; src != srcEnd && dst != dstEnd; src += Size, dst += Size)
+                CopyAssigner(dst, src);
+        }
+        else
+        {
+            const usize minSize = dstSize < srcSize ? dstSize : srcSize;
+            ForwardCopy(dstBegin, srcBegin, srcBegin + minSize);
+        }
+        if (!destroyLeftovers())
+        {
+            if (CopyCtor)
+            {
+                std::byte *dst = dstEnd;
+                const std::byte *src = srcBegin + dstSize;
+                for (; src != srcEnd; src += Size, dst += Size)
+                    CopyCtor(dst, src);
+            }
+            else
+                ForwardCopy(dstEnd, srcBegin + dstSize, srcEnd);
+        }
+    }
+}
 void ComponentColumn::Append(void *component)
 {
     resizeIfNeeded();
     const usize row = m_RowCount++;
     void *dst = Get(row);
-    m_Info.MoveCtor(dst, component);
+    m_Info.MoveConstruct(dst, component);
 }
 
 void ComponentColumn::Pop()
 {
     const usize lidx = m_RowCount - 1;
     void *component = Get(lidx);
-    m_Info.Destroy(component);
+    if (m_Info.Destroy)
+        m_Info.Destroy(component);
     m_RowCount = lidx;
 }
 void ComponentColumn::Remove(const usize row)
@@ -24,25 +87,27 @@ void ComponentColumn::Remove(const usize row)
     void *component = Get(row);
     void *last = Get(lidx);
     m_Info.MoveAssign(component, last);
-    m_Info.Destroy(last);
+    if (m_Info.Destroy)
+        m_Info.Destroy(last);
     m_RowCount = lidx;
 }
 
-void ComponentColumn::resizeIfNeeded()
+void ComponentColumn::resize(const usize capacity)
 {
-    if (m_RowCount == m_RowCapacity)
+    TKIT_ASSERT(capacity > m_RowCapacity, "[TOOLKIT][ECS] New capacity must be bigger than old capacity");
+    m_RowCapacity = capacity;
+    void *ndata = TKit::AllocateAligned(m_Info.Size * m_RowCapacity, m_Info.Alignment);
+    if (m_Data)
     {
-        m_RowCapacity = Container::GrowthFactor(m_RowCount);
-        void *ndata = TKit::AllocateAligned(m_Info.Size * m_RowCapacity, m_Info.Alignment);
         for (u32 r = 0; r < m_RowCount; ++r)
         {
             void *src = Get(r);
             void *dst = scast<std::byte *>(ndata) + r * m_Info.Size;
-            m_Info.MoveCtor(dst, src);
+            m_Info.MoveConstruct(dst, src);
         }
         TKit::DeallocateAligned(m_Data);
-        m_Data = ndata;
     }
+    m_Data = ndata;
 }
 
 void Archetype::AddColumn(const ComponentInfo &cinfo)
@@ -172,23 +237,9 @@ Entity Archetype::removeEntity(const usize row)
     return row != GetRowCount() ? m_Entities[row] : NullEntity;
 }
 
-Archetype *Registry::createArchetype(const usz archId)
-{
-    TierAllocator *tier = GetTier();
-    Archetype *arch = tier->Create<Archetype>();
-    m_ArchetypeById[archId] = arch;
-    return m_Archetypes.Append(arch);
-}
-
 Registry::~Registry()
 {
-    for (Archetype *arch : m_Archetypes)
-        destroyArchetype(arch);
-    for (const KeyValuePair<const usz, CachedQuery> &pair : m_Queries)
-    {
-        const CachedQuery &q = pair.Value;
-        q.Destroy(q.Query);
-    }
+    cleanup();
 }
 
 void Registry::DestroyEntity(const Entity e)
@@ -203,21 +254,29 @@ void Registry::DestroyEntity(const Entity e)
     m_Entities.Remove(e);
 }
 
+void Registry::cleanup()
+{
+    for (Archetype *arch : m_Archetypes)
+        destroyArchetype(arch);
+    for (const KeyValuePair<const usz, CachedQuery> &pair : m_Queries)
+    {
+        const CachedQuery &q = pair.Value;
+        q.Destroy(q.Query);
+    }
+}
+
+Archetype *Registry::createArchetype(const usz archId)
+{
+    TierAllocator *tier = GetTier();
+    Archetype *arch = tier->Create<Archetype>();
+    m_ArchetypeById[archId] = arch;
+    return m_Archetypes.Append(arch);
+}
+
 void Registry::destroyArchetype(const Archetype *arch)
 {
     TierAllocator *tier = GetTier();
     tier->Destroy(arch);
-}
-
-void Registry::removeArchetype(const Archetype *arch)
-{
-    for (u32 i = 0; i < m_Archetypes.GetSize(); ++i)
-        if (m_Archetypes[i] == arch)
-        {
-            destroyArchetype(arch);
-            return;
-        }
-    TKIT_FATAL("[TOOLKIT][ECS] Archetype to remove was not found!");
 }
 
 } // namespace TKit

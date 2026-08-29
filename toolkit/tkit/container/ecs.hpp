@@ -41,14 +41,44 @@ struct ComponentInfo
     usize Size;
     usize Alignment;
 
-    void (*Destroy)(const void *);
-    // void (*CopyCtor)(void *dst, const void *src);
-    void (*MoveCtor)(void *dst, void *src);
-    void (*MoveAssign)(void *dst, void *src);
+    void (*Destroy)(const void *) = nullptr;
+    void (*CopyCtor)(void *dst, const void *src) = nullptr;
+    void (*CopyAssigner)(void *dst, const void *src) = nullptr;
+    void (*MoveCtor)(void *dst, void *src) = nullptr;
+    void (*MoveAssigner)(void *dst, void *src) = nullptr;
 
-#ifdef TKIT_ENABLE_ENSURE
-    bool Registered = false;
-#endif
+    void CopyConstruct(void *dst, const void *src) const
+    {
+        if (CopyCtor)
+            CopyCtor(dst, src);
+        else
+            ForwardCopy(dst, src, Size);
+    }
+    void CopyAssign(void *dst, const void *src) const
+    {
+        if (CopyAssigner)
+            CopyAssigner(dst, src);
+        else
+            ForwardCopy(dst, src, Size);
+    }
+    void MoveConstruct(void *dst, void *src) const
+    {
+        if (MoveCtor)
+            MoveCtor(dst, src);
+        else
+            ForwardCopy(dst, src, Size);
+    }
+    void MoveAssign(void *dst, void *src) const
+    {
+        if (MoveAssigner)
+            MoveAssigner(dst, src);
+        else
+            ForwardCopy(dst, src, Size);
+    }
+
+    void CopyConstructFromRange(std::byte *dstBegin, const std::byte *srcBegin, const std::byte *srcEnd) const;
+    void CopyAssignFromRange(std::byte *dstBegin, std::byte *dstEnd, const std::byte *srcBegin,
+                             const std::byte *srcEnd) const;
 
     template <typename C> static ComponentInfo Create()
     {
@@ -57,13 +87,16 @@ struct ComponentInfo
         info.Size = sizeof(C);
         info.Alignment = alignof(C);
 
-        info.Destroy = [](const void *ptr) { Destruct(scast<const C *>(ptr)); };
-        // info.CopyCtor = [](const void *dst, void *src) { Construct(scast<C *>(dst), *scast<const C *>(src)); };
-        info.MoveCtor = [](void *dst, void *src) { Construct(scast<C *>(dst), std::move(*scast<C *>(src))); };
-        info.MoveAssign = [](void *dst, void *src) { *scast<C *>(dst) = std::move(*scast<C *>(src)); };
-#ifdef TKIT_ENABLE_ENSURE
-        info.Registered = true;
-#endif
+        if constexpr (!std::is_trivially_destructible_v<C>)
+            info.Destroy = [](const void *ptr) { Destruct(scast<const C *>(ptr)); };
+        if constexpr (!std::is_trivially_copy_constructible_v<C>)
+            info.CopyCtor = [](void *dst, const void *src) { Construct(scast<C *>(dst), *scast<const C *>(src)); };
+        if constexpr (!std::is_trivially_copy_assignable_v<C>)
+            info.CopyAssigner = [](void *dst, const void *src) { *scast<C *>(dst) = *scast<const C *>(src); };
+        if constexpr (!std::is_trivially_move_constructible_v<C>)
+            info.MoveCtor = [](void *dst, void *src) { Construct(scast<C *>(dst), std::move(*scast<C *>(src))); };
+        if constexpr (!std::is_trivially_move_assignable_v<C>)
+            info.MoveAssigner = [](void *dst, void *src) { *scast<C *>(dst) = std::move(*scast<C *>(src)); };
 
         return info;
     }
@@ -79,6 +112,55 @@ class ComponentColumn
         m_Data = AllocateAligned(StartingCapacity * info.Size, info.Alignment);
     }
 
+    ComponentColumn(const ComponentColumn &other)
+        : m_RowCount(other.m_RowCount), m_RowCapacity(other.m_RowCapacity), m_Info(other.m_Info)
+    {
+        m_Data = AllocateAligned(m_RowCapacity * m_Info.Size, m_Info.Alignment);
+        m_Info.CopyConstructFromRange(begin(), other.begin(), other.end());
+    }
+
+    ComponentColumn(ComponentColumn &&other)
+        : m_Data(other.m_Data), m_RowCount(other.m_RowCount), m_RowCapacity(other.m_RowCapacity), m_Info(other.m_Info)
+    {
+        other.m_Data = nullptr;
+        other.m_RowCount = 0;
+        other.m_RowCapacity = 0;
+    }
+
+    ComponentColumn &operator=(const ComponentColumn &other)
+    {
+        if (this == &other)
+            return *this;
+
+        resizeIfNeeded(other.m_RowCount);
+        m_Info.CopyAssignFromRange(begin(), end(), other.begin(), other.end());
+        return *this;
+    }
+    ComponentColumn &operator=(ComponentColumn &&other)
+    {
+        if (this == &other)
+            return *this;
+
+        m_Data = other.m_Data;
+        m_RowCount = other.m_RowCount;
+        m_RowCapacity = other.m_RowCapacity;
+
+        other.m_Data = nullptr;
+        other.m_RowCount = 0;
+        other.m_RowCapacity = 0;
+
+        return *this;
+    }
+
+    ~ComponentColumn()
+    {
+        if (m_Info.Destroy)
+            for (usize r = 0; r < m_RowCount; ++r)
+                m_Info.Destroy(Get(r));
+
+        TKit::DeallocateAligned(m_Data);
+    }
+
     template <typename C, typename... Args> C *Append(Args &&...args)
     {
         resizeIfNeeded();
@@ -92,6 +174,24 @@ class ComponentColumn
     void Pop();
     void Remove(usize row);
 
+    std::byte *begin()
+    {
+        return scast<std::byte *>(m_Data);
+    }
+    std::byte *end()
+    {
+        return scast<std::byte *>(m_Data) + m_RowCount * m_Info.Size;
+    }
+
+    const std::byte *begin() const
+    {
+        return scast<const std::byte *>(m_Data);
+    }
+    const std::byte *end() const
+    {
+        return scast<const std::byte *>(m_Data) + m_RowCount * m_Info.Size;
+    }
+
     void *Get(const usize row)
     {
         TKIT_ASSERT(row < m_RowCapacity,
@@ -100,6 +200,15 @@ class ComponentColumn
         TKIT_ASSERT(row < m_RowCount, "[TOOLKIT][ECS] The row index ({}) exceeds component data buffer's size ({})",
                     row, m_RowCount);
         return scast<std::byte *>(m_Data) + row * m_Info.Size;
+    }
+    const void *Get(const usize row) const
+    {
+        TKIT_ASSERT(row < m_RowCapacity,
+                    "[TOOLKIT][ECS] The row index ({}) exceeds component data buffer's capacity ({})", row,
+                    m_RowCapacity);
+        TKIT_ASSERT(row < m_RowCount, "[TOOLKIT][ECS] The row index ({}) exceeds component data buffer's size ({})",
+                    row, m_RowCount);
+        return scast<const std::byte *>(m_Data) + row * m_Info.Size;
     }
 
     template <typename C> C *Get(const usize row)
@@ -121,7 +230,16 @@ class ComponentColumn
     }
 
   private:
-    void resizeIfNeeded();
+    void resizeIfNeeded(const usize size)
+    {
+        if (size >= m_RowCapacity)
+            resize(Container::GrowthFactor(size));
+    }
+    void resizeIfNeeded()
+    {
+        resizeIfNeeded(m_RowCount);
+    }
+    void resize(usize capacity);
 
     void *m_Data;
 
@@ -235,6 +353,11 @@ class Archetype
         TKIT_ASSERT(m_ColumnByComponent.Contains(cid), "[TOOLKIT][ECS] Archetype does not contain component with id {}",
                     cid);
         return m_Columns[m_ColumnByComponent[cid]];
+    }
+
+    usz GetId() const
+    {
+        return m_Id;
     }
 
     const TierArray<ComponentId> &GetComponentIds() const
@@ -553,10 +676,56 @@ Entity ComponentQuery<Cs...>::RowView::GetEntity() const
 
 class Registry
 {
-    TKIT_NON_COPYABLE(Registry)
   public:
     Registry() = default;
     ~Registry();
+
+    Registry(const Registry &other) : m_Entities(other.m_Entities), m_Components(other.m_Components)
+    {
+        for (const Archetype *arch : other.m_Archetypes)
+            *createArchetype(arch->GetId()) = *arch;
+        for (EntityRecord &r : m_Entities)
+            if (r.Archetype)
+                r.Archetype = m_ArchetypeById[r.Archetype->GetId()];
+    }
+
+    Registry(Registry &&other) = default;
+
+    Registry &operator=(const Registry &other)
+    {
+        if (this == &other)
+            return *this;
+
+        cleanup();
+
+        m_Entities = other.m_Entities;
+        m_Components = other.m_Components;
+        m_Archetypes.Clear();
+        m_Queries.Clear();
+
+        for (const Archetype *arch : other.m_Archetypes)
+            *createArchetype(arch->GetId()) = *arch;
+        for (EntityRecord &r : m_Entities)
+            if (r.Archetype)
+                r.Archetype = m_ArchetypeById[r.Archetype->GetId()];
+
+        return *this;
+    }
+
+    Registry &operator=(Registry &&other)
+    {
+        if (this == &other)
+            return *this;
+
+        cleanup();
+        m_Entities = std::move(other.m_Entities);
+        m_Components = std::move(other.m_Components);
+        m_Archetypes = std::move(other.m_Archetypes);
+        m_ArchetypeById = std::move(other.m_ArchetypeById);
+        m_Queries = std::move(other.m_Queries);
+
+        return *this;
+    }
 
     Entity CreateEntity()
     {
@@ -570,7 +739,6 @@ class Registry
         if (cid >= m_Components.GetSize())
             m_Components.Resize(cid + 1);
 
-        TKIT_ENSURE(!m_Components[cid].Registered, "[TOOLKIT][ECS] Cannot register an already registered component");
         m_Components[cid] = ComponentInfo::Create<C>();
     }
 
@@ -745,9 +913,9 @@ class Registry
     }
 
   private:
+    void cleanup();
     Archetype *createArchetype(usz archId);
     void destroyArchetype(const Archetype *arch);
-    void removeArchetype(const Archetype *arch);
 
     TierHive<EntityRecord> m_Entities{};
     TierArray<ComponentInfo> m_Components{};
