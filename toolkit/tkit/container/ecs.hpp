@@ -990,7 +990,7 @@ class Registry
 
     Entity GetEntityByIndex(const usize idx) const
     {
-        return m_Entities.GetId(idx);
+        return m_Entities.IsValidIndex(idx) ? m_Entities.GetId(idx) : NullEntity;
     }
     const TierArray<usize> &GetEntityIndices() const
     {
