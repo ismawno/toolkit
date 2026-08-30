@@ -988,6 +988,11 @@ class Registry
         return *q;
     }
 
+    template <typename F> void IterateEntitiesByInsertionOrder(F &&func)
+    {
+        m_Entities.IterateByInsertionOrder(std::forward<F>(func));
+    }
+
     Entity GetEntityByIndex(const usize idx) const
     {
         return m_Entities.IsValidIndex(idx) ? m_Entities.GetId(idx) : NullEntity;
