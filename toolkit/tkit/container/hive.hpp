@@ -141,6 +141,8 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
             {
                 if constexpr (std::is_invocable_v<F, usize, T &>)
                     std::forward<F>(func)(id, AtByIndex(idx));
+                else if constexpr (std::is_invocable_v<F, usize>)
+                    std::forward<F>(func)(id);
                 else
                     std::forward<F>(func)(AtByIndex(idx));
             }
@@ -155,6 +157,8 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
             {
                 if constexpr (std::is_invocable_v<F, usize, const T &>)
                     std::forward<F>(func)(id, AtByIndex(idx));
+                else if constexpr (std::is_invocable_v<F, usize>)
+                    std::forward<F>(func)(id);
                 else
                     std::forward<F>(func)(AtByIndex(idx));
             }
