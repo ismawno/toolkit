@@ -988,6 +988,14 @@ class Registry
         return *q;
     }
 
+    Entity GetEntityByIndex(const usize idx) const
+    {
+        return m_Entities.GetId(idx);
+    }
+    const TierArray<usize> &GetEntityIndices() const
+    {
+        return m_Entities.GetIndices();
+    }
     Span<const Entity> GetEntities() const
     {
         return m_Entities.GetValidIds();

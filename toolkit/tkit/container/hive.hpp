@@ -9,14 +9,14 @@
 
 namespace TKit
 {
-template <typename T, typename AllocState> class Hive
+template <typename T, typename AllocState, typename IdAllocState> class Hive
 {
   public:
     using ValueType = T;
     using Id = usize;
 
     constexpr Hive() = default;
-    constexpr Hive(AllocState &&data, AllocState &&indices, AllocState &&ids)
+    constexpr Hive(AllocState &&data, IdAllocState &&indices, IdAllocState &&ids)
         : m_Data(std::move(data)), m_Indices(std::move(indices)), m_Ids(std::move(ids))
     {
     }
@@ -27,19 +27,20 @@ template <typename T, typename AllocState> class Hive
     constexpr Hive &operator=(const Hive &) = default;
     constexpr Hive &operator=(Hive &&) = default;
 
-    template <typename OtherAlloc>
-    constexpr Hive(const Hive<T, OtherAlloc> &other)
+    template <typename OtherAlloc, typename OtherIdAlloc>
+    constexpr Hive(const Hive<T, OtherAlloc, OtherIdAlloc> &other)
         : m_Data(other.m_Data), m_Indices(other.m_Indices), m_Ids(other.m_Ids)
     {
     }
 
-    template <typename OtherAlloc>
-    constexpr Hive(Hive<T, OtherAlloc> &&other)
+    template <typename OtherAlloc, typename OtherIdAlloc>
+    constexpr Hive(Hive<T, OtherAlloc, OtherIdAlloc> &&other)
         : m_Data(std::move(other.m_Data)), m_Indices(std::move(other.m_Indices)), m_Ids(std::move(other.m_Ids))
     {
     }
 
-    template <typename OtherAlloc> constexpr Hive &operator=(const Hive<T, OtherAlloc> &other)
+    template <typename OtherAlloc, typename OtherIdAlloc>
+    constexpr Hive &operator=(const Hive<T, OtherAlloc, OtherIdAlloc> &other)
     {
         m_Data = other.m_Data;
         m_Indices = other.m_Indices;
@@ -47,7 +48,8 @@ template <typename T, typename AllocState> class Hive
         return *this;
     }
 
-    template <typename OtherAlloc> constexpr Hive &operator=(Hive<T, OtherAlloc> &&other)
+    template <typename OtherAlloc, typename OtherIdAlloc>
+    constexpr Hive &operator=(Hive<T, OtherAlloc, OtherIdAlloc> &&other)
     {
         m_Data = std::move(other.m_Data);
         m_Indices = std::move(other.m_Indices);
@@ -87,6 +89,15 @@ template <typename T, typename AllocState> class Hive
         return At(id);
     }
 
+    constexpr const T &AtByIndex(const usize idx) const
+    {
+        return m_Data[idx];
+    }
+    constexpr T &AtByIndex(const usize idx)
+    {
+        return m_Data[idx];
+    }
+
     constexpr const T *Get(const usize id) const
     {
         return Contains(id) ? &At(id) : nullptr;
@@ -94,6 +105,15 @@ template <typename T, typename AllocState> class Hive
     constexpr T *Get(const usize id)
     {
         return Contains(id) ? &At(id) : nullptr;
+    }
+
+    constexpr const T *GetByIndex(const usize idx) const
+    {
+        return idx < m_Data.GetSize() ? &AtByIndex(idx) : nullptr;
+    }
+    constexpr T *GetByIndex(const usize idx)
+    {
+        return idx < m_Data.GetSize() ? &AtByIndex(idx) : nullptr;
     }
 
     constexpr void Reserve(const usize capacity)
@@ -107,12 +127,16 @@ template <typename T, typename AllocState> class Hive
     {
         return id < m_Indices.GetSize() && m_Indices[id] < m_Data.GetSize();
     }
+    constexpr bool IsValidIndex(const usize idx) const
+    {
+        return idx < m_Data.GetSize();
+    }
 
-    constexpr const Array<usize, AllocState> &GetIndices() const
+    constexpr const Array<usize, IdAllocState> &GetIndices() const
     {
         return m_Indices;
     }
-    constexpr const Array<usize, AllocState> &GetIds() const
+    constexpr const Array<usize, IdAllocState> &GetIds() const
     {
         return m_Ids;
     }
@@ -226,17 +250,18 @@ template <typename T, typename AllocState> class Hive
 
   private:
     Array<T, AllocState> m_Data{};
-    Array<usize, AllocState> m_Indices{};
-    Array<usize, AllocState> m_Ids{};
+    Array<usize, IdAllocState> m_Indices{};
+    Array<usize, IdAllocState> m_Ids{};
 
-    template <typename U, typename OtherAlloc> friend class Hive;
+    template <typename U, typename OtherAlloc, typename OtherIdAlloc> friend class Hive;
 };
-template <typename T> using ArenaHive = Hive<T, ArenaAllocation<T>>;
-template <typename T> using DynamicHive = Hive<T, DynamicAllocation<T>>;
-template <typename T> using StackHive = Hive<T, StackAllocation<T>>;
-template <typename T> using TierHive = Hive<T, TierAllocation<T>>;
+template <typename T> using ArenaHive = Hive<T, ArenaAllocation<T>, ArenaAllocation<usize>>;
+template <typename T> using DynamicHive = Hive<T, DynamicAllocation<T>, DynamicAllocation<usize>>;
+template <typename T> using StackHive = Hive<T, StackAllocation<T>, StackAllocation<usize>>;
+template <typename T> using TierHive = Hive<T, TierAllocation<T>, TierAllocation<usize>>;
 
-template <typename T, usize Capacity> using StaticHive = Hive<T, StaticAllocation<T, Capacity>>;
+template <typename T, usize Capacity>
+using StaticHive = Hive<T, StaticAllocation<T, Capacity>, StaticAllocation<usize, Capacity>>;
 template <typename T> using StaticHive4 = StaticHive<T, 4>;
 template <typename T> using StaticHive8 = StaticHive<T, 8>;
 template <typename T> using StaticHive16 = StaticHive<T, 16>;

@@ -23,7 +23,7 @@ template <template <typename> typename A, typename... Args> void TestHiveBasic(A
     A<u32> st1{args...};
     A<u32> st2{args...};
     A<u32> st3{args...};
-    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
+    Hive<u32, A<u32>, A<usize>> hive{std::move(st1), std::move(st2), std::move(st3)};
     REQUIRE(hive.GetSize() == 0);
     REQUIRE(hive.IsEmpty());
     REQUIRE_FALSE(hive.IsFull());
@@ -41,7 +41,7 @@ template <template <typename> typename A, typename... Args> void TestHiveInsertL
     A<u32> st1{args...};
     A<u32> st2{args...};
     A<u32> st3{args...};
-    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
+    Hive<u32, A<u32>, A<usize>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     const usize id0 = hive.Insert(100u);
     const usize id1 = hive.Insert(200u);
@@ -62,7 +62,7 @@ template <template <typename> typename A, typename... Args> void TestHiveRemoveC
     A<u32> st1{args...};
     A<u32> st2{args...};
     A<u32> st3{args...};
-    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
+    Hive<u32, A<u32>, A<usize>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     const usize id0 = hive.Insert(1u);
     const usize id1 = hive.Insert(2u);
@@ -89,7 +89,7 @@ template <template <typename> typename A, typename... Args> void TestHiveRemoveL
     A<u32> st1{args...};
     A<u32> st2{args...};
     A<u32> st3{args...};
-    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
+    Hive<u32, A<u32>, A<usize>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     const usize id0 = hive.Insert(42u);
     const usize id1 = hive.Insert(43u);
@@ -107,7 +107,7 @@ template <template <typename> typename A, typename... Args> void TestHiveRemoveF
     A<u32> st1{args...};
     A<u32> st2{args...};
     A<u32> st3{args...};
-    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
+    Hive<u32, A<u32>, A<usize>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     const usize id0 = hive.Insert(10u);
     const usize id1 = hive.Insert(20u);
@@ -128,7 +128,7 @@ template <template <typename> typename A, typename... Args> void TestHiveIdReuse
     A<u32> st1{args...};
     A<u32> st2{args...};
     A<u32> st3{args...};
-    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
+    Hive<u32, A<u32>, A<usize>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     const usize id0 = hive.Insert(1u);
     const usize id1 = hive.Insert(2u);
@@ -152,7 +152,7 @@ template <template <typename> typename A, typename... Args> void TestHiveMultipl
     A<u32> st1{args...};
     A<u32> st2{args...};
     A<u32> st3{args...};
-    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
+    Hive<u32, A<u32>, A<usize>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     const usize id0 = hive.Insert(10u);
     const usize id1 = hive.Insert(20u);
@@ -182,7 +182,7 @@ template <template <typename> typename A, typename... Args> void TestHiveDenseIt
     A<u32> st1{args...};
     A<u32> st2{args...};
     A<u32> st3{args...};
-    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
+    Hive<u32, A<u32>, A<usize>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     hive.Insert(1u);
     hive.Insert(2u);
@@ -208,7 +208,7 @@ template <template <typename> typename A, typename... Args> void TestHiveReserve
     A<u32> st1{args...};
     A<u32> st2{args...};
     A<u32> st3{args...};
-    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
+    Hive<u32, A<u32>, A<usize>> hive{std::move(st1), std::move(st2), std::move(st3)};
     hive.Reserve(8);
     REQUIRE(hive.GetSize() == 0);
     REQUIRE(hive.IsEmpty());
@@ -220,11 +220,11 @@ template <template <typename> typename A, typename... Args> void TestHiveCopyMov
     A<u32> st1{args...};
     A<u32> st2{args...};
     A<u32> st3{args...};
-    Hive<u32, A<u32>> hive{std::move(st1), std::move(st2), std::move(st3)};
+    Hive<u32, A<u32>, A<usize>> hive{std::move(st1), std::move(st2), std::move(st3)};
     const usize id0 = hive.Insert(7u);
     const usize id1 = hive.Insert(8u);
 
-    Hive<u32, A<u32>> copy = hive;
+    Hive<u32, A<u32>, A<usize>> copy = hive;
     REQUIRE(copy.GetSize() == 2);
     REQUIRE(copy[id0] == 7u);
     REQUIRE(copy[id1] == 8u);
@@ -232,7 +232,7 @@ template <template <typename> typename A, typename... Args> void TestHiveCopyMov
     copy[id0] = 77u;
     REQUIRE(hive[id0] == 7u);
 
-    Hive<u32, A<u32>> moved = std::move(copy);
+    Hive<u32, A<u32>, A<usize>> moved = std::move(copy);
     REQUIRE(moved.GetSize() == 2);
     REQUIRE(moved[id0] == 77u);
     REQUIRE(moved[id1] == 8u);
@@ -241,9 +241,9 @@ template <template <typename> typename A, typename... Args> void TestHiveCopyMov
 template <template <typename> typename A, typename... Args> void TestHiveStringOps(Args... args)
 {
     A<std::string> st1{args...};
-    A<std::string> st2{args...};
-    A<std::string> st3{args...};
-    Hive<std::string, A<std::string>> hive{std::move(st1), std::move(st2), std::move(st3)};
+    A<usize> st2{args...};
+    A<usize> st3{args...};
+    Hive<std::string, A<std::string>, A<usize>> hive{std::move(st1), std::move(st2), std::move(st3)};
 
     const usize id0 = hive.Insert("alpha");
     const usize id1 = hive.Insert("beta");
