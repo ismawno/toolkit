@@ -132,6 +132,35 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
         return idx < m_Data.GetSize();
     }
 
+    template <typename F> void IterateByInsertionOrder(F &&func)
+    {
+        for (usize id = 0; id < m_Indices.GetSize(); ++id)
+        {
+            const usize idx = m_Indices[id];
+            if (IsValidIndex(idx))
+            {
+                if constexpr (std::is_invocable_v<F, usize, T &>)
+                    std::forward<F>(func)(id, AtByIndex(idx));
+                else
+                    std::forward<F>(func)(AtByIndex(idx));
+            }
+        }
+    }
+    template <typename F> void IterateByInsertionOrder(F &&func) const
+    {
+        for (usize id = 0; id < m_Indices.GetSize(); ++id)
+        {
+            const usize idx = m_Indices[id];
+            if (IsValidIndex(idx))
+            {
+                if constexpr (std::is_invocable_v<F, usize, const T &>)
+                    std::forward<F>(func)(id, AtByIndex(idx));
+                else
+                    std::forward<F>(func)(AtByIndex(idx));
+            }
+        }
+    }
+
     constexpr const Array<usize, IdAllocState> &GetIndices() const
     {
         return m_Indices;
