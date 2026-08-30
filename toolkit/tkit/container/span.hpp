@@ -2,7 +2,6 @@
 
 #include "tkit/container/fixed_array.hpp"
 #include "tkit/container/array.hpp"
-#include "tkit/container/hive.hpp"
 #include "tkit/math/tensor.hpp"
 #include <span>
 #include <vector>
@@ -61,15 +60,6 @@ template <typename T> class Span
     }
     template <typename AllocState>
     constexpr Span(Array<ElementType, AllocState> &array) : m_Data(array.GetData()), m_Size(array.GetSize())
-    {
-    }
-
-    template <typename AllocState>
-    constexpr Span(const Hive<ElementType, AllocState> &hive) : m_Data(hive.GetData(), hive.GetSize())
-    {
-    }
-    template <typename AllocState>
-    constexpr Span(Hive<ElementType, AllocState> &hive) : m_Data(hive.GetData(), hive.GetSize())
     {
     }
 
