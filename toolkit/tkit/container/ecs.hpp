@@ -35,6 +35,36 @@ template <typename... C> void RegisterComponentIds()
     (GetComponentId<C>(), ...);
 }
 
+template <typename... Cs> struct ComponentSet
+{
+};
+
+template <typename... Sets> struct MergedComponentSets;
+
+template <typename... Cs> struct MergedComponentSets<ComponentSet<Cs...>>
+{
+    using Type = ComponentSet<Cs...>;
+};
+
+template <typename... As, typename... Bs, typename... Rest>
+struct MergedComponentSets<ComponentSet<As...>, ComponentSet<Bs...>, Rest...>
+{
+    using Type = typename MergedComponentSets<ComponentSet<As..., Bs...>, Rest...>::Type;
+};
+
+template <typename... As, typename... Bs, typename... Rest>
+struct MergedComponentSets<ComponentSet<As...>, ComponentSet<Bs...>, ComponentSet<Rest...>>
+{
+    using Type = typename MergedComponentSets<ComponentSet<As..., Bs...>, ComponentSet<Rest...>>::Type;
+};
+
+template <typename... As, typename T, typename... Rest> struct MergedComponentSets<ComponentSet<As...>, T, Rest...>
+{
+    using Type = typename MergedComponentSets<ComponentSet<As..., T>, Rest...>::Type;
+};
+
+template <typename... Sets> using MergeComponentSets = MergedComponentSets<Sets...>::Type;
+
 struct ComponentInfo
 {
     ComponentId Id;
@@ -742,9 +772,13 @@ class Registry
         m_Components[cid] = ComponentInfo::Create<C>();
     }
 
-    template <typename... C> void RegisterComponents()
+    template <typename... Cs> void RegisterComponents()
     {
-        (RegisterComponent<C>(), ...);
+        (RegisterComponent<Cs>(), ...);
+    }
+    template <typename... Cs> void RegisterComponents(const ComponentSet<Cs...>)
+    {
+        RegisterComponents<Cs...>();
     }
 
     template <typename C> C *GetComponent(const Entity e) const
@@ -769,6 +803,22 @@ class Registry
     template <typename C> bool HasComponent(const Entity e) const
     {
         return GetComponent<C>(e) != nullptr;
+    }
+    template <typename... Cs> bool HasAllComponents(const Entity e) const
+    {
+        return (HasComponent<Cs>(e) && ... && true);
+    }
+    template <typename... Cs> bool HasAnyComponent(const Entity e) const
+    {
+        return (HasComponent<Cs>(e) || ... || false);
+    }
+    template <typename... Cs> bool HasAllComponents(const ComponentSet<Cs...>, const Entity e) const
+    {
+        return HasAllComponents<Cs...>(e);
+    }
+    template <typename... Cs> bool HasAnyComponent(const ComponentSet<Cs...>, const Entity e) const
+    {
+        return HasAnyComponent<Cs...>(e);
     }
 
     template <typename C, typename... Args> C *AddComponent(const Entity e, Args &&...args)
@@ -836,6 +886,19 @@ class Registry
         return result.Added;
     }
 
+    template <typename... Cs, typename... Args>
+        requires(!HasDuplicateTypes<Cs...>())
+    std::tuple<Cs *...> AddComponents(const Entity e, Args... args)
+    {
+        return std::make_tuple(AddComponent<Cs>(e, args...)...);
+    }
+    template <typename... Cs, typename... Args>
+        requires(!HasDuplicateTypes<Cs...>())
+    std::tuple<Cs *...> AddComponents(const ComponentSet<Cs...>, const Entity e, Args... args)
+    {
+        return AddComponents<Cs...>(e, args...);
+    }
+
     template <typename C> void RemoveComponent(const Entity e)
     {
         EntityRecord &r = m_Entities[e];
@@ -871,6 +934,19 @@ class Registry
         }
         r.Row = nrow;
         r.Archetype = dst;
+    }
+
+    template <typename... Cs>
+        requires(!HasDuplicateTypes<Cs...>())
+    void RemoveComponents(const Entity e)
+    {
+        (RemoveComponent<Cs>(e), ...);
+    }
+    template <typename... Cs>
+        requires(!HasDuplicateTypes<Cs...>())
+    void RemoveComponents(const ComponentSet<Cs...>, const Entity e)
+    {
+        RemoveComponents<Cs...>(e);
     }
 
     template <typename... Cs>
