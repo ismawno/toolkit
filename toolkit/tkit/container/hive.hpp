@@ -121,11 +121,11 @@ template <typename T, typename AllocState> class Hive
         return Span<const usize>{m_Ids.GetData(), m_Data.GetSize()};
     }
 
-    constexpr usize GetIndex(const usize id)
+    constexpr usize GetIndex(const usize id) const
     {
         return m_Indices[id];
     }
-    constexpr usize GetId(const usize index)
+    constexpr usize GetId(const usize index) const
     {
         return m_Ids[index];
     }
