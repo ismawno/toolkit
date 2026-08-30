@@ -65,6 +65,11 @@ template <typename... As, typename T, typename... Rest> struct MergedComponentSe
 
 template <typename... Sets> using MergeComponentSets = MergedComponentSets<Sets...>::Type;
 
+template <typename F, typename... Cs> void ForEachComponentType(const ComponentSet<Cs...>, F &&func)
+{
+    (func.template operator()<Cs>(), ...);
+}
+
 struct ComponentInfo
 {
     ComponentId Id;
