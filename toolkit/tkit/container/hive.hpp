@@ -132,38 +132,59 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
         return idx < m_Data.GetSize();
     }
 
-    template <typename F> void IterateByInsertionOrder(F &&func)
+#define ITERATE_BY_INSERTION_ORDER(type)                                                                               \
+    for (usize id = 0; id < m_Indices.GetSize(); ++id)                                                                 \
+    {                                                                                                                  \
+        const usize idx = m_Indices[id];                                                                               \
+        if (IsValidIndex(idx))                                                                                         \
+        {                                                                                                              \
+            if constexpr (std::is_invocable_v<F, usize, type>)                                                         \
+            {                                                                                                          \
+                constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, usize, type>, bool>;                    \
+                if constexpr (hasRet)                                                                                  \
+                {                                                                                                      \
+                    if (!std::forward<F>(func)(id, AtByIndex(idx)))                                                    \
+                        return true;                                                                                   \
+                }                                                                                                      \
+                else                                                                                                   \
+                    std::forward<F>(func)(id, AtByIndex(idx));                                                         \
+            }                                                                                                          \
+            else if constexpr (std::is_invocable_v<F, usize>)                                                          \
+            {                                                                                                          \
+                constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, usize>, bool>;                          \
+                if constexpr (hasRet)                                                                                  \
+                {                                                                                                      \
+                    if (!std::forward<F>(func)(id))                                                                    \
+                        return true;                                                                                   \
+                }                                                                                                      \
+                else                                                                                                   \
+                    std::forward<F>(func)(id);                                                                         \
+            }                                                                                                          \
+            else                                                                                                       \
+            {                                                                                                          \
+                constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, type>, bool>;                           \
+                if constexpr (hasRet)                                                                                  \
+                {                                                                                                      \
+                    if (!std::forward<F>(func)(AtByIndex(idx)))                                                        \
+                        return true;                                                                                   \
+                }                                                                                                      \
+                else                                                                                                   \
+                    std::forward<F>(func)(AtByIndex(idx));                                                             \
+            }                                                                                                          \
+        }                                                                                                              \
+    }                                                                                                                  \
+    return false;
+
+    template <typename F> bool IterateByInsertionOrder(F &&func)
     {
-        for (usize id = 0; id < m_Indices.GetSize(); ++id)
-        {
-            const usize idx = m_Indices[id];
-            if (IsValidIndex(idx))
-            {
-                if constexpr (std::is_invocable_v<F, usize, T &>)
-                    std::forward<F>(func)(id, AtByIndex(idx));
-                else if constexpr (std::is_invocable_v<F, usize>)
-                    std::forward<F>(func)(id);
-                else
-                    std::forward<F>(func)(AtByIndex(idx));
-            }
-        }
+        ITERATE_BY_INSERTION_ORDER(T &)
     }
-    template <typename F> void IterateByInsertionOrder(F &&func) const
+    template <typename F> bool IterateByInsertionOrder(F &&func) const
     {
-        for (usize id = 0; id < m_Indices.GetSize(); ++id)
-        {
-            const usize idx = m_Indices[id];
-            if (IsValidIndex(idx))
-            {
-                if constexpr (std::is_invocable_v<F, usize, const T &>)
-                    std::forward<F>(func)(id, AtByIndex(idx));
-                else if constexpr (std::is_invocable_v<F, usize>)
-                    std::forward<F>(func)(id);
-                else
-                    std::forward<F>(func)(AtByIndex(idx));
-            }
-        }
+        ITERATE_BY_INSERTION_ORDER(const T &)
     }
+
+#undef ITERATE_BY_INSERTION_ORDER
 
     constexpr const Array<usize, IdAllocState> &GetIndices() const
     {
