@@ -988,7 +988,7 @@ class Registry
         return *q;
     }
 
-    template <typename F> void IterateEntitiesByInsertionOrder(F &&func)
+    template <typename F> void IterateEntitiesByInsertionOrder(F &&func) const
     {
         m_Entities.IterateByInsertionOrder(std::forward<F>(func));
     }
