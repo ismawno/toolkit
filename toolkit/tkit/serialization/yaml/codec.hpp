@@ -8,7 +8,6 @@
 #include "tkit/reflection/reflect.hpp"
 #include "tkit/preprocessor/system.hpp"
 #include "tkit/utils/alias.hpp"
-#include "tkit/container/span.hpp"
 
 TKIT_COMPILER_WARNING_IGNORE_PUSH()
 TKIT_GCC_WARNING_IGNORE("-Wunused-parameter")
