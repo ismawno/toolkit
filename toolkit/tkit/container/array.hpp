@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tkit/container/container.hpp"
+#include "tkit/utils/limits.hpp"
 #include <ostream>
 
 namespace TKit
@@ -752,6 +753,24 @@ template <typename T, typename AllocState> class Array
     constexpr usize GetCapacity() const
     {
         return m_State.GetCapacity();
+    }
+
+    template <typename U>
+        requires std::convertible_to<U, T>
+    constexpr usize FindIndex(U &&value)
+    {
+        for (usize i = 0; i < GetSize(); ++i)
+            if (At(i) == value)
+                return i;
+
+        return TKIT_USIZE_MAX;
+    }
+
+    template <typename U>
+        requires std::convertible_to<U, T>
+    constexpr bool Contains(U &&value)
+    {
+        return FindIndex(std::forward<U>(value)) != TKIT_USIZE_MAX;
     }
 
     constexpr bool IsEmpty() const
