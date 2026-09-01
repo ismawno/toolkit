@@ -21,6 +21,40 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
     {
     }
 
+    template <std::input_iterator It>
+    constexpr Hive(const It idxBegin, const Id idxEnd, const It idBegin, const It idEnd)
+        : m_Indices(idxBegin, idxEnd), m_Ids(idBegin, idEnd)
+    {
+        TKIT_ASSERT(m_Indices.GetSize() == m_Ids.GetSize(),
+                    "[TOOLKIT][HIVE] Indices and ids sizes must be equal, but are {} and {}", m_Indices.GetSize(),
+                    m_Ids.GetSize());
+#ifdef TKIT_ENABLE_ENSURE
+        for (usize id = 0; id < m_Indices.GetSize(); ++id)
+        {
+            TKIT_ENSURE(m_Indices[id] == id,
+                        "[TOOLKIT][HIVE] To specify indices and ids, they must satisfy indices[id] == id, however "
+                        "found indices[id = {}] = {} != id = {}",
+                        id, m_Indices[id], id);
+        }
+#endif
+    }
+
+    constexpr Hive(const Span<const usize> indices, const Span<const usize> ids) : m_Indices(indices), m_Ids(ids)
+    {
+        TKIT_ASSERT(indices.GetSize() == ids.GetSize(),
+                    "[TOOLKIT][HIVE] Indices and ids sizes must be equal, but are {} and {}", m_Indices.GetSize(),
+                    indices.GetSize(), ids.GetSize());
+#ifdef TKIT_ENABLE_ENSURE
+        for (usize id = 0; id < m_Indices.GetSize(); ++id)
+        {
+            TKIT_ENSURE(m_Indices[id] == id,
+                        "[TOOLKIT][HIVE] To specify indices and ids, they must satisfy indices[id] == id, however "
+                        "found indices[id = {}] = {} != id = {}",
+                        id, m_Indices[id], id);
+        }
+#endif
+    }
+
     constexpr Hive(const Hive &) = default;
     constexpr Hive(Hive &&) = default;
 
