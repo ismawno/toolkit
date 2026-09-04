@@ -268,7 +268,7 @@ class ComponentColumn
     void resizeIfNeeded(const usize size)
     {
         if (size >= m_RowCapacity)
-            resize(Container::GrowthFactor(size));
+            resize(ArrayGrowthFactor(size));
     }
     void resizeIfNeeded()
     {

@@ -6,20 +6,10 @@
 #endif
 
 #include "tkit/reflection/reflect.hpp"
-#include "tkit/preprocessor/system.hpp"
-#include "tkit/utils/alias.hpp"
+#include "tkit/serialization/yaml/tree.hpp"
 
-TKIT_COMPILER_WARNING_IGNORE_PUSH()
-TKIT_GCC_WARNING_IGNORE("-Wunused-parameter")
-TKIT_CLANG_WARNING_IGNORE("-Wunused-parameter")
-TKIT_MSVC_WARNING_IGNORE(4100)
-#include <yaml-cpp/yaml.h>
-TKIT_COMPILER_WARNING_IGNORE_POP()
-
-namespace TKit::Yaml
+namespace TKit
 {
-using Node = YAML::Node;
-
 /**
  * @brief This struct encapsulated serialization and deserialization code for a type `T`.
  *
@@ -40,22 +30,21 @@ using Node = YAML::Node;
  */
 template <typename T> struct Codec
 {
-    static Node Encode(const T &instance)
+    static void Encode(YamlNode &node, const T &instance)
     {
-        Node node;
 #ifdef TKIT_SERIALIZATION_FROM_REFLECTION
         static_assert(Reflect<T>::Implemented || std::is_enum_v<T>,
                       "If type has not a dedicated 'Codec<T>' specialization, it must be reflected "
                       "to auto-serialize. It is recommended to use the serialization marks and scripts available.");
         if constexpr (Reflect<T>::Implemented)
-            Reflect<T>::ForEachField([&](const auto &field) { node[field.Name] = field.Get(instance); });
+            Reflect<T>::ForEachField([&](const auto &field) { node[field.Name] << field.Get(instance); });
         else
         {
             using Integer = std::underlying_type_t<T>;
             if constexpr (std::is_same_v<Integer, u8>)
-                node = Node{u16(instance)};
+                node << u16(instance);
             else
-                node = Node{Integer(instance)};
+                node << Integer(instance);
         }
 #else
         if constexpr (Reflect<T>::Implemented)
@@ -76,14 +65,13 @@ template <typename T> struct Codec
                 "and scripts available, which is the recommended approach.");
         using Integer = std::underlying_type_t<T>;
         if constexpr (std::is_same_v<Integer, u8>)
-            node = Node{u16(instance)};
+            node << u16(instance);
         else
-            node = Node{Integer(instance)};
+            node << Integer(instance);
 #endif
-        return node;
     }
 
-    static bool Decode(const Node &node, T &instance)
+    static YamlReadResult Decode(const YamlNode &node, T &instance)
     {
 #ifdef TKIT_SERIALIZATION_FROM_REFLECTION
         static_assert(Reflect<T>::Implemented || std::is_enum_v<T>,
@@ -91,14 +79,26 @@ template <typename T> struct Codec
                       "to auto-deserialize. It is recommended to use the serialization marks and scripts available.");
 
         if constexpr (Reflect<T>::Implemented)
+        {
+            YamlReadResult res = YamlReadResult::Ok();
             Reflect<T>::ForEachField([&](const auto &field) {
                 using Type = TKIT_REFLECT_FIELD_TYPE(field);
-                field.Set(instance, node[field.Name].template as<Type>());
+                if (!res)
+                    return;
+                Type val;
+                res = node[field.Name].TryRead(val);
+                if (res)
+                    field.Set(instance, val);
             });
+        }
         else
         {
             using Integer = std::underlying_type_t<T>;
-            instance = T(node.as<Integer>());
+            Integer i;
+            const YamlReadResult res = node.Read(i);
+            if (!res)
+                return res;
+            instance = T(i);
         }
 #else
         if constexpr (Reflect<T>::Implemented)
@@ -119,57 +119,45 @@ template <typename T> struct Codec
                 "and scripts available, which is the recommended approach.");
 
         using Integer = std::underlying_type_t<T>;
-        instance = T(node.as<Integer>());
+        Integer i;
+        const YamlReadResult res = node.Read(i);
+        if (!res)
+            return res;
+        instance = T(i);
 #endif
-        return true;
     }
 };
 
-Node FromString(const char *string);
-Node FromFile(const char *path);
-
-Node FromString(const std::string &string);
-Node FromFile(const std::string &path);
-
-void ToFile(const char *path, const Node &node);
-void ToFile(const std::string &path, const Node &node);
-
-template <typename T> void Serialize(const char *path, const T &instance)
+template <typename T> void Serialize(const fs::path &path, const T &instance)
 {
-    const Node node{instance};
-    ToFile(path, node);
+    const YamlTree tree{};
+    tree.GetRoot() << instance;
+    tree.ToFile(path);
 }
-template <typename T> T Deserialize(const char *path)
+template <typename T> YamlReadResult TryDeserialize(const fs::path &path, T &instance)
 {
-    const Node node = FromFile(path);
-    return node.as<T>();
+    const YamlTree tree = YamlTree::FromFile(path);
+    return tree.GetRoot().TryRead(instance);
 }
-
-template <typename T> void Serialize(const std::string &path, const T &instance)
+template <typename T> void Deserialize(const fs::path &path, T &instance)
 {
-    const Node node{instance};
-    ToFile(path, node);
+    const YamlTree tree = YamlTree::FromFile(path);
+    tree.GetRoot().Read(instance);
 }
-template <typename T> T Deserialize(const std::string &path)
+template <typename T, typename... Args> T Deserialize(const fs::path &path, Args &&...args)
 {
-    const Node node = FromFile(path);
-    return node.as<T>();
+    const YamlTree tree = YamlTree::FromFile(path);
+    return tree.GetRoot().Read<T>(std::forward<Args>(args)...);
 }
 
-} // namespace TKit::Yaml
+template <typename T>
+concept BuiltInCodecable =
+    Numeric<T> || std::is_same_v<std::remove_cvref_t<T>, char *> || std::is_same_v<std::remove_cvref_t<T>, std::string>;
 
-namespace YAML
+template <BuiltInCodecable T> struct Codec<T>
 {
-template <typename T> struct convert
-{
-    static Node encode(const T &instance)
-    {
-        return TKit::Yaml::Codec<T>::Encode(instance);
-    }
-
-    static bool decode(const Node &node, T &instance)
-    {
-        return TKit::Yaml::Codec<T>::Decode(node, instance);
-    }
+    static void Encode(YamlNode &node, const T &instance);
+    static YamlReadResult Decode(const YamlNode &node, T &instance);
 };
-} // namespace YAML
+
+} // namespace TKit

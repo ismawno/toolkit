@@ -23,7 +23,7 @@ template <typename T, typename AllocState> class Array
     static constexpr bool IsString = std::is_same_v<T, char>;
 
     using ValueType = T;
-    using Tools = Container::ArrayTools<T>;
+    using Tools = ArrayTools<T>;
 
     constexpr Array() = default;
     template <typename... Args>

@@ -12,60 +12,70 @@
 
 // Alias to the std are not included as yaml-cpp already includes them
 
-namespace TKit::Yaml
+namespace TKit
 {
 template <typename T, usize N> struct Codec<FixedArray<T, N>>
 {
-    static Node Encode(const FixedArray<T, N> &instance)
+    static void Encode(YamlNode &node, const FixedArray<T, N> &instance)
     {
-        Node node;
         for (const T &element : instance)
-            node.push_back(element);
-        return node;
+            node.Append(element);
     }
 
-    static bool Decode(const Node &node, FixedArray<T, N> &instance)
+    static YamlReadResult Decode(const YamlNode &node, FixedArray<T, N> &instance)
     {
-        if (!node.IsSequence() || node.size() > N)
-            return false;
+        if (!(node.GetFlags() & YamlNodeFlag_Sequence) || node.GetChildCount() > N)
+            return YamlReadResult::Error(node.GetId(),
+                                         TierString::Format("Failed to decode: Child count ({}) is greater than array "
+                                                            "capacity ({}) or the node is not a sequence",
+                                                            node.GetChildCount(), N));
 
         for (usize i = 0; i < N; ++i)
-            instance[i] = node[i].template as<T>();
-        return true;
+        {
+            TKIT_RETURN_IF_FAILED(node[i].Read(instance[i]));
+        }
+        return YamlReadResult::Ok();
     }
 };
 
 template <typename T, typename AllocState> struct Codec<Array<T, AllocState>>
 {
-    static Node Encode(const Array<T, AllocState> &instance)
+    static void Encode(YamlNode &node, const Array<T, AllocState> &instance)
     {
-        Node node;
         if constexpr (Array<T, AllocState>::IsString)
-            node = instance.GetData();
+            node << instance.GetData();
         else
             for (const T &element : instance)
-                node.push_back(element);
-        return node;
+                node.Append(element);
     }
 
-    static bool Decode(const Node &node, Array<T, AllocState> &instance)
+    static YamlReadResult Decode(const YamlNode &node, Array<T, AllocState> &instance)
     {
         if constexpr (Array<T, AllocState>::IsString)
         {
-            if (!node.IsScalar())
-                return false;
-
-            const std::string str = node.as<std::string>();
-            instance.Reserve(usize(str.size()));
+            std::string str;
+            TKIT_RETURN_IF_FAILED(node.TryRead(str));
+            if constexpr (Array<T, AllocState>::Type != Array_Static)
+                instance.Reserve(usize(str.size()));
+            else if (str.size() >= instance.GetCapacity())
+                return YamlReadResult::Error(
+                    node.GetId(), TierString::Format("Not enough capacity ({}) to deserialize string of size {}",
+                                                     instance.GetCapacity(), str.size()));
             for (const char c : str)
                 instance.Append(c);
         }
         else
         {
-            if (!node.IsSequence())
-                return false;
+            if (!(node.GetFlags() & YamlNodeFlag_Sequence))
+                return YamlReadResult::Error(node.GetId(), "Node must be a sequence to decode array");
 
-            instance.Reserve(usize(node.size()));
+            if constexpr (Array<T, AllocState>::Type != Array_Static)
+                instance.Reserve(usize(node.GetChildCount()));
+            else if (node.GetChildCount() >= instance.GetCapacity())
+                return YamlReadResult::Error(
+                    node.GetId(), TierString::Format("Not enough capacity ({}) to deserialize array of size {}",
+                                                     instance.GetCapacity(), node.GetChildCount()));
+
             for (const Node &element : node)
                 instance.Append(element.template as<T>());
         }
@@ -87,4 +97,4 @@ template <typename T> struct Codec<Span<T>>
     }
 };
 
-} // namespace TKit::Yaml
+} // namespace TKit

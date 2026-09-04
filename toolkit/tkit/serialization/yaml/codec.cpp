@@ -1,37 +1,22 @@
 #include "tkit/core/pch.hpp"
 #include "tkit/serialization/yaml/codec.hpp"
-#include "tkit/utils/debug.hpp"
-#include <filesystem>
-#include <fstream>
+#include <ryml.hpp>
 
-namespace TKit::Yaml
+namespace TKit
 {
-Node FromString(const char *string)
+template <BuiltInCodecable T> void Codec<T>::Encode(YamlNode &node, const T &instance)
 {
-    return YAML::Load(string);
+    ryml::Tree *tree = node.m_Tree;
+    tree->save(node.m_Id, instance);
 }
-Node FromFile(const char *path)
+
+template <BuiltInCodecable T> YamlReadResult Codec<T>::Decode(const YamlNode &node, T &instance)
 {
-    TKIT_ASSERT(std::filesystem::exists(std::string(path)), "File does not exist: {}", path);
-    return YAML::LoadFile(path);
+    const ryml::Tree *tree = node.m_Tree;
+    const ryml::ReadResult res = tree->deserialize(node.m_Id, &instance);
+    if (!res)
+        return YamlReadResult::Error(res.node, "Failed to deserialize built-in value");
+
+    return YamlReadResult::Ok();
 }
-void ToFile(const char *path, const Node &node)
-{
-    std::ofstream file(path);
-    file << node;
-}
-Node FromString(const std::string &string)
-{
-    return YAML::Load(string);
-}
-Node FromFile(const std::string &path)
-{
-    TKIT_ASSERT(std::filesystem::exists(path), "File does not exist: {}", path);
-    return YAML::LoadFile(path);
-}
-void ToFile(const std::string &path, const Node &node)
-{
-    std::ofstream file(path);
-    file << node;
-}
-} // namespace TKit::Yaml
+} // namespace TKit

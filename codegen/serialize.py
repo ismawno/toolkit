@@ -131,35 +131,37 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                 closer="};",
             ):
                 with hpp.doc():
-                    hpp.brief(f"Encode an instance of type `{enum.id.name}` into a `Node` (serialization step).")
+                    hpp.brief(f"Encode an instance of type `{enum.id.name}` into a `YamlNode` (serialization step).")
+                    hpp.param("node", "The node to write into.")
                     hpp.param("instance", f"An instance of type `{enum.id.name}`.")
-                    hpp.ret("A node with serialization information.")
 
-                with hpp.scope(f"static Node Encode(const {enum.id.name} &instance)"):
+                with hpp.scope(f"static void Encode(YamlNode &node, const {enum.id.name} &instance)"):
                     with hpp.scope(f"switch (instance)"):
                         for entry in enum.values:
                             with hpp.scope(f"case {enum.id.name}::{entry}:", delimiters=False):
-                                hpp(f'return Node{{"{entry}"}};')
+                                hpp(f'node << "{entry}";')
+                                hpp("break;")
                         with hpp.scope(f"default:", delimiters=False):
                             hpp('TKIT_FATAL("[TOOLKIT][YAML] Unknown enum value");')
-                            hpp('return Node{"[TOOLKIT][YAML] Error - Unknown enum value."};')
 
                 with hpp.doc():
                     hpp.brief(
-                        f"Decode an instance of type `{enum.id.identifier}` from a `Node` (deserialization step)."
+                        f"Decode an instance of type `{enum.id.identifier}` from a `YamlNode` (deserialization step)."
                     )
                     hpp.param("node", "A node with serialization information.")
                     hpp.param("instance", f"An instance of type `{enum.id.identifier}`.")
 
-                with hpp.scope(f"static bool Decode(const Node &node, {enum.id.identifier} &instance)"):
-                    hpp("const std::string val = node.as<std::string>();")
+                with hpp.scope(f"static YamlReadResult Decode(const YamlNode &node, {enum.id.identifier} &instance)"):
+                    hpp(f"std::string val;")
+                    hpp(f"const YamlReadResult res = node.TryRead(val);")
+                    with hpp.scope("if (!res)", delimiters=False):
+                        hpp("return res;")
                     for entry in enum.values:
                         with hpp.scope(f'if (val == "{entry}")'):
                             hpp(f"instance = {enum.id.identifier}::{entry};")
-                            hpp(f"return true;")
+                            hpp(f"return YamlReadResult::Ok();")
 
-                    hpp("TKIT_FATAL(\"[TOOLKIT][YAML] Failed to parse enum from '{}'. Unknown enum value\", val);")
-                    hpp(f"return false;")
+                    hpp(f'return YamlReadResult::Error("Unknown enum value: {{}}", val);')
 
         for clsinfo in classes.classes:
             fields = get_fields_with_options(clsinfo)
@@ -199,13 +201,12 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
 
                 with hpp.doc():
                     hpp.brief(
-                        f"Encode an instance of type `{clsinfo.id.identifier}` into a `Node` (serialization step)."
+                        f"Encode an instance of type `{clsinfo.id.identifier}` into a `YamlNode` (serialization step)."
                     )
+                    hpp.param("node", "The node to write into.")
                     hpp.param("instance", f"An instance of type `{clsinfo.id.identifier}`.")
-                    hpp.ret("A node with serialization information.")
 
-                with hpp.scope(f"static Node Encode(const {clsinfo.id.identifier} &instance)"):
-                    hpp("Node node;")
+                with hpp.scope(f"static void Encode(YamlNode &node, const {clsinfo.id.identifier} &instance)"):
                     for field, options in fields:
                         if in_options("only-deserialize", options):
                             hpp.comment(f"Skipping {field.name} - It has been set as deserialization only")
@@ -224,22 +225,20 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                                     )
 
                         if vtype is None:
-                            hpp(f'node["{field.name}"] = instance.{field.name};')
+                            hpp(f'node["{field.name}"] << instance.{field.name};')
                         else:
-                            hpp(f'node["{field.name}"] = scast<{vtype}>(instance.{field.name});')
-                    hpp("return node;")
+                            hpp(f'node["{field.name}"] << scast<{vtype}>(instance.{field.name});')
 
                 with hpp.doc():
                     hpp.brief(
-                        f"Decode an instance of type `{clsinfo.id.identifier}` from a `Node` (deserialization step)."
+                        f"Decode an instance of type `{clsinfo.id.identifier}` from a `YamlNode` (deserialization step)."
                     )
                     hpp.param("node", "A node with serialization information.")
                     hpp.param("instance", f"An instance of type `{clsinfo.id.identifier}`.")
 
-                with hpp.scope(f"static bool Decode(const Node &node, {clsinfo.id.identifier} &instance)"):
-                    with hpp.scope("if (!node.IsMap())", delimiters=False):
-                        hpp("return false;")
-
+                with hpp.scope(
+                    f"static YamlReadResult Decode(const YamlNode &node, {clsinfo.id.identifier} &instance)"
+                ):
                     for field, options in fields:
                         if in_options("only-serialize", options):
                             hpp.comment(f"Skipping `{field.name}` - It has been set as serialization only")
@@ -258,12 +257,20 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                                     )
 
                         if in_options("skip-if-missing", options):
-                            with hpp.scope(f'if (node["{field.name}"])', delimiters=False):
-                                hpp(f'instance.{field.name} = node["{field.name}"].as<{vtype}>();')
+                            with hpp.scope(f'if (node.HasChild("{field.name}"))', delimiters=False):
+                                hpp(f"{vtype} val;")
+                                hpp(f'const YamlReadResult res = node["{field.name}"].TryRead(val);')
+                                with hpp.scope("if (!res)", delimiters=False):
+                                    hpp("return res;")
+                                hpp(f"instance.{field.name} = val;")
                         else:
-                            hpp(f'instance.{field.name} = node["{field.name}"].as<{vtype}>();')
+                            hpp(f"{vtype} val;")
+                            hpp(f'const YamlReadResult res_{field.name} = node["{field.name}"].TryRead(val);')
+                            with hpp.scope(f"if (!res_{field.name})", delimiters=False):
+                                hpp(f"return res_{field.name};")
+                            hpp(f"instance.{field.name} = val;")
 
-                    hpp("return true;")
+                    hpp("return YamlReadResult::Ok();")
 
 
 orchestrator.generate(generate_serialization_code, disclaimer="serialize.py")

@@ -44,26 +44,18 @@ include(FetchContent)
 if(TOOLKIT_ENABLE_YAML_SERIALIZATION)
 
   FetchContent_Declare(
-    yaml-cpp
-    GIT_REPOSITORY https://github.com/ismawno/yaml-cpp.git
-    GIT_TAG v0.8.0
+    ryml
+    GIT_REPOSITORY https://github.com/biojppm/rapidyaml.git
+    GIT_TAG v0.16.0
     GIT_SHALLOW TRUE
     GIT_PROGRESS TRUE)
 
-  set(YAML_CPP_BUILD_TESTS
-      OFF
-      CACHE BOOL "" FORCE)
-  set(YAML_CPP_BUILD_TOOLS
-      OFF
-      CACHE BOOL "" FORCE)
-  set(YAML_CPP_BUILD_CONTRIB
-      OFF
-      CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(ryml)
 
-  FetchContent_MakeAvailable(yaml-cpp)
-
-  tkit_configure_compile_link_options(yaml-cpp NO_EXCEPTIONS NO_RTTI)
-  list(APPEND SOURCES tkit/serialization/yaml/codec.cpp)
+  tkit_configure_compile_link_options(ryml NO_EXCEPTIONS NO_RTTI)
+  target_compile_definitions(ryml PUBLIC RYML_ID_TYPE=uint32_t)
+  list(APPEND SOURCES tkit/serialization/yaml/tree.cpp
+       tkit/serialization/yaml/node.cpp)
 endif()
 
 add_library(toolkit STATIC ${SOURCES})
@@ -93,7 +85,7 @@ if(TOOLKIT_ENABLE_MIMALLOC)
 endif()
 
 if(TOOLKIT_ENABLE_YAML_SERIALIZATION)
-  target_link_libraries(toolkit PUBLIC yaml-cpp)
+  target_link_libraries(toolkit PUBLIC ryml)
 endif()
 
 if(TOOLKIT_ENABLE_MULTIPROCESSING)
