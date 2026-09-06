@@ -5,7 +5,6 @@
 #include <string>
 
 using namespace TKit;
-using namespace TKit::Container;
 using namespace TKit::Alias;
 
 TEST_CASE("Span dynamic extent: default and pointer+size ctor", "[Span]")

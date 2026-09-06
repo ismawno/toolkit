@@ -43,7 +43,7 @@
  */
 #ifdef TKIT_ENABLE_YAML_SERIALIZATION
 #    include "tkit/serialization/yaml/codec.hpp"
-#    define TKIT_YAML_SERIALIZE_DECLARE(className, ...) friend struct TKit::Yaml::Codec<className>;
+#    define TKIT_YAML_SERIALIZE_DECLARE(className, ...) friend struct TKit::Codec<className>;
 #else
 #    define TKIT_YAML_SERIALIZE_DECLARE(className, ...)
 #endif

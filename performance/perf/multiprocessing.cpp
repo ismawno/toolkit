@@ -9,7 +9,7 @@
 
 namespace TKit
 {
-static ArenaAllocator s_Alloc{1_kib};
+static ArenaAllocator s_Alloc{128_kib};
 struct Number
 {
     u32 Value;

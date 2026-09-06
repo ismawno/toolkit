@@ -6,7 +6,6 @@
 #include <cstring>
 
 using namespace TKit;
-using namespace TKit::Container;
 using namespace TKit::Alias;
 
 template <typename T> using Tools = ArrayTools<T>;

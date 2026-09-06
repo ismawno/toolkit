@@ -18,7 +18,7 @@ namespace TKit
 template <typename T, usize Capacity> struct FixedArray
 {
     using ValueType = T;
-    using Tools = Container::ArrayTools<T>;
+    using Tools = ArrayTools<T>;
 
     constexpr FixedArray() = default;
 

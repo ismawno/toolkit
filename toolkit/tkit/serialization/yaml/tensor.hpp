@@ -3,27 +3,30 @@
 #include "tkit/serialization/yaml/codec.hpp"
 #include "tkit/math/tensor.hpp"
 
-namespace TKit::Yaml
+namespace TKit
 {
 template <typename T, usize N0, usize... N> struct Codec<ten<T, N0, N...>>
 {
-    static Node Encode(const ten<T, N0, N...> &instance)
+    static void Encode(YamlNode &node, const ten<T, N0, N...> &instance)
     {
-        Node node;
         for (usize i = 0; i < (N0 * ... * N); ++i)
-            node.push_back(instance(i));
-        node.SetStyle(YAML::EmitterStyle::Flow);
-        return node;
+            node.Append(instance.Flat(i));
+        node |= YamlNodeFlag_FlowSingleLine;
     }
 
-    static bool Decode(const Node &node, ten<T, N0, N...> &instance)
+    static YamlReadResult Decode(const YamlNode &node, ten<T, N0, N...> &instance)
     {
-        if (!node.IsSequence() || node.size() != (N0 * ... * N))
-            return false;
-
+        constexpr usize size = (N0 * ... * N);
+        if (!(node.GetFlags() & YamlNodeFlag_Sequence) || node.GetChildCount() != size)
+            return YamlReadResult::Error(
+                node.GetId(), TierString::Format("Failed to decode: Child count ({}) is not equal to {} for tensor "
+                                                 "or the node is not a sequence",
+                                                 node.GetChildCount(), size));
         for (usize i = 0; i < (N0 * ... * N); ++i)
-            instance.Flat(i) = node[i].as<T>();
-        return true;
+        {
+            TKIT_RETURN_IF_FAILED(node[i].TryRead(instance.Flat(i)));
+        }
+        return YamlReadResult::Ok();
     }
 };
-} // namespace TKit::Yaml
+} // namespace TKit

@@ -78,7 +78,7 @@ template <typename T> struct DynamicAllocation
     }
     void ModifyCapacity(const usize capacity)
     {
-        using Tools = Container::ArrayTools<T>;
+        using Tools = ArrayTools<T>;
         TKIT_ASSERT(capacity != 0, "[TOOLKIT][DYN-ARRAY] Capacity must be greater than 0");
         TKIT_ASSERT(capacity >= Size, "[TOOLKIT][DYN-ARRAY] Capacity ({}) is smaller than size ({})", capacity, Size);
         T *newData = scast<T *>(AllocateAligned(capacity * sizeof(T), alignof(T)));
@@ -97,7 +97,7 @@ template <typename T> struct DynamicAllocation
     }
     void GrowCapacity(const usize size)
     {
-        const usize capacity = Container::GrowthFactor(size);
+        const usize capacity = ArrayGrowthFactor(size);
         ModifyCapacity(capacity);
     }
 

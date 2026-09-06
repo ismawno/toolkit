@@ -3,7 +3,7 @@
 #include "tkit/memory/memory.hpp"
 #include "tkit/utils/debug.hpp"
 
-namespace TKit::Container
+namespace TKit
 {
 template <typename T>
 concept Iterable = requires(T a) {
@@ -11,7 +11,7 @@ concept Iterable = requires(T a) {
     { a.end() } -> std::input_iterator;
 };
 
-static constexpr usize GrowthFactor(const usize size)
+static constexpr usize ArrayGrowthFactor(const usize size)
 {
     return 1 + size + size / 2;
 }
@@ -210,4 +210,4 @@ template <typename T> struct ArrayTools
     }
 };
 
-} // namespace TKit::Container
+} // namespace TKit

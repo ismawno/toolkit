@@ -3,11 +3,21 @@
 #include "perf/container.hpp"
 #include "tkit/profiling/clock.hpp"
 #include "tkit/utils/logging.hpp"
+#include "tkit/utils/literals.hpp"
+#include "tkit/memory/stack_allocator.hpp"
 
 using namespace TKit::Alias;
+using namespace TKit::Literals;
 
 int main(int argc, char **argv)
 {
+    TKit::ArenaAllocator arena{8_kib};
+    TKit::StackAllocator stack{1_kib};
+    TKit::TierAllocator tier{{.Allocator = &arena, .MaxAllocation = 8_kib}};
+    TKit::PushArena(&arena);
+    TKit::PushStack(&stack);
+    TKit::PushTier(&tier);
+
     const TKit::Settings settings = TKit::CreateSettings(argc, argv);
 #ifdef TKIT_ENABLE_INFO_LOGS
     TKit::LogSettings(settings);
@@ -43,4 +53,7 @@ int main(int argc, char **argv)
 
     TKIT_LOG_INFO("[TOOLKIT][PERF] Done! ({:.1f} seconds) Results have been written to 'performance/results'",
                   clock.GetElapsed().AsSeconds());
+    TKit::PopArena();
+    TKit::PopStack();
+    TKit::PopTier();
 }

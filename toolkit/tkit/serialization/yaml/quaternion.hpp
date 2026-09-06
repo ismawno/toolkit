@@ -3,27 +3,30 @@
 #include "tkit/serialization/yaml/codec.hpp"
 #include "tkit/math/quaternion.hpp"
 
-namespace TKit::Yaml
+namespace TKit
 {
 template <typename T> struct Codec<qua<T>>
 {
-    static Node Encode(const qua<T> &instance)
+    static void Encode(YamlNode &node, const qua<T> &instance)
     {
-        Node node;
         for (usize i = 0; i < 4; ++i)
-            node.push_back(instance[i]);
-        node.SetStyle(YAML::EmitterStyle::Flow);
-        return node;
+            node.Append(instance[i]);
+        node |= YamlNodeFlag_FlowSingleLine;
     }
 
-    static bool Decode(const Node &node, qua<T> &instance)
+    static YamlReadResult Decode(const YamlNode &node, qua<T> &instance)
     {
-        if (!node.IsSequence() || node.size() != 4)
-            return false;
+        if (!(node.GetFlags() & YamlNodeFlag_Sequence) || node.GetChildCount() != 4)
+            return YamlReadResult::Error(
+                node.GetId(), TierString::Format("Failed to decode: Child count ({}) is not equal to 4 for quaternion "
+                                                 "or the node is not a sequence",
+                                                 node.GetChildCount()));
 
         for (usize i = 0; i < 4; ++i)
-            instance[i] = node[i].as<T>();
-        return true;
+        {
+            TKIT_RETURN_IF_FAILED(node[i].TryRead(instance[i]));
+        }
+        return YamlReadResult::Ok();
     }
 };
-} // namespace TKit::Yaml
+} // namespace TKit
