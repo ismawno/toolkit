@@ -243,6 +243,8 @@ class YamlNode
     friend struct Codec<f32>;
     friend struct Codec<f64>;
 
+    friend struct Codec<bool>;
+
     friend struct Codec<char *>;
     friend struct Codec<std::string>;
     friend struct Codec<std::string_view>;

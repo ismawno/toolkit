@@ -39,6 +39,8 @@ template struct Codec<i64>;
 template struct Codec<f32>;
 template struct Codec<f64>;
 
+template struct Codec<bool>;
+
 template struct Codec<char *>;
 template struct Codec<std::string>;
 } // namespace TKit
