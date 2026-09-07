@@ -96,10 +96,22 @@ class YamlNode
     {
     }
 
-    YamlNode operator[](StringView str) const;
+    YamlNode ByKey(StringView key) const;
+    YamlNode ByKey(u32 idx) const;
+
+    YamlNode ByKey(StringView key);
+    YamlNode ByKey(u32 idx);
+
+    YamlNode operator[](const StringView key) const
+    {
+        return ByKey(key);
+    }
     YamlNode operator[](u32 idx) const;
 
-    YamlNode operator[](StringView str);
+    YamlNode operator[](const StringView key)
+    {
+        return ByKey(key);
+    }
     YamlNode operator[](u32 idx);
 
     YamlNode Append();
@@ -124,8 +136,8 @@ class YamlNode
     YamlNode FirstChild() const;
     YamlNode NextSibling() const;
 
-    void SetValue(StringView str);
-    void SetKey(StringView str);
+    void SetValue(StringView val);
+    void SetKey(StringView key);
 
     YamlNodeFlags GetFlags() const;
     void SetFlags(YamlNodeFlags flags);

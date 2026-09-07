@@ -13,28 +13,23 @@ static StringView fromNative(const c4::csubstr str)
     return StringView{str.data(), usize(str.size())};
 }
 
-YamlNode YamlNode::operator[](const StringView str) const
+YamlNode YamlNode::ByKey(const StringView key) const
 {
     TKIT_ASSERT(IsMap(), "[TOOLKIT][YAML] To access a read-only node by key, parent node must be a map");
-    const u32 id = m_Tree->find_child(m_Id, toNative(str));
+    const u32 id = m_Tree->find_child(m_Id, toNative(key));
     return {m_Tree, id};
 }
-YamlNode YamlNode::operator[](const u32 idx) const
+YamlNode YamlNode::ByKey(const u32 key) const
 {
-    const u32 id = m_Tree->child(m_Id, idx);
-    if (id == ryml::NONE)
-        return (*this)[std::to_string(idx)];
-
-    return {m_Tree, id};
+    return ByKey(std::to_string(key));
 }
-
-YamlNode YamlNode::operator[](const StringView str)
+YamlNode YamlNode::ByKey(const StringView key)
 {
     TKIT_ASSERT(!IsSequence(), "[TOOLKIT][YAML] Cannot access a sequence node by key");
     if (!IsMap())
         AddFlags(YamlNodeFlag_Map);
 
-    const c4::csubstr cstr = toNative(str);
+    const c4::csubstr cstr = toNative(key);
     u32 id = m_Tree->find_child(m_Id, cstr);
     if (id == ryml::NONE)
     {
@@ -44,14 +39,20 @@ YamlNode YamlNode::operator[](const StringView str)
     }
     return {m_Tree, id};
 }
+YamlNode YamlNode::ByKey(const u32 key)
+{
+    return ByKey(std::to_string(key));
+}
+
+YamlNode YamlNode::operator[](const u32 idx) const
+{
+    const u32 id = m_Tree->child(m_Id, idx);
+    TKIT_ASSERT(id != ryml::NONE, "[ONYX][YAML] Child with index {} was not found", idx);
+    return {m_Tree, id};
+}
+
 YamlNode YamlNode::operator[](const u32 idx)
 {
-    if (IsMap() || (!IsSequence() && idx != 0))
-        return (*this)[std::to_string(idx)];
-
-    if (!IsSequence())
-        AddFlags(YamlNodeFlag_Sequence);
-
     const u32 id = m_Tree->child(m_Id, idx);
     TKIT_ASSERT(id != ryml::NONE, "[TOOLKIT][YAML] Child with index {} not found", idx);
     return {m_Tree, id};
@@ -92,13 +93,13 @@ YamlNode YamlNode::NextSibling() const
     return {m_Tree, m_Tree->next_sibling(m_Id)};
 }
 
-void YamlNode::SetValue(const StringView str)
+void YamlNode::SetValue(const StringView val)
 {
-    m_Tree->set_val(m_Id, toNative(str));
+    m_Tree->set_val(m_Id, toNative(val));
 }
-void YamlNode::SetKey(const StringView str)
+void YamlNode::SetKey(const StringView key)
 {
-    m_Tree->set_key(m_Id, toNative(str));
+    m_Tree->set_key(m_Id, toNative(key));
 }
 
 template <typename T> YamlReadResult YamlNode::TryReadKey(T &key) const
