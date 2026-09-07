@@ -149,12 +149,12 @@ class YamlNode
         SetKeyFlags(GetKeyFlags() & ~flags);
     }
 
-    YamlNode &operator|=(YamlNodeFlags flags)
+    YamlNode &operator|=(const YamlNodeFlags flags)
     {
         AddFlags(flags);
         return *this;
     }
-    YamlNode &operator&=(YamlNodeFlags flags)
+    YamlNode &operator&=(const YamlNodeFlags flags)
     {
         SetFlags(GetFlags() & flags);
         return *this;
@@ -179,6 +179,20 @@ class YamlNode
     {
         Codec<T>::Encode(*this, val);
     }
+
+    template <typename T> YamlReadResult TryReadKey(T &val) const;
+
+    template <typename T> void ReadKey(T &val) const
+    {
+        TKIT_CHECK_YAML_RESULT(TryReadKey(val));
+    }
+    template <typename T, typename... Args> T ReadKey(Args &&...args) const
+    {
+        T val{std::forward<Args>(args)...};
+        ReadKey(val);
+        return val;
+    }
+    template <typename T> void WriteKey(const T &val);
 
     template <typename T> YamlNode &operator<<(const T &val)
     {

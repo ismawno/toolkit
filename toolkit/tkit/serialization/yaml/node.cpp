@@ -100,6 +100,18 @@ void YamlNode::SetKey(const StringView str)
     m_Tree->set_key(m_Id, toNative(str));
 }
 
+template <typename T> YamlReadResult YamlNode::TryReadKey(T &key) const
+{
+    const ryml::ReadResult res = m_Tree->deserialize_key(m_Id, &key);
+    if (!res)
+        return YamlReadResult::Error(res.node, "Failed to deserialize key");
+    return YamlReadResult::Ok();
+}
+template <typename T> void YamlNode::WriteKey(const T &key)
+{
+    m_Tree->save_key(m_Id, key);
+}
+
 YamlNodeFlags YamlNode::GetFlags() const
 {
     return YamlNodeFlags(m_Tree->type(m_Id));
@@ -121,6 +133,27 @@ void YamlNode::SetKeyFlags(const YamlNodeFlags flags)
 {
     m_Tree->set_key_style(m_Id, flags);
 }
+template YamlReadResult YamlNode::TryReadKey(u8 &) const;
+template YamlReadResult YamlNode::TryReadKey(u16 &) const;
+template YamlReadResult YamlNode::TryReadKey(u32 &) const;
+template YamlReadResult YamlNode::TryReadKey(u64 &) const;
+template YamlReadResult YamlNode::TryReadKey(i8 &) const;
+template YamlReadResult YamlNode::TryReadKey(i16 &) const;
+template YamlReadResult YamlNode::TryReadKey(i32 &) const;
+template YamlReadResult YamlNode::TryReadKey(i64 &) const;
+template YamlReadResult YamlNode::TryReadKey(f32 &) const;
+template YamlReadResult YamlNode::TryReadKey(f64 &) const;
+
+template void YamlNode::WriteKey(const u8 &);
+template void YamlNode::WriteKey(const u16 &);
+template void YamlNode::WriteKey(const u32 &);
+template void YamlNode::WriteKey(const u64 &);
+template void YamlNode::WriteKey(const i8 &);
+template void YamlNode::WriteKey(const i16 &);
+template void YamlNode::WriteKey(const i32 &);
+template void YamlNode::WriteKey(const i64 &);
+template void YamlNode::WriteKey(const f32 &);
+template void YamlNode::WriteKey(const f64 &);
 } // namespace TKit
 
 #ifdef TKIT_ENABLE_ENSURE
