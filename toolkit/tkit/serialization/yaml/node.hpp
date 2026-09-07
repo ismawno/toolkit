@@ -226,7 +226,7 @@ class YamlNode
         return {m_Tree, NullYamlNodeId};
     }
 
-    operator bool() const
+    explicit operator bool() const
     {
         return m_Id != NullYamlNodeId;
     }
