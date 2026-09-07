@@ -5,7 +5,7 @@
 
 namespace TKit
 {
-template <typename T> struct Codec<qua<T>>
+template <typename T> struct YamlCodec<qua<T>>
 {
     static void Encode(YamlNode &node, const qua<T> &instance)
     {

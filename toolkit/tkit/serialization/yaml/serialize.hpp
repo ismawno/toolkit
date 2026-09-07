@@ -24,7 +24,8 @@
 
 /**
  * The main serialization macro, used to mark classes or structs required for serialization. Unmarked classes or structs
- * will be ignored. The macro expands to a friend statement so that the Codec class may have access to private fields.
+ * will be ignored. The macro expands to a friend statement so that the YamlCodec class may have access to private
+ * fields.
  *
  * The extra arguments can be used to list the parents of the target class so it can also inherit its fields. The list
  * of parents may invoke instantiations not explicitly present in the code.
@@ -43,7 +44,7 @@
  */
 #ifdef TKIT_ENABLE_YAML_SERIALIZATION
 #    include "tkit/serialization/yaml/codec.hpp"
-#    define TKIT_YAML_SERIALIZE_DECLARE(className, ...) friend struct TKit::Codec<className>;
+#    define TKIT_YAML_SERIALIZE_DECLARE(className, ...) friend struct TKit::YamlCodec<className>;
 #else
 #    define TKIT_YAML_SERIALIZE_DECLARE(className, ...)
 #endif

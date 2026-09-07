@@ -16,7 +16,7 @@ class Tree;
 
 namespace TKit
 {
-template <typename T> struct Codec;
+template <typename T> struct YamlCodec;
 
 namespace ryml = c4::yml;
 using YamlNodeFlags = u32;
@@ -162,7 +162,7 @@ class YamlNode
 
     template <typename T> YamlReadResult TryRead(T &val) const
     {
-        return Codec<T>::Decode(*this, val);
+        return YamlCodec<T>::Decode(*this, val);
     }
 
     template <typename T> void Read(T &val) const
@@ -177,22 +177,22 @@ class YamlNode
     }
     template <typename T> void Write(const T &val)
     {
-        Codec<T>::Encode(*this, val);
+        YamlCodec<T>::Encode(*this, val);
     }
 
-    template <typename T> YamlReadResult TryReadKey(T &val) const;
+    template <typename T> YamlReadResult TryReadKey(T &key) const;
 
-    template <typename T> void ReadKey(T &val) const
+    template <typename T> void ReadKey(T &key) const
     {
-        TKIT_CHECK_YAML_RESULT(TryReadKey(val));
+        TKIT_CHECK_YAML_RESULT(TryReadKey(key));
     }
     template <typename T, typename... Args> T ReadKey(Args &&...args) const
     {
-        T val{std::forward<Args>(args)...};
-        ReadKey(val);
-        return val;
+        T key{std::forward<Args>(args)...};
+        ReadKey(key);
+        return key;
     }
-    template <typename T> void WriteKey(const T &val);
+    template <typename T> void WriteKey(const T &key);
 
     template <typename T> YamlNode &operator<<(const T &val)
     {
@@ -249,23 +249,23 @@ class YamlNode
     ryml::Tree *m_Tree;
     u32 m_Id;
 
-    friend struct Codec<u8>;
-    friend struct Codec<u16>;
-    friend struct Codec<u32>;
-    friend struct Codec<u64>;
+    friend struct YamlCodec<u8>;
+    friend struct YamlCodec<u16>;
+    friend struct YamlCodec<u32>;
+    friend struct YamlCodec<u64>;
 
-    friend struct Codec<i8>;
-    friend struct Codec<i16>;
-    friend struct Codec<i32>;
-    friend struct Codec<i64>;
+    friend struct YamlCodec<i8>;
+    friend struct YamlCodec<i16>;
+    friend struct YamlCodec<i32>;
+    friend struct YamlCodec<i64>;
 
-    friend struct Codec<f32>;
-    friend struct Codec<f64>;
+    friend struct YamlCodec<f32>;
+    friend struct YamlCodec<f64>;
 
-    friend struct Codec<bool>;
+    friend struct YamlCodec<bool>;
 
-    friend struct Codec<char *>;
-    friend struct Codec<std::string>;
-    friend struct Codec<std::string_view>;
+    friend struct YamlCodec<char *>;
+    friend struct YamlCodec<std::string>;
+    friend struct YamlCodec<std::string_view>;
 };
 } // namespace TKit

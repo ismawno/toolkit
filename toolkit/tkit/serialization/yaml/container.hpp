@@ -14,7 +14,7 @@
 
 namespace TKit
 {
-template <typename T, usize N> struct Codec<FixedArray<T, N>>
+template <typename T, usize N> struct YamlCodec<FixedArray<T, N>>
 {
     static void Encode(YamlNode &node, const FixedArray<T, N> &instance)
     {
@@ -38,7 +38,7 @@ template <typename T, usize N> struct Codec<FixedArray<T, N>>
     }
 };
 
-template <typename T, typename AllocState> struct Codec<Array<T, AllocState>>
+template <typename T, typename AllocState> struct YamlCodec<Array<T, AllocState>>
 {
     static void Encode(YamlNode &node, const Array<T, AllocState> &instance)
     {
@@ -86,7 +86,7 @@ template <typename T, typename AllocState> struct Codec<Array<T, AllocState>>
     }
 };
 
-template <typename T> struct Codec<Span<T>>
+template <typename T> struct YamlCodec<Span<T>>
 {
     static void Encode(YamlNode &node, const Span<const T> &instance)
     {

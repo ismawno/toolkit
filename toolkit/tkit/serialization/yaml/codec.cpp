@@ -4,13 +4,13 @@
 
 namespace TKit
 {
-template <BuiltInCodecable T> void Codec<T>::Encode(YamlNode &node, const T &instance)
+template <BuiltInCodecable T> void YamlCodec<T>::Encode(YamlNode &node, const T &instance)
 {
     ryml::Tree *tree = node.m_Tree;
     tree->save(node.m_Id, instance);
 }
 
-template <BuiltInCodecable T> YamlReadResult Codec<T>::Decode(const YamlNode &node, T &instance)
+template <BuiltInCodecable T> YamlReadResult YamlCodec<T>::Decode(const YamlNode &node, T &instance)
 {
     const ryml::Tree *tree = node.m_Tree;
     const ryml::ReadResult res = tree->deserialize(node.m_Id, &instance);
@@ -20,27 +20,27 @@ template <BuiltInCodecable T> YamlReadResult Codec<T>::Decode(const YamlNode &no
     return YamlReadResult::Ok();
 }
 
-void Codec<std::string_view>::Encode(YamlNode &node, const std::string_view &instance)
+void YamlCodec<std::string_view>::Encode(YamlNode &node, const std::string_view &instance)
 {
     ryml::Tree *tree = node.m_Tree;
     tree->save(node.m_Id, instance);
 }
 
-template struct Codec<u8>;
-template struct Codec<u16>;
-template struct Codec<u32>;
-template struct Codec<u64>;
+template struct YamlCodec<u8>;
+template struct YamlCodec<u16>;
+template struct YamlCodec<u32>;
+template struct YamlCodec<u64>;
 
-template struct Codec<i8>;
-template struct Codec<i16>;
-template struct Codec<i32>;
-template struct Codec<i64>;
+template struct YamlCodec<i8>;
+template struct YamlCodec<i16>;
+template struct YamlCodec<i32>;
+template struct YamlCodec<i64>;
 
-template struct Codec<f32>;
-template struct Codec<f64>;
+template struct YamlCodec<f32>;
+template struct YamlCodec<f64>;
 
-template struct Codec<bool>;
+template struct YamlCodec<bool>;
 
-template struct Codec<char *>;
-template struct Codec<std::string>;
+template struct YamlCodec<char *>;
+template struct YamlCodec<std::string>;
 } // namespace TKit

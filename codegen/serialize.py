@@ -15,7 +15,7 @@ def parse_arguments() -> Namespace:
     desc = """
     This python script takes in a C++ file and scans it for classes/structs marked with the
     toolkit macro TKIT_SERIALIZE_DECLARE. If it finds any instance of this macro, it will generate
-    another C++ file containing a template specialization of a special serialization class (called Codec)
+    another C++ file containing a template specialization of a special serialization class (called YamlCodec)
     which will contain the necessary code to serialize and deserialize the class members for the specified backend.
 
     It is also possible to group fields with the macros TKIT_SERIALIZE_GROUP_BEGIN and TKIT_SERIALIZE_GROUP_END,
@@ -121,13 +121,13 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
 
             with hpp.doc():
                 hpp.brief(
-                    f"This is an auto-generated specialization of the placeholder `TKit::Codec` struct containing {backend} serialization code for `{enum.id.identifier}`."
+                    f"This is an auto-generated specialization of the placeholder `TKit::YamlCodec` struct containing {backend} serialization code for `{enum.id.identifier}`."
                 )
                 hpp(
-                    f"For serialization to work, this file must be included before any `TKit::Codec` instantiations occur. If `{enum.id.identifier}` also includes fields that have automatic serialization code, such files must also be included."
+                    f"For serialization to work, this file must be included before any `TKit::YamlCodec` instantiations occur. If `{enum.id.identifier}` also includes fields that have automatic serialization code, such files must also be included."
                 )
             with hpp.scope(
-                f"template <> struct Codec<{enum.id.name}>",
+                f"template <> struct YamlCodec<{enum.id.name}>",
                 closer="};",
             ):
                 with hpp.doc():
@@ -172,10 +172,10 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
 
             with hpp.doc():
                 hpp.brief(
-                    f"This is an auto-generated specialization of the placeholder `TKit::Codec` struct containing {backend} serialization code for `{clsinfo.id.identifier}`."
+                    f"This is an auto-generated specialization of the placeholder `TKit::YamlCodec` struct containing {backend} serialization code for `{clsinfo.id.identifier}`."
                 )
                 hpp(
-                    f"For serialization to work, this file must be included before any `TKit::Codec` instantiations occur. If `{clsinfo.id.identifier}` also includes fields that have automatic serialization code, such files must also be included."
+                    f"For serialization to work, this file must be included before any `TKit::YamlCodec` instantiations occur. If `{clsinfo.id.identifier}` also includes fields that have automatic serialization code, such files must also be included."
                 )
                 hpp(
                     f"You may customize how each field gets (de)serialized by grouping them with the macro pair `{gpair.begin}` and `{gpair.end}`, and adding options to the group to modify the generated code for the (de)serialization of those fields. The available options are the following:"
@@ -192,7 +192,7 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                 )
 
             with hpp.scope(
-                f"template <{clsinfo.id.templdecl if clsinfo.id.templdecl is not None else ''}> struct Codec<{clsinfo.id.identifier}>",
+                f"template <{clsinfo.id.templdecl if clsinfo.id.templdecl is not None else ''}> struct YamlCodec<{clsinfo.id.identifier}>",
                 closer="};",
             ):
                 if not fields:
