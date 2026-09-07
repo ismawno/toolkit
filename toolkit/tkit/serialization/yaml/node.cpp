@@ -19,10 +19,6 @@ YamlNode YamlNode::ByKey(const StringView key) const
     const u32 id = m_Tree->find_child(m_Id, toNative(key));
     return {m_Tree, id};
 }
-YamlNode YamlNode::ByKey(const u32 key) const
-{
-    return ByKey(std::to_string(key));
-}
 YamlNode YamlNode::ByKey(const StringView key)
 {
     TKIT_ASSERT(!IsSequence(), "[TOOLKIT][YAML] Cannot access a sequence node by key");
@@ -38,10 +34,6 @@ YamlNode YamlNode::ByKey(const StringView key)
         m_Tree->set_val(id, "~");
     }
     return {m_Tree, id};
-}
-YamlNode YamlNode::ByKey(const u32 key)
-{
-    return ByKey(std::to_string(key));
 }
 
 YamlNode YamlNode::operator[](const u32 idx) const

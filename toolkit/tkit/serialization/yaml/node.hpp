@@ -97,10 +97,15 @@ class YamlNode
     }
 
     YamlNode ByKey(StringView key) const;
-    YamlNode ByKey(u32 idx) const;
-
     YamlNode ByKey(StringView key);
-    YamlNode ByKey(u32 idx);
+    template <TKit::Integer T> YamlNode ByKey(const T &key) const
+    {
+        return ByKey(std::to_string(key));
+    }
+    template <TKit::Integer T> YamlNode ByKey(const T &key)
+    {
+        return ByKey(std::to_string(key));
+    }
 
     YamlNode operator[](const StringView key) const
     {
