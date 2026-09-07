@@ -226,6 +226,11 @@ class YamlNode
         return {m_Tree, NullYamlNodeId};
     }
 
+    operator bool() const
+    {
+        return m_Id != NullYamlNodeId;
+    }
+
   private:
     ryml::Tree *m_Tree;
     u32 m_Id;
