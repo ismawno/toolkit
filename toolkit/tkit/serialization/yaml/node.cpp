@@ -22,17 +22,18 @@ YamlNode YamlNode::operator[](const StringView str) const
 }
 YamlNode YamlNode::operator[](const u32 idx) const
 {
-    TKIT_ASSERT(GetFlags() & YamlNodeFlag_Sequence,
-                "[TOOLKIT][YAML] To access a read-only node by index, parent node must be a sequence");
     const u32 id = m_Tree->child(m_Id, idx);
-    TKIT_ASSERT(id != ryml::NONE, "[TOOLKIT][YAML] Child with index {} not found", idx);
+    if (id == ryml::NONE)
+        return (*this)[std::to_string(idx)];
+
     return {m_Tree, id};
 }
 
 YamlNode YamlNode::operator[](const StringView str)
 {
-    TKIT_ASSERT(!(GetFlags() & YamlNodeFlag_Sequence), "[TOOLKIT][YAML] Cannot access a sequence node by key");
-    if (!(GetFlags() & YamlNodeFlag_Map))
+    const YamlNodeFlags flags = GetFlags();
+    TKIT_ASSERT(!(flags & YamlNodeFlag_Sequence), "[TOOLKIT][YAML] Cannot access a sequence node by key");
+    if (!(flags & YamlNodeFlag_Map))
         AddFlags(YamlNodeFlag_Map);
 
     const c4::csubstr cstr = toNative(str);
@@ -46,8 +47,11 @@ YamlNode YamlNode::operator[](const StringView str)
 }
 YamlNode YamlNode::operator[](const u32 idx)
 {
-    TKIT_ASSERT(!(GetFlags() & YamlNodeFlag_Map), "[TOOLKIT][YAML] Cannot access a map node by index");
-    if (!(GetFlags() & YamlNodeFlag_Sequence))
+    const YamlNodeFlags flags = GetFlags();
+    if ((flags & YamlNodeFlag_Map) || (!(flags & YamlNodeFlag_Sequence) && idx != 0))
+        return (*this)[std::to_string(idx)];
+
+    if (!(flags & YamlNodeFlag_Sequence))
         AddFlags(YamlNodeFlag_Sequence);
 
     const u32 id = m_Tree->child(m_Id, idx);
