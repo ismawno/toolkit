@@ -15,8 +15,7 @@ static StringView fromNative(const c4::csubstr str)
 
 YamlNode YamlNode::operator[](const StringView str) const
 {
-    TKIT_ASSERT(GetFlags() & YamlNodeFlag_Map,
-                "[TOOLKIT][YAML] To access a read-only node by key, parent node must be a map");
+    TKIT_ASSERT(IsMap(), "[TOOLKIT][YAML] To access a read-only node by key, parent node must be a map");
     const u32 id = m_Tree->find_child(m_Id, toNative(str));
     return {m_Tree, id};
 }
@@ -31,9 +30,8 @@ YamlNode YamlNode::operator[](const u32 idx) const
 
 YamlNode YamlNode::operator[](const StringView str)
 {
-    const YamlNodeFlags flags = GetFlags();
-    TKIT_ASSERT(!(flags & YamlNodeFlag_Sequence), "[TOOLKIT][YAML] Cannot access a sequence node by key");
-    if (!(flags & YamlNodeFlag_Map))
+    TKIT_ASSERT(!IsSequence(), "[TOOLKIT][YAML] Cannot access a sequence node by key");
+    if (!IsMap())
         AddFlags(YamlNodeFlag_Map);
 
     const c4::csubstr cstr = toNative(str);
@@ -47,11 +45,10 @@ YamlNode YamlNode::operator[](const StringView str)
 }
 YamlNode YamlNode::operator[](const u32 idx)
 {
-    const YamlNodeFlags flags = GetFlags();
-    if ((flags & YamlNodeFlag_Map) || (!(flags & YamlNodeFlag_Sequence) && idx != 0))
+    if (IsMap() || (!IsSequence() && idx != 0))
         return (*this)[std::to_string(idx)];
 
-    if (!(flags & YamlNodeFlag_Sequence))
+    if (!IsSequence())
         AddFlags(YamlNodeFlag_Sequence);
 
     const u32 id = m_Tree->child(m_Id, idx);

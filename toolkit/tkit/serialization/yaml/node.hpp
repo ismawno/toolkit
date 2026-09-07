@@ -245,6 +245,35 @@ class YamlNode
         return m_Id != NullYamlNodeId;
     }
 
+    bool IsMap() const
+    {
+        return GetFlags() & YamlNodeFlag_Map;
+    }
+    bool IsSequence() const
+    {
+        return GetFlags() & YamlNodeFlag_Sequence;
+    }
+    bool IsContainer() const
+    {
+        return GetFlags() & (YamlNodeFlag_Map | YamlNodeFlag_Sequence);
+    }
+    bool IsScalar() const
+    {
+        return (GetFlags() & YamlNodeFlag_Value) && !IsContainer();
+    }
+    bool HasKey() const
+    {
+        return GetFlags() & YamlNodeFlag_Key;
+    }
+    bool HasValue() const
+    {
+        return GetFlags() & YamlNodeFlag_Value;
+    }
+    bool IsKeyValue() const
+    {
+        return (GetFlags() & YamlNodeFlag_KeyValue) == YamlNodeFlag_KeyValue;
+    }
+
   private:
     ryml::Tree *m_Tree;
     u32 m_Id;

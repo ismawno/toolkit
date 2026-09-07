@@ -24,7 +24,7 @@ template <typename T, usize N> struct YamlCodec<FixedArray<T, N>>
 
     static YamlReadResult Decode(const YamlNode &node, FixedArray<T, N> &instance)
     {
-        if (!(node.GetFlags() & YamlNodeFlag_Sequence) || node.GetChildCount() > N)
+        if (!node.IsSequence() || node.GetChildCount() > N)
             return YamlReadResult::Error(node.GetId(),
                                          TierString::Format("Failed to decode: Child count ({}) is greater than array "
                                                             "capacity ({}) or the node is not a sequence",
@@ -66,7 +66,7 @@ template <typename T, typename AllocState> struct YamlCodec<Array<T, AllocState>
         }
         else
         {
-            if (!(node.GetFlags() & YamlNodeFlag_Sequence))
+            if (!node.IsSequence())
                 return YamlReadResult::Error(node.GetId(), "Node must be a sequence to decode array");
 
             if constexpr (Array<T, AllocState>::Type != Array_Static)

@@ -16,7 +16,7 @@ template <typename T> struct YamlCodec<qua<T>>
 
     static YamlReadResult Decode(const YamlNode &node, qua<T> &instance)
     {
-        if (!(node.GetFlags() & YamlNodeFlag_Sequence) || node.GetChildCount() != 4)
+        if (!node.IsSequence() || node.GetChildCount() != 4)
             return YamlReadResult::Error(
                 node.GetId(), TierString::Format("Failed to decode: Child count ({}) is not equal to 4 for quaternion "
                                                  "or the node is not a sequence",
