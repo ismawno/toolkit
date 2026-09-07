@@ -58,6 +58,9 @@ YamlNode YamlNode::operator[](const u32 idx)
 
 YamlNode YamlNode::Append()
 {
+    TKIT_ASSERT(!IsMap(), "[TOOLKIT][YAML] Cannot append children to a map");
+    if (!IsSequence())
+        AddFlags(YamlNodeFlag_Sequence);
     return YamlNode{m_Tree, m_Tree->append_child(m_Id)};
 }
 
