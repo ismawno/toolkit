@@ -343,15 +343,32 @@ namespace TKit::Detail
 {
 void CheckYamlReadResult(const YamlReadResult &res, const ryml::Tree *tree)
 {
-    if (tree && !res && tree->has_val(res.GetError().NodeId))
+    if (res)
+        return;
+
+    const YamlReadError &err = res.GetError();
+    const bool hasVal = tree && tree->has_val(err.NodeId);
+    const bool hasKey = tree && tree->has_key(err.NodeId);
+
+    if (hasKey && hasVal)
+    {
+        TKIT_PANIC("[TOOLKIT][YAML] Failed to read node with message - '{}' - Key: {} - Value: {} - Faulty id: {}",
+                   fromNative(tree->key(err.NodeId)), fromNative(tree->val(err.NodeId)), err.Message, err.NodeId);
+    }
+    else if (hasKey)
+    {
+        TKIT_PANIC("[TOOLKIT][YAML] Failed to read node with message - '{}' - Key: {} - Faulty id: {}",
+                   fromNative(tree->key(err.NodeId)), err.Message, err.NodeId);
+    }
+    else if (hasVal)
     {
         TKIT_PANIC("[TOOLKIT][YAML] Failed to read node with message - '{}' - Value: {} - Faulty id: {}",
-                   fromNative(tree->val(res.GetError().NodeId)), res.GetError().Message, res.GetError().NodeId);
+                   fromNative(tree->val(err.NodeId)), err.Message, err.NodeId);
     }
     else
     {
-        TKIT_ENSURE(res, "[TOOLKIT][YAML] Failed to read node with message - '{}' - Faulty id: {}",
-                    res.GetError().Message, res.GetError().NodeId);
+        TKIT_ENSURE(res, "[TOOLKIT][YAML] Failed to read node with message - '{}' - Faulty id: {}", err.Message,
+                    err.NodeId);
     }
 }
 } // namespace TKit::Detail
