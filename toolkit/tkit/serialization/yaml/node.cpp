@@ -12,123 +12,281 @@ static StringView fromNative(const c4::csubstr str)
 {
     return StringView{str.data(), usize(str.size())};
 }
-
-YamlNode YamlNode::ByKey(const StringView key) const
+ConstYamlNode::ConstYamlNode()
 {
-    TKIT_ASSERT(IsMap(), "[TOOLKIT][YAML] To access a read-only node by key, parent node must be a map");
-    const u32 id = m_Tree->find_child(m_Id, toNative(key));
-    return {m_Tree, id};
+    m_Data.Construct<ryml::ConstNodeRef>();
 }
-YamlNode YamlNode::ByKey(const StringView key)
+ConstYamlNode::ConstYamlNode(const ryml::ConstNodeRef &ref)
 {
-    TKIT_ASSERT(!IsSequence(), "[TOOLKIT][YAML] Cannot access a sequence node by key");
-    if (!IsMap())
-        AddFlags(YamlNodeFlag_Map);
-
-    c4::csubstr cstr = toNative(key);
-    u32 id = m_Tree->find_child(m_Id, cstr);
-    if (id == ryml::NONE)
-    {
-        cstr = m_Tree->copy_to_arena(cstr);
-        id = m_Tree->append_child(m_Id);
-        m_Tree->set_key(id, cstr);
-        // m_Tree->set_val(id, "~");
-    }
-    return {m_Tree, id};
+    m_Data.Construct<ryml::ConstNodeRef>(ref);
+}
+ConstYamlNode::ConstYamlNode(const ryml::NodeRef &ref)
+{
+    m_Data.Construct<ryml::ConstNodeRef>(ref);
 }
 
-YamlNode YamlNode::operator[](const u32 idx) const
+ConstYamlNode ConstYamlNode::ByKey(const StringView key) const
 {
-    const u32 id = m_Tree->child(m_Id, idx);
-    TKIT_ASSERT(id != ryml::NONE, "[ONYX][YAML] Child with index {} was not found", idx);
-    return {m_Tree, id};
+    return (*get())[toNative(key)];
+}
+
+ConstYamlNode ConstYamlNode::operator[](const u32 idx) const
+{
+    return (*get())[idx];
+}
+
+ConstYamlNode ConstYamlNode::GetParent() const
+{
+    return get()->parent();
+}
+
+StringView ConstYamlNode::GetKey() const
+{
+    return fromNative(get()->key());
+}
+StringView ConstYamlNode::GetValue() const
+{
+    return fromNative(get()->val());
+}
+u32 ConstYamlNode::GetChildCount() const
+{
+    return get()->num_children();
+}
+u32 ConstYamlNode::GetId() const
+{
+    return get()->id();
+}
+
+ConstYamlNode ConstYamlNode::FirstChild() const
+{
+    return get()->first_child();
+}
+ConstYamlNode ConstYamlNode::NextSibling() const
+{
+    return get()->next_sibling();
+}
+
+template <typename T> YamlReadResult ConstYamlNode::TryReadKey(T &key) const
+{
+    const ryml::ReadResult res = get()->deserialize_key(&key);
+    if (!res)
+        return YamlReadResult::Error(res.node, "Failed to deserialize key");
+    return YamlReadResult::Ok();
+}
+
+YamlNodeFlags ConstYamlNode::GetFlags() const
+{
+    return YamlNodeFlags(get()->type());
+}
+
+YamlNodeFlags ConstYamlNode::GetKeyFlags() const
+{
+    return get()->key_style();
+}
+
+ConstYamlNode::operator bool() const
+{
+    return get()->readable();
+}
+
+bool ConstYamlNode::IsMap() const
+{
+    return get()->is_map();
+}
+bool ConstYamlNode::IsSequence() const
+{
+    return get()->is_seq();
+}
+bool ConstYamlNode::IsContainer() const
+{
+    return get()->is_container();
+}
+bool ConstYamlNode::IsScalar() const
+{
+    return get()->has_val() && !get()->is_container();
+}
+bool ConstYamlNode::HasKey() const
+{
+    return get()->has_key();
+}
+bool ConstYamlNode::HasValue() const
+{
+    return get()->has_val();
+}
+bool ConstYamlNode::IsKeyValue() const
+{
+    return get()->is_keyval();
+}
+
+YamlNode::YamlNode()
+{
+    m_Data.Construct<ryml::NodeRef>();
+}
+YamlNode::YamlNode(const ryml::NodeRef &ref)
+{
+    m_Data.Construct<ryml::NodeRef>(ref);
+}
+
+ConstYamlNode YamlNode::ByKey(const StringView key) const
+{
+    return (*get())[toNative(key)];
+}
+YamlNode YamlNode::ByKey(const StringView key, const bool copyKey)
+{
+    get()->set_map();
+
+    c4::csubstr k = toNative(key);
+    if (copyKey)
+        k = get()->tree()->copy_to_arena(k);
+    return (*get())[k];
+}
+
+ConstYamlNode YamlNode::operator[](const u32 idx) const
+{
+    return (*get())[idx];
 }
 
 YamlNode YamlNode::operator[](const u32 idx)
 {
-    const u32 id = m_Tree->child(m_Id, idx);
-    TKIT_ASSERT(id != ryml::NONE, "[TOOLKIT][YAML] Child with index {} not found", idx);
-    return {m_Tree, id};
+    get()->set_seq();
+    return (*get())[idx];
 }
 
 YamlNode YamlNode::Append()
 {
-    TKIT_ASSERT(!IsMap(), "[TOOLKIT][YAML] Cannot append children to a map");
-    if (!IsSequence())
-        AddFlags(YamlNodeFlag_Sequence);
-    return YamlNode{m_Tree, m_Tree->append_child(m_Id)};
+    return get()->append_child();
 }
 
-YamlNode YamlNode::GetParent() const
+ConstYamlNode YamlNode::GetParent() const
 {
-    return YamlNode{m_Tree, m_Tree->parent(m_Id)};
+    return get()->parent();
 }
 
 StringView YamlNode::GetKey() const
 {
-    return fromNative(m_Tree->key(m_Id));
+    return fromNative(get()->key());
 }
 StringView YamlNode::GetValue() const
 {
-    return fromNative(m_Tree->val(m_Id));
+    return fromNative(get()->val());
 }
 u32 YamlNode::GetChildCount() const
 {
-    return m_Tree->num_children(m_Id);
+    return get()->num_children();
+}
+u32 YamlNode::GetId() const
+{
+    return get()->id();
 }
 
-YamlNode YamlNode::FirstChild() const
+ConstYamlNode YamlNode::FirstChild() const
 {
-    return {m_Tree, m_Tree->first_child(m_Id)};
+    return get()->first_child();
 }
-YamlNode YamlNode::NextSibling() const
+ConstYamlNode YamlNode::NextSibling() const
 {
-    return {m_Tree, m_Tree->next_sibling(m_Id)};
+    return get()->next_sibling();
+}
+
+YamlNode YamlNode::FirstChild()
+{
+    return get()->first_child();
+}
+YamlNode YamlNode::NextSibling()
+{
+    return get()->next_sibling();
 }
 
 void YamlNode::SetValue(const StringView val)
 {
-    m_Tree->set_val(m_Id, toNative(val));
+    get()->set_val(toNative(val));
 }
-void YamlNode::SetKey(const StringView key)
+void YamlNode::SetKey(const StringView key, const bool copy)
 {
-    const c4::csubstr cstr = m_Tree->copy_to_arena(toNative(key));
-    m_Tree->set_key(m_Id, cstr);
+    c4::csubstr k = toNative(key);
+    if (copy)
+        k = get()->tree()->copy_to_arena(k);
+    get()->set_key(k);
 }
 
 template <typename T> YamlReadResult YamlNode::TryReadKey(T &key) const
 {
-    const ryml::ReadResult res = m_Tree->deserialize_key(m_Id, &key);
+    const ryml::ReadResult res = get()->deserialize_key(&key);
     if (!res)
         return YamlReadResult::Error(res.node, "Failed to deserialize key");
     return YamlReadResult::Ok();
 }
 template <typename T> void YamlNode::WriteKey(const T &key)
 {
-    m_Tree->save_key(m_Id, key);
+    get()->save_key(key);
 }
 
 YamlNodeFlags YamlNode::GetFlags() const
 {
-    return YamlNodeFlags(m_Tree->type(m_Id));
+    return YamlNodeFlags(get()->type());
 }
 void YamlNode::SetFlags(const YamlNodeFlags flags)
 {
-    if (m_Tree->has_val(m_Id))
-        m_Tree->set_val_style(m_Id, flags);
+    if (flags & YamlNodeFlag_Style)
+        get()->set_val_style(flags);
     if (flags & ~YamlNodeFlag_Style)
-        m_Tree->change_type(m_Id, flags);
+        get()->change_type(flags);
 }
 
 YamlNodeFlags YamlNode::GetKeyFlags() const
 {
-    return m_Tree->key_style(m_Id);
+    return get()->key_style();
 }
 
 void YamlNode::SetKeyFlags(const YamlNodeFlags flags)
 {
-    m_Tree->set_key_style(m_Id, flags);
+    get()->set_key_style(flags);
 }
+
+YamlNode::operator bool() const
+{
+    return get()->readable();
+}
+
+bool YamlNode::IsMap() const
+{
+    return get()->is_map();
+}
+bool YamlNode::IsSequence() const
+{
+    return get()->is_seq();
+}
+bool YamlNode::IsContainer() const
+{
+    return get()->is_container();
+}
+bool YamlNode::IsScalar() const
+{
+    return get()->has_val() && !get()->is_container();
+}
+bool YamlNode::HasKey() const
+{
+    return get()->has_key();
+}
+bool YamlNode::HasValue() const
+{
+    return get()->has_val();
+}
+bool YamlNode::IsKeyValue() const
+{
+    return get()->is_keyval();
+}
+template YamlReadResult ConstYamlNode::TryReadKey(u8 &) const;
+template YamlReadResult ConstYamlNode::TryReadKey(u16 &) const;
+template YamlReadResult ConstYamlNode::TryReadKey(u32 &) const;
+template YamlReadResult ConstYamlNode::TryReadKey(u64 &) const;
+template YamlReadResult ConstYamlNode::TryReadKey(i8 &) const;
+template YamlReadResult ConstYamlNode::TryReadKey(i16 &) const;
+template YamlReadResult ConstYamlNode::TryReadKey(i32 &) const;
+template YamlReadResult ConstYamlNode::TryReadKey(i64 &) const;
+template YamlReadResult ConstYamlNode::TryReadKey(f32 &) const;
+template YamlReadResult ConstYamlNode::TryReadKey(f64 &) const;
+
 template YamlReadResult YamlNode::TryReadKey(u8 &) const;
 template YamlReadResult YamlNode::TryReadKey(u16 &) const;
 template YamlReadResult YamlNode::TryReadKey(u32 &) const;

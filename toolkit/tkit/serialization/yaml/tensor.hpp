@@ -14,7 +14,7 @@ template <typename T, usize N0, usize... N> struct YamlCodec<ten<T, N0, N...>>
         node |= YamlNodeFlag_FlowSingleLine;
     }
 
-    static YamlReadResult Decode(const YamlNode &node, ten<T, N0, N...> &instance)
+    static YamlReadResult Decode(const ConstYamlNode &node, ten<T, N0, N...> &instance)
     {
         constexpr usize size = (N0 * ... * N);
         if (!node.IsSequence() || node.GetChildCount() != size)

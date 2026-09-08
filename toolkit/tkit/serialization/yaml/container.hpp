@@ -22,7 +22,7 @@ template <typename T, usize N> struct YamlCodec<FixedArray<T, N>>
             node.Append(element);
     }
 
-    static YamlReadResult Decode(const YamlNode &node, FixedArray<T, N> &instance)
+    static YamlReadResult Decode(const ConstYamlNode &node, FixedArray<T, N> &instance)
     {
         if (!node.IsSequence() || node.GetChildCount() > N)
             return YamlReadResult::Error(node.GetId(),
@@ -49,7 +49,7 @@ template <typename T, typename AllocState> struct YamlCodec<Array<T, AllocState>
                 node.Append(element);
     }
 
-    static YamlReadResult Decode(const YamlNode &node, Array<T, AllocState> &instance)
+    static YamlReadResult Decode(const ConstYamlNode &node, Array<T, AllocState> &instance)
     {
         if constexpr (Array<T, AllocState>::IsString)
         {
@@ -76,7 +76,7 @@ template <typename T, typename AllocState> struct YamlCodec<Array<T, AllocState>
                     node.GetId(), TierString::Format("Not enough capacity ({}) to deserialize array of size {}",
                                                      instance.GetCapacity(), node.GetChildCount()));
 
-            for (const YamlNode element : node)
+            for (const ConstYamlNode element : node)
             {
                 T &elm = instance.Append();
                 TKIT_RETURN_IF_FAILED(element.TryRead(elm));

@@ -7,7 +7,6 @@
 
 #include "tkit/container/span.hpp"
 #include "tkit/serialization/yaml/node.hpp"
-#include "tkit/utils/non_copyable.hpp"
 #include <filesystem>
 
 namespace TKit
@@ -16,17 +15,15 @@ namespace fs = std::filesystem;
 
 class YamlTree
 {
-    TKIT_NON_COPYABLE(YamlTree)
   public:
     YamlTree();
-    YamlTree(c4::yml::Tree *tree) : m_Tree(tree)
-    {
-    }
-
-    YamlTree(YamlTree &&other) = default;
-    YamlTree &operator=(YamlTree &&other) = default;
-
     ~YamlTree();
+
+    YamlTree(const YamlTree &other);
+    YamlTree(YamlTree &&other);
+
+    YamlTree &operator=(const YamlTree &other);
+    YamlTree &operator=(YamlTree &&other);
 
     static YamlTree FromString(StringView str);
     static YamlTree FromFile(const fs::path &path);
@@ -34,9 +31,18 @@ class YamlTree
     template <typename Str> Str ToString() const;
     void ToFile(const fs::path &path) const;
 
-    YamlNode GetRoot() const;
+    ConstYamlNode GetRoot() const;
+    YamlNode GetRoot();
 
   private:
-    ryml::Tree *m_Tree;
+    const ryml::Tree *get() const
+    {
+        return m_Data.Get<ryml::Tree>();
+    }
+    ryml::Tree *get()
+    {
+        return m_Data.Get<ryml::Tree>();
+    }
+    RawStorage<256> m_Data;
 };
 } // namespace TKit

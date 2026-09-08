@@ -151,7 +151,9 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                     hpp.param("node", "A node with serialization information.")
                     hpp.param("instance", f"An instance of type `{enum.id.identifier}`.")
 
-                with hpp.scope(f"static YamlReadResult Decode(const YamlNode &node, {enum.id.identifier} &instance)"):
+                with hpp.scope(
+                    f"static YamlReadResult Decode(const ConstYamlNode &node, {enum.id.identifier} &instance)"
+                ):
                     hpp(f"std::string val;")
                     hpp(f"const YamlReadResult res = node.TryRead(val);")
                     with hpp.scope("if (!res)", delimiters=False):
@@ -231,13 +233,13 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
 
                 with hpp.doc():
                     hpp.brief(
-                        f"Decode an instance of type `{clsinfo.id.identifier}` from a `YamlNode` (deserialization step)."
+                        f"Decode an instance of type `{clsinfo.id.identifier}` from a `ConstYamlNode` (deserialization step)."
                     )
                     hpp.param("node", "A node with serialization information.")
                     hpp.param("instance", f"An instance of type `{clsinfo.id.identifier}`.")
 
                 with hpp.scope(
-                    f"static YamlReadResult Decode(const YamlNode &node, {clsinfo.id.identifier} &instance)"
+                    f"static YamlReadResult Decode(const ConstYamlNode &node, {clsinfo.id.identifier} &instance)"
                 ):
                     for field, options in fields:
                         if in_options("only-serialize", options):

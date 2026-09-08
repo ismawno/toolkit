@@ -1,7 +1,6 @@
 #pragma once
 
 #include "tkit/memory/memory.hpp"
-#include "tkit/utils/non_copyable.hpp"
 namespace TKit
 {
 /**
@@ -20,7 +19,6 @@ namespace TKit
  */
 template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStorage
 {
-    TKIT_NON_COPYABLE(RawStorage)
   public:
     constexpr RawStorage() = default;
 

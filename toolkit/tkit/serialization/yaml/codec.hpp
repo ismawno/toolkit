@@ -72,7 +72,7 @@ template <typename T> struct YamlCodec
 #endif
     }
 
-    static YamlReadResult Decode(const YamlNode &node, T &instance)
+    static YamlReadResult Decode(const ConstYamlNode &node, T &instance)
     {
 #ifdef TKIT_SERIALIZATION_FROM_REFLECTION
         static_assert(Reflect<T>::Implemented || std::is_enum_v<T>,
@@ -131,7 +131,7 @@ template <typename T> struct YamlCodec
 
 template <typename T> void Serialize(const fs::path &path, const T &instance)
 {
-    const YamlTree tree{};
+    YamlTree tree{};
     tree.GetRoot() << instance;
     tree.ToFile(path);
 }
@@ -159,7 +159,7 @@ concept BuiltInCodecable =
 template <BuiltInCodecable T> struct YamlCodec<T>
 {
     static void Encode(YamlNode &node, const T &instance);
-    static YamlReadResult Decode(const YamlNode &node, T &instance);
+    static YamlReadResult Decode(const ConstYamlNode &node, T &instance);
 };
 
 template <> struct YamlCodec<std::string_view>

@@ -12,7 +12,9 @@
 namespace c4::yml
 {
 class Tree;
-}
+class ConstNodeRef;
+class NodeRef;
+} // namespace c4::yml
 
 namespace TKit
 {
@@ -89,29 +91,155 @@ void CheckYamlReadResult(const YamlReadResult &res);
 namespace TKit
 {
 constexpr u32 NullYamlNodeId = TKIT_U32_MAX;
+class ConstYamlNode
+{
+  public:
+    ConstYamlNode();
+    ConstYamlNode(const ryml::ConstNodeRef &ref);
+    ConstYamlNode(const ryml::NodeRef &ref);
+
+    ConstYamlNode ByKey(StringView key) const;
+    template <TKit::Integer T> ConstYamlNode ByKey(const T &key) const
+    {
+        return ByKey(std::to_string(key));
+    }
+    ConstYamlNode operator[](const StringView key) const
+    {
+        return ByKey(key);
+    }
+    ConstYamlNode operator[](u32 idx) const;
+    ConstYamlNode GetParent() const;
+
+    StringView GetKey() const;
+    StringView GetValue() const;
+
+    u32 GetChildCount() const;
+    u32 GetId() const;
+
+    ConstYamlNode FirstChild() const;
+    ConstYamlNode NextSibling() const;
+
+    YamlNodeFlags GetFlags() const;
+    YamlNodeFlags GetKeyFlags() const;
+    template <typename T> YamlReadResult TryRead(T &val) const
+    {
+        return YamlCodec<T>::Decode(*this, val);
+    }
+
+    template <typename T> void Read(T &val) const
+    {
+        TKIT_CHECK_YAML_RESULT(TryRead(val));
+    }
+    template <typename T, typename... Args> T Read(Args &&...args) const
+    {
+        T val{std::forward<Args>(args)...};
+        Read(val);
+        return val;
+    }
+    template <typename T> YamlReadResult TryReadKey(T &key) const;
+
+    template <typename T> void ReadKey(T &key) const
+    {
+        TKIT_CHECK_YAML_RESULT(TryReadKey(key));
+    }
+    template <typename T, typename... Args> T ReadKey(Args &&...args) const
+    {
+        T key{std::forward<Args>(args)...};
+        ReadKey(key);
+        return key;
+    }
+    bool operator==(const ConstYamlNode &node) const
+    {
+        return GetId() == node.GetId();
+    }
+    bool operator!=(const ConstYamlNode &node) const
+    {
+        return GetId() != node.GetId();
+    }
+
+    explicit operator bool() const;
+    bool IsMap() const;
+    bool IsSequence() const;
+    bool IsContainer() const;
+    bool IsScalar() const;
+    bool HasKey() const;
+    bool HasValue() const;
+    bool IsKeyValue() const;
+
+    const ConstYamlNode &operator*()
+    {
+        return *this;
+    }
+
+    ConstYamlNode &operator++()
+    {
+        *this = NextSibling();
+        return *this;
+    }
+    ConstYamlNode operator++(int)
+    {
+        const ConstYamlNode cpy = *this;
+        ++(*this);
+        return cpy;
+    }
+
+    ConstYamlNode begin() const
+    {
+        return FirstChild();
+    }
+    ConstYamlNode end() const
+    {
+        return ConstYamlNode{};
+    }
+
+  private:
+    const ryml::ConstNodeRef *get() const
+    {
+        return m_Data.Get<ryml::ConstNodeRef>();
+    }
+    RawStorage<16> m_Data;
+    friend struct YamlCodec<u8>;
+    friend struct YamlCodec<u16>;
+    friend struct YamlCodec<u32>;
+    friend struct YamlCodec<u64>;
+
+    friend struct YamlCodec<i8>;
+    friend struct YamlCodec<i16>;
+    friend struct YamlCodec<i32>;
+    friend struct YamlCodec<i64>;
+
+    friend struct YamlCodec<f32>;
+    friend struct YamlCodec<f64>;
+
+    friend struct YamlCodec<bool>;
+
+    friend struct YamlCodec<char *>;
+    friend struct YamlCodec<std::string>;
+    friend struct YamlCodec<std::string_view>;
+};
 class YamlNode
 {
   public:
-    YamlNode(ryml::Tree *tree, const u32 id) : m_Tree(tree), m_Id(id)
-    {
-    }
+    YamlNode();
+    YamlNode(const ryml::NodeRef &ref);
 
-    YamlNode ByKey(StringView key) const;
-    YamlNode ByKey(StringView key);
-    template <TKit::Integer T> YamlNode ByKey(const T &key) const
+    ConstYamlNode ByKey(StringView key) const;
+    YamlNode ByKey(StringView key, bool copyKey = false);
+
+    template <TKit::Integer T> ConstYamlNode ByKey(const T &key) const
     {
         return ByKey(std::to_string(key));
     }
     template <TKit::Integer T> YamlNode ByKey(const T &key)
     {
-        return ByKey(std::to_string(key));
+        return ByKey(std::to_string(key), true);
     }
 
-    YamlNode operator[](const StringView key) const
+    ConstYamlNode operator[](const StringView key) const
     {
         return ByKey(key);
     }
-    YamlNode operator[](u32 idx) const;
+    ConstYamlNode operator[](u32 idx) const;
 
     YamlNode operator[](const StringView key)
     {
@@ -127,22 +255,22 @@ class YamlNode
         return node;
     }
 
-    YamlNode GetParent() const;
+    ConstYamlNode GetParent() const;
 
     StringView GetKey() const;
     StringView GetValue() const;
 
     u32 GetChildCount() const;
-    u32 GetId() const
-    {
-        return m_Id;
-    }
+    u32 GetId() const;
 
-    YamlNode FirstChild() const;
-    YamlNode NextSibling() const;
+    ConstYamlNode FirstChild() const;
+    ConstYamlNode NextSibling() const;
+
+    YamlNode FirstChild();
+    YamlNode NextSibling();
 
     void SetValue(StringView val);
-    void SetKey(StringView key);
+    void SetKey(StringView key, bool copy = false);
 
     YamlNodeFlags GetFlags() const;
     void SetFlags(YamlNodeFlags flags);
@@ -224,11 +352,11 @@ class YamlNode
 
     bool operator==(const YamlNode &node) const
     {
-        return node.m_Id == m_Id && node.m_Tree == m_Tree;
+        return GetId() == node.GetId();
     }
     bool operator!=(const YamlNode &node) const
     {
-        return node.m_Id != m_Id || node.m_Tree != m_Tree;
+        return GetId() != node.GetId();
     }
 
     YamlNode &operator++()
@@ -248,52 +376,60 @@ class YamlNode
         return *this;
     }
 
-    YamlNode begin() const
+    ConstYamlNode begin() const
     {
         return FirstChild();
     }
-    YamlNode end() const
+    ConstYamlNode end() const
     {
-        return {m_Tree, NullYamlNodeId};
+        return ConstYamlNode{};
+    }
+    YamlNode begin()
+    {
+        return FirstChild();
+    }
+    YamlNode end()
+    {
+        return YamlNode{};
     }
 
-    explicit operator bool() const
-    {
-        return m_Id != NullYamlNodeId;
-    }
+    explicit operator bool() const;
 
-    bool IsMap() const
+    bool IsMap() const;
+    bool IsSequence() const;
+    bool IsContainer() const;
+    bool IsScalar() const;
+    bool HasKey() const;
+    bool HasValue() const;
+    bool IsKeyValue() const;
+
+    friend bool operator==(const YamlNode &lhs, const ConstYamlNode &rhs)
     {
-        return GetFlags() & YamlNodeFlag_Map;
+        return lhs.GetId() == rhs.GetId();
     }
-    bool IsSequence() const
+    friend bool operator!=(const YamlNode &lhs, const ConstYamlNode &rhs)
     {
-        return GetFlags() & YamlNodeFlag_Sequence;
+        return lhs.GetId() != rhs.GetId();
     }
-    bool IsContainer() const
+    friend bool operator==(const ConstYamlNode &lhs, const YamlNode &rhs)
     {
-        return GetFlags() & (YamlNodeFlag_Map | YamlNodeFlag_Sequence);
+        return lhs.GetId() == rhs.GetId();
     }
-    bool IsScalar() const
+    friend bool operator!=(const ConstYamlNode &lhs, const YamlNode &rhs)
     {
-        return (GetFlags() & YamlNodeFlag_Value) && !IsContainer();
-    }
-    bool HasKey() const
-    {
-        return GetFlags() & YamlNodeFlag_Key;
-    }
-    bool HasValue() const
-    {
-        return GetFlags() & YamlNodeFlag_Value;
-    }
-    bool IsKeyValue() const
-    {
-        return (GetFlags() & YamlNodeFlag_KeyValue) == YamlNodeFlag_KeyValue;
+        return lhs.GetId() != rhs.GetId();
     }
 
   private:
-    ryml::Tree *m_Tree;
-    u32 m_Id;
+    const ryml::NodeRef *get() const
+    {
+        return m_Data.Get<ryml::NodeRef>();
+    }
+    ryml::NodeRef *get()
+    {
+        return m_Data.Get<ryml::NodeRef>();
+    }
+    RawStorage<32> m_Data;
 
     friend struct YamlCodec<u8>;
     friend struct YamlCodec<u16>;

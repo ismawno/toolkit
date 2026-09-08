@@ -14,7 +14,7 @@ template <typename T> struct YamlCodec<qua<T>>
         node |= YamlNodeFlag_FlowSingleLine;
     }
 
-    static YamlReadResult Decode(const YamlNode &node, qua<T> &instance)
+    static YamlReadResult Decode(const ConstYamlNode &node, qua<T> &instance)
     {
         if (!node.IsSequence() || node.GetChildCount() != 4)
             return YamlReadResult::Error(

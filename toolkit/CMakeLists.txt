@@ -54,6 +54,12 @@ if(TOOLKIT_ENABLE_YAML_SERIALIZATION)
 
   tkit_configure_compile_link_options(ryml NO_EXCEPTIONS NO_RTTI)
   target_compile_definitions(ryml PUBLIC RYML_ID_TYPE=uint32_t)
+  if(TOOLKIT_ENABLE_ENSURE)
+    target_compile_definitions(ryml PUBLIC RYML_USE_ASSERT=1)
+  else()
+    target_compile_definitions(ryml PUBLIC RYML_USE_ASSERT=0)
+  endif()
+
   list(APPEND SOURCES tkit/serialization/yaml/tree.cpp
        tkit/serialization/yaml/node.cpp tkit/serialization/yaml/codec.cpp)
 endif()

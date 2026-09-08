@@ -51,19 +51,39 @@ static ryml::Callbacks createCallbacks()
 }
 YamlTree::YamlTree()
 {
-    TierAllocator *tier = GetTier();
-    m_Tree = tier->Create<ryml::Tree>(createCallbacks());
+    m_Data.Construct<ryml::Tree>(createCallbacks());
 }
 YamlTree::~YamlTree()
 {
-    TierAllocator *tier = GetTier();
-    tier->Destroy(m_Tree);
+    m_Data.Destruct<ryml::Tree>();
+}
+
+YamlTree::YamlTree(const YamlTree &other)
+{
+    m_Data.Construct<ryml::Tree>(*other.get());
+}
+YamlTree::YamlTree(YamlTree &&other)
+{
+    m_Data.Construct<ryml::Tree>(std::move(*other.get()));
+}
+
+YamlTree &YamlTree::operator=(const YamlTree &other)
+{
+    if (this != &other)
+        *get() = *other.get();
+    return *this;
+}
+YamlTree &YamlTree::operator=(YamlTree &&other)
+{
+    if (this != &other)
+        *get() = std::move(*get());
+    return *this;
 }
 
 YamlTree YamlTree::FromString(const StringView str)
 {
     YamlTree t{};
-    ryml::parse_in_arena(toNative(str), t.m_Tree);
+    ryml::parse_in_arena(toNative(str), t.get());
     return t;
 }
 
@@ -81,18 +101,19 @@ YamlTree YamlTree::FromFile(const fs::path &path)
 
 template <typename Str> Str YamlTree::ToString() const
 {
-    const c4::substr res = ryml::emit_yaml(*m_Tree, c4::substr{}, false);
+    const ryml::Tree *tree = get();
+    const c4::substr res = ryml::emit_yaml(*tree, c4::substr{}, false);
     Str str{};
 
     if constexpr (std::is_same_v<Str, std::string>)
     {
         str.resize(res.len, 0);
-        ryml::emit_yaml(*m_Tree, c4::substr{str.data(), str.size()});
+        ryml::emit_yaml(*tree, c4::substr{str.data(), str.size()});
     }
     else
     {
         str.Resize(res.len, 0);
-        ryml::emit_yaml(*m_Tree, c4::substr{str.GetData(), str.GetSize()});
+        ryml::emit_yaml(*tree, c4::substr{str.GetData(), str.GetSize()});
     }
     return str;
 }
@@ -105,9 +126,13 @@ void YamlTree::ToFile(const fs::path &path) const
     file << str.CString();
 }
 
-YamlNode YamlTree::GetRoot() const
+ConstYamlNode YamlTree::GetRoot() const
 {
-    return {m_Tree, m_Tree->root_id()};
+    return get()->rootref();
+}
+YamlNode YamlTree::GetRoot()
+{
+    return get()->rootref();
 }
 
 template StackString YamlTree::ToString() const;
