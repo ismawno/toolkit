@@ -229,11 +229,11 @@ class YamlNode
     ConstYamlNode ByKey(StringView key) const;
     YamlNode ByKey(StringView key, bool copyKey = false);
 
-    template <TKit::Integer T> ConstYamlNode ByKey(const T &key) const
+    template <TKit::Integer T> ConstYamlNode ByKey(const T key) const
     {
         return ByKey(std::to_string(key));
     }
-    template <TKit::Integer T> YamlNode ByKey(const T &key)
+    template <TKit::Integer T> YamlNode ByKey(const T key)
     {
         return ByKey(std::to_string(key), true);
     }
@@ -249,7 +249,12 @@ class YamlNode
         return ByKey(key);
     }
     YamlNode operator[](u32 idx);
+
     bool HasChild(StringView key) const;
+    template <TKit::Integer T> bool HasChild(const T key) const
+    {
+        return HasChild(std::to_string(key));
+    }
 
     YamlNode Append();
     template <typename T> YamlNode Append(const T &val)
