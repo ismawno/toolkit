@@ -343,10 +343,10 @@ namespace TKit::Detail
 {
 void CheckYamlReadResult(const YamlReadResult &res, const ryml::Tree *tree)
 {
-    if (tree)
+    if (tree && !res && tree->has_val(res.GetError().NodeId))
     {
-        TKIT_ENSURE(res, "[TOOLKIT][YAML] Failed to read node with message - '{}' - Value: {} - Faulty id: {}",
-                    fromNative(tree->val(res.GetError().NodeId)), res.GetError().Message, res.GetError().NodeId);
+        TKIT_PANIC("[TOOLKIT][YAML] Failed to read node with message - '{}' - Value: {} - Faulty id: {}",
+                   fromNative(tree->val(res.GetError().NodeId)), res.GetError().Message, res.GetError().NodeId);
     }
     else
     {
