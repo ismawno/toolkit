@@ -21,7 +21,7 @@ template <typename T, usize N> struct YamlCodec<FixedArray<T, N>>
         for (const T &element : instance)
             node.Append(element);
         if constexpr (Numeric<T>)
-            node |= YamlNodeFlag_ContainerFlow;
+            node |= YamlFlagsBasedOnContainer(N);
     }
 
     static YamlReadResult Decode(const ConstYamlNode &node, FixedArray<T, N> &instance)
@@ -51,7 +51,7 @@ template <typename T, typename AllocState> struct YamlCodec<Array<T, AllocState>
             for (const T &element : instance)
                 node.Append(element);
             if constexpr (Numeric<T>)
-                node |= YamlNodeFlag_ContainerFlow;
+                node |= YamlFlagsBasedOnContainer(instance.GetSize());
         }
     }
 
@@ -103,7 +103,7 @@ template <typename T> struct YamlCodec<Span<T>>
             for (const T &element : instance)
                 node.Append(element);
             if constexpr (Numeric<T>)
-                node |= YamlNodeFlag_ContainerFlow;
+                node |= YamlFlagsBasedOnContainer(instance.GetSize());
         }
     }
 };

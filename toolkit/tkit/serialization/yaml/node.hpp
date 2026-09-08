@@ -67,6 +67,13 @@ enum YamlNodeFlagBit : YamlNodeFlags
     YamlNodeFlag_Style = YamlNodeFlag_ScalarStyle | YamlNodeFlag_ContainerStyle,
 };
 
+constexpr YamlNodeFlags YamlFlagsBasedOnContainer(const usize size)
+{
+    if (size < 12)
+        return YamlNodeFlag_FlowSingleLine;
+    return YamlNodeFlag_FlowMultiLineN;
+}
+
 struct YamlReadError
 {
     u32 NodeId;

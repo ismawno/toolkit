@@ -9,9 +9,10 @@ template <typename T, usize N0, usize... N> struct YamlCodec<ten<T, N0, N...>>
 {
     static void Encode(YamlNode &node, const ten<T, N0, N...> &instance)
     {
-        for (usize i = 0; i < (N0 * ... * N); ++i)
+        constexpr usize size = (N0 * ... * N);
+        for (usize i = 0; i < size; ++i)
             node.Append(instance.Flat(i));
-        node |= YamlNodeFlag_ContainerFlow;
+        node |= YamlFlagsBasedOnContainer(size);
     }
 
     static YamlReadResult Decode(const ConstYamlNode &node, ten<T, N0, N...> &instance)

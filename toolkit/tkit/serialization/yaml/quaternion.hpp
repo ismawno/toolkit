@@ -11,7 +11,7 @@ template <typename T> struct YamlCodec<qua<T>>
     {
         for (usize i = 0; i < 4; ++i)
             node.Append(instance[i]);
-        node |= YamlNodeFlag_ContainerFlow;
+        node |= YamlNodeFlag_FlowSingleLine;
     }
 
     static YamlReadResult Decode(const ConstYamlNode &node, qua<T> &instance)
