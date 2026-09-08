@@ -11,7 +11,7 @@ template <typename T, usize N0, usize... N> struct YamlCodec<ten<T, N0, N...>>
     {
         for (usize i = 0; i < (N0 * ... * N); ++i)
             node.Append(instance.Flat(i));
-        node |= YamlNodeFlag_FlowMultiLineN;
+        node |= YamlNodeFlag_ContainerFlow;
     }
 
     static YamlReadResult Decode(const ConstYamlNode &node, ten<T, N0, N...> &instance)
