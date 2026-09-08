@@ -767,6 +767,7 @@ class Registry
         return m_Entities.Insert();
     }
     void DestroyEntity(Entity e);
+    void Clear();
 
     template <typename C> void RegisterComponent()
     {

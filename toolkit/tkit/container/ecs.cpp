@@ -253,6 +253,12 @@ void Registry::DestroyEntity(const Entity e)
     }
     m_Entities.Remove(e);
 }
+void Registry::Clear()
+{
+    const StackHive<EntityRecord> entities = m_Entities;
+    for (const Entity e : entities.GetValidIds())
+        DestroyEntity(e);
+}
 
 void Registry::cleanup()
 {
