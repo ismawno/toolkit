@@ -154,7 +154,7 @@ template <typename T, typename... Args> T Deserialize(const fs::path &path, Args
 template <typename T>
 concept BuiltInCodecable =
     Numeric<T> || std::is_same_v<std::remove_cvref_t<T>, bool> || std::is_same_v<std::remove_cvref_t<T>, char *> ||
-    std::is_same_v<std::remove_cvref_t<T>, std::string>;
+    std::is_same_v<std::remove_cvref_t<T>, const char *> || std::is_same_v<std::remove_cvref_t<T>, std::string>;
 
 template <BuiltInCodecable T> struct YamlCodec<T>
 {
