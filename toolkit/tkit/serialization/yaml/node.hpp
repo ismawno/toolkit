@@ -283,15 +283,15 @@ class YamlNode
         SetFlags(GetFlags() & ~flags);
     }
 
-    YamlNodeFlags GetKeyFlags() const;
-    void SetKeyFlags(YamlNodeFlags flags);
-    void AddKeyFlags(const YamlNodeFlags flags)
+    YamlNodeFlags GetKeyStyle() const;
+    void SetKeyStyle(YamlNodeFlags flags);
+    void AddKeyStyle(const YamlNodeFlags flags)
     {
-        SetKeyFlags(GetKeyFlags() | flags);
+        SetKeyStyle(GetKeyStyle() | flags);
     }
-    void RemoveKeyFlags(const YamlNodeFlags flags)
+    void RemoveKeyStyle(const YamlNodeFlags flags)
     {
-        SetKeyFlags(GetKeyFlags() & ~flags);
+        SetKeyStyle(GetKeyStyle() & ~flags);
     }
 
     YamlNode &operator|=(const YamlNodeFlags flags)

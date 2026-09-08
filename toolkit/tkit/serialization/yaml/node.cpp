@@ -228,18 +228,18 @@ YamlNodeFlags YamlNode::GetFlags() const
 }
 void YamlNode::SetFlags(const YamlNodeFlags flags)
 {
-    if (flags & YamlNodeFlag_Style)
+    if ((flags & YamlNodeFlag_Style) && get()->has_val())
         get()->set_val_style(flags);
     if (flags & ~YamlNodeFlag_Style)
         get()->change_type(flags);
 }
 
-YamlNodeFlags YamlNode::GetKeyFlags() const
+YamlNodeFlags YamlNode::GetKeyStyle() const
 {
     return get()->key_style();
 }
 
-void YamlNode::SetKeyFlags(const YamlNodeFlags flags)
+void YamlNode::SetKeyStyle(const YamlNodeFlags flags)
 {
     get()->set_key_style(flags);
 }
