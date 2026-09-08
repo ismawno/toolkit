@@ -154,6 +154,7 @@ YamlNode YamlNode::operator[](const u32 idx)
 
 YamlNode YamlNode::Append()
 {
+    get()->set_seq();
     return get()->append_child();
 }
 
