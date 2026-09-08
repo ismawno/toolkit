@@ -35,6 +35,11 @@ ConstYamlNode ConstYamlNode::operator[](const u32 idx) const
     return (*get())[idx];
 }
 
+bool ConstYamlNode::HasChild(const StringView key) const
+{
+    return get()->has_child(toNative(key));
+}
+
 ConstYamlNode ConstYamlNode::GetParent() const
 {
     return get()->parent();
@@ -161,6 +166,14 @@ YamlNode YamlNode::Append()
 ConstYamlNode YamlNode::GetParent() const
 {
     return get()->parent();
+}
+YamlNode YamlNode::GetParent()
+{
+    return get()->parent();
+}
+bool YamlNode::HasChild(const StringView key) const
+{
+    return get()->has_child(toNative(key));
 }
 
 StringView YamlNode::GetKey() const

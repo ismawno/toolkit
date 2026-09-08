@@ -108,6 +108,9 @@ class ConstYamlNode
         return ByKey(key);
     }
     ConstYamlNode operator[](u32 idx) const;
+
+    bool HasChild(StringView key) const;
+
     ConstYamlNode GetParent() const;
 
     StringView GetKey() const;
@@ -246,6 +249,7 @@ class YamlNode
         return ByKey(key);
     }
     YamlNode operator[](u32 idx);
+    bool HasChild(StringView key) const;
 
     YamlNode Append();
     template <typename T> YamlNode Append(const T &val)
@@ -256,6 +260,7 @@ class YamlNode
     }
 
     ConstYamlNode GetParent() const;
+    YamlNode GetParent();
 
     StringView GetKey() const;
     StringView GetValue() const;
