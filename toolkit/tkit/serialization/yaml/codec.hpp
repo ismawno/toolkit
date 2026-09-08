@@ -91,15 +91,16 @@ template <typename T> struct YamlCodec
                 if (res)
                     field.Set(instance, val);
             });
+            return res;
         }
         else
         {
             using Integer = std::underlying_type_t<T>;
             Integer i;
             const YamlReadResult res = node.TryRead(i);
-            if (!res)
-                return res;
-            instance = T(i);
+            if (res)
+                instance = T(i);
+            return res;
         }
 #else
         if constexpr (Reflect<T>::Implemented)
@@ -122,9 +123,9 @@ template <typename T> struct YamlCodec
         using Integer = std::underlying_type_t<T>;
         Integer i;
         const YamlReadResult res = node.TryRead(i);
-        if (!res)
-            return res;
-        instance = T(i);
+        if (res)
+            instance = T(i);
+        return res;
 #endif
     }
 };
