@@ -123,6 +123,11 @@ bool ConstYamlNode::IsKeyValue() const
     return get()->is_keyval();
 }
 
+const ryml::Tree *ConstYamlNode::getHandle() const
+{
+    return get()->tree();
+}
+
 YamlNode::YamlNode()
 {
     m_Data.Construct<ryml::NodeRef>();
@@ -295,6 +300,10 @@ bool YamlNode::IsKeyValue() const
 {
     return get()->is_keyval();
 }
+const ryml::Tree *YamlNode::getHandle() const
+{
+    return get()->tree();
+}
 template YamlReadResult ConstYamlNode::TryReadKey(u8 &) const;
 template YamlReadResult ConstYamlNode::TryReadKey(u16 &) const;
 template YamlReadResult ConstYamlNode::TryReadKey(u32 &) const;
@@ -332,10 +341,18 @@ template void YamlNode::WriteKey(const f64 &);
 #ifdef TKIT_ENABLE_ENSURE
 namespace TKit::Detail
 {
-void CheckYamlReadResult(const YamlReadResult &res)
+void CheckYamlReadResult(const YamlReadResult &res, const ryml::Tree *tree)
 {
-    TKIT_ENSURE(res, "[TOOLKIT][YAML] Failed to read node with message - '{}' - Faulty id: {}", res.GetError().Message,
-                res.GetError().NodeId);
+    if (tree)
+    {
+        TKIT_ENSURE(res, "[TOOLKIT][YAML] Failed to read node with message - '{}' - Value: {} - Faulty id: {}",
+                    fromNative(tree->val(res.GetError().NodeId)), res.GetError().Message, res.GetError().NodeId);
+    }
+    else
+    {
+        TKIT_ENSURE(res, "[TOOLKIT][YAML] Failed to read node with message - '{}' - Faulty id: {}",
+                    res.GetError().Message, res.GetError().NodeId);
+    }
 }
 } // namespace TKit::Detail
 #endif

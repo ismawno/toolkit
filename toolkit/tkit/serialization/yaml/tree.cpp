@@ -16,10 +16,12 @@ static c4::csubstr toNative(const StringView str)
 {
     return c4::csubstr{str.GetData(), str.GetSize()};
 }
+#ifdef TKIT_ENABLE_ENSURE
 static StringView fromNative(const c4::csubstr str)
 {
     return StringView{str.data(), usize(str.size())};
 }
+#endif
 static ryml::Callbacks createCallbacks()
 {
 #ifdef TKIT_ENABLE_ENSURE
@@ -76,7 +78,7 @@ YamlTree &YamlTree::operator=(const YamlTree &other)
 YamlTree &YamlTree::operator=(YamlTree &&other)
 {
     if (this != &other)
-        *get() = std::move(*get());
+        *get() = std::move(*other.get());
     return *this;
 }
 

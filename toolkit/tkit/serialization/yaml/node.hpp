@@ -87,12 +87,12 @@ using YamlReadResult = Result<void, YamlReadError>;
 
 namespace TKit::Detail
 {
-void CheckYamlReadResult(const YamlReadResult &res);
+void CheckYamlReadResult(const YamlReadResult &res, const ryml::Tree *tree = nullptr);
 } // namespace TKit::Detail
 
-#    define TKIT_CHECK_YAML_RESULT(expr) TKit::Detail::CheckYamlReadResult(expr)
+#    define TKIT_CHECK_YAML_RESULT(expr, ...) TKit::Detail::CheckYamlReadResult(expr __VA_OPT__(, ) __VA_ARGS__)
 #else
-#    define TKIT_CHECK_YAML_RESULT(expr) expr
+#    define TKIT_CHECK_YAML_RESULT(expr, ...) expr
 #endif
 
 namespace TKit
@@ -142,7 +142,7 @@ class ConstYamlNode
 
     template <typename T> void Read(T &val) const
     {
-        TKIT_CHECK_YAML_RESULT(TryRead(val));
+        TKIT_CHECK_YAML_RESULT(TryRead(val), getHandle());
     }
     template <typename T, typename... Args> T Read(Args &&...args) const
     {
@@ -154,7 +154,7 @@ class ConstYamlNode
 
     template <typename T> void ReadKey(T &key) const
     {
-        TKIT_CHECK_YAML_RESULT(TryReadKey(key));
+        TKIT_CHECK_YAML_RESULT(TryReadKey(key), getHandle());
     }
     template <typename T, typename... Args> T ReadKey(Args &&...args) const
     {
@@ -207,6 +207,7 @@ class ConstYamlNode
     }
 
   private:
+    const ryml::Tree *getHandle() const;
     const ryml::ConstNodeRef *get() const
     {
         return m_Data.Get<ryml::ConstNodeRef>();
@@ -334,7 +335,7 @@ class YamlNode
 
     template <typename T> void Read(T &val) const
     {
-        TKIT_CHECK_YAML_RESULT(TryRead(val));
+        TKIT_CHECK_YAML_RESULT(TryRead(val), getHandle());
     }
     template <typename T, typename... Args> T Read(Args &&...args) const
     {
@@ -351,7 +352,7 @@ class YamlNode
 
     template <typename T> void ReadKey(T &key) const
     {
-        TKIT_CHECK_YAML_RESULT(TryReadKey(key));
+        TKIT_CHECK_YAML_RESULT(TryReadKey(key), getHandle());
     }
     template <typename T, typename... Args> T ReadKey(Args &&...args) const
     {
@@ -443,6 +444,7 @@ class YamlNode
     }
 
   private:
+    const ryml::Tree *getHandle() const;
     const ryml::NodeRef *get() const
     {
         return m_Data.Get<ryml::NodeRef>();
