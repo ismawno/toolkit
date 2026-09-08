@@ -109,6 +109,7 @@ def get_fields_with_options(clsinfo: Class, /) -> list[tuple[Field, list[str]]]:
 
 def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> None:
     hpp.include(f"tkit/serialization/{backend}/codec.hpp", quotes=True)
+    hpp.include("tkit/container/tier_array.hpp")
     if classes.enums:
         hpp.include(f"tkit/utils/debug.hpp", quotes=True)
         hpp.include("string")
@@ -163,7 +164,9 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                             hpp(f"instance = {enum.id.identifier}::{entry};")
                             hpp(f"return YamlReadResult::Ok();")
 
-                    hpp(f'return YamlReadResult::Error(node.GetId(), "Unknown enum value: {{}}", val);')
+                    hpp(
+                        f'return YamlReadResult::Error(node.GetId(), TierString::Format("Unknown enum value: {{}}", val));'
+                    )
 
         for clsinfo in classes.classes:
             fields = get_fields_with_options(clsinfo)
