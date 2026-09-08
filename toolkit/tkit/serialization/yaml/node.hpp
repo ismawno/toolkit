@@ -67,11 +67,11 @@ enum YamlNodeFlagBit : YamlNodeFlags
     YamlNodeFlag_Style = YamlNodeFlag_ScalarStyle | YamlNodeFlag_ContainerStyle,
 };
 
-constexpr YamlNodeFlags YamlFlagsBasedOnContainer(const usize size)
+constexpr YamlNodeFlags YamlFlagsBasedOnContainer(const usize size, const usize maxSize = 12)
 {
-    if (size < 12)
-        return YamlNodeFlag_FlowSingleLine;
-    return YamlNodeFlag_FlowMultiLineN;
+    if (size < maxSize)
+        return YamlNodeFlag_FlowSingleLine | YamlNodeFlag_FlowSpaced;
+    return YamlNodeFlag_FlowMultiLineN | YamlNodeFlag_FlowSpaced;
 }
 
 struct YamlReadError
