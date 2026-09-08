@@ -96,7 +96,7 @@ template <typename T> struct YamlCodec
         {
             using Integer = std::underlying_type_t<T>;
             Integer i;
-            const YamlReadResult res = node.Read(i);
+            const YamlReadResult res = node.TryRead(i);
             if (!res)
                 return res;
             instance = T(i);
@@ -121,7 +121,7 @@ template <typename T> struct YamlCodec
 
         using Integer = std::underlying_type_t<T>;
         Integer i;
-        const YamlReadResult res = node.Read(i);
+        const YamlReadResult res = node.TryRead(i);
         if (!res)
             return res;
         instance = T(i);
