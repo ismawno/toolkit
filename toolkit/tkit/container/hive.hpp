@@ -170,6 +170,12 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
     {
         m_Data.Clear();
     }
+    constexpr void ClearAll()
+    {
+        m_Data.Clear();
+        m_Indices.Clear();
+        m_Ids.Clear();
+    }
 
 #define ITERATE_BY_INSERTION_ORDER(type)                                                                               \
     for (usize id = 0; id < m_Indices.GetSize(); ++id)                                                                 \

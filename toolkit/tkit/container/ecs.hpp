@@ -1002,9 +1002,19 @@ class Registry
     {
         return m_Entities.GetIndices();
     }
+    const TierArray<Entity> &GetEntityIds() const
+    {
+        return m_Entities.GetIds();
+    }
     Span<const Entity> GetEntities() const
     {
         return m_Entities.GetValidIds();
+    }
+    void EstablishEntityIndicesAndIds(const Span<const usize> indices, const Span<const Entity> ids)
+    {
+        TKIT_ASSERT(m_Entities.IsEmpty(),
+                    "[TOOLKIT][ECS] Can only establis entities indices and ids if the registry is empty");
+        m_Entities = TierHive<EntityRecord>{indices, ids};
     }
 
   private:
