@@ -114,7 +114,7 @@ template <typename Str> Str YamlTree::ToString() const
     }
     else
     {
-        str.Resize(res.len, 0);
+        str.Resize(usize(res.len), 0);
         ryml::emit_yaml(*tree, c4::substr{str.GetData(), str.GetSize()});
     }
     return str;
