@@ -32,7 +32,7 @@ YamlNode YamlNode::ByKey(const StringView key)
         cstr = m_Tree->copy_to_arena(cstr);
         id = m_Tree->append_child(m_Id);
         m_Tree->set_key(id, cstr);
-        m_Tree->set_val(id, "~");
+        // m_Tree->set_val(id, "~");
     }
     return {m_Tree, id};
 }
