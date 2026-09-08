@@ -163,7 +163,7 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                             hpp(f"instance = {enum.id.identifier}::{entry};")
                             hpp(f"return YamlReadResult::Ok();")
 
-                    hpp(f'return YamlReadResult::Error("Unknown enum value: {{}}", val);')
+                    hpp(f'return YamlReadResult::Error(node.GetId(), "Unknown enum value: {{}}", val);')
 
         for clsinfo in classes.classes:
             fields = get_fields_with_options(clsinfo)
