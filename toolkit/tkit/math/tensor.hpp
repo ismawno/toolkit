@@ -254,7 +254,7 @@ struct Tensor
     }
 
     template <typename F, typename... Args>
-        requires(TKit::Integer<Args> && ... && true)
+        requires(Integer<Args> && ... && true)
     static void IterateMultiIndex(F &&func, Args... indices)
     {
         TKit::IterateMultiIndex<N0, N...>(std::forward<F>(func), indices...);

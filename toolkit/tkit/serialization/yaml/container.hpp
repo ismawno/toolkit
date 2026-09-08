@@ -20,6 +20,8 @@ template <typename T, usize N> struct YamlCodec<FixedArray<T, N>>
     {
         for (const T &element : instance)
             node.Append(element);
+        if constexpr (Numeric<T>)
+            node |= YamlNodeFlag_FlowMultiLineN;
     }
 
     static YamlReadResult Decode(const ConstYamlNode &node, FixedArray<T, N> &instance)
@@ -44,9 +46,13 @@ template <typename T, typename AllocState> struct YamlCodec<Array<T, AllocState>
     {
         if constexpr (Array<T, AllocState>::IsString)
             node << std::string_view{instance.GetData(), instance.GetSize()};
-        else
+        else if (!instance.IsEmpty())
+        {
             for (const T &element : instance)
                 node.Append(element);
+            if constexpr (Numeric<T>)
+                node |= YamlNodeFlag_FlowMultiLineN;
+        }
     }
 
     static YamlReadResult Decode(const ConstYamlNode &node, Array<T, AllocState> &instance)
@@ -92,9 +98,13 @@ template <typename T> struct YamlCodec<Span<T>>
     {
         if constexpr (Span<T>::IsString)
             node << std::string_view{instance.GetData(), instance.GetSize()};
-        else
+        else if (!instance.IsEmpty())
+        {
             for (const T &element : instance)
                 node.Append(element);
+            if constexpr (Numeric<T>)
+                node |= YamlNodeFlag_FlowMultiLineN;
+        }
     }
 };
 
