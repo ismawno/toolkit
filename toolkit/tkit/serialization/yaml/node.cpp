@@ -228,8 +228,13 @@ YamlNodeFlags YamlNode::GetFlags() const
 }
 void YamlNode::SetFlags(const YamlNodeFlags flags)
 {
-    if ((flags & YamlNodeFlag_Style) && get()->has_val())
-        get()->set_val_style(flags);
+    if (flags & YamlNodeFlag_Style)
+    {
+        if (get()->has_val())
+            get()->set_val_style(flags);
+        else if (get()->is_container())
+            get()->set_container_style(flags);
+    }
     if (flags & ~YamlNodeFlag_Style)
         get()->change_type(flags);
 }
