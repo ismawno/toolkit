@@ -19,6 +19,11 @@ template <BuiltInCodecable T> YamlReadResult YamlCodec<T>::Decode(const ConstYam
     return YamlReadResult::Ok();
 }
 
+void YamlCodec<const char *>::Encode(YamlNode &node, const char *str)
+{
+    node.get()->save(str);
+}
+
 void YamlCodec<std::string_view>::Encode(YamlNode &node, const std::string_view &instance)
 {
     node.get()->save(instance);
@@ -38,7 +43,5 @@ template struct YamlCodec<f32>;
 template struct YamlCodec<f64>;
 
 template struct YamlCodec<bool>;
-
-template struct YamlCodec<char *>;
 template struct YamlCodec<std::string>;
 } // namespace TKit

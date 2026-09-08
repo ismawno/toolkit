@@ -220,6 +220,7 @@ class ConstYamlNode
 
     friend struct YamlCodec<bool>;
 
+    friend struct YamlCodec<const char *>;
     friend struct YamlCodec<char *>;
     friend struct YamlCodec<std::string>;
     friend struct YamlCodec<std::string_view>;
@@ -460,6 +461,7 @@ class YamlNode
 
     friend struct YamlCodec<bool>;
 
+    friend struct YamlCodec<const char *>;
     friend struct YamlCodec<char *>;
     friend struct YamlCodec<std::string>;
     friend struct YamlCodec<std::string_view>;

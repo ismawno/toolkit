@@ -153,13 +153,32 @@ template <typename T, typename... Args> T Deserialize(const fs::path &path, Args
 
 template <typename T>
 concept BuiltInCodecable =
-    Numeric<T> || std::is_same_v<std::remove_cvref_t<T>, bool> || std::is_same_v<std::remove_cvref_t<T>, char *> ||
-    std::is_same_v<std::remove_cvref_t<T>, const char *> || std::is_same_v<std::remove_cvref_t<T>, std::string>;
+    Numeric<T> || std::is_same_v<std::remove_cvref_t<T>, bool> || std::is_same_v<std::remove_cvref_t<T>, std::string>;
 
 template <BuiltInCodecable T> struct YamlCodec<T>
 {
     static void Encode(YamlNode &node, const T &instance);
     static YamlReadResult Decode(const ConstYamlNode &node, T &instance);
+};
+
+template <> struct YamlCodec<const char *>
+{
+    static void Encode(YamlNode &node, const char *str);
+};
+template <> struct YamlCodec<char *>
+{
+    static void Encode(YamlNode &node, const char *str)
+    {
+        YamlCodec<const char *>::Encode(node, str);
+    }
+};
+
+template <usize N> struct YamlCodec<char[N]>
+{
+    static void Encode(YamlNode &node, const char *str)
+    {
+        return YamlCodec<const char *>::Encode(node, str);
+    }
 };
 
 template <> struct YamlCodec<std::string_view>
