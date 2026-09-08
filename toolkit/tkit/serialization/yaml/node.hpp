@@ -110,6 +110,10 @@ class ConstYamlNode
     ConstYamlNode operator[](u32 idx) const;
 
     bool HasChild(StringView key) const;
+    template <TKit::Integer T> bool HasChild(const T key) const
+    {
+        return HasChild(std::to_string(key));
+    }
 
     ConstYamlNode GetParent() const;
 
