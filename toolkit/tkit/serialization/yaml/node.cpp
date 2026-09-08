@@ -25,10 +25,11 @@ YamlNode YamlNode::ByKey(const StringView key)
     if (!IsMap())
         AddFlags(YamlNodeFlag_Map);
 
-    const c4::csubstr cstr = toNative(key);
+    c4::csubstr cstr = toNative(key);
     u32 id = m_Tree->find_child(m_Id, cstr);
     if (id == ryml::NONE)
     {
+        cstr = m_Tree->copy_to_arena(cstr);
         id = m_Tree->append_child(m_Id);
         m_Tree->set_key(id, cstr);
         m_Tree->set_val(id, "~");
@@ -91,7 +92,8 @@ void YamlNode::SetValue(const StringView val)
 }
 void YamlNode::SetKey(const StringView key)
 {
-    m_Tree->set_key(m_Id, toNative(key));
+    const c4::csubstr cstr = m_Tree->copy_to_arena(toNative(key));
+    m_Tree->set_key(m_Id, cstr);
 }
 
 template <typename T> YamlReadResult YamlNode::TryReadKey(T &key) const
