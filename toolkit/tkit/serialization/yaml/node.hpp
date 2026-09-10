@@ -285,6 +285,14 @@ class YamlNode
         return node;
     }
 
+    void RemoveByKey(StringView key);
+    template <Integer T> void RemoveByKey(const T key)
+    {
+        RemoveByKey(std::to_string(key));
+    }
+
+    void RemoveByIndex(u32 idx);
+
     ConstYamlNode GetParent() const;
     YamlNode GetParent();
 

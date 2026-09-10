@@ -173,6 +173,15 @@ YamlNode YamlNode::Prepend()
     return get()->prepend_child();
 }
 
+void YamlNode::RemoveByKey(const StringView key)
+{
+    get()->remove_child(toNative(key));
+}
+void YamlNode::RemoveByIndex(const u32 idx)
+{
+    get()->remove_child(idx);
+}
+
 ConstYamlNode YamlNode::GetParent() const
 {
     return get()->parent();
