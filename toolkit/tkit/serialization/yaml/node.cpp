@@ -167,6 +167,11 @@ YamlNode YamlNode::Append()
     get()->set_seq();
     return get()->append_child();
 }
+YamlNode YamlNode::Prepend()
+{
+    get()->set_seq();
+    return get()->prepend_child();
+}
 
 ConstYamlNode YamlNode::GetParent() const
 {

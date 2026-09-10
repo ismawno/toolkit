@@ -270,9 +270,17 @@ class YamlNode
     }
 
     YamlNode Append();
+    YamlNode Prepend();
+
     template <typename T> YamlNode Append(const T &val)
     {
         YamlNode node = Append();
+        node.Write(val);
+        return node;
+    }
+    template <typename T> YamlNode Prepend(const T &val)
+    {
+        YamlNode node = Prepend();
         node.Write(val);
         return node;
     }
