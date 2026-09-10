@@ -16,6 +16,9 @@ ConstYamlNode::ConstYamlNode()
 {
     m_Data.Construct<ryml::ConstNodeRef>();
 }
+ConstYamlNode::ConstYamlNode(const YamlNode &node) : ConstYamlNode(*node.get())
+{
+}
 ConstYamlNode::ConstYamlNode(const ryml::ConstNodeRef &ref)
 {
     m_Data.Construct<ryml::ConstNodeRef>(ref);

@@ -98,10 +98,12 @@ void CheckYamlReadResult(const YamlReadResult &res, const ryml::Tree *tree = nul
 namespace TKit
 {
 constexpr u32 NullYamlNodeId = TKIT_U32_MAX;
+class YamlNode;
 class ConstYamlNode
 {
   public:
     ConstYamlNode();
+    ConstYamlNode(const YamlNode &node);
     ConstYamlNode(const ryml::ConstNodeRef &ref);
     ConstYamlNode(const ryml::NodeRef &ref);
 
@@ -490,5 +492,7 @@ class YamlNode
     friend struct YamlCodec<char *>;
     friend struct YamlCodec<std::string>;
     friend struct YamlCodec<std::string_view>;
+
+    friend ConstYamlNode;
 };
 } // namespace TKit
