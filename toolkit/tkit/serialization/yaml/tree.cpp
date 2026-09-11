@@ -97,6 +97,7 @@ YamlTree YamlTree::FromFile(const fs::path &path)
 
     file.seekg(0);
     file.read(contents.GetData(), contents.GetSize());
+    contents.Resize(file.gcount(), 0); // workaround for window files
 
     return FromString(contents);
 }
