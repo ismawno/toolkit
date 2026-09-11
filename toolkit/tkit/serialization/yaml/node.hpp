@@ -81,19 +81,23 @@ struct YamlReadError
 };
 
 using YamlReadResult = Result<void, YamlReadError>;
+class YamlNode;
+class ConstYamlNode;
 } // namespace TKit
-
-#ifdef TKIT_ENABLE_ENSURE
 
 namespace TKit::Detail
 {
+template <typename T> void EncodeBuiltIn(YamlNode &node, const T &instance);
+template <typename T> YamlReadResult DecodeBuiltIn(const ConstYamlNode &node, T &instance);
+#ifdef TKIT_ENABLE_ENSURE
+
 void CheckYamlReadResult(const YamlReadResult &res, const ryml::Tree *tree = nullptr);
-} // namespace TKit::Detail
 
 #    define TKIT_CHECK_YAML_RESULT(expr, ...) TKit::Detail::CheckYamlReadResult(expr __VA_OPT__(, ) __VA_ARGS__)
 #else
 #    define TKIT_CHECK_YAML_RESULT(expr, ...) expr
 #endif
+} // namespace TKit::Detail
 
 namespace TKit
 {
@@ -215,24 +219,10 @@ class ConstYamlNode
         return m_Data.Get<ryml::ConstNodeRef>();
     }
     RawStorage<16> m_Data;
-    friend struct YamlCodec<u8>;
-    friend struct YamlCodec<u16>;
-    friend struct YamlCodec<u32>;
-    friend struct YamlCodec<u64>;
-
-    friend struct YamlCodec<i8>;
-    friend struct YamlCodec<i16>;
-    friend struct YamlCodec<i32>;
-    friend struct YamlCodec<i64>;
-
-    friend struct YamlCodec<f32>;
-    friend struct YamlCodec<f64>;
-
-    friend struct YamlCodec<bool>;
+    template <typename T> friend void Detail::EncodeBuiltIn(YamlNode &, const T &);
+    template <typename T> friend YamlReadResult Detail::DecodeBuiltIn(const ConstYamlNode &, T &);
 
     friend struct YamlCodec<const char *>;
-    friend struct YamlCodec<char *>;
-    friend struct YamlCodec<std::string>;
     friend struct YamlCodec<std::string_view>;
 };
 class YamlNode
@@ -473,24 +463,10 @@ class YamlNode
     }
     RawStorage<32> m_Data;
 
-    friend struct YamlCodec<u8>;
-    friend struct YamlCodec<u16>;
-    friend struct YamlCodec<u32>;
-    friend struct YamlCodec<u64>;
-
-    friend struct YamlCodec<i8>;
-    friend struct YamlCodec<i16>;
-    friend struct YamlCodec<i32>;
-    friend struct YamlCodec<i64>;
-
-    friend struct YamlCodec<f32>;
-    friend struct YamlCodec<f64>;
-
-    friend struct YamlCodec<bool>;
+    template <typename T> friend void Detail::EncodeBuiltIn(YamlNode &, const T &);
+    template <typename T> friend YamlReadResult Detail::DecodeBuiltIn(const ConstYamlNode &, T &);
 
     friend struct YamlCodec<const char *>;
-    friend struct YamlCodec<char *>;
-    friend struct YamlCodec<std::string>;
     friend struct YamlCodec<std::string_view>;
 
     friend ConstYamlNode;

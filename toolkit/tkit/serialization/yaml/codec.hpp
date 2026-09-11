@@ -158,8 +158,14 @@ concept BuiltInCodecable =
 
 template <BuiltInCodecable T> struct YamlCodec<T>
 {
-    static void Encode(YamlNode &node, const T &instance);
-    static YamlReadResult Decode(const ConstYamlNode &node, T &instance);
+    static void Encode(YamlNode &node, const T &instance)
+    {
+        Detail::EncodeBuiltIn(node, instance);
+    }
+    static YamlReadResult Decode(const ConstYamlNode &node, T &instance)
+    {
+        return Detail::DecodeBuiltIn(node, instance);
+    }
 };
 
 template <> struct YamlCodec<const char *>
