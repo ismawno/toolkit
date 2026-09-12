@@ -31,10 +31,10 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
 #ifdef TKIT_ENABLE_ENSURE
         for (usize id = 0; id < m_Indices.GetSize(); ++id)
         {
-            TKIT_ENSURE(m_Indices[id] == id,
-                        "[TOOLKIT][HIVE] To specify indices and ids, they must satisfy indices[id] == id, however "
-                        "found indices[id = {}] = {} != id = {}",
-                        id, m_Indices[id], id);
+            TKIT_ENSURE(m_Ids[m_Indices[id]] == id,
+                        "[TOOLKIT][HIVE] To specify indices and ids, they must satisfy ids[indices[id]] == id, however "
+                        "found ids[indices[id = {}] = {}] = {} != id = {}",
+                        id, m_Indices[id], m_Ids[m_Indices[id]], id);
         }
 #endif
     }
