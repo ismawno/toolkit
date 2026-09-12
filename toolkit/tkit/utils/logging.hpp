@@ -3,6 +3,7 @@
 #include "tkit/utils/alias.hpp"
 #include <string_view>
 #include <fmt/format.h>
+#include <functional>
 
 #define TKIT_LOG_COLOR_RESET "\033[0m"
 #define TKIT_LOG_COLOR_DEBUG "\033[34m"
@@ -82,6 +83,18 @@ CREATE_DETAIL_LOGGING_FUNCTIONS(fmt::runtime_format_string<>)
 
 namespace TKit
 {
+struct LogInfo
+{
+    std::string_view Message;
+    const char *Level;
+    const char *Color;
+    const char *File;
+    i32 Line;
+};
+
+const std::function<void(const LogInfo &)> &GetLogCallback();
+void SetLogCallback(const std::function<void(const LogInfo &)> &func);
+
 fmt::runtime_format_string<> RuntimeFormatString(std::string_view string);
 template <typename T> const void *FormatPointer(T ptr)
 {
