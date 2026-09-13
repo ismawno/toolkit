@@ -161,25 +161,6 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
     void *Allocate(usz size);
     void Deallocate(const void *ptr, usz size);
 
-    void *AllocateWithHeader(usz size);
-    void DeallocateWithHeader(const void *ptr);
-
-    usz GetHeaderSize() const
-    {
-        return (sizeof(usz) + usz(m_HeaderAllocationsAlignment) - 1) & ~(usz(m_HeaderAllocationsAlignment) - 1);
-    }
-    usz GetHeaderSizeValue(const void *ptr) const
-    {
-        const usz headerSize = GetHeaderSize();
-
-        const std::byte *mem = rcast<const std::byte *>(ptr);
-        const usz *header = rcast<const usz *>(mem - headerSize);
-        TKIT_UNPOISON_MEMORY_REGION(header, headerSize);
-        const usz size = *header;
-        TKIT_POISON_MEMORY_REGION(header, headerSize);
-        return size;
-    }
-
     template <typename T> T *Allocate(const usize count = 1)
     {
         T *ptr = scast<T *>(Allocate(count * sizeof(T)));
@@ -231,6 +212,70 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
             for (usize i = 0; i < count; ++i)
                 ptr[i].~T();
         Deallocate(ptr, count);
+    }
+
+    void *AllocateWithHeader(usz size);
+    void DeallocateWithHeader(const void *ptr);
+
+    template <typename T> T *AllocateWithHeader(const usize count = 1)
+    {
+        T *ptr = scast<T *>(AllocateWithHeader(count * sizeof(T)));
+        TKIT_ASSERT(!ptr || IsAligned(ptr, alignof(T)),
+                    "[TOOLKIT][TIER-ALLOC] Type T has stronger memory alignment requirements than specified. Bump the "
+                    "alignment of the allocator or prevent using it to allocate objects of such type");
+        return ptr;
+    }
+
+    template <typename T, typename... Args> T *CreateWithHeader(Args &&...args)
+    {
+        T *ptr = AllocateWithHeader<T>();
+        if (!ptr)
+            return nullptr;
+        return Construct(ptr, std::forward<Args>(args)...);
+    }
+    template <typename T, typename... Args> T *NCreateWithHeader(const usize count, Args &&...args)
+    {
+        T *ptr = AllocateWithHeader<T>(count);
+        if (!ptr)
+            return nullptr;
+        ConstructRange(ptr, ptr + count, std::forward<Args>(args)...);
+        return ptr;
+    }
+
+    template <typename T>
+        requires(!std::same_as<T, void>)
+    constexpr void DestroyWithHeader(const T *ptr)
+    {
+        if constexpr (!std::is_trivially_destructible_v<T>)
+            Destruct(ptr);
+        DeallocateWithHeader(ptr);
+    }
+    template <typename T> void NDestroyWithHeader(T *ptr, const usize count)
+    {
+        TKIT_ASSERT(ptr, "[TOOLKIT][TIER-ALLOC] Cannot deallocate a null pointer");
+        TKIT_ASSERT(Belongs(ptr),
+                    "[TOOLKIT][TIER-ALLOC] Cannot deallocate a pointer that does not belong to the allocator");
+        if constexpr (!std::is_trivially_destructible_v<T>)
+            for (usize i = 0; i < count; ++i)
+                ptr[i].~T();
+
+        DeallocateWithHeader(ptr);
+    }
+
+    usz GetHeaderSize() const
+    {
+        return (sizeof(usz) + usz(m_HeaderAllocationsAlignment) - 1) & ~(usz(m_HeaderAllocationsAlignment) - 1);
+    }
+    usz GetHeaderSizeValue(const void *ptr) const
+    {
+        const usz headerSize = GetHeaderSize();
+
+        const std::byte *mem = rcast<const std::byte *>(ptr);
+        const usz *header = rcast<const usz *>(mem - headerSize);
+        TKIT_UNPOISON_MEMORY_REGION(header, headerSize);
+        const usz size = *header;
+        TKIT_POISON_MEMORY_REGION(header, headerSize);
+        return size;
     }
 
     /**
