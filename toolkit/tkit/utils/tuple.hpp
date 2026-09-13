@@ -181,19 +181,18 @@ template <usize I, typename... T> auto &&Get(Tuple<T...> &&t)
 {
     return std::move(t).template Get<I>();
 }
+
 template <usize I, typename... T> auto &get(Tuple<T...> &t)
 {
-    return Get(t);
+    return Get<I>(t);
 }
-
 template <usize I, typename... T> const auto &get(const Tuple<T...> &t)
 {
-    return Get(t);
+    return Get<I>(t);
 }
-
 template <usize I, typename... T> auto &&get(Tuple<T...> &&t)
 {
-    return Get(std::move(t));
+    return Get<I>(std::move(t));
 }
 
 } // namespace TKit

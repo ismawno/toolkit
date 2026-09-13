@@ -542,15 +542,15 @@ template <usize I, typename T, usize N0, usize... N> constexpr T &&Get(Tensor<T,
 
 template <usize I, typename T, usize N0, usize... N> constexpr const T &get(const Tensor<T, N0, N...> &t)
 {
-    return Get(t);
+    return Get<I>(t);
 }
 template <usize I, typename T, usize N0, usize... N> constexpr T &get(Tensor<T, N0, N...> &t)
 {
-    return Get(t);
+    return Get<I>(t);
 }
 template <usize I, typename T, usize N0, usize... N> constexpr T &&get(Tensor<T, N0, N...> &&t)
 {
-    return Get(std::move(t));
+    return Get<I>(std::move(t));
 }
 
 } // namespace TKit::Math
