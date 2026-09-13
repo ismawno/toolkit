@@ -56,7 +56,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
     hpp.include("tkit/container/span.hpp", quotes=True)
     hpp.include("tkit/reflection/reflect.hpp", quotes=True)
     hpp.include("tkit/utils/debug.hpp", quotes=True)
-    hpp.include("tuple")
+    hpp.include("tkit/utils/tuple.hpp", quotes=True)
 
     with hpp.scope("namespace TKit", indent=0):
         for enum in classes.enums:
@@ -270,7 +270,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                         hpp("return false;")
 
                     def create_tuple_sequence(fields: list[str], /, **_) -> str:
-                        return f"std::make_tuple({', '.join(fields)})"
+                        return f"CreateTuple({', '.join(fields)})"
 
                     def create_array_sequence(fields: list[str], /, *, vtype: str | None = None) -> str:
                         if vtype is None:
@@ -292,7 +292,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                                 "You may optionally provide type filters so that only fields with such types are retrieved.",
                             )
                             hpp.ret(
-                                f"If the retrieved fields share all the same type, the return value will be simplified to a `TKit::FixedArray<{modifier}Field>`. If that is not the case however, the fields will be stored in a `std::tuple`."
+                                f"If the retrieved fields share all the same type, the return value will be simplified to a `TKit::FixedArray<{modifier}Field>`. If that is not the case however, the fields will be stored in a `TKit::Tuple`."
                             )
 
                         with hpp.scope(
@@ -306,7 +306,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                             ):
                                 hpp(f"return get{group}{modifier}Array<Ref_Types...>();")
                             with hpp.scope("else", delimiters=False):
-                                hpp(f"return std::tuple_cat(get{group}{modifier}Tuple<Ref_Types>()...);")
+                                hpp(f"return ConcatenateTuples(get{group}{modifier}Tuple<Ref_Types>()...);")
 
                     def create_for_each_method(*, group: str = "") -> None:
                         with hpp.doc():
@@ -357,7 +357,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                                 hpp("std::forward<Ref_Fun>(fun)(field);")
                         with hpp.scope("else", delimiters=False):
                             hpp(
-                                "std::apply([&fun](const auto &...field) {(std::forward<Ref_Fun>(fun)(field), ...);}, fields);"
+                                "Apply([&fun](const auto &...field) {(std::forward<Ref_Fun>(fun)(field), ...);}, fields);"
                             )
 
                     create_get_fields_method(fcollection.fields)
@@ -372,7 +372,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                                 "You may optionally provide type filters so that only fields with such types are retrieved.",
                             )
                             hpp.ret(
-                                f"If the retrieved fields share all the same type, the return value will be simplified to a `TKit::FixedArray<{modifier}Field>`. If that is not the case however, the fields will be stored in a `std::tuple`."
+                                f"If the retrieved fields share all the same type, the return value will be simplified to a `TKit::FixedArray<{modifier}Field>`. If that is not the case however, the fields will be stored in a `TKit::Tuple`."
                             )
                         with hpp.scope(
                             f"template <{modifier}Group Ref_Group, typename... Ref_Types> static constexpr auto Get{modifier}FieldsByGroup()"
@@ -392,7 +392,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                             ):
                                 hpp(f"return FixedArray<{modifier}Field<Ref_Types...>, 0>{{}};")
                             with hpp.scope("else", delimiters=False):
-                                hpp("return std::tuple{};")
+                                hpp("return Tuple{};")
 
                         with hpp.doc():
                             hpp.brief(f"Iterate over all {modifier.lower()} fields.")
@@ -423,7 +423,7 @@ def generate_reflection_code(hpp: CPPGenerator, classes: ClassCollection, /) -> 
                             def generator(fields_cpp: list[str], vtype: str, /) -> None:
                                 hpp(f"return {create_tuple_sequence(fields_cpp, vtype=vtype)};")
 
-                            create_if_constexpr_per_type(generator, "std::tuple{}", group=group)
+                            create_if_constexpr_per_type(generator, "Tuple{}", group=group)
 
                     def create_get_array_method(*, group: str | None = None) -> None:
                         with hpp.scope(

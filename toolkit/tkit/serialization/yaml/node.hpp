@@ -214,7 +214,7 @@ class ConstYamlNode
 
   private:
     const ryml::Tree *getHandle() const;
-    const ryml::ConstNodeRef *get() const
+    const ryml::ConstNodeRef &get() const
     {
         return m_Data.Get<ryml::ConstNodeRef>();
     }
@@ -453,11 +453,11 @@ class YamlNode
 
   private:
     const ryml::Tree *getHandle() const;
-    const ryml::NodeRef *get() const
+    const ryml::NodeRef &get() const
     {
         return m_Data.Get<ryml::NodeRef>();
     }
-    ryml::NodeRef *get()
+    ryml::NodeRef &get()
     {
         return m_Data.Get<ryml::NodeRef>();
     }

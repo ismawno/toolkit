@@ -12,6 +12,7 @@
 #include "tkit/memory/memory.hpp"
 #include "tkit/multiprocessing/for_each.hpp"
 #include "tkit/utils/utils.hpp"
+#include "tkit/utils/tuple.hpp"
 
 namespace TKit
 {
@@ -894,13 +895,13 @@ class Registry
 
     template <typename... Cs, typename... Args>
         requires(!HasDuplicateTypes<Cs...>())
-    std::tuple<Cs *...> AddComponents(const Entity e, Args... args)
+    Tuple<Cs *...> AddComponents(const Entity e, Args... args)
     {
-        return std::make_tuple(AddComponent<Cs>(e, args...)...);
+        return CreateTuple(AddComponent<Cs>(e, args...)...);
     }
     template <typename... Cs, typename... Args>
         requires(!HasDuplicateTypes<Cs...>())
-    std::tuple<Cs *...> AddComponents(const ComponentSet<Cs...>, const Entity e, Args... args)
+    Tuple<Cs *...> AddComponents(const ComponentSet<Cs...>, const Entity e, Args... args)
     {
         return AddComponents<Cs...>(e, args...);
     }

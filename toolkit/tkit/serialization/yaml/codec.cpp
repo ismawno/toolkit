@@ -8,13 +8,13 @@ namespace Detail
 {
 template <typename T> void EncodeBuiltIn(YamlNode &node, const T &instance)
 {
-    node.get()->save(instance);
+    node.get().save(instance);
 }
 
 template <typename T> YamlReadResult DecodeBuiltIn(const ConstYamlNode &node, T &instance)
 {
-    const ryml::ConstNodeRef *ref = node.get();
-    const ryml::ReadResult res = ref->deserialize(&instance);
+    const ryml::ConstNodeRef &ref = node.get();
+    const ryml::ReadResult res = ref.deserialize(&instance);
     if (!res)
         return YamlReadResult::Error(res.node, "Failed to deserialize built-in value");
 
@@ -50,12 +50,12 @@ template YamlReadResult DecodeBuiltIn(const ConstYamlNode &, std::string &);
 
 void YamlCodec<const char *>::Encode(YamlNode &node, const char *str)
 {
-    node.get()->save(str);
+    node.get().save(str);
 }
 
 void YamlCodec<std::string_view>::Encode(YamlNode &node, const std::string_view &instance)
 {
-    node.get()->save(instance);
+    node.get().save(instance);
 }
 
 } // namespace TKit

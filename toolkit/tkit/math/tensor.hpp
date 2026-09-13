@@ -527,13 +527,17 @@ template <typename T, usize N0, usize... N> constexpr T *AsPointer(Tensor<T, N0,
     return &tensor(0);
 }
 
-template <usize I, typename T, usize N0, usize... N> constexpr const T &get(const Tensor<T, N0, N...> &t)
+template <usize I, typename T, usize N0, usize... N> constexpr const T &Get(const Tensor<T, N0, N...> &t)
 {
     return t[I];
 }
-template <usize I, typename T, usize N0, usize... N> constexpr T &get(Tensor<T, N0, N...> &t)
+template <usize I, typename T, usize N0, usize... N> constexpr T &Get(Tensor<T, N0, N...> &t)
 {
     return t[I];
+}
+template <usize I, typename T, usize N0, usize... N> constexpr T &&Get(Tensor<T, N0, N...> &&t)
+{
+    return std::move(t[I]);
 }
 
 } // namespace TKit::Math

@@ -62,23 +62,23 @@ YamlTree::~YamlTree()
 
 YamlTree::YamlTree(const YamlTree &other)
 {
-    m_Data.Construct<ryml::Tree>(*other.get());
+    m_Data.Construct<ryml::Tree>(other.get());
 }
 YamlTree::YamlTree(YamlTree &&other)
 {
-    m_Data.Construct<ryml::Tree>(std::move(*other.get()));
+    m_Data.Construct<ryml::Tree>(std::move(other.get()));
 }
 
 YamlTree &YamlTree::operator=(const YamlTree &other)
 {
     if (this != &other)
-        *get() = *other.get();
+        get() = other.get();
     return *this;
 }
 YamlTree &YamlTree::operator=(YamlTree &&other)
 {
     if (this != &other)
-        *get() = std::move(*other.get());
+        get() = std::move(other.get());
     return *this;
 }
 
@@ -104,19 +104,19 @@ YamlTree YamlTree::FromFile(const fs::path &path)
 
 template <typename Str> Str YamlTree::ToString() const
 {
-    const ryml::Tree *tree = get();
-    const c4::substr res = ryml::emit_yaml(*tree, c4::substr{}, false);
+    const ryml::Tree &tree = get();
+    const c4::substr res = ryml::emit_yaml(tree, c4::substr{}, false);
     Str str{};
 
     if constexpr (std::is_same_v<Str, std::string>)
     {
         str.resize(res.len, 0);
-        ryml::emit_yaml(*tree, c4::substr{str.data(), str.size()});
+        ryml::emit_yaml(tree, c4::substr{str.data(), str.size()});
     }
     else
     {
         str.Resize(usize(res.len), 0);
-        ryml::emit_yaml(*tree, c4::substr{str.GetData(), str.GetSize()});
+        ryml::emit_yaml(tree, c4::substr{str.GetData(), str.GetSize()});
     }
     return str;
 }
@@ -131,11 +131,11 @@ void YamlTree::ToFile(const fs::path &path) const
 
 ConstYamlNode YamlTree::GetRoot() const
 {
-    return get()->rootref();
+    return get().rootref();
 }
 YamlNode YamlTree::GetRoot()
 {
-    return get()->rootref();
+    return get().rootref();
 }
 
 template StackString YamlTree::ToString() const;

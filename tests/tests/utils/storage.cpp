@@ -1,4 +1,5 @@
-#include "tkit/container/storage.hpp"
+#include "tkit/utils/storage.hpp"
+#include "tkit/utils/union.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <cstdint>
 
@@ -11,8 +12,8 @@ static u32 g_DtorCount = 0;
 TEST_CASE("RawStorage: trivial type construct and destruct", "[RawStorage]")
 {
     RawStorage<sizeof(u32), alignof(u32)> storage;
-    const u32 *pValue = storage.Construct<u32>(123);
-    REQUIRE(*pValue == 123);
+    const u32 &pValue = storage.Construct<u32>(123);
+    REQUIRE(pValue == 123);
     storage.Destruct<u32>();
 }
 
@@ -34,8 +35,8 @@ struct NT
 TEST_CASE("RawStorage: non-trivial type construct and destruct", "[RawStorage]")
 {
     RawStorage<sizeof(NT), alignof(NT)> storage;
-    const NT *pObj = storage.Construct<NT>(77);
-    REQUIRE(pObj->value == 77);
+    const NT &pObj = storage.Construct<NT>(77);
+    REQUIRE(pObj.value == 77);
     REQUIRE(NT::CtorCount == 1);
     storage.Destruct<NT>();
     REQUIRE(NT::DtorCount == 1);
@@ -50,8 +51,8 @@ TEST_CASE("RawStorage: alignment correctness", "[RawStorage]")
     static_assert(alignof(A16) == 16, "alignment mismatch");
 
     RawStorage<sizeof(A16), 16> storage;
-    const A16 *pA = storage.Construct<A16>();
-    const uptr addr = rcast<uintptr_t>(pA);
+    const A16 &pA = storage.Construct<A16>();
+    const uptr addr = rcast<uintptr_t>(&pA);
     REQUIRE((addr % alignof(A16)) == 0);
     storage.Destruct<A16>();
 }
@@ -66,8 +67,8 @@ TEST_CASE("Storage: trivial type via constructor, destruct, reconstruct", "[Stor
     *s1 = 9; // placement new left memory valid, assignment works
     REQUIRE(*s1 == 9);
 
-    const u32 *pNew = s1.Construct(42);
-    REQUIRE(*pNew == 42);
+    const u32 &pNew = s1.Construct(42);
+    REQUIRE(pNew == 42);
     s1.Destruct();
 }
 

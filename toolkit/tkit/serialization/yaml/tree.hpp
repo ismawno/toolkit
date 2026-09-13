@@ -35,11 +35,11 @@ class YamlTree
     YamlNode GetRoot();
 
   private:
-    const ryml::Tree *get() const
+    const ryml::Tree &get() const
     {
         return m_Data.Get<ryml::Tree>();
     }
-    ryml::Tree *get()
+    ryml::Tree &get()
     {
         return m_Data.Get<ryml::Tree>();
     }

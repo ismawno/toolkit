@@ -20,8 +20,6 @@ namespace TKit
 template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStorage
 {
   public:
-    constexpr RawStorage() = default;
-
     /**
      * @brief Construct a new object of type `T` in the local buffer.
      *
@@ -34,11 +32,11 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
      * @param args The arguments to pass to the constructor of `T`.
      * @return A pointer to the newly created object.
      */
-    template <typename T, typename... Args> constexpr T *Construct(Args &&...args)
+    template <typename T, typename... Args> constexpr T &Construct(Args &&...args)
     {
         static_assert(sizeof(T) <= Size, "Object does not fit in the local buffer");
         static_assert(alignof(T) <= Alignment, "Object has incompatible alignment");
-        return TKit::Construct(Get<T>(), std::forward<Args>(args)...);
+        return *TKit::Construct(&Get<T>(), std::forward<Args>(args)...);
     }
 
     /**
@@ -57,7 +55,7 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
     template <typename T> constexpr void Destruct() const
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
-            TKit::Destruct(Get<T>());
+            TKit::Destruct(&Get<T>());
     }
 
     /**
@@ -68,9 +66,9 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
      * @tparam T The type of the object to get.
      * @return A pointer to the object in the local buffer.
      */
-    template <typename T> constexpr const T *Get() const
+    template <typename T> constexpr const T &Get() const
     {
-        return rcast<const T *>(m_Data);
+        return *rcast<const T *>(m_Data);
     }
 
     /**
@@ -81,9 +79,9 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
      * @tparam T The type of the object to get.
      * @return A pointer to the object in the local buffer.
      */
-    template <typename T> constexpr T *Get()
+    template <typename T> constexpr T &Get()
     {
-        return rcast<T *>(m_Data);
+        return *rcast<T *>(m_Data);
     }
 
   private:
@@ -106,8 +104,6 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
 template <typename T> class Storage
 {
   public:
-    constexpr Storage() = default;
-
     /**
      * @brief Construct a new object of type `T` in the local buffer.
      *
@@ -116,7 +112,7 @@ template <typename T> class Storage
      * @param args The arguments to pass to the constructor of `T`.
      * @return A pointer to the newly created object.
      */
-    template <typename... Args> constexpr T *Construct(Args &&...args)
+    template <typename... Args> constexpr T &Construct(Args &&...args)
     {
         return m_Storage.template Construct<T>(std::forward<Args>(args)...);
     }
@@ -135,31 +131,31 @@ template <typename T> class Storage
         m_Storage.template Destruct<T>();
     }
 
-    constexpr const T *Get() const
+    constexpr const T &Get() const
     {
         return m_Storage.template Get<T>();
     }
-    constexpr T *Get()
+    constexpr T &Get()
     {
         return m_Storage.template Get<T>();
     }
 
     constexpr const T *operator->() const
     {
-        return Get();
+        return &Get();
     }
     constexpr T *operator->()
     {
-        return Get();
+        return &Get();
     }
 
     constexpr const T &operator*() const
     {
-        return *Get();
+        return Get();
     }
     constexpr T &operator*()
     {
-        return *Get();
+        return Get();
     }
 
   private:

@@ -20,7 +20,7 @@ Located under the [container](https://github.com/ismawno/toolkit/tree/main/toolk
 
 - [static_array.hpp](https://github.com/ismawno/toolkit/blob/main/toolkit/tkit/container/static_array.hpp): A hybrid between `TKit::FixedArray` and `TKit::DynamicArray`, it inherits almost all of the functionality of the later, but uses a fixed size buffer, meaning the array can be resized up to its fixed capacity. This is very handy as the memory usage of the array is very predictable and local, but provides an API that allows object emplacement, just like a dynamic array would.
 
-- [storage.hpp](https://github.com/ismawno/toolkit/blob/main/toolkit/tkit/container/storage.hpp): A small storage unit that reserves enough memory locally for a specific type and allows its deferred construction and destruction. It shares the versatility `std::unique_ptr` offers when an object cannot be constructed immediately because of previous requirements or needs to be re-created constantly, but the memory access pattern is the same as if the object was allocated in-place instead of through a heap allocation.
+- [storage.hpp](https://github.com/ismawno/toolkit/blob/main/toolkit/tkit/utils/storage.hpp): A small storage unit that reserves enough memory locally for a specific type and allows its deferred construction and destruction. It shares the versatility `std::unique_ptr` offers when an object cannot be constructed immediately because of previous requirements or needs to be re-created constantly, but the memory access pattern is the same as if the object was allocated in-place instead of through a heap allocation.
 
 ### Memory
 

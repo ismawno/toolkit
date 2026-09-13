@@ -1,7 +1,7 @@
 #pragma once
 
 #include "tkit/utils/debug.hpp"
-#include "tkit/container/storage.hpp"
+#include "tkit/utils/storage.hpp"
 
 #define TKIT_RETURN_ON_ERROR(result, ...)                                                                              \
     if (!(result))                                                                                                     \
@@ -99,7 +99,7 @@ template <typename T = void, typename E = const char *> class Result
         TKIT_ASSERT(checkFlags(ResultFlag_Ok),
                     "[TOOLKIT] To copy results with different error types but same value types, "
                     "copy-from result must be a value");
-        m_Value.Construct(scast<T>(*other.m_Value.Get()));
+        m_Value.Construct(scast<T>(other.m_Value.Get()));
     }
     template <typename Type, std::convertible_to<E> Error>
         requires(!std::same_as<T, Type>)
@@ -112,7 +112,7 @@ template <typename T = void, typename E = const char *> class Result
                     "[TOOLKIT] To copy results with different value types but same error types, "
                     "copy-from result must be an error");
 
-        m_Error.Construct(scast<E>(*other.m_Error.Get()));
+        m_Error.Construct(scast<E>(other.m_Error.Get()));
     }
 
     constexpr Result(const Result &other)
@@ -121,9 +121,9 @@ template <typename T = void, typename E = const char *> class Result
     {
         TKIT_ASSERT(checkFlags(ResultFlag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
         if (checkFlags(ResultFlag_Ok))
-            m_Value.Construct(*other.m_Value.Get());
+            m_Value.Construct(other.m_Value.Get());
         else
-            m_Error.Construct(*other.m_Error.Get());
+            m_Error.Construct(other.m_Error.Get());
     }
     constexpr Result(Result &&other)
         requires(std::move_constructible<T> && std::move_constructible<E>)
@@ -131,9 +131,9 @@ template <typename T = void, typename E = const char *> class Result
     {
         TKIT_ASSERT(checkFlags(ResultFlag_Engaged), "[TOOLKIT] Cannot copy from an undefined result");
         if (checkFlags(ResultFlag_Ok))
-            m_Value.Construct(std::move(*other.m_Value.Get()));
+            m_Value.Construct(std::move(other.m_Value.Get()));
         else
-            m_Error.Construct(std::move(*other.m_Error.Get()));
+            m_Error.Construct(std::move(other.m_Error.Get()));
     }
 
     constexpr Result &operator=(const T &ok)
@@ -177,7 +177,7 @@ template <typename T = void, typename E = const char *> class Result
         TKIT_ASSERT(checkFlags(ResultFlag_Ok),
                     "[TOOLKIT] To copy results with different error types but same value types, "
                     "copy-from result must be a value");
-        m_Value.Construct(scast<T>(*other.m_Value.Get()));
+        m_Value.Construct(scast<T>(other.m_Value.Get()));
         return *this;
     }
     template <typename Type, std::convertible_to<E> Error>
@@ -193,7 +193,7 @@ template <typename T = void, typename E = const char *> class Result
                     "[TOOLKIT] To copy results with different value types but same error types, "
                     "copy-from result must be an error");
 
-        m_Error.Construct(scast<E>(*other.m_Error.Get()));
+        m_Error.Construct(scast<E>(other.m_Error.Get()));
         return *this;
     }
 
@@ -206,9 +206,9 @@ template <typename T = void, typename E = const char *> class Result
 
         TKIT_ASSERT(checkFlags(ResultFlag_Engaged), "[TOOLKIT] Cannot assign from an undefined result");
         if (checkFlags(ResultFlag_Ok))
-            m_Value.Construct(*other.m_Value.Get());
+            m_Value.Construct(other.m_Value.Get());
         else
-            m_Error.Construct(*other.m_Error.Get());
+            m_Error.Construct(other.m_Error.Get());
 
         return *this;
     }
@@ -222,9 +222,9 @@ template <typename T = void, typename E = const char *> class Result
 
         TKIT_ASSERT(checkFlags(ResultFlag_Engaged), "[TOOLKIT] Cannot assign from an undefined result");
         if (checkFlags(ResultFlag_Ok))
-            m_Value.Construct(std::move(*other.m_Value.Get()));
+            m_Value.Construct(std::move(other.m_Value.Get()));
         else
-            m_Error.Construct(std::move(*other.m_Error.Get()));
+            m_Error.Construct(std::move(other.m_Error.Get()));
 
         return *this;
     }
@@ -256,7 +256,7 @@ template <typename T = void, typename E = const char *> class Result
     const T &GetValue() const
     {
         TKIT_ASSERT(IsOk(), "[TOOLKIT][RESULT] Result is not Ok");
-        return *m_Value.Get();
+        return m_Value.Get();
     }
 
     /**
@@ -268,7 +268,7 @@ template <typename T = void, typename E = const char *> class Result
     constexpr T &GetValue()
     {
         TKIT_ASSERT(IsOk(), "[TOOLKIT][RESULT] Result is not Ok");
-        return *m_Value.Get();
+        return m_Value.Get();
     }
 
     /**
@@ -280,7 +280,7 @@ template <typename T = void, typename E = const char *> class Result
     constexpr const E &GetError() const
     {
         TKIT_ASSERT(IsError(), "[TOOLKIT][RESULT] Result is not an error");
-        return *m_Error.Get();
+        return m_Error.Get();
     }
 
     constexpr const T *operator->() const
@@ -400,7 +400,7 @@ template <typename E> class Result<void, E>
         TKIT_ASSERT(!checkFlags(ResultFlag_Ok),
                     "[TOOLKIT] To copy results with different value types but same error types, "
                     "copy-from result must be an error");
-        m_Error.Construct(scast<E>(*other.m_Error.Get()));
+        m_Error.Construct(scast<E>(other.m_Error.Get()));
     }
 
     constexpr Result(const Result &other)
@@ -408,14 +408,14 @@ template <typename E> class Result<void, E>
         : m_Flags(other.m_Flags)
     {
         if (IsError())
-            m_Error.Construct(*other.m_Error.Get());
+            m_Error.Construct(other.m_Error.Get());
     }
     constexpr Result(Result &&other)
         requires(std::move_constructible<E>)
         : m_Flags(other.m_Flags)
     {
         if (IsError())
-            m_Error.Construct(std::move(*other.m_Error.Get()));
+            m_Error.Construct(std::move(other.m_Error.Get()));
     }
 
     constexpr Result &operator=(const E &error)
@@ -457,7 +457,7 @@ template <typename E> class Result<void, E>
         TKIT_ASSERT(!checkFlags(ResultFlag_Ok),
                     "[TOOLKIT] To copy results with different value types but same error types, "
                     "copy-from result must be an error");
-        m_Error.Construct(scast<E>(*other.m_Error.Get()));
+        m_Error.Construct(scast<E>(other.m_Error.Get()));
         return *this;
     }
 
@@ -468,7 +468,7 @@ template <typename E> class Result<void, E>
         destroy();
         m_Flags = other.m_Flags;
         if (IsError())
-            m_Error.Construct(*other.m_Error.Get());
+            m_Error.Construct(other.m_Error.Get());
 
         return *this;
     }
@@ -479,7 +479,7 @@ template <typename E> class Result<void, E>
         destroy();
         m_Flags = other.m_Flags;
         if (IsError())
-            m_Error.Construct(std::move(*other.m_Error.Get()));
+            m_Error.Construct(std::move(other.m_Error.Get()));
 
         return *this;
     }
@@ -511,7 +511,7 @@ template <typename E> class Result<void, E>
     constexpr const E &GetError() const
     {
         TKIT_ASSERT(IsError(), "[TOOLKIT][RESULT] Result is not an error");
-        return *m_Error.Get();
+        return m_Error.Get();
     }
 
     constexpr operator bool() const
@@ -583,7 +583,7 @@ template <typename T> class Result<T, void>
                     "[TOOLKIT] To copy results with different error types but same value types, "
                     "copy-from result must be a value");
 
-        m_Value.Construct(scast<T>(*other.m_Value.Get()));
+        m_Value.Construct(scast<T>(other.m_Value.Get()));
     }
     template <typename Type>
         requires(!std::same_as<T, Type>)
@@ -600,14 +600,14 @@ template <typename T> class Result<T, void>
         : m_Flags(other.m_Flags)
     {
         if (IsSome())
-            m_Value.Construct(*other.m_Value.Get());
+            m_Value.Construct(other.m_Value.Get());
     }
     constexpr Result(Result &&other)
         requires(std::move_constructible<T>)
         : m_Flags(other.m_Flags)
     {
         if (IsSome())
-            m_Value.Construct(std::move(*other.m_Value.Get()));
+            m_Value.Construct(std::move(other.m_Value.Get()));
     }
 
     constexpr Result &operator=(const T &value)
@@ -636,7 +636,7 @@ template <typename T> class Result<T, void>
         TKIT_ASSERT(checkFlags(ResultFlag_Some),
                     "[TOOLKIT] To copy results with different error types but same value types, "
                     "copy-from result must be a value");
-        m_Value.Construct(scast<T>(*other.m_Value.Get()));
+        m_Value.Construct(scast<T>(other.m_Value.Get()));
         return *this;
     }
     template <typename Type>
@@ -660,7 +660,7 @@ template <typename T> class Result<T, void>
         destroy();
         m_Flags = other.m_Flags;
         if (IsSome())
-            m_Value.Construct(*other.m_Value.Get());
+            m_Value.Construct(other.m_Value.Get());
 
         return *this;
     }
@@ -671,7 +671,7 @@ template <typename T> class Result<T, void>
         destroy();
         m_Flags = other.m_Flags;
         if (IsSome())
-            m_Value.Construct(std::move(*other.m_Value.Get()));
+            m_Value.Construct(std::move(other.m_Value.Get()));
 
         return *this;
     }
@@ -693,12 +693,12 @@ template <typename T> class Result<T, void>
     constexpr const T &GetValue() const
     {
         TKIT_ASSERT(IsSome(), "[TOOLKIT][RESULT] Result is not an error");
-        return *m_Value.Get();
+        return m_Value.Get();
     }
     constexpr T &GetValue()
     {
         TKIT_ASSERT(IsSome(), "[TOOLKIT][RESULT] Result is not an error");
-        return *m_Value.Get();
+        return m_Value.Get();
     }
 
     constexpr operator bool() const

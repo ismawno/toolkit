@@ -18,7 +18,7 @@ set(SOURCES
     tests/container/hash_set.cpp
     tests/container/container.cpp
     tests/container/span.cpp
-    tests/container/storage.cpp
+    tests/utils/storage.cpp
     tests/container/ecs.cpp
     tests/multiprocessing/task.cpp
     tests/multiprocessing/thread_pool.cpp
