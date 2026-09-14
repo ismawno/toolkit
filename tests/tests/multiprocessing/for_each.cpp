@@ -19,13 +19,13 @@ TEST_CASE("AsyncForEach (void) with ThreadPool sums all elements", "[AsyncForEac
     std::atomic<usize> totalSum{0};
 
     // Partition [0,100) into 5 chunks; each chunk adds its length to totalSum
-    std::array<Task<>, partitionCount> tasks{};
+    std::array<DynamicTask<>, partitionCount> tasks{};
 
     AsyncForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount, [&](const usize start, const usize end) {
         totalSum.fetch_add(end - start, std::memory_order_relaxed);
     });
 
-    for (const Task<> &task : tasks)
+    for (const DynamicTask<> &task : tasks)
         pool.WaitUntilFinished(task);
 
     REQUIRE(totalSum.load(std::memory_order_relaxed) == lastIndex - firstIndex);
@@ -39,7 +39,7 @@ TEST_CASE("AsyncForEach with output iterator collects and executes all", "[Async
     constexpr usize partitionCount = 5;
     std::atomic<usize> totalSum{0};
 
-    std::array<Task<>, partitionCount> tasks{};
+    std::array<DynamicTask<>, partitionCount> tasks{};
 
     // Partition [10,25) into 5 chunks; capture tasks and sum chunk sizes
     AsyncForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount, [&](const usize start, const usize end) {
@@ -50,7 +50,7 @@ TEST_CASE("AsyncForEach with output iterator collects and executes all", "[Async
     REQUIRE(usize(tasks.size()) == partitionCount);
 
     // wait for each task to finish
-    for (const Task<> &task : tasks)
+    for (const DynamicTask<> &task : tasks)
         pool.WaitUntilFinished(task);
 
     REQUIRE(totalSum.load(std::memory_order_relaxed) == lastIndex - firstIndex);
@@ -63,7 +63,7 @@ TEST_CASE("SyncForEach with output iterator partitions and returns main result",
     const usize lastIndex = 100;
     const usize partitionCount = 4;
     std::atomic<usize> otherSum{0};
-    std::array<Task<usize>, partitionCount - 1> tasks{};
+    std::array<DynamicTask<usize>, partitionCount - 1> tasks{};
 
     // Callable returns usize length for main partition; others add to otherSum
     const auto callable = [&](const usize start, const usize end) -> usize {
@@ -83,7 +83,7 @@ TEST_CASE("SyncForEach with output iterator partitions and returns main result",
     REQUIRE(usize(tasks.size()) == partitionCount - 1);
 
     // wait all other partitions
-    for (const Task<usize> &task : tasks)
+    for (const DynamicTask<usize> &task : tasks)
         pool.WaitUntilFinished(task);
 
     // sum of other partitions = total length minus mainLength
@@ -97,7 +97,7 @@ TEST_CASE("SyncForEach without output iterator executes all partitions", "[SyncF
     const usize lastIndex = 30;
     const usize partitionCount = 5;
     std::atomic<usize> totalSum{0};
-    std::array<Task<>, partitionCount - 1> tasks{};
+    std::array<DynamicTask<>, partitionCount - 1> tasks{};
 
     // Callable adds length of each range to totalSum
     const auto callable = [&](const usize start, const usize end) {
@@ -107,7 +107,7 @@ TEST_CASE("SyncForEach without output iterator executes all partitions", "[SyncF
     // This overload does not return a value
     SyncForEach(pool, firstIndex, lastIndex, tasks.begin(), partitionCount, callable);
 
-    for (const Task<> &task : tasks)
+    for (const DynamicTask<> &task : tasks)
         pool.WaitUntilFinished(task);
 
     // entire range length = lastIndex - firstIndex

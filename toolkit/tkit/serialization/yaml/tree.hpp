@@ -43,6 +43,6 @@ class YamlTree
     {
         return m_Data.Get<ryml::Tree>();
     }
-    RawStorage<256> m_Data;
+    StaticStorage<256> m_Data;
 };
 } // namespace TKit

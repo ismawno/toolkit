@@ -22,7 +22,7 @@ void RecordThreadPoolSum(const ThreadPoolSettings &settings)
     file << "threads,sum (ns),result\n";
 
     ThreadPool threadPool(&s_Alloc, settings.MaxThreads);
-    StaticArray128<Task<u32>> tasks(settings.MaxThreads);
+    StaticArray128<DynamicTask<u32>> tasks(settings.MaxThreads);
     DynamicArray<u32> values(settings.SumCount);
 
     for (u32 i = 0; i < settings.SumCount; ++i)

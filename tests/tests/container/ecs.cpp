@@ -483,7 +483,7 @@ TEST_CASE("ECS: Query AsyncEach", "[ECS]")
         {
             std::atomic<u32> count{0};
             const auto &query = r.Query<Test_ComponentA>();
-            std::array<Task<>, N> tasks{};
+            std::array<DynamicTask<>, N> tasks{};
 
             query.AsyncEach(pool, tasks.begin(), partitions,
                             [&](Test_ComponentA &) { count.fetch_add(1, std::memory_order_relaxed); });
@@ -499,7 +499,7 @@ TEST_CASE("ECS: Query AsyncEach", "[ECS]")
         {
             std::atomic<u32> count{0};
             const auto &query = r.Query<Test_ComponentA, Test_ComponentB>();
-            std::array<Task<>, N> tasks{};
+            std::array<DynamicTask<>, N> tasks{};
 
             query.AsyncEach(pool, tasks.begin(), partitions, [&](const Entity, Test_ComponentA &, Test_ComponentB &) {
                 count.fetch_add(1, std::memory_order_relaxed);
@@ -515,7 +515,7 @@ TEST_CASE("ECS: Query AsyncEach", "[ECS]")
         SECTION("AsyncEach can mutate components")
         {
             const auto &query = r.Query<Test_ComponentA>();
-            std::array<Task<>, N> tasks{};
+            std::array<DynamicTask<>, N> tasks{};
 
             query.AsyncEach(pool, tasks.begin(), partitions, [](Test_ComponentA &a) { a.Data += 1000; });
 
@@ -558,7 +558,7 @@ TEST_CASE("ECS: Query AsyncEach across multiple archetypes", "[ECS]")
 
         std::atomic<u32> count{0};
         const auto &query = r.Query<Test_ComponentA, Test_ComponentB>();
-        std::array<Task<>, N> tasks{};
+        std::array<DynamicTask<>, N> tasks{};
 
         query.AsyncEach(pool, tasks.begin(), partitions,
                         [&](Test_ComponentA &, Test_ComponentB &) { count.fetch_add(1, std::memory_order_relaxed); });

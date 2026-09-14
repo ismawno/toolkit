@@ -5,7 +5,7 @@
         "[TOOLKIT][MULTIPROC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_MULTIPROCESSING"
 #endif
 
-#include <functional>
+#include "tkit/utils/function.hpp"
 #include <atomic>
 
 namespace TKit
@@ -97,7 +97,7 @@ class ITask
  *
  * @tparam T The return type of the task.
  */
-template <typename T = void> class Task final : public ITask
+template <typename Storage, typename T = void> class Task final : public ITask
 {
   public:
     Task() = default;
@@ -170,7 +170,7 @@ template <typename T = void> class Task final : public ITask
     }
 
   private:
-    std::function<T()> m_Function = nullptr;
+    Function<Storage, T()> m_Function = nullptr;
     T m_Result{};
 };
 
@@ -180,7 +180,7 @@ template <typename T = void> class Task final : public ITask
  * The task is a simple callable object that takes a thread index as an argument.
  *
  */
-template <> class Task<void> final : public ITask
+template <typename Storage> class Task<Storage, void> final : public ITask
 {
   public:
     constexpr Task() = default;
@@ -213,7 +213,11 @@ template <> class Task<void> final : public ITask
         m_Function = std::bind_front(std::forward<Callable>(callable), std::forward<Args>(args)...);
     }
 
-    void operator()() override;
+    void operator()() override
+    {
+        m_Function();
+        notifyCompleted();
+    }
 
     operator bool() const
     {
@@ -221,6 +225,14 @@ template <> class Task<void> final : public ITask
     }
 
   private:
-    std::function<void()> m_Function = nullptr;
+    Function<Storage, void()> m_Function = nullptr;
 };
+
+template <typename T = void> using DynamicTask = Task<DynamicStorage, T>;
+template <typename T = void> using ArenaTask = Task<ArenaStorage, T>;
+template <typename T = void> using StackTask = Task<StackStorage, T>;
+template <typename T = void> using TierTask = Task<TierStorage, T>;
+template <usize Size, typename T = void, usize Alignment = alignof(std::max_align_t)>
+using StaticTask = Task<StaticStorage<Size, Alignment>, T>;
+
 } // namespace TKit

@@ -8,14 +8,14 @@
 using namespace TKit;
 static ArenaAllocator s_Alloc{16_kib, TKIT_CACHE_LINE_SIZE};
 
-TEST_CASE("ThreadPool executes Task<void>s", "[ThreadPool]")
+TEST_CASE("ThreadPool executes DynamicTask<void>s", "[ThreadPool]")
 {
     constexpr usize threadCount = 4;
     constexpr usize taskCount = 10;
     ThreadPool pool(&s_Alloc, threadCount);
 
     std::atomic<usize> counter{0};
-    std::array<Task<>, taskCount> tasks;
+    std::array<DynamicTask<>, taskCount> tasks;
 
     // Submit several void tasks
     for (usize i = 0; i < taskCount; ++i)
@@ -30,13 +30,13 @@ TEST_CASE("ThreadPool executes Task<void>s", "[ThreadPool]")
     REQUIRE(counter.load(std::memory_order_relaxed) == taskCount);
 }
 
-TEST_CASE("ThreadPool executes Task<usize>s and preserves results", "[ThreadPool]")
+TEST_CASE("ThreadPool executes DynamicTask<usize>s and preserves results", "[ThreadPool]")
 {
     constexpr usize threadCount = 3;
     constexpr usize taskCount = 6;
     ThreadPool pool(&s_Alloc, threadCount);
 
-    std::array<Task<usize>, taskCount> tasks;
+    std::array<DynamicTask<usize>, taskCount> tasks;
 
     // Submit tasks that encode (taskIndex * 10 + threadIndex)
     for (usize i = 0; i < taskCount; ++i)

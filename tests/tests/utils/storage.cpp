@@ -1,5 +1,4 @@
 #include "tkit/utils/storage.hpp"
-#include "tkit/utils/union.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <cstdint>
 
@@ -9,9 +8,9 @@ using namespace TKit::Alias;
 static u32 g_CtorCount = 0;
 static u32 g_DtorCount = 0;
 
-TEST_CASE("RawStorage: trivial type construct and destruct", "[RawStorage]")
+TEST_CASE("StaticStorage: trivial type construct and destruct", "[StaticStorage]")
 {
-    RawStorage<sizeof(u32), alignof(u32)> storage;
+    StaticStorage<sizeof(u32), alignof(u32)> storage;
     const u32 &pValue = storage.Construct<u32>(123);
     REQUIRE(pValue == 123);
     storage.Destruct<u32>();
@@ -32,9 +31,9 @@ struct NT
     }
 };
 
-TEST_CASE("RawStorage: non-trivial type construct and destruct", "[RawStorage]")
+TEST_CASE("StaticStorage: non-trivial type construct and destruct", "[StaticStorage]")
 {
-    RawStorage<sizeof(NT), alignof(NT)> storage;
+    StaticStorage<sizeof(NT), alignof(NT)> storage;
     const NT &pObj = storage.Construct<NT>(77);
     REQUIRE(pObj.value == 77);
     REQUIRE(NT::CtorCount == 1);
@@ -42,7 +41,7 @@ TEST_CASE("RawStorage: non-trivial type construct and destruct", "[RawStorage]")
     REQUIRE(NT::DtorCount == 1);
 }
 
-TEST_CASE("RawStorage: alignment correctness", "[RawStorage]")
+TEST_CASE("StaticStorage: alignment correctness", "[StaticStorage]")
 {
     struct alignas(16) A16
     {
@@ -50,7 +49,7 @@ TEST_CASE("RawStorage: alignment correctness", "[RawStorage]")
     };
     static_assert(alignof(A16) == 16, "alignment mismatch");
 
-    RawStorage<sizeof(A16), 16> storage;
+    StaticStorage<sizeof(A16), 16> storage;
     const A16 &pA = storage.Construct<A16>();
     const uptr addr = rcast<uintptr_t>(&pA);
     REQUIRE((addr % alignof(A16)) == 0);

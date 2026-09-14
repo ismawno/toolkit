@@ -92,6 +92,7 @@ struct LogInfo
     i32 Line;
 };
 
+// cant really use my function bc of circular imports
 const std::function<void(const LogInfo &)> &GetLogCallback();
 void SetLogCallback(const std::function<void(const LogInfo &)> &func);
 

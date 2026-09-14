@@ -19,10 +19,4 @@ void ITask::notifyCompleted()
 #endif
     m_Finished.notify_all();
 }
-
-void Task<void>::operator()()
-{
-    m_Function();
-    notifyCompleted();
-}
 } // namespace TKit

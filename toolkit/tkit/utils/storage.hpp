@@ -1,84 +1,44 @@
 #pragma once
 
-#include "tkit/memory/memory.hpp"
+#include "tkit/memory/arena_allocator.hpp"
+#include "tkit/memory/stack_allocator.hpp"
+#include "tkit/memory/tier_allocator.hpp"
+#include "tkit/utils/non_copyable.hpp"
+
 namespace TKit
 {
-/**
- * @brief A raw storage class mainly used to allow the deferred creation and destruction of objects using a fixed size
- * buffer with no heap allocations.
- *
- * This is useful when having a class with no default constructor (having strict initialization requirements) that is
- * being used in another class for which the construction requirements of the original class may not be met at the time
- * of construction.
- *
- * This class is trivially copyable and movable. Be cautios when using it with complex types that have non-trivial copy
- * or move constructors.
- *
- * @tparam Size The size of the local allocation.
- * @tparam Alignment The alignment of the local allocation, defaults to the alignment of a pointer.
- */
-template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStorage
+enum StorageType : u8
+{
+    Storage_Static,
+    Storage_Dynamic,
+    Storage_Arena,
+    Storage_Stack,
+    Storage_Tier
+};
+template <usize Size, usize Alignment = alignof(std::max_align_t)> class StaticStorage
 {
   public:
-    /**
-     * @brief Construct a new object of type `T` in the local buffer.
-     *
-     * Calling `Construct()` on top of an existing object will cause undefined behavior. The object of type `T` needs to
-     * fit in the local buffer and have an alignment that is compatible with the local buffer.
-     *
-     * If your type is trivially constructible, you dont need to call this function.
-     *
-     * @tparam T The type of the object to create.
-     * @param args The arguments to pass to the constructor of `T`.
-     * @return A pointer to the newly created object.
-     */
+    static constexpr StorageType Type = Storage_Static;
     template <typename T, typename... Args> constexpr T &Construct(Args &&...args)
     {
-        static_assert(sizeof(T) <= Size, "Object does not fit in the local buffer");
-        static_assert(alignof(T) <= Alignment, "Object has incompatible alignment");
+        static_assert(sizeof(T) <= Size, "[TOOLKIT][STATIC-STORAGE] Object does not fit in the local buffer");
+        static_assert(alignof(T) <= Alignment, "[TOOLKIT][STATIC-STORAGE] Object has incompatible alignment");
         return *TKit::Construct(&Get<T>(), std::forward<Args>(args)...);
     }
 
-    /**
-     * @brief Destroy the object in the local buffer.
-     *
-     * Calling `Destruct()` on top of an already destroyed object/uninitialized memory, or calling `Destruct()` with a
-     * different type `T` will cause undefined behavior.
-     *
-     * If `T`is trivially destructible, this function will do nothing.
-     *
-     * This function is declared as const to follow the standard pattern where a pointer to const object can be
-     * destroyed.
-     *
-     * @tparam T The type of the object to destroy.
-     */
     template <typename T> constexpr void Destruct() const
     {
+        static_assert(sizeof(T) <= Size, "[TOOLKIT][STATIC-STORAGE] Object does not fit in the local buffer");
+        static_assert(alignof(T) <= Alignment, "[TOOLKIT][STATIC-STORAGE] Object has incompatible alignment");
         if constexpr (!std::is_trivially_destructible_v<T>)
             TKit::Destruct(&Get<T>());
     }
 
-    /**
-     * @brief Get a pointer to the object in the local buffer.
-     *
-     * Calling `Get()` with a different type `T` will cause undefined behavior (uses rcast under the hood).
-     *
-     * @tparam T The type of the object to get.
-     * @return A pointer to the object in the local buffer.
-     */
     template <typename T> constexpr const T &Get() const
     {
         return *rcast<const T *>(m_Data);
     }
 
-    /**
-     * @brief Get a pointer to the object in the local buffer.
-     *
-     * Calling `Get()` with a different type `T` will cause undefined behavior (uses rcast under the hood).
-     *
-     * @tparam T The type of the object to get.
-     * @return A pointer to the object in the local buffer.
-     */
     template <typename T> constexpr T &Get()
     {
         return *rcast<T *>(m_Data);
@@ -88,44 +48,353 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class RawStor
     alignas(Alignment) std::byte m_Data[Size];
 };
 
-/**
- * @brief A class that wraps a RawStorage object and provides a more user-friendly interface for creating and destroying
- * objects.
- *
- * It is safer to use as it emposes more restrictions on its usage. It will adapt to the size and alignment of
- * the specified type, and the copy and move constructors and assignment operators will be generated based on the type
- * T.
- *
- * To avoid a boolean check overhead and grant the user more constrol over the destruction of the object, the `T`'s
- * destructor will not be called automatically when the Storage object goes out of scope.
- *
- * @tparam T The type of object to store.
- */
+class DynamicStorage
+{
+    TKIT_NON_COPYABLE(DynamicStorage)
+  public:
+    static constexpr StorageType Type = Storage_Dynamic;
+
+    DynamicStorage() = default;
+    DynamicStorage(const usz capacity, const usize alignment = alignof(std::max_align_t))
+    {
+        m_Data = scast<std::byte *>(AllocateAligned(capacity, alignment));
+#ifdef TKIT_ENABLE_ENSURE
+        m_Capacity = capacity;
+        m_Alignment = alignment;
+#endif
+    }
+
+    DynamicStorage(DynamicStorage &&other) : m_Data(other.m_Data)
+    {
+#ifdef TKIT_ENABLE_ENSURE
+        m_Capacity = other.m_Capacity;
+        m_Alignment = other.m_Alignment;
+        other.m_Capacity = 0;
+        other.m_Alignment = 0;
+#endif
+        other.m_Data = nullptr;
+    }
+
+    ~DynamicStorage()
+    {
+        DeallocateAligned(m_Data);
+    }
+
+    DynamicStorage &operator=(DynamicStorage &&other)
+    {
+        if (&other != this)
+        {
+            DeallocateAligned(m_Data);
+            m_Data = other.m_Data;
+            other.m_Data = nullptr;
+#ifdef TKIT_ENABLE_ENSURE
+            m_Capacity = other.m_Capacity;
+            m_Alignment = other.m_Alignment;
+            other.m_Capacity = 0;
+            other.m_Alignment = 0;
+#endif
+        }
+        return *this;
+    }
+
+    template <typename T, typename... Args> constexpr T &Construct(Args &&...args)
+    {
+        TKIT_ENSURE(sizeof(T) <= m_Capacity,
+                    "[TOOLKIT][DYNAMIC-STORAGE] Object (size: {}) does not fit in the local buffer (size: {})",
+                    sizeof(T), m_Capacity);
+        TKIT_ENSURE(
+            alignof(T) <= m_Alignment,
+            "[TOOLKIT][DYNAMIC-STORAGE] Object (alignment: {}) has incompatible alignment with the buffer's ({})",
+            alignof(T), m_Alignment);
+        return *TKit::Construct(&Get<T>(), std::forward<Args>(args)...);
+    }
+
+    template <typename T> constexpr void Destruct() const
+    {
+        TKIT_ENSURE(sizeof(T) <= m_Capacity,
+                    "[TOOLKIT][DYNAMIC-STORAGE] Object (size: {}) does not fit in the local buffer (size: {})",
+                    sizeof(T), m_Capacity);
+        TKIT_ENSURE(
+            alignof(T) <= m_Alignment,
+            "[TOOLKIT][DYNAMIC-STORAGE] Object (alignment: {}) has incompatible alignment with the buffer's ({})",
+            alignof(T), m_Alignment);
+        if constexpr (!std::is_trivially_destructible_v<T>)
+            TKit::Destruct(&Get<T>());
+    }
+
+    template <typename T> constexpr const T &Get() const
+    {
+        return *rcast<const T *>(m_Data);
+    }
+
+    template <typename T> constexpr T &Get()
+    {
+        return *rcast<T *>(m_Data);
+    }
+
+    operator bool() const
+    {
+        return m_Data;
+    }
+
+  private:
+    std::byte *m_Data = nullptr;
+#ifdef TKIT_ENABLE_ENSURE
+    usz m_Capacity = 0;
+    usize m_Alignment = 0;
+#endif
+};
+
+class ArenaStorage
+{
+    TKIT_NON_COPYABLE(ArenaStorage)
+  public:
+    static constexpr StorageType Type = Storage_Arena;
+    ArenaStorage() = default;
+    ArenaStorage(const usz capacity) : ArenaStorage(GetArena(), capacity)
+    {
+    }
+    ArenaStorage(ArenaAllocator *alloc, const usz capacity) : m_Data(scast<std::byte *>(alloc->Allocate(capacity)))
+    {
+#ifdef TKIT_ENABLE_ENSURE
+        m_Capacity = capacity;
+#endif
+    }
+
+    ArenaStorage(ArenaStorage &&other) : m_Data(other.m_Data)
+    {
+        other.m_Data = nullptr;
+#ifdef TKIT_ENABLE_ENSURE
+        other.m_Capacity = 0;
+#endif
+    }
+
+    ArenaStorage &operator=(ArenaStorage &&other)
+    {
+        if (this != &other)
+        {
+            m_Data = other.m_Data;
+            other.m_Data = nullptr;
+#ifdef TKIT_ENABLE_ENSURE
+            m_Capacity = other.m_Capacity;
+            other.m_Capacity = 0;
+#endif
+        }
+        return *this;
+    }
+
+    template <typename T, typename... Args> constexpr T &Construct(Args &&...args)
+    {
+        TKIT_ENSURE(sizeof(T) <= m_Capacity,
+                    "[TOOLKIT][ARENA-STORAGE] Object (size: {}) does not fit in the local buffer (size: {})", sizeof(T),
+                    m_Capacity);
+        return *TKit::Construct(&Get<T>(), std::forward<Args>(args)...);
+    }
+
+    template <typename T> constexpr void Destruct() const
+    {
+        TKIT_ENSURE(sizeof(T) <= m_Capacity,
+                    "[TOOLKIT][ARENA-STORAGE] Object (size: {}) does not fit in the local buffer (size: {})", sizeof(T),
+                    m_Capacity);
+        if constexpr (!std::is_trivially_destructible_v<T>)
+            TKit::Destruct(&Get<T>());
+    }
+
+    template <typename T> constexpr const T &Get() const
+    {
+        return *rcast<const T *>(m_Data);
+    }
+
+    template <typename T> constexpr T &Get()
+    {
+        return *rcast<T *>(m_Data);
+    }
+
+    operator bool() const
+    {
+        return m_Data;
+    }
+
+  private:
+    std::byte *m_Data = nullptr;
+#ifdef TKIT_ENABLE_ENSURE
+    usz m_Capacity = 0;
+#endif
+};
+
+class StackStorage
+{
+    TKIT_NON_COPYABLE(StackStorage)
+  public:
+    static constexpr StorageType Type = Storage_Stack;
+    StackStorage() = default;
+    StackStorage(const usz capacity) : StackStorage(GetStack(), capacity)
+    {
+    }
+    StackStorage(StackAllocator *alloc, const usz capacity)
+        : m_Data(scast<std::byte *>(alloc->Allocate(capacity))), m_Allocator(alloc), m_Capacity(capacity)
+    {
+    }
+
+    ~StackStorage()
+    {
+        if (m_Data)
+            m_Allocator->Deallocate(scast<void *>(m_Data), m_Capacity);
+    }
+
+    StackStorage(StackStorage &&other)
+        : m_Data(other.m_Data), m_Allocator(other.m_Allocator), m_Capacity(other.m_Capacity)
+    {
+        other.m_Data = nullptr;
+        other.m_Allocator = nullptr;
+        other.m_Capacity = 0;
+    }
+
+    StackStorage &operator=(StackStorage &&other)
+    {
+        if (this != &other)
+        {
+            if (m_Data)
+                m_Allocator->Deallocate(scast<void *>(m_Data), m_Capacity);
+            m_Data = other.m_Data;
+            m_Allocator = other.m_Allocator;
+            m_Capacity = other.m_Capacity;
+            other.m_Data = nullptr;
+            other.m_Allocator = nullptr;
+            other.m_Capacity = 0;
+        }
+        return *this;
+    }
+
+    template <typename T, typename... Args> constexpr T &Construct(Args &&...args)
+    {
+        TKIT_ENSURE(sizeof(T) <= m_Capacity,
+                    "[TOOLKIT][STACK-STORAGE] Object (size: {}) does not fit in the local buffer (size: {})", sizeof(T),
+                    m_Capacity);
+        return *TKit::Construct(&Get<T>(), std::forward<Args>(args)...);
+    }
+
+    template <typename T> constexpr void Destruct() const
+    {
+        TKIT_ENSURE(sizeof(T) <= m_Capacity,
+                    "[TOOLKIT][STACK-STORAGE] Object (size: {}) does not fit in the local buffer (size: {})", sizeof(T),
+                    m_Capacity);
+        if constexpr (!std::is_trivially_destructible_v<T>)
+            TKit::Destruct(&Get<T>());
+    }
+
+    template <typename T> constexpr const T &Get() const
+    {
+        return *rcast<const T *>(m_Data);
+    }
+
+    template <typename T> constexpr T &Get()
+    {
+        return *rcast<T *>(m_Data);
+    }
+
+    operator bool() const
+    {
+        return m_Data;
+    }
+
+  private:
+    std::byte *m_Data = nullptr;
+    StackAllocator *m_Allocator = nullptr;
+    usz m_Capacity = 0;
+};
+
+class TierStorage
+{
+    TKIT_NON_COPYABLE(TierStorage)
+  public:
+    static constexpr StorageType Type = Storage_Tier;
+
+    TierStorage() = default;
+    TierStorage(const usz capacity) : TierStorage(GetTier(), capacity)
+    {
+    }
+    TierStorage(TierAllocator *alloc, const usz capacity)
+        : m_Data(scast<std::byte *>(alloc->Allocate(capacity))), m_Allocator(alloc), m_Capacity(capacity)
+    {
+    }
+
+    ~TierStorage()
+    {
+        if (m_Data)
+            m_Allocator->Deallocate(scast<void *>(m_Data), m_Capacity);
+    }
+
+    TierStorage(TierStorage &&other)
+        : m_Data(other.m_Data), m_Allocator(other.m_Allocator), m_Capacity(other.m_Capacity)
+    {
+        other.m_Data = nullptr;
+        other.m_Allocator = nullptr;
+        other.m_Capacity = 0;
+    }
+
+    TierStorage &operator=(TierStorage &&other)
+    {
+        if (this != &other)
+        {
+            if (m_Data)
+                m_Allocator->Deallocate(scast<void *>(m_Data), m_Capacity);
+            m_Data = other.m_Data;
+            m_Allocator = other.m_Allocator;
+            m_Capacity = other.m_Capacity;
+            other.m_Data = nullptr;
+            other.m_Allocator = nullptr;
+            other.m_Capacity = 0;
+        }
+        return *this;
+    }
+
+    template <typename T, typename... Args> constexpr T &Construct(Args &&...args)
+    {
+        TKIT_ENSURE(sizeof(T) <= m_Capacity,
+                    "[TOOLKIT][TIER-STORAGE] Object (size: {}) does not fit in the local buffer (size: {})", sizeof(T),
+                    m_Capacity);
+        return *TKit::Construct(&Get<T>(), std::forward<Args>(args)...);
+    }
+
+    template <typename T> constexpr void Destruct() const
+    {
+        TKIT_ENSURE(sizeof(T) <= m_Capacity,
+                    "[TOOLKIT][TIER-STORAGE] Object (size: {}) does not fit in the local buffer (size: {})", sizeof(T),
+                    m_Capacity);
+        if constexpr (!std::is_trivially_destructible_v<T>)
+            TKit::Destruct(&Get<T>());
+    }
+
+    template <typename T> constexpr const T &Get() const
+    {
+        return *rcast<const T *>(m_Data);
+    }
+
+    template <typename T> constexpr T &Get()
+    {
+        return *rcast<T *>(m_Data);
+    }
+
+    operator bool() const
+    {
+        return m_Data;
+    }
+
+  private:
+    std::byte *m_Data = nullptr;
+    TierAllocator *m_Allocator = nullptr;
+    usz m_Capacity = 0;
+};
+
 template <typename T> class Storage
 {
   public:
-    /**
-     * @brief Construct a new object of type `T` in the local buffer.
-     *
-     * Calling `Construct()` on top of an existing object will cause undefined behavior.
-     *
-     * @param args The arguments to pass to the constructor of `T`.
-     * @return A pointer to the newly created object.
-     */
     template <typename... Args> constexpr T &Construct(Args &&...args)
     {
         return m_Storage.template Construct<T>(std::forward<Args>(args)...);
     }
 
-    /**
-     * @brief Destruct the object in the local buffer.
-     *
-     * Calling `Destruct()` on top of an already destroyed object/uninitialized memory, or calling `Destruct()` with a
-     * different type `T` will cause undefined behavior.
-     *
-     * This function is declared as const to follow the standard pattern where a pointer to const object can be
-     * destroyed.
-     */
     constexpr void Destruct() const
     {
         m_Storage.template Destruct<T>();
@@ -159,7 +428,7 @@ template <typename T> class Storage
     }
 
   private:
-    RawStorage<sizeof(T), alignof(T)> m_Storage;
+    StaticStorage<sizeof(T), alignof(T)> m_Storage;
 };
 
 }; // namespace TKit

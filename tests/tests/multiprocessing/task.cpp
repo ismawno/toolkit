@@ -6,10 +6,10 @@
 
 using namespace TKit;
 
-TEST_CASE("Task<T> basic behavior", "[Task]")
+TEST_CASE("DynamicTask<T> basic behavior", "[DynamicTask]")
 {
-    // Create a Task<u32> that doubles an arbitrary number
-    Task<u32> task{[](const u32 index) { return u32(index * 2); }, 5u};
+    // Create a DynamicTask<u32> that doubles an arbitrary number
+    DynamicTask<u32> task{[](const u32 index) { return u32(index * 2); }, 5u};
     REQUIRE(!task.IsFinished());
 
     // Invoke it with index 5
@@ -25,11 +25,11 @@ TEST_CASE("Task<T> basic behavior", "[Task]")
     REQUIRE(task.WaitForResult() == 10);
 }
 
-TEST_CASE("Task<void> basic behavior", "[Task]")
+TEST_CASE("DynamicTask<void> basic behavior", "[DynamicTask]")
 {
     usize counter = 0;
-    // Create a Task<void> that adds the thread index to counter
-    Task<> task{[&](const u32 index) { counter += index; }, 5u};
+    // Create a DynamicTask<void> that adds the thread index to counter
+    DynamicTask<> task{[&](const u32 index) { counter += index; }, 5u};
     REQUIRE(!task.IsFinished());
 
     task();
@@ -40,10 +40,10 @@ TEST_CASE("Task<void> basic behavior", "[Task]")
     REQUIRE(!task.IsFinished());
 }
 
-TEST_CASE("Task::WaitUntilFinished blocks from another thread", "[Task]")
+TEST_CASE("DynamicTask::WaitUntilFinished blocks from another thread", "[DynamicTask]")
 {
     // Create a task that sleeps then returns its index
-    Task<u32> task;
+    DynamicTask<u32> task;
     task = [] {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         return 32u;

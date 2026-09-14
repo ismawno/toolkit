@@ -218,7 +218,7 @@ class ConstYamlNode
     {
         return m_Data.Get<ryml::ConstNodeRef>();
     }
-    RawStorage<16> m_Data;
+    StaticStorage<16> m_Data;
     template <typename T> friend void Detail::EncodeBuiltIn(YamlNode &, const T &);
     template <typename T> friend YamlReadResult Detail::DecodeBuiltIn(const ConstYamlNode &, T &);
 
@@ -461,7 +461,7 @@ class YamlNode
     {
         return m_Data.Get<ryml::NodeRef>();
     }
-    RawStorage<32> m_Data;
+    StaticStorage<32> m_Data;
 
     template <typename T> friend void Detail::EncodeBuiltIn(YamlNode &, const T &);
     template <typename T> friend YamlReadResult Detail::DecodeBuiltIn(const ConstYamlNode &, T &);
