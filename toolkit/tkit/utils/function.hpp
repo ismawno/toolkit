@@ -105,5 +105,15 @@ template <typename Signature> using DynamicFunction = Function<DynamicStorage, S
 template <usize Size, typename Signature> using StaticFunction = Function<StaticStorage<Size>, Signature>;
 
 template <typename Signature> using StaticFunction4 = StaticFunction<4, Signature>;
-
+template <typename Signature> using StaticFunction8 = StaticFunction<8, Signature>;
+template <typename Signature> using StaticFunction16 = StaticFunction<16, Signature>;
+template <typename Signature> using StaticFunction32 = StaticFunction<32, Signature>;
+template <typename Signature> using StaticFunction64 = StaticFunction<64, Signature>;
+template <typename Signature> using StaticFunction128 = StaticFunction<128, Signature>;
+template <typename Signature> using StaticFunction196 = StaticFunction<196, Signature>;
+template <typename Signature> using StaticFunction256 = StaticFunction<256, Signature>;
+template <typename Signature> using StaticFunction384 = StaticFunction<384, Signature>;
+template <typename Signature> using StaticFunction512 = StaticFunction<512, Signature>;
+template <typename Signature> using StaticFunction768 = StaticFunction<768, Signature>;
+template <typename Signature> using StaticFunction1024 = StaticFunction<1024, Signature>;
 } // namespace TKit
