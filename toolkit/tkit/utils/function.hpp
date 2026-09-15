@@ -20,14 +20,7 @@ template <typename Storage, typename Ret, typename... Args> class Function<Stora
         requires(!std::is_same_v<std::remove_cvref_t<F>, Function>)
     constexpr Function(F &&func)
     {
-        if constexpr (Type == Storage_Dynamic)
-            m_Storage = Storage{sizeof(F), alignof(F)};
-        else if constexpr (Type != Storage_Static)
-            m_Storage = Storage{sizeof(F)};
-
-        m_Storage.template Construct<F>(std::forward<F>(func));
-        m_Invoke = [](Storage &st, Args... args) { return st.template Get<F>()(args...); };
-        m_Destroy = [](const Storage &st) { st.template Destruct<F>(); };
+        setFunc(std::forward<F>(func));
     }
 
     constexpr Function(Function &&other)
@@ -63,16 +56,7 @@ template <typename Storage, typename Ret, typename... Args> class Function<Stora
 
     template <typename F> constexpr Function &operator=(F &&func)
     {
-        if (m_Destroy)
-            m_Destroy(m_Storage);
-        if constexpr (Type == Storage_Dynamic)
-            m_Storage = Storage{sizeof(F), alignof(F)};
-        else if constexpr (Type != Storage_Static)
-            m_Storage = Storage{sizeof(F)};
-
-        m_Storage.template Construct<F>(std::forward<F>(func));
-        m_Invoke = [](Storage &st, Args... args) { return st.template Get<F>()(args...); };
-        m_Destroy = [](const Storage &st) { st.template Destruct<F>(); };
+        setFunc(std::forward<F>(func));
         return *this;
     }
 
@@ -94,6 +78,21 @@ template <typename Storage, typename Ret, typename... Args> class Function<Stora
     }
 
   private:
+    template <typename F> void setFunc(F &&func)
+    {
+        using DecF = std::remove_cvref_t<F>;
+        if (m_Destroy)
+            m_Destroy(m_Storage);
+        if constexpr (Type == Storage_Dynamic)
+            m_Storage = Storage{sizeof(DecF), alignof(DecF)};
+        else if constexpr (Type != Storage_Static)
+            m_Storage = Storage{sizeof(DecF)};
+
+        m_Storage.template Construct<DecF>(std::forward<F>(func));
+        m_Invoke = [](Storage &st, Args... args) { return st.template Get<DecF>()(args...); };
+        m_Destroy = [](const Storage &st) { st.template Destruct<DecF>(); };
+    }
+
     Storage m_Storage;
     Ret (*m_Invoke)(Storage &, Args...) = nullptr;
     void (*m_Destroy)(const Storage &st) = nullptr;
