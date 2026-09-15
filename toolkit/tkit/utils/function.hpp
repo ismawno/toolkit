@@ -34,6 +34,8 @@ template <typename Storage, typename Ret, typename... Args> class Function<Stora
         requires(Type != Storage_Static)
         : m_Storage(std::move(other.m_Storage)), m_Invoke{other.m_Invoke}, m_Destroy{other.m_Destroy}
     {
+        other.m_Invoke = nullptr;
+        other.m_Destroy = nullptr;
     }
 
     constexpr ~Function()
