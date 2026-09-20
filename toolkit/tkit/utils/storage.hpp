@@ -15,20 +15,20 @@ enum StorageType : u8
     Storage_Stack,
     Storage_Tier
 };
-template <usize Size, usize Alignment = alignof(std::max_align_t)> class StaticStorage
+template <usize Capacity, usize Alignment = alignof(std::max_align_t)> class StaticStorage
 {
   public:
     static constexpr StorageType Type = Storage_Static;
     template <typename T, typename... Args> constexpr T &Construct(Args &&...args)
     {
-        static_assert(sizeof(T) <= Size, "[TOOLKIT][STATIC-STORAGE] Object does not fit in the local buffer");
+        static_assert(sizeof(T) <= Capacity, "[TOOLKIT][STATIC-STORAGE] Object does not fit in the local buffer");
         static_assert(alignof(T) <= Alignment, "[TOOLKIT][STATIC-STORAGE] Object has incompatible alignment");
         return *TKit::Construct(&Get<T>(), std::forward<Args>(args)...);
     }
 
     template <typename T> constexpr void Destruct() const
     {
-        static_assert(sizeof(T) <= Size, "[TOOLKIT][STATIC-STORAGE] Object does not fit in the local buffer");
+        static_assert(sizeof(T) <= Capacity, "[TOOLKIT][STATIC-STORAGE] Object does not fit in the local buffer");
         static_assert(alignof(T) <= Alignment, "[TOOLKIT][STATIC-STORAGE] Object has incompatible alignment");
         if constexpr (!std::is_trivially_destructible_v<T>)
             TKit::Destruct(&Get<T>());
@@ -44,8 +44,17 @@ template <usize Size, usize Alignment = alignof(std::max_align_t)> class StaticS
         return *rcast<T *>(m_Data);
     }
 
+    constexpr usize GetCapacity() const
+    {
+        return Capacity;
+    }
+    constexpr usize GetAlignment() const
+    {
+        return Alignment;
+    }
+
   private:
-    alignas(Alignment) std::byte m_Data[Size];
+    alignas(Alignment) std::byte m_Data[Capacity];
 };
 
 class DynamicStorage
@@ -56,22 +65,16 @@ class DynamicStorage
 
     DynamicStorage() = default;
     DynamicStorage(const usz capacity, const usize alignment = alignof(std::max_align_t))
+        : m_Capacity(capacity), m_Alignment(alignment)
     {
         m_Data = scast<std::byte *>(AllocateAligned(capacity, alignment));
-#ifdef TKIT_ENABLE_ENSURE
-        m_Capacity = capacity;
-        m_Alignment = alignment;
-#endif
     }
 
-    DynamicStorage(DynamicStorage &&other) : m_Data(other.m_Data)
+    DynamicStorage(DynamicStorage &&other)
+        : m_Data(other.m_Data), m_Capacity(other.m_Capacity), m_Alignment(other.m_Alignment)
     {
-#ifdef TKIT_ENABLE_ENSURE
-        m_Capacity = other.m_Capacity;
-        m_Alignment = other.m_Alignment;
         other.m_Capacity = 0;
         other.m_Alignment = 0;
-#endif
         other.m_Data = nullptr;
     }
 
@@ -86,13 +89,11 @@ class DynamicStorage
         {
             DeallocateAligned(m_Data);
             m_Data = other.m_Data;
-            other.m_Data = nullptr;
-#ifdef TKIT_ENABLE_ENSURE
             m_Capacity = other.m_Capacity;
             m_Alignment = other.m_Alignment;
+            other.m_Data = nullptr;
             other.m_Capacity = 0;
             other.m_Alignment = 0;
-#endif
         }
         return *this;
     }
@@ -132,17 +133,24 @@ class DynamicStorage
         return *rcast<T *>(m_Data);
     }
 
-    operator bool() const
+    constexpr operator bool() const
     {
         return m_Data;
     }
 
+    constexpr usz GetCapacity() const
+    {
+        return m_Capacity;
+    }
+    constexpr usize GetAlignment() const
+    {
+        return m_Alignment;
+    }
+
   private:
     std::byte *m_Data = nullptr;
-#ifdef TKIT_ENABLE_ENSURE
     usz m_Capacity = 0;
     usize m_Alignment = 0;
-#endif
 };
 
 class ArenaStorage
@@ -154,19 +162,15 @@ class ArenaStorage
     ArenaStorage(const usz capacity) : ArenaStorage(GetArena(), capacity)
     {
     }
-    ArenaStorage(ArenaAllocator *alloc, const usz capacity) : m_Data(scast<std::byte *>(alloc->Allocate(capacity)))
+    ArenaStorage(ArenaAllocator *alloc, const usz capacity)
+        : m_Data(scast<std::byte *>(alloc->Allocate(capacity))), m_Capacity(capacity)
     {
-#ifdef TKIT_ENABLE_ENSURE
-        m_Capacity = capacity;
-#endif
     }
 
-    ArenaStorage(ArenaStorage &&other) : m_Data(other.m_Data)
+    ArenaStorage(ArenaStorage &&other) : m_Data(other.m_Data), m_Capacity(other.m_Capacity)
     {
         other.m_Data = nullptr;
-#ifdef TKIT_ENABLE_ENSURE
         other.m_Capacity = 0;
-#endif
     }
 
     ArenaStorage &operator=(ArenaStorage &&other)
@@ -174,11 +178,9 @@ class ArenaStorage
         if (this != &other)
         {
             m_Data = other.m_Data;
-            other.m_Data = nullptr;
-#ifdef TKIT_ENABLE_ENSURE
             m_Capacity = other.m_Capacity;
+            other.m_Data = nullptr;
             other.m_Capacity = 0;
-#endif
         }
         return *this;
     }
@@ -210,16 +212,19 @@ class ArenaStorage
         return *rcast<T *>(m_Data);
     }
 
-    operator bool() const
+    constexpr operator bool() const
     {
         return m_Data;
     }
 
+    constexpr usz GetCapacity() const
+    {
+        return m_Capacity;
+    }
+
   private:
     std::byte *m_Data = nullptr;
-#ifdef TKIT_ENABLE_ENSURE
     usz m_Capacity = 0;
-#endif
 };
 
 class StackStorage
@@ -293,9 +298,13 @@ class StackStorage
         return *rcast<T *>(m_Data);
     }
 
-    operator bool() const
+    constexpr operator bool() const
     {
         return m_Data;
+    }
+    constexpr usz GetCapacity() const
+    {
+        return m_Capacity;
     }
 
   private:
@@ -376,9 +385,13 @@ class TierStorage
         return *rcast<T *>(m_Data);
     }
 
-    operator bool() const
+    constexpr operator bool() const
     {
         return m_Data;
+    }
+    constexpr usz GetCapacity() const
+    {
+        return m_Capacity;
     }
 
   private:
