@@ -547,7 +547,7 @@ template <typename T> class Span
     {
         return std::span<T>{m_Data, m_Size};
     }
-    operator std::string_view()
+    operator std::string_view() const
         requires(IsString)
     {
         return std::string_view{m_Data, m_Size};
