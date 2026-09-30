@@ -491,25 +491,25 @@ template <typename T> class Span
     constexpr bool operator<(const Span<const ElementType> &other) const
         requires(IsString)
     {
-        return Compare(other.begin()) < 0;
+        return Compare(other) < 0;
     }
 
     constexpr bool operator>(const Span<const ElementType> &other) const
         requires(IsString)
     {
-        return Compare(other.begin()) > 0;
+        return Compare(other) > 0;
     }
 
     constexpr bool operator<=(const Span<const ElementType> &other) const
         requires(IsString)
     {
-        return Compare(other.begin()) <= 0;
+        return Compare(other) <= 0;
     }
 
     constexpr bool operator>=(const Span<const ElementType> &other) const
         requires(IsString)
     {
-        return Compare(other.begin()) >= 0;
+        return Compare(other) >= 0;
     }
 
     // === Friend concatenation: Span + Array / Array + Span ===

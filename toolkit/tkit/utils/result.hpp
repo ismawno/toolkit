@@ -622,7 +622,7 @@ template <typename T> class Result<T, void>
     {
         destroy();
         m_Flags = ResultFlag_Engaged | ResultFlag_Some;
-        m_Value.Construct(value);
+        m_Value.Construct(std::move(value));
         return *this;
     }
 
