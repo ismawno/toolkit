@@ -555,6 +555,7 @@ template <typename T> class Result<T, void>
         Result result{};
         result.m_Flags = ResultFlag_Engaged | ResultFlag_Some;
         result.m_Value.Construct(std::forward<ValueArgs>(args)...);
+        return result;
     }
     static constexpr Result None()
     {
@@ -613,14 +614,14 @@ template <typename T> class Result<T, void>
     constexpr Result &operator=(const T &value)
     {
         destroy();
-        m_Flags = ResultFlag_Engaged;
+        m_Flags = ResultFlag_Engaged | ResultFlag_Some;
         m_Value.Construct(value);
         return *this;
     }
     constexpr Result &operator=(T &&value)
     {
         destroy();
-        m_Flags = ResultFlag_Engaged;
+        m_Flags = ResultFlag_Engaged | ResultFlag_Some;
         m_Value.Construct(value);
         return *this;
     }
