@@ -54,6 +54,13 @@ template <typename T> class Span
     {
     }
 
+    template <usize Extent> constexpr Span(const ElementType array[Extent]) : m_Data(array), m_Size(Extent)
+    {
+    }
+    template <usize Extent> constexpr Span(ElementType array[Extent]) : m_Data(array), m_Size(Extent)
+    {
+    }
+
     template <typename AllocState>
     constexpr Span(const Array<ElementType, AllocState> &array) : m_Data(array.GetData()), m_Size(array.GetSize())
     {
