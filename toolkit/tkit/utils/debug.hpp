@@ -86,16 +86,10 @@ void CheckOutOfBounds(const char *level, const char *color, const char *file, i3
 #        define TKIT_ASSERT(condition, ...) TKIT_ASSUME(condition)
 #        define TKIT_ASSERT_BOUNDS(index, size, ...) TKIT_ASSUME((index) < (size))
 
-#        define TKIT_ASSERT_RETURNS(expression, expected, ...) TKIT_ASSUME((expression) == (expected))
-#        define TKIT_ASSERT_NOT_RETURNS(expression, expected, ...) TKIT_ASSUME((expression) != (expected))
 #    else
 #        define TKIT_FATAL(...) TKIT_PANIC(__VA_ARGS__)
 #        define TKIT_ASSERT(condition, ...) TKIT_ENSURE(condition, __VA_ARGS__)
 #        define TKIT_ASSERT_BOUNDS(index, size, ...) TKIT_ENSURE_BOUNDS(index, size, __VA_ARGS__)
-
-#        define TKIT_ASSERT_RETURNS(expression, expected, ...) TKIT_ENSURE_RETURNS(expression, expected, __VA_ARGS__)
-#        define TKIT_ASSERT_NOT_RETURNS(expression, expected, ...)                                                     \
-            TKIT_ENSURE_NOT_RETURNS(expression, expected, __VA_ARGS__)
 #    endif
 #else
 #    define TKIT_FATAL(...)
