@@ -40,7 +40,7 @@ namespace TKit
  */
 template <std::derived_from<ITaskManager> TManager, typename It1, typename It2, typename Callable, typename... Args>
 void AsyncForEach(TManager &manager, const It1 first, const It1 last, It2 dest, const usize partitions,
-                  Callable &&callable)
+                  const Callable callable)
 {
     const usize size = Detail::Distance(first, last);
     usize start = 0;
@@ -52,9 +52,9 @@ void AsyncForEach(TManager &manager, const It1 first, const It1 last, It2 dest, 
         TKIT_ASSERT(end <= size, "[TOOLKIT][FOR-EACH] Partition exceeds container size");
         auto &task = *(dest++);
         if constexpr (std::is_invocable_v<Callable, usize, usize, usize>)
-            task.Set(std::forward<Callable>(callable), i, first + start, first + end);
+            task.Set(callable, i, first + start, first + end);
         else
-            task.Set(std::forward<Callable>(callable), first + start, first + end);
+            task.Set(callable, first + start, first + end);
 
         sindex = manager.SubmitTask(&task, sindex);
         start = end;
@@ -85,7 +85,7 @@ void AsyncForEach(TManager &manager, const It1 first, const It1 last, It2 dest, 
  */
 template <std::derived_from<ITaskManager> TManager, typename It1, typename It2, typename Callable, typename... Args>
 auto SyncForEach(TManager &manager, const It1 first, const It1 last, It2 dest, const usize partitions,
-                 Callable &&callable) -> std::invoke_result_t<Callable, Args..., It1, It1>
+                 const Callable callable) -> std::invoke_result_t<Callable, Args..., It1, It1>
 {
     const usize size = Detail::Distance(first, last);
     usize start = size / partitions;
@@ -95,9 +95,9 @@ auto SyncForEach(TManager &manager, const It1 first, const It1 last, It2 dest, c
     if (partitions == 1)
     {
         if constexpr (partArg)
-            return std::forward<Callable>(callable)(0, first, first + start);
+            return callable(0, first, first + start);
         else
-            return std::forward<Callable>(callable)(first, first + start);
+            return callable(first, first + start);
     }
 
     usize sindex = 0;
@@ -108,9 +108,9 @@ auto SyncForEach(TManager &manager, const It1 first, const It1 last, It2 dest, c
 
         auto &task = *(dest++);
         if constexpr (partArg)
-            task.Set(std::forward<Callable>(callable), i, first + start, first + end);
+            task.Set(callable, i, first + start, first + end);
         else
-            task.Set(std::forward<Callable>(callable), first + start, first + end);
+            task.Set(callable, first + start, first + end);
         sindex = manager.SubmitTask(&task, sindex);
 
         start = end;
@@ -118,8 +118,8 @@ auto SyncForEach(TManager &manager, const It1 first, const It1 last, It2 dest, c
 
     const usize end = size / partitions;
     if constexpr (partArg)
-        return std::forward<Callable>(callable)(0, first, first + end);
+        return callable(0, first, first + end);
     else
-        return std::forward<Callable>(callable)(first, first + end);
+        return callable(first, first + end);
 }
 } // namespace TKit

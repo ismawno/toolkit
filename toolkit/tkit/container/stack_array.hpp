@@ -82,6 +82,11 @@ template <typename T> struct StackAllocation
         return Capacity;
     }
 
+    T *GetData() const
+    {
+        return Data;
+    }
+
     StackAllocator *Allocator = nullptr;
     T *Data = nullptr;
     usize Size = 0;

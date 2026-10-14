@@ -113,6 +113,11 @@ template <typename T> struct TierAllocation
         ModifyCapacity(capacity);
     }
 
+    T *GetData() const
+    {
+        return Data;
+    }
+
     TierAllocator *Allocator = nullptr;
     T *Data = nullptr;
     usize Size = 0;

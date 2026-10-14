@@ -24,6 +24,15 @@ template <typename T, usize Capacity> struct StaticAllocation
     static_assert(sizeof(Element) == sizeof(T), "Element size is not equal to T size");
     static_assert(alignof(Element) == alignof(T), "Element alignment is not equal to T alignment");
 
+    const T *GetData() const
+    {
+        return rcast<const T *>(Data.GetData());
+    }
+    T *GetData()
+    {
+        return rcast<T *>(Data.GetData());
+    }
+
     FixedArray<Element, Capacity> Data{};
     usize Size = 0;
 };

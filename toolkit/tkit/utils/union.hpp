@@ -1,3 +1,4 @@
+#pragma once
 #include "tkit/utils/storage.hpp"
 
 namespace TKit::Detail
@@ -82,10 +83,10 @@ template <typename... T> class Union
     {
         return m_Data.template GetStorage<U>().Construct(std::forward<Args>(args)...);
     }
-    template <typename U> constexpr U &Destruct()
+    template <typename U> constexpr void Destruct()
     {
         if constexpr (!std::is_trivially_destructible_v<U>)
-            return m_Data.template GetStorage<U>().Destruct();
+            m_Data.template GetStorage<U>().Destruct();
     }
 
     template <typename U> constexpr const U &Get() const

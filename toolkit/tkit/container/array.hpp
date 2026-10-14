@@ -687,7 +687,7 @@ template <typename T, typename AllocState> class Array
 
     constexpr const T *GetData() const
     {
-        const T *ptr = rcast<const T *>(std::addressof(m_State.Data[0]));
+        const T *ptr = m_State.GetData();
         TKIT_ASSERT(ptr || m_State.Size == 0,
                     "[TOOLKIT][ARRAY] If the data of an array is null, its size must be zero, but is {}", m_State.Size);
         TKIT_ASSERT(ptr || m_State.GetCapacity() == 0,
@@ -700,7 +700,7 @@ template <typename T, typename AllocState> class Array
 
     constexpr T *GetData()
     {
-        T *ptr = rcast<T *>(std::addressof(m_State.Data[0]));
+        T *ptr = m_State.GetData();
         TKIT_ASSERT(ptr || m_State.Size == 0,
                     "[TOOLKIT][ARRAY] If the data of an array is null, its size must be zero");
         TKIT_ASSERT(ptr || m_State.GetCapacity() == 0,

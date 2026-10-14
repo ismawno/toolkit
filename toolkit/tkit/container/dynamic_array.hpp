@@ -101,6 +101,11 @@ template <typename T> struct DynamicAllocation
         ModifyCapacity(capacity);
     }
 
+    T *GetData() const
+    {
+        return Data;
+    }
+
     T *Data = nullptr;
     usize Size = 0;
     usize Capacity = 0;

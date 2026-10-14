@@ -1,3 +1,5 @@
+#pragma once
+
 #include "tkit/utils/hash.hpp"
 #include "tkit/math/quaternion.hpp"
 

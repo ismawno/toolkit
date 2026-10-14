@@ -651,31 +651,31 @@ class ComponentQuery
 
   private:
     template <typename F, usize... I>
-    void eachPerArchetype(F &&func, const usize idx, const std::integer_sequence<usize, I...>) const
+    void eachPerArchetype(const F func, const usize idx, const std::integer_sequence<usize, I...>) const
     {
         const ArchetypeQueryInterface &interface = m_ArchetypeInfo[idx];
         const ArchetypeQueryColumns<Count> &columns = interface.Columns;
         const usize rcount = GetRowCount(columns);
         for (usize r = 0; r < rcount; ++r)
             if constexpr (std::is_invocable_v<F, Entity, Cs &...>)
-                std::forward<F>(func)(interface.Archetype->GetEntity(r), *columns[I]->template Get<Cs>(r)...);
+                func(interface.Archetype->GetEntity(r), *columns[I]->template Get<Cs>(r)...);
             else
-                std::forward<F>(func)(*columns[I]->template Get<Cs>(r)...);
+                func(*columns[I]->template Get<Cs>(r)...);
     }
 
     template <std::derived_from<ITaskManager> TManager, typename It, typename F, usize... I>
-    void asyncEachPerArchetype(TManager &manager, const It dest, const usize partitions, F &&func, const usize idx,
+    void asyncEachPerArchetype(TManager &manager, const It dest, const usize partitions, const F func, const usize idx,
                                const std::integer_sequence<usize, I...>) const
     {
         const ArchetypeQueryInterface &interface = m_ArchetypeInfo[idx];
         const ArchetypeQueryColumns<Count> &columns = interface.Columns;
         const usize rcount = GetRowCount(columns);
-        AsyncForEach(manager, usize(0), rcount, dest, partitions, [&](const usize start, const usize end) {
+        AsyncForEach(manager, usize(0), rcount, dest, partitions, [&, func](const usize start, const usize end) {
             for (usize r = start; r < end; ++r)
                 if constexpr (std::is_invocable_v<F, Entity, Cs &...>)
-                    std::forward<F>(func)(interface.Archetype->GetEntity(r), *columns[I]->template Get<Cs>(r)...);
+                    func(interface.Archetype->GetEntity(r), *columns[I]->template Get<Cs>(r)...);
                 else
-                    std::forward<F>(func)(*columns[I]->template Get<Cs>(r)...);
+                    func(*columns[I]->template Get<Cs>(r)...);
         });
     }
 

@@ -72,6 +72,11 @@ template <typename T> struct ArenaAllocation
         return Capacity;
     }
 
+    T *GetData() const
+    {
+        return Data;
+    }
+
     ArenaAllocator *Allocator = nullptr;
     T *Data = nullptr;
     usize Size = 0;

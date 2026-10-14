@@ -50,6 +50,8 @@ void LogAndBreak(const char *level, const char *color, const char *file, const i
 {
     TKIT_PRINT_STACK_TRACE(1);
     Log(message, level, color, file, line, std::forward<Args>(args)...);
+    std::fflush(stdout);
+    std::fflush(stderr);
     TKIT_DEBUG_BREAK();
 }
 void LogAndBreak(const char *level, const char *color, const char *file, i32 line);

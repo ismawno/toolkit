@@ -19,6 +19,8 @@ void LogAndBreak(const char *level, const char *color, const char *file, const i
 {
     TKIT_PRINT_STACK_TRACE(2);
     Log("[TOOLKIT] Assertion failed!", level, color, file, line);
+    std::fflush(stdout);
+    std::fflush(stderr);
     TKIT_DEBUG_BREAK();
 }
 void CheckOutOfBounds(const char *level, const char *color, const char *file, const i32 line, const usize index,
@@ -33,6 +35,8 @@ void CheckOutOfBounds(const char *level, const char *color, const char *file, co
         Log("{}Out of bounds error. Trying to index into an empty container with an index value of {}. Container "
             "must not be indexed until it has elements",
             level, color, file, line, head, index, size);
+    std::fflush(stdout);
+    std::fflush(stderr);
     TKIT_DEBUG_BREAK();
 }
 #endif
