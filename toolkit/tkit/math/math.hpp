@@ -189,6 +189,40 @@ template <Float T, usize N0, usize... N> constexpr ten<T, N0, N...> Power(const 
         result(i) = Power(tensor(i), power);
     return result;
 }
+template <Float T, usize N0, usize... N> constexpr ten<T, N0, N...> Round(const ten<T, N0, N...> &tensor)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result(i) = Round(tensor(i));
+    return result;
+}
+template <Float T, usize N0, usize... N> constexpr ten<T, N0, N...> Round(const ten<T, N0, N...> &tensor, const T step)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result(i) = Round(tensor(i), step);
+    return result;
+}
+template <Float T, usize N0, usize... N>
+constexpr ten<T, N0, N...> Round(const ten<T, N0, N...> &tensor, const ten<T, N0, N...> &step)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result(i) = Round(tensor(i), step(i));
+    return result;
+}
+template <Float T, usize N0, usize... N>
+constexpr ten<T, N0, N...> Round(const ten<T, N0, N...> &tensor, const ten<u32, N0, N...> &step)
+{
+    ten<T, N0, N...> result;
+    constexpr usize size = (N0 * ... * N);
+    for (usize i = 0; i < size; ++i)
+        result(i) = Round(tensor(i), step(i));
+    return result;
+}
 template <typename T, usize N0, usize... N>
 constexpr ten<T, N0, N...> LinearLerp(const ten<T, N0, N...> &tensor0, const ten<T, N0, N...> &tensor1,
                                       const ten<T, N0, N...> &t)
