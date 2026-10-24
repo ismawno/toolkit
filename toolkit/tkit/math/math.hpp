@@ -469,7 +469,7 @@ constexpr bool ApproachesZero(const ten<T, N0, N...> &tensor, const T epsilon = 
 {
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        if (!ApproachesZero(tensor[i], epsilon))
+        if (!ApproachesZero(tensor(i), epsilon))
             return false;
     return true;
 }
@@ -479,7 +479,7 @@ constexpr bool Approximately(const ten<T, N0, N...> &lhs, const ten<T, N0, N...>
 {
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
-        if (!Approximately(lhs[i], rhs[i], epsilon))
+        if (!Approximately(lhs(i), rhs(i), epsilon))
             return false;
     return true;
 }
