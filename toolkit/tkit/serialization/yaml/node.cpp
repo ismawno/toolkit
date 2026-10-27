@@ -360,14 +360,14 @@ template void YamlNode::WriteKey(const u16 &);
 template void YamlNode::WriteKey(const u32 &);
 template void YamlNode::WriteKey(const u64 &);
 #ifdef TKIT_OS_APPLE
-template void YamlNode::WriteKey(const usz &) const;
+template void YamlNode::WriteKey(const usz &);
 #endif
 template void YamlNode::WriteKey(const i8 &);
 template void YamlNode::WriteKey(const i16 &);
 template void YamlNode::WriteKey(const i32 &);
 template void YamlNode::WriteKey(const i64 &);
 #ifdef TKIT_OS_APPLE
-template void YamlNode::WriteKey(const isz &) const;
+template void YamlNode::WriteKey(const isz &);
 #endif
 template void YamlNode::WriteKey(const f32 &);
 template void YamlNode::WriteKey(const f64 &);
