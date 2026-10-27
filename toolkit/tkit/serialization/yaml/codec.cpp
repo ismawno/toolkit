@@ -25,10 +25,16 @@ template void EncodeBuiltIn(YamlNode &, const u8 &);
 template void EncodeBuiltIn(YamlNode &, const u16 &);
 template void EncodeBuiltIn(YamlNode &, const u32 &);
 template void EncodeBuiltIn(YamlNode &, const u64 &);
+#ifdef TKIT_OS_APPLE
+template void EncodeBuiltIn(YamlNode &, const usz &);
+#endif
 template void EncodeBuiltIn(YamlNode &, const i8 &);
 template void EncodeBuiltIn(YamlNode &, const i16 &);
 template void EncodeBuiltIn(YamlNode &, const i32 &);
 template void EncodeBuiltIn(YamlNode &, const i64 &);
+#ifdef TKIT_OS_APPLE
+template void EncodeBuiltIn(YamlNode &, const isz &);
+#endif
 template void EncodeBuiltIn(YamlNode &, const f32 &);
 template void EncodeBuiltIn(YamlNode &, const f64 &);
 template void EncodeBuiltIn(YamlNode &, const bool &);
@@ -38,10 +44,16 @@ template YamlReadResult DecodeBuiltIn(const ConstYamlNode &, u8 &);
 template YamlReadResult DecodeBuiltIn(const ConstYamlNode &, u16 &);
 template YamlReadResult DecodeBuiltIn(const ConstYamlNode &, u32 &);
 template YamlReadResult DecodeBuiltIn(const ConstYamlNode &, u64 &);
+#ifdef TKIT_OS_APPLE
+template YamlReadResult DecodeBuiltIn(const ConstYamlNode &, usz &);
+#endif
 template YamlReadResult DecodeBuiltIn(const ConstYamlNode &, i8 &);
 template YamlReadResult DecodeBuiltIn(const ConstYamlNode &, i16 &);
 template YamlReadResult DecodeBuiltIn(const ConstYamlNode &, i32 &);
 template YamlReadResult DecodeBuiltIn(const ConstYamlNode &, i64 &);
+#ifdef TKIT_OS_APPLE
+template YamlReadResult DecodeBuiltIn(const ConstYamlNode &, isz &);
+#endif
 template YamlReadResult DecodeBuiltIn(const ConstYamlNode &, f32 &);
 template YamlReadResult DecodeBuiltIn(const ConstYamlNode &, f64 &);
 template YamlReadResult DecodeBuiltIn(const ConstYamlNode &, bool &);
