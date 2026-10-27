@@ -40,7 +40,7 @@ using i32 = std::int32_t;
 using i64 = std::int64_t;
 
 using usz = std::size_t;
-using isz = u64;
+using isz = ssize_t;
 
 using usize = TKIT_USIZE_TYPE;
 using ssize = TKIT_SSIZE_TYPE;
@@ -67,9 +67,11 @@ template <typename T>
 concept Float = std::same_as<T, f32> || std::same_as<T, f64>;
 
 template <typename T>
-concept UnsignedInteger = std::same_as<T, u8> || std::same_as<T, u16> || std::same_as<T, u32> || std::same_as<T, u64>;
+concept UnsignedInteger =
+    std::same_as<T, u8> || std::same_as<T, u16> || std::same_as<T, u32> || std::same_as<T, u64> || std::same_as<T, usz>;
 template <typename T>
-concept SignedInteger = std::same_as<T, i8> || std::same_as<T, i16> || std::same_as<T, i32> || std::same_as<T, i64>;
+concept SignedInteger =
+    std::same_as<T, i8> || std::same_as<T, i16> || std::same_as<T, i32> || std::same_as<T, i64> || std::same_as<T, isz>;
 
 template <typename T>
 concept Integer = UnsignedInteger<T> || SignedInteger<T>;
