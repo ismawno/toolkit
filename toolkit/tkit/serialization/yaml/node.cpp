@@ -325,10 +325,16 @@ template YamlReadResult ConstYamlNode::TryReadKey(u8 &) const;
 template YamlReadResult ConstYamlNode::TryReadKey(u16 &) const;
 template YamlReadResult ConstYamlNode::TryReadKey(u32 &) const;
 template YamlReadResult ConstYamlNode::TryReadKey(u64 &) const;
+#ifdef TKIT_OS_APPLE
+template YamlReadResult ConstYamlNode::TryReadKey(usz &) const;
+#endif
 template YamlReadResult ConstYamlNode::TryReadKey(i8 &) const;
 template YamlReadResult ConstYamlNode::TryReadKey(i16 &) const;
 template YamlReadResult ConstYamlNode::TryReadKey(i32 &) const;
 template YamlReadResult ConstYamlNode::TryReadKey(i64 &) const;
+#ifdef TKIT_OS_APPLE
+template YamlReadResult ConstYamlNode::TryReadKey(isz &) const;
+#endif
 template YamlReadResult ConstYamlNode::TryReadKey(f32 &) const;
 template YamlReadResult ConstYamlNode::TryReadKey(f64 &) const;
 
@@ -336,10 +342,16 @@ template YamlReadResult YamlNode::TryReadKey(u8 &) const;
 template YamlReadResult YamlNode::TryReadKey(u16 &) const;
 template YamlReadResult YamlNode::TryReadKey(u32 &) const;
 template YamlReadResult YamlNode::TryReadKey(u64 &) const;
+#ifdef TKIT_OS_APPLE
+template YamlReadResult YamlNode::TryReadKey(usz &) const;
+#endif
 template YamlReadResult YamlNode::TryReadKey(i8 &) const;
 template YamlReadResult YamlNode::TryReadKey(i16 &) const;
 template YamlReadResult YamlNode::TryReadKey(i32 &) const;
 template YamlReadResult YamlNode::TryReadKey(i64 &) const;
+#ifdef TKIT_OS_APPLE
+template YamlReadResult YamlNode::TryReadKey(isz &) const;
+#endif
 template YamlReadResult YamlNode::TryReadKey(f32 &) const;
 template YamlReadResult YamlNode::TryReadKey(f64 &) const;
 
@@ -347,10 +359,16 @@ template void YamlNode::WriteKey(const u8 &);
 template void YamlNode::WriteKey(const u16 &);
 template void YamlNode::WriteKey(const u32 &);
 template void YamlNode::WriteKey(const u64 &);
+#ifdef TKIT_OS_APPLE
+template YamlReadResult YamlNode::WriteKey(usz &) const;
+#endif
 template void YamlNode::WriteKey(const i8 &);
 template void YamlNode::WriteKey(const i16 &);
 template void YamlNode::WriteKey(const i32 &);
 template void YamlNode::WriteKey(const i64 &);
+#ifdef TKIT_OS_APPLE
+template YamlReadResult YamlNode::WriteKey(isz &) const;
+#endif
 template void YamlNode::WriteKey(const f32 &);
 template void YamlNode::WriteKey(const f64 &);
 } // namespace TKit
