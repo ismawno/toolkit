@@ -270,9 +270,9 @@ endif()
 
 if(TOOLKIT_ENABLE_ENSURE)
   target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ENSURE)
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    target_compile_options(toolkit PUBLIC /Zc:preprocessor)
-  endif()
+endif()
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  target_compile_options(toolkit PUBLIC /Zc:preprocessor)
 endif()
 
 if(TOOLKIT_ENABLE_STACK_TRACE)
