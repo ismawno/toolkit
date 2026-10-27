@@ -40,7 +40,7 @@ using i32 = std::int32_t;
 using i64 = std::int64_t;
 
 using usz = std::size_t;
-using isz = ssize_t;
+using isz = std::ptrdiff_t;
 
 using usize = TKIT_USIZE_TYPE;
 using ssize = TKIT_SSIZE_TYPE;
