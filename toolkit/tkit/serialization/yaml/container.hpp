@@ -57,6 +57,7 @@ template <typename T, typename AllocState> struct YamlCodec<Array<T, AllocState>
 
     static YamlReadResult Decode(const ConstYamlNode &node, Array<T, AllocState> &instance)
     {
+        instance.Clear();
         if constexpr (Array<T, AllocState>::IsString)
         {
             std::string str;
@@ -77,7 +78,7 @@ template <typename T, typename AllocState> struct YamlCodec<Array<T, AllocState>
 
             if constexpr (Array<T, AllocState>::Type != Array_Static)
                 instance.Reserve(usize(node.GetChildCount()));
-            else if (node.GetChildCount() >= instance.GetCapacity())
+            else if (node.GetChildCount() > instance.GetCapacity())
                 return YamlReadResult::Error(
                     node.GetId(), TierString::Format("Not enough capacity ({}) to deserialize array of size {}",
                                                      instance.GetCapacity(), node.GetChildCount()));

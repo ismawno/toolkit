@@ -126,7 +126,7 @@ template <typename T, usize N0, usize... N> constexpr T Min(const ten<T, N0, N..
 }
 template <typename T, usize N0, usize... N> constexpr T Max(const ten<T, N0, N...> &tensor)
 {
-    T mx{T(0)};
+    T mx{std::numeric_limits<T>::lowest()};
     constexpr usize size = (N0 * ... * N);
     for (usize i = 0; i < size; ++i)
         if (mx < tensor(i))
