@@ -92,6 +92,8 @@ YamlTree YamlTree::FromString(const StringView str)
 YamlTree YamlTree::FromFile(const fs::path &path)
 {
     std::ifstream file{path, std::ios::ate};
+    TKIT_ASSERT(file.is_open(), "[TOOLKIT][YAML] Failed to open file at {}", path.string());
+
     StackString contents{};
     contents.Resize(file.tellg(), 0);
 
