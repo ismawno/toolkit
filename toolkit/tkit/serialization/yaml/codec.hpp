@@ -138,18 +138,26 @@ template <typename T> void Serialize(const fs::path &path, const T &instance)
 }
 template <typename T> YamlReadResult TryDeserialize(const fs::path &path, T &instance)
 {
-    const YamlTree tree = YamlTree::FromFile(path);
-    return tree.GetRoot().TryRead(instance);
+    const auto tree = YamlTree::FromFile(path);
+    if (!tree)
+        return YamlReadResult::Error(NullYamlNodeId, tree.GetError());
+
+    return tree->GetRoot().TryRead(instance);
 }
-template <typename T> void Deserialize(const fs::path &path, T &instance)
+template <typename T> Result<void, TierString> Deserialize(const fs::path &path, T &instance)
 {
-    const YamlTree tree = YamlTree::FromFile(path);
-    tree.GetRoot().Read(instance);
+    const auto tree = YamlTree::FromFile(path);
+    TKIT_RETURN_ON_ERROR(tree);
+
+    tree->GetRoot().Read(instance);
+    return Result<void, TierString>::Ok();
 }
-template <typename T, typename... Args> T Deserialize(const fs::path &path, Args &&...args)
+template <typename T, typename... Args> Result<T, TierString> Deserialize(const fs::path &path, Args &&...args)
 {
-    const YamlTree tree = YamlTree::FromFile(path);
-    return tree.GetRoot().Read<T>(std::forward<Args>(args)...);
+    const auto tree = YamlTree::FromFile(path);
+    TKIT_RETURN_ON_ERROR(tree);
+
+    return tree->GetRoot().Read<T>(std::forward<Args>(args)...);
 }
 
 template <typename T>

@@ -32,9 +32,9 @@ template <typename T, usize N> struct YamlCodec<FixedArray<T, N>>
                                                             "capacity ({}) or the node is not a sequence",
                                                             node.GetChildCount(), N));
 
-        for (usize i = 0; i < N; ++i)
+        for (usize i = 0; i < node.GetChildCount(); ++i)
         {
-            TKIT_RETURN_IF_FAILED(node[i].Read(instance[i]));
+            TKIT_RETURN_IF_FAILED(node[i].TryRead(instance[i]));
         }
         return YamlReadResult::Ok();
     }

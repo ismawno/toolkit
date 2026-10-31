@@ -269,6 +269,11 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                                     hpp("return res;")
                                 hpp(f"instance.{field.name} = val;")
                         else:
+                            with hpp.scope(f'if (!node.HasChild("{field.name}"))', delimiters=False):
+                                hpp(
+                                    f'return YamlReadResult::Error(node.GetId(), "Missing required field: {{}}", {field.name});'
+                                )
+
                             hpp(f"{vtype} val_{field.name};")
                             hpp(
                                 f'const YamlReadResult res_{field.name} = node["{field.name}"].TryRead(val_{field.name});'

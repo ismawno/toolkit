@@ -2,9 +2,8 @@
 #include "tkit/serialization/yaml/tree.hpp"
 #include "tkit/memory/tier_allocator.hpp"
 #include "tkit/container/stack_array.hpp"
-#include "tkit/container/dynamic_array.hpp"
-#include "tkit/container/tier_array.hpp"
 #include "tkit/container/span.hpp"
+#include "tkit/container/dynamic_array.hpp"
 #include <ryml.hpp>
 #include <fstream>
 
@@ -89,10 +88,12 @@ YamlTree YamlTree::FromString(const StringView str)
     return t;
 }
 
-YamlTree YamlTree::FromFile(const fs::path &path)
+Result<YamlTree, TierString> YamlTree::FromFile(const fs::path &path)
 {
     std::ifstream file{path, std::ios::ate};
-    TKIT_ASSERT(file.is_open(), "[TOOLKIT][YAML] Failed to open file at {}", path.string());
+    if (file.is_open())
+        return Result<YamlTree, TierString>::Error(
+            TierString::Format("[TOOLKIT][YAML] Failed to open file at {}", path.string()));
 
     StackString contents{};
     contents.Resize(file.tellg(), 0);

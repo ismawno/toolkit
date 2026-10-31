@@ -26,7 +26,7 @@ class YamlTree
     YamlTree &operator=(YamlTree &&other);
 
     static YamlTree FromString(StringView str);
-    static YamlTree FromFile(const fs::path &path);
+    static Result<YamlTree, TierString> FromFile(const fs::path &path);
 
     template <typename Str> Str ToString() const;
     void ToFile(const fs::path &path) const;

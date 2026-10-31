@@ -75,7 +75,11 @@ Settings CreateSettings(int argc, char **argv)
     parser.parse_args(argc, argv);
 
     if (const auto path = parser.present("--settings"))
-        settings = TKit::Deserialize<Settings>(*path);
+    {
+        const auto res = TKit::Deserialize<Settings>(*path);
+        TKIT_ASSERT(res, "[TOOLKIT][PERF] Failed to deserialize: {}", res.GetError());
+        settings = *res;
+    }
 
     TKit::Reflect<Settings>::ForEachMemberField([&](const auto &field1) {
         using Type1 = TKIT_REFLECT_FIELD_TYPE(field1);
