@@ -9,6 +9,8 @@
 
 #ifdef TKIT_ENABLE_INSTRUMENTATION
 
+#    include "tkit/preprocessor/utils.hpp"
+
 // The main reason of this wrap around the tracy library is, in case I switch to another profiling library, I can keep
 // the same interface and just change the implementation of the macros.
 
@@ -22,20 +24,21 @@ using ProfilingPlotFormat = tracy::PlotFormatType;
 #    define TKIT_PROFILE_MARK_FRAME_END(name) FrameMarkEnd(name)
 #    define TKIT_PROFILE_NMARK_FRAME(name) FrameMarkNamed(name)
 
-#    define TKIT_PROFILE_SCOPE_IF(enabled) ZoneNamed(__tkit_perf_scope##__LINE__, enabled)
-#    define TKIT_PROFILE_NSCOPE_IF(enabled, name) ZoneNamedN(__tkit_perf_scope##__LINE__, name, enabled)
-#    define TKIT_PROFILE_CSCOPE_IF(enabled, color) ZoneNamedC(__tkit_perf_scope##__LINE__, color, enabled)
-#    define TKIT_PROFILE_NCSCOPE_IF(enabled, name, color) ZoneNamedNC(__tkit_perf_scope##__LINE__, name, color, enabled)
+#    define TKIT_PROFILE_SCOPE_IF(enabled) ZoneNamed(TKIT_CONCAT(__tkit_perf_scope, __LINE__), enabled)
+#    define TKIT_PROFILE_NSCOPE_IF(enabled, name) ZoneNamedN(TKIT_CONCAT(__tkit_perf_scope, __LINE__), name, enabled)
+#    define TKIT_PROFILE_CSCOPE_IF(enabled, color) ZoneNamedC(TKIT_CONCAT(__tkit_perf_scope, __LINE__), color, enabled)
+#    define TKIT_PROFILE_NCSCOPE_IF(enabled, name, color)                                                              \
+        ZoneNamedNC(TKIT_CONCAT(__tkit_perf_scope, __LINE__), name, color, enabled)
 
-#    define TKIT_PROFILE_SCOPE() ZoneNamed(__tkit_perf_scope##__LINE__, true)
-#    define TKIT_PROFILE_NSCOPE(name) ZoneNamedN(__tkit_perf_scope##__LINE__, name, true)
-#    define TKIT_PROFILE_CSCOPE(color) ZoneNamedC(__tkit_perf_scope##__LINE__, color, true)
-#    define TKIT_PROFILE_NCSCOPE(name, color) ZoneNamedNC(__tkit_perf_scope##__LINE__, name, color, true)
+#    define TKIT_PROFILE_SCOPE() ZoneNamed(TKIT_CONCAT(__tkit_perf_scope, __LINE__), true)
+#    define TKIT_PROFILE_NSCOPE(name) ZoneNamedN(TKIT_CONCAT(__tkit_perf_scope, __LINE__), name, true)
+#    define TKIT_PROFILE_CSCOPE(color) ZoneNamedC(TKIT_CONCAT(__tkit_perf_scope, __LINE__), color, true)
+#    define TKIT_PROFILE_NCSCOPE(name, color) ZoneNamedNC(TKIT_CONCAT(__tkit_perf_scope, __LINE__), name, color, true)
 
-#    define TKIT_PROFILE_SCOPE_TEXT(text, size) ZoneTextV(__tkit_perf_scope##__LINE__, text, size)
-#    define TKIT_PROFILE_SCOPE_NAME(name, size) ZoneNameV(__tkit_perf_scope##__LINE__, name, size)
-#    define TKIT_PROFILE_SCOPE_COLOR(color) ZoneColorV(__tkit_perf_scope##__LINE__, color)
-#    define TKIT_PROFILE_SCOPE_VALUE(value) ZoneValueV(__tkit_perf_scope##__LINE__, value)
+#    define TKIT_PROFILE_SCOPE_TEXT(text, size) ZoneTextV(TKIT_CONCAT(__tkit_perf_scope, __LINE__), text, size)
+#    define TKIT_PROFILE_SCOPE_NAME(name, size) ZoneNameV(TKIT_CONCAT(__tkit_perf_scope, __LINE__), name, size)
+#    define TKIT_PROFILE_SCOPE_COLOR(color) ZoneColorV(TKIT_CONCAT(__tkit_perf_scope, __LINE__), color)
+#    define TKIT_PROFILE_SCOPE_VALUE(value) ZoneValueV(TKIT_CONCAT(__tkit_perf_scope, __LINE__), value)
 
 #    define TKIT_PROFILE_MESSAGE(message) TracyMessageL(message)
 #    define TKIT_PROFILE_NMESSAGE(message, size) TracyMessage(message, size)

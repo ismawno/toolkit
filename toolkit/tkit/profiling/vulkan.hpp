@@ -3,6 +3,8 @@
 #ifdef TKIT_ENABLE_VULKAN_INSTRUMENTATION
 #    include <tracy/TracyVulkan.hpp>
 
+#    include "tkit/preprocessor/utils.hpp"
+
 namespace TKit
 {
 using VkProfilingContext = TracyVkCtx;
@@ -18,14 +20,14 @@ using VkProfilingContext = TracyVkCtx;
 #    define TKIT_PROFILE_DESTROY_VULKAN_CONTEXT(context) TracyVkDestroy(context)
 
 #    define TKIT_PROFILE_VULKAN_SCOPE_IF(active, name, context, cmdbuf)                                                \
-        TracyVkNamedZone(context, __tkit_gpu_scope##__LINE__, cmdbuf, name, active)
+        TracyVkNamedZone(context, TKIT_CONCAT(__tkit_gpu_scope, __LINE__), cmdbuf, name, active)
 #    define TKIT_PROFILE_VULKAN_CSCOPE_IF(active, name, color, context, cmdbuf)                                        \
-        TracyVkNamedZoneC(context, __tkit_gpu_scope##__LINE__, cmdbuf, name, color, active)
+        TracyVkNamedZoneC(context, TKIT_CONCAT(__tkit_gpu_scope, __LINE__), cmdbuf, name, color, active)
 
 #    define TKIT_PROFILE_VULKAN_SCOPE(name, context, cmdbuf)                                                           \
-        TracyVkNamedZone(context, __tkit_gpu_scope##__LINE__, cmdbuf, name, true)
+        TracyVkNamedZone(context, TKIT_CONCAT(__tkit_gpu_scope, __LINE__), cmdbuf, name, true)
 #    define TKIT_PROFILE_VULKAN_CSCOPE(name, color, context, cmdbuf)                                                   \
-        TracyVkNamedZoneC(context, __tkit_gpu_scope##__LINE__, cmdbuf, name, color, true)
+        TracyVkNamedZoneC(context, TKIT_CONCAT(__tkit_gpu_scope, __LINE__), cmdbuf, name, color, true)
 
 #    define TKIT_PROFILE_VULKAN_COLLECT(context, cmdbuf) TracyVkCollect(context, cmdbuf)
 
