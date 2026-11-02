@@ -1,6 +1,8 @@
+#define __TKIT_CONCAT(a, b) a##b
+
 #define TKIT_UNUSED(arg) (void)(arg)
 #define TKIT_IDENTITY(...) __VA_ARGS__
-#define TKIT_CONCAT(a, b) a##b
+#define TKIT_CONCAT(a, b) __TKIT_CONCAT(a, b)
 #define TKIT_STRINGIFY(...) #__VA_ARGS__
 
 #define TKIT_UNWRAP(...) __VA_ARGS__
