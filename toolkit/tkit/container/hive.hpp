@@ -302,6 +302,19 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
         return m_Data.IsFull();
     }
 
+    constexpr usize GetNextId() const
+    {
+        const usize size = m_Data.GetSize();
+        const usize idxs = m_Indices.GetSize();
+
+        TKIT_ASSERT(
+            size <= idxs,
+            "[TOOLKIT][HIVE] Data constainer size ({}) must be smaller or equal to index/id container size ({})", size,
+            idxs);
+
+        return size == idxs ? size : m_Ids[size];
+    }
+
     template <typename... Args>
         requires std::constructible_from<T, Args...>
     constexpr usize Insert(Args &&...args)
