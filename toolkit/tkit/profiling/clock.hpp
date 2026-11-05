@@ -13,41 +13,41 @@
     {                                                                                                                  \
     }
 
-#define TKIT_END_CLOCK(level, unit, ...)                                                                               \
+#define TKIT_END_CLOCK(level, unit, msg, ...)                                                                          \
     const auto elapsed = __tkit_##level##_clock.GetElapsed().As##unit();                                               \
     if (TKit::Detail::t_LogMask & TKIT_##level##_LOGS_BIT)                                                             \
-    TKit::Detail::Log(TKit::Format(__VA_ARGS__, elapsed), #level, TKIT_LOG_COLOR_##level)
+    TKit::Detail::Log(TKit::Format(msg, elapsed __VA_OPT__(, ) __VA_ARGS__), #level, TKIT_LOG_COLOR_##level)
 
 #ifdef TKIT_ENABLE_DEBUG_LOGS
 #    define TKIT_BEGIN_DEBUG_CLOCK() TKIT_BEGIN_CLOCK(DEBUG)
-#    define TKIT_END_DEBUG_CLOCK(unit, ...) TKIT_END_CLOCK(DEBUG, unit, __VA_ARGS__)
+#    define TKIT_END_DEBUG_CLOCK(unit, msg, ...) TKIT_END_CLOCK(DEBUG, unit, msg, __VA_ARGS__)
 #else
 #    define TKIT_BEGIN_DEBUG_CLOCK()
-#    define TKIT_END_DEBUG_CLOCK(unit, ...)
+#    define TKIT_END_DEBUG_CLOCK(unit, msg, ...)
 #endif
 
 #ifdef TKIT_ENABLE_INFO_LOGS
 #    define TKIT_BEGIN_INFO_CLOCK() TKIT_BEGIN_CLOCK(INFO)
-#    define TKIT_END_INFO_CLOCK(unit, ...) TKIT_END_CLOCK(INFO, unit, __VA_ARGS__)
+#    define TKIT_END_INFO_CLOCK(unit, msg, ...) TKIT_END_CLOCK(INFO, unit, msg, __VA_ARGS__)
 #else
 #    define TKIT_BEGIN_INFO_CLOCK()
-#    define TKIT_END_INFO_CLOCK(unit, ...)
+#    define TKIT_END_INFO_CLOCK(unit, msg, ...)
 #endif
 
 #ifdef TKIT_ENABLE_WARNING_LOGS
 #    define TKIT_BEGIN_WARNING_CLOCK() TKIT_BEGIN_CLOCK(WARNING)
-#    define TKIT_END_WARNING_CLOCK(unit, ...) TKIT_END_CLOCK(WARNING, unit, __VA_ARGS__)
+#    define TKIT_END_WARNING_CLOCK(unit, msg, ...) TKIT_END_CLOCK(WARNING, unit, msg, __VA_ARGS__)
 #else
 #    define TKIT_BEGIN_WARNING_CLOCK()
-#    define TKIT_END_WARNING_CLOCK(unit, ...)
+#    define TKIT_END_WARNING_CLOCK(unit, msg, ...)
 #endif
 
 #ifdef TKIT_ENABLE_ERROR_LOGS
 #    define TKIT_BEGIN_ERROR_CLOCK() TKIT_BEGIN_CLOCK(ERROR)
-#    define TKIT_END_ERROR_CLOCK(unit, ...) TKIT_END_CLOCK(ERROR, unit, __VA_ARGS__)
+#    define TKIT_END_ERROR_CLOCK(unit, msg, ...) TKIT_END_CLOCK(ERROR, unit, msg, __VA_ARGS__)
 #else
 #    define TKIT_BEGIN_ERROR_CLOCK()
-#    define TKIT_END_ERROR_CLOCK(unit, ...)
+#    define TKIT_END_ERROR_CLOCK(unit, msg, ...)
 #endif
 
 namespace TKit
