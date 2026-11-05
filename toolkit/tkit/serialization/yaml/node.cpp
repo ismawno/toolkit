@@ -414,21 +414,27 @@ void CheckYamlReadResult(const YamlReadResult &res, const ryml::Tree *tree)
     const YamlReadError &err = res.GetError();
     const bool hasVal = tree && tree->has_val(err.NodeId);
     const bool hasKey = tree && tree->has_key(err.NodeId);
+    ConstYamlNode node;
+    if (tree)
+        node = tree->ref(err.NodeId);
 
     if (hasKey && hasVal)
     {
-        TKIT_PANIC("[TOOLKIT][YAML] Failed to read node with message - '{}' - Key: {} - Value: {} - Faulty id: {}",
-                   fromNative(tree->key(err.NodeId)), fromNative(tree->val(err.NodeId)), err.Message, err.NodeId);
+        TKIT_PANIC("[TOOLKIT][YAML] Failed to read node '{}': got {} - {} - Key: {} - Value: {} - Faulty id: {}",
+                   YamlGeneratePath(node), YamlDescribeNode(node), err.Message, fromNative(tree->key(err.NodeId)),
+                   fromNative(tree->val(err.NodeId)), err.NodeId);
     }
     else if (hasKey)
     {
-        TKIT_PANIC("[TOOLKIT][YAML] Failed to read node with message - '{}' - Key: {} - Faulty id: {}",
-                   fromNative(tree->key(err.NodeId)), err.Message, err.NodeId);
+        TKIT_PANIC("[TOOLKIT][YAML] Failed to read node '{}': got {} - {} - Key: {} - Faulty id: {}",
+                   YamlGeneratePath(node), YamlDescribeNode(node), err.Message, fromNative(tree->key(err.NodeId)),
+                   err.NodeId);
     }
     else if (hasVal)
     {
-        TKIT_PANIC("[TOOLKIT][YAML] Failed to read node with message - '{}' - Value: {} - Faulty id: {}",
-                   fromNative(tree->val(err.NodeId)), err.Message, err.NodeId);
+        TKIT_PANIC("[TOOLKIT][YAML] Failed to read node '{}': got {} - {} - Value: {} - Faulty id: {}",
+                   YamlGeneratePath(node), YamlDescribeNode(node), err.Message, fromNative(tree->val(err.NodeId)),
+                   err.NodeId);
     }
     else
     {
