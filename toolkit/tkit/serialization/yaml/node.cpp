@@ -321,6 +321,36 @@ const ryml::Tree *YamlNode::getHandle() const
 {
     return get().tree();
 }
+
+TKit::TierString YamlGeneratePath(TKit::ConstYamlNode node)
+{
+    TKit::TierString path{};
+    for (TKit::ConstYamlNode parent = node.GetParent(); parent; node = parent, parent = node.GetParent())
+    {
+        if (node.HasKey())
+            path = TKit::TierString::Format(".{}{}", node.GetKey(), path);
+        else
+        {
+            u32 idx = 0;
+            for (TKit::ConstYamlNode sib = parent.FirstChild(); sib != node; sib = sib.NextSibling())
+                ++idx;
+            path = TKit::TierString::Format("[{}]{}", idx, path);
+        }
+    }
+    return path.IsEmpty() ? "root" : path;
+}
+
+TKit::TierString YamlDescribeNode(const TKit::ConstYamlNode node)
+{
+    if (node.IsSequence())
+        return TKit::TierString::Format("a sequence of {} elements", node.GetChildCount());
+    if (node.IsMap())
+        return TKit::TierString::Format("a map with {} keys", node.GetChildCount());
+    if (node.HasValue())
+        return TKit::TierString::Format("'{}'", node.GetValue());
+    return "an empty node";
+}
+
 template YamlReadResult ConstYamlNode::TryReadKey(u8 &) const;
 template YamlReadResult ConstYamlNode::TryReadKey(u16 &) const;
 template YamlReadResult ConstYamlNode::TryReadKey(u32 &) const;

@@ -471,4 +471,7 @@ class YamlNode
 
     friend ConstYamlNode;
 };
+
+TKit::TierString YamlGeneratePath(TKit::ConstYamlNode node);
+TKit::TierString YamlDescribeNode(TKit::ConstYamlNode node);
 } // namespace TKit
