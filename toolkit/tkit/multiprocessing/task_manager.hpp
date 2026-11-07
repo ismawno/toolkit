@@ -1,10 +1,5 @@
 #pragma once
 
-#ifndef TKIT_ENABLE_MULTIPROCESSING
-#    error                                                                                                             \
-        "[TOOLKIT][MULTIPROC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_MULTIPROCESSING"
-#endif
-
 #include "tkit/multiprocessing/task.hpp"
 #include "tkit/utils/alias.hpp"
 #include <type_traits>

@@ -1,15 +1,9 @@
 #include "tkit/core/pch.hpp"
 #include "tkit/serialization/yaml/tree.hpp"
 #include "tkit/memory/tier_allocator.hpp"
-#ifdef TKIT_ENABLE_ARENA_ALLOCATOR
-#    include "tkit/container/arena_array.hpp"
-#endif
-#ifdef TKIT_ENABLE_STACK_ALLOCATOR
-#    include "tkit/container/stack_array.hpp"
-#endif
-#ifdef TKIT_ENABLE_TIER_ALLOCATOR
-#    include "tkit/container/tier_array.hpp"
-#endif
+#include "tkit/container/arena_array.hpp"
+#include "tkit/container/stack_array.hpp"
+#include "tkit/container/tier_array.hpp"
 #include "tkit/container/span.hpp"
 #include "tkit/container/dynamic_array.hpp"
 #include <ryml.hpp>
@@ -149,15 +143,9 @@ YamlNode YamlTree::GetRoot()
     return get().rootref();
 }
 
-#ifdef TKIT_ENABLE_ARENA_ALLOCATOR
 template ArenaString YamlTree::ToString() const;
-#endif
-#ifdef TKIT_ENABLE_STACK_ALLOCATOR
 template StackString YamlTree::ToString() const;
-#endif
-#ifdef TKIT_ENABLE_TIER_ALLOCATOR
 template TierString YamlTree::ToString() const;
-#endif
 template DynamicString YamlTree::ToString() const;
 template std::string YamlTree::ToString() const;
 

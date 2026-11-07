@@ -3,41 +3,23 @@ project(toolkit)
 
 set(NAME toolkit)
 
-set(SOURCES tkit/core/pch.cpp tkit/memory/memory.cpp tkit/utils/logging.cpp)
-
-if(TOOLKIT_ENABLE_ENSURE OR TOOLKIT_ENABLE_STACK_TRACE)
-  list(APPEND SOURCES tkit/utils/debug.cpp)
-endif()
-
-if(TOOLKIT_ENABLE_ARENA_ALLOCATOR)
-  list(APPEND SOURCES tkit/memory/arena_allocator.cpp)
-endif()
-
-if(TOOLKIT_ENABLE_BLOCK_ALLOCATOR)
-  list(APPEND SOURCES tkit/memory/block_allocator.cpp)
-endif()
-
-if(TOOLKIT_ENABLE_STACK_ALLOCATOR)
-  list(APPEND SOURCES tkit/memory/stack_allocator.cpp)
-endif()
-
-if(TOOLKIT_ENABLE_TIER_ALLOCATOR)
-  list(APPEND SOURCES tkit/memory/tier_allocator.cpp)
-endif()
-
-if(TOOLKIT_ENABLE_ECS)
-  list(APPEND SOURCES tkit/container/ecs.cpp)
-endif()
-
-if(TOOLKIT_ENABLE_MULTIPROCESSING)
-  list(APPEND SOURCES tkit/multiprocessing/task.cpp
-       tkit/multiprocessing/task_manager.cpp
-       tkit/multiprocessing/thread_pool.cpp tkit/multiprocessing/topology.cpp)
-endif()
-
-if(TOOLKIT_ENABLE_PROFILING)
-  list(APPEND SOURCES tkit/profiling/clock.cpp tkit/profiling/timespan.cpp)
-endif()
+set(SOURCES
+    tkit/core/pch.cpp
+    tkit/memory/memory.cpp
+    tkit/utils/logging.cpp
+    tkit/utils/debug.cpp
+    tkit/memory/arena_allocator.cpp
+    tkit/memory/block_allocator.cpp
+    tkit/memory/stack_allocator.cpp
+    tkit/memory/tier_allocator.cpp
+    tkit/filesystem/filesystem.cpp
+    tkit/container/ecs.cpp
+    tkit/multiprocessing/task.cpp
+    tkit/multiprocessing/task_manager.cpp
+    tkit/multiprocessing/thread_pool.cpp
+    tkit/multiprocessing/topology.cpp
+    tkit/profiling/clock.cpp
+    tkit/profiling/timespan.cpp)
 
 include(FetchContent)
 
@@ -214,34 +196,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   target_compile_definitions(toolkit PUBLIC TKIT_DEBUG)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
   target_compile_definitions(toolkit PUBLIC TKIT_RELEASE)
-endif()
-
-if(TOOLKIT_ENABLE_ARENA_ALLOCATOR)
-  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ARENA_ALLOCATOR)
-endif()
-
-if(TOOLKIT_ENABLE_BLOCK_ALLOCATOR)
-  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_BLOCK_ALLOCATOR)
-endif()
-
-if(TOOLKIT_ENABLE_STACK_ALLOCATOR)
-  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_STACK_ALLOCATOR)
-endif()
-
-if(TOOLKIT_ENABLE_TIER_ALLOCATOR)
-  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_TIER_ALLOCATOR)
-endif()
-
-if(TOOLKIT_ENABLE_ECS)
-  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_ECS)
-endif()
-
-if(TOOLKIT_ENABLE_MULTIPROCESSING)
-  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_MULTIPROCESSING)
-endif()
-
-if(TOOLKIT_ENABLE_PROFILING)
-  target_compile_definitions(toolkit PUBLIC TKIT_ENABLE_PROFILING)
 endif()
 
 if(TOOLKIT_ENABLE_DEBUG_LOGS)

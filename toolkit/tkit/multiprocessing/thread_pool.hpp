@@ -1,10 +1,5 @@
 #pragma once
 
-#ifndef TKIT_ENABLE_MULTIPROCESSING
-#    error                                                                                                             \
-        "[TOOLKIT][MULTIPROC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_MULTIPROCESSING"
-#endif
-
 #include "tkit/multiprocessing/task_manager.hpp"
 #include "tkit/multiprocessing/chase_lev_deque.hpp"
 #include "tkit/multiprocessing/mpmc_stack.hpp"

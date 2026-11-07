@@ -11,6 +11,8 @@ set(SOURCES
     tests/memory/arena_allocator.cpp
     tests/memory/tier_allocator.cpp
     tests/memory/ptr.cpp
+    tests/filesystem/filesystem.cpp
+    tests/filesystem/path.cpp
     tests/container/array.cpp
     tests/container/string.cpp
     tests/container/hive.cpp

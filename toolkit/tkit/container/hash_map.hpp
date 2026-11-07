@@ -1,14 +1,8 @@
 #pragma once
 
-#ifdef TKIT_ENABLE_ARENA_ALLOCATOR
-#    include "tkit/container/arena_array.hpp"
-#endif
-#ifdef TKIT_ENABLE_STACK_ALLOCATOR
-#    include "tkit/container/stack_array.hpp"
-#endif
-#ifdef TKIT_ENABLE_TIER_ALLOCATOR
-#    include "tkit/container/tier_array.hpp"
-#endif
+#include "tkit/container/arena_array.hpp"
+#include "tkit/container/stack_array.hpp"
+#include "tkit/container/tier_array.hpp"
 #include "tkit/container/dynamic_array.hpp"
 #include "tkit/container/static_array.hpp"
 #include "tkit/utils/hash.hpp"
@@ -562,15 +556,9 @@ template <typename K, typename V, typename AllocState> class HashMap
     usize m_Size = 0;
 };
 
-#ifdef TKIT_ENABLE_ARENA_ALLOCATOR
 template <typename K, typename V> using ArenaHashMap = HashMap<K, V, ArenaAllocation<MapNode<K, V>>>;
-#endif
-#ifdef TKIT_ENABLE_STACK_ALLOCATOR
 template <typename K, typename V> using StackHashMap = HashMap<K, V, StackAllocation<MapNode<K, V>>>;
-#endif
-#ifdef TKIT_ENABLE_TIER_ALLOCATOR
 template <typename K, typename V> using TierHashMap = HashMap<K, V, TierAllocation<MapNode<K, V>>>;
-#endif
 template <typename K, typename V> using DynamicHashMap = HashMap<K, V, DynamicAllocation<MapNode<K, V>>>;
 
 template <typename K, typename V, usize Capacity>

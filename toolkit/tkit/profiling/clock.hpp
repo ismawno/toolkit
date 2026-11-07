@@ -1,10 +1,5 @@
 #pragma once
 
-#ifndef TKIT_ENABLE_PROFILING
-#    error                                                                                                             \
-        "[TOOLKIT][PROFILING] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_PROFILING"
-#endif
-
 #include "tkit/profiling/timespan.hpp"
 #include "tkit/utils/logging.hpp"
 

@@ -1,10 +1,5 @@
 #pragma once
 
-#ifndef TKIT_ENABLE_STACK_ALLOCATOR
-#    error                                                                                                             \
-        "[TOOLKIT][STACK-ALLOC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_STACK_ALLOCATOR"
-#endif
-
 #include "tkit/utils/debug.hpp"
 #include "tkit/preprocessor/system.hpp"
 #include "tkit/utils/non_copyable.hpp"

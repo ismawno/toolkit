@@ -1,10 +1,5 @@
 #pragma once
 
-#ifndef TKIT_ENABLE_YAML_SERIALIZATION
-#    error                                                                                                             \
-        "[TOOLKIT][YAML] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_YAML_SERIALIZATION"
-#endif
-
 #include "tkit/reflection/reflect.hpp"
 #include "tkit/serialization/yaml/tree.hpp"
 

@@ -1,11 +1,5 @@
 #pragma once
 
-#ifndef TKIT_ENABLE_ECS
-#    error                                                                                                             \
-        "[TOOLKIT][ECS] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_ECS"
-#endif
-
-#include "tkit/container/tier_array.hpp"
 #include "tkit/container/hive.hpp"
 #include "tkit/container/hash_map.hpp"
 #include "tkit/container/span.hpp"
@@ -16,6 +10,16 @@
 
 namespace TKit
 {
+#ifndef TKIT_ECS_DEFAULT_ARRAY
+#    define TKIT_ECS_DEFAULT_ARRAY TKit::TierArray
+#endif
+#ifndef TKIT_ECS_DEFAULT_HASH_MAP
+#    define TKIT_ECS_DEFAULT_HASH_MAP TKit::TierHashMap
+#endif
+
+template <typename T> using EcsArray = TKIT_ECS_DEFAULT_ARRAY<T>;
+template <typename K, typename V> using EcsHashMap = TKIT_ECS_DEFAULT_HASH_MAP<K, V>;
+
 class ITaskManager;
 using ComponentId = usize;
 using Entity = usize;
@@ -396,7 +400,7 @@ class Archetype
         return m_Id;
     }
 
-    const TierArray<ComponentId> &GetComponentIds() const
+    const EcsArray<ComponentId> &GetComponentIds() const
     {
         return m_ComponentIdSet;
     }
@@ -443,13 +447,13 @@ class Archetype
     Entity removeEntity(usize row);
 
     usz m_Id = TKIT_USZ_MAX;
-    TierArray<ComponentId> m_ComponentIdSet{};
-    TierArray<ComponentColumn> m_Columns{};
-    TierArray<Entity> m_Entities{};
+    EcsArray<ComponentId> m_ComponentIdSet{};
+    EcsArray<ComponentColumn> m_Columns{};
+    EcsArray<Entity> m_Entities{};
 
-    TierHashMap<ComponentId, usize> m_ColumnByComponent{};
-    TierHashMap<ComponentId, Archetype *> m_AddEdges{};
-    TierHashMap<ComponentId, Archetype *> m_RemoveEdges{};
+    EcsHashMap<ComponentId, usize> m_ColumnByComponent{};
+    EcsHashMap<ComponentId, Archetype *> m_AddEdges{};
+    EcsHashMap<ComponentId, Archetype *> m_RemoveEdges{};
 };
 
 template <usize N>
@@ -562,7 +566,7 @@ class ComponentQuery
     class RowIterator
     {
       public:
-        RowIterator(const TierArray<ArchetypeQueryInterface> *archInfo, const usize archetype)
+        RowIterator(const EcsArray<ArchetypeQueryInterface> *archInfo, const usize archetype)
             : m_ArchInfo(archInfo), m_Archetype(archetype)
         {
         }
@@ -604,7 +608,7 @@ class ComponentQuery
         }
 
       private:
-        const TierArray<ArchetypeQueryInterface> *m_ArchInfo;
+        const EcsArray<ArchetypeQueryInterface> *m_ArchInfo;
         usize m_Archetype;
         usize m_Row = 0;
     };
@@ -644,7 +648,7 @@ class ComponentQuery
         return RowIterator{&m_ArchetypeInfo, TKIT_USIZE_MAX};
     }
 
-    const TierArray<ArchetypeQueryInterface> &Archetypes() const
+    const EcsArray<ArchetypeQueryInterface> &Archetypes() const
     {
         return m_ArchetypeInfo;
     }
@@ -686,7 +690,7 @@ class ComponentQuery
         interface.Columns = ArchetypeQueryColumns<Count>{&arch->GetColumn(GetComponentId<Cs>())...};
     }
 
-    TierArray<ArchetypeQueryInterface> m_ArchetypeInfo{};
+    EcsArray<ArchetypeQueryInterface> m_ArchetypeInfo{};
 
     FixedArray<ComponentId, Count> m_ComponentIds{};
     usize m_CheckedArchetypes;
@@ -999,11 +1003,11 @@ class Registry
     {
         return m_Entities.IsValidIndex(idx) ? m_Entities.GetId(idx) : NullEntity;
     }
-    const TierArray<usize> &GetEntityIndices() const
+    const EcsArray<usize> &GetEntityIndices() const
     {
         return m_Entities.GetIndices();
     }
-    const TierArray<Entity> &GetEntityIds() const
+    const EcsArray<Entity> &GetEntityIds() const
     {
         return m_Entities.GetIds();
     }
@@ -1024,16 +1028,16 @@ class Registry
     void destroyArchetype(const Archetype *arch);
 
     TierHive<EntityRecord> m_Entities{};
-    TierArray<ComponentInfo> m_Components{};
-    TierArray<Archetype *> m_Archetypes{};
+    EcsArray<ComponentInfo> m_Components{};
+    EcsArray<Archetype *> m_Archetypes{};
 
-    TierHashMap<usz, Archetype *> m_ArchetypeById{};
+    EcsHashMap<usz, Archetype *> m_ArchetypeById{};
     struct CachedQuery
     {
         void *Query;
         void (*Destroy)(const void *);
     };
-    TierHashMap<usz, CachedQuery> m_Queries{};
+    EcsHashMap<usz, CachedQuery> m_Queries{};
 };
 
 } // namespace TKit

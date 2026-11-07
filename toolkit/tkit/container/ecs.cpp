@@ -273,16 +273,24 @@ void Registry::cleanup()
 
 Archetype *Registry::createArchetype(const usz archId)
 {
+#ifndef TKIT_ECS_NO_TIER_ALLOCATIONS
     TierAllocator *tier = GetTier();
     Archetype *arch = tier->Create<Archetype>();
+#else
+    Archetype *arch = new Archetype{};
+#endif
     m_ArchetypeById[archId] = arch;
     return m_Archetypes.Append(arch);
 }
 
 void Registry::destroyArchetype(const Archetype *arch)
 {
+#ifndef TKIT_ECS_NO_TIER_ALLOCATIONS
     TierAllocator *tier = GetTier();
     tier->Destroy(arch);
+#else
+    delete arch;
+#endif
 }
 
 } // namespace TKit

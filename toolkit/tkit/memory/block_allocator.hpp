@@ -1,10 +1,5 @@
 #pragma once
 
-#ifndef TKIT_ENABLE_BLOCK_ALLOCATOR
-#    error                                                                                                             \
-        "[TOOLKIT][BLOCK-ALLOC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_BLOCK_ALLOCATOR"
-#endif
-
 #include "tkit/utils/non_copyable.hpp"
 #include "tkit/preprocessor/system.hpp"
 #include "tkit/memory/memory.hpp"
