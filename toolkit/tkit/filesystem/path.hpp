@@ -837,8 +837,6 @@ template <typename AllocState> class Path
         const char *odata = other.GetData();
         const usize osize = other.GetSize();
 
-        const StringView current = StringView{data, size};
-
         const StringView rootName = StringView{data, rootNameSize()};
         const StringView otherRootName = StringView{odata, Detail::GetRootNameSize(other)};
 
