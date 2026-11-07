@@ -56,14 +56,14 @@ TEST_CASE("Status and basic queries", "[filesystem]")
     const DynamicPath file = tmp.Root / "file.txt";
     writeFile(file, "hello");
 
-    REQUIRE(Exists(tmp.Root));
+    REQUIRE(PathExists(tmp.Root));
     REQUIRE(IsDirectory(tmp.Root));
-    REQUIRE(Exists(file));
+    REQUIRE(PathExists(file));
     REQUIRE(IsRegularFile(file));
     REQUIRE_FALSE(IsDirectory(file));
-    REQUIRE_FALSE(Exists(tmp.Root / "nope"));
-    REQUIRE(Exists(file.CString()));
-    REQUIRE(Exists(std::string{file.CString()}));
+    REQUIRE_FALSE(PathExists(tmp.Root / "nope"));
+    REQUIRE(PathExists(file.CString()));
+    REQUIRE(PathExists(std::string{file.CString()}));
 
     const auto missing = GetStatus(tmp.Root / "nope");
     REQUIRE(missing);
@@ -138,7 +138,7 @@ TEST_CASE("Directory creation and removal", "[filesystem]")
 
     // a, a/b, a/b/c, a/b/c/d, a/b/e, a/f2
     REQUIRE(RemoveAll(tmp.Root / "a").GetValue() == 6);
-    REQUIRE_FALSE(Exists(tmp.Root / "a"));
+    REQUIRE_FALSE(PathExists(tmp.Root / "a"));
     REQUIRE(RemoveAll(tmp.Root / "a").GetValue() == 0);
     PopTier();
 }
@@ -176,13 +176,13 @@ TEST_CASE("Symlinks and hard links", "[filesystem]")
 
     // removing a symlink must not touch its target
     REQUIRE(Remove(link).GetValue());
-    REQUIRE(Exists(file));
+    REQUIRE(PathExists(file));
     REQUIRE(RemoveAll(dirLink).GetValue() == 1);
     REQUIRE(IsDirectory(dir));
 
     const DynamicPath broken = tmp.Root / "broken";
     REQUIRE(CreateSymlink("does-not-exist", broken));
-    REQUIRE_FALSE(Exists(broken));
+    REQUIRE_FALSE(PathExists(broken));
     REQUIRE(IsSymlink(broken));
     PopTier();
 }
@@ -233,19 +233,19 @@ TEST_CASE("Copy and rename", "[filesystem]")
 
     const DynamicPath shallow = tmp.Root / "shallow";
     REQUIRE(Copy(tree, shallow, CopyOptionFlag_None));
-    REQUIRE(Exists(shallow / "root"));
-    REQUIRE_FALSE(Exists(shallow / "x"));
+    REQUIRE(PathExists(shallow / "root"));
+    REQUIRE_FALSE(PathExists(shallow / "x"));
 
     const DynamicPath dirsOnly = tmp.Root / "dirs-only";
     REQUIRE(Copy(tree, dirsOnly, CopyOptionFlag_Recursive | CopyOptionFlag_DirectoriesOnly));
     REQUIRE(IsDirectory(dirsOnly / "x/y"));
-    REQUIRE_FALSE(Exists(dirsOnly / "root"));
+    REQUIRE_FALSE(PathExists(dirsOnly / "root"));
 
     REQUIRE(Copy(file, tree));
     REQUIRE(readFile(tree / "a.txt") == "second");
 
     REQUIRE(Rename(copy, tmp.Root / "renamed.txt"));
-    REQUIRE_FALSE(Exists(copy));
+    REQUIRE_FALSE(PathExists(copy));
     REQUIRE(readFile(tmp.Root / "renamed.txt") == "second");
     PopTier();
 }

@@ -349,7 +349,7 @@ template <PathLike P> FileSystemResult<FileStatus> GetSymlinkStatus(const P &pat
 
 // These return false on error. Use GetStatus() if errors must be told apart from a false result.
 
-template <PathLike P> bool Exists(const P &path)
+template <PathLike P> bool PathExists(const P &path)
 {
     const auto result = GetStatus(path);
     return result && result->Exists();
