@@ -21,7 +21,7 @@ struct Test_ComponentC
 
 static ArenaAllocator s_Arena{4_mib};
 static StackAllocator s_Stack{4_mib};
-static TierAllocator s_Tier{{.Allocator = &s_Arena, .MaxAllocation = 128_kib}};
+static TierAllocator s_Tier{{.MaxAllocation = 128_kib}};
 
 TEST_CASE("ECS: Entity creation and recycling", "[ECS]")
 {
@@ -464,7 +464,7 @@ TEST_CASE("ECS: Query AsyncEach", "[ECS]")
     PushTier(&s_Tier);
     PushStack(&s_Stack);
     {
-        ThreadPool pool(&arena, 4);
+        ThreadPool pool{4};
         Registry r{};
         r.RegisterComponents<Test_ComponentA, Test_ComponentB, Test_ComponentC>();
 
@@ -536,7 +536,7 @@ TEST_CASE("ECS: Query AsyncEach across multiple archetypes", "[ECS]")
     PushTier(&s_Tier);
     PushStack(&s_Stack);
     {
-        ThreadPool pool(&arena, 4);
+        ThreadPool pool{4};
         Registry r{};
         r.RegisterComponents<Test_ComponentA, Test_ComponentB, Test_ComponentC>();
 

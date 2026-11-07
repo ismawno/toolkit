@@ -1,10 +1,16 @@
 #pragma once
 
-#include "tkit/container/arena_array.hpp"
+#ifdef TKIT_ENABLE_ARENA_ALLOCATOR
+#    include "tkit/container/arena_array.hpp"
+#endif
+#ifdef TKIT_ENABLE_STACK_ALLOCATOR
+#    include "tkit/container/stack_array.hpp"
+#endif
+#ifdef TKIT_ENABLE_TIER_ALLOCATOR
+#    include "tkit/container/tier_array.hpp"
+#endif
 #include "tkit/container/dynamic_array.hpp"
-#include "tkit/container/stack_array.hpp"
 #include "tkit/container/static_array.hpp"
-#include "tkit/container/tier_array.hpp"
 #include "tkit/utils/hash.hpp"
 #include "tkit/utils/bit.hpp"
 #include "tkit/utils/limits.hpp"
@@ -474,10 +480,16 @@ template <typename K, typename AllocState> class HashSet
     usize m_Size = 0;
 };
 
+#ifdef TKIT_ENABLE_ARENA_ALLOCATOR
 template <typename K> using ArenaHashSet = HashSet<K, ArenaAllocation<SetNode<K>>>;
-template <typename K> using DynamicHashSet = HashSet<K, DynamicAllocation<SetNode<K>>>;
+#endif
+#ifdef TKIT_ENABLE_STACK_ALLOCATOR
 template <typename K> using StackHashSet = HashSet<K, StackAllocation<SetNode<K>>>;
+#endif
+#ifdef TKIT_ENABLE_TIER_ALLOCATOR
 template <typename K> using TierHashSet = HashSet<K, TierAllocation<SetNode<K>>>;
+#endif
+template <typename K> using DynamicHashSet = HashSet<K, DynamicAllocation<SetNode<K>>>;
 
 template <typename K, usize Capacity> using StaticHashSet = HashSet<K, StaticAllocation<SetNode<K>, Capacity>>;
 template <typename K> using StaticHashSet4 = StaticHashSet<K, 4>;

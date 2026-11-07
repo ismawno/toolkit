@@ -1,6 +1,5 @@
 #include "tkit/multiprocessing/for_each.hpp"
 #include "tkit/multiprocessing/thread_pool.hpp"
-#include "tkit/utils/literals.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <atomic>
 #include <array>
@@ -8,11 +7,9 @@
 using namespace TKit;
 using namespace TKit::Alias;
 
-static ArenaAllocator s_Alloc{16_kib, TKIT_CACHE_LINE_SIZE};
-
 TEST_CASE("AsyncForEach (void) with ThreadPool sums all elements", "[AsyncForEach][ThreadPool]")
 {
-    ThreadPool pool(&s_Alloc, 4);
+    ThreadPool pool{4};
     constexpr usize firstIndex = 0;
     constexpr usize lastIndex = 100;
     constexpr usize partitionCount = 5;
@@ -33,7 +30,7 @@ TEST_CASE("AsyncForEach (void) with ThreadPool sums all elements", "[AsyncForEac
 
 TEST_CASE("AsyncForEach with output iterator collects and executes all", "[AsyncForEach][ThreadPool]")
 {
-    ThreadPool pool(&s_Alloc, 3);
+    ThreadPool pool{3};
     constexpr usize firstIndex = 10;
     constexpr usize lastIndex = 25;
     constexpr usize partitionCount = 5;
@@ -58,7 +55,7 @@ TEST_CASE("AsyncForEach with output iterator collects and executes all", "[Async
 
 TEST_CASE("SyncForEach with output iterator partitions and returns main result", "[SyncForEach][ThreadPool]")
 {
-    ThreadPool pool(&s_Alloc, 3);
+    ThreadPool pool{3};
     const usize firstIndex = 0;
     const usize lastIndex = 100;
     const usize partitionCount = 4;
@@ -92,7 +89,7 @@ TEST_CASE("SyncForEach with output iterator partitions and returns main result",
 
 TEST_CASE("SyncForEach without output iterator executes all partitions", "[SyncForEach][ThreadPool]")
 {
-    ThreadPool pool(&s_Alloc, 2);
+    ThreadPool pool{2};
     const usize firstIndex = 10;
     const usize lastIndex = 30;
     const usize partitionCount = 5;

@@ -12,7 +12,7 @@ using namespace TKit::Alias;
 
 static ArenaAllocator s_Arena{10_kib};
 static StackAllocator s_Stack{10_kib};
-static TierAllocator s_Tier{{.Allocator = &s_Arena, .MaxAllocation = 16_kib}};
+static TierAllocator s_Tier{{.MaxAllocation = 16_kib}};
 
 template <typename T> using StaticAlloc64 = StaticAllocation<T, 64>;
 

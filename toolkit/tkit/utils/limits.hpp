@@ -73,23 +73,58 @@ template <typename T> struct Limits
     }
 };
 
-#ifndef TKIT_MEMORY_MAX_STACK_ALLOCATION
-#    define TKIT_MEMORY_MAX_STACK_ALLOCATION 1024
+#ifndef TKIT_MAX_STACK_ALLOCATION
+#    define TKIT_MAX_STACK_ALLOCATION 1024
 #endif
 
 #ifndef TKIT_MAX_THREADS
 #    define TKIT_MAX_THREADS 16
 #endif
 
-#if TKIT_MAX_THREADS < 1
-#    error "[TOOLKIT][LIMITS] TKIT_MAX_THREADS must be at least 1"
-#endif
-
 #ifndef TKIT_MAX_ALLOCATOR_PUSH_DEPTH
 #    define TKIT_MAX_ALLOCATOR_PUSH_DEPTH 4
 #endif
 
-constexpr usize MaxStackAlloc = TKIT_MEMORY_MAX_STACK_ALLOCATION;
+#ifndef TKIT_MAX_TIER_ALLOCATOR_TIERS
+#    define TKIT_MAX_TIER_ALLOCATOR_TIERS 64
+#endif
+
+#ifndef TKIT_MAX_THREAD_POOL_TASKS_PER_WORKER
+#    define TKIT_MAX_THREAD_POOL_TASKS_PER_WORKER 16
+#endif
+
+#ifndef TKIT_MAX_THREAD_POOL_WORKERS
+#    define TKIT_MAX_THREAD_POOL_WORKERS 16
+#endif
+
+#if TKIT_MAX_STACK_ALLOCATION < 1
+#    error "[TOOLKIT][LIMITS] TKIT_MAX_STACK_ALLOCATION must be at least 1"
+#endif
+
+#if TKIT_MAX_THREADS < 1
+#    error "[TOOLKIT][LIMITS] TKIT_MAX_THREADS must be at least 1"
+#endif
+
+#if TKIT_MAX_ALLOCATOR_PUSH_DEPTH < 1
+#    error "[TOOLKIT][LIMITS] TKIT_MAX_ALLOCATOR_PUSH_DEPTH must be at least 1"
+#endif
+
+#if TKIT_MAX_TIER_ALLOCATOR_TIERS < 1
+#    error "[TOOLKIT][LIMITS] TKIT_MAX_TIER_ALLOCATOR_TIERS must be at least 1"
+#endif
+
+#if TKIT_MAX_THREAD_POOL_TASKS_PER_WORKER < 1
+#    error "[TOOLKIT][LIMITS] TKIT_MAX_THREAD_POOL_TASKS_PER_WORKER must be at least 1"
+#endif
+
+#if TKIT_MAX_THREAD_POOL_WORKERS < 1
+#    error "[TOOLKIT][LIMITS] TKIT_MAX_THREAD_POOL_WORKERS must be at least 1"
+#endif
+
+constexpr usize MaxStackAlloc = TKIT_MAX_STACK_ALLOCATION;
 constexpr usize MaxThreads = TKIT_MAX_THREADS;
 constexpr usize MaxAllocatorPushDepth = TKIT_MAX_ALLOCATOR_PUSH_DEPTH;
+constexpr usize MaxTierAllocTiers = TKIT_MAX_TIER_ALLOCATOR_TIERS;
+constexpr usize MaxThreadPoolTasksPerWorker = TKIT_MAX_THREAD_POOL_TASKS_PER_WORKER;
+constexpr usize MaxThreadPoolWorkers = TKIT_MAX_THREAD_POOL_WORKERS;
 } // namespace TKit

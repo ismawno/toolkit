@@ -16,7 +16,7 @@ static u32 g_Constructions = 0;
 static u32 g_Destructions = 0;
 static ArenaAllocator s_Arena{1_mib};
 static StackAllocator s_Stack{1_mib};
-static TierAllocator s_Tier{{.Allocator = &s_Arena, .MaxAllocation = 16_kib}};
+static TierAllocator s_Tier{{.MaxAllocation = 16_kib}};
 
 struct Test_Tracker
 {
@@ -436,7 +436,7 @@ TEST_CASE("Bug3: Append self-ref dangles on realloc", "[Array][bug]")
 TEST_CASE("Bug3b: Append self-ref dangles on realloc (Tier)", "[Array][tier][bug]")
 {
     ArenaAllocator arena{1_mib};
-    TierAllocator tier{{.Allocator = &arena, .MaxAllocation = 16_kib}};
+    TierAllocator tier{{.MaxAllocation = 16_kib}};
     {
         Array<std::string, TierAllocation<std::string>> arr(&tier);
         arr.Append("hello");

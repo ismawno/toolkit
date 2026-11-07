@@ -13,7 +13,7 @@ int main(int argc, char **argv)
 {
     TKit::ArenaAllocator arena{8_kib};
     TKit::StackAllocator stack{1_kib};
-    TKit::TierAllocator tier{{.Allocator = &arena, .MaxAllocation = 8_kib}};
+    TKit::TierAllocator tier{{.MaxAllocation = 8_kib}};
     TKit::PushArena(&arena);
     TKit::PushStack(&stack);
     TKit::PushTier(&tier);

@@ -8,7 +8,7 @@ using namespace TKit::Alias;
 
 static ArenaAllocator s_Arena{1_mib};
 static StackAllocator s_Stack{1_mib};
-static TierAllocator s_Tier{{.Allocator = &s_Arena, .MaxAllocation = 16_kib}};
+static TierAllocator s_Tier{{.MaxAllocation = 16_kib}};
 
 static constexpr usize initialSize = 4;
 

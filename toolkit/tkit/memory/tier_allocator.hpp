@@ -5,7 +5,7 @@
         "[TOOLKIT][TIER-ALLOC] To include this file, the corresponding feature must be enabled in CMake with TOOLKIT_ENABLE_TIER_ALLOCATOR"
 #endif
 
-#include "tkit/container/arena_array.hpp"
+#include "tkit/container/static_array.hpp"
 #include "tkit/memory/memory.hpp"
 #include "tkit/utils/non_copyable.hpp"
 #include "tkit/utils/debug.hpp"
@@ -50,10 +50,8 @@ namespace TKit
  */
 struct TierSpecs
 {
-    ArenaAllocator *Allocator = nullptr;
     usz MaxAllocation = 1_kib;
     usz MinAllocation = 0; // will default to Granularity * sizeof(void *) / 2
-    usize MaxTiers = 64;
     usize Granularity = 4;
     f32 TierSlotDecay = 0.9f;
 };
@@ -72,7 +70,7 @@ class TierDescriptions
 
     usize GetTierIndex(usz size) const;
 
-    const ArenaArray<TierInfo> &GetTiers() const
+    const StaticArray<TierInfo, MaxTierAllocTiers> &GetTiers() const
     {
         return m_Tiers;
     }
@@ -122,8 +120,8 @@ class TierDescriptions
   private:
     void buildTierLayout();
 
-    ArenaArray<TierInfo> m_Tiers;
-    ArenaArray<usize> m_MinSlots{};
+    StaticArray<TierInfo, MaxTierAllocTiers> m_Tiers;
+    StaticArray<usize, MaxTierAllocTiers> m_MinSlots{};
     usz m_BufferSize;
     usz m_MinAllocation;
     usz m_MaxAllocation;
@@ -328,7 +326,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
 #endif
     void deallocateBuffer();
 
-    ArenaArray<Tier> m_Tiers;
+    StaticArray<Tier, MaxTierAllocTiers> m_Tiers;
     std::byte *m_Buffer;
     usz m_BufferSize;
     usz m_MinAllocation;
@@ -350,7 +348,7 @@ class alignas(TKIT_CACHE_LINE_SIZE) TierAllocator
         return m_Deallocations;
     }
 #endif
-    const ArenaArray<Tier> &GetTiers() const
+    const StaticArray<Tier, MaxTierAllocTiers> &GetTiers() const
     {
         return m_Tiers;
     }

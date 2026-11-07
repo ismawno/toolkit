@@ -39,20 +39,19 @@ class ThreadPool final : public ITaskManager
     struct alignas(TKIT_CACHE_LINE_SIZE) Worker
     {
         template <typename Callable, typename... Args>
-        Worker(ArenaAllocator *allocator, const usize maxTasks, Callable &&callable, Args &&...args)
-            : Thread(std::forward<Callable>(callable), std::forward<Args>(args)...), Queue(allocator, maxTasks)
+        Worker(Callable &&callable, Args &&...args)
+            : Thread(std::forward<Callable>(callable), std::forward<Args>(args)...)
         {
         }
         std::thread Thread;
-        ChaseLevDeque<ITask *> Queue;
+        ChaseLevDeque<ITask *, MaxThreadPoolTasksPerWorker> Queue{};
         MpmcStack<ITask *> Inbox{};
         std::atomic<u32> Epochs{0};
         std::atomic<u32> TaskCount{0}; // Speculative
         std::atomic_flag TerminateSignal = ATOMIC_FLAG_INIT;
     };
 
-    ThreadPool(ArenaAllocator *allocator, usize wokerCount, usize maxTasksPerQueue = 32);
-    explicit ThreadPool(usize wokerCount, usize maxTasksPerQueue = 32);
+    explicit ThreadPool(usize wokerCount);
     ~ThreadPool() override;
 
     /**
@@ -90,7 +89,7 @@ class ThreadPool final : public ITaskManager
     void drainTasks(usize workerIndex, usize workers);
     bool trySteal(usize victim);
 
-    ArenaArray<Worker> m_Workers;
+    StaticArray<Worker, MaxThreadPoolWorkers> m_Workers;
 
     alignas(TKIT_CACHE_LINE_SIZE) std::atomic_flag m_ReadySignal = ATOMIC_FLAG_INIT;
     const Topology::Handle *m_Handle;

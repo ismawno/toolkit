@@ -71,7 +71,7 @@ static usize getTierIndex(const usz size, const usz minAllocation, const usize g
     // return lastIndex + ((offset - incIndex) << (grIndex - 1)) + (reference >> incIndex);
 }
 
-static void createDefaultSlotRequests(ArenaArray<usize> &slots, const f32 tierSlotDecay)
+static void createDefaultSlotRequests(StaticArray<usize, MaxTierAllocTiers> &slots, const f32 tierSlotDecay)
 {
     const usize capacity = slots.GetCapacity();
     TKIT_ASSERT(capacity != 0, "[TOOLKIT][TIER-ALLOC] Maximum tiers must not be zero");
@@ -85,8 +85,7 @@ static void createDefaultSlotRequests(ArenaArray<usize> &slots, const f32 tierSl
 }
 
 TierDescriptions::TierDescriptions(const TierSpecs &specs)
-    : m_Tiers(specs.Allocator, specs.MaxTiers), m_MinSlots(specs.Allocator, specs.MaxTiers),
-      m_MinAllocation(specs.MinAllocation ? specs.MinAllocation : (specs.Granularity * sizeof(void *) / 2)),
+    : m_MinAllocation(specs.MinAllocation ? specs.MinAllocation : (specs.Granularity * sizeof(void *) / 2)),
       m_MaxAllocation(specs.MaxAllocation), m_Granularity(specs.Granularity)
 {
     TKIT_ASSERT(IsPowerOfTwo(m_MaxAllocation) && IsPowerOfTwo(m_MinAllocation) && IsPowerOfTwo(m_Granularity),
@@ -189,9 +188,8 @@ void TierDescriptions::buildTierLayout()
 }
 
 TierAllocator::TierAllocator(const TierDescriptions &tiers, const usize maxAlignment, const usize headerAllocsAlignment)
-    : m_Tiers(tiers.GetTiers().GetAllocator(), tiers.GetTiers().GetCapacity()), m_BufferSize(tiers.GetBufferSize()),
-      m_MinAllocation(tiers.GetMinAllocation()), m_Granularity(tiers.GetGranularity()),
-      m_HeaderAllocationsAlignment(headerAllocsAlignment)
+    : m_BufferSize(tiers.GetBufferSize()), m_MinAllocation(tiers.GetMinAllocation()),
+      m_Granularity(tiers.GetGranularity()), m_HeaderAllocationsAlignment(headerAllocsAlignment)
 {
 #ifdef TKIT_ENABLE_ENSURE
     m_MaxAllocation = tiers.GetMaxAllocation();

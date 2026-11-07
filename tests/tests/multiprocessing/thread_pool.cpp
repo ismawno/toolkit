@@ -6,13 +6,12 @@
 #include <array>
 
 using namespace TKit;
-static ArenaAllocator s_Alloc{16_kib, TKIT_CACHE_LINE_SIZE};
 
 TEST_CASE("ThreadPool executes DynamicTask<void>s", "[ThreadPool]")
 {
     constexpr usize threadCount = 4;
     constexpr usize taskCount = 10;
-    ThreadPool pool(&s_Alloc, threadCount);
+    ThreadPool pool(threadCount);
 
     std::atomic<usize> counter{0};
     std::array<DynamicTask<>, taskCount> tasks;
@@ -34,7 +33,7 @@ TEST_CASE("ThreadPool executes DynamicTask<usize>s and preserves results", "[Thr
 {
     constexpr usize threadCount = 3;
     constexpr usize taskCount = 6;
-    ThreadPool pool(&s_Alloc, threadCount);
+    ThreadPool pool(threadCount);
 
     std::array<DynamicTask<usize>, taskCount> tasks;
 

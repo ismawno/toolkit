@@ -9,7 +9,6 @@
 
 namespace TKit
 {
-static ArenaAllocator s_Alloc{128_kib};
 struct Number
 {
     u32 Value;
@@ -21,7 +20,7 @@ void RecordThreadPoolSum(const ThreadPoolSettings &settings)
     std::ofstream file(g_Root + "/performance/results/thread_pool_sum.csv");
     file << "threads,sum (ns),result\n";
 
-    ThreadPool threadPool(&s_Alloc, settings.MaxThreads);
+    ThreadPool threadPool{settings.MaxThreads};
     StaticArray128<DynamicTask<u32>> tasks(settings.MaxThreads);
     DynamicArray<u32> values(settings.SumCount);
 
