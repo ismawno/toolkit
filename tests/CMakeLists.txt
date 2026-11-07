@@ -13,6 +13,7 @@ set(SOURCES
     tests/memory/ptr.cpp
     tests/filesystem/filesystem.cpp
     tests/filesystem/path.cpp
+    tests/filesystem/file.cpp
     tests/container/array.cpp
     tests/container/string.cpp
     tests/container/hive.cpp

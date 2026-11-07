@@ -62,6 +62,8 @@ const char *ToString(const FileSystemError error)
         return "Operation not supported";
     case FileSystemError_IO:
         return "Input/output error";
+    case FileSystemError_TooLarge:
+        return "File too large";
     }
     return "Unknown error";
 }
@@ -77,9 +79,9 @@ template <typename T> static FileSystemResult<std::remove_cvref_t<T>> ok(T &&val
 {
     return FileSystemResult<std::remove_cvref_t<T>>::Ok(std::forward<T>(value));
 }
-static FileSystemResult<void> ok()
+static FileSystemResult<> ok()
 {
-    return FileSystemResult<void>::Ok();
+    return FileSystemResult<>::Ok();
 }
 
 #ifdef TKIT_OS_WINDOWS
@@ -143,6 +145,10 @@ static FileSystemError fromNative(const DWORD error)
 template <typename T = void> static FileSystemResult<T> lastError()
 {
     return FileSystemResult<T>::Error(fromNative(GetLastError()));
+}
+FileSystemError LastError()
+{
+    return fromNative(::GetLastError());
 }
 
 static bool isNotFound(const DWORD error)
@@ -322,7 +328,7 @@ FileSystemResult<FileTime> GetLastWriteTime(const char *path)
     return ok(fromFileTime(info->ftLastWriteTime));
 }
 
-FileSystemResult<void> SetLastWriteTime(const char *path, const FileTime time)
+FileSystemResult<> SetLastWriteTime(const char *path, const FileTime time)
 {
     TKIT_WIDEN(wpath, path)
     const HandleGuard guard{openHandle(wpath.GetData(), FILE_WRITE_ATTRIBUTES, true)};
@@ -334,7 +340,7 @@ FileSystemResult<void> SetLastWriteTime(const char *path, const FileTime time)
     return ok();
 }
 
-FileSystemResult<void> SetPermissions(const char *path, const FilePermissions permissions,
+FileSystemResult<> SetPermissions(const char *path, const FilePermissions permissions,
                                       const PermissionOptionFlags flags)
 {
     TKIT_WIDEN(wpath, path)
@@ -391,7 +397,7 @@ FileSystemResult<bool> CreateDirectory(const char *path, const char *existing)
     return error<bool>(fromNative(err));
 }
 
-static FileSystemResult<void> createSymlink(const char *target, const char *link, const DWORD flags)
+static FileSystemResult<> createSymlink(const char *target, const char *link, const DWORD flags)
 {
     TKIT_WIDEN(wtarget, target)
     TKIT_WIDEN(wlink, link)
@@ -403,16 +409,16 @@ static FileSystemResult<void> createSymlink(const char *target, const char *link
     return lastError();
 }
 
-FileSystemResult<void> CreateSymlink(const char *target, const char *link)
+FileSystemResult<> CreateSymlink(const char *target, const char *link)
 {
     return createSymlink(target, link, 0);
 }
-FileSystemResult<void> CreateDirectorySymlink(const char *target, const char *link)
+FileSystemResult<> CreateDirectorySymlink(const char *target, const char *link)
 {
     return createSymlink(target, link, SYMBOLIC_LINK_FLAG_DIRECTORY);
 }
 
-FileSystemResult<void> CreateHardLink(const char *target, const char *link)
+FileSystemResult<> CreateHardLink(const char *target, const char *link)
 {
     TKIT_WIDEN(wtarget, target)
     TKIT_WIDEN(wlink, link)
@@ -499,7 +505,7 @@ FileSystemResult<FileSystemPath> ReadSymlink(const char *path)
     return ok(narrow(name, length));
 }
 
-static FileSystemResult<void> copyContents(const char *from, const char *to)
+static FileSystemResult<> copyContents(const char *from, const char *to)
 {
     TKIT_WIDEN(wfrom, from)
     TKIT_WIDEN(wto, to)
@@ -537,7 +543,7 @@ FileSystemResult<bool> Remove(const char *path)
     return ok(true);
 }
 
-FileSystemResult<void> Rename(const char *from, const char *to)
+FileSystemResult<> Rename(const char *from, const char *to)
 {
     TKIT_WIDEN(wfrom, from)
     TKIT_WIDEN(wto, to)
@@ -546,7 +552,7 @@ FileSystemResult<void> Rename(const char *from, const char *to)
     return ok();
 }
 
-FileSystemResult<void> ResizeFile(const char *path, const u64 size)
+FileSystemResult<> ResizeFile(const char *path, const u64 size)
 {
     TKIT_WIDEN(wpath, path)
     const HandleGuard guard{openHandle(wpath.GetData(), GENERIC_WRITE, true)};
@@ -583,7 +589,7 @@ FileSystemResult<FileSystemPath> GetCurrentPath()
     return ok(narrow(buffer.GetData(), usize(length)));
 }
 
-FileSystemResult<void> SetCurrentPath(const char *path)
+FileSystemResult<> SetCurrentPath(const char *path)
 {
     TKIT_WIDEN(wpath, path)
     if (!SetCurrentDirectoryW(wpath.GetData()))
@@ -691,7 +697,7 @@ void DirectoryStream::Close()
     m_Handle = nullptr;
 }
 
-FileSystemResult<void> DirectoryStream::Open(const char *path)
+FileSystemResult<> DirectoryStream::Open(const char *path)
 {
     Close();
 
@@ -814,6 +820,10 @@ template <typename T = void> static FileSystemResult<T> lastError()
 {
     return FileSystemResult<T>::Error(fromNative(errno));
 }
+FileSystemError LastError()
+{
+    return fromNative(errno);
+}
 
 static FileType toFileType(const mode_t mode)
 {
@@ -893,7 +903,7 @@ FileSystemResult<FileTime> GetLastWriteTime(const char *path)
     return ok(FileTime{std::chrono::seconds{time.tv_sec} + std::chrono::nanoseconds{time.tv_nsec}});
 }
 
-FileSystemResult<void> SetLastWriteTime(const char *path, const FileTime time)
+FileSystemResult<> SetLastWriteTime(const char *path, const FileTime time)
 {
     const i64 nanoseconds = time.time_since_epoch().count();
     i64 seconds = nanoseconds / 1000000000;
@@ -914,7 +924,7 @@ FileSystemResult<void> SetLastWriteTime(const char *path, const FileTime time)
     return ok();
 }
 
-FileSystemResult<void> SetPermissions(const char *path, const FilePermissions permissions,
+FileSystemResult<> SetPermissions(const char *path, const FilePermissions permissions,
                                       const PermissionOptionFlags flags)
 {
     TKIT_ASSERT(((flags & PermissionOptionFlag_Replace) != 0) + ((flags & PermissionOptionFlag_Add) != 0) +
@@ -966,19 +976,19 @@ FileSystemResult<bool> CreateDirectory(const char *path, const char *existing)
     return createDirectory(path, st->st_mode & FilePermission_Mask);
 }
 
-FileSystemResult<void> CreateSymlink(const char *target, const char *link)
+FileSystemResult<> CreateSymlink(const char *target, const char *link)
 {
     if (::symlink(target, link) != 0)
         return lastError();
     return ok();
 }
 
-FileSystemResult<void> CreateDirectorySymlink(const char *target, const char *link)
+FileSystemResult<> CreateDirectorySymlink(const char *target, const char *link)
 {
     return CreateSymlink(target, link);
 }
 
-FileSystemResult<void> CreateHardLink(const char *target, const char *link)
+FileSystemResult<> CreateHardLink(const char *target, const char *link)
 {
     if (::link(target, link) != 0)
         return lastError();
@@ -1004,7 +1014,7 @@ FileSystemResult<FileSystemPath> ReadSymlink(const char *path)
     }
 }
 
-static FileSystemResult<void> copyContents(const char *from, const char *to)
+static FileSystemResult<> copyContents(const char *from, const char *to)
 {
     const int in = ::open(from, O_RDONLY | O_CLOEXEC);
     if (in < 0)
@@ -1107,14 +1117,14 @@ FileSystemResult<bool> Remove(const char *path)
     return lastError<bool>();
 }
 
-FileSystemResult<void> Rename(const char *from, const char *to)
+FileSystemResult<> Rename(const char *from, const char *to)
 {
     if (::rename(from, to) != 0)
         return lastError();
     return ok();
 }
 
-FileSystemResult<void> ResizeFile(const char *path, const u64 size)
+FileSystemResult<> ResizeFile(const char *path, const u64 size)
 {
     if (::truncate(path, off_t(size)) != 0)
         return lastError();
@@ -1149,7 +1159,7 @@ FileSystemResult<FileSystemPath> GetCurrentPath()
     }
 }
 
-FileSystemResult<void> SetCurrentPath(const char *path)
+FileSystemResult<> SetCurrentPath(const char *path)
 {
     if (::chdir(path) != 0)
         return lastError();
@@ -1222,7 +1232,7 @@ void DirectoryStream::Close()
     m_Handle = nullptr;
 }
 
-FileSystemResult<void> DirectoryStream::Open(const char *path)
+FileSystemResult<> DirectoryStream::Open(const char *path)
 {
     Close();
     DIR *directory = ::opendir(path);
@@ -1426,7 +1436,7 @@ FileSystemResult<bool> CopyFile(const char *from, const char *to, const CopyOpti
     return ok(true);
 }
 
-FileSystemResult<void> CopySymlink(const char *from, const char *to)
+FileSystemResult<> CopySymlink(const char *from, const char *to)
 {
     const auto target = ReadSymlink(from);
     TKIT_RETURN_ON_ERROR(target);
@@ -1441,7 +1451,7 @@ FileSystemResult<void> CopySymlink(const char *from, const char *to)
 // internal flag to mark that Copy() is being called from within a recursive copy
 static constexpr CopyOptionFlags s_InRecursiveCopy = 1 << 15;
 
-FileSystemResult<void> Copy(const char *from, const char *to, const CopyOptionFlags flags)
+FileSystemResult<> Copy(const char *from, const char *to, const CopyOptionFlags flags)
 {
     const bool symlinkStatus =
         flags & (CopyOptionFlag_CopySymlinks | CopyOptionFlag_SkipSymlinks | CopyOptionFlag_CreateSymlinks);

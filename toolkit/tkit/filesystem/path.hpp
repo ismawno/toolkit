@@ -61,7 +61,7 @@ constexpr bool HasRootDirectory(const TKit::StringView path)
 constexpr bool IsAbsolutePath(const TKit::StringView path)
 {
 #ifdef TKIT_OS_WINDOWS
-    return GetRootNameSize(path, size) != 0 && HasRootDirectory(path, size);
+    return GetRootNameSize(path) != 0 && HasRootDirectory(path);
 #else
     return !path.IsEmpty() && path[0] == '/';
 #endif

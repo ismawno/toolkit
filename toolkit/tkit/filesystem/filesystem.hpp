@@ -42,7 +42,8 @@ enum FileSystemError : u8
     FileSystemError_CrossDevice,
     FileSystemError_Busy,
     FileSystemError_NotSupported,
-    FileSystemError_IO
+    FileSystemError_IO,
+    FileSystemError_TooLarge
 };
 
 const char *ToString(FileSystemError error);
@@ -217,34 +218,36 @@ FileSystemResult<bool> Equivalent(const char *path1, const char *path2);
 FileSystemResult<u64> GetFileSize(const char *path);
 FileSystemResult<u64> GetHardLinkCount(const char *path);
 FileSystemResult<FileTime> GetLastWriteTime(const char *path);
-FileSystemResult<void> SetLastWriteTime(const char *path, FileTime time);
-FileSystemResult<void> SetPermissions(const char *path, FilePermissions permissions, PermissionOptionFlags flags);
+FileSystemResult<> SetLastWriteTime(const char *path, FileTime time);
+FileSystemResult<> SetPermissions(const char *path, FilePermissions permissions, PermissionOptionFlags flags);
 
 FileSystemResult<bool> CreateDirectory(const char *path);
 FileSystemResult<bool> CreateDirectory(const char *path, const char *existing);
 FileSystemResult<bool> CreateDirectories(const char *path);
-FileSystemResult<void> CreateSymlink(const char *target, const char *link);
-FileSystemResult<void> CreateDirectorySymlink(const char *target, const char *link);
-FileSystemResult<void> CreateHardLink(const char *target, const char *link);
+FileSystemResult<> CreateSymlink(const char *target, const char *link);
+FileSystemResult<> CreateDirectorySymlink(const char *target, const char *link);
+FileSystemResult<> CreateHardLink(const char *target, const char *link);
 FileSystemResult<FileSystemPath> ReadSymlink(const char *path);
 
 FileSystemResult<bool> CopyFile(const char *from, const char *to, CopyOptionFlags flags);
-FileSystemResult<void> CopySymlink(const char *from, const char *to);
-FileSystemResult<void> Copy(const char *from, const char *to, CopyOptionFlags flags);
+FileSystemResult<> CopySymlink(const char *from, const char *to);
+FileSystemResult<> Copy(const char *from, const char *to, CopyOptionFlags flags);
 FileSystemResult<bool> Remove(const char *path);
 FileSystemResult<u64> RemoveAll(const char *path);
-FileSystemResult<void> Rename(const char *from, const char *to);
-FileSystemResult<void> ResizeFile(const char *path, u64 size);
+FileSystemResult<> Rename(const char *from, const char *to);
+FileSystemResult<> ResizeFile(const char *path, u64 size);
 FileSystemResult<SpaceInfo> GetSpace(const char *path);
 
 FileSystemResult<FileSystemPath> GetCurrentPath();
-FileSystemResult<void> SetCurrentPath(const char *path);
+FileSystemResult<> SetCurrentPath(const char *path);
 FileSystemResult<FileSystemPath> GetTempDirectoryPath();
 FileSystemResult<FileSystemPath> Absolute(const char *path);
 FileSystemResult<FileSystemPath> Canonical(const char *path);
 FileSystemResult<FileSystemPath> WeaklyCanonical(const char *path);
 FileSystemResult<FileSystemPath> Relative(const char *path, const char *base);
 FileSystemResult<FileSystemPath> Proximate(const char *path, const char *base);
+// The error of the last failed OS call in this thread (errno or GetLastError())
+FileSystemError LastError();
 
 /**
  * @brief A thin, non-recursive wrapper over the OS directory listing facilities. "." and ".." are skipped.
@@ -259,7 +262,7 @@ class DirectoryStream
     DirectoryStream(DirectoryStream &&other);
     DirectoryStream &operator=(DirectoryStream &&other);
 
-    FileSystemResult<void> Open(const char *path);
+    FileSystemResult<> Open(const char *path);
     void Close();
 
     /**
@@ -424,7 +427,7 @@ template <PathLike P> FileSystemResult<FileTime> GetLastWriteTime(const P &path)
 {
     return Detail::GetLastWriteTime(Detail::ToCString(path));
 }
-template <PathLike P> FileSystemResult<void> SetLastWriteTime(const P &path, const FileTime time)
+template <PathLike P> FileSystemResult<> SetLastWriteTime(const P &path, const FileTime time)
 {
     return Detail::SetLastWriteTime(Detail::ToCString(path), time);
 }
@@ -437,7 +440,7 @@ template <PathLike P> FileSystemResult<void> SetLastWriteTime(const P &path, con
  * optionally combined with `PermissionOptionFlag_NoFollow`.
  */
 template <PathLike P>
-FileSystemResult<void> SetPermissions(const P &path, const FilePermissions permissions,
+FileSystemResult<> SetPermissions(const P &path, const FilePermissions permissions,
                                       const PermissionOptionFlags flags = PermissionOptionFlag_Replace)
 {
     return Detail::SetPermissions(Detail::ToCString(path), permissions, flags);
@@ -473,15 +476,15 @@ template <PathLike P> FileSystemResult<bool> CreateDirectories(const P &path)
     return Detail::CreateDirectories(Detail::ToCString(path));
 }
 
-template <PathLike P1, PathLike P2> FileSystemResult<void> CreateSymlink(const P1 &target, const P2 &link)
+template <PathLike P1, PathLike P2> FileSystemResult<> CreateSymlink(const P1 &target, const P2 &link)
 {
     return Detail::CreateSymlink(Detail::ToCString(target), Detail::ToCString(link));
 }
-template <PathLike P1, PathLike P2> FileSystemResult<void> CreateDirectorySymlink(const P1 &target, const P2 &link)
+template <PathLike P1, PathLike P2> FileSystemResult<> CreateDirectorySymlink(const P1 &target, const P2 &link)
 {
     return Detail::CreateDirectorySymlink(Detail::ToCString(target), Detail::ToCString(link));
 }
-template <PathLike P1, PathLike P2> FileSystemResult<void> CreateHardLink(const P1 &target, const P2 &link)
+template <PathLike P1, PathLike P2> FileSystemResult<> CreateHardLink(const P1 &target, const P2 &link)
 {
     return Detail::CreateHardLink(Detail::ToCString(target), Detail::ToCString(link));
 }
@@ -504,7 +507,7 @@ FileSystemResult<bool> CopyFile(const P1 &from, const P2 &to, const CopyOptionFl
 /**
  * @brief Copy a symlink itself (not the file it points to).
  */
-template <PathLike P1, PathLike P2> FileSystemResult<void> CopySymlink(const P1 &from, const P2 &to)
+template <PathLike P1, PathLike P2> FileSystemResult<> CopySymlink(const P1 &from, const P2 &to)
 {
     return Detail::CopySymlink(Detail::ToCString(from), Detail::ToCString(to));
 }
@@ -513,7 +516,7 @@ template <PathLike P1, PathLike P2> FileSystemResult<void> CopySymlink(const P1 
  * @brief Copy files, directories and symlinks, following `std::filesystem::copy()` semantics.
  */
 template <PathLike P1, PathLike P2>
-FileSystemResult<void> Copy(const P1 &from, const P2 &to, const CopyOptionFlags flags = CopyOptionFlag_None)
+FileSystemResult<> Copy(const P1 &from, const P2 &to, const CopyOptionFlags flags = CopyOptionFlag_None)
 {
     return Detail::Copy(Detail::ToCString(from), Detail::ToCString(to), flags);
 }
@@ -538,12 +541,12 @@ template <PathLike P> FileSystemResult<u64> RemoveAll(const P &path)
     return Detail::RemoveAll(Detail::ToCString(path));
 }
 
-template <PathLike P1, PathLike P2> FileSystemResult<void> Rename(const P1 &from, const P2 &to)
+template <PathLike P1, PathLike P2> FileSystemResult<> Rename(const P1 &from, const P2 &to)
 {
     return Detail::Rename(Detail::ToCString(from), Detail::ToCString(to));
 }
 
-template <PathLike P> FileSystemResult<void> ResizeFile(const P &path, const u64 size)
+template <PathLike P> FileSystemResult<> ResizeFile(const P &path, const u64 size)
 {
     return Detail::ResizeFile(Detail::ToCString(path), size);
 }
@@ -559,7 +562,7 @@ template <typename PathType = FileSystemPath> FileSystemResult<PathType> GetCurr
 {
     return Detail::ConvertPath<typename PathType::AllocStateType>(Detail::GetCurrentPath());
 }
-template <PathLike P> FileSystemResult<void> SetCurrentPath(const P &path)
+template <PathLike P> FileSystemResult<> SetCurrentPath(const P &path)
 {
     return Detail::SetCurrentPath(Detail::ToCString(path));
 }
@@ -819,7 +822,7 @@ template <typename AllocState> class DirectoryIterator
     /**
      * @brief Move to the next entry. Once the directory is exhausted, `IsEnd()` returns true.
      */
-    FileSystemResult<void> Advance()
+    FileSystemResult<> Advance()
     {
         TKIT_ASSERT(m_Stream.IsOpen(), "[TOOLKIT][FILESYSTEM] Cannot advance an end directory iterator");
         const auto next = m_Stream.Next();
@@ -828,13 +831,13 @@ template <typename AllocState> class DirectoryIterator
         if (!next.GetValue())
         {
             Close();
-            return FileSystemResult<void>::Ok();
+            return FileSystemResult<>::Ok();
         }
         // the previous entry is released before the new one is allocated (keeps LIFO order for stack paths)
         m_Entry.m_Path = Path<AllocState>{};
         m_Entry.m_Path = m_Directory.Join(m_Stream.GetName());
         m_Entry.m_Type = m_Stream.GetType();
-        return FileSystemResult<void>::Ok();
+        return FileSystemResult<>::Ok();
     }
 
     void Close()
@@ -931,7 +934,7 @@ template <typename AllocState> class RecursiveDirectoryIterator
      * @brief Move to the next entry, recursing into the current one if it is a directory (and recursion was not
      * disabled for it).
      */
-    FileSystemResult<void> Advance()
+    FileSystemResult<> Advance()
     {
         TKIT_ASSERT(!IsEnd(), "[TOOLKIT][FILESYSTEM] Cannot advance an end directory iterator");
         const bool recurse = m_Pending && shouldRecurse();
@@ -941,13 +944,13 @@ template <typename AllocState> class RecursiveDirectoryIterator
     /**
      * @brief Stop iterating the current directory and move to the next entry of its parent.
      */
-    FileSystemResult<void> Pop()
+    FileSystemResult<> Pop()
     {
         TKIT_ASSERT(!IsEnd(), "[TOOLKIT][FILESYSTEM] Cannot pop an end directory iterator");
         m_Entry.m_Path = Path<AllocState>{};
         m_Levels.Pop();
         if (m_Levels.IsEmpty())
-            return FileSystemResult<void>::Ok();
+            return FileSystemResult<>::Ok();
         return advance(false);
     }
 
@@ -1027,7 +1030,7 @@ template <typename AllocState> class RecursiveDirectoryIterator
         return false;
     }
 
-    FileSystemResult<void> advance(const bool recurse)
+    FileSystemResult<> advance(const bool recurse)
     {
         if (recurse)
         {
@@ -1055,11 +1058,11 @@ template <typename AllocState> class RecursiveDirectoryIterator
             {
                 m_Entry.m_Path = level.Directory.Join(level.Stream.GetName());
                 m_Entry.m_Type = level.Stream.GetType();
-                return FileSystemResult<void>::Ok();
+                return FileSystemResult<>::Ok();
             }
             m_Levels.Pop();
         }
-        return FileSystemResult<void>::Ok();
+        return FileSystemResult<>::Ok();
     }
 
     // the levels own their own directory paths, which are allocated before the current entry

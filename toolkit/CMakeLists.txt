@@ -13,6 +13,7 @@ set(SOURCES
     tkit/memory/stack_allocator.cpp
     tkit/memory/tier_allocator.cpp
     tkit/filesystem/filesystem.cpp
+    tkit/filesystem/file.cpp
     tkit/container/ecs.cpp
     tkit/multiprocessing/task.cpp
     tkit/multiprocessing/task_manager.cpp
