@@ -2,12 +2,9 @@
 
 #include "tkit/container/span.hpp"
 #include "tkit/serialization/yaml/node.hpp"
-#include <filesystem>
 
 namespace TKit
 {
-namespace fs = std::filesystem;
-
 class YamlTree
 {
   public:
@@ -21,10 +18,10 @@ class YamlTree
     YamlTree &operator=(YamlTree &&other);
 
     static YamlTree FromString(StringView str);
-    static Result<YamlTree, TierString> FromFile(const fs::path &path);
+    static Result<YamlTree, YamlString> FromFile(const YamlPath &path);
 
     template <typename Str> Str ToString() const;
-    void ToFile(const fs::path &path) const;
+    void ToFile(const YamlPath &path) const;
 
     ConstYamlNode GetRoot() const;
     YamlNode GetRoot();

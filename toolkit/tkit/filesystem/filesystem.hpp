@@ -13,8 +13,6 @@
 #    undef CopyFile
 #endif
 
-namespace TKit
-{
 #ifndef TKIT_FILESYSTEM_DEFAULT_PATH
 #    define TKIT_FILESYSTEM_DEFAULT_PATH TKit::TierPath
 #endif
@@ -22,6 +20,8 @@ namespace TKit
 #    define TKIT_FILESYSTEM_DEFAULT_ARRAY TKit::TierArray
 #endif
 
+namespace TKit
+{
 using FileSystemPath = TKIT_FILESYSTEM_DEFAULT_PATH;
 template <typename T> using FileSystemArray = TKIT_FILESYSTEM_DEFAULT_ARRAY<T>;
 

@@ -23,7 +23,7 @@ template <typename T, usize N> struct YamlCodec<FixedArray<T, N>>
     {
         if (!node.IsSequence() || node.GetChildCount() > N)
             return YamlReadResult::Error(node.GetId(),
-                                         TierString::Format("Failed to decode: Child count ({}) is greater than array "
+                                         YamlString::Format("Failed to decode: Child count ({}) is greater than array "
                                                             "capacity ({}) or the node is not a sequence",
                                                             node.GetChildCount(), N));
 
@@ -61,7 +61,7 @@ template <typename T, typename AllocState> struct YamlCodec<Array<T, AllocState>
                 instance.Reserve(usize(str.size()));
             else if (str.size() >= instance.GetCapacity())
                 return YamlReadResult::Error(
-                    node.GetId(), TierString::Format("Not enough capacity ({}) to deserialize string of size {}",
+                    node.GetId(), YamlString::Format("Not enough capacity ({}) to deserialize string of size {}",
                                                      instance.GetCapacity(), str.size()));
             for (const char c : str)
                 instance.Append(c);
@@ -75,7 +75,7 @@ template <typename T, typename AllocState> struct YamlCodec<Array<T, AllocState>
                 instance.Reserve(usize(node.GetChildCount()));
             else if (node.GetChildCount() > instance.GetCapacity())
                 return YamlReadResult::Error(
-                    node.GetId(), TierString::Format("Not enough capacity ({}) to deserialize array of size {}",
+                    node.GetId(), YamlString::Format("Not enough capacity ({}) to deserialize array of size {}",
                                                      instance.GetCapacity(), node.GetChildCount()));
 
             for (const ConstYamlNode element : node)

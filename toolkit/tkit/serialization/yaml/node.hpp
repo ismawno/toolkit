@@ -3,6 +3,15 @@
 #include "tkit/container/span.hpp"
 #include "tkit/container/tier_array.hpp"
 #include "tkit/utils/result.hpp"
+#include "tkit/filesystem/path.hpp"
+
+#ifndef TKIT_YAML_DEFAULT_STRING
+#    define TKIT_YAML_DEFAULT_STRING TKit::TierString
+#endif
+
+#ifndef TKIT_YAML_DEFAULT_PATH
+#    define TKIT_YAML_DEFAULT_PATH TKit::TierPath
+#endif
 
 namespace c4::yml
 {
@@ -13,6 +22,9 @@ class NodeRef;
 
 namespace TKit
 {
+using YamlString = TKIT_YAML_DEFAULT_STRING;
+using YamlPath = TKIT_YAML_DEFAULT_PATH;
+
 template <typename T> struct YamlCodec;
 
 namespace ryml = c4::yml;
@@ -72,7 +84,7 @@ constexpr YamlNodeFlags YamlFlagsBasedOnContainer(const usize size, const usize 
 struct YamlReadError
 {
     u32 NodeId;
-    TierString Message;
+    YamlString Message;
 };
 
 using YamlReadResult = Result<void, YamlReadError>;
@@ -467,6 +479,6 @@ class YamlNode
     friend ConstYamlNode;
 };
 
-TKit::TierString YamlGeneratePath(TKit::ConstYamlNode node);
-TKit::TierString YamlDescribeNode(TKit::ConstYamlNode node);
+TKit::YamlString YamlGeneratePath(TKit::ConstYamlNode node);
+TKit::YamlString YamlDescribeNode(TKit::ConstYamlNode node);
 } // namespace TKit

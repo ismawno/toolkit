@@ -322,32 +322,32 @@ const ryml::Tree *YamlNode::getHandle() const
     return get().tree();
 }
 
-TKit::TierString YamlGeneratePath(TKit::ConstYamlNode node)
+YamlString YamlGeneratePath(ConstYamlNode node)
 {
-    TKit::TierString path{};
-    for (TKit::ConstYamlNode parent = node.GetParent(); parent; node = parent, parent = node.GetParent())
+    YamlString path{};
+    for (ConstYamlNode parent = node.GetParent(); parent; node = parent, parent = node.GetParent())
     {
         if (node.HasKey())
-            path = TKit::TierString::Format(".{}{}", node.GetKey(), path);
+            path = YamlString::Format(".{}{}", node.GetKey(), path);
         else
         {
             u32 idx = 0;
-            for (TKit::ConstYamlNode sib = parent.FirstChild(); sib != node; sib = sib.NextSibling())
+            for (ConstYamlNode sib = parent.FirstChild(); sib != node; sib = sib.NextSibling())
                 ++idx;
-            path = TKit::TierString::Format("[{}]{}", idx, path);
+            path = YamlString::Format("[{}]{}", idx, path);
         }
     }
     return path.IsEmpty() ? "root" : path;
 }
 
-TKit::TierString YamlDescribeNode(const TKit::ConstYamlNode node)
+YamlString YamlDescribeNode(const ConstYamlNode node)
 {
     if (node.IsSequence())
-        return TKit::TierString::Format("a sequence of {} elements", node.GetChildCount());
+        return YamlString::Format("a sequence of {} elements", node.GetChildCount());
     if (node.IsMap())
-        return TKit::TierString::Format("a map with {} keys", node.GetChildCount());
+        return YamlString::Format("a map with {} keys", node.GetChildCount());
     if (node.HasValue())
-        return TKit::TierString::Format("'{}'", node.GetValue());
+        return YamlString::Format("'{}'", node.GetValue());
     return "an empty node";
 }
 
@@ -401,10 +401,8 @@ template void YamlNode::WriteKey(const isz &);
 #endif
 template void YamlNode::WriteKey(const f32 &);
 template void YamlNode::WriteKey(const f64 &);
-} // namespace TKit
-
 #ifdef TKIT_ENABLE_ENSURE
-namespace TKit::Detail
+namespace Detail
 {
 void CheckYamlReadResult(const YamlReadResult &res, const ryml::Tree *tree)
 {
@@ -442,5 +440,6 @@ void CheckYamlReadResult(const YamlReadResult &res, const ryml::Tree *tree)
                     err.NodeId);
     }
 }
-} // namespace TKit::Detail
+} // namespace Detail
 #endif
+} // namespace TKit

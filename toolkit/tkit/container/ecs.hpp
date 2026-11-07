@@ -8,8 +8,6 @@
 #include "tkit/utils/utils.hpp"
 #include "tkit/utils/tuple.hpp"
 
-namespace TKit
-{
 #ifndef TKIT_ECS_DEFAULT_ARRAY
 #    define TKIT_ECS_DEFAULT_ARRAY TKit::TierArray
 #endif
@@ -17,6 +15,8 @@ namespace TKit
 #    define TKIT_ECS_DEFAULT_HASH_MAP TKit::TierHashMap
 #endif
 
+namespace TKit
+{
 template <typename T> using EcsArray = TKIT_ECS_DEFAULT_ARRAY<T>;
 template <typename K, typename V> using EcsHashMap = TKIT_ECS_DEFAULT_HASH_MAP<K, V>;
 

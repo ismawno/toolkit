@@ -25,13 +25,16 @@ static StringView fromNative(const c4::csubstr str)
 #endif
 static ryml::Callbacks createCallbacks()
 {
-#ifdef TKIT_ENABLE_ENSURE
+    ryml::Callbacks cbks = ryml::get_callbacks();
+#ifndef TKIT_YAML_NO_TIER_ALLOCATIONS
     TierAllocator *tier = GetTier();
-    ryml::Callbacks cbks;
     cbks.set_user_data(tier);
+
     cbks.set_allocate(
         [](const size_t size, void *, void *tier) { return scast<TierAllocator *>(tier)->Allocate(size); });
     cbks.set_free([](void *mem, const usz size, void *tier) { scast<TierAllocator *>(tier)->Deallocate(mem, size); });
+#endif
+#ifdef TKIT_ENABLE_ENSURE
     cbks.set_error_basic([](const c4::csubstr msg, const ryml::ErrorDataBasic &data, void *) {
         TKIT_PANIC("[TOOLKIT][YAML][BASIC] Message: {} - Name: {}, Line: {}, Col: {}, Offset: {}", fromNative(msg),
                    EXPAND_LOCATION(data.location));
@@ -47,10 +50,8 @@ static ryml::Callbacks createCallbacks()
                    fromNative(msg), FormatPointer(data.tree), data.node, EXPAND_LOCATION(data.cpploc));
     });
 
-    return cbks;
-#else
-    return ryml::get_callbacks();
 #endif
+    return cbks;
 }
 YamlTree::YamlTree()
 {
@@ -90,12 +91,12 @@ YamlTree YamlTree::FromString(const StringView str)
     return t;
 }
 
-Result<YamlTree, TierString> YamlTree::FromFile(const fs::path &path)
+Result<YamlTree, YamlString> YamlTree::FromFile(const YamlPath &path)
 {
-    std::ifstream file{path, std::ios::ate};
+    std::ifstream file{path.GetString(), std::ios::ate};
     if (!file.is_open())
-        return Result<YamlTree, TierString>::Error(
-            TierString::Format("[TOOLKIT][YAML] Failed to open file at {}", path.string()));
+        return Result<YamlTree, YamlString>::Error(
+            YamlString::Format("[TOOLKIT][YAML] Failed to open file at {}", path));
 
     StackString contents{};
     contents.Resize(file.tellg(), 0);
@@ -126,9 +127,9 @@ template <typename Str> Str YamlTree::ToString() const
     return str;
 }
 
-void YamlTree::ToFile(const fs::path &path) const
+void YamlTree::ToFile(const YamlPath &path) const
 {
-    std::ofstream file{path};
+    std::ofstream file{path.GetString()};
 
     const StackString str = ToString<StackString>();
     file << str.CString();
@@ -145,7 +146,7 @@ YamlNode YamlTree::GetRoot()
 
 template ArenaString YamlTree::ToString() const;
 template StackString YamlTree::ToString() const;
-template TierString YamlTree::ToString() const;
+template YamlString YamlTree::ToString() const;
 template DynamicString YamlTree::ToString() const;
 template std::string YamlTree::ToString() const;
 

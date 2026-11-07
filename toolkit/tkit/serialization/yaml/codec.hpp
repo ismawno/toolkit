@@ -125,13 +125,13 @@ template <typename T> struct YamlCodec
     }
 };
 
-template <typename T> void Serialize(const fs::path &path, const T &instance)
+template <typename T> void Serialize(const YamlPath &path, const T &instance)
 {
     YamlTree tree{};
     tree.GetRoot() << instance;
     tree.ToFile(path);
 }
-template <typename T> YamlReadResult TryDeserialize(const fs::path &path, T &instance)
+template <typename T> YamlReadResult TryDeserialize(const YamlPath &path, T &instance)
 {
     const auto tree = YamlTree::FromFile(path);
     if (!tree)
@@ -139,15 +139,15 @@ template <typename T> YamlReadResult TryDeserialize(const fs::path &path, T &ins
 
     return tree->GetRoot().TryRead(instance);
 }
-template <typename T> Result<void, TierString> Deserialize(const fs::path &path, T &instance)
+template <typename T> Result<void, YamlString> Deserialize(const YamlPath &path, T &instance)
 {
     const auto tree = YamlTree::FromFile(path);
     TKIT_RETURN_ON_ERROR(tree);
 
     tree->GetRoot().Read(instance);
-    return Result<void, TierString>::Ok();
+    return Result<void, YamlString>::Ok();
 }
-template <typename T, typename... Args> Result<T, TierString> Deserialize(const fs::path &path, Args &&...args)
+template <typename T, typename... Args> Result<T, YamlString> Deserialize(const YamlPath &path, Args &&...args)
 {
     const auto tree = YamlTree::FromFile(path);
     TKIT_RETURN_ON_ERROR(tree);
