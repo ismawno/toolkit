@@ -1073,13 +1073,13 @@ template <typename AllocState> class RecursiveDirectoryIterator
 };
 
 template <typename AllocState>
-DirectoryIterator<AllocState> IterateDirectories(const Path<AllocState> &path,
-                                                 const DirectoryOptionFlags flags = DirectoryOptionFlag_None)
+DirectoryIterator<AllocState> IterateDirectory(const Path<AllocState> &path,
+                                               const DirectoryOptionFlags flags = DirectoryOptionFlag_None)
 {
     return DirectoryIterator<AllocState>::Open(path, flags);
 }
 template <typename AllocState>
-RecursiveDirectoryIterator<AllocState> IterateDirectoriesRecursive(
+RecursiveDirectoryIterator<AllocState> IterateDirectoryRecursive(
     const Path<AllocState> &path, const DirectoryOptionFlags flags = DirectoryOptionFlag_None)
 {
     return RecursiveDirectoryIterator<AllocState>::Open(path, flags);
