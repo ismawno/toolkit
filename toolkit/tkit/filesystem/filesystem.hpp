@@ -441,7 +441,7 @@ template <PathLike P> FileSystemResult<> SetLastWriteTime(const P &path, const F
  */
 template <PathLike P>
 FileSystemResult<> SetPermissions(const P &path, const FilePermissions permissions,
-                                      const PermissionOptionFlags flags = PermissionOptionFlag_Replace)
+                                  const PermissionOptionFlags flags = PermissionOptionFlag_Replace)
 {
     return Detail::SetPermissions(Detail::ToCString(path), permissions, flags);
 }
@@ -1071,5 +1071,18 @@ template <typename AllocState> class RecursiveDirectoryIterator
     DirectoryOptionFlags m_Flags = DirectoryOptionFlag_None;
     bool m_Pending = true;
 };
+
+template <typename AllocState>
+DirectoryIterator<AllocState> IterateDirectories(const Path<AllocState> &path,
+                                                 const DirectoryOptionFlags flags = DirectoryOptionFlag_None)
+{
+    return DirectoryIterator<AllocState>::Open(path, flags);
+}
+template <typename AllocState>
+RecursiveDirectoryIterator<AllocState> IterateDirectoriesRecursive(
+    const Path<AllocState> &path, const DirectoryOptionFlags flags = DirectoryOptionFlag_None)
+{
+    return RecursiveDirectoryIterator<AllocState>::Open(path, flags);
+}
 
 } // namespace TKit
