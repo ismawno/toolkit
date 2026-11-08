@@ -120,7 +120,7 @@ template <typename Str> Str YamlTree::ToString() const
 
 FileSystemResult<> YamlTree::ToFile(const YamlPath &path) const
 {
-    return WriteFile(path, ToString<StackString>());
+    return WriteFile(path, ToString<StackString>(), FileOpenFlag_Overwrite | FileOpenFlag_Create);
 }
 
 ConstYamlNode YamlTree::GetRoot() const
