@@ -70,7 +70,7 @@ TEST_CASE("Status and basic queries", "[filesystem]")
     REQUIRE(missing->Type == FileType_NotFound);
 
     REQUIRE(GetFileSize(file).GetValue() == 5);
-    REQUIRE(GetFileSize(tmp.Root).GetError() == FileSystemError_IsADirectory);
+    REQUIRE(GetFileSize(tmp.Root).GetError() == FileSystemError_IsDirectory);
     REQUIRE(GetFileSize(tmp.Root / "nope").GetError() == FileSystemError_NotFound);
     REQUIRE(GetHardLinkCount(file).GetValue() == 1);
 
@@ -360,7 +360,7 @@ template <typename AllocState, typename... Args> static void testDirectoryIterat
     }
 
     REQUIRE(DirectoryIterator<AllocState>::Open(root / "nope").GetError() == FileSystemError_NotFound);
-    REQUIRE(DirectoryIterator<AllocState>::Open(root / "f1").GetError() == FileSystemError_NotADirectory);
+    REQUIRE(DirectoryIterator<AllocState>::Open(root / "f1").GetError() == FileSystemError_IsNotDirectory);
     PopTier();
 }
 

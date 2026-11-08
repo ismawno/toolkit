@@ -38,9 +38,9 @@ const char *ToString(const FileSystemError error)
         return "File already exists";
     case FileSystemError_PermissionDenied:
         return "Permission denied";
-    case FileSystemError_NotADirectory:
+    case FileSystemError_IsNotDirectory:
         return "Not a directory";
-    case FileSystemError_IsADirectory:
+    case FileSystemError_IsDirectory:
         return "Is a directory";
     case FileSystemError_DirectoryNotEmpty:
         return "Directory not empty";
@@ -113,7 +113,7 @@ static FileSystemError fromNative(const DWORD error)
     case ERROR_PRIVILEGE_NOT_HELD:
         return FileSystemError_PermissionDenied;
     case ERROR_DIRECTORY:
-        return FileSystemError_NotADirectory;
+        return FileSystemError_IsNotDirectory;
     case ERROR_DIR_NOT_EMPTY:
         return FileSystemError_DirectoryNotEmpty;
     case ERROR_INVALID_PARAMETER:
@@ -310,7 +310,7 @@ FileSystemResult<u64> GetFileSize(const char *path)
     const auto info = getInformation(path);
     TKIT_RETURN_ON_ERROR(info);
     if (info->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-        return error<u64>(FileSystemError_IsADirectory);
+        return error<u64>(FileSystemError_IsDirectory);
     return ok((u64(info->nFileSizeHigh) << 32) | u64(info->nFileSizeLow));
 }
 
@@ -791,9 +791,9 @@ static FileSystemError fromNative(const int err)
     if (err == EACCES || err == EPERM)
         return FileSystemError_PermissionDenied;
     if (err == ENOTDIR)
-        return FileSystemError_NotADirectory;
+        return FileSystemError_IsNotDirectory;
     if (err == EISDIR)
-        return FileSystemError_IsADirectory;
+        return FileSystemError_IsDirectory;
     if (err == ENOTEMPTY)
         return FileSystemError_DirectoryNotEmpty;
     if (err == EINVAL)
@@ -878,7 +878,7 @@ FileSystemResult<u64> GetFileSize(const char *path)
     const auto st = getStat(path);
     TKIT_RETURN_ON_ERROR(st);
     if (S_ISDIR(st->st_mode))
-        return error<u64>(FileSystemError_IsADirectory);
+        return error<u64>(FileSystemError_IsDirectory);
     if (!S_ISREG(st->st_mode))
         return error<u64>(FileSystemError_NotSupported);
     return ok(u64(st->st_size));
@@ -972,7 +972,7 @@ FileSystemResult<bool> CreateDirectory(const char *path, const char *existing)
     const auto st = getStat(existing);
     TKIT_RETURN_ON_ERROR(st);
     if (!S_ISDIR(st->st_mode))
-        return error<bool>(FileSystemError_NotADirectory);
+        return error<bool>(FileSystemError_IsNotDirectory);
     return createDirectory(path, st->st_mode & FilePermission_Mask);
 }
 
@@ -1182,7 +1182,7 @@ FileSystemResult<FileSystemPath> GetTempDirectoryPath()
     const auto st = getStat(path);
     TKIT_RETURN_ON_ERROR(st);
     if (!S_ISDIR(st->st_mode))
-        return error<FileSystemPath>(FileSystemError_NotADirectory);
+        return error<FileSystemPath>(FileSystemError_IsNotDirectory);
     return ok(FileSystemPath{path});
 }
 
@@ -1402,14 +1402,14 @@ FileSystemResult<bool> CopyFile(const char *from, const char *to, const CopyOpti
     if (!fromStatus->Exists())
         return error<bool>(FileSystemError_NotFound);
     if (!fromStatus->IsRegularFile())
-        return error<bool>(fromStatus->IsDirectory() ? FileSystemError_IsADirectory : FileSystemError_NotSupported);
+        return error<bool>(fromStatus->IsDirectory() ? FileSystemError_IsDirectory : FileSystemError_NotSupported);
 
     const auto toStatus = GetStatus(to, true);
     TKIT_RETURN_ON_ERROR(toStatus);
     if (toStatus->Exists())
     {
         if (!toStatus->IsRegularFile())
-            return error<bool>(toStatus->IsDirectory() ? FileSystemError_IsADirectory : FileSystemError_NotSupported);
+            return error<bool>(toStatus->IsDirectory() ? FileSystemError_IsDirectory : FileSystemError_NotSupported);
 
         const auto equivalent = Equivalent(from, to);
         TKIT_RETURN_ON_ERROR(equivalent);
@@ -1474,7 +1474,7 @@ FileSystemResult<> Copy(const char *from, const char *to, const CopyOptionFlags 
     if (fromStatus->IsOther() || toStatus->IsOther())
         return FileSystemError_NotSupported;
     if (fromStatus->IsDirectory() && toStatus->IsRegularFile())
-        return FileSystemError_IsADirectory;
+        return FileSystemError_IsDirectory;
 
     if (fromStatus->IsSymlink())
     {
@@ -1511,7 +1511,7 @@ FileSystemResult<> Copy(const char *from, const char *to, const CopyOptionFlags 
     if (fromStatus->IsDirectory())
     {
         if (flags & CopyOptionFlag_CreateSymlinks)
-            return FileSystemError_IsADirectory;
+            return FileSystemError_IsDirectory;
 
         // with no flags at all, only the top level directory is copied (its sub-directories are visited with the
         // internal recursive flag, so they will not match this condition)
