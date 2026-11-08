@@ -24,13 +24,10 @@
 
 // for `return SomeCall(...);` where the returned Result itself may be an error
 #define TKIT_ERROR_DEFER_RETURN(expression)                                                                            \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        const auto __tkit_error_defer_result = (expression);                                                           \
-        if (__tkit_error_defer_result)                                                                                 \
-            __tkit_error_defer_scope.Commit();                                                                         \
-        return __tkit_error_defer_result;                                                                              \
-    } while (false)
+    const auto __tkit_error_defer_result = (expression);                                                               \
+    if (__tkit_error_defer_result)                                                                                     \
+        __tkit_error_defer_scope.Commit();                                                                             \
+    return __tkit_error_defer_result
 
 namespace TKit
 {
