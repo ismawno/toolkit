@@ -24,21 +24,23 @@ using ProfilingPlotFormat = tracy::PlotFormatType;
 #    define TKIT_PROFILE_MARK_FRAME_END(name) FrameMarkEnd(name)
 #    define TKIT_PROFILE_NMARK_FRAME(name) FrameMarkNamed(name)
 
-#    define TKIT_PROFILE_SCOPE_IF(enabled) ZoneNamed(TKIT_CONCAT(__tkit_perf_scope, __LINE__), enabled)
-#    define TKIT_PROFILE_NSCOPE_IF(enabled, name) ZoneNamedN(TKIT_CONCAT(__tkit_perf_scope, __LINE__), name, enabled)
-#    define TKIT_PROFILE_CSCOPE_IF(enabled, color) ZoneNamedC(TKIT_CONCAT(__tkit_perf_scope, __LINE__), color, enabled)
+#    define TKIT_PROFILE_SCOPE_IF(enabled) ZoneNamed(TKIT_CONCAT(__tkit_perf_scope, __COUNTER__), enabled)
+#    define TKIT_PROFILE_NSCOPE_IF(enabled, name) ZoneNamedN(TKIT_CONCAT(__tkit_perf_scope, __COUNTER__), name, enabled)
+#    define TKIT_PROFILE_CSCOPE_IF(enabled, color)                                                                     \
+        ZoneNamedC(TKIT_CONCAT(__tkit_perf_scope, __COUNTER__), color, enabled)
 #    define TKIT_PROFILE_NCSCOPE_IF(enabled, name, color)                                                              \
-        ZoneNamedNC(TKIT_CONCAT(__tkit_perf_scope, __LINE__), name, color, enabled)
+        ZoneNamedNC(TKIT_CONCAT(__tkit_perf_scope, __COUNTER__), name, color, enabled)
 
-#    define TKIT_PROFILE_SCOPE() ZoneNamed(TKIT_CONCAT(__tkit_perf_scope, __LINE__), true)
-#    define TKIT_PROFILE_NSCOPE(name) ZoneNamedN(TKIT_CONCAT(__tkit_perf_scope, __LINE__), name, true)
-#    define TKIT_PROFILE_CSCOPE(color) ZoneNamedC(TKIT_CONCAT(__tkit_perf_scope, __LINE__), color, true)
-#    define TKIT_PROFILE_NCSCOPE(name, color) ZoneNamedNC(TKIT_CONCAT(__tkit_perf_scope, __LINE__), name, color, true)
+#    define TKIT_PROFILE_SCOPE() ZoneNamed(TKIT_CONCAT(__tkit_perf_scope, __COUNTER__), true)
+#    define TKIT_PROFILE_NSCOPE(name) ZoneNamedN(TKIT_CONCAT(__tkit_perf_scope, __COUNTER__), name, true)
+#    define TKIT_PROFILE_CSCOPE(color) ZoneNamedC(TKIT_CONCAT(__tkit_perf_scope, __COUNTER__), color, true)
+#    define TKIT_PROFILE_NCSCOPE(name, color)                                                                          \
+        ZoneNamedNC(TKIT_CONCAT(__tkit_perf_scope, __COUNTER__), name, color, true)
 
-#    define TKIT_PROFILE_SCOPE_TEXT(text, size) ZoneTextV(TKIT_CONCAT(__tkit_perf_scope, __LINE__), text, size)
-#    define TKIT_PROFILE_SCOPE_NAME(name, size) ZoneNameV(TKIT_CONCAT(__tkit_perf_scope, __LINE__), name, size)
-#    define TKIT_PROFILE_SCOPE_COLOR(color) ZoneColorV(TKIT_CONCAT(__tkit_perf_scope, __LINE__), color)
-#    define TKIT_PROFILE_SCOPE_VALUE(value) ZoneValueV(TKIT_CONCAT(__tkit_perf_scope, __LINE__), value)
+#    define TKIT_PROFILE_SCOPE_TEXT(text, size) ZoneTextV(TKIT_CONCAT(__tkit_perf_scope, __COUNTER__), text, size)
+#    define TKIT_PROFILE_SCOPE_NAME(name, size) ZoneNameV(TKIT_CONCAT(__tkit_perf_scope, __COUNTER__), name, size)
+#    define TKIT_PROFILE_SCOPE_COLOR(color) ZoneColorV(TKIT_CONCAT(__tkit_perf_scope, __COUNTER__), color)
+#    define TKIT_PROFILE_SCOPE_VALUE(value) ZoneValueV(TKIT_CONCAT(__tkit_perf_scope, __COUNTER__), value)
 
 #    define TKIT_PROFILE_MESSAGE(message) TracyMessageL(message)
 #    define TKIT_PROFILE_NMESSAGE(message, size) TracyMessage(message, size)
