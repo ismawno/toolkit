@@ -143,7 +143,9 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                                 hpp(f'node << "{entry}";')
                                 hpp("break;")
                         with hpp.scope(f"default:", delimiters=False):
-                            hpp('TKIT_FATAL("[TOOLKIT][YAML] Unknown enum value");')
+                            hpp(
+                                f'TKIT_FATAL("[TOOLKIT][YAML] Cannot encode unknown value {{}} of enum `{enum.id.identifier}`", i64(instance));'
+                            )
 
                 with hpp.doc():
                     hpp.brief(
@@ -157,15 +159,18 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                 ):
                     hpp(f"std::string val;")
                     hpp(f"const YamlReadResult res = node.TryRead(val);")
+
                     with hpp.scope("if (!res)", delimiters=False):
                         hpp("return res;")
+
                     for entry in enum.values:
                         with hpp.scope(f'if (val == "{entry}")'):
                             hpp(f"instance = {enum.id.identifier}::{entry};")
                             hpp(f"return YamlReadResult::Ok();")
 
+                    expected = ", ".join(enum.values)
                     hpp(
-                        f'return YamlReadResult::Error(node.GetId(), TierString::Format("Unknown enum value: {{}}", val));'
+                        f"return YamlReadResult::Error(node.GetId(), TierString::Format(\"Unknown value '{{}}' for enum `{enum.id.identifier}`. Expected one of: {expected}\", val));"
                     )
 
         for clsinfo in classes.classes:
@@ -265,21 +270,29 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                             with hpp.scope(f'if (node.HasChild("{field.name}"))', delimiters=False):
                                 hpp(f"{vtype} val;")
                                 hpp(f'const YamlReadResult res = node["{field.name}"].TryRead(val);')
+
                                 with hpp.scope("if (!res)", delimiters=False):
-                                    hpp("return res;")
+                                    hpp(
+                                        f'return YamlReadResult::Error(res.GetError().NodeId, TierString::Format("Failed to decode field `{field.name}` of `{clsinfo.id.identifier}`: {{}}", res.GetError().Message));'
+                                    )
+
                                 hpp(f"instance.{field.name} = val;")
                         else:
                             with hpp.scope(f'if (!node.HasChild("{field.name}"))', delimiters=False):
                                 hpp(
-                                    f'return YamlReadResult::Error(node.GetId(), "Missing required field: {field.name}");'
+                                    f'return YamlReadResult::Error(node.GetId(), "Missing required field `{field.name}` while decoding `{clsinfo.id.identifier}`");'
                                 )
 
                             hpp(f"{vtype} val_{field.name};")
                             hpp(
                                 f'const YamlReadResult res_{field.name} = node["{field.name}"].TryRead(val_{field.name});'
                             )
+
                             with hpp.scope(f"if (!res_{field.name})", delimiters=False):
-                                hpp(f"return res_{field.name};")
+                                hpp(
+                                    f'return YamlReadResult::Error(res_{field.name}.GetError().NodeId, TierString::Format("Failed to decode field `{field.name}` of `{clsinfo.id.identifier}`: {{}}", res_{field.name}.GetError().Message));'
+                                )
+
                             hpp(f"instance.{field.name} = val_{field.name};")
 
                     hpp("return YamlReadResult::Ok();")
