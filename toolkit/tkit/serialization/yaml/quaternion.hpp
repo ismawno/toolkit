@@ -16,12 +16,17 @@ template <typename T> struct YamlCodec<qua<T>>
 
     TKIT_NO_DISCARD static YamlReadResult Decode(const ConstYamlNode &node, qua<T> &instance)
     {
-        if (!node.IsSequence() || node.GetChildCount() != 4)
+        if (!node.IsSequence())
             return YamlReadResult::Error(
-                node.GetId(), TierString::Format(
-                                  "[TOOLKIT][YAML] Failed to decode: Child count ({}) is not equal to 4 for quaternion "
-                                  "or the node is not a sequence",
-                                  node.GetChildCount()));
+                node.GetId(), YamlString::Format("[TOOLKIT][YAML] Failed to decode '{}' as a quaternion: expected a "
+                                                 "sequence of 4 components, but got {}",
+                                                 YamlGeneratePath(node), YamlDescribeNode(node)));
+
+        if (node.GetChildCount() != 4)
+            return YamlReadResult::Error(
+                node.GetId(), YamlString::Format("[TOOLKIT][YAML] Failed to decode '{}' as a quaternion: expected 4 "
+                                                 "components, but found {}",
+                                                 YamlGeneratePath(node), node.GetChildCount()));
 
         for (usize i = 0; i < 4; ++i)
         {

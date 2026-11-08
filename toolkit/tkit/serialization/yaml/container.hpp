@@ -21,12 +21,17 @@ template <typename T, usize N> struct YamlCodec<FixedArray<T, N>>
 
     TKIT_NO_DISCARD static YamlReadResult Decode(const ConstYamlNode &node, FixedArray<T, N> &instance)
     {
-        if (!node.IsSequence() || node.GetChildCount() > N)
+        if (!node.IsSequence())
             return YamlReadResult::Error(
-                node.GetId(),
-                YamlString::Format("[TOOLKIT][YAML] Failed to decode: Child count ({}) is greater than array "
-                                   "capacity ({}) or the node is not a sequence",
-                                   node.GetChildCount(), N));
+                node.GetId(), YamlString::Format("[TOOLKIT][YAML] Failed to decode '{}' as a fixed array of {} "
+                                                 "elements: expected a sequence, but got {}",
+                                                 YamlGeneratePath(node), N, YamlDescribeNode(node)));
+
+        if (node.GetChildCount() > N)
+            return YamlReadResult::Error(
+                node.GetId(), YamlString::Format("[TOOLKIT][YAML] Failed to decode '{}' as a fixed array: it has {} "
+                                                 "elements, but the array can hold at most {}",
+                                                 YamlGeneratePath(node), node.GetChildCount(), N));
 
         for (usize i = 0; i < node.GetChildCount(); ++i)
         {
@@ -57,29 +62,41 @@ template <typename T, typename AllocState> struct YamlCodec<Array<T, AllocState>
         if constexpr (Array<T, AllocState>::IsString)
         {
             std::string str;
-            TKIT_RETURN_IF_FAILED(node.TryRead(str));
+            const YamlReadResult res = node.TryRead(str);
+            if (!res)
+                return YamlReadResult::Error(
+                    node.GetId(),
+                    YamlString::Format("[TOOLKIT][YAML] Failed to decode '{}' as a string: got {} - {}",
+                                       YamlGeneratePath(node), YamlDescribeNode(node), res.GetError().Message));
+
             if constexpr (Array<T, AllocState>::Type != Array_Static)
                 instance.Reserve(usize(str.size()));
             else if (str.size() >= instance.GetCapacity())
                 return YamlReadResult::Error(
                     node.GetId(),
-                    YamlString::Format("[TOOLKIT][YAML] Not enough capacity ({}) to deserialize string of size {}",
-                                       instance.GetCapacity(), str.size()));
+                    YamlString::Format("[TOOLKIT][YAML] Failed to decode '{}' as a string: its length ({}) does not "
+                                       "fit in a static string with capacity {}",
+                                       YamlGeneratePath(node), str.size(), instance.GetCapacity()));
             for (const char c : str)
                 instance.Append(c);
         }
         else
         {
             if (!node.IsSequence())
-                return YamlReadResult::Error(node.GetId(), "[TOOLKIT][YAML] Node must be a sequence to decode array");
+                return YamlReadResult::Error(
+                    node.GetId(),
+                    YamlString::Format("[TOOLKIT][YAML] Failed to decode '{}' as an array: expected a sequence, but "
+                                       "got {}",
+                                       YamlGeneratePath(node), YamlDescribeNode(node)));
 
             if constexpr (Array<T, AllocState>::Type != Array_Static)
                 instance.Reserve(usize(node.GetChildCount()));
             else if (node.GetChildCount() > instance.GetCapacity())
                 return YamlReadResult::Error(
                     node.GetId(),
-                    YamlString::Format("[TOOLKIT][YAML] Not enough capacity ({}) to deserialize array of size {}",
-                                       instance.GetCapacity(), node.GetChildCount()));
+                    YamlString::Format("[TOOLKIT][YAML] Failed to decode '{}' as a static array: it has {} elements, "
+                                       "but the array can hold at most {}",
+                                       YamlGeneratePath(node), node.GetChildCount(), instance.GetCapacity()));
 
             for (const ConstYamlNode element : node)
             {
