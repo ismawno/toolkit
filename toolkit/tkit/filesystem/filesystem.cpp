@@ -1,5 +1,6 @@
 #include "tkit/core/pch.hpp"
 #include "tkit/filesystem/filesystem.hpp"
+#include "tkit/utils/defer.hpp"
 
 #ifdef TKIT_OS_WINDOWS
 #    ifndef NOMINMAX
@@ -1020,11 +1021,12 @@ TKIT_NO_DISCARD static FileSystemResult<> copyContents(const char *from, const c
     if (in < 0)
         return lastError();
 
+    TKIT_DEFER(::close(in));
+
     struct stat st;
     if (::fstat(in, &st) != 0)
     {
         const int err = errno;
-        ::close(in);
         return fromNative(err);
     }
 
@@ -1033,7 +1035,6 @@ TKIT_NO_DISCARD static FileSystemResult<> copyContents(const char *from, const c
     if (out < 0)
     {
         const int err = errno;
-        ::close(in);
         return fromNative(err);
     }
 
@@ -1100,7 +1101,6 @@ TKIT_NO_DISCARD static FileSystemResult<> copyContents(const char *from, const c
     if (err == 0 && ::fchmod(out, mode) != 0)
         err = errno;
 
-    ::close(in);
     if (::close(out) != 0 && err == 0)
         err = errno;
     if (err != 0)
