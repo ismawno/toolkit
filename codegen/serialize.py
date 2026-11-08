@@ -170,7 +170,7 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
 
                     expected = ", ".join(enum.values)
                     hpp(
-                        f"return YamlReadResult::Error(node.GetId(), TierString::Format(\"Unknown value '{{}}' for enum `{enum.id.identifier}`. Expected one of: {expected}\", val));"
+                        f"return YamlReadResult::Error(node.GetId(), YamlString::Format(\"Unknown value '{{}}' for enum `{enum.id.identifier}`. Expected one of: {expected}\", val));"
                     )
 
         for clsinfo in classes.classes:
@@ -273,7 +273,7 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
 
                                 with hpp.scope("if (!res)", delimiters=False):
                                     hpp(
-                                        f'return YamlReadResult::Error(res.GetError().NodeId, TierString::Format("Failed to decode field `{field.name}` of `{clsinfo.id.identifier}`: {{}}", res.GetError().Message));'
+                                        f'return YamlReadResult::Error(res.GetError().NodeId, YamlString::Format("Failed to decode field `{field.name}` of `{clsinfo.id.identifier}`: {{}}", res.GetError().Message));'
                                     )
 
                                 hpp(f"instance.{field.name} = val;")
@@ -290,7 +290,7 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
 
                             with hpp.scope(f"if (!res_{field.name})", delimiters=False):
                                 hpp(
-                                    f'return YamlReadResult::Error(res_{field.name}.GetError().NodeId, TierString::Format("Failed to decode field `{field.name}` of `{clsinfo.id.identifier}`: {{}}", res_{field.name}.GetError().Message));'
+                                    f'return YamlReadResult::Error(res_{field.name}.GetError().NodeId, YamlString::Format("Failed to decode field `{field.name}` of `{clsinfo.id.identifier}`: {{}}", res_{field.name}.GetError().Message));'
                                 )
 
                             hpp(f"instance.{field.name} = val_{field.name};")
