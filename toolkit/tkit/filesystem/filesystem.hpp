@@ -1062,7 +1062,7 @@ template <typename AllocState> class RecursiveDirectoryIterator
             const auto next = level.Stream.Next();
             if (!next)
                 return next.GetError();
-            if (!(*next))
+            if (*next)
             {
                 m_Entry.m_Path = level.Directory.Join(level.Stream.GetName());
                 m_Entry.m_Type = level.Stream.GetType();
