@@ -158,9 +158,25 @@ endif()
 set(TOOLKIT_ROOT_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}
     CACHE STRING "" FORCE)
-set(TOOLKIT_PYTHON_EXECUTABLE
-    python
-    CACHE STRING "" FORCE)
+
+if(NOT TOOLKIT_PYTHON_EXECUTABLE)
+  # prefer an active virtualenv over the system python
+  set(Python3_FIND_VIRTUALENV FIRST)
+  find_package(Python3 COMPONENTS Interpreter)
+
+  if(Python3_Interpreter_FOUND)
+    set(TOOLKIT_PYTHON_EXECUTABLE
+        "${Python3_EXECUTABLE}"
+        CACHE FILEPATH "Python interpreter used by the toolkit code generators")
+  else()
+    # last resort: whatever is called `python` on PATH, same as before
+    set(TOOLKIT_PYTHON_EXECUTABLE
+        python
+        CACHE STRING "Python interpreter used by the toolkit code generators")
+    message(
+      WARNING "No Python 3 interpreter found, falling back to 'python' on PATH")
+  endif()
+endif()
 
 function(
   tkit_register_code_generation_target
