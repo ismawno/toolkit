@@ -16,7 +16,7 @@ template <typename T> YamlReadResult DecodeBuiltIn(const ConstYamlNode &node, T 
     const ryml::ConstNodeRef &ref = node.get();
     const ryml::ReadResult res = ref.deserialize(&instance);
     if (!res)
-        return YamlReadResult::Error(res.node, "Failed to deserialize built-in value");
+        return YamlReadResult::Error(res.node, "[TOOLKIT][YAML] Failed to deserialize built-in value");
 
     return YamlReadResult::Ok();
 }

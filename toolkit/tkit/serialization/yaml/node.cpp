@@ -78,7 +78,7 @@ template <typename T> YamlReadResult ConstYamlNode::TryReadKey(T &key) const
 {
     const ryml::ReadResult res = get().deserialize_key(&key);
     if (!res)
-        return YamlReadResult::Error(res.node, "Failed to deserialize key");
+        return YamlReadResult::Error(res.node, "[TOOLKIT][YAML] Failed to deserialize key");
     return YamlReadResult::Ok();
 }
 
@@ -249,7 +249,7 @@ template <typename T> YamlReadResult YamlNode::TryReadKey(T &key) const
 {
     const ryml::ReadResult res = get().deserialize_key(&key);
     if (!res)
-        return YamlReadResult::Error(res.node, "Failed to deserialize key");
+        return YamlReadResult::Error(res.node, "[TOOLKIT][YAML] Failed to deserialize key");
     return YamlReadResult::Ok();
 }
 template <typename T> void YamlNode::WriteKey(const T &key)

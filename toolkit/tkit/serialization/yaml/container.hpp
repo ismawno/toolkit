@@ -22,10 +22,11 @@ template <typename T, usize N> struct YamlCodec<FixedArray<T, N>>
     TKIT_NO_DISCARD static YamlReadResult Decode(const ConstYamlNode &node, FixedArray<T, N> &instance)
     {
         if (!node.IsSequence() || node.GetChildCount() > N)
-            return YamlReadResult::Error(node.GetId(),
-                                         YamlString::Format("Failed to decode: Child count ({}) is greater than array "
-                                                            "capacity ({}) or the node is not a sequence",
-                                                            node.GetChildCount(), N));
+            return YamlReadResult::Error(
+                node.GetId(),
+                YamlString::Format("[TOOLKIT][YAML] Failed to decode: Child count ({}) is greater than array "
+                                   "capacity ({}) or the node is not a sequence",
+                                   node.GetChildCount(), N));
 
         for (usize i = 0; i < node.GetChildCount(); ++i)
         {
@@ -61,22 +62,24 @@ template <typename T, typename AllocState> struct YamlCodec<Array<T, AllocState>
                 instance.Reserve(usize(str.size()));
             else if (str.size() >= instance.GetCapacity())
                 return YamlReadResult::Error(
-                    node.GetId(), YamlString::Format("Not enough capacity ({}) to deserialize string of size {}",
-                                                     instance.GetCapacity(), str.size()));
+                    node.GetId(),
+                    YamlString::Format("[TOOLKIT][YAML] Not enough capacity ({}) to deserialize string of size {}",
+                                       instance.GetCapacity(), str.size()));
             for (const char c : str)
                 instance.Append(c);
         }
         else
         {
             if (!node.IsSequence())
-                return YamlReadResult::Error(node.GetId(), "Node must be a sequence to decode array");
+                return YamlReadResult::Error(node.GetId(), "[TOOLKIT][YAML] Node must be a sequence to decode array");
 
             if constexpr (Array<T, AllocState>::Type != Array_Static)
                 instance.Reserve(usize(node.GetChildCount()));
             else if (node.GetChildCount() > instance.GetCapacity())
                 return YamlReadResult::Error(
-                    node.GetId(), YamlString::Format("Not enough capacity ({}) to deserialize array of size {}",
-                                                     instance.GetCapacity(), node.GetChildCount()));
+                    node.GetId(),
+                    YamlString::Format("[TOOLKIT][YAML] Not enough capacity ({}) to deserialize array of size {}",
+                                       instance.GetCapacity(), node.GetChildCount()));
 
             for (const ConstYamlNode element : node)
             {

@@ -135,8 +135,9 @@ template <typename T> TKIT_NO_DISCARD YamlReadResult Deserialize(const YamlPath 
 {
     const auto tree = YamlTree::FromFile(path);
     if (!tree)
-        return YamlReadResult::Error(NullYamlNodeId, YamlString::Format("File to deserialize at '{}' with error: {}",
-                                                                        path, ToString(tree.GetError())));
+        return YamlReadResult::Error(NullYamlNodeId,
+                                     YamlString::Format("[TOOLKIT][YAML] File to deserialize at '{}' with error: {}",
+                                                        path, ToString(tree.GetError())));
 
     return tree->GetRoot().TryRead(instance);
 }
