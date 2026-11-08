@@ -67,7 +67,7 @@ template <typename T> struct YamlCodec
 #endif
     }
 
-    static YamlReadResult Decode(const ConstYamlNode &node, T &instance)
+    TKIT_NO_DISCARD static YamlReadResult Decode(const ConstYamlNode &node, T &instance)
     {
 #ifdef TKIT_SERIALIZATION_FROM_REFLECTION
         static_assert(Reflect<T>::Implemented || std::is_enum_v<T>,
@@ -125,34 +125,29 @@ template <typename T> struct YamlCodec
     }
 };
 
-template <typename T> void Serialize(const YamlPath &path, const T &instance)
+template <typename T> TKIT_NO_DISCARD FileSystemResult<> Serialize(const YamlPath &path, const T &instance)
 {
     YamlTree tree{};
     tree.GetRoot() << instance;
-    tree.ToFile(path);
+    return tree.ToFile(path);
 }
-template <typename T> YamlReadResult TryDeserialize(const YamlPath &path, T &instance)
+template <typename T> TKIT_NO_DISCARD YamlReadResult Deserialize(const YamlPath &path, T &instance)
 {
     const auto tree = YamlTree::FromFile(path);
     if (!tree)
-        return YamlReadResult::Error(NullYamlNodeId, tree.GetError());
+        return YamlReadResult::Error(NullYamlNodeId, YamlString::Format("File to deserialize at '{}' with error: {}",
+                                                                        path, ToString(tree.GetError())));
 
     return tree->GetRoot().TryRead(instance);
 }
-template <typename T> Result<void, YamlString> Deserialize(const YamlPath &path, T &instance)
+template <typename T, typename... Args>
+    requires(sizeof...(Args) != 1 || !(std::is_same_v<std::remove_cvref_t<Args>, T> || ... || false))
+TKIT_NO_DISCARD Result<T, YamlReadError> Deserialize(const YamlPath &path, Args &&...args)
 {
-    const auto tree = YamlTree::FromFile(path);
-    TKIT_RETURN_ON_ERROR(tree);
-
-    tree->GetRoot().Read(instance);
-    return Result<void, YamlString>::Ok();
-}
-template <typename T, typename... Args> Result<T, YamlString> Deserialize(const YamlPath &path, Args &&...args)
-{
-    const auto tree = YamlTree::FromFile(path);
-    TKIT_RETURN_ON_ERROR(tree);
-
-    return tree->GetRoot().Read<T>(std::forward<Args>(args)...);
+    T instance{std::forward<Args>(args)...};
+    const auto res = Deserialize(path, instance);
+    TKIT_RETURN_ON_ERROR(res);
+    return instance;
 }
 
 template <typename T>
@@ -165,7 +160,7 @@ template <BuiltInCodecable T> struct YamlCodec<T>
     {
         Detail::EncodeBuiltIn(node, instance);
     }
-    static YamlReadResult Decode(const ConstYamlNode &node, T &instance)
+    TKIT_NO_DISCARD static YamlReadResult Decode(const ConstYamlNode &node, T &instance)
     {
         return Detail::DecodeBuiltIn(node, instance);
     }

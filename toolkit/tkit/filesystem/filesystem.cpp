@@ -71,15 +71,15 @@ const char *ToString(const FileSystemError error)
 
 namespace TKit::Detail
 {
-template <typename T> static FileSystemResult<T> error(const FileSystemError err)
+template <typename T> TKIT_NO_DISCARD static FileSystemResult<T> error(const FileSystemError err)
 {
     return FileSystemResult<T>::Error(err);
 }
-template <typename T> static FileSystemResult<std::remove_cvref_t<T>> ok(T &&value)
+template <typename T> TKIT_NO_DISCARD static FileSystemResult<std::remove_cvref_t<T>> ok(T &&value)
 {
     return FileSystemResult<std::remove_cvref_t<T>>::Ok(std::forward<T>(value));
 }
-static FileSystemResult<> ok()
+TKIT_NO_DISCARD static FileSystemResult<> ok()
 {
     return FileSystemResult<>::Ok();
 }
@@ -142,7 +142,7 @@ static FileSystemError fromNative(const DWORD error)
         return FileSystemError_Unknown;
     }
 }
-template <typename T = void> static FileSystemResult<T> lastError()
+template <typename T = void> TKIT_NO_DISCARD static FileSystemResult<T> lastError()
 {
     return FileSystemResult<T>::Error(fromNative(GetLastError()));
 }
@@ -242,7 +242,7 @@ static FILETIME toFileTime(const FileTime time)
     return ft;
 }
 
-static FileSystemResult<BY_HANDLE_FILE_INFORMATION> getInformation(const char *path)
+TKIT_NO_DISCARD static FileSystemResult<BY_HANDLE_FILE_INFORMATION> getInformation(const char *path)
 {
     TKIT_WIDEN(wpath, path)
     const HandleGuard guard{openHandle(wpath.GetData(), 0, true)};
@@ -341,7 +341,7 @@ FileSystemResult<> SetLastWriteTime(const char *path, const FileTime time)
 }
 
 FileSystemResult<> SetPermissions(const char *path, const FilePermissions permissions,
-                                      const PermissionOptionFlags flags)
+                                  const PermissionOptionFlags flags)
 {
     TKIT_WIDEN(wpath, path)
     const DWORD attributes = GetFileAttributesW(wpath.GetData());
@@ -397,7 +397,7 @@ FileSystemResult<bool> CreateDirectory(const char *path, const char *existing)
     return error<bool>(fromNative(err));
 }
 
-static FileSystemResult<> createSymlink(const char *target, const char *link, const DWORD flags)
+TKIT_NO_DISCARD static FileSystemResult<> createSymlink(const char *target, const char *link, const DWORD flags)
 {
     TKIT_WIDEN(wtarget, target)
     TKIT_WIDEN(wlink, link)
@@ -505,7 +505,7 @@ FileSystemResult<FileSystemPath> ReadSymlink(const char *path)
     return ok(narrow(name, length));
 }
 
-static FileSystemResult<> copyContents(const char *from, const char *to)
+TKIT_NO_DISCARD static FileSystemResult<> copyContents(const char *from, const char *to)
 {
     TKIT_WIDEN(wfrom, from)
     TKIT_WIDEN(wto, to)
@@ -816,7 +816,7 @@ static FileSystemError fromNative(const int err)
         return FileSystemError_IO;
     return FileSystemError_Unknown;
 }
-template <typename T = void> static FileSystemResult<T> lastError()
+template <typename T = void> TKIT_NO_DISCARD static FileSystemResult<T> lastError()
 {
     return FileSystemResult<T>::Error(fromNative(errno));
 }
@@ -844,7 +844,7 @@ static FileType toFileType(const mode_t mode)
     return FileType_Unknown;
 }
 
-static FileSystemResult<struct stat> getStat(const char *path, const bool followSymlinks = true)
+TKIT_NO_DISCARD static FileSystemResult<struct stat> getStat(const char *path, const bool followSymlinks = true)
 {
     struct stat st;
     if ((followSymlinks ? ::stat(path, &st) : ::lstat(path, &st)) != 0)
@@ -925,7 +925,7 @@ FileSystemResult<> SetLastWriteTime(const char *path, const FileTime time)
 }
 
 FileSystemResult<> SetPermissions(const char *path, const FilePermissions permissions,
-                                      const PermissionOptionFlags flags)
+                                  const PermissionOptionFlags flags)
 {
     TKIT_ASSERT(((flags & PermissionOptionFlag_Replace) != 0) + ((flags & PermissionOptionFlag_Add) != 0) +
                         ((flags & PermissionOptionFlag_Remove) != 0) ==
@@ -947,7 +947,7 @@ FileSystemResult<> SetPermissions(const char *path, const FilePermissions permis
     return ok();
 }
 
-static FileSystemResult<bool> createDirectory(const char *path, const mode_t mode)
+TKIT_NO_DISCARD static FileSystemResult<bool> createDirectory(const char *path, const mode_t mode)
 {
     if (::mkdir(path, mode) == 0)
         return ok(true);
@@ -1014,7 +1014,7 @@ FileSystemResult<FileSystemPath> ReadSymlink(const char *path)
     }
 }
 
-static FileSystemResult<> copyContents(const char *from, const char *to)
+TKIT_NO_DISCARD static FileSystemResult<> copyContents(const char *from, const char *to)
 {
     const int in = ::open(from, O_RDONLY | O_CLOEXEC);
     if (in < 0)

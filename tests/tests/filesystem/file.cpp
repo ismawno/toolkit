@@ -17,20 +17,20 @@ namespace
 {
 // the filesystem functions build their internal paths with the pushed tier allocator (FileSystemPath), so one is kept
 // pushed for as long as the directory lives
-struct TempDirectory
+struct File_TempDirectory
 {
-    TempDirectory()
+    File_TempDirectory()
     {
         PushTier(&s_Tier);
         const auto tmp = GetTempDirectoryPath();
         REQUIRE(tmp);
         Root = *tmp / "tkit-file-test";
-        RemoveAll(Root);
+        REQUIRE(RemoveAll(Root));
         REQUIRE(CreateDirectory(Root).GetValue());
     }
-    ~TempDirectory()
+    ~File_TempDirectory()
     {
-        RemoveAll(Root);
+        REQUIRE(RemoveAll(Root));
         PopTier();
     }
     DynamicPath Root;
@@ -54,10 +54,10 @@ static std::string readAll(File &file)
 
 TEST_CASE("File: open flags", "[file]")
 {
-    const TempDirectory tmp{};
+    const File_TempDirectory tmp{};
     const DynamicPath path = tmp.Root / "file.txt";
 
-    REQUIRE(File::Open(path).GetError() == FileSystemError_NotFound);
+    REQUIRE(File::Open(path, FileOpenFlag_Read).GetError() == FileSystemError_NotFound);
     REQUIRE(File::Open(path, FileOpenFlag_Write).GetError() == FileSystemError_NotFound);
     REQUIRE_FALSE(PathExists(path));
 
@@ -104,7 +104,7 @@ TEST_CASE("File: open flags", "[file]")
 
 TEST_CASE("File: read, write and seek", "[file]")
 {
-    const TempDirectory tmp{};
+    const File_TempDirectory tmp{};
     const DynamicPath path = tmp.Root / "data.bin";
 
     auto file = File::Open(path, FileOpenFlag_Read | FileOpenFlag_Write | FileOpenFlag_Create);
@@ -147,7 +147,7 @@ TEST_CASE("File: read, write and seek", "[file]")
 
 TEST_CASE("File: resize", "[file]")
 {
-    const TempDirectory tmp{};
+    const File_TempDirectory tmp{};
     const DynamicPath path = tmp.Root / "resize.bin";
     REQUIRE(WriteFile(path, "0123456789"));
 
@@ -168,7 +168,7 @@ TEST_CASE("File: resize", "[file]")
 
 TEST_CASE("File: move and close", "[file]")
 {
-    const TempDirectory tmp{};
+    const File_TempDirectory tmp{};
     const DynamicPath path = tmp.Root / "move.txt";
 
     File file{};
@@ -194,7 +194,7 @@ TEST_CASE("File: move and close", "[file]")
 
 TEST_CASE("File: WriteFile and ReadFile", "[file]")
 {
-    const TempDirectory tmp{};
+    const File_TempDirectory tmp{};
     const DynamicPath path = tmp.Root / "contents.txt";
 
     REQUIRE(WriteFile(path, "first line\n"));
@@ -223,7 +223,7 @@ TEST_CASE("File: WriteFile and ReadFile", "[file]")
 
 template <template <typename> typename A, typename... Args> static void TestReadFileInto(Args... args)
 {
-    const TempDirectory tmp{};
+    const File_TempDirectory tmp{};
     const DynamicPath path = tmp.Root / "text.txt";
 
     std::string expected{};
@@ -269,7 +269,7 @@ TEST_CASE("File: ReadFile into every string type", "[file]")
 
 TEST_CASE("File: ReadFile into a string that is too small", "[file]")
 {
-    const TempDirectory tmp{};
+    const File_TempDirectory tmp{};
     const DynamicPath path = tmp.Root / "big.txt";
     REQUIRE(WriteFile(path, "this does not fit in 8 characters"));
     REQUIRE(ReadFile<StaticString8>(path).GetError() == FileSystemError_TooLarge);
@@ -278,7 +278,7 @@ TEST_CASE("File: ReadFile into a string that is too small", "[file]")
 
 TEST_CASE("File: ReadFile with the pushed allocator", "[file]")
 {
-    const TempDirectory tmp{};
+    const File_TempDirectory tmp{};
     const DynamicPath path = tmp.Root / "pushed.txt";
     REQUIRE(WriteFile(path, "pushed"));
 

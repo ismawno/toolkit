@@ -95,7 +95,7 @@ class ConstYamlNode;
 namespace TKit::Detail
 {
 template <typename T> void EncodeBuiltIn(YamlNode &node, const T &instance);
-template <typename T> YamlReadResult DecodeBuiltIn(const ConstYamlNode &node, T &instance);
+template <typename T> TKIT_NO_DISCARD YamlReadResult DecodeBuiltIn(const ConstYamlNode &node, T &instance);
 #ifdef TKIT_ENABLE_ENSURE
 
 void CheckYamlReadResult(const YamlReadResult &res, const ryml::Tree *tree = nullptr);
@@ -148,7 +148,7 @@ class ConstYamlNode
 
     YamlNodeFlags GetFlags() const;
     YamlNodeFlags GetKeyFlags() const;
-    template <typename T> YamlReadResult TryRead(T &val) const
+    template <typename T> TKIT_NO_DISCARD YamlReadResult TryRead(T &val) const
     {
         return YamlCodec<T>::Decode(*this, val);
     }
@@ -163,7 +163,7 @@ class ConstYamlNode
         Read(val);
         return val;
     }
-    template <typename T> YamlReadResult TryReadKey(T &key) const;
+    template <typename T> TKIT_NO_DISCARD YamlReadResult TryReadKey(T &key) const;
 
     template <typename T> void ReadKey(T &key) const
     {
@@ -343,7 +343,7 @@ class YamlNode
         return *this;
     }
 
-    template <typename T> YamlReadResult TryRead(T &val) const
+    template <typename T> TKIT_NO_DISCARD YamlReadResult TryRead(T &val) const
     {
         return YamlCodec<T>::Decode(*this, val);
     }
@@ -363,7 +363,7 @@ class YamlNode
         YamlCodec<T>::Encode(*this, val);
     }
 
-    template <typename T> YamlReadResult TryReadKey(T &key) const;
+    template <typename T> TKIT_NO_DISCARD YamlReadResult TryReadKey(T &key) const;
 
     template <typename T> void ReadKey(T &key) const
     {

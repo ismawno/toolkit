@@ -41,6 +41,8 @@ void PrintStackTrace(u32 skip);
 } // namespace TKit::Detail
 
 #ifdef TKIT_ENABLE_ENSURE
+#    define TKIT_NO_DISCARD [[nodiscard]]
+
 namespace TKit::Detail
 {
 
@@ -74,6 +76,7 @@ void CheckOutOfBounds(const char *level, const char *color, const char *file, i3
 #    define TKIT_ENSURE_NOT_RETURNS(expression, expected, ...)                                                         \
         TKIT_ENSURE((expression) != (expected)__VA_OPT__(, ) __VA_ARGS__)
 #else
+#    define TKIT_NO_DISCARD
 #    define TKIT_PANIC(...)
 #    define TKIT_ENSURE(...)
 #    define TKIT_ENSURE_BOUNDS(...)

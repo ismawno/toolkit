@@ -15,22 +15,22 @@ static TierAllocator s_Tier{{.MaxAllocation = 128_kib}};
 
 namespace
 {
-struct TempDirectory
+struct FileSystem_TempDirectory
 {
-    TempDirectory()
+    FileSystem_TempDirectory()
     {
         PushTier(&s_Tier);
         const auto tmp = GetTempDirectoryPath();
         REQUIRE(tmp);
         Root = *tmp / "tkit-fs-test";
-        RemoveAll(Root);
+        REQUIRE(RemoveAll(Root));
         REQUIRE(CreateDirectory(Root).GetValue());
         PopTier();
     }
-    ~TempDirectory()
+    ~FileSystem_TempDirectory()
     {
         PushTier(&s_Tier);
-        RemoveAll(Root);
+        REQUIRE(RemoveAll(Root));
         PopTier();
     }
     DynamicPath Root;
@@ -52,7 +52,7 @@ std::string readFile(const DynamicPath &path)
 TEST_CASE("Status and basic queries", "[filesystem]")
 {
     PushTier(&s_Tier);
-    const TempDirectory tmp{};
+    const FileSystem_TempDirectory tmp{};
     const DynamicPath file = tmp.Root / "file.txt";
     writeFile(file, "hello");
 
@@ -93,7 +93,7 @@ TEST_CASE("Status and basic queries", "[filesystem]")
 TEST_CASE("Times, sizes and permissions", "[filesystem]")
 {
     PushTier(&s_Tier);
-    const TempDirectory tmp{};
+    const FileSystem_TempDirectory tmp{};
     const DynamicPath file = tmp.Root / "file.bin";
     writeFile(file, "0123456789");
 
@@ -118,7 +118,7 @@ TEST_CASE("Times, sizes and permissions", "[filesystem]")
 TEST_CASE("Directory creation and removal", "[filesystem]")
 {
     PushTier(&s_Tier);
-    const TempDirectory tmp{};
+    const FileSystem_TempDirectory tmp{};
     const DynamicPath deep = tmp.Root / "a/b/c/d";
 
     REQUIRE(CreateDirectory(deep).GetError() == FileSystemError_NotFound);
@@ -146,7 +146,7 @@ TEST_CASE("Directory creation and removal", "[filesystem]")
 TEST_CASE("Symlinks and hard links", "[filesystem]")
 {
     PushTier(&s_Tier);
-    const TempDirectory tmp{};
+    const FileSystem_TempDirectory tmp{};
     const DynamicPath file = tmp.Root / "target.txt";
     const DynamicPath dir = tmp.Root / "dir";
     writeFile(file, "content");
@@ -190,7 +190,7 @@ TEST_CASE("Symlinks and hard links", "[filesystem]")
 TEST_CASE("Copy and rename", "[filesystem]")
 {
     PushTier(&s_Tier);
-    const TempDirectory tmp{};
+    const FileSystem_TempDirectory tmp{};
     const DynamicPath file = tmp.Root / "a.txt";
     writeFile(file, "first");
 
@@ -253,7 +253,7 @@ TEST_CASE("Copy and rename", "[filesystem]")
 TEST_CASE("Current, absolute, canonical and relative paths", "[filesystem]")
 {
     PushTier(&s_Tier);
-    const TempDirectory tmp{};
+    const FileSystem_TempDirectory tmp{};
     REQUIRE(CreateDirectories(tmp.Root / "x/y"));
 
     const auto previous = GetCurrentPath();
@@ -288,7 +288,7 @@ TEST_CASE("Current, absolute, canonical and relative paths", "[filesystem]")
 template <typename AllocState, typename... Args> static void testDirectoryIteration(Args... args)
 {
     PushTier(&s_Tier);
-    const TempDirectory tmp{};
+    const FileSystem_TempDirectory tmp{};
     REQUIRE(CreateDirectories(tmp.Root / "d1/d2"));
     writeFile(tmp.Root / "f1", "1");
     writeFile(tmp.Root / "d1/f2", "22");
@@ -386,7 +386,7 @@ TEST_CASE("Directory iteration (tier)", "[filesystem]")
 TEST_CASE("Path returning functions keep the allocation type", "[filesystem]")
 {
     PushTier(&s_Tier);
-    const TempDirectory tmp{};
+    const FileSystem_TempDirectory tmp{};
 
     const auto current = GetCurrentPath<StaticPath1024>();
     REQUIRE(current);

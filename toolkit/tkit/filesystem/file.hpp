@@ -46,8 +46,7 @@ class File
     File(File &&other);
     File &operator=(File &&other);
 
-    template <PathLike P>
-    static FileSystemResult<File> Open(const P &path, const FileOpenFlags flags = FileOpenFlag_Read)
+    template <PathLike P> TKIT_NO_DISCARD static FileSystemResult<File> Open(const P &path, const FileOpenFlags flags)
     {
         return open(Detail::ToCString(path), flags);
     }
@@ -64,13 +63,13 @@ class File
      *
      * @return The number of bytes read. It is only smaller than `size` if the end of the file was reached.
      */
-    FileSystemResult<usz> Read(void *data, usz size);
+    TKIT_NO_DISCARD FileSystemResult<usz> Read(void *data, usz size);
 
     /**
      * @brief Write all `size` bytes of `data`.
      */
-    FileSystemResult<> Write(const void *data, usz size);
-    FileSystemResult<> Write(const StringView str)
+    TKIT_NO_DISCARD FileSystemResult<> Write(const void *data, usz size);
+    TKIT_NO_DISCARD FileSystemResult<> Write(const StringView str)
     {
         return Write(str.GetData(), str.GetSize());
     }
@@ -80,22 +79,22 @@ class File
      *
      * @return The new position, from the beginning of the file.
      */
-    FileSystemResult<u64> Seek(i64 offset, SeekOrigin origin = SeekOrigin_Begin);
-    FileSystemResult<u64> GetPosition();
-    FileSystemResult<u64> GetSize() const;
+    TKIT_NO_DISCARD FileSystemResult<u64> Seek(i64 offset, SeekOrigin origin = SeekOrigin_Begin);
+    TKIT_NO_DISCARD FileSystemResult<u64> GetPosition();
+    TKIT_NO_DISCARD FileSystemResult<u64> GetSize() const;
 
     /**
      * @brief Truncate or zero-extend the file. The file position is not modified.
      */
-    FileSystemResult<> Resize(u64 size);
+    TKIT_NO_DISCARD FileSystemResult<> Resize(u64 size);
 
     /**
      * @brief Make sure everything written so far reaches the disk.
      */
-    FileSystemResult<> Flush();
+    TKIT_NO_DISCARD FileSystemResult<> Flush();
 
   private:
-    static FileSystemResult<File> open(const char *path, FileOpenFlags flags);
+    TKIT_NO_DISCARD static FileSystemResult<File> open(const char *path, FileOpenFlags flags);
 
     // a file descriptor on posix, a HANDLE on windows
     uptr m_Handle = 0;
@@ -105,7 +104,8 @@ class File
 /**
  * @brief Read a whole file into `contents`, which keeps its allocator.
  */
-template <typename AllocState, PathLike P> FileSystemResult<> ReadFile(const P &path, String<AllocState> &contents)
+template <typename AllocState, PathLike P>
+TKIT_NO_DISCARD FileSystemResult<> ReadFile(const P &path, String<AllocState> &contents)
 {
     auto file = File::Open(path, FileOpenFlag_Read);
     TKIT_RETURN_ON_ERROR(file);
@@ -113,9 +113,8 @@ template <typename AllocState, PathLike P> FileSystemResult<> ReadFile(const P &
     const auto size = file->GetSize();
     TKIT_RETURN_ON_ERROR(size);
 
-    const u64 fsize = size.GetValue();
-    if (fsize >= u64(TKIT_USIZE_MAX) ||
-        (String<AllocState>::Type == Array_Static && fsize >= u64(contents.GetCapacity())))
+    const u64 fsize = *size;
+    if (fsize >= TKIT_U64_MAX || (String<AllocState>::Type == Array_Static && fsize >= u64(contents.GetCapacity())))
         return FileSystemError_TooLarge;
 
     contents.Resize(usize(fsize));
@@ -123,15 +122,16 @@ template <typename AllocState, PathLike P> FileSystemResult<> ReadFile(const P &
     TKIT_RETURN_ON_ERROR(read);
 
     // the file may have shrunk in the meantime
-    if (read.GetValue() < usz(fsize))
-        contents.Resize(usize(read.GetValue()));
+    if (*read < usz(fsize))
+        contents.Resize(usize(*read));
     return FileSystemResult<>::Ok();
 }
 
 /**
  * @brief Read a whole file into a new string. Allocators that need one use the currently pushed allocator.
  */
-template <typename StringType = DynamicString, PathLike P> FileSystemResult<StringType> ReadFile(const P &path)
+template <typename StringType = DynamicString, PathLike P>
+TKIT_NO_DISCARD FileSystemResult<StringType> ReadFile(const P &path)
 {
     StringType contents{};
     const auto result = ReadFile(path, contents);
@@ -146,16 +146,16 @@ template <typename StringType = DynamicString, PathLike P> FileSystemResult<Stri
 // the size is a template so that flags (an enum) are never mistaken for it: WriteFile(path, "text", flags) must pick
 // the StringView overload
 template <PathLike P, std::integral Size>
-FileSystemResult<> WriteFile(const P &path, const void *data, const Size size,
-                             const FileOpenFlags flags = FileOpenFlag_Overwrite)
+TKIT_NO_DISCARD FileSystemResult<> WriteFile(const P &path, const void *data, const Size size,
+                                             const FileOpenFlags flags = FileOpenFlag_Overwrite)
 {
     auto file = File::Open(path, flags);
     TKIT_RETURN_ON_ERROR(file);
     return file->Write(data, usz(size));
 }
 template <PathLike P>
-FileSystemResult<> WriteFile(const P &path, const StringView contents,
-                             const FileOpenFlags flags = FileOpenFlag_Overwrite)
+TKIT_NO_DISCARD FileSystemResult<> WriteFile(const P &path, const StringView contents,
+                                             const FileOpenFlags flags = FileOpenFlag_Overwrite)
 {
     return WriteFile(path, contents.GetData(), contents.GetSize(), flags);
 }

@@ -39,11 +39,11 @@ File &File::operator=(File &&other)
     return *this;
 }
 
-static FileSystemResult<> lastError()
+TKIT_NO_DISCARD static FileSystemResult<> lastError()
 {
     return FileSystemResult<>::Error(Detail::LastError());
 }
-template <typename T> static FileSystemResult<T> lastError()
+template <typename T> TKIT_NO_DISCARD static FileSystemResult<T> lastError()
 {
     return FileSystemResult<T>::Error(Detail::LastError());
 }

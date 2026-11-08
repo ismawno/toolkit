@@ -6,6 +6,7 @@
 #include "tkit/container/tier_array.hpp"
 #include "tkit/container/span.hpp"
 #include "tkit/container/dynamic_array.hpp"
+#include "tkit/filesystem/file.hpp"
 #include <ryml.hpp>
 #include <fstream>
 
@@ -91,21 +92,11 @@ YamlTree YamlTree::FromString(const StringView str)
     return t;
 }
 
-Result<YamlTree, YamlString> YamlTree::FromFile(const YamlPath &path)
+FileSystemResult<YamlTree> YamlTree::FromFile(const YamlPath &path)
 {
-    std::ifstream file{path.GetString(), std::ios::ate};
-    if (!file.is_open())
-        return Result<YamlTree, YamlString>::Error(
-            YamlString::Format("[TOOLKIT][YAML] Failed to open file at {}", path));
-
-    StackString contents{};
-    contents.Resize(file.tellg(), 0);
-
-    file.seekg(0);
-    file.read(contents.GetData(), contents.GetSize());
-    contents.Resize(file.gcount(), 0); // workaround for window files
-
-    return FromString(contents);
+    const auto res = ReadFile<StackString>(path);
+    TKIT_RETURN_ON_ERROR(res);
+    return FromString(*res);
 }
 
 template <typename Str> Str YamlTree::ToString() const
@@ -127,12 +118,9 @@ template <typename Str> Str YamlTree::ToString() const
     return str;
 }
 
-void YamlTree::ToFile(const YamlPath &path) const
+FileSystemResult<> YamlTree::ToFile(const YamlPath &path) const
 {
-    std::ofstream file{path.GetString()};
-
-    const StackString str = ToString<StackString>();
-    file << str.CString();
+    return WriteFile(path, ToString<StackString>());
 }
 
 ConstYamlNode YamlTree::GetRoot() const

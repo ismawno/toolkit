@@ -2,6 +2,7 @@
 
 #include "tkit/container/span.hpp"
 #include "tkit/serialization/yaml/node.hpp"
+#include "tkit/filesystem/filesystem.hpp"
 
 namespace TKit
 {
@@ -18,10 +19,10 @@ class YamlTree
     YamlTree &operator=(YamlTree &&other);
 
     static YamlTree FromString(StringView str);
-    static Result<YamlTree, YamlString> FromFile(const YamlPath &path);
+    TKIT_NO_DISCARD static FileSystemResult<YamlTree> FromFile(const YamlPath &path);
 
     template <typename Str> Str ToString() const;
-    void ToFile(const YamlPath &path) const;
+    TKIT_NO_DISCARD FileSystemResult<> ToFile(const YamlPath &path) const;
 
     ConstYamlNode GetRoot() const;
     YamlNode GetRoot();

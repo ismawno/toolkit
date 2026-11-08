@@ -153,7 +153,7 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                     hpp.param("instance", f"An instance of type `{enum.id.identifier}`.")
 
                 with hpp.scope(
-                    f"static YamlReadResult Decode(const ConstYamlNode &node, {enum.id.identifier} &instance)"
+                    f"TKIT_NO_DISCARD static YamlReadResult Decode(const ConstYamlNode &node, {enum.id.identifier} &instance)"
                 ):
                     hpp(f"std::string val;")
                     hpp(f"const YamlReadResult res = node.TryRead(val);")

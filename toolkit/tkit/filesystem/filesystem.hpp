@@ -212,40 +212,41 @@ concept PathLike = requires(const T &path) {
 // OS specific implementations. These are not meant to be called directly. Use the public API below
 namespace TKit::Detail
 {
-FileSystemResult<FileStatus> GetStatus(const char *path, bool followSymlinks);
-FileSystemResult<bool> IsEmpty(const char *path);
-FileSystemResult<bool> Equivalent(const char *path1, const char *path2);
-FileSystemResult<u64> GetFileSize(const char *path);
-FileSystemResult<u64> GetHardLinkCount(const char *path);
-FileSystemResult<FileTime> GetLastWriteTime(const char *path);
-FileSystemResult<> SetLastWriteTime(const char *path, FileTime time);
-FileSystemResult<> SetPermissions(const char *path, FilePermissions permissions, PermissionOptionFlags flags);
+TKIT_NO_DISCARD FileSystemResult<FileStatus> GetStatus(const char *path, bool followSymlinks);
+TKIT_NO_DISCARD FileSystemResult<bool> IsEmpty(const char *path);
+TKIT_NO_DISCARD FileSystemResult<bool> Equivalent(const char *path1, const char *path2);
+TKIT_NO_DISCARD FileSystemResult<u64> GetFileSize(const char *path);
+TKIT_NO_DISCARD FileSystemResult<u64> GetHardLinkCount(const char *path);
+TKIT_NO_DISCARD FileSystemResult<FileTime> GetLastWriteTime(const char *path);
+TKIT_NO_DISCARD FileSystemResult<> SetLastWriteTime(const char *path, FileTime time);
+TKIT_NO_DISCARD FileSystemResult<> SetPermissions(const char *path, FilePermissions permissions,
+                                                  PermissionOptionFlags flags);
 
-FileSystemResult<bool> CreateDirectory(const char *path);
-FileSystemResult<bool> CreateDirectory(const char *path, const char *existing);
-FileSystemResult<bool> CreateDirectories(const char *path);
-FileSystemResult<> CreateSymlink(const char *target, const char *link);
-FileSystemResult<> CreateDirectorySymlink(const char *target, const char *link);
-FileSystemResult<> CreateHardLink(const char *target, const char *link);
-FileSystemResult<FileSystemPath> ReadSymlink(const char *path);
+TKIT_NO_DISCARD FileSystemResult<bool> CreateDirectory(const char *path);
+TKIT_NO_DISCARD FileSystemResult<bool> CreateDirectory(const char *path, const char *existing);
+TKIT_NO_DISCARD FileSystemResult<bool> CreateDirectories(const char *path);
+TKIT_NO_DISCARD FileSystemResult<> CreateSymlink(const char *target, const char *link);
+TKIT_NO_DISCARD FileSystemResult<> CreateDirectorySymlink(const char *target, const char *link);
+TKIT_NO_DISCARD FileSystemResult<> CreateHardLink(const char *target, const char *link);
+TKIT_NO_DISCARD FileSystemResult<FileSystemPath> ReadSymlink(const char *path);
 
-FileSystemResult<bool> CopyFile(const char *from, const char *to, CopyOptionFlags flags);
-FileSystemResult<> CopySymlink(const char *from, const char *to);
-FileSystemResult<> Copy(const char *from, const char *to, CopyOptionFlags flags);
-FileSystemResult<bool> Remove(const char *path);
-FileSystemResult<u64> RemoveAll(const char *path);
-FileSystemResult<> Rename(const char *from, const char *to);
-FileSystemResult<> ResizeFile(const char *path, u64 size);
-FileSystemResult<SpaceInfo> GetSpace(const char *path);
+TKIT_NO_DISCARD FileSystemResult<bool> CopyFile(const char *from, const char *to, CopyOptionFlags flags);
+TKIT_NO_DISCARD FileSystemResult<> CopySymlink(const char *from, const char *to);
+TKIT_NO_DISCARD FileSystemResult<> Copy(const char *from, const char *to, CopyOptionFlags flags);
+TKIT_NO_DISCARD FileSystemResult<bool> Remove(const char *path);
+TKIT_NO_DISCARD FileSystemResult<u64> RemoveAll(const char *path);
+TKIT_NO_DISCARD FileSystemResult<> Rename(const char *from, const char *to);
+TKIT_NO_DISCARD FileSystemResult<> ResizeFile(const char *path, u64 size);
+TKIT_NO_DISCARD FileSystemResult<SpaceInfo> GetSpace(const char *path);
 
-FileSystemResult<FileSystemPath> GetCurrentPath();
-FileSystemResult<> SetCurrentPath(const char *path);
-FileSystemResult<FileSystemPath> GetTempDirectoryPath();
-FileSystemResult<FileSystemPath> Absolute(const char *path);
-FileSystemResult<FileSystemPath> Canonical(const char *path);
-FileSystemResult<FileSystemPath> WeaklyCanonical(const char *path);
-FileSystemResult<FileSystemPath> Relative(const char *path, const char *base);
-FileSystemResult<FileSystemPath> Proximate(const char *path, const char *base);
+TKIT_NO_DISCARD FileSystemResult<FileSystemPath> GetCurrentPath();
+TKIT_NO_DISCARD FileSystemResult<> SetCurrentPath(const char *path);
+TKIT_NO_DISCARD FileSystemResult<FileSystemPath> GetTempDirectoryPath();
+TKIT_NO_DISCARD FileSystemResult<FileSystemPath> Absolute(const char *path);
+TKIT_NO_DISCARD FileSystemResult<FileSystemPath> Canonical(const char *path);
+TKIT_NO_DISCARD FileSystemResult<FileSystemPath> WeaklyCanonical(const char *path);
+TKIT_NO_DISCARD FileSystemResult<FileSystemPath> Relative(const char *path, const char *base);
+TKIT_NO_DISCARD FileSystemResult<FileSystemPath> Proximate(const char *path, const char *base);
 // The error of the last failed OS call in this thread (errno or GetLastError())
 FileSystemError LastError();
 
@@ -262,7 +263,7 @@ class DirectoryStream
     DirectoryStream(DirectoryStream &&other);
     DirectoryStream &operator=(DirectoryStream &&other);
 
-    FileSystemResult<> Open(const char *path);
+    TKIT_NO_DISCARD FileSystemResult<> Open(const char *path);
     void Close();
 
     /**
@@ -270,7 +271,7 @@ class DirectoryStream
      *
      * @return `true` if a new entry is available, `false` if the stream is exhausted.
      */
-    FileSystemResult<bool> Next();
+    TKIT_NO_DISCARD FileSystemResult<bool> Next();
 
     StringView GetName() const;
 
@@ -297,8 +298,8 @@ template <usize Capacity> struct StaticCapacity<StaticAllocation<char, Capacity>
 // Converts a result coming from the OS layer into a path of the requested allocation type, sharing the allocator of
 // `like` if it is provided.
 template <typename AllocState>
-FileSystemResult<Path<AllocState>> ConvertPath(FileSystemResult<FileSystemPath> &&result,
-                                               [[maybe_unused]] const Path<AllocState> *like = nullptr)
+TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> ConvertPath(FileSystemResult<FileSystemPath> &&result,
+                                                               [[maybe_unused]] const Path<AllocState> *like = nullptr)
 {
     using PathType = Path<AllocState>;
     if (!result)
@@ -308,7 +309,7 @@ FileSystemResult<Path<AllocState>> ConvertPath(FileSystemResult<FileSystemPath> 
         return std::move(result);
     else
     {
-        const StringView view = result.GetValue().GetView();
+        const StringView view = result->GetView();
         if constexpr (PathType::Type == Array_Static)
         {
             if (view.GetSize() >= StaticCapacity<AllocState>::Value)
@@ -336,7 +337,7 @@ namespace TKit
  *
  * A path that does not exist is not an error: the returned status will have a `FileType_NotFound` type.
  */
-template <PathLike P> FileSystemResult<FileStatus> GetStatus(const P &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<FileStatus> GetStatus(const P &path)
 {
     return Detail::GetStatus(Detail::ToCString(path), true);
 }
@@ -345,7 +346,7 @@ template <PathLike P> FileSystemResult<FileStatus> GetStatus(const P &path)
  *
  * A path that does not exist is not an error: the returned status will have a `FileType_NotFound` type.
  */
-template <PathLike P> FileSystemResult<FileStatus> GetSymlinkStatus(const P &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<FileStatus> GetSymlinkStatus(const P &path)
 {
     return Detail::GetStatus(Detail::ToCString(path), false);
 }
@@ -401,7 +402,7 @@ template <PathLike P> bool IsOther(const P &path)
 /**
  * @brief Check if a file is empty, or if a directory has no entries.
  */
-template <PathLike P> FileSystemResult<bool> IsEmpty(const P &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<bool> IsEmpty(const P &path)
 {
     return Detail::IsEmpty(Detail::ToCString(path));
 }
@@ -409,25 +410,25 @@ template <PathLike P> FileSystemResult<bool> IsEmpty(const P &path)
 /**
  * @brief Check if two paths resolve to the same file.
  */
-template <PathLike P1, PathLike P2> FileSystemResult<bool> Equivalent(const P1 &path1, const P2 &path2)
+template <PathLike P1, PathLike P2> TKIT_NO_DISCARD FileSystemResult<bool> Equivalent(const P1 &path1, const P2 &path2)
 {
     return Detail::Equivalent(Detail::ToCString(path1), Detail::ToCString(path2));
 }
 
-template <PathLike P> FileSystemResult<u64> GetFileSize(const P &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<u64> GetFileSize(const P &path)
 {
     return Detail::GetFileSize(Detail::ToCString(path));
 }
-template <PathLike P> FileSystemResult<u64> GetHardLinkCount(const P &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<u64> GetHardLinkCount(const P &path)
 {
     return Detail::GetHardLinkCount(Detail::ToCString(path));
 }
 
-template <PathLike P> FileSystemResult<FileTime> GetLastWriteTime(const P &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<FileTime> GetLastWriteTime(const P &path)
 {
     return Detail::GetLastWriteTime(Detail::ToCString(path));
 }
-template <PathLike P> FileSystemResult<> SetLastWriteTime(const P &path, const FileTime time)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<> SetLastWriteTime(const P &path, const FileTime time)
 {
     return Detail::SetLastWriteTime(Detail::ToCString(path), time);
 }
@@ -440,8 +441,8 @@ template <PathLike P> FileSystemResult<> SetLastWriteTime(const P &path, const F
  * optionally combined with `PermissionOptionFlag_NoFollow`.
  */
 template <PathLike P>
-FileSystemResult<> SetPermissions(const P &path, const FilePermissions permissions,
-                                  const PermissionOptionFlags flags = PermissionOptionFlag_Replace)
+TKIT_NO_DISCARD FileSystemResult<> SetPermissions(const P &path, const FilePermissions permissions,
+                                                  const PermissionOptionFlags flags = PermissionOptionFlag_Replace)
 {
     return Detail::SetPermissions(Detail::ToCString(path), permissions, flags);
 }
@@ -453,7 +454,7 @@ FileSystemResult<> SetPermissions(const P &path, const FilePermissions permissio
  *
  * @return `true` if the directory was created, `false` if it already existed.
  */
-template <PathLike P> FileSystemResult<bool> CreateDirectory(const P &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<bool> CreateDirectory(const P &path)
 {
     return Detail::CreateDirectory(Detail::ToCString(path));
 }
@@ -462,7 +463,8 @@ template <PathLike P> FileSystemResult<bool> CreateDirectory(const P &path)
  *
  * @return `true` if the directory was created, `false` if it already existed.
  */
-template <PathLike P1, PathLike P2> FileSystemResult<bool> CreateDirectory(const P1 &path, const P2 &existing)
+template <PathLike P1, PathLike P2>
+TKIT_NO_DISCARD FileSystemResult<bool> CreateDirectory(const P1 &path, const P2 &existing)
 {
     return Detail::CreateDirectory(Detail::ToCString(path), Detail::ToCString(existing));
 }
@@ -471,20 +473,21 @@ template <PathLike P1, PathLike P2> FileSystemResult<bool> CreateDirectory(const
  *
  * @return `true` if a directory was created, `false` if it already existed.
  */
-template <PathLike P> FileSystemResult<bool> CreateDirectories(const P &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<bool> CreateDirectories(const P &path)
 {
     return Detail::CreateDirectories(Detail::ToCString(path));
 }
 
-template <PathLike P1, PathLike P2> FileSystemResult<> CreateSymlink(const P1 &target, const P2 &link)
+template <PathLike P1, PathLike P2> TKIT_NO_DISCARD FileSystemResult<> CreateSymlink(const P1 &target, const P2 &link)
 {
     return Detail::CreateSymlink(Detail::ToCString(target), Detail::ToCString(link));
 }
-template <PathLike P1, PathLike P2> FileSystemResult<> CreateDirectorySymlink(const P1 &target, const P2 &link)
+template <PathLike P1, PathLike P2>
+TKIT_NO_DISCARD FileSystemResult<> CreateDirectorySymlink(const P1 &target, const P2 &link)
 {
     return Detail::CreateDirectorySymlink(Detail::ToCString(target), Detail::ToCString(link));
 }
-template <PathLike P1, PathLike P2> FileSystemResult<> CreateHardLink(const P1 &target, const P2 &link)
+template <PathLike P1, PathLike P2> TKIT_NO_DISCARD FileSystemResult<> CreateHardLink(const P1 &target, const P2 &link)
 {
     return Detail::CreateHardLink(Detail::ToCString(target), Detail::ToCString(link));
 }
@@ -499,7 +502,8 @@ template <PathLike P1, PathLike P2> FileSystemResult<> CreateHardLink(const P1 &
  * @return `true` if the file was copied, `false` if it was skipped.
  */
 template <PathLike P1, PathLike P2>
-FileSystemResult<bool> CopyFile(const P1 &from, const P2 &to, const CopyOptionFlags flags = CopyOptionFlag_None)
+TKIT_NO_DISCARD FileSystemResult<bool> CopyFile(const P1 &from, const P2 &to,
+                                                const CopyOptionFlags flags = CopyOptionFlag_None)
 {
     return Detail::CopyFile(Detail::ToCString(from), Detail::ToCString(to), flags);
 }
@@ -507,7 +511,7 @@ FileSystemResult<bool> CopyFile(const P1 &from, const P2 &to, const CopyOptionFl
 /**
  * @brief Copy a symlink itself (not the file it points to).
  */
-template <PathLike P1, PathLike P2> FileSystemResult<> CopySymlink(const P1 &from, const P2 &to)
+template <PathLike P1, PathLike P2> TKIT_NO_DISCARD FileSystemResult<> CopySymlink(const P1 &from, const P2 &to)
 {
     return Detail::CopySymlink(Detail::ToCString(from), Detail::ToCString(to));
 }
@@ -516,7 +520,7 @@ template <PathLike P1, PathLike P2> FileSystemResult<> CopySymlink(const P1 &fro
  * @brief Copy files, directories and symlinks, following `std::filesystem::copy()` semantics.
  */
 template <PathLike P1, PathLike P2>
-FileSystemResult<> Copy(const P1 &from, const P2 &to, const CopyOptionFlags flags = CopyOptionFlag_None)
+TKIT_NO_DISCARD FileSystemResult<> Copy(const P1 &from, const P2 &to, const CopyOptionFlags flags = CopyOptionFlag_None)
 {
     return Detail::Copy(Detail::ToCString(from), Detail::ToCString(to), flags);
 }
@@ -526,7 +530,7 @@ FileSystemResult<> Copy(const P1 &from, const P2 &to, const CopyOptionFlags flag
  *
  * @return `true` if the file was removed, `false` if it did not exist.
  */
-template <PathLike P> FileSystemResult<bool> Remove(const P &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<bool> Remove(const P &path)
 {
     return Detail::Remove(Detail::ToCString(path));
 }
@@ -536,43 +540,44 @@ template <PathLike P> FileSystemResult<bool> Remove(const P &path)
  *
  * @return The number of files and directories removed.
  */
-template <PathLike P> FileSystemResult<u64> RemoveAll(const P &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<u64> RemoveAll(const P &path)
 {
     return Detail::RemoveAll(Detail::ToCString(path));
 }
 
-template <PathLike P1, PathLike P2> FileSystemResult<> Rename(const P1 &from, const P2 &to)
+template <PathLike P1, PathLike P2> TKIT_NO_DISCARD FileSystemResult<> Rename(const P1 &from, const P2 &to)
 {
     return Detail::Rename(Detail::ToCString(from), Detail::ToCString(to));
 }
 
-template <PathLike P> FileSystemResult<> ResizeFile(const P &path, const u64 size)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<> ResizeFile(const P &path, const u64 size)
 {
     return Detail::ResizeFile(Detail::ToCString(path), size);
 }
 
-template <PathLike P> FileSystemResult<SpaceInfo> GetSpace(const P &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<SpaceInfo> GetSpace(const P &path)
 {
     return Detail::GetSpace(Detail::ToCString(path));
 }
 
 // === Paths ===
 
-template <typename PathType = FileSystemPath> FileSystemResult<PathType> GetCurrentPath()
+template <typename PathType = FileSystemPath> TKIT_NO_DISCARD FileSystemResult<PathType> GetCurrentPath()
 {
     return Detail::ConvertPath<typename PathType::AllocStateType>(Detail::GetCurrentPath());
 }
-template <PathLike P> FileSystemResult<> SetCurrentPath(const P &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<> SetCurrentPath(const P &path)
 {
     return Detail::SetCurrentPath(Detail::ToCString(path));
 }
 
-template <typename PathType = FileSystemPath> FileSystemResult<PathType> GetTempDirectoryPath()
+template <typename PathType = FileSystemPath> TKIT_NO_DISCARD FileSystemResult<PathType> GetTempDirectoryPath()
 {
     return Detail::ConvertPath<typename PathType::AllocStateType>(Detail::GetTempDirectoryPath());
 }
 
-template <typename AllocState> FileSystemResult<Path<AllocState>> ReadSymlink(const Path<AllocState> &path)
+template <typename AllocState>
+TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> ReadSymlink(const Path<AllocState> &path)
 {
     return Detail::ConvertPath(Detail::ReadSymlink(path.CString()), &path);
 }
@@ -580,7 +585,7 @@ template <typename AllocState> FileSystemResult<Path<AllocState>> ReadSymlink(co
 /**
  * @brief Make a path absolute by prepending the current path (if needed). The file does not need to exist.
  */
-template <typename AllocState> FileSystemResult<Path<AllocState>> Absolute(const Path<AllocState> &path)
+template <typename AllocState> TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> Absolute(const Path<AllocState> &path)
 {
     return Detail::ConvertPath(Detail::Absolute(path.CString()), &path);
 }
@@ -588,7 +593,8 @@ template <typename AllocState> FileSystemResult<Path<AllocState>> Absolute(const
 /**
  * @brief Get the absolute path with no symlinks, "." or ".." elements. The file must exist.
  */
-template <typename AllocState> FileSystemResult<Path<AllocState>> Canonical(const Path<AllocState> &path)
+template <typename AllocState>
+TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> Canonical(const Path<AllocState> &path)
 {
     return Detail::ConvertPath(Detail::Canonical(path.CString()), &path);
 }
@@ -597,7 +603,8 @@ template <typename AllocState> FileSystemResult<Path<AllocState>> Canonical(cons
  * @brief Same as `Canonical()`, but the trailing elements that do not exist are lexically normalized and appended
  * instead.
  */
-template <typename AllocState> FileSystemResult<Path<AllocState>> WeaklyCanonical(const Path<AllocState> &path)
+template <typename AllocState>
+TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> WeaklyCanonical(const Path<AllocState> &path)
 {
     return Detail::ConvertPath(Detail::WeaklyCanonical(path.CString()), &path);
 }
@@ -607,14 +614,14 @@ template <typename AllocState> FileSystemResult<Path<AllocState>> WeaklyCanonica
  * relative path exists.
  */
 template <typename AllocState, PathLike P>
-FileSystemResult<Path<AllocState>> Relative(const Path<AllocState> &path, const P &base)
+TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> Relative(const Path<AllocState> &path, const P &base)
 {
     return Detail::ConvertPath(Detail::Relative(path.CString(), Detail::ToCString(base)), &path);
 }
 /**
  * @brief Get `path` relative to the current path.
  */
-template <typename AllocState> FileSystemResult<Path<AllocState>> Relative(const Path<AllocState> &path)
+template <typename AllocState> TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> Relative(const Path<AllocState> &path)
 {
     return Detail::ConvertPath(Detail::Relative(path.CString(), "."), &path);
 }
@@ -623,11 +630,12 @@ template <typename AllocState> FileSystemResult<Path<AllocState>> Relative(const
  * @brief Same as `Relative()`, but returns `WeaklyCanonical(path)` if no relative path exists.
  */
 template <typename AllocState, PathLike P>
-FileSystemResult<Path<AllocState>> Proximate(const Path<AllocState> &path, const P &base)
+TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> Proximate(const Path<AllocState> &path, const P &base)
 {
     return Detail::ConvertPath(Detail::Proximate(path.CString(), Detail::ToCString(base)), &path);
 }
-template <typename AllocState> FileSystemResult<Path<AllocState>> Proximate(const Path<AllocState> &path)
+template <typename AllocState>
+TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> Proximate(const Path<AllocState> &path)
 {
     return Detail::ConvertPath(Detail::Proximate(path.CString(), "."), &path);
 }
@@ -702,11 +710,11 @@ template <typename AllocState> class DirectoryEntry
         return GetType() == FileType_Socket;
     }
 
-    FileSystemResult<u64> GetFileSize() const
+    TKIT_NO_DISCARD FileSystemResult<u64> GetFileSize() const
     {
         return TKit::GetFileSize(m_Path);
     }
-    FileSystemResult<FileTime> GetLastWriteTime() const
+    TKIT_NO_DISCARD FileSystemResult<FileTime> GetLastWriteTime() const
     {
         return TKit::GetLastWriteTime(m_Path);
     }
@@ -799,8 +807,8 @@ template <typename AllocState> class DirectoryIterator
     DirectoryIterator &operator=(DirectoryIterator &&) = default;
 
     template <PathLike P>
-    static FileSystemResult<DirectoryIterator> Open(const P &path,
-                                                    const DirectoryOptionFlags flags = DirectoryOptionFlag_None)
+    TKIT_NO_DISCARD static FileSystemResult<DirectoryIterator> Open(
+        const P &path, const DirectoryOptionFlags flags = DirectoryOptionFlag_None)
     {
         DirectoryIterator it{};
         it.m_Directory = Detail::MakeRootPath<AllocState>(path);
@@ -822,13 +830,13 @@ template <typename AllocState> class DirectoryIterator
     /**
      * @brief Move to the next entry. Once the directory is exhausted, `IsEnd()` returns true.
      */
-    FileSystemResult<> Advance()
+    TKIT_NO_DISCARD FileSystemResult<> Advance()
     {
         TKIT_ASSERT(m_Stream.IsOpen(), "[TOOLKIT][FILESYSTEM] Cannot advance an end directory iterator");
         const auto next = m_Stream.Next();
         if (!next)
             return next.GetError();
-        if (!next.GetValue())
+        if (!(*next))
         {
             Close();
             return FileSystemResult<>::Ok();
@@ -906,7 +914,7 @@ template <typename AllocState> class RecursiveDirectoryIterator
     }
 
     template <PathLike P>
-    static FileSystemResult<RecursiveDirectoryIterator> Open(
+    TKIT_NO_DISCARD static FileSystemResult<RecursiveDirectoryIterator> Open(
         const P &path, const DirectoryOptionFlags flags = DirectoryOptionFlag_None)
     {
         RecursiveDirectoryIterator it{};
@@ -934,7 +942,7 @@ template <typename AllocState> class RecursiveDirectoryIterator
      * @brief Move to the next entry, recursing into the current one if it is a directory (and recursion was not
      * disabled for it).
      */
-    FileSystemResult<> Advance()
+    TKIT_NO_DISCARD FileSystemResult<> Advance()
     {
         TKIT_ASSERT(!IsEnd(), "[TOOLKIT][FILESYSTEM] Cannot advance an end directory iterator");
         const bool recurse = m_Pending && shouldRecurse();
@@ -944,7 +952,7 @@ template <typename AllocState> class RecursiveDirectoryIterator
     /**
      * @brief Stop iterating the current directory and move to the next entry of its parent.
      */
-    FileSystemResult<> Pop()
+    TKIT_NO_DISCARD FileSystemResult<> Pop()
     {
         TKIT_ASSERT(!IsEnd(), "[TOOLKIT][FILESYSTEM] Cannot pop an end directory iterator");
         m_Entry.m_Path = Path<AllocState>{};
@@ -1030,7 +1038,7 @@ template <typename AllocState> class RecursiveDirectoryIterator
         return false;
     }
 
-    FileSystemResult<> advance(const bool recurse)
+    TKIT_NO_DISCARD FileSystemResult<> advance(const bool recurse)
     {
         if (recurse)
         {
@@ -1054,7 +1062,7 @@ template <typename AllocState> class RecursiveDirectoryIterator
             const auto next = level.Stream.Next();
             if (!next)
                 return next.GetError();
-            if (next.GetValue())
+            if (!(*next))
             {
                 m_Entry.m_Path = level.Directory.Join(level.Stream.GetName());
                 m_Entry.m_Type = level.Stream.GetType();
@@ -1073,13 +1081,13 @@ template <typename AllocState> class RecursiveDirectoryIterator
 };
 
 template <typename AllocState>
-FileSystemResult<DirectoryIterator<AllocState>> IterateDirectory(
+TKIT_NO_DISCARD FileSystemResult<DirectoryIterator<AllocState>> IterateDirectory(
     const Path<AllocState> &path, const DirectoryOptionFlags flags = DirectoryOptionFlag_None)
 {
     return DirectoryIterator<AllocState>::Open(path, flags);
 }
 template <typename AllocState>
-FileSystemResult<RecursiveDirectoryIterator<AllocState>> IterateDirectoryRecursive(
+TKIT_NO_DISCARD FileSystemResult<RecursiveDirectoryIterator<AllocState>> IterateDirectoryRecursive(
     const Path<AllocState> &path, const DirectoryOptionFlags flags = DirectoryOptionFlag_None)
 {
     return RecursiveDirectoryIterator<AllocState>::Open(path, flags);

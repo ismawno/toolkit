@@ -44,7 +44,7 @@ void LogSettings(const Settings &settings)
 
 Settings CreateSettings(int argc, char **argv)
 {
-    TKit::CreateDirectories(TKIT_ROOT_PATH "/performance/results");
+    TKIT_ENSURE(TKit::CreateDirectories(TKIT_ROOT_PATH "/performance/results"));
 
     argparse::ArgumentParser parser{"toolkit-performance", TKIT_VERSION, argparse::default_arguments::all};
     parser.add_description("A small performance test playground for some of the toolkit utilities.");
@@ -77,7 +77,7 @@ Settings CreateSettings(int argc, char **argv)
     if (const auto path = parser.present("--settings"))
     {
         const auto res = TKit::Deserialize<Settings>(*path);
-        TKIT_ASSERT(res, "[TOOLKIT][PERF] Failed to deserialize: {}", res.GetError());
+        TKIT_ASSERT(res, "[TOOLKIT][PERF] Failed to deserialize: {}", res.GetError().Message);
         settings = *res;
     }
 
@@ -93,7 +93,9 @@ Settings CreateSettings(int argc, char **argv)
     });
 
     if (parser.get<bool>("--export"))
-        TKit::Serialize(spath, settings);
+    {
+        TKIT_ENSURE(TKit::Serialize(spath, settings));
+    }
 
     return settings;
 }

@@ -19,7 +19,7 @@ template <typename T, usize N> struct YamlCodec<FixedArray<T, N>>
             node |= YamlFlagsBasedOnContainer(N);
     }
 
-    static YamlReadResult Decode(const ConstYamlNode &node, FixedArray<T, N> &instance)
+    TKIT_NO_DISCARD static YamlReadResult Decode(const ConstYamlNode &node, FixedArray<T, N> &instance)
     {
         if (!node.IsSequence() || node.GetChildCount() > N)
             return YamlReadResult::Error(node.GetId(),
@@ -50,7 +50,7 @@ template <typename T, typename AllocState> struct YamlCodec<Array<T, AllocState>
         }
     }
 
-    static YamlReadResult Decode(const ConstYamlNode &node, Array<T, AllocState> &instance)
+    TKIT_NO_DISCARD static YamlReadResult Decode(const ConstYamlNode &node, Array<T, AllocState> &instance)
     {
         instance.Clear();
         if constexpr (Array<T, AllocState>::IsString)

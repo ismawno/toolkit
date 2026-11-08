@@ -15,7 +15,7 @@ template <typename T, usize N0, usize... N> struct YamlCodec<ten<T, N0, N...>>
         node |= YamlFlagsBasedOnContainer(size);
     }
 
-    static YamlReadResult Decode(const ConstYamlNode &node, ten<T, N0, N...> &instance)
+    TKIT_NO_DISCARD static YamlReadResult Decode(const ConstYamlNode &node, ten<T, N0, N...> &instance)
     {
         constexpr usize size = (N0 * ... * N);
         if (!node.IsSequence() || node.GetChildCount() != size)
