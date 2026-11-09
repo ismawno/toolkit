@@ -25,4 +25,6 @@ target_link_libraries(toolkit-performance PRIVATE toolkit argparse)
 target_include_directories(toolkit-performance
                            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-tkit_default_configure(toolkit-performance NO_EXCEPTIONS NO_RTTI)
+# NOTE(Isma): allowing RTTI bc of argparse. consider implementing my own
+# argparse
+tkit_default_configure(toolkit-performance NO_EXCEPTIONS)
