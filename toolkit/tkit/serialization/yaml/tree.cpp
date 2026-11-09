@@ -116,10 +116,12 @@ Result<YamlTree, YamlString> YamlTree::FromString(const StringView str)
     return t;
 }
 
-FileSystemResult<YamlTree> YamlTree::FromFile(const YamlPath &path)
+Result<YamlTree, YamlString> YamlTree::FromFile(const YamlPath &path)
 {
     const auto res = ReadFile<StackString>(path);
-    TKIT_RETURN_ON_ERROR(res);
+    if (!res)
+        return Result<YamlTree, YamlString>::Error(
+            YamlString::Format("[TOOLKIT][YAML][PARSE] {}", TKit::ToString(res.GetError())));
     return FromString(*res);
 }
 
