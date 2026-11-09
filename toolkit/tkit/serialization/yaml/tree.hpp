@@ -18,7 +18,7 @@ class YamlTree
     YamlTree &operator=(const YamlTree &other);
     YamlTree &operator=(YamlTree &&other);
 
-    static YamlTree FromString(StringView str);
+    static Result<YamlTree, YamlString> FromString(StringView str);
     TKIT_NO_DISCARD static FileSystemResult<YamlTree> FromFile(const YamlPath &path);
 
     template <typename Str> Str ToString() const;

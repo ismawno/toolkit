@@ -8,9 +8,12 @@
 #include "tkit/container/dynamic_array.hpp"
 #include "tkit/filesystem/file.hpp"
 #include <ryml.hpp>
-#include <fstream>
+#include <csetjmp>
 
 #define EXPAND_LOCATION(loc) fromNative(loc.name), loc.line, loc.col, loc.offset
+
+static thread_local std::jmp_buf *t_ParseJump = nullptr;
+static thread_local TKit::StaticString1024 t_ParseError{};
 
 namespace TKit
 {
@@ -41,10 +44,17 @@ static ryml::Callbacks createCallbacks()
                    EXPAND_LOCATION(data.location));
     });
     cbks.set_error_parse([](const c4::csubstr msg, const ryml::ErrorDataParse &data, void *) {
-        TKIT_PANIC("[TOOLKIT][YAML][PARSE] Message: {} - cpp - Name: {}, Line: {}, Col: {}, Offset: {} - yaml - Name: "
-                   "{}, Line: {}, "
-                   "Col: {}, Offset: {}",
-                   fromNative(msg), EXPAND_LOCATION(data.cpploc), EXPAND_LOCATION(data.ymlloc));
+        const TKit::StaticString1024 err = TKit::StackString::Format(
+            "[TOOLKIT][YAML][PARSE] Message: {} - cpp - Name: {}, Line: {}, Col: {}, Offset: {} - yaml - Name: "
+            "{}, Line: {}, "
+            "Col: {}, Offset: {}",
+            fromNative(msg), EXPAND_LOCATION(data.cpploc), EXPAND_LOCATION(data.ymlloc));
+        if (t_ParseJump)
+        {
+            t_ParseError = err;
+            std::longjmp(*t_ParseJump, 1);
+        }
+        TKIT_PANIC("{}", err);
     });
     cbks.set_error_visit([](const c4::csubstr msg, const ryml::ErrorDataVisit &data, void *) {
         TKIT_PANIC("[TOOLKIT][YAML][VISIT] Message: {} - Tree: {}, Node: {} - Name: {}, Line: {}, Col: {}, Offset: {}",
@@ -85,10 +95,24 @@ YamlTree &YamlTree::operator=(YamlTree &&other)
     return *this;
 }
 
-YamlTree YamlTree::FromString(const StringView str)
+Result<YamlTree, YamlString> YamlTree::FromString(const StringView str)
 {
     YamlTree t{};
-    ryml::parse_in_arena(toNative(str), t.get());
+    // the handler and parser live in this frame, so they are destroyed normally after a jump
+    ryml::EventHandlerTree handler{t.get().callbacks()};
+    ryml::Parser parser{&handler};
+
+    std::jmp_buf jump;
+    std::jmp_buf *previous = t_ParseJump;
+    t_ParseJump = &jump;
+
+    if (setjmp(jump) != 0)
+    {
+        t_ParseJump = previous;
+        return Result<YamlTree, YamlString>::Error(t_ParseError.CString());
+    }
+    ryml::parse_in_arena(&parser, toNative(str), &t.get());
+    t_ParseJump = previous;
     return t;
 }
 
