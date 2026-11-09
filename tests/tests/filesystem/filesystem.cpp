@@ -103,7 +103,7 @@ TEST_CASE("Times, sizes and permissions", "[filesystem]")
 
     const FileTime time = FileTime{std::chrono::seconds{1000000000} + std::chrono::nanoseconds{123456789}};
     REQUIRE(SetLastWriteTime(file, time));
-    REQUIRE(GetLastWriteTime(file).GetValue() == time);
+    REQUIRE(GetLastWriteTime(file)->time_since_epoch().count() == time.time_since_epoch().count());
 
     REQUIRE(SetPermissions(file, FilePermission_OwnerRead | FilePermission_OwnerWrite));
     REQUIRE(GetStatus(file)->Permissions == (FilePermission_OwnerRead | FilePermission_OwnerWrite));
