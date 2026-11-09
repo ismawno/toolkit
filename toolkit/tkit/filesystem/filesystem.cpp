@@ -432,30 +432,32 @@ FileSystemResult<> CreateHardLink(const char *target, const char *link)
     return ok();
 }
 
-// REPARSE_DATA_BUFFER lives in the DDK headers, so it is replicated here
+// REPARSE_DATA_BUFFER lives in the DDK headers (ntifs.h), so it is replicated here
+struct SymbolicLinkReparseBuffer
+{
+    USHORT SubstituteNameOffset;
+    USHORT SubstituteNameLength;
+    USHORT PrintNameOffset;
+    USHORT PrintNameLength;
+    ULONG Flags;
+    WCHAR PathBuffer[1];
+};
+struct MountPointReparseBuffer
+{
+    USHORT SubstituteNameOffset;
+    USHORT SubstituteNameLength;
+    USHORT PrintNameOffset;
+    USHORT PrintNameLength;
+    WCHAR PathBuffer[1];
+};
 struct ReparseBuffer
 {
     ULONG ReparseTag;
     USHORT ReparseDataLength;
     USHORT Reserved;
     union {
-        struct
-        {
-            USHORT SubstituteNameOffset;
-            USHORT SubstituteNameLength;
-            USHORT PrintNameOffset;
-            USHORT PrintNameLength;
-            ULONG Flags;
-            WCHAR PathBuffer[1];
-        } SymbolicLink;
-        struct
-        {
-            USHORT SubstituteNameOffset;
-            USHORT SubstituteNameLength;
-            USHORT PrintNameOffset;
-            USHORT PrintNameLength;
-            WCHAR PathBuffer[1];
-        } MountPoint;
+        SymbolicLinkReparseBuffer SymbolicLink;
+        MountPointReparseBuffer MountPoint;
     };
 };
 
