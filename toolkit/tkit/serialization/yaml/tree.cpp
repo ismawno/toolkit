@@ -95,24 +95,29 @@ YamlTree &YamlTree::operator=(YamlTree &&other)
     return *this;
 }
 
+static bool parseOrFail(ryml::Parser *parser, const c4::csubstr yaml, ryml::Tree *tree)
+{
+    std::jmp_buf jump;
+    std::jmp_buf *const previous = t_ParseJump;
+    t_ParseJump = &jump;
+    if (setjmp(jump) != 0)
+    {
+        t_ParseJump = previous;
+        return false;
+    }
+    ryml::parse_in_arena(parser, yaml, tree);
+    t_ParseJump = previous;
+    return true;
+}
+
 Result<YamlTree, YamlString> YamlTree::FromString(const StringView str)
 {
     YamlTree t{};
     // the handler and parser live in this frame, so they are destroyed normally after a jump
     ryml::EventHandlerTree handler{t.get().callbacks()};
     ryml::Parser parser{&handler};
-
-    std::jmp_buf jump;
-    std::jmp_buf *previous = t_ParseJump;
-    t_ParseJump = &jump;
-
-    if (setjmp(jump) != 0)
-    {
-        t_ParseJump = previous;
+    if (!parseOrFail(&parser, toNative(str), &t.get()))
         return Result<YamlTree, YamlString>::Error(t_ParseError.CString());
-    }
-    ryml::parse_in_arena(&parser, toNative(str), &t.get());
-    t_ParseJump = previous;
     return t;
 }
 
