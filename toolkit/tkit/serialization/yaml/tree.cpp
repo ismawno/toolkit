@@ -95,6 +95,8 @@ YamlTree &YamlTree::operator=(YamlTree &&other)
     return *this;
 }
 
+TKIT_COMPILER_WARNING_IGNORE_PUSH()
+TKIT_MSVC_WARNING_IGNORE(4611)
 static bool parseOrFail(ryml::Parser *parser, const c4::csubstr yaml, ryml::Tree *tree)
 {
     std::jmp_buf jump;
@@ -109,6 +111,7 @@ static bool parseOrFail(ryml::Parser *parser, const c4::csubstr yaml, ryml::Tree
     t_ParseJump = previous;
     return true;
 }
+TKIT_COMPILER_WARNING_IGNORE_POP()
 
 Result<YamlTree, YamlString> YamlTree::FromString(const StringView str)
 {
