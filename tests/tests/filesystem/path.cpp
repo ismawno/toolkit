@@ -22,8 +22,6 @@ static constexpr usize s_Capacity = 128;
 
 static const char *s_Paths[] = {"",
                                 "/",
-                                "//",
-                                "///a",
                                 "a",
                                 "a/",
                                 "a//",
@@ -125,16 +123,8 @@ template <template <typename> typename A, typename... Args> static void TestDeco
                 CHECK(usesAllocator<A>(parent, args...));
         }
 
-        // libstdc++ leaves root-only paths with repeated separators ("//") untouched, while the standard (and this
-        // implementation) collapses them into one
-        if (std::string{raw} == "//")
-            CHECK(str(path.LexicallyNormal()) == "/");
-        else
-            CHECK(str(path.LexicallyNormal()) == expected.lexically_normal().string());
+        CHECK(str(path.LexicallyNormal()) == expected.lexically_normal().string());
 
-        // iteration. libstdc++ yields "//" as the root directory of "//", while the standard says it is "/"
-        if (std::string{raw} == "//")
-            continue;
         auto eit = expected.begin();
         for (const StringView element : path)
         {
@@ -319,6 +309,46 @@ template <template <typename> typename A, typename... Args> static void TestConv
     REQUIRE(std::hash<P>{}(P{"a/b", args...}) == std::hash<P>{}(P{"a//b", args...}));
 }
 
+// Paths with repeated leading separators are handled differently by every standard library (libstdc++, libc++ and
+// msvc disagree on their root directory, parent path and normal form), so they are checked against fixed values
+template <template <typename> typename A, typename... Args> static void TestRepeatedSeparators(Args... args)
+{
+    const std::string sep(1, PathSeparator);
+    {
+        const auto path = makePath<A>("//", args...);
+        CHECK(str(path.GetRootName()).empty());
+        CHECK(str(path.GetRootDirectory()) == "/");
+        CHECK(str(path.GetRootPath()) == "/");
+        CHECK(str(path.GetRelativePath()).empty());
+        CHECK(str(path.GetParentPath()) == "//");
+        CHECK(str(path.GetFilename()).empty());
+        CHECK(path.IsAbsolute() == Detail::IsAbsolutePath(StringView{"/"}));
+        CHECK(str(path.LexicallyNormal()) == sep);
+
+        auto it = path.begin();
+        REQUIRE(it != path.end());
+        CHECK(str(*it) == "/");
+        CHECK(++it == path.end());
+    }
+    {
+        const auto path = makePath<A>("///a", args...);
+        CHECK(str(path.GetRootDirectory()) == "/");
+        CHECK(str(path.GetRootPath()) == "/");
+        CHECK(str(path.GetRelativePath()) == "a");
+        CHECK(str(path.GetParentPath()) == "/");
+        CHECK(str(path.GetFilename()) == "a");
+        CHECK(str(path.LexicallyNormal()) == sep + "a");
+        CHECK(path == "/a");
+
+        auto it = path.begin();
+        REQUIRE(it != path.end());
+        CHECK(str(*it) == "/");
+        REQUIRE(++it != path.end());
+        CHECK(str(*it) == "a");
+        CHECK(++it == path.end());
+    }
+}
+
 // ---------------------------------------------------------------------------
 // TEST_CASEs
 // ---------------------------------------------------------------------------
@@ -332,6 +362,11 @@ template <template <typename> typename A, typename... Args> static void TestConv
     REQUIRE(s_Stack.IsEmpty());                                                                                        \
     Fn<StaticAlloc256>();                                                                                              \
     Fn<TierAllocation>(&s_Tier)
+
+TEST_CASE("Path: repeated separators", "[path]")
+{
+    PATH_TEST_ALL(TestRepeatedSeparators);
+}
 
 TEST_CASE("Path: decomposition matches std::filesystem", "[path]")
 {

@@ -101,10 +101,20 @@ TEST_CASE("Times, sizes and permissions", "[filesystem]")
     REQUIRE(GetFileSize(file).GetValue() == 4);
     REQUIRE(readFile(file) == "0123");
 
-    const FileTime time = FileTime{std::chrono::seconds{1000000000} + std::chrono::nanoseconds{123456789}};
+    // a multiple of 100ns, the resolution of windows file times
+    const FileTime time = FileTime{std::chrono::seconds{1000000000} + std::chrono::nanoseconds{123456700}};
     REQUIRE(SetLastWriteTime(file, time));
     REQUIRE(GetLastWriteTime(file)->time_since_epoch().count() == time.time_since_epoch().count());
 
+#ifdef TKIT_OS_WINDOWS
+    // windows only has a read-only attribute: no write bit means read-only (0555), any write bit means 0777
+    REQUIRE(SetPermissions(file, FilePermission_OwnerRead));
+    REQUIRE(GetStatus(file)->Permissions == 0555);
+    REQUIRE(SetPermissions(file, FilePermission_OwnerWrite, PermissionOptionFlag_Add));
+    REQUIRE(GetStatus(file)->Permissions == 0777);
+    REQUIRE(SetPermissions(file, FilePermission_All, PermissionOptionFlag_Remove));
+    REQUIRE(GetStatus(file)->Permissions == 0555);
+#else
     REQUIRE(SetPermissions(file, FilePermission_OwnerRead | FilePermission_OwnerWrite));
     REQUIRE(GetStatus(file)->Permissions == (FilePermission_OwnerRead | FilePermission_OwnerWrite));
     REQUIRE(SetPermissions(file, FilePermission_GroupRead, PermissionOptionFlag_Add));
@@ -112,6 +122,7 @@ TEST_CASE("Times, sizes and permissions", "[filesystem]")
             (FilePermission_OwnerRead | FilePermission_OwnerWrite | FilePermission_GroupRead));
     REQUIRE(SetPermissions(file, FilePermission_OwnerWrite, PermissionOptionFlag_Remove));
     REQUIRE(GetStatus(file)->Permissions == (FilePermission_OwnerRead | FilePermission_GroupRead));
+#endif
     PopTier();
 }
 
@@ -262,23 +273,29 @@ TEST_CASE("Current, absolute, canonical and relative paths", "[filesystem]")
 
     REQUIRE(SetCurrentPath(tmp.Root));
     const DynamicPath canonicalRoot = Canonical(tmp.Root).GetValue();
-    REQUIRE(GetCurrentPath().GetValue() == canonicalRoot);
+    // the current path is returned as it was set, which may not be canonical (windows short names such as
+    // "RUNNER~1", macos /var -> /private/var)
+    const DynamicPath current = GetCurrentPath().GetValue();
+    REQUIRE(Canonical(current).GetValue() == canonicalRoot);
 
-    REQUIRE(Absolute(DynamicPath{"x/y"}).GetValue() == canonicalRoot / "x/y");
-    REQUIRE(Absolute(DynamicPath{"/already"}).GetValue() == "/already");
+    REQUIRE(Absolute(DynamicPath{"x/y"}).GetValue() == current / "x/y");
+    REQUIRE(Absolute(canonicalRoot).GetValue() == canonicalRoot);
     REQUIRE(Canonical(DynamicPath{"x/./y/../y"}).GetValue() == canonicalRoot / "x/y");
     REQUIRE(Canonical(DynamicPath{"x/nope"}).GetError() == FileSystemError_NotFound);
     REQUIRE(WeaklyCanonical(DynamicPath{"x/y/../nope/./z"}).GetValue() == canonicalRoot / "x/nope/z");
     REQUIRE(Relative(DynamicPath{"x/y"}).GetValue() == "x/y");
     REQUIRE(Relative(DynamicPath{"x"}, "x/y").GetValue() == "..");
 
-    // compare against std
-    for (const char *raw : {"x", "x/y/..", "nope/a/../b", "/", "x/y/"})
+    // when no leading element exists, the path is only normalized. libc++ makes it absolute instead
+    REQUIRE(WeaklyCanonical(DynamicPath{"nope/a/../b"}).GetValue() == "nope/b");
+
+    // compare against std. paths are compared (not strings) so that separators may differ
+    for (const char *raw : {"x", "x/y/..", "/", "x/y/"})
     {
         INFO(raw);
-        REQUIRE(WeaklyCanonical(DynamicPath{raw}).GetValue().GetString() == fs::weakly_canonical(raw).string());
-        REQUIRE(Relative(DynamicPath{raw}, "x").GetValue().GetString() == fs::relative(raw, "x").string());
-        REQUIRE(Proximate(DynamicPath{raw}, "x").GetValue().GetString() == fs::proximate(raw, "x").string());
+        REQUIRE(WeaklyCanonical(DynamicPath{raw}).GetValue() == DynamicPath{fs::weakly_canonical(raw).string()});
+        REQUIRE(Relative(DynamicPath{raw}, "x").GetValue() == DynamicPath{fs::relative(raw, "x").string()});
+        REQUIRE(Proximate(DynamicPath{raw}, "x").GetValue() == DynamicPath{fs::proximate(raw, "x").string()});
     }
 
     REQUIRE(SetCurrentPath(*previous));
@@ -323,7 +340,7 @@ template <typename AllocState, typename... Args> static void testDirectoryIterat
         auto it = RecursiveDirectoryIterator<AllocState>::Open(root);
         REQUIRE(it);
         for (const auto &entry : *it)
-            relatives.insert(std::string{entry.GetPath().LexicallyRelative(root).CString()});
+            relatives.insert(std::string{entry.GetPath().LexicallyRelative(root).GetGenericString().CString()});
         REQUIRE(relatives == std::set<std::string>{"d1", "d1/d2", "d1/d2/f3", "d1/f2", "f1", "link"});
     }
 
@@ -334,7 +351,8 @@ template <typename AllocState, typename... Args> static void testDirectoryIterat
         u32 maxDepth = 0;
         while (!it->IsEnd())
         {
-            relatives.insert(std::string{it->GetEntry().GetPath().LexicallyRelative(root).CString()});
+            relatives.insert(
+                std::string{it->GetEntry().GetPath().LexicallyRelative(root).GetGenericString().CString()});
             maxDepth = std::max(maxDepth, u32(it->GetDepth()));
             REQUIRE(it->Advance());
         }
@@ -351,7 +369,7 @@ template <typename AllocState, typename... Args> static void testDirectoryIterat
         while (!it->IsEnd())
         {
             const auto &entry = it->GetEntry();
-            relatives.insert(std::string{entry.GetPath().LexicallyRelative(root).CString()});
+            relatives.insert(std::string{entry.GetPath().LexicallyRelative(root).GetGenericString().CString()});
             if (entry.GetPath().GetFilename() == "d1")
                 it->DisableRecursionPending();
             REQUIRE(it->Advance());
