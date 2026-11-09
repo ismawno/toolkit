@@ -774,6 +774,17 @@ template <typename AllocState> class Path
         if (count == 0 && (it == itEnd || (*it).GetSize() == 0))
             return subPath(".", 1);
 
+        // the remaining elements are appended with operator/= semantics. a root directory among them (only possible
+        // on windows, where "/a" is not absolute) discards everything appended before it, so emission starts there
+        PathIterator start = it;
+        bool restart = false;
+        for (PathIterator rit = it; rit != itEnd; ++rit)
+            if (Detail::IsSeparatorElement(*rit))
+            {
+                start = rit;
+                restart = true;
+            }
+
         // two passes: one to compute the size, the other to write
         const auto emit = [&](char *out) {
             usize w = 0;
@@ -788,11 +799,13 @@ template <typename AllocState> class Path
                 if (out)
                     std::char_traits<char>::copy(out + w, element.GetData(), element.GetSize());
                 w += element.GetSize();
-                hasFilename = element.GetSize() != 0;
+                // a root directory does not count as a filename: the next element is appended right after it
+                hasFilename = element.GetSize() != 0 && !Detail::IsSeparatorElement(element);
             };
-            for (i32 i = 0; i < count; ++i)
-                put(StringView{"..", 2});
-            for (PathIterator rit = it; rit != itEnd; ++rit)
+            if (!restart)
+                for (i32 i = 0; i < count; ++i)
+                    put(StringView{"..", 2});
+            for (PathIterator rit = start; rit != itEnd; ++rit)
                 put(*rit);
             return w;
         };

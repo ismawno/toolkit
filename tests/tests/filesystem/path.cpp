@@ -57,9 +57,20 @@ static const char *s_Paths[] = {"",
                                 "x..",
                                 "/a/b/./c/../../d"};
 
+// Separators are compared as '/', as standard libraries disagree on which one they return on windows (msvc keeps
+// the original one, libstdc++ often uses the preferred one)
+static std::string str(std::string result)
+{
+#ifdef TKIT_OS_WINDOWS
+    for (char &c : result)
+        if (c == '\\')
+            c = '/';
+#endif
+    return result;
+}
 static std::string str(const StringView view)
 {
-    return std::string{view.GetData(), view.GetSize()};
+    return str(std::string{view.GetData(), view.GetSize()});
 }
 
 // Creates a path with room for s_Capacity characters, using the given allocator (if any)
@@ -95,15 +106,15 @@ template <template <typename> typename A, typename... Args> static void TestDeco
         const auto path = makePath<A>(raw, args...);
         const fs::path expected{raw};
 
-        CHECK(str(path.GetView()) == expected.string());
-        CHECK(str(path.GetRootName()) == expected.root_name().string());
-        CHECK(str(path.GetRootDirectory()) == expected.root_directory().string());
-        CHECK(str(path.GetRootPath()) == expected.root_path().string());
-        CHECK(str(path.GetRelativePath()) == expected.relative_path().string());
-        CHECK(str(path.GetParentPath()) == expected.parent_path().string());
-        CHECK(str(path.GetFilename()) == expected.filename().string());
-        CHECK(str(path.GetStem()) == expected.stem().string());
-        CHECK(str(path.GetExtension()) == expected.extension().string());
+        CHECK(str(path.GetView()) == str(expected.string()));
+        CHECK(str(path.GetRootName()) == str(expected.root_name().string()));
+        CHECK(str(path.GetRootDirectory()) == str(expected.root_directory().string()));
+        CHECK(str(path.GetRootPath()) == str(expected.root_path().string()));
+        CHECK(str(path.GetRelativePath()) == str(expected.relative_path().string()));
+        CHECK(str(path.GetParentPath()) == str(expected.parent_path().string()));
+        CHECK(str(path.GetFilename()) == str(expected.filename().string()));
+        CHECK(str(path.GetStem()) == str(expected.stem().string()));
+        CHECK(str(path.GetExtension()) == str(expected.extension().string()));
 
         CHECK(path.HasRootName() == expected.has_root_name());
         CHECK(path.HasRootDirectory() == expected.has_root_directory());
@@ -123,13 +134,13 @@ template <template <typename> typename A, typename... Args> static void TestDeco
                 CHECK(usesAllocator<A>(parent, args...));
         }
 
-        CHECK(str(path.LexicallyNormal()) == expected.lexically_normal().string());
+        CHECK(str(path.LexicallyNormal()) == str(expected.lexically_normal().string()));
 
         auto eit = expected.begin();
         for (const StringView element : path)
         {
             CHECK(eit != expected.end());
-            CHECK(str(element) == eit->string());
+            CHECK(str(element) == str(eit->string()));
             ++eit;
         }
         CHECK(eit == expected.end());
@@ -148,9 +159,9 @@ template <template <typename> typename A, typename... Args> static void TestBina
             const fs::path elhs{lraw};
             const fs::path erhs{rraw};
 
-            CHECK(str(lhs / rhs) == (elhs / erhs).string());
-            CHECK(str(lhs.LexicallyRelative(rhs)) == elhs.lexically_relative(erhs).string());
-            CHECK(str(lhs.LexicallyProximate(rhs)) == elhs.lexically_proximate(erhs).string());
+            CHECK(str(lhs / rhs) == str((elhs / erhs).string()));
+            CHECK(str(lhs.LexicallyRelative(rhs)) == str(elhs.lexically_relative(erhs).string()));
+            CHECK(str(lhs.LexicallyProximate(rhs)) == str(elhs.lexically_proximate(erhs).string()));
 
             const i32 cmp = lhs.Compare(rhs);
             const int ecmp = elhs.compare(erhs);
@@ -164,21 +175,21 @@ template <template <typename> typename A, typename... Args> static void TestBina
             {
                 P appended = lhs;
                 appended /= rhs;
-                CHECK(str(appended) == (elhs / erhs).string());
+                CHECK(str(appended) == str((elhs / erhs).string()));
             }
             {
                 P concatenated = lhs;
                 concatenated += rhs;
                 // not using fs::path::operator+= here: libstdc++ 13 corrupts the path's component list on some
                 // inputs
-                CHECK(str(concatenated) == elhs.string() + erhs.string());
+                CHECK(str(concatenated) == str(elhs.string() + erhs.string()));
             }
             {
                 P replaced = lhs;
                 replaced.ReplaceFilename(rhs);
                 fs::path ereplaced = elhs;
                 ereplaced.replace_filename(erhs);
-                CHECK(str(replaced) == ereplaced.string());
+                CHECK(str(replaced) == str(ereplaced.string()));
             }
             {
                 P extension = lhs;
@@ -190,7 +201,7 @@ template <template <typename> typename A, typename... Args> static void TestBina
                 if (!erhs.empty() && erhs.string()[0] != '.')
                     eextension += '.';
                 eextension += erhs.string();
-                CHECK(str(extension) == eextension);
+                CHECK(str(extension) == str(eextension));
             }
         }
 }
@@ -201,28 +212,28 @@ template <template <typename> typename A, typename... Args> static void TestModi
     path.RemoveFilename();
     REQUIRE(path == "a/b/");
     path.ReplaceFilename("other.cpp");
-    REQUIRE(path.GetString() == "a/b/other.cpp");
+    REQUIRE(str(path) == "a/b/other.cpp");
     path.ReplaceExtension("hpp");
-    REQUIRE(path.GetString() == "a/b/other.hpp");
+    REQUIRE(str(path) == "a/b/other.hpp");
     path.ReplaceExtension(".cpp");
-    REQUIRE(path.GetString() == "a/b/other.cpp");
+    REQUIRE(str(path) == "a/b/other.cpp");
     path.ReplaceExtension();
-    REQUIRE(path.GetString() == "a/b/other");
+    REQUIRE(str(path) == "a/b/other");
     path += ".x";
-    REQUIRE(path.GetString() == "a/b/other.x");
+    REQUIRE(str(path) == "a/b/other.x");
     path += 'y';
-    REQUIRE(path.GetString() == "a/b/other.xy");
+    REQUIRE(str(path) == "a/b/other.xy");
     path /= "c";
-    REQUIRE(path.GetString() == "a/b/other.xy/c");
+    REQUIRE(str(path) == "a/b/other.xy/c");
     path /= "/abs";
-    REQUIRE(path.GetString() == "/abs");
+    REQUIRE(str(path) == "/abs");
     path.MakePreferred();
-    REQUIRE(path.GetString() == "/abs");
+    REQUIRE(str(path) == "/abs");
     path.Clear();
     REQUIRE(path.IsEmpty());
     REQUIRE(path.CString()[0] == '\0');
     path = "again";
-    REQUIRE(path.GetString() == "again");
+    REQUIRE(str(path) == "again");
     REQUIRE(usesAllocator<A>(path, args...));
 }
 
@@ -231,13 +242,13 @@ template <template <typename> typename A, typename... Args> static void TestAlia
     // appending, assigning and concatenating a path to itself
     auto path = makePath<A>("x/y", args...);
     path /= path;
-    REQUIRE(path.GetString() == "x/y/x/y");
+    REQUIRE(str(path) == "x/y/x/y");
     path = path.GetView();
-    REQUIRE(path.GetString() == "x/y/x/y");
+    REQUIRE(str(path) == "x/y/x/y");
     path += path;
-    REQUIRE(path.GetString() == "x/y/x/yx/y/x/y");
+    REQUIRE(str(path) == "x/y/x/yx/y/x/y");
     path = StringView{path.GetData() + 2, 3};
-    REQUIRE(path.GetString() == "y/x");
+    REQUIRE(str(path) == "y/x");
 }
 
 template <template <typename> typename A, typename... Args> static void TestEmptyStates(Args... args)
@@ -271,7 +282,7 @@ template <template <typename> typename A, typename... Args> static void TestConv
     const P path{dyn, args...};
     REQUIRE(path == dyn);
     REQUIRE(dyn == path);
-    REQUIRE(path.GetString() == "some/dir/file.txt");
+    REQUIRE(str(path) == "some/dir/file.txt");
     REQUIRE(usesAllocator<A>(path, args...));
 
     const P fromStd{std::string{"a/b"}, args...};
@@ -288,23 +299,23 @@ template <template <typename> typename A, typename... Args> static void TestConv
 
     auto assigned = makePath<A>("", args...);
     assigned = "x/y";
-    REQUIRE(assigned.GetString() == "x/y");
+    REQUIRE(str(assigned) == "x/y");
     assigned = std::string{"z"};
-    REQUIRE(assigned.GetString() == "z");
+    REQUIRE(str(assigned) == "z");
     assigned = std::string_view{"w"};
-    REQUIRE(assigned.GetString() == "w");
+    REQUIRE(str(assigned) == "w");
     assigned = dyn;
-    REQUIRE(assigned.GetString() == "some/dir/file.txt");
+    REQUIRE(str(assigned) == "some/dir/file.txt");
     REQUIRE(usesAllocator<A>(assigned, args...));
 
     const P joined = "prefix" / path;
-    REQUIRE(joined.GetString() == "prefix/some/dir/file.txt");
+    REQUIRE(str(joined) == "prefix/some/dir/file.txt");
     REQUIRE(usesAllocator<A>(joined, args...));
 
     const P joinedDyn = path / dyn;
-    REQUIRE(joinedDyn.GetString() == "some/dir/file.txt/some/dir/file.txt");
+    REQUIRE(str(joinedDyn) == "some/dir/file.txt/some/dir/file.txt");
 
-    REQUIRE(str(path.GetGenericString()) == "some/dir/file.txt");
+    REQUIRE(str(StringView{path.GetGenericString()}) == "some/dir/file.txt");
     REQUIRE(fmt::format("{}", path) == "some/dir/file.txt");
     REQUIRE(std::hash<P>{}(P{"a/b", args...}) == std::hash<P>{}(P{"a//b", args...}));
 }
@@ -313,7 +324,6 @@ template <template <typename> typename A, typename... Args> static void TestConv
 // msvc disagree on their root directory, parent path and normal form), so they are checked against fixed values
 template <template <typename> typename A, typename... Args> static void TestRepeatedSeparators(Args... args)
 {
-    const std::string sep(1, PathSeparator);
     {
         const auto path = makePath<A>("//", args...);
         CHECK(str(path.GetRootName()).empty());
@@ -323,7 +333,7 @@ template <template <typename> typename A, typename... Args> static void TestRepe
         CHECK(str(path.GetParentPath()) == "//");
         CHECK(str(path.GetFilename()).empty());
         CHECK(path.IsAbsolute() == Detail::IsAbsolutePath(StringView{"/"}));
-        CHECK(str(path.LexicallyNormal()) == sep);
+        CHECK(str(path.LexicallyNormal()) == "/");
 
         auto it = path.begin();
         REQUIRE(it != path.end());
@@ -337,7 +347,7 @@ template <template <typename> typename A, typename... Args> static void TestRepe
         CHECK(str(path.GetRelativePath()) == "a");
         CHECK(str(path.GetParentPath()) == "/");
         CHECK(str(path.GetFilename()) == "a");
-        CHECK(str(path.LexicallyNormal()) == sep + "a");
+        CHECK(str(path.LexicallyNormal()) == "/a");
         CHECK(path == "/a");
 
         auto it = path.begin();
@@ -413,21 +423,21 @@ TEST_CASE("Path: stack paths keep a LIFO allocation order", "[path]")
     {
         const StackPath path{"/usr/local/lib/libtoolkit.a", &s_Stack};
         const StackPath parent = path.GetParentPath();
-        REQUIRE(parent.GetString() == "/usr/local/lib");
+        REQUIRE(str(parent) == "/usr/local/lib");
 
         const StackPath joined = parent / "other.a";
-        REQUIRE(joined.GetString() == "/usr/local/lib/other.a");
+        REQUIRE(str(joined) == "/usr/local/lib/other.a");
 
         // the source must outlive the result (a temporary would be freed out of order)
         const StackPath source{"a/./b/../c", &s_Stack};
         const StackPath normal = source.LexicallyNormal();
-        REQUIRE(normal.GetString() == "a/c");
+        REQUIRE(str(normal) == "a/c");
 
         // shrinking in place never reallocates
         StackPath shrinking{"a/b/c.txt", &s_Stack};
         shrinking.RemoveFilename();
         shrinking.ReplaceFilename("d");
-        REQUIRE(shrinking.GetString() == "a/b/d");
+        REQUIRE(str(shrinking) == "a/b/d");
     }
     REQUIRE(s_Stack.IsEmpty());
 }

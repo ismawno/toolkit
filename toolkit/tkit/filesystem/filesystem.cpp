@@ -169,7 +169,12 @@ static WideString widen(const char *str)
         return wide;
     wide.Resize(usize(size));
     MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, -1, wide.GetData(), size);
+    // win32 accepts both separators, but some APIs (and "\\?\" prefixed paths) only handle the native one
+    for (wchar_t &c : wide)
+        if (c == L'/')
+            c = L'\\';
     return wide;
+}
 }
 
 // UTF-16 -> UTF-8
@@ -639,7 +644,12 @@ FileSystemResult<FileSystemPath> Absolute(const char *path)
 
 FileSystemResult<FileSystemPath> Canonical(const char *path)
 {
-    TKIT_WIDEN(wpath, path)
+    // resolve drive-relative forms ("\a", "C:a") against the current drive/directory before opening the file
+    const auto absolute = Absolute(path);
+    TKIT_RETURN_ON_ERROR(absolute);
+
+    TKIT_WIDEN(wpath, absolute->CString())
+
     const HandleGuard guard{openHandle(wpath.GetData(), 0, true)};
     if (guard.Handle == INVALID_HANDLE_VALUE)
         return lastError<FileSystemPath>();
