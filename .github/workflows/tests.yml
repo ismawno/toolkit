@@ -1,104 +1,122 @@
-# This starter workflow is for a CMake project running on multiple platforms. There is a different starter workflow if you just want a single platform.
-# See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
+# Builds toolkit on every supported toolchain and runs the toolkit-tests suite (Catch2, through ctest) on each of them.
+#
+# Every test case runs in a process of its own (catch_discover_tests), with a timeout: toolkit is built without
+# exceptions, so a failed REQUIRE aborts its process, and on Windows debug builds abort() would otherwise wait forever
+# on the CRT's message box.
+
 name: Tests
 
 on:
   push:
-    branches: ["main", "workflow/testing"]
+    branches: [main, workflow/testing]
+    tags: ["v*"]
   pull_request:
-    branches: ["main"]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-
+  toolkit:
+    name: ${{ matrix.config.name }} / ${{ matrix.preset }}
+    runs-on: ${{ matrix.config.os }}
+    timeout-minutes: 60
     strategy:
-      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
       fail-fast: false
-
-      # Set up a matrix to run the following 3 configurations:
-      # 1. <Windows, Release, latest MSVC compiler toolchain on the default runner image, default generator>
-      # 2. <Linux, Release, latest GCC compiler toolchain on the default runner image, default generator>
-      # 3. <Linux, Release, latest Clang compiler toolchain on the default runner image, default generator>
-      #
-      # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
-        os: [ubuntu-26.04, windows-2025-vs2026, macos-26]
         preset: [debug, release]
-        c_compiler: [gcc, clang, cl]
-        include:
-          - os: windows-2025-vs2026
-            c_compiler: cl
-            cpp_compiler: cl
-          - os: ubuntu-26.04
-            c_compiler: gcc
-            cpp_compiler: g++
-          - os: ubuntu-26.04
-            c_compiler: clang
-            cpp_compiler: clang++
-          - os: macos-26
-            c_compiler: clang
-            cpp_compiler: clang++
-        exclude:
-          - os: windows-2025-vs2026
-            c_compiler: gcc
-          - os: windows-2025-vs2026
-            c_compiler: clang
-          - os: ubuntu-26.04
-            c_compiler: cl
-          - os: macos-26
-            c_compiler: gcc
-          - os: macos-26
-            c_compiler: cl
-    env:
-      CC: ${{ matrix.c_compiler }}
-      CXX: ${{ matrix.cpp_compiler }}
+        config:
+          - { name: linux-gcc, os: ubuntu-26.04, cc: gcc, cxx: g++ }
+          - {
+              name: linux-clang,
+              os: ubuntu-26.04,
+              cc: clang,
+              cxx: clang++,
+              lld: true,
+            }
+          - { name: windows-msvc, os: windows-2025-vs2026, cc: cl, cxx: cl }
+          # the GNU style clang++ driver, not clang-cl: toolkit picks its flags by compiler id and by MSVC, and
+          # clang-cl would get both kinds. lld links LTO (release) objects, which link.exe cannot read
+          - {
+              name: windows-clang,
+              os: windows-2025-vs2026,
+              cc: clang,
+              cxx: clang++,
+              lld: true,
+            }
+          - { name: macos-clang, os: macos-26, cc: clang, cxx: clang++ }
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      # ---------------------------------------------------------------------------------------------------------------
+      #  Toolchains and dependencies
+      # ---------------------------------------------------------------------------------------------------------------
+
+      # the reflection and serialization code generators run Python 3 at build time. CMake finds it on its own, but
+      # runner images ship several interpreters: this pins the same one on every job
+      - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
-      - name: Set reusable strings
-        # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
-        id: strings
-        shell: bash
+      - name: Dependencies (Linux)
+        if: runner.os == 'Linux'
         run: |
-          echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+          sudo apt-get update
+          sudo apt-get install -y ninja-build lld
 
-      - name: Set linker flags only for Ubuntu + Clang
-        if: startsWith(matrix.os, 'ubuntu') && matrix.c_compiler == 'clang'
-        run: |
-          echo "EXTRA_LD_FLAGS=-DCMAKE_EXE_LINKER_FLAGS='-fuse-ld=lld' -DCMAKE_LINKER=lld" >> $GITHUB_ENV
+      - name: Dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ninja
 
-      - name: Configure CMake
-        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+      - name: Dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: if (-not (Get-Command ninja -ErrorAction SilentlyContinue)) { choco install ninja -y }
+
+      # Ninja does not set up the MSVC environment the way the Visual Studio generator does. clang needs it too, for
+      # the Windows SDK and the MSVC runtime
+      - name: MSVC environment (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      # ---------------------------------------------------------------------------------------------------------------
+      #  Build
+      # ---------------------------------------------------------------------------------------------------------------
+
+      - name: Configure
         run: >
-          cmake --preset ${{ matrix.preset }}
-          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
-          ${{ env.EXTRA_LD_FLAGS }}
+          cmake --preset ${{ matrix.preset }} -G Ninja
+          -DCMAKE_C_COMPILER=${{ matrix.config.cc }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.config.cxx }}
+          ${{ matrix.config.lld && '-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld' || '' }}
 
       - name: Build
-        # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
         run: cmake --build --preset ${{ matrix.preset }}
 
-      # - name: Run tests with Catch2 (Linux and MacOS)
-      #   if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macos')
-      #   working-directory: ${{ steps.strings.outputs.build-output-dir }}
-      #   run: ./${{ matrix.preset }}/tests/toolkit-tests
+      # ---------------------------------------------------------------------------------------------------------------
+      #  Tests. ctest writes a JUnit report, uploaded below for every configuration
+      # ---------------------------------------------------------------------------------------------------------------
 
-      - name: Run tests with ctest
-        # working-directory: ${{ steps.strings.outputs.build-output-dir }}
-        # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-        # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-        run: ctest --preset ${{ matrix.preset }}
+      - name: Tests
+        run: >
+          ctest --preset ${{ matrix.preset }} --timeout 300
+          --output-junit ${{ github.workspace }}/build/${{ matrix.preset }}/toolkit-tests.xml
 
-      # - name: Run tests with Catch2 (Windows)
-      #   if: startsWith(matrix.os, 'windows')
-      #   working-directory: ${{ steps.strings.outputs.build-output-dir }}
-      #   run: .\${{ matrix.preset }}\tests\toolkit-tests.exe
+      - name: Upload the test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: toolkit-tests-${{ matrix.config.name }}-${{ matrix.preset }}
+          path: build/${{ matrix.preset }}/toolkit-tests.xml
+          if-no-files-found: ignore
+
+  # a single check to require in branch protection (Settings > Branches): it is green only when every configuration is
+  tests-ok:
+    name: Tests ok
+    if: always()
+    needs: toolkit
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "${{ needs.toolkit.result }}" = "success"
