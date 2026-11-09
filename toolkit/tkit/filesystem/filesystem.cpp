@@ -175,7 +175,6 @@ static WideString widen(const char *str)
             c = L'\\';
     return wide;
 }
-}
 
 // UTF-16 -> UTF-8
 static FileSystemPath narrow(const wchar_t *str, const usize length)
