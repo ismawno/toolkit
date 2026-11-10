@@ -38,11 +38,6 @@ static ryml::Callbacks createCallbacks()
         [](const size_t size, void *, void *tier) { return scast<TierAllocator *>(tier)->Allocate(size); });
     cbks.set_free([](void *mem, const usz size, void *tier) { scast<TierAllocator *>(tier)->Deallocate(mem, size); });
 #endif
-#ifdef TKIT_ENABLE_ENSURE
-    cbks.set_error_basic([](const c4::csubstr msg, const ryml::ErrorDataBasic &data, void *) {
-        TKIT_PANIC("[TOOLKIT][YAML][BASIC] Message: {} - Name: {}, Line: {}, Col: {}, Offset: {}", fromNative(msg),
-                   EXPAND_LOCATION(data.location));
-    });
     cbks.set_error_parse([](const c4::csubstr msg, const ryml::ErrorDataParse &data, void *) {
         const TKit::StaticString1024 err = TKit::StackString::Format(
             "[TOOLKIT][YAML][PARSE] Message: {} - cpp - Name: {}, Line: {}, Col: {}, Offset: {} - yaml - Name: "
@@ -55,6 +50,11 @@ static ryml::Callbacks createCallbacks()
             std::longjmp(*t_ParseJump, 1);
         }
         TKIT_PANIC("{}", err);
+    });
+#ifdef TKIT_ENABLE_ENSURE
+    cbks.set_error_basic([](const c4::csubstr msg, const ryml::ErrorDataBasic &data, void *) {
+        TKIT_PANIC("[TOOLKIT][YAML][BASIC] Message: {} - Name: {}, Line: {}, Col: {}, Offset: {}", fromNative(msg),
+                   EXPAND_LOCATION(data.location));
     });
     cbks.set_error_visit([](const c4::csubstr msg, const ryml::ErrorDataVisit &data, void *) {
         TKIT_PANIC("[TOOLKIT][YAML][VISIT] Message: {} - Tree: {}, Node: {} - Name: {}, Line: {}, Col: {}, Offset: {}",
