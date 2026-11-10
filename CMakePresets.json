@@ -12,7 +12,6 @@
       "binaryDir": "${sourceDir}/build/${presetName}",
       "cacheVariables": {
         "TOOLKIT_BUILD_TESTS": "ON",
-        "TOOLKIT_BUILD_PERFORMANCE": "ON",
         "TOOLKIT_ENABLE_SYMBOLS": "OFF",
         "TOOLKIT_SANITIZERS": "NONE",
         "TOOLKIT_OPTIMIZATIONS": "FORTIFY",

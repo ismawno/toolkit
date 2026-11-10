@@ -504,7 +504,3 @@ if(TOOLKIT_BUILD_TESTS)
   enable_testing()
   add_subdirectory(tests)
 endif()
-
-if(TOOLKIT_BUILD_PERFORMANCE)
-  add_subdirectory(performance)
-endif()
