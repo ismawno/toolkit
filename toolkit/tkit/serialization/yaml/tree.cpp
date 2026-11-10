@@ -21,12 +21,10 @@ static c4::csubstr toNative(const StringView str)
 {
     return c4::csubstr{str.GetData(), str.GetSize()};
 }
-#ifdef TKIT_ENABLE_ENSURE
 static StringView fromNative(const c4::csubstr str)
 {
     return StringView{str.data(), usize(str.size())};
 }
-#endif
 static ryml::Callbacks createCallbacks()
 {
     ryml::Callbacks cbks = ryml::get_callbacks();
