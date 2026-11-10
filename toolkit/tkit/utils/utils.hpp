@@ -1,6 +1,7 @@
 #pragma once
 
 #include "tkit/utils/alias.hpp"
+#include "tkit/preprocessor/system.hpp"
 
 namespace TKit
 {
@@ -27,4 +28,14 @@ template <typename T0, typename P0, typename... P> constexpr usize GetTypeIndex(
     else if constexpr (sizeof...(P) != 0)
         return 1 + GetTypeIndex<T0, P...>();
 }
+
+inline const char *GetEnvironmentVariable(const char *name)
+{
+    TKIT_COMPILER_WARNING_IGNORE_PUSH()
+    TKIT_MSVC_WARNING_IGNORE(4996)
+    TKIT_CLANG_WARNING_IGNORE("-Wdeprecated-declarations")
+    return std::getenv(name);
+    TKIT_COMPILER_WARNING_IGNORE_POP()
+}
+
 } // namespace TKit
