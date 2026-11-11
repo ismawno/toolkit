@@ -11,16 +11,6 @@
 
 namespace TKit
 {
-template <typename K, typename V> struct KeyValuePair
-{
-    template <typename... Args>
-    KeyValuePair(const K &key, Args &&...args) : Key(key), Value(std::forward<Args>(args)...)
-    {
-    }
-    K Key;
-    V Value;
-};
-
 // NOTE(Isma): This is missing some features like custom comparison/hasher and heterogeneous lookup
 // NOTE(Isma): Consider implementing a SwissTable
 template <typename K, typename V> struct MapNode
@@ -263,7 +253,11 @@ template <typename K, typename V, typename AllocState> class HashMap
         requires std::constructible_from<V, Args...>
     constexpr V &Insert(const K &key, Args &&...args)
     {
-        return *insert<true>(Hash(key), key, std::forward<Args>(args)...);
+        const usz hash = Hash(key);
+        TKIT_ASSERT(find(key, hash) == TKIT_USIZE_MAX,
+                    "[TOOLKIT][HASH-MAP] Insert() can only be used when the entry to be inserted does not exist. Use "
+                    "TryInsert() in case the entry may be contained already");
+        return *insert<true>(hash, key, std::forward<Args>(args)...);
     }
     constexpr V &Insert(const Pair &pair)
     {
@@ -272,7 +266,7 @@ template <typename K, typename V, typename AllocState> class HashMap
 
     template <typename... Args>
         requires std::constructible_from<V, Args...>
-    constexpr V &TryInsert(bool *didExist, const K &key, Args &&...args)
+    constexpr V &TryInsert(bool *didInsert, const K &key, Args &&...args)
     {
         maybeRehash();
         const usz hash = Hash(key);
@@ -280,8 +274,8 @@ template <typename K, typename V, typename AllocState> class HashMap
 
         Node &node = m_Buckets[idx];
         const bool occupied = node.State == HashNode_Occupied;
-        if (didExist)
-            *didExist = occupied;
+        if (didInsert)
+            *didInsert = !occupied;
 
         if (occupied)
             return node.GetEntry()->Value;
@@ -297,9 +291,9 @@ template <typename K, typename V, typename AllocState> class HashMap
     {
         return TryInsert(nullptr, key, std::forward<Args>(args)...);
     }
-    constexpr V &TryInsert(const Pair &pair, bool *didExist = nullptr)
+    constexpr V &TryInsert(const Pair &pair, bool *didInsert = nullptr)
     {
-        return TryInsert(didExist, pair.Key, pair.Value);
+        return TryInsert(didInsert, pair.Key, pair.Value);
     }
 
     constexpr ConstIterator Find(const K &key) const
@@ -343,26 +337,28 @@ template <typename K, typename V, typename AllocState> class HashMap
         TKIT_ASSERT(m_Size != 0, "[TOOLKIT][HASH-MAP] Cannot remove an element when the size is 0");
         const Iterator next = iter.Next();
 
-        Node &node = iter.m_Buckets->At(iter.m_Index);
-        TKIT_ASSERT(node.State == HashNode_Occupied,
+        TKIT_ASSERT(m_Buckets[iter.m_Index].State == HashNode_Occupied,
                     "[TOOLKIT][HASH-MAP] Iterator must point to an occupied slot to be removed");
 
-        node.State = HashNode_Tombstone;
-        Destruct(node.GetEntry());
-        --m_Size;
+        remove(iter.m_Index);
         return next;
     }
 
-    constexpr bool Remove(const K &key)
+    constexpr void Remove(const K &key)
+    {
+        const usize idx = find(key, Hash(key));
+        TKIT_ASSERT(idx != TKIT_USIZE_MAX,
+                    "[TOOLKIT][HASH-MAP] Remove() can only be used when the entry to be inserted does not exist. Use "
+                    "TryRemove() in case the entry may be contained already");
+        remove(idx);
+    }
+    constexpr bool TryRemove(const K &key)
     {
         const usize idx = find(key, Hash(key));
         if (idx == TKIT_USIZE_MAX)
             return false;
 
-        Node &node = m_Buckets[idx];
-        node.State = HashNode_Tombstone;
-        Destruct(node.GetEntry());
-        --m_Size;
+        remove(idx);
         return true;
     }
 
@@ -410,12 +406,21 @@ template <typename K, typename V, typename AllocState> class HashMap
     }
 
   private:
-    void setEmpty()
+    constexpr void setEmpty()
     {
         for (Node &n : m_Buckets)
             n.State = HashNode_Free;
     }
-    template <bool GetInsertSpot = false> usize find(const K &key, const usz hash) const
+
+    constexpr void remove(const u32 idx)
+    {
+        Node &node = m_Buckets[idx];
+        node.State = HashNode_Tombstone;
+        Destruct(node.GetEntry());
+        --m_Size;
+    }
+
+    template <bool GetInsertSpot = false> constexpr usize find(const K &key, const usz hash) const
     {
         const usize buckets = m_Buckets.GetSize();
         if (buckets == 0)
@@ -563,16 +568,4 @@ template <typename K, typename V> using DynamicHashMap = HashMap<K, V, DynamicAl
 
 template <typename K, typename V, usize Capacity>
 using StaticHashMap = HashMap<K, V, StaticAllocation<MapNode<K, V>, Capacity>>;
-template <typename K, typename V> using StaticHashMap4 = StaticHashMap<K, V, 4>;
-template <typename K, typename V> using StaticHashMap8 = StaticHashMap<K, V, 8>;
-template <typename K, typename V> using StaticHashMap16 = StaticHashMap<K, V, 16>;
-template <typename K, typename V> using StaticHashMap32 = StaticHashMap<K, V, 32>;
-template <typename K, typename V> using StaticHashMap64 = StaticHashMap<K, V, 64>;
-template <typename K, typename V> using StaticHashMap128 = StaticHashMap<K, V, 128>;
-template <typename K, typename V> using StaticHashMap196 = StaticHashMap<K, V, 196>;
-template <typename K, typename V> using StaticHashMap256 = StaticHashMap<K, V, 256>;
-template <typename K, typename V> using StaticHashMap384 = StaticHashMap<K, V, 384>;
-template <typename K, typename V> using StaticHashMap512 = StaticHashMap<K, V, 512>;
-template <typename K, typename V> using StaticHashMap768 = StaticHashMap<K, V, 768>;
-template <typename K, typename V> using StaticHashMap1024 = StaticHashMap<K, V, 1024>;
 } // namespace TKit

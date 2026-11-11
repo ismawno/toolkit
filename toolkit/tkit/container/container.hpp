@@ -5,6 +5,16 @@
 
 namespace TKit
 {
+template <typename K, typename V> struct KeyValuePair
+{
+    template <typename... Args>
+    KeyValuePair(const K &key, Args &&...args) : Key(key), Value(std::forward<Args>(args)...)
+    {
+    }
+    K Key;
+    V Value;
+};
+
 template <typename T>
 concept Iterable = requires(T a) {
     { a.begin() } -> std::input_iterator;

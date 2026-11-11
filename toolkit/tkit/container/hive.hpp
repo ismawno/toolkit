@@ -17,7 +17,7 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
 
     constexpr Hive() = default;
     constexpr Hive(AllocState &&data, IdAllocState &&indices, IdAllocState &&ids)
-        : m_Data(std::move(data)), m_Indices(std::move(indices)), m_Ids(std::move(ids))
+        : m_Dense(std::move(data)), m_Indices(std::move(indices)), m_Ids(std::move(ids))
     {
     }
 
@@ -63,20 +63,20 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
 
     template <typename OtherAlloc, typename OtherIdAlloc>
     constexpr Hive(const Hive<T, OtherAlloc, OtherIdAlloc> &other)
-        : m_Data(other.m_Data), m_Indices(other.m_Indices), m_Ids(other.m_Ids)
+        : m_Dense(other.m_Dense), m_Indices(other.m_Indices), m_Ids(other.m_Ids)
     {
     }
 
     template <typename OtherAlloc, typename OtherIdAlloc>
     constexpr Hive(Hive<T, OtherAlloc, OtherIdAlloc> &&other)
-        : m_Data(std::move(other.m_Data)), m_Indices(std::move(other.m_Indices)), m_Ids(std::move(other.m_Ids))
+        : m_Dense(std::move(other.m_Dense)), m_Indices(std::move(other.m_Indices)), m_Ids(std::move(other.m_Ids))
     {
     }
 
     template <typename OtherAlloc, typename OtherIdAlloc>
     constexpr Hive &operator=(const Hive<T, OtherAlloc, OtherIdAlloc> &other)
     {
-        m_Data = other.m_Data;
+        m_Dense = other.m_Dense;
         m_Indices = other.m_Indices;
         m_Ids = other.m_Ids;
         return *this;
@@ -85,33 +85,30 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
     template <typename OtherAlloc, typename OtherIdAlloc>
     constexpr Hive &operator=(Hive<T, OtherAlloc, OtherIdAlloc> &&other)
     {
-        m_Data = std::move(other.m_Data);
+        m_Dense = std::move(other.m_Dense);
         m_Indices = std::move(other.m_Indices);
         m_Ids = std::move(other.m_Ids);
         return *this;
     }
 
+#define CHECK_ID_EXISTS(id)                                                                                            \
+    TKIT_ASSERT((id) < m_Indices.GetSize(),                                                                            \
+                "[TOOLKIT][HIVE] The id {} does not exist in the hive, as it exceeds the indices size ({})", id,       \
+                m_Indices.GetSize());                                                                                  \
+    TKIT_ASSERT(                                                                                                       \
+        m_Indices[id] < m_Dense.GetSize(),                                                                             \
+        "[TOOLKIT][HIVE] The id {} does not exist in the hive, as indices[id = {}] = {} exceeds data size ({})", id,   \
+        id, m_Indices[id], m_Dense.GetSize())
+
     constexpr const T &At(const usize id) const
     {
-        TKIT_ASSERT(id < m_Indices.GetSize(),
-                    "[TOOLKIT][HIVE] The id {} does not exist in the hive, as it exceeds the indices size ({})", id,
-                    m_Indices.GetSize());
-        TKIT_ASSERT(
-            m_Indices[id] < m_Data.GetSize(),
-            "[TOOLKIT][HIVE] The id {} does not exist in the hive, as indices[id = {}] = {} exceeds data size ({})", id,
-            id, m_Indices[id], m_Data.GetSize());
-        return m_Data[m_Indices[id]];
+        CHECK_ID_EXISTS(id);
+        return m_Dense[m_Indices[id]];
     }
     constexpr T &At(const usize id)
     {
-        TKIT_ASSERT(id < m_Indices.GetSize(),
-                    "[TOOLKIT][HIVE] The id {} does not exist in the hive, as it exceeds the indices size ({})", id,
-                    m_Indices.GetSize());
-        TKIT_ASSERT(
-            m_Indices[id] < m_Data.GetSize(),
-            "[TOOLKIT][HIVE] The id {} does not exist in the hive, as indices[id = {}] = {} exceeds data size ({})", id,
-            id, m_Indices[id], m_Data.GetSize());
-        return m_Data[m_Indices[id]];
+        CHECK_ID_EXISTS(id);
+        return m_Dense[m_Indices[id]];
     }
 
     constexpr const T &operator[](const usize id) const
@@ -125,11 +122,11 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
 
     constexpr const T &AtByIndex(const usize idx) const
     {
-        return m_Data[idx];
+        return m_Dense[idx];
     }
     constexpr T &AtByIndex(const usize idx)
     {
-        return m_Data[idx];
+        return m_Dense[idx];
     }
 
     constexpr const T *Get(const usize id) const
@@ -143,36 +140,36 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
 
     constexpr const T *GetByIndex(const usize idx) const
     {
-        return idx < m_Data.GetSize() ? &AtByIndex(idx) : nullptr;
+        return idx < m_Dense.GetSize() ? &AtByIndex(idx) : nullptr;
     }
     constexpr T *GetByIndex(const usize idx)
     {
-        return idx < m_Data.GetSize() ? &AtByIndex(idx) : nullptr;
+        return idx < m_Dense.GetSize() ? &AtByIndex(idx) : nullptr;
     }
 
     constexpr void Reserve(const usize capacity)
     {
-        m_Data.Reserve(capacity);
+        m_Dense.Reserve(capacity);
         m_Indices.Reserve(capacity);
         m_Ids.Reserve(capacity);
     }
 
     constexpr bool Contains(const usize id) const
     {
-        return id < m_Indices.GetSize() && m_Indices[id] < m_Data.GetSize();
+        return id < m_Indices.GetSize() && m_Indices[id] < m_Dense.GetSize();
     }
     constexpr bool IsValidIndex(const usize idx) const
     {
-        return idx < m_Data.GetSize();
+        return idx < m_Dense.GetSize();
     }
 
     constexpr void Clear()
     {
-        m_Data.Clear();
+        m_Dense.Clear();
     }
     constexpr void ClearAll()
     {
-        m_Data.Clear();
+        m_Dense.Clear();
         m_Indices.Clear();
         m_Ids.Clear();
     }
@@ -241,7 +238,7 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
     }
     constexpr Span<const usize> GetValidIds() const
     {
-        return Span<const usize>{m_Ids.GetData(), m_Data.GetSize()};
+        return Span<const usize>{m_Ids.GetData(), m_Dense.GetSize()};
     }
 
     constexpr usize GetIndex(const usize id) const
@@ -255,56 +252,56 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
 
     constexpr const T *GetData() const
     {
-        return m_Data.GetData();
+        return m_Dense.GetData();
     }
     constexpr T *GetData()
     {
-        return m_Data.GetData();
+        return m_Dense.GetData();
     }
 
     constexpr T *begin()
     {
-        return m_Data.begin();
+        return m_Dense.begin();
     }
     constexpr T *end()
     {
-        return m_Data.end();
+        return m_Dense.end();
     }
 
     constexpr const T *begin() const
     {
-        return m_Data.begin();
+        return m_Dense.begin();
     }
     constexpr const T *end() const
     {
-        return m_Data.end();
+        return m_Dense.end();
     }
 
     constexpr usize GetSize() const
     {
-        return m_Data.GetSize();
+        return m_Dense.GetSize();
     }
     constexpr usize GetCapacity() const
     {
-        return m_Data.GetCapacity();
+        return m_Dense.GetCapacity();
     }
     constexpr usz GetBytes() const
     {
-        return m_Data.GetSize() * sizeof(T);
+        return m_Dense.GetBytes();
     }
 
     constexpr bool IsEmpty() const
     {
-        return m_Data.IsEmpty();
+        return m_Dense.IsEmpty();
     }
     constexpr bool IsFull() const
     {
-        return m_Data.IsFull();
+        return m_Dense.IsFull();
     }
 
     constexpr usize GetNextId() const
     {
-        const usize size = m_Data.GetSize();
+        const usize size = m_Dense.GetSize();
         const usize idxs = m_Indices.GetSize();
 
         TKIT_ASSERT(
@@ -319,7 +316,7 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
         requires std::constructible_from<T, Args...>
     constexpr usize Insert(Args &&...args)
     {
-        const usize size = m_Data.GetSize();
+        const usize size = m_Dense.GetSize();
         const usize idxs = m_Indices.GetSize();
         TKIT_ASSERT(idxs == m_Ids.GetSize(), "[TOOLKIT][HIVE] Indices size ({}) and ids size ({}) mismatch", idxs,
                     m_Ids.GetSize());
@@ -327,7 +324,7 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
             size <= idxs,
             "[TOOLKIT][HIVE] Data constainer size ({}) must be smaller or equal to index/id container size ({})", size,
             idxs);
-        m_Data.Append(std::forward<Args>(args)...);
+        m_Dense.Append(std::forward<Args>(args)...);
         if (size == idxs)
         {
             m_Indices.Append(size);
@@ -339,29 +336,33 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
 
     constexpr void Remove(const usize id)
     {
-        TKIT_ASSERT(id < m_Indices.GetSize(),
-                    "[TOOLKIT][HIVE] The id {} does not exist in the hive, as it exceeds the indices size ({})", id,
-                    m_Indices.GetSize());
-        TKIT_ASSERT(
-            m_Indices[id] < m_Data.GetSize(),
-            "[TOOLKIT][HIVE] The id {} does not exist in the hive, as indices[id = {}] = {} exceeds data size ({})", id,
-            id, m_Indices[id], m_Data.GetSize());
+        CHECK_ID_EXISTS(id);
         const usize idx = m_Indices[id];
-        const usize last = m_Data.GetSize() - 1;
+        const usize last = m_Dense.GetSize() - 1;
         if (idx == last)
         {
-            m_Data.Pop();
+            m_Dense.Pop();
             return;
         }
         const usize lid = m_Ids[last];
-        m_Data.RemoveUnordered(m_Data.begin() + idx);
+        m_Dense.RemoveUnordered(m_Dense.begin() + idx);
         m_Indices[id] = last;
         m_Indices[lid] = idx;
         std::swap(m_Ids[idx], m_Ids[last]);
     }
+    constexpr bool TryRemove(const usize id)
+    {
+        if (Contains(id))
+        {
+            Remove(id);
+            return true;
+        }
+        return false;
+    }
+#undef CHECK_ID_EXISTS
 
   private:
-    Array<T, AllocState> m_Data{};
+    Array<T, AllocState> m_Dense{};
     Array<usize, IdAllocState> m_Indices{};
     Array<usize, IdAllocState> m_Ids{};
 
@@ -374,16 +375,4 @@ template <typename T> using TierHive = Hive<T, TierAllocation<T>, TierAllocation
 
 template <typename T, usize Capacity>
 using StaticHive = Hive<T, StaticAllocation<T, Capacity>, StaticAllocation<usize, Capacity>>;
-template <typename T> using StaticHive4 = StaticHive<T, 4>;
-template <typename T> using StaticHive8 = StaticHive<T, 8>;
-template <typename T> using StaticHive16 = StaticHive<T, 16>;
-template <typename T> using StaticHive32 = StaticHive<T, 32>;
-template <typename T> using StaticHive64 = StaticHive<T, 64>;
-template <typename T> using StaticHive128 = StaticHive<T, 128>;
-template <typename T> using StaticHive196 = StaticHive<T, 196>;
-template <typename T> using StaticHive256 = StaticHive<T, 256>;
-template <typename T> using StaticHive384 = StaticHive<T, 384>;
-template <typename T> using StaticHive512 = StaticHive<T, 512>;
-template <typename T> using StaticHive768 = StaticHive<T, 768>;
-template <typename T> using StaticHive1024 = StaticHive<T, 1024>;
 } // namespace TKit

@@ -96,17 +96,6 @@ template <template <typename> typename A, typename... Args> void TestMapTryInser
     REQUIRE(map.At(77u) == 77u);
 }
 
-template <template <typename> typename A, typename... Args> void TestMapInsertOverwrite(Args... args)
-{
-    using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
-
-    map.Insert(1u, 100u);
-    map.Insert(1u, 200u); // Insert always inserts — this is a second entry
-    // size grows because Insert doesn't check for duplicates
-    REQUIRE(map.GetSize() == 2);
-}
-
 template <template <typename> typename A, typename... Args> void TestMapContains(Args... args)
 {
     using Node = MapNode<u32, u32>;
@@ -131,13 +120,13 @@ template <template <typename> typename A, typename... Args> void TestMapRemoveBy
     map.Insert(3u, 30u);
     REQUIRE(map.GetSize() == 3);
 
-    REQUIRE(map.Remove(2u));
+    REQUIRE(map.TryRemove(2u));
     REQUIRE(map.GetSize() == 2);
     REQUIRE_FALSE(map.Contains(2u));
     REQUIRE(map.Contains(1u));
     REQUIRE(map.Contains(3u));
 
-    REQUIRE_FALSE(map.Remove(99u));
+    REQUIRE_FALSE(map.TryRemove(99u));
     REQUIRE(map.GetSize() == 2);
 
     REQUIRE(map.Find(1u)->Value == 10u);
@@ -362,10 +351,6 @@ TEST_CASE("HashMap: At accessor", "[HashMap]")
 TEST_CASE("HashMap: TryInsert semantics", "[HashMap]")
 {
     MAP_TEST_ALL(TestMapTryInsert, 16);
-}
-TEST_CASE("HashMap: Insert does not deduplicate", "[HashMap]")
-{
-    MAP_TEST_ALL(TestMapInsertOverwrite, 16);
 }
 TEST_CASE("HashMap: Contains", "[HashMap]")
 {

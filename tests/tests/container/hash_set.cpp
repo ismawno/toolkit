@@ -59,20 +59,6 @@ template <template <typename> typename A, typename... Args> void TestSetContains
     REQUIRE_FALSE(set.Contains(999u));
 }
 
-template <template <typename> typename A, typename... Args> void TestSetInsertDuplicate(Args... args)
-{
-    using Node = SetNode<u32>;
-    HashSet<u32, A<Node>> set{initialSize, A<Node>{args...}};
-
-    set.Insert(1u);
-    set.Insert(1u);
-    set.Insert(1u);
-
-    // Insert doesn't deduplicate — each call adds
-    REQUIRE(set.GetSize() == 3);
-    REQUIRE(set.Contains(1u));
-}
-
 template <template <typename> typename A, typename... Args> void TestSetRemoveByKey(Args... args)
 {
     using Node = SetNode<u32>;
@@ -83,13 +69,13 @@ template <template <typename> typename A, typename... Args> void TestSetRemoveBy
     set.Insert(3u);
     REQUIRE(set.GetSize() == 3);
 
-    REQUIRE(set.Remove(2u));
+    REQUIRE(set.TryRemove(2u));
     REQUIRE(set.GetSize() == 2);
     REQUIRE_FALSE(set.Contains(2u));
     REQUIRE(set.Contains(1u));
     REQUIRE(set.Contains(3u));
 
-    REQUIRE_FALSE(set.Remove(99u));
+    REQUIRE_FALSE(set.TryRemove(99u));
     REQUIRE(set.GetSize() == 2);
 }
 
@@ -270,10 +256,6 @@ TEST_CASE("HashSet: Insert and Find", "[HashSet]")
 TEST_CASE("HashSet: Contains", "[HashSet]")
 {
     SET_TEST_ALL(TestSetContains, 16);
-}
-TEST_CASE("HashSet: Insert does not deduplicate", "[HashSet]")
-{
-    SET_TEST_ALL(TestSetInsertDuplicate, 16);
 }
 TEST_CASE("HashSet: Remove by key", "[HashSet]")
 {

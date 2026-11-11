@@ -234,18 +234,22 @@ template <typename K, typename AllocState> class HashSet
 
     constexpr const K &Insert(const K &key)
     {
-        return *insert(Hash(key), key);
+        const usz hash = Hash(key);
+        TKIT_ASSERT(find(key, hash) == TKIT_USIZE_MAX,
+                    "[TOOLKIT][HASH-SET] Insert() can only be used when the entry to be inserted does not exist. Use "
+                    "TryInsert() in case the entry may be contained already");
+        return *insert(hash, key);
     }
 
-    template <typename... Args> constexpr const K &TryInsert(const K &key, bool *didExist = nullptr)
+    template <typename... Args> constexpr const K &TryInsert(const K &key, bool *didInsert = nullptr)
     {
         const usz hash = Hash(key);
         const usize idx = find<true>(key, hash);
 
         Node &node = m_Buckets[idx];
         const bool occupied = node.State == HashNode_Occupied;
-        if (didExist)
-            *didExist = occupied;
+        if (didInsert)
+            *didInsert = !occupied;
 
         if (occupied)
             return *node.GetKey();
@@ -276,26 +280,28 @@ template <typename K, typename AllocState> class HashSet
         TKIT_ASSERT(m_Size != 0, "[TOOLKIT][HASH-SET] Cannot remove an element when the size is 0");
         const Iterator next = iter.Next();
 
-        Node &node = iter.m_Buckets->At(iter.m_Index);
-        TKIT_ASSERT(node.State == HashNode_Occupied,
+        TKIT_ASSERT(m_Buckets[iter.m_Index].State == HashNode_Occupied,
                     "[TOOLKIT][HASH-SET] Iterator must point to an occupied slot to be removed");
 
-        node.State = HashNode_Tombstone;
-        Destruct(node.GetKey());
-        --m_Size;
+        remove(iter.m_Index);
         return next;
     }
 
-    constexpr bool Remove(const K &key)
+    constexpr void Remove(const K &key)
+    {
+        const usize idx = find(key, Hash(key));
+        TKIT_ASSERT(idx != TKIT_USIZE_MAX,
+                    "[TOOLKIT][HASH-SET] Remove() can only be used when the entry to be inserted does not exist. Use "
+                    "TryRemove() in case the entry may be contained already");
+        remove(idx);
+    }
+    constexpr bool TryRemove(const K &key)
     {
         const usize idx = find(key, Hash(key));
         if (idx == TKIT_USIZE_MAX)
             return false;
 
-        Node &node = m_Buckets[idx];
-        node.State = HashNode_Tombstone;
-        Destruct(node.GetKey());
-        --m_Size;
+        remove(idx);
         return true;
     }
 
@@ -343,12 +349,19 @@ template <typename K, typename AllocState> class HashSet
     }
 
   private:
-    void setEmpty()
+    constexpr void setEmpty()
     {
         for (Node &n : m_Buckets)
             n.State = HashNode_Free;
     }
-    template <bool GetInsertSpot = false> usize find(const K &key, const usz hash) const
+    constexpr void remove(const u32 idx)
+    {
+        Node &node = m_Buckets[idx];
+        node.State = HashNode_Tombstone;
+        Destruct(node.GetKey());
+        --m_Size;
+    }
+    template <bool GetInsertSpot = false> constexpr usize find(const K &key, const usz hash) const
     {
         const usize buckets = m_Buckets.GetSize();
         if (buckets == 0)
@@ -428,7 +441,7 @@ template <typename K, typename AllocState> class HashSet
     constexpr usize rehash(const usize nbuckets)
         requires(Type != Array_Arena && Type != Array_Stack)
     {
-        TKIT_ASSERT(nbuckets != 0, "[TOOLKIT][HASH-MAP] The bucket count must not be zero");
+        TKIT_ASSERT(nbuckets != 0, "[TOOLKIT][HASH-SET] The bucket count must not be zero");
         HashSet old = std::move(*this);
 
         TKIT_ASSERT(IsPowerOfTwo(nbuckets), "[TOOLKIT][HASH-SET] The bucket count must be a power of 2, but is {}",
@@ -480,16 +493,4 @@ template <typename K> using TierHashSet = HashSet<K, TierAllocation<SetNode<K>>>
 template <typename K> using DynamicHashSet = HashSet<K, DynamicAllocation<SetNode<K>>>;
 
 template <typename K, usize Capacity> using StaticHashSet = HashSet<K, StaticAllocation<SetNode<K>, Capacity>>;
-template <typename K> using StaticHashSet4 = StaticHashSet<K, 4>;
-template <typename K> using StaticHashSet8 = StaticHashSet<K, 8>;
-template <typename K> using StaticHashSet16 = StaticHashSet<K, 16>;
-template <typename K> using StaticHashSet32 = StaticHashSet<K, 32>;
-template <typename K> using StaticHashSet64 = StaticHashSet<K, 64>;
-template <typename K> using StaticHashSet128 = StaticHashSet<K, 128>;
-template <typename K> using StaticHashSet196 = StaticHashSet<K, 196>;
-template <typename K> using StaticHashSet256 = StaticHashSet<K, 256>;
-template <typename K> using StaticHashSet384 = StaticHashSet<K, 384>;
-template <typename K> using StaticHashSet512 = StaticHashSet<K, 512>;
-template <typename K> using StaticHashSet768 = StaticHashSet<K, 768>;
-template <typename K> using StaticHashSet1024 = StaticHashSet<K, 1024>;
 } // namespace TKit
