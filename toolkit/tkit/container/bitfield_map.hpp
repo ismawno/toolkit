@@ -93,18 +93,18 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
 #define CHECK_KEY_WITHIN_BOUNDS(k)                                                                                     \
     TKIT_ASSERT(                                                                                                       \
         (k) < m_Sparse.GetSize(),                                                                                      \
-        "[TOOLKIT][BITFIELD] The key {:#0{}b} exceeds sparse array size ({}) derived from the bit count of {} "        \
+        "[TOOLKIT][BITFIELD-MAP] The key {:#0{}b} exceeds sparse array size ({}) derived from the bit count of {} "    \
         "specified at compile time",                                                                                   \
         k, BitCount + 2, m_Sparse.GetSize(), BitCount)
 #define CHECK_INDEX_WITHIN_BOUNDS(idx)                                                                                 \
     TKIT_ASSERT((idx) < GetSize(),                                                                                     \
-                "[TOOLKIT][BITFIELD] The key {:#0{}b} is contained in the map, but it is not stored in the dense "     \
+                "[TOOLKIT][BITFIELD-MAP] The key {:#0{}b} is contained in the map, but it is not stored in the dense " \
                 "array. This datastructure has been corrupted",                                                        \
                 k, BitCount + 2);
 
 #define CHECK_KEY_EXISTS(k)                                                                                            \
     CHECK_KEY_WITHIN_BOUNDS(k);                                                                                        \
-    TKIT_ASSERT(m_Sparse[k] != Null, "[TOOLKIT][BITFIELD] The key {:#0{}b} is not contained in the map", k,            \
+    TKIT_ASSERT(m_Sparse[k] != Null, "[TOOLKIT][BITFIELD-MAP] The key {:#0{}b} is not contained in the map", k,        \
                 BitCount + 2);                                                                                         \
     CHECK_INDEX_WITHIN_BOUNDS(m_Sparse[k])
 
@@ -201,13 +201,14 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
     {
         k = canon(k);
         CHECK_KEY_WITHIN_BOUNDS(k);
-        TKIT_ASSERT(!Contains(k),
-                    "[TOOLKIT][BITFIELD] Insert() can only be used when entry to be inserted does not exist, but key "
-                    "{:#0{}b} is contained. Use TryInsert() in case the entry may be contained already",
-                    k, BitCount + 2);
+        TKIT_ASSERT(
+            !Contains(k),
+            "[TOOLKIT][BITFIELD-MAP] Insert() can only be used when entry to be inserted does not exist, but key "
+            "{:#0{}b} is contained. Use TryInsert() in case the entry may be contained already",
+            k, BitCount + 2);
 
         TKIT_ASSERT(m_Values.GetSize() + 1 < Null,
-                    "[TOOLKIT][BITFIELD] Maximum amount of elements representable with provided index type ({}) "
+                    "[TOOLKIT][BITFIELD-MAP] Maximum amount of elements representable with provided index type ({}) "
                     "reached. Use a bigger index type",
                     Null);
         m_Sparse[k] = m_Values.GetSize();
@@ -223,10 +224,11 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
         Index &idx = m_Sparse[k];
         if (idx == Null)
         {
-            TKIT_ASSERT(m_Values.GetSize() + 1 < Null,
-                        "[TOOLKIT][BITFIELD] Maximum amount of elements representable with provided index type ({}) "
-                        "reached. Use a bigger index type",
-                        Null);
+            TKIT_ASSERT(
+                m_Values.GetSize() + 1 < Null,
+                "[TOOLKIT][BITFIELD-MAP] Maximum amount of elements representable with provided index type ({}) "
+                "reached. Use a bigger index type",
+                Null);
             if (didInsert)
                 *didInsert = true;
             idx = m_Values.GetSize();
@@ -288,6 +290,10 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
         }
 
 #define QUERY_IMPL(type)                                                                                               \
+    TKIT_ASSERT((partialKey & mask) == partialKey,                                                                     \
+                "[TOOLKIT][BITFIELD-MAP] The mask {:#0{}b} does not fully cover the "                                  \
+                "breadth of bits that the partial key {:#0{}b} includes",                                              \
+                mask, BitCount + 2, partialKey, BitCount + 2);                                                         \
     if constexpr (std::is_invocable_v<F, type>)                                                                        \
     {                                                                                                                  \
         constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, type>, bool>;                                   \
@@ -336,7 +342,7 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
                       })
         {
             TKIT_ASSERT(FieldDesc::Canonicalize(FieldDesc::Canonicalize(k)) == FieldDesc::Canonicalize(k),
-                        "[TOOLKIT][BITFIELD] Canonicalize function is not idempotent for key {:#0{}b}, as "
+                        "[TOOLKIT][BITFIELD-MAP] Canonicalize function is not idempotent for key {:#0{}b}, as "
                         "Canonicalize(Canonicalize(k)) = {:#0{}b} != {:#0{}b} = Canonicalize(k)",
                         k, BitCount + 2, FieldDesc::Canonicalize(FieldDesc::Canonicalize(k)), BitCount + 2,
                         FieldDesc::Canonicalize(k), BitCount + 2);
