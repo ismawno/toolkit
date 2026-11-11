@@ -994,7 +994,7 @@ class Registry
         return *q;
     }
 
-    template <typename F> bool IterateEntitiesByInsertionOrder(F func) const
+    template <typename F> auto IterateEntitiesByInsertionOrder(F func) const
     {
         return m_Entities.IterateByInsertionOrder(func);
     }
