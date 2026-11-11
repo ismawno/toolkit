@@ -242,6 +242,7 @@ template <typename K, typename AllocState> class HashSet
 
     template <typename... Args> constexpr const K &TryInsert(const K &key, bool *didInsert = nullptr)
     {
+        maybeRehash();
         const usz hash = Hash(key);
         const usize idx = find<true>(key, hash);
 
@@ -253,7 +254,6 @@ template <typename K, typename AllocState> class HashSet
         if (occupied)
             return *node.GetKey();
 
-        maybeRehash();
         ++m_Size;
         node.Hash = hash;
         node.State = HashNode_Occupied;
