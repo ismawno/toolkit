@@ -208,11 +208,11 @@ template <typename T, typename AllocState> class Hive
             return true;                                                                                               \
     }
 
-    template <typename F> auto IterateByInsertionOrder(const F func)
+    template <typename F> auto IterateByInsertionOrder(F func)
     {
         ITERATE_BY_INSERTION_ORDER(T &)
     }
-    template <typename F> auto IterateByInsertionOrder(const F func) const
+    template <typename F> auto IterateByInsertionOrder(F func) const
     {
         ITERATE_BY_INSERTION_ORDER(const T &)
     }

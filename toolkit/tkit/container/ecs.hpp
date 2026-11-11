@@ -70,7 +70,7 @@ template <typename... As, typename T, typename... Rest> struct MergedComponentSe
 
 template <typename... Sets> using MergeComponentSets = MergedComponentSets<Sets...>::Type;
 
-template <typename F, typename... Cs> void ForEachComponentType(const ComponentSet<Cs...>, const F func)
+template <typename F, typename... Cs> void ForEachComponentType(const ComponentSet<Cs...>, F func)
 {
     (func.template operator()<Cs>(), ...);
 }
@@ -613,14 +613,14 @@ class ComponentQuery
         usize m_Row = 0;
     };
 
-    template <typename F> void Each(const F func) const
+    template <typename F> void Each(F func) const
     {
         for (usize i = 0; i < m_ArchetypeInfo.GetSize(); ++i)
             eachPerArchetype(func, i, std::make_integer_sequence<usize, Count>{});
     }
 
     template <std::derived_from<ITaskManager> TManager, typename It, typename F>
-    void AsyncEach(TManager &manager, const It dest, const usize partitions, const F func) const
+    void AsyncEach(TManager &manager, const It dest, const usize partitions, F func) const
     {
         for (usize i = 0; i < m_ArchetypeInfo.GetSize(); ++i)
             asyncEachPerArchetype(manager, dest + i * partitions, partitions, func, i,
@@ -655,7 +655,7 @@ class ComponentQuery
 
   private:
     template <typename F, usize... I>
-    void eachPerArchetype(const F func, const usize idx, const std::integer_sequence<usize, I...>) const
+    void eachPerArchetype(F func, const usize idx, const std::integer_sequence<usize, I...>) const
     {
         const ArchetypeQueryInterface &interface = m_ArchetypeInfo[idx];
         const ArchetypeQueryColumns<Count> &columns = interface.Columns;
@@ -668,7 +668,7 @@ class ComponentQuery
     }
 
     template <std::derived_from<ITaskManager> TManager, typename It, typename F, usize... I>
-    void asyncEachPerArchetype(TManager &manager, const It dest, const usize partitions, const F func, const usize idx,
+    void asyncEachPerArchetype(TManager &manager, const It dest, const usize partitions, F func, const usize idx,
                                const std::integer_sequence<usize, I...>) const
     {
         const ArchetypeQueryInterface &interface = m_ArchetypeInfo[idx];
@@ -994,7 +994,7 @@ class Registry
         return *q;
     }
 
-    template <typename F> bool IterateEntitiesByInsertionOrder(const F func) const
+    template <typename F> bool IterateEntitiesByInsertionOrder(F func) const
     {
         return m_Entities.IterateByInsertionOrder(func);
     }

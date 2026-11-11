@@ -303,11 +303,11 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
             return true;                                                                                               \
     }
 
-    template <typename F> auto Query(const Key partialKey, const Key mask, const F func) const
+    template <typename F> auto Query(const Key partialKey, const Key mask, F func) const
     {
         QUERY_IMPL(const T &)
     }
-    template <typename F> auto Query(const Key partialKey, const Key mask, const F func)
+    template <typename F> auto Query(const Key partialKey, const Key mask, F func)
     {
         QUERY_IMPL(T &);
     }
