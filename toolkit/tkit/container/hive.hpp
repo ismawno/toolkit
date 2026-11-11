@@ -203,7 +203,7 @@ template <typename T, typename AllocState> class Hive
     else                                                                                                               \
     {                                                                                                                  \
         constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, type>, bool>;                                   \
-        EMIT_LOOP(id);                                                                                                 \
+        EMIT_LOOP(AtByIndex(idx));                                                                                     \
         if constexpr (hasRet)                                                                                          \
             return true;                                                                                               \
     }
