@@ -73,11 +73,11 @@ static std::string str(const StringView view)
     return str(std::string{view.GetData(), view.GetSize()});
 }
 
-// Creates a path with room for s_Capacity characters, using the given allocator (if any)
-template <template <typename> typename A, typename... Args> Path<A<char>> makePath(const char *raw, Args... args)
+// Creates a path with room for s_Capacity characters, using the pushed allocator (if any)
+template <template <typename> typename A> Path<A<char>> makePath(const char *raw)
 {
     using P = Path<A<char>>;
-    String<A<char>> str{args...};
+    String<A<char>> str{};
     if constexpr (P::Type != Array_Static)
         str.Reserve(s_Capacity);
     P path{std::move(str)};
@@ -98,12 +98,12 @@ static bool usesAllocator(const Path<A<char>> &path, Args... args)
 // Test functions
 // ---------------------------------------------------------------------------
 
-template <template <typename> typename A, typename... Args> static void TestDecomposition(Args... args)
+template <template <typename> typename A, typename... Args> static void TestDecomposition([[maybe_unused]] const Args... args)
 {
     for (const char *raw : s_Paths)
     {
         INFO("path: '" << raw << "'");
-        const auto path = makePath<A>(raw, args...);
+        const auto path = makePath<A>(raw);
         const fs::path expected{raw};
 
         CHECK(str(path.GetView()) == str(expected.string()));
@@ -147,15 +147,15 @@ template <template <typename> typename A, typename... Args> static void TestDeco
     }
 }
 
-template <template <typename> typename A, typename... Args> static void TestBinaryOperations(Args... args)
+template <template <typename> typename A, typename... Args> static void TestBinaryOperations([[maybe_unused]] const Args... args)
 {
     using P = Path<A<char>>;
     for (const char *lraw : s_Paths)
         for (const char *rraw : s_Paths)
         {
             INFO("lhs: '" << lraw << "', rhs: '" << rraw << "'");
-            const P lhs = makePath<A>(lraw, args...);
-            const P rhs = makePath<A>(rraw, args...);
+            const P lhs = makePath<A>(lraw);
+            const P rhs = makePath<A>(rraw);
             const fs::path elhs{lraw};
             const fs::path erhs{rraw};
 
@@ -206,9 +206,9 @@ template <template <typename> typename A, typename... Args> static void TestBina
         }
 }
 
-template <template <typename> typename A, typename... Args> static void TestModifiers(Args... args)
+template <template <typename> typename A, typename... Args> static void TestModifiers([[maybe_unused]] const Args... args)
 {
-    auto path = makePath<A>("a/b/file.txt", args...);
+    auto path = makePath<A>("a/b/file.txt");
     path.RemoveFilename();
     REQUIRE(path == "a/b/");
     path.ReplaceFilename("other.cpp");
@@ -237,10 +237,10 @@ template <template <typename> typename A, typename... Args> static void TestModi
     REQUIRE(usesAllocator<A>(path, args...));
 }
 
-template <template <typename> typename A, typename... Args> static void TestAliasing(Args... args)
+template <template <typename> typename A, typename... Args> static void TestAliasing([[maybe_unused]] const Args... args)
 {
     // appending, assigning and concatenating a path to itself
-    auto path = makePath<A>("x/y", args...);
+    auto path = makePath<A>("x/y");
     path /= path;
     REQUIRE(str(path) == "x/y/x/y");
     path = path.GetView();
@@ -251,7 +251,7 @@ template <template <typename> typename A, typename... Args> static void TestAlia
     REQUIRE(str(path) == "y/x");
 }
 
-template <template <typename> typename A, typename... Args> static void TestEmptyStates(Args... args)
+template <template <typename> typename A, typename... Args> static void TestEmptyStates([[maybe_unused]] const Args... args)
 {
     using P = Path<A<char>>;
     const P empty{};
@@ -266,38 +266,38 @@ template <template <typename> typename A, typename... Args> static void TestEmpt
     REQUIRE_FALSE(empty.HasFilename());
     REQUIRE(empty.IsRelative());
 
-    const P fromNull{scast<const char *>(nullptr), args...};
+    const P fromNull{scast<const char *>(nullptr)};
     REQUIRE(fromNull.IsEmpty());
     REQUIRE(fromNull == empty);
 
-    const P fromEmpty{"", args...};
+    const P fromEmpty{""};
     REQUIRE(fromEmpty.IsEmpty());
     REQUIRE(fromEmpty == empty);
 }
 
-template <template <typename> typename A, typename... Args> static void TestConversionsAndComparisons(Args... args)
+template <template <typename> typename A, typename... Args> static void TestConversionsAndComparisons([[maybe_unused]] const Args... args)
 {
     using P = Path<A<char>>;
     const DynamicPath dyn{"some/dir/file.txt"};
-    const P path{dyn, args...};
+    const P path{dyn};
     REQUIRE(path == dyn);
     REQUIRE(dyn == path);
     REQUIRE(str(path) == "some/dir/file.txt");
     REQUIRE(usesAllocator<A>(path, args...));
 
-    const P fromStd{std::string{"a/b"}, args...};
+    const P fromStd{std::string{"a/b"}};
     REQUIRE(fromStd == "a/b");
     REQUIRE(fromStd == "a//b");
     REQUIRE(fromStd != "a/c");
     REQUIRE(fromStd == StringView{"a/b/", 3});
 
-    const P fromView{std::string_view{"a/c"}, args...};
+    const P fromView{std::string_view{"a/c"}};
     REQUIRE(fromStd < fromView);
     REQUIRE(fromView > fromStd);
     REQUIRE(fromStd <= fromStd);
     REQUIRE(fromStd >= fromStd);
 
-    auto assigned = makePath<A>("", args...);
+    auto assigned = makePath<A>("");
     assigned = "x/y";
     REQUIRE(str(assigned) == "x/y");
     assigned = std::string{"z"};
@@ -317,15 +317,15 @@ template <template <typename> typename A, typename... Args> static void TestConv
 
     REQUIRE(str(StringView{path.GetGenericString()}) == "some/dir/file.txt");
     REQUIRE(fmt::format("{}", path) == "some/dir/file.txt");
-    REQUIRE(std::hash<P>{}(P{"a/b", args...}) == std::hash<P>{}(P{"a//b", args...}));
+    REQUIRE(std::hash<P>{}(P{"a/b"}) == std::hash<P>{}(P{"a//b"}));
 }
 
 // Paths with repeated leading separators are handled differently by every standard library (libstdc++, libc++ and
 // msvc disagree on their root directory, parent path and normal form), so they are checked against fixed values
-template <template <typename> typename A, typename... Args> static void TestRepeatedSeparators(Args... args)
+template <template <typename> typename A, typename... Args> static void TestRepeatedSeparators([[maybe_unused]] const Args... args)
 {
     {
-        const auto path = makePath<A>("//", args...);
+        const auto path = makePath<A>("//");
         CHECK(str(path.GetRootName()).empty());
         CHECK(str(path.GetRootDirectory()) == "/");
         CHECK(str(path.GetRootPath()) == "/");
@@ -341,7 +341,7 @@ template <template <typename> typename A, typename... Args> static void TestRepe
         CHECK(++it == path.end());
     }
     {
-        const auto path = makePath<A>("///a", args...);
+        const auto path = makePath<A>("///a");
         CHECK(str(path.GetRootDirectory()) == "/");
         CHECK(str(path.GetRootPath()) == "/");
         CHECK(str(path.GetRelativePath()) == "a");
@@ -363,15 +363,22 @@ template <template <typename> typename A, typename... Args> static void TestRepe
 // TEST_CASEs
 // ---------------------------------------------------------------------------
 
-// the arena is reset after every run so that it does not run out, and the stack must be empty after every run
+// The allocator is pushed around each run (paths take it from there), and still passed so tests can check it is used.
+// The arena is reset after every run so that it does not run out, and the stack must be empty after every run
 #define PATH_TEST_ALL(Fn)                                                                                              \
+    PushArena(&s_Arena);                                                                                               \
     Fn<ArenaAllocation>(&s_Arena);                                                                                     \
+    PopArena();                                                                                                        \
     s_Arena.Reset();                                                                                                   \
     Fn<DynamicAllocation>();                                                                                           \
+    PushStack(&s_Stack);                                                                                               \
     Fn<StackAllocation>(&s_Stack);                                                                                     \
+    PopStack();                                                                                                        \
     REQUIRE(s_Stack.IsEmpty());                                                                                        \
-    Fn<StaticAlloc256>();                                                                                              \
-    Fn<TierAllocation>(&s_Tier)
+    Fn<StaticAlloc256>();                                                                                             \
+    PushTier(&s_Tier);                                                                                                 \
+    Fn<TierAllocation>(&s_Tier);                                                                                       \
+    PopTier()
 
 TEST_CASE("Path: repeated separators", "[path]")
 {
@@ -410,18 +417,21 @@ TEST_CASE("Path: conversions and comparisons", "[path]")
 
 TEST_CASE("Path: tier paths grow beyond their initial size", "[path]")
 {
-    TierPath path{"base", &s_Tier};
+    PushTier(&s_Tier);
+    TierPath path{"base"};
     for (u32 i = 0; i < 64; ++i)
         path /= "segment";
     REQUIRE(path.GetString().GetAllocator() == &s_Tier);
     REQUIRE(path.GetSize() == 4 + 64 * 8);
     REQUIRE(path.GetFilename().GetString() == "segment");
+    PopTier();
 }
 
 TEST_CASE("Path: stack paths keep a LIFO allocation order", "[path]")
 {
+    PushStack(&s_Stack);
     {
-        const StackPath path{"/usr/local/lib/libtoolkit.a", &s_Stack};
+        const StackPath path{"/usr/local/lib/libtoolkit.a"};
         const StackPath parent = path.GetParentPath();
         REQUIRE(str(parent) == "/usr/local/lib");
 
@@ -429,15 +439,16 @@ TEST_CASE("Path: stack paths keep a LIFO allocation order", "[path]")
         REQUIRE(str(joined) == "/usr/local/lib/other.a");
 
         // the source must outlive the result (a temporary would be freed out of order)
-        const StackPath source{"a/./b/../c", &s_Stack};
+        const StackPath source{"a/./b/../c"};
         const StackPath normal = source.LexicallyNormal();
         REQUIRE(str(normal) == "a/c");
 
         // shrinking in place never reallocates
-        StackPath shrinking{"a/b/c.txt", &s_Stack};
+        StackPath shrinking{"a/b/c.txt"};
         shrinking.RemoveFilename();
         shrinking.ReplaceFilename("d");
         REQUIRE(str(shrinking) == "a/b/d");
     }
+    PopStack();
     REQUIRE(s_Stack.IsEmpty());
 }

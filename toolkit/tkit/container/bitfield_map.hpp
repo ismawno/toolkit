@@ -289,6 +289,7 @@ class BitFieldMap
     TKit::Array<Pair, AllocState> m_Dense{};
 
     template <typename U, typename OtherFieldDesc, typename OtherAllocState, UnsignedInteger OtherIndex>
+        requires(OtherFieldDesc::BitCount <= 16)
     friend class BitFieldMap;
 };
 } // namespace TKit

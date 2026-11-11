@@ -134,13 +134,6 @@ template <typename K, typename AllocState> class HashSet
     {
         setEmpty();
     }
-    constexpr HashSet(AllocState &&state) : m_Buckets(std::move(state))
-    {
-    }
-    constexpr HashSet(const usize buckets, AllocState &&state) : m_Buckets(NextPowerOfTwo(buckets), std::move(state))
-    {
-        setEmpty();
-    }
 
     template <std::input_iterator It> constexpr HashSet(const It pbegin, const It pend)
     {

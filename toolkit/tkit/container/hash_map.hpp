@@ -143,13 +143,6 @@ template <typename K, typename V, typename AllocState> class HashMap
     {
         setEmpty();
     }
-    constexpr HashMap(AllocState &&state) : m_Buckets(std::move(state))
-    {
-    }
-    constexpr HashMap(const usize capacity, AllocState &&state) : m_Buckets(NextPowerOfTwo(capacity), std::move(state))
-    {
-        setEmpty();
-    }
 
     template <std::input_iterator It> constexpr HashMap(const It pbegin, const It pend)
     {

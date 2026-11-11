@@ -16,10 +16,6 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
     using Id = usize;
 
     constexpr Hive() = default;
-    constexpr Hive(AllocState &&data, IdAllocState &&indices, IdAllocState &&ids)
-        : m_Dense(std::move(data)), m_Indices(std::move(indices)), m_Ids(std::move(ids))
-    {
-    }
 
     template <std::input_iterator It>
     constexpr Hive(const It idxBegin, const Id idxEnd, const It idBegin, const It idEnd)

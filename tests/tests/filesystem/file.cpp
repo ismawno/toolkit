@@ -232,7 +232,7 @@ template <template <typename> typename A, typename... Args> static void TestRead
     REQUIRE(WriteFile(path, StringView{expected}));
 
     {
-        String<A<char>> contents{args...};
+        String<A<char>> contents{};
         if constexpr (String<A<char>>::Type == Array_Arena || String<A<char>>::Type == Array_Stack)
             contents.Reserve(1024);
         REQUIRE(ReadFile(path, contents));
@@ -243,7 +243,7 @@ template <template <typename> typename A, typename... Args> static void TestRead
     }
     {
         // reading the same file twice into the same string reuses it
-        String<A<char>> contents{args...};
+        String<A<char>> contents{};
         if constexpr (String<A<char>>::Type == Array_Arena || String<A<char>>::Type == Array_Stack)
             contents.Reserve(1024);
         REQUIRE(ReadFile(path, contents));
@@ -253,14 +253,22 @@ template <template <typename> typename A, typename... Args> static void TestRead
     }
 }
 
+// The allocator is pushed around each run (paths take it from there), and still passed so tests can check it is used.
+// The arena is reset after every run so that it does not run out, and the stack must be empty after every run
 #define FILE_TEST_ALL(Fn)                                                                                              \
+    PushArena(&s_Arena);                                                                                               \
     Fn<ArenaAllocation>(&s_Arena);                                                                                     \
+    PopArena();                                                                                                        \
     s_Arena.Reset();                                                                                                   \
     Fn<DynamicAllocation>();                                                                                           \
+    PushStack(&s_Stack);                                                                                               \
     Fn<StackAllocation>(&s_Stack);                                                                                     \
+    PopStack();                                                                                                        \
     REQUIRE(s_Stack.IsEmpty());                                                                                        \
     Fn<StaticAlloc1024>();                                                                                             \
-    Fn<TierAllocation>(&s_Tier)
+    PushTier(&s_Tier);                                                                                                 \
+    Fn<TierAllocation>(&s_Tier);                                                                                       \
+    PopTier()
 
 TEST_CASE("File: ReadFile into every string type", "[file]")
 {

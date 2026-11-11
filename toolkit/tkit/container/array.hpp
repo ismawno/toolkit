@@ -26,17 +26,8 @@ template <typename T, typename AllocState> class Array
     using Tools = ArrayTools<T>;
 
     constexpr Array() = default;
-    template <typename... Args>
-        requires(sizeof...(Args) > 1 || ((!std::is_same_v<Array, std::remove_cvref_t<Args>> &&
-                                          !std::is_same_v<std::remove_cvref_t<char *>, std::remove_cvref_t<Args>>) &&
-                                         ... && true))
-    constexpr explicit Array(Args &&...args) : m_State(std::forward<Args>(args)...)
-    {
-    }
 
-    template <std::convertible_to<usize> U, typename... Args>
-        requires(std::constructible_from<AllocState, Args...>)
-    constexpr explicit Array(const U psize, Args &&...args) : m_State(std::forward<Args>(args)...)
+    template <std::convertible_to<usize> U> constexpr explicit Array(const U psize)
     {
         const usize size = addOneIfString(usize(psize));
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
@@ -57,11 +48,9 @@ template <typename T, typename AllocState> class Array
         writeNullTerminatorIfString();
     }
 
-    template <std::convertible_to<usize> U, typename... Args>
-        requires(std::constructible_from<AllocState, Args...>)
-    constexpr Array(const T *str, const U psize, Args &&...args)
+    template <std::convertible_to<usize> U>
+    constexpr Array(const T *str, const U psize)
         requires(IsString)
-        : m_State(std::forward<Args>(args)...)
     {
         const usize size = addOneIfString(usize(psize));
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
@@ -80,31 +69,23 @@ template <typename T, typename AllocState> class Array
         Tools::CopyConstructFromRange(begin(), str, str + subOneIfString(size));
         writeNullTerminatorIfString();
     }
-    template <typename... Args>
-        requires(std::constructible_from<AllocState, Args...>)
-    constexpr Array(const T *str, Args &&...args)
+    constexpr Array(const T *str)
         requires(IsString)
-        : Array(str, usize(std::char_traits<T>::length(str)), std::forward<Args>(args)...)
+        : Array(str, usize(std::char_traits<T>::length(str)))
     {
     }
-    template <typename... Args>
-        requires(std::constructible_from<AllocState, Args...>)
-    constexpr Array(const std::string &str, Args &&...args)
+    constexpr Array(const std::string &str)
         requires(IsString)
-        : Array(str.c_str(), str.size(), std::forward<Args>(args)...)
+        : Array(str.c_str(), str.size())
     {
     }
-    template <typename... Args>
-        requires(std::constructible_from<AllocState, Args...>)
-    constexpr Array(const std::string_view str, Args &&...args)
+    constexpr Array(const std::string_view str)
         requires(IsString)
-        : Array(str.data(), str.size(), std::forward<Args>(args)...)
+        : Array(str.data(), str.size())
     {
     }
 
-    template <std::input_iterator It, typename... Args>
-        requires(std::constructible_from<AllocState, Args...>)
-    constexpr Array(const It pbegin, const It pend, Args &&...args) : m_State(std::forward<Args>(args)...)
+    template <std::input_iterator It> constexpr Array(const It pbegin, const It pend)
     {
         const usize size = addOneIfString(usize(std::distance(pbegin, pend)));
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
@@ -124,15 +105,14 @@ template <typename T, typename AllocState> class Array
         writeNullTerminatorIfString();
     }
 
-    template <typename... Args>
-        requires(std::constructible_from<AllocState, Args...>)
-    constexpr Array(const Span<const T> &span, Args &&...args);
-    template <typename... Args>
-        requires(std::constructible_from<AllocState, Args...>)
-    constexpr Array(const Span<T> &span, Args &&...args);
+    constexpr Array(const Span<const T> &span);
+    constexpr Array(const Span<T> &span);
 
-    template <typename... Args>
-    constexpr Array(const std::initializer_list<T> list, Args &&...args) : m_State(std::forward<Args>(args)...)
+    // The empty pack keeps this from being an initializer-list constructor, so brace initialization does not prefer it:
+    // Array{n} means n elements, and an element list needs double braces, Array{{a, b, c}}
+    template <typename... None>
+        requires(sizeof...(None) == 0)
+    constexpr Array(const std::initializer_list<T> list, None...)
     {
         const usize size = addOneIfString(usize(list.size()));
         if constexpr (Type == Array_Dynamic || Type == Array_Tier)
@@ -1335,12 +1315,21 @@ template <typename T, typename AllocState> class Array
             return size;
     }
 
-    template <typename... Args> constexpr Array createWithAllocator(Args &&...args) const
+    // Results of string operations allocate from this array's allocator, not from the currently pushed one
+    constexpr Array createWithAllocator(const usize size) const
     {
-        if constexpr (Type == Array_Static || Type == Array_Dynamic)
-            return Array{std::forward<Args>(args)...};
-        else
-            return Array{std::forward<Args>(args)..., m_State.Allocator};
+        Array result{};
+        if constexpr (Type != Array_Static && Type != Array_Dynamic)
+            result.ResetAllocator(m_State.Allocator);
+        result.Resize(size);
+        return result;
+    }
+    constexpr Array createWithAllocator(const T *str, const usize size) const
+        requires(IsString)
+    {
+        Array result = createWithAllocator(size);
+        std::char_traits<T>::copy(result.begin(), str, size);
+        return result;
     }
 
     template <typename U, typename OtherAlloc> friend class Array;

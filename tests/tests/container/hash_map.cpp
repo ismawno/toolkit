@@ -10,6 +10,35 @@ static ArenaAllocator s_Arena{1_mib};
 static StackAllocator s_Stack{1_mib};
 static TierAllocator s_Tier{{.MaxAllocation = 16_kib}};
 
+// Internal linkage: every test file defines these, each with its own allocators
+namespace
+{
+// Allocator backed containers take their allocator from the pushed ones, so every test case pushes this file's
+struct PushedAllocators
+{
+    PushedAllocators()
+    {
+        PushArena(&s_Arena);
+        PushStack(&s_Stack);
+        PushTier(&s_Tier);
+    }
+    ~PushedAllocators()
+    {
+        PopTier();
+        PopStack();
+        PopArena();
+    }
+};
+
+// Default constructs and reserves the given capacity, if any (static allocations get none)
+template <typename C, typename... Capacity> C Reserved(const Capacity... capacity)
+{
+    C c{};
+    (c.Reserve(capacity), ...);
+    return c;
+}
+} // namespace
+
 static constexpr usize initialSize = 4;
 
 template <typename T> using StaticAlloc16 = StaticAllocation<T, 16>;
@@ -19,10 +48,10 @@ template <typename T> using StaticAlloc32 = StaticAllocation<T, 32>;
 // Test functions
 // ---------------------------------------------------------------------------
 
-template <template <typename> typename A, typename... Args> void TestMapInsertFind(Args... args)
+template <template <typename> typename A, typename... Args> void TestMapInsertFind([[maybe_unused]] const Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map(initialSize);
 
     const u32 v0 = map.Insert(1u, 100u);
     const u32 v1 = map.Insert(2u, 200u);
@@ -52,10 +81,10 @@ template <template <typename> typename A, typename... Args> void TestMapInsertFi
     REQUIRE_FALSE(map.Contains(99u));
 }
 
-template <template <typename> typename A, typename... Args> void TestMapAt(Args... args)
+template <template <typename> typename A, typename... Args> void TestMapAt([[maybe_unused]] const Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map(initialSize);
 
     map.Insert(1u, 10u);
     map.Insert(2u, 20u);
@@ -71,10 +100,10 @@ template <template <typename> typename A, typename... Args> void TestMapAt(Args.
     REQUIRE(cmap[2u] == 20u);
 }
 
-template <template <typename> typename A, typename... Args> void TestMapTryInsert(Args... args)
+template <template <typename> typename A, typename... Args> void TestMapTryInsert([[maybe_unused]] const Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map(initialSize);
 
     // first TryInsert creates the entry
     u32 &v0 = map.TryInsert(1u, 100u);
@@ -96,10 +125,10 @@ template <template <typename> typename A, typename... Args> void TestMapTryInser
     REQUIRE(map.At(77u) == 77u);
 }
 
-template <template <typename> typename A, typename... Args> void TestMapContains(Args... args)
+template <template <typename> typename A, typename... Args> void TestMapContains([[maybe_unused]] const Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map(initialSize);
 
     map.Insert(10u, 1u);
     map.Insert(20u, 2u);
@@ -110,10 +139,10 @@ template <template <typename> typename A, typename... Args> void TestMapContains
     REQUIRE_FALSE(map.Contains(0u));
 }
 
-template <template <typename> typename A, typename... Args> void TestMapRemoveByKey(Args... args)
+template <template <typename> typename A, typename... Args> void TestMapRemoveByKey([[maybe_unused]] const Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map(initialSize);
 
     map.Insert(1u, 10u);
     map.Insert(2u, 20u);
@@ -133,10 +162,10 @@ template <template <typename> typename A, typename... Args> void TestMapRemoveBy
     REQUIRE(map.Find(3u)->Value == 30u);
 }
 
-template <template <typename> typename A, typename... Args> void TestMapRemoveByIterator(Args... args)
+template <template <typename> typename A, typename... Args> void TestMapRemoveByIterator([[maybe_unused]] const Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map(initialSize);
 
     map.Insert(5u, 50u);
     map.Insert(6u, 60u);
@@ -151,10 +180,10 @@ template <template <typename> typename A, typename... Args> void TestMapRemoveBy
     REQUIRE(map.Find(6u)->Value == 60u);
 }
 
-template <template <typename> typename A, typename... Args> void TestMapClear(Args... args)
+template <template <typename> typename A, typename... Args> void TestMapClear([[maybe_unused]] const Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map(initialSize);
 
     map.Insert(1u, 1u);
     map.Insert(2u, 2u);
@@ -173,10 +202,10 @@ template <template <typename> typename A, typename... Args> void TestMapClear(Ar
     REQUIRE(map.Find(4u)->Value == 40u);
 }
 
-template <template <typename> typename A, typename... Args> void TestMapIteration(Args... args)
+template <template <typename> typename A, typename... Args> void TestMapIteration([[maybe_unused]] const Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map(initialSize);
 
     map.Insert(1u, 10u);
     map.Insert(2u, 20u);
@@ -204,10 +233,10 @@ template <template <typename> typename A, typename... Args> void TestMapIteratio
     REQUIRE(map.Find(3u)->Value == 60u);
 }
 
-template <template <typename> typename A, typename... Args> void TestMapMutation(Args... args)
+template <template <typename> typename A, typename... Args> void TestMapMutation([[maybe_unused]] const Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map(initialSize);
 
     map.Insert(1u, 100u);
 
@@ -229,10 +258,10 @@ template <template <typename> typename A, typename... Args> void TestMapMutation
     REQUIRE(map.At(2u) == 77u);
 }
 
-template <template <typename> typename A, typename... Args> void TestMapInsertAfterRemove(Args... args)
+template <template <typename> typename A, typename... Args> void TestMapInsertAfterRemove([[maybe_unused]] const Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map(initialSize);
 
     map.Insert(1u, 10u);
     map.Insert(2u, 20u);
@@ -260,10 +289,10 @@ template <template <typename> typename A, typename... Args> void TestMapInsertAf
     REQUIRE(map.At(100u) == 1000u);
 }
 
-template <template <typename> typename A, typename... Args> void TestMapStringKV(Args... args)
+template <template <typename> typename A, typename... Args> void TestMapStringKV([[maybe_unused]] const Args... args)
 {
     using Node = MapNode<std::string, std::string>;
-    HashMap<std::string, std::string, A<Node>> map{initialSize, A<Node>{args...}};
+    HashMap<std::string, std::string, A<Node>> map(initialSize);
 
     map.Insert(std::string("name"), std::string("Alice"));
     map.Insert(std::string("city"), std::string("Madrid"));
@@ -286,10 +315,10 @@ template <template <typename> typename A, typename... Args> void TestMapStringKV
     REQUIRE(map.GetSize() == 2);
 }
 
-template <template <typename> typename A, typename... Args> void TestMapMixedKV(Args... args)
+template <template <typename> typename A, typename... Args> void TestMapMixedKV([[maybe_unused]] const Args... args)
 {
     using Node = MapNode<std::string, u32>;
-    HashMap<std::string, u32, A<Node>> map{initialSize, A<Node>{args...}};
+    HashMap<std::string, u32, A<Node>> map(initialSize);
 
     map.Insert(std::string("alpha"), 1u);
     map.Insert(std::string("beta"), 2u);
@@ -314,10 +343,10 @@ template <template <typename> typename A, typename... Args> void TestMapMixedKV(
     REQUIRE(map.GetSize() == 0);
 }
 
-template <template <typename> typename A, typename... Args> void TestMapLoadFactor(Args... args)
+template <template <typename> typename A, typename... Args> void TestMapLoadFactor([[maybe_unused]] const Args... args)
 {
     using Node = MapNode<u32, u32>;
-    HashMap<u32, u32, A<Node>> map{initialSize, A<Node>{args...}};
+    HashMap<u32, u32, A<Node>> map(initialSize);
 
     REQUIRE(map.GetSize() == 0);
     map.Insert(1u, 1u);
@@ -334,62 +363,75 @@ template <template <typename> typename A, typename... Args> void TestMapLoadFact
 // ---------------------------------------------------------------------------
 
 #define MAP_TEST_ALL(Fn, Cap)                                                                                          \
-    Fn<ArenaAllocation>(&s_Arena, usize(Cap));                                                                         \
+    Fn<ArenaAllocation>(usize(Cap));                                                                         \
     Fn<DynamicAllocation>(usize(Cap));                                                                                 \
-    Fn<StackAllocation>(&s_Stack, usize(Cap));                                                                         \
+    Fn<StackAllocation>(usize(Cap));                                                                         \
     Fn<StaticAlloc##Cap>();                                                                                            \
-    Fn<TierAllocation>(&s_Tier, usize(Cap))
+    Fn<TierAllocation>(usize(Cap))
 
 TEST_CASE("HashMap: Insert and Find", "[HashMap]")
 {
+    const PushedAllocators pushed{};
     MAP_TEST_ALL(TestMapInsertFind, 16);
 }
 TEST_CASE("HashMap: At accessor", "[HashMap]")
 {
+    const PushedAllocators pushed{};
     MAP_TEST_ALL(TestMapAt, 16);
 }
 TEST_CASE("HashMap: TryInsert semantics", "[HashMap]")
 {
+    const PushedAllocators pushed{};
     MAP_TEST_ALL(TestMapTryInsert, 16);
 }
 TEST_CASE("HashMap: Contains", "[HashMap]")
 {
+    const PushedAllocators pushed{};
     MAP_TEST_ALL(TestMapContains, 16);
 }
 TEST_CASE("HashMap: Remove by key", "[HashMap]")
 {
+    const PushedAllocators pushed{};
     MAP_TEST_ALL(TestMapRemoveByKey, 16);
 }
 TEST_CASE("HashMap: Remove by iterator", "[HashMap]")
 {
+    const PushedAllocators pushed{};
     MAP_TEST_ALL(TestMapRemoveByIterator, 16);
 }
 TEST_CASE("HashMap: Clear and re-insert", "[HashMap]")
 {
+    const PushedAllocators pushed{};
     MAP_TEST_ALL(TestMapClear, 16);
 }
 TEST_CASE("HashMap: Iteration and mutation", "[HashMap]")
 {
+    const PushedAllocators pushed{};
     MAP_TEST_ALL(TestMapIteration, 16);
 }
 TEST_CASE("HashMap: Mutation through Find, At, operator[], Insert ref", "[HashMap]")
 {
+    const PushedAllocators pushed{};
     MAP_TEST_ALL(TestMapMutation, 16);
 }
 TEST_CASE("HashMap: Insert after Remove (tombstone reuse)", "[HashMap]")
 {
+    const PushedAllocators pushed{};
     MAP_TEST_ALL(TestMapInsertAfterRemove, 16);
 }
 TEST_CASE("HashMap<string, string>: basic operations", "[HashMap][string]")
 {
+    const PushedAllocators pushed{};
     MAP_TEST_ALL(TestMapStringKV, 16);
 }
 TEST_CASE("HashMap<string, u32>: mixed key-value types", "[HashMap][string]")
 {
+    const PushedAllocators pushed{};
     MAP_TEST_ALL(TestMapMixedKV, 16);
 }
 TEST_CASE("HashMap: load factor", "[HashMap]")
 {
+    const PushedAllocators pushed{};
     MAP_TEST_ALL(TestMapLoadFactor, 16);
 }
 

@@ -325,23 +325,16 @@ template <typename AllocState> class Path
 
     constexpr Path() = default;
 
-    template <typename... Args>
-    constexpr Path(const char *path, Args &&...args) : m_Path(path ? path : "", std::forward<Args>(args)...)
+    constexpr Path(const char *path) : m_Path(path ? path : "")
     {
     }
-    template <typename... Args>
-    constexpr Path(const StringView path, Args &&...args)
-        : m_Path(path.GetData(), path.GetSize(), std::forward<Args>(args)...)
+    constexpr Path(const StringView path) : m_Path(path.GetData(), path.GetSize())
     {
     }
-    template <typename... Args>
-    constexpr Path(const std::string_view path, Args &&...args)
-        : m_Path(path.data(), usize(path.size()), std::forward<Args>(args)...)
+    constexpr Path(const std::string_view path) : m_Path(path.data(), usize(path.size()))
     {
     }
-    template <typename... Args>
-    constexpr Path(const std::string &path, Args &&...args)
-        : m_Path(path.c_str(), usize(path.size()), std::forward<Args>(args)...)
+    constexpr Path(const std::string &path) : m_Path(path.c_str(), usize(path.size()))
     {
     }
 
@@ -352,9 +345,9 @@ template <typename AllocState> class Path
     {
     }
 
-    template <typename OtherAlloc, typename... Args>
+    template <typename OtherAlloc>
         requires(!std::is_same_v<OtherAlloc, AllocState>)
-    constexpr Path(const Path<OtherAlloc> &other, Args &&...args) : Path(other.GetView(), std::forward<Args>(args)...)
+    constexpr Path(const Path<OtherAlloc> &other) : Path(other.GetView())
     {
     }
 
@@ -1047,10 +1040,10 @@ template <typename AllocState> class Path
     // Creates an empty string that shares this path's allocator
     constexpr StringType createString() const
     {
-        if constexpr (Type == Array_Static || Type == Array_Dynamic)
-            return StringType{};
-        else
-            return StringType(m_Path.GetAllocator());
+        StringType str{};
+        if constexpr (Type != Array_Static && Type != Array_Dynamic)
+            str.ResetAllocator(m_Path.GetAllocator());
+        return str;
     }
 
     constexpr Path subPath(const char *data, const usize size) const

@@ -18,6 +18,7 @@ set(SOURCES
     tests/container/string.cpp
     tests/container/hive.cpp
     tests/container/hash_map.cpp
+    tests/container/bitfield_map.cpp
     tests/container/hash_set.cpp
     tests/container/container.cpp
     tests/container/span.cpp

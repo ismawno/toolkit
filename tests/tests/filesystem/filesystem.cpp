@@ -302,7 +302,7 @@ TEST_CASE("Current, absolute, canonical and relative paths", "[filesystem]")
     PopTier();
 }
 
-template <typename AllocState, typename... Args> static void testDirectoryIteration(Args... args)
+template <typename AllocState> static void testDirectoryIteration()
 {
     PushTier(&s_Tier);
     const FileSystem_TempDirectory tmp{};
@@ -312,7 +312,7 @@ template <typename AllocState, typename... Args> static void testDirectoryIterat
     writeFile(tmp.Root / "d1/d2/f3", "333");
     REQUIRE(CreateDirectorySymlink("d1", tmp.Root / "link"));
 
-    const Path<AllocState> root{tmp.Root.GetView(), args...};
+    const Path<AllocState> root{tmp.Root.GetView()};
 
     {
         std::set<std::string> names{};
@@ -393,12 +393,14 @@ TEST_CASE("Directory iteration (static)", "[filesystem]")
 TEST_CASE("Directory iteration (stack)", "[filesystem]")
 {
     StackAllocator stack{64_kib};
-    testDirectoryIteration<StackAllocation<char>>(&stack);
+    PushStack(&stack);
+    testDirectoryIteration<StackAllocation<char>>();
+    PopStack();
     REQUIRE(stack.IsEmpty());
 }
 TEST_CASE("Directory iteration (tier)", "[filesystem]")
 {
-    testDirectoryIteration<TierAllocation<char>>(&s_Tier);
+    testDirectoryIteration<TierAllocation<char>>();
 }
 
 TEST_CASE("Path returning functions keep the allocation type", "[filesystem]")
@@ -414,13 +416,15 @@ TEST_CASE("Path returning functions keep the allocation type", "[filesystem]")
     REQUIRE(tooSmall.GetError() == FileSystemError_NameTooLong);
 
     StackAllocator stack{4_kib};
+    PushStack(&stack);
     {
-        const StackPath path{tmp.Root.GetView(), &stack};
+        const StackPath path{tmp.Root.GetView()};
         const auto canonical = Canonical(path);
         REQUIRE(canonical);
         REQUIRE(canonical->GetString().GetAllocator() == &stack);
         REQUIRE(canonical.GetValue() == Canonical(tmp.Root).GetValue());
     }
+    PopStack();
     REQUIRE(stack.IsEmpty());
     const TierPath tpath{"some/relative"};
     const auto absolute = Absolute(tpath);

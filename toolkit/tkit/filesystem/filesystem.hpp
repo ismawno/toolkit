@@ -320,9 +320,12 @@ TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> ConvertPath(FileSystemResult<
             return FileSystemResult<PathType>::Ok(view);
         else
         {
-            using AllocatorPtr = decltype(PathType{}.GetString().GetAllocator());
-            const AllocatorPtr allocator = like ? like->GetString().GetAllocator() : nullptr;
-            return FileSystemResult<PathType>::Ok(view, allocator);
+            // A null allocator makes the string grab the currently pushed one when it allocates
+            typename PathType::StringType str{};
+            str.ResetAllocator(like ? like->GetString().GetAllocator() : nullptr);
+            str.Resize(view.GetSize());
+            std::char_traits<char>::copy(str.GetData(), view.GetData(), view.GetSize());
+            return FileSystemResult<PathType>::Ok(std::move(str));
         }
     }
 }

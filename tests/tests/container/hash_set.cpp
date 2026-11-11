@@ -10,6 +10,35 @@ static ArenaAllocator s_Arena{1_mib};
 static StackAllocator s_Stack{1_mib};
 static TierAllocator s_Tier{{.MaxAllocation = 16_kib}};
 
+// Internal linkage: every test file defines these, each with its own allocators
+namespace
+{
+// Allocator backed containers take their allocator from the pushed ones, so every test case pushes this file's
+struct PushedAllocators
+{
+    PushedAllocators()
+    {
+        PushArena(&s_Arena);
+        PushStack(&s_Stack);
+        PushTier(&s_Tier);
+    }
+    ~PushedAllocators()
+    {
+        PopTier();
+        PopStack();
+        PopArena();
+    }
+};
+
+// Default constructs and reserves the given capacity, if any (static allocations get none)
+template <typename C, typename... Capacity> C Reserved(const Capacity... capacity)
+{
+    C c{};
+    (c.Reserve(capacity), ...);
+    return c;
+}
+} // namespace
+
 static constexpr usize initialSize = 4;
 
 template <typename T> using StaticAlloc16 = StaticAllocation<T, 16>;
@@ -19,10 +48,10 @@ template <typename T> using StaticAlloc32 = StaticAllocation<T, 32>;
 // Test functions
 // ---------------------------------------------------------------------------
 
-template <template <typename> typename A, typename... Args> void TestSetInsertFind(Args... args)
+template <template <typename> typename A, typename... Args> void TestSetInsertFind([[maybe_unused]] const Args... args)
 {
     using Node = SetNode<u32>;
-    HashSet<u32, A<Node>> set{initialSize, A<Node>{args...}};
+    HashSet<u32, A<Node>> set(initialSize);
 
     const u32 &v0 = set.Insert(10u);
     const u32 &v1 = set.Insert(20u);
@@ -42,10 +71,10 @@ template <template <typename> typename A, typename... Args> void TestSetInsertFi
     REQUIRE(*it == 10u);
 }
 
-template <template <typename> typename A, typename... Args> void TestSetContains(Args... args)
+template <template <typename> typename A, typename... Args> void TestSetContains([[maybe_unused]] const Args... args)
 {
     using Node = SetNode<u32>;
-    HashSet<u32, A<Node>> set{initialSize, A<Node>{args...}};
+    HashSet<u32, A<Node>> set(initialSize);
 
     set.Insert(1u);
     set.Insert(2u);
@@ -59,10 +88,10 @@ template <template <typename> typename A, typename... Args> void TestSetContains
     REQUIRE_FALSE(set.Contains(999u));
 }
 
-template <template <typename> typename A, typename... Args> void TestSetRemoveByKey(Args... args)
+template <template <typename> typename A, typename... Args> void TestSetRemoveByKey([[maybe_unused]] const Args... args)
 {
     using Node = SetNode<u32>;
-    HashSet<u32, A<Node>> set{initialSize, A<Node>{args...}};
+    HashSet<u32, A<Node>> set(initialSize);
 
     set.Insert(1u);
     set.Insert(2u);
@@ -79,10 +108,10 @@ template <template <typename> typename A, typename... Args> void TestSetRemoveBy
     REQUIRE(set.GetSize() == 2);
 }
 
-template <template <typename> typename A, typename... Args> void TestSetRemoveByIterator(Args... args)
+template <template <typename> typename A, typename... Args> void TestSetRemoveByIterator([[maybe_unused]] const Args... args)
 {
     using Node = SetNode<u32>;
-    HashSet<u32, A<Node>> set{initialSize, A<Node>{args...}};
+    HashSet<u32, A<Node>> set(initialSize);
 
     set.Insert(5u);
     set.Insert(6u);
@@ -96,10 +125,10 @@ template <template <typename> typename A, typename... Args> void TestSetRemoveBy
     REQUIRE(set.Contains(6u));
 }
 
-template <template <typename> typename A, typename... Args> void TestSetClear(Args... args)
+template <template <typename> typename A, typename... Args> void TestSetClear([[maybe_unused]] const Args... args)
 {
     using Node = SetNode<u32>;
-    HashSet<u32, A<Node>> set{initialSize, A<Node>{args...}};
+    HashSet<u32, A<Node>> set(initialSize);
 
     set.Insert(1u);
     set.Insert(2u);
@@ -118,10 +147,10 @@ template <template <typename> typename A, typename... Args> void TestSetClear(Ar
     REQUIRE(set.Contains(4u));
 }
 
-template <template <typename> typename A, typename... Args> void TestSetIteration(Args... args)
+template <template <typename> typename A, typename... Args> void TestSetIteration([[maybe_unused]] const Args... args)
 {
     using Node = SetNode<u32>;
-    HashSet<u32, A<Node>> set{initialSize, A<Node>{args...}};
+    HashSet<u32, A<Node>> set(initialSize);
 
     set.Insert(10u);
     set.Insert(20u);
@@ -138,10 +167,10 @@ template <template <typename> typename A, typename... Args> void TestSetIteratio
     REQUIRE(sum == 60u);
 }
 
-template <template <typename> typename A, typename... Args> void TestSetIteratorConst(Args... args)
+template <template <typename> typename A, typename... Args> void TestSetIteratorConst([[maybe_unused]] const Args... args)
 {
     using Node = SetNode<u32>;
-    HashSet<u32, A<Node>> set{initialSize, A<Node>{args...}};
+    HashSet<u32, A<Node>> set(initialSize);
 
     set.Insert(1u);
     set.Insert(2u);
@@ -155,10 +184,10 @@ template <template <typename> typename A, typename... Args> void TestSetIterator
         REQUIRE((key == 1u || key == 2u));
 }
 
-template <template <typename> typename A, typename... Args> void TestSetInsertAfterRemove(Args... args)
+template <template <typename> typename A, typename... Args> void TestSetInsertAfterRemove([[maybe_unused]] const Args... args)
 {
     using Node = SetNode<u32>;
-    HashSet<u32, A<Node>> set{initialSize, A<Node>{args...}};
+    HashSet<u32, A<Node>> set(initialSize);
 
     set.Insert(1u);
     set.Insert(2u);
@@ -185,10 +214,10 @@ template <template <typename> typename A, typename... Args> void TestSetInsertAf
     REQUIRE(set.Contains(100u));
 }
 
-template <template <typename> typename A, typename... Args> void TestSetStringKeys(Args... args)
+template <template <typename> typename A, typename... Args> void TestSetStringKeys([[maybe_unused]] const Args... args)
 {
     using Node = SetNode<std::string>;
-    HashSet<std::string, A<Node>> set{initialSize, A<Node>{args...}};
+    HashSet<std::string, A<Node>> set(initialSize);
 
     const std::string &r0 = set.Insert(std::string("alpha"));
     const std::string &r1 = set.Insert(std::string("beta"));
@@ -222,10 +251,10 @@ template <template <typename> typename A, typename... Args> void TestSetStringKe
     REQUIRE(count == 2);
 }
 
-template <template <typename> typename A, typename... Args> void TestSetLoadFactor(Args... args)
+template <template <typename> typename A, typename... Args> void TestSetLoadFactor([[maybe_unused]] const Args... args)
 {
     using Node = SetNode<u32>;
-    HashSet<u32, A<Node>> set{initialSize, A<Node>{args...}};
+    HashSet<u32, A<Node>> set(initialSize);
 
     REQUIRE(set.GetSize() == 0);
 
@@ -243,50 +272,60 @@ template <template <typename> typename A, typename... Args> void TestSetLoadFact
 // ---------------------------------------------------------------------------
 
 #define SET_TEST_ALL(Fn, Cap)                                                                                          \
-    Fn<ArenaAllocation>(&s_Arena, usize(Cap));                                                                         \
+    Fn<ArenaAllocation>(usize(Cap));                                                                         \
     Fn<DynamicAllocation>(usize(Cap));                                                                                 \
-    Fn<StackAllocation>(&s_Stack, usize(Cap));                                                                         \
+    Fn<StackAllocation>(usize(Cap));                                                                         \
     Fn<StaticAlloc##Cap>();                                                                                            \
-    Fn<TierAllocation>(&s_Tier, usize(Cap))
+    Fn<TierAllocation>(usize(Cap))
 
 TEST_CASE("HashSet: Insert and Find", "[HashSet]")
 {
+    const PushedAllocators pushed{};
     SET_TEST_ALL(TestSetInsertFind, 16);
 }
 TEST_CASE("HashSet: Contains", "[HashSet]")
 {
+    const PushedAllocators pushed{};
     SET_TEST_ALL(TestSetContains, 16);
 }
 TEST_CASE("HashSet: Remove by key", "[HashSet]")
 {
+    const PushedAllocators pushed{};
     SET_TEST_ALL(TestSetRemoveByKey, 16);
 }
 TEST_CASE("HashSet: Remove by iterator", "[HashSet]")
 {
+    const PushedAllocators pushed{};
     SET_TEST_ALL(TestSetRemoveByIterator, 16);
 }
 TEST_CASE("HashSet: Clear and re-insert", "[HashSet]")
 {
+    const PushedAllocators pushed{};
     SET_TEST_ALL(TestSetClear, 16);
 }
 TEST_CASE("HashSet: Iteration", "[HashSet]")
 {
+    const PushedAllocators pushed{};
     SET_TEST_ALL(TestSetIteration, 16);
 }
 TEST_CASE("HashSet: iterator yields const K&", "[HashSet]")
 {
+    const PushedAllocators pushed{};
     SET_TEST_ALL(TestSetIteratorConst, 16);
 }
 TEST_CASE("HashSet: Insert after Remove (tombstone reuse)", "[HashSet]")
 {
+    const PushedAllocators pushed{};
     SET_TEST_ALL(TestSetInsertAfterRemove, 16);
 }
 TEST_CASE("HashSet<string>: basic operations", "[HashSet][string]")
 {
+    const PushedAllocators pushed{};
     SET_TEST_ALL(TestSetStringKeys, 16);
 }
 TEST_CASE("HashSet: load factor", "[HashSet]")
 {
+    const PushedAllocators pushed{};
     SET_TEST_ALL(TestSetLoadFactor, 16);
 }
 

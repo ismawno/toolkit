@@ -1020,7 +1020,7 @@ FileSystemResult<FileSystemPath> ReadSymlink(const char *path)
         if (usize(length) < capacity)
         {
             buffer.Resize(usize(length));
-            return ok(FileSystemPath{std::move(buffer)});
+            return ok(FileSystemPath{FileSystemPath::StringType(std::move(buffer))});
         }
         capacity *= 2;
     }
@@ -1162,7 +1162,7 @@ FileSystemResult<FileSystemPath> GetCurrentPath()
         if (::getcwd(buffer.GetData(), capacity + 1))
         {
             buffer.Resize(usize(std::char_traits<char>::length(buffer.GetData())));
-            return ok(FileSystemPath{std::move(buffer)});
+            return ok(FileSystemPath{FileSystemPath::StringType(std::move(buffer))});
         }
         if (errno != ERANGE)
             return lastError<FileSystemPath>();
