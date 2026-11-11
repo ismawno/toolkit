@@ -12,9 +12,7 @@ template <usize N> struct IdentityFieldDesc
     static constexpr usize BitCount = N;
 };
 
-template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger Index = u16>
-    requires(FieldDesc::BitCount <= 16)
-class BitFieldMap
+template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger Index = u16> class BitFieldMap
 {
   public:
     static constexpr usize BitCount = FieldDesc::BitCount;
@@ -289,7 +287,6 @@ class BitFieldMap
     TKit::Array<Pair, AllocState> m_Dense{};
 
     template <typename U, typename OtherFieldDesc, typename OtherAllocState, UnsignedInteger OtherIndex>
-        requires(OtherFieldDesc::BitCount <= 16)
     friend class BitFieldMap;
 };
 } // namespace TKit
