@@ -48,7 +48,7 @@ template <typename T> using StaticAlloc8 = StaticAllocation<T, 8>;
 
 template <template <typename> typename A, typename... Args> void TestHiveBasic([[maybe_unused]] const Args... args)
 {
-    auto hive = Reserved<Hive<u32, A<u32>, A<usize>>>(args...);
+    auto hive = Reserved<Hive<u32, A<u32>>>(args...);
     REQUIRE(hive.GetSize() == 0);
     REQUIRE(hive.IsEmpty());
     REQUIRE_FALSE(hive.IsFull());
@@ -61,9 +61,10 @@ template <template <typename> typename A, typename... Args> void TestHiveBasic([
     REQUIRE(hive.Contains(id1));
 }
 
-template <template <typename> typename A, typename... Args> void TestHiveInsertLookup([[maybe_unused]] const Args... args)
+template <template <typename> typename A, typename... Args>
+void TestHiveInsertLookup([[maybe_unused]] const Args... args)
 {
-    auto hive = Reserved<Hive<u32, A<u32>, A<usize>>>(args...);
+    auto hive = Reserved<Hive<u32, A<u32>>>(args...);
 
     const usize id0 = hive.Insert(100u);
     const usize id1 = hive.Insert(200u);
@@ -79,9 +80,10 @@ template <template <typename> typename A, typename... Args> void TestHiveInsertL
     REQUIRE(hive.GetSize() == 3);
 }
 
-template <template <typename> typename A, typename... Args> void TestHiveRemoveCompact([[maybe_unused]] const Args... args)
+template <template <typename> typename A, typename... Args>
+void TestHiveRemoveCompact([[maybe_unused]] const Args... args)
 {
-    auto hive = Reserved<Hive<u32, A<u32>, A<usize>>>(args...);
+    auto hive = Reserved<Hive<u32, A<u32>>>(args...);
 
     const usize id0 = hive.Insert(1u);
     const usize id1 = hive.Insert(2u);
@@ -105,7 +107,7 @@ template <template <typename> typename A, typename... Args> void TestHiveRemoveC
 
 template <template <typename> typename A, typename... Args> void TestHiveRemoveLast([[maybe_unused]] const Args... args)
 {
-    auto hive = Reserved<Hive<u32, A<u32>, A<usize>>>(args...);
+    auto hive = Reserved<Hive<u32, A<u32>>>(args...);
 
     const usize id0 = hive.Insert(42u);
     const usize id1 = hive.Insert(43u);
@@ -118,9 +120,10 @@ template <template <typename> typename A, typename... Args> void TestHiveRemoveL
     REQUIRE(hive[id0] == 42u);
 }
 
-template <template <typename> typename A, typename... Args> void TestHiveRemoveFirst([[maybe_unused]] const Args... args)
+template <template <typename> typename A, typename... Args>
+void TestHiveRemoveFirst([[maybe_unused]] const Args... args)
 {
-    auto hive = Reserved<Hive<u32, A<u32>, A<usize>>>(args...);
+    auto hive = Reserved<Hive<u32, A<u32>>>(args...);
 
     const usize id0 = hive.Insert(10u);
     const usize id1 = hive.Insert(20u);
@@ -138,7 +141,7 @@ template <template <typename> typename A, typename... Args> void TestHiveRemoveF
 
 template <template <typename> typename A, typename... Args> void TestHiveIdReuse([[maybe_unused]] const Args... args)
 {
-    auto hive = Reserved<Hive<u32, A<u32>, A<usize>>>(args...);
+    auto hive = Reserved<Hive<u32, A<u32>>>(args...);
 
     const usize id0 = hive.Insert(1u);
     const usize id1 = hive.Insert(2u);
@@ -157,9 +160,10 @@ template <template <typename> typename A, typename... Args> void TestHiveIdReuse
     REQUIRE(hive.Contains(id2));
 }
 
-template <template <typename> typename A, typename... Args> void TestHiveMultipleRemoves([[maybe_unused]] const Args... args)
+template <template <typename> typename A, typename... Args>
+void TestHiveMultipleRemoves([[maybe_unused]] const Args... args)
 {
-    auto hive = Reserved<Hive<u32, A<u32>, A<usize>>>(args...);
+    auto hive = Reserved<Hive<u32, A<u32>>>(args...);
 
     const usize id0 = hive.Insert(10u);
     const usize id1 = hive.Insert(20u);
@@ -184,9 +188,10 @@ template <template <typename> typename A, typename... Args> void TestHiveMultipl
     REQUIRE(hive.Contains(nid1));
 }
 
-template <template <typename> typename A, typename... Args> void TestHiveDenseIteration([[maybe_unused]] const Args... args)
+template <template <typename> typename A, typename... Args>
+void TestHiveDenseIteration([[maybe_unused]] const Args... args)
 {
-    auto hive = Reserved<Hive<u32, A<u32>, A<usize>>>(args...);
+    auto hive = Reserved<Hive<u32, A<u32>>>(args...);
 
     hive.Insert(1u);
     hive.Insert(2u);
@@ -209,7 +214,7 @@ template <template <typename> typename A, typename... Args> void TestHiveDenseIt
 
 template <template <typename> typename A, typename... Args> void TestHiveReserve([[maybe_unused]] const Args... args)
 {
-    auto hive = Reserved<Hive<u32, A<u32>, A<usize>>>(args...);
+    auto hive = Reserved<Hive<u32, A<u32>>>(args...);
     hive.Reserve(8);
     REQUIRE(hive.GetSize() == 0);
     REQUIRE(hive.IsEmpty());
@@ -218,11 +223,11 @@ template <template <typename> typename A, typename... Args> void TestHiveReserve
 
 template <template <typename> typename A, typename... Args> void TestHiveCopyMove([[maybe_unused]] const Args... args)
 {
-    auto hive = Reserved<Hive<u32, A<u32>, A<usize>>>(args...);
+    auto hive = Reserved<Hive<u32, A<u32>>>(args...);
     const usize id0 = hive.Insert(7u);
     const usize id1 = hive.Insert(8u);
 
-    Hive<u32, A<u32>, A<usize>> copy = hive;
+    Hive<u32, A<u32>> copy = hive;
     REQUIRE(copy.GetSize() == 2);
     REQUIRE(copy[id0] == 7u);
     REQUIRE(copy[id1] == 8u);
@@ -230,7 +235,7 @@ template <template <typename> typename A, typename... Args> void TestHiveCopyMov
     copy[id0] = 77u;
     REQUIRE(hive[id0] == 7u);
 
-    Hive<u32, A<u32>, A<usize>> moved = std::move(copy);
+    Hive<u32, A<u32>> moved = std::move(copy);
     REQUIRE(moved.GetSize() == 2);
     REQUIRE(moved[id0] == 77u);
     REQUIRE(moved[id1] == 8u);
@@ -238,7 +243,7 @@ template <template <typename> typename A, typename... Args> void TestHiveCopyMov
 
 template <template <typename> typename A, typename... Args> void TestHiveStringOps([[maybe_unused]] const Args... args)
 {
-    auto hive = Reserved<Hive<std::string, A<std::string>, A<usize>>>(args...);
+    auto hive = Reserved<Hive<std::string, A<std::string>>>(args...);
 
     const usize id0 = hive.Insert("alpha");
     const usize id1 = hive.Insert("beta");

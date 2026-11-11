@@ -9,11 +9,12 @@
 
 namespace TKit
 {
-template <typename T, typename AllocState, typename IdAllocState> class Hive
+template <typename T, typename AllocState> class Hive
 {
   public:
     using ValueType = T;
     using Id = usize;
+    using IdAllocState = AllocState::template Rebind<Id>;
 
     constexpr Hive() = default;
 
@@ -57,20 +58,19 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
     constexpr Hive &operator=(const Hive &) = default;
     constexpr Hive &operator=(Hive &&) = default;
 
-    template <typename OtherAlloc, typename OtherIdAlloc>
-    constexpr Hive(const Hive<T, OtherAlloc, OtherIdAlloc> &other)
+    template <typename OtherAlloc>
+    constexpr Hive(const Hive<T, OtherAlloc> &other)
         : m_Dense(other.m_Dense), m_Indices(other.m_Indices), m_Ids(other.m_Ids)
     {
     }
 
-    template <typename OtherAlloc, typename OtherIdAlloc>
-    constexpr Hive(Hive<T, OtherAlloc, OtherIdAlloc> &&other)
+    template <typename OtherAlloc>
+    constexpr Hive(Hive<T, OtherAlloc> &&other)
         : m_Dense(std::move(other.m_Dense)), m_Indices(std::move(other.m_Indices)), m_Ids(std::move(other.m_Ids))
     {
     }
 
-    template <typename OtherAlloc, typename OtherIdAlloc>
-    constexpr Hive &operator=(const Hive<T, OtherAlloc, OtherIdAlloc> &other)
+    template <typename OtherAlloc> constexpr Hive &operator=(const Hive<T, OtherAlloc> &other)
     {
         m_Dense = other.m_Dense;
         m_Indices = other.m_Indices;
@@ -78,8 +78,7 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
         return *this;
     }
 
-    template <typename OtherAlloc, typename OtherIdAlloc>
-    constexpr Hive &operator=(Hive<T, OtherAlloc, OtherIdAlloc> &&other)
+    template <typename OtherAlloc> constexpr Hive &operator=(Hive<T, OtherAlloc> &&other)
     {
         m_Dense = std::move(other.m_Dense);
         m_Indices = std::move(other.m_Indices);
@@ -170,59 +169,56 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
         m_Ids.Clear();
     }
 
-#define ITERATE_BY_INSERTION_ORDER(type)                                                                               \
+#define EMIT_LOOP(...)                                                                                                 \
     for (usize id = 0; id < m_Indices.GetSize(); ++id)                                                                 \
     {                                                                                                                  \
         const usize idx = m_Indices[id];                                                                               \
         if (IsValidIndex(idx))                                                                                         \
         {                                                                                                              \
-            if constexpr (std::is_invocable_v<F, usize, type>)                                                         \
+            if constexpr (hasRet)                                                                                      \
             {                                                                                                          \
-                constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, usize, type>, bool>;                    \
-                if constexpr (hasRet)                                                                                  \
-                {                                                                                                      \
-                    if (!std::forward<F>(func)(id, AtByIndex(idx)))                                                    \
-                        return true;                                                                                   \
-                }                                                                                                      \
-                else                                                                                                   \
-                    std::forward<F>(func)(id, AtByIndex(idx));                                                         \
-            }                                                                                                          \
-            else if constexpr (std::is_invocable_v<F, usize>)                                                          \
-            {                                                                                                          \
-                constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, usize>, bool>;                          \
-                if constexpr (hasRet)                                                                                  \
-                {                                                                                                      \
-                    if (!std::forward<F>(func)(id))                                                                    \
-                        return true;                                                                                   \
-                }                                                                                                      \
-                else                                                                                                   \
-                    std::forward<F>(func)(id);                                                                         \
+                if (!func(__VA_ARGS__))                                                                                \
+                    return false;                                                                                      \
             }                                                                                                          \
             else                                                                                                       \
-            {                                                                                                          \
-                constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, type>, bool>;                           \
-                if constexpr (hasRet)                                                                                  \
-                {                                                                                                      \
-                    if (!std::forward<F>(func)(AtByIndex(idx)))                                                        \
-                        return true;                                                                                   \
-                }                                                                                                      \
-                else                                                                                                   \
-                    std::forward<F>(func)(AtByIndex(idx));                                                             \
-            }                                                                                                          \
+                func(__VA_ARGS__);                                                                                     \
         }                                                                                                              \
-    }                                                                                                                  \
-    return false;
+    }
 
-    template <typename F> bool IterateByInsertionOrder(F &&func)
+#define ITERATE_BY_INSERTION_ORDER(type)                                                                               \
+    if constexpr (std::is_invocable_v<F, usize, type>)                                                                 \
+    {                                                                                                                  \
+        constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, usize, type>, bool>;                            \
+        EMIT_LOOP(id, AtByIndex(idx));                                                                                 \
+        if constexpr (hasRet)                                                                                          \
+            return true;                                                                                               \
+    }                                                                                                                  \
+    else if constexpr (std::is_invocable_v<F, usize>)                                                                  \
+    {                                                                                                                  \
+        constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, usize>, bool>;                                  \
+        EMIT_LOOP(id);                                                                                                 \
+        if constexpr (hasRet)                                                                                          \
+            return true;                                                                                               \
+    }                                                                                                                  \
+    else                                                                                                               \
+    {                                                                                                                  \
+        constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, type>, bool>;                                   \
+        EMIT_LOOP(id);                                                                                                 \
+        if constexpr (hasRet)                                                                                          \
+            return true;                                                                                               \
+    }
+
+    template <typename F> auto IterateByInsertionOrder(const F func)
     {
         ITERATE_BY_INSERTION_ORDER(T &)
     }
-    template <typename F> bool IterateByInsertionOrder(F &&func) const
+    template <typename F> auto IterateByInsertionOrder(const F func) const
     {
         ITERATE_BY_INSERTION_ORDER(const T &)
     }
 
 #undef ITERATE_BY_INSERTION_ORDER
+#undef EMIT_LOOP
 
     constexpr const Array<usize, IdAllocState> &GetIndices() const
     {
@@ -362,13 +358,12 @@ template <typename T, typename AllocState, typename IdAllocState> class Hive
     Array<usize, IdAllocState> m_Indices{};
     Array<usize, IdAllocState> m_Ids{};
 
-    template <typename U, typename OtherAlloc, typename OtherIdAlloc> friend class Hive;
+    template <typename U, typename OtherAlloc> friend class Hive;
 };
-template <typename T> using ArenaHive = Hive<T, ArenaAllocation<T>, ArenaAllocation<usize>>;
-template <typename T> using DynamicHive = Hive<T, DynamicAllocation<T>, DynamicAllocation<usize>>;
-template <typename T> using StackHive = Hive<T, StackAllocation<T>, StackAllocation<usize>>;
-template <typename T> using TierHive = Hive<T, TierAllocation<T>, TierAllocation<usize>>;
+template <typename T> using ArenaHive = Hive<T, ArenaAllocation<T>>;
+template <typename T> using DynamicHive = Hive<T, DynamicAllocation<T>>;
+template <typename T> using StackHive = Hive<T, StackAllocation<T>>;
+template <typename T> using TierHive = Hive<T, TierAllocation<T>>;
 
-template <typename T, usize Capacity>
-using StaticHive = Hive<T, StaticAllocation<T, Capacity>, StaticAllocation<usize, Capacity>>;
+template <typename T, usize Capacity> using StaticHive = Hive<T, StaticAllocation<T, Capacity>>;
 } // namespace TKit

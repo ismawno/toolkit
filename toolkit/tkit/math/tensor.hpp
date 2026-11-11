@@ -65,22 +65,25 @@ namespace TKit
 {
 template <usize N0, usize... N, typename F, typename... Args>
     requires(TKit::Integer<Args> && ... && true)
-void IterateMultiIndex(F &&func, Args... indices)
+auto IterateMultiIndex(const F func, Args... indices)
 {
+    constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, Args..., usize>, bool>;
     for (usize i = 0; i < N0; ++i)
         if constexpr (sizeof...(N) == 0)
         {
-            constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, Args..., usize>, bool>;
             if constexpr (hasRet)
             {
-                if (!std::forward<F>(func)(indices..., i))
-                    return;
+                if (!func(indices..., i))
+                    return false;
             }
             else
-                std::forward<F>(func)(indices..., i);
+                func(indices..., i);
         }
         else
-            IterateMultiIndex<N...>(std::forward<F>(func), indices..., i);
+            return IterateMultiIndex<N...>(func, indices..., i);
+
+    if constexpr (hasRet)
+        return true;
 }
 } // namespace TKit
 
@@ -255,9 +258,9 @@ struct Tensor
 
     template <typename F, typename... Args>
         requires(Integer<Args> && ... && true)
-    static void IterateMultiIndex(F &&func, Args... indices)
+    static auto IterateMultiIndex(const F func, Args... indices)
     {
-        TKit::IterateMultiIndex<N0, N...>(std::forward<F>(func), indices...);
+        return TKit::IterateMultiIndex<N0, N...>(func, indices...);
     }
 
     constexpr const T &Flat(const usize index) const

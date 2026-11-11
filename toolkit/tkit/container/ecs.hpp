@@ -70,7 +70,7 @@ template <typename... As, typename T, typename... Rest> struct MergedComponentSe
 
 template <typename... Sets> using MergeComponentSets = MergedComponentSets<Sets...>::Type;
 
-template <typename F, typename... Cs> void ForEachComponentType(const ComponentSet<Cs...>, F &&func)
+template <typename F, typename... Cs> void ForEachComponentType(const ComponentSet<Cs...>, const F func)
 {
     (func.template operator()<Cs>(), ...);
 }
@@ -613,17 +613,17 @@ class ComponentQuery
         usize m_Row = 0;
     };
 
-    template <typename F> void Each(F &&func) const
+    template <typename F> void Each(const F func) const
     {
         for (usize i = 0; i < m_ArchetypeInfo.GetSize(); ++i)
-            eachPerArchetype(std::forward<F>(func), i, std::make_integer_sequence<usize, Count>{});
+            eachPerArchetype(func, i, std::make_integer_sequence<usize, Count>{});
     }
 
     template <std::derived_from<ITaskManager> TManager, typename It, typename F>
-    void AsyncEach(TManager &manager, const It dest, const usize partitions, F &&func) const
+    void AsyncEach(TManager &manager, const It dest, const usize partitions, const F func) const
     {
         for (usize i = 0; i < m_ArchetypeInfo.GetSize(); ++i)
-            asyncEachPerArchetype(manager, dest + i * partitions, partitions, std::forward<F>(func), i,
+            asyncEachPerArchetype(manager, dest + i * partitions, partitions, func, i,
                                   std::make_integer_sequence<usize, Count>{});
     }
 
@@ -994,9 +994,9 @@ class Registry
         return *q;
     }
 
-    template <typename F> bool IterateEntitiesByInsertionOrder(F &&func) const
+    template <typename F> bool IterateEntitiesByInsertionOrder(const F func) const
     {
-        return m_Entities.IterateByInsertionOrder(std::forward<F>(func));
+        return m_Entities.IterateByInsertionOrder(func);
     }
 
     Entity GetEntityByIndex(const usize idx) const

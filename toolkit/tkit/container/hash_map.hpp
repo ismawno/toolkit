@@ -192,12 +192,17 @@ template <typename K, typename V, typename AllocState> class HashMap
 
     constexpr HashMap &operator=(const HashMap &other)
     {
-        Clear();
-        copyOp(other.m_Buckets);
+        if (this != &other)
+        {
+            Clear();
+            copyOp(other.m_Buckets);
+        }
         return *this;
     }
     constexpr HashMap &operator=(HashMap &&other)
     {
+        if (this == &other)
+            return *this;
         Clear();
         if constexpr (Type == Array_Static)
         {

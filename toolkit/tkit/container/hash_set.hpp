@@ -179,12 +179,18 @@ template <typename K, typename AllocState> class HashSet
 
     constexpr HashSet &operator=(const HashSet &other)
     {
-        Clear();
-        copyOp(other.m_Buckets);
+        if (this != &other)
+        {
+            Clear();
+            copyOp(other.m_Buckets);
+        }
         return *this;
     }
     constexpr HashSet &operator=(HashSet &&other)
     {
+        if (this == &other)
+            return *this;
+
         Clear();
         if constexpr (Type == Array_Static)
             copyOp(other.m_Buckets);

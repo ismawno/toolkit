@@ -67,10 +67,7 @@ struct FlatDesc
 using Desc4 = IdentityFieldDesc<4>;
 using Desc12 = IdentityFieldDesc<12>;
 
-template <usize Bits> using KeyOf = std::conditional_t<(Bits <= 8), u8, u16>;
-
-template <template <typename> typename A, typename T, typename Desc>
-using MapOf = BitFieldMap<T, Desc, A<KeyValuePair<KeyOf<Desc::BitCount>, T>>>;
+template <template <typename> typename A, typename T, typename Desc> using MapOf = BitFieldMap<T, Desc, A<T>>;
 
 static_assert(std::is_same_v<MapOf<DynamicAllocation, u32, IdentityFieldDesc<1>>::Key, u8>);
 static_assert(std::is_same_v<MapOf<DynamicAllocation, u32, Desc4>::Key, u8>);
@@ -79,16 +76,20 @@ static_assert(std::is_same_v<MapOf<DynamicAllocation, u32, IdentityFieldDesc<9>>
 static_assert(std::is_same_v<MapOf<DynamicAllocation, u32, Desc12>::Key, u16>);
 static_assert(std::is_same_v<MapOf<DynamicAllocation, u32, IdentityFieldDesc<16>>::Key, u16>);
 
-// Every key the sparse array claims is in the dense array and vice versa, and At() agrees with iteration
+// Every key the sparse array claims is in the dense arrays and vice versa, keys and values stay in lockstep, and At()
+// agrees with iteration
 template <typename Map> void RequireConsistent(const Map &map)
 {
     using Key = typename Map::Key;
+    REQUIRE(map.GetKeys().GetSize() == map.GetSize());
+    REQUIRE(usize(map.end() - map.begin()) == map.GetSize());
+
     usize found = 0;
     for (u32 k = 0; k < (1u << Map::BitCount); ++k)
     {
         bool inDense = false;
-        for (const auto &p : map)
-            if (p.Key == k)
+        for (const Key key : map.GetKeys())
+            if (key == k)
             {
                 REQUIRE_FALSE(inDense); // no duplicated keys in the dense array
                 inDense = true;
@@ -101,8 +102,11 @@ template <typename Map> void RequireConsistent(const Map &map)
         }
     }
     REQUIRE(found == map.GetSize());
-    for (const auto &p : map)
-        REQUIRE(&map.At(p.Key) == &p.Value);
+    for (usize i = 0; i < map.GetSize(); ++i)
+    {
+        REQUIRE(map.GetKey(i) == map.GetKeys()[i]);
+        REQUIRE(&map.At(map.GetKey(i)) == map.GetData() + i);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -137,10 +141,15 @@ template <template <typename> typename A, typename... Args> void TestInsertAt(Ar
         REQUIRE(map.Contains(k) == (k == 0 || k == 3 || k == 7 || k == 15));
 
     // Dense storage keeps insertion order
-    const u8 expected[] = {3, 0, 15, 7};
+    const u8 expectedKeys[] = {3, 0, 15, 7};
+    const u32 expectedValues[] = {33, 0, 155, 70};
     usize i = 0;
-    for (const auto &p : map)
-        REQUIRE(p.Key == expected[i++]);
+    for (const u32 value : map)
+    {
+        REQUIRE(map.GetKey(i) == expectedKeys[i]);
+        REQUIRE(value == expectedValues[i]);
+        ++i;
+    }
     REQUIRE(i == 4);
 
     RequireConsistent(map);
@@ -194,7 +203,7 @@ template <template <typename> typename A, typename... Args> void TestRemove(Args
     RequireConsistent(map);
 
     // Back of the dense array
-    const u8 back = (map.end() - 1)->Key;
+    const u8 back = map.GetKey(map.GetSize() - 1);
     map.Remove(back);
     REQUIRE_FALSE(map.Contains(back));
     RequireConsistent(map);
@@ -293,7 +302,7 @@ template <template <typename> typename A, typename... Args> void TestCanonicaliz
     // Inserting the non-canonical key stores the canonical one
     map.Insert(flatCulled, 1u);
     REQUIRE(map.GetSize() == 1);
-    REQUIRE(map.begin()->Key == flat);
+    REQUIRE(map.GetKey(0) == flat);
 
     // Both spellings reach the same entry
     REQUIRE(map.Contains(flat));
@@ -322,8 +331,8 @@ template <template <typename> typename A, typename... Args> void TestCanonicaliz
     REQUIRE(map.TryRemove(culled));
     REQUIRE(map.GetSize() == 1);
 
-    for (const auto &p : map)
-        REQUIRE(FlatDesc::Canonicalize(p.Key) == p.Key);
+    for (const u8 key : map.GetKeys())
+        REQUIRE(FlatDesc::Canonicalize(key) == key);
 }
 
 template <template <typename> typename A, typename... Args> void TestCopy(Args... args)
@@ -486,6 +495,122 @@ template <template <typename> typename A, typename... Args> void TestConvertingC
     RequireConsistent(src);
 }
 
+template <template <typename> typename A, typename... Args> void TestQuery(Args... args)
+{
+    // Same layout as FlatDesc: [0] Flat, [1] BackCull, [2..3] Blend
+    constexpr u8 flatMask = Flag_Flat;
+    constexpr u8 cullMask = Flag_BackCull;
+    constexpr u8 blendMask = u8(0b11 << BlendShift);
+    constexpr u8 fullMask = u8(flatMask | cullMask | blendMask);
+    const auto blend = [](const u32 b) { return u8(b << BlendShift); };
+
+    using Map = MapOf<A, u32, Desc4>;
+    Map map{args...};
+    for (u8 k = 0; k < 16; ++k)
+        map.Insert(k, u32(k) * 10u);
+
+    // Counts the matches, checking each one actually satisfies (key & mask) == partial
+    const auto count = [&](const u8 partial, const u8 mask) {
+        usize n = 0;
+        map.Query(partial, mask, [&](const u8 key, const u32 value) {
+            REQUIRE((key & mask) == partial);
+            REQUIRE(value == u32(key) * 10u);
+            ++n;
+        });
+        return n;
+    };
+
+    // A single flag set, and the same flag queried for zero
+    REQUIRE(count(Flag_Flat, flatMask) == 8);
+    REQUIRE(count(0, flatMask) == 8);
+    REQUIRE(count(0, cullMask) == 8);
+
+    // Every value of the 2 bit field, zero included. Blend 2 (0b10) must not match blend 3 (0b11), which a plain
+    // "bits are set" test would
+    for (u32 b = 0; b < 4; ++b)
+    {
+        usize n = 0;
+        map.Query(blend(b), blendMask, [&](const u8 key, const u32) {
+            REQUIRE(u32(key >> BlendShift) == b);
+            ++n;
+        });
+        REQUIRE(n == 4);
+    }
+
+    // Several fields at once, with the remaining one ignored: blend 1 and flat, any culling -> 0101, 0111
+    REQUIRE(count(u8(blend(1) | Flag_Flat), u8(blendMask | flatMask)) == 2);
+    // A zero field combined with a set one: blend 0 and culled, any flat -> 0010, 0011
+    REQUIRE(count(Flag_BackCull, u8(blendMask | cullMask)) == 2);
+    // Everything zero, every field constrained: exactly key 0
+    REQUIRE(count(0, fullMask) == 1);
+
+    // The full mask is an exact lookup
+    for (u8 k = 0; k < 16; ++k)
+        REQUIRE(count(k, fullMask) == 1);
+
+    // An empty mask matches everything
+    REQUIRE(count(0, 0) == 16);
+
+    // mask == partial is the old "these bits are set" query
+    REQUIRE(count(0b0101, 0b0101) == 4); // 0101, 0111, 1101, 1111
+
+    // Value only callback
+    u32 sum = 0;
+    map.Query(blend(3), blendMask, [&](const u32 value) { sum += value; });
+    REQUIRE(sum == (12u + 13u + 14u + 15u) * 10u);
+
+    // Mutation through the non const overload: bump every blend 2 entry
+    map.Query(blend(2), blendMask, [](u32 &value) { value += 1u; });
+    for (u8 k = 0; k < 16; ++k)
+        REQUIRE(map.At(k) == u32(k) * 10u + ((k >> BlendShift) == 2 ? 1u : 0u));
+    map.Query(blend(2), blendMask, [](const u8 key, u32 &value) { value = u32(key) * 10u; });
+
+    // Returning bool stops early, and Query reports whether it ran to completion
+    usize visited = 0;
+    REQUIRE_FALSE(map.Query(0, flatMask, [&](const u32) { return ++visited < 3; }));
+    REQUIRE(visited == 3);
+
+    visited = 0;
+    REQUIRE(map.Query(0, flatMask, [&](const u8, const u32) { return ++visited != 0; }));
+    REQUIRE(visited == 8);
+
+    // Removed keys are not visited, and a query with no matches completes
+    map.Remove(15);
+    visited = 0;
+    REQUIRE(map.Query(15, fullMask, [&](const u32) { return ++visited != 0; }));
+    REQUIRE(visited == 0);
+
+    // Const overload
+    const Map &cmap = map;
+    visited = 0;
+    cmap.Query(blend(3), blendMask, [&](const u32 &) { ++visited; });
+    REQUIRE(visited == 3);
+    cmap.Query(u8(blend(3) | Flag_Flat), u8(blendMask | flatMask), [&](const u8 key, const u32 &) {
+        REQUIRE(key == 0b1101);
+        ++visited;
+    });
+    REQUIRE(visited == 4);
+
+    // Queries see canonical keys: flat entries had their culling bit folded away, so querying culling only finds the
+    // non flat ones
+    using FlatMap = MapOf<A, u32, FlatDesc>;
+    FlatMap fmap{args...};
+    for (u8 k = 0; k < 16; ++k)
+        fmap.TryInsert(k, u32(k));
+    REQUIRE(fmap.GetSize() == 12);
+
+    usize culled = 0;
+    fmap.Query(Flag_BackCull, cullMask, [&](const u8 key, const u32) {
+        REQUIRE((key & Flag_Flat) == 0);
+        ++culled;
+    });
+    REQUIRE(culled == 4); // 0010, 0110, 1010, 1110
+
+    usize flatCulled = 0;
+    fmap.Query(u8(Flag_Flat | Flag_BackCull), u8(flatMask | cullMask), [&](const u32) { ++flatCulled; });
+    REQUIRE(flatCulled == 0);
+}
+
 template <template <typename> typename A, typename... Args> void TestLifetimes(Args... args)
 {
     using Map = MapOf<A, Test_Tracker, Desc4>;
@@ -576,6 +701,10 @@ TEST_CASE("BitFieldMap: Moved-from map is reusable", "[BitFieldMap]")
 TEST_CASE("BitFieldMap: Converting copy and move", "[BitFieldMap]")
 {
     BFM_TEST_ALL(TestConvertingCopyMove);
+}
+TEST_CASE("BitFieldMap: Query by partial key", "[BitFieldMap]")
+{
+    BFM_TEST_ALL(TestQuery);
 }
 TEST_CASE("BitFieldMap: Element lifetimes", "[BitFieldMap]")
 {

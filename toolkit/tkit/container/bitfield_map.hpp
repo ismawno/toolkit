@@ -19,6 +19,7 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
 
     using Key = u<Math::Max(NextPowerOfTwo(BitCount), usize(8))>;
     using Pair = KeyValuePair<Key, T>;
+    using KeyAllocState = AllocState::template Rebind<Key>;
 
     static constexpr ArrayType Type = AllocState::Type;
     static constexpr Index Null = TKit::Limits<Index>::Max();
@@ -32,32 +33,35 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
         requires(Type != Array_Static)
         : BitFieldMap()
     {
-        m_Dense.Reserve(capacity);
+        m_Keys.Reserve(capacity);
+        m_Values.Reserve(capacity);
     }
 
     constexpr BitFieldMap(const BitFieldMap &) = default;
     constexpr BitFieldMap &operator=(const BitFieldMap &) = default;
 
-    constexpr BitFieldMap(BitFieldMap &&other) : m_Sparse(other.m_Sparse), m_Dense(std::move(other.m_Dense))
+    constexpr BitFieldMap(BitFieldMap &&other)
+        : m_Sparse(other.m_Sparse), m_Keys(std::move(other.m_Keys)), m_Values(std::move(other.m_Values))
     {
         releaseFrom(other);
     }
     constexpr BitFieldMap &operator=(BitFieldMap &&other)
     {
         m_Sparse = other.m_Sparse;
-        m_Dense = std::move(other.m_Dense);
+        m_Keys = std::move(other.m_Keys);
+        m_Values = std::move(other.m_Values);
         releaseFrom(other);
         return *this;
     }
 
     template <typename OtherAlloc>
     constexpr BitFieldMap(const BitFieldMap<T, FieldDesc, OtherAlloc, Index> &other)
-        : m_Sparse(other.m_Sparse), m_Dense(other.m_Dense)
+        : m_Sparse(other.m_Sparse), m_Keys(other.m_Keys), m_Values(other.m_Values)
     {
     }
     template <typename OtherAlloc>
     constexpr BitFieldMap(BitFieldMap<T, FieldDesc, OtherAlloc, Index> &&other)
-        : m_Sparse(other.m_Sparse), m_Dense(std::move(other.m_Dense))
+        : m_Sparse(other.m_Sparse), m_Keys(std::move(other.m_Keys)), m_Values(std::move(other.m_Values))
     {
         releaseFrom(other);
     }
@@ -66,14 +70,16 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
     constexpr BitFieldMap &operator=(const BitFieldMap<T, FieldDesc, OtherAlloc, Index> &other)
     {
         m_Sparse = other.m_Sparse;
-        m_Dense = other.m_Dense;
+        m_Keys = other.m_Keys;
+        m_Values = other.m_Values;
         return *this;
     }
     template <typename OtherAlloc>
     constexpr BitFieldMap &operator=(BitFieldMap<T, FieldDesc, OtherAlloc, Index> &&other)
     {
         m_Sparse = other.m_Sparse;
-        m_Dense = std::move(other.m_Dense);
+        m_Keys = std::move(other.m_Keys);
+        m_Values = std::move(other.m_Values);
         releaseFrom(other);
         return *this;
     }
@@ -91,7 +97,7 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
         "specified at compile time",                                                                                   \
         k, BitCount + 2, m_Sparse.GetSize(), BitCount)
 #define CHECK_INDEX_WITHIN_BOUNDS(idx)                                                                                 \
-    TKIT_ASSERT((idx) < m_Dense.GetSize(),                                                                             \
+    TKIT_ASSERT((idx) < GetSize(),                                                                                     \
                 "[TOOLKIT][BITFIELD] The key {:#0{}b} is contained in the map, but it is not stored in the dense "     \
                 "array. This datastructure has been corrupted",                                                        \
                 k, BitCount + 2);
@@ -106,13 +112,13 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
     {
         k = canon(k);
         CHECK_KEY_EXISTS(k);
-        return m_Dense[m_Sparse[k]].Value;
+        return m_Values[m_Sparse[k]];
     }
     constexpr T &At(Key k)
     {
         k = canon(k);
         CHECK_KEY_EXISTS(k);
-        return m_Dense[m_Sparse[k]].Value;
+        return m_Values[m_Sparse[k]];
     }
     constexpr const T &operator[](const Key k) const
     {
@@ -125,58 +131,68 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
 
     constexpr void Clear()
     {
-        for (const Pair &p : m_Dense)
-            m_Sparse[p.Key] = Null;
-        m_Dense.Clear();
+        for (Key &k : m_Keys)
+            m_Sparse[k] = Null;
+        m_Keys.Clear();
+        m_Values.Clear();
     }
 
-    constexpr const Pair *GetData() const
+    constexpr const T *GetData() const
     {
-        return m_Dense.GetData();
+        return m_Values.GetData();
     }
-    constexpr Pair *GetData()
+    constexpr T *GetData()
     {
-        return m_Dense.GetData();
-    }
-
-    constexpr const Pair *begin() const
-    {
-        return m_Dense.begin();
-    }
-    constexpr const Pair *end() const
-    {
-        return m_Dense.end();
+        return m_Values.GetData();
     }
 
-    constexpr Pair *begin()
+    constexpr const T *begin() const
     {
-        return m_Dense.begin();
+        return m_Values.begin();
     }
-    constexpr Pair *end()
+    constexpr const T *end() const
     {
-        return m_Dense.end();
+        return m_Values.end();
+    }
+
+    constexpr T *begin()
+    {
+        return m_Values.begin();
+    }
+    constexpr T *end()
+    {
+        return m_Values.end();
+    }
+
+    const TKit::Array<Key, KeyAllocState> &GetKeys() const
+    {
+        return m_Keys;
+    }
+    Key GetKey(const usize idx) const
+    {
+        return m_Keys[idx];
     }
 
     constexpr usize GetSize() const
     {
-        return m_Dense.GetSize();
+        return m_Values.GetSize();
     }
     constexpr usize GetCapacity() const
     {
-        return m_Dense.GetCapacity();
+        return m_Values.GetCapacity();
     }
     constexpr usz GetBytes() const
     {
-        return m_Dense.GetBytes();
+        return m_Values.GetBytes();
     }
 
     constexpr bool IsEmpty() const
     {
-        return m_Dense.IsEmpty();
+        return m_Values.IsEmpty();
     }
     constexpr bool IsFull() const
     {
-        return m_Dense.IsFull();
+        return m_Values.IsFull();
     }
 
     template <typename... Args>
@@ -190,12 +206,13 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
                     "{:#0{}b} is contained. Use TryInsert() in case the entry may be contained already",
                     k, BitCount + 2);
 
-        TKIT_ASSERT(m_Dense.GetSize() + 1 < Null,
+        TKIT_ASSERT(m_Values.GetSize() + 1 < Null,
                     "[TOOLKIT][BITFIELD] Maximum amount of elements representable with provided index type ({}) "
                     "reached. Use a bigger index type",
                     Null);
-        m_Sparse[k] = m_Dense.GetSize();
-        return m_Dense.Append(k, std::forward<Args>(args)...).Value;
+        m_Sparse[k] = m_Values.GetSize();
+        m_Keys.Append(k);
+        return m_Values.Append(std::forward<Args>(args)...);
     }
     template <typename... Args>
         requires std::constructible_from<T, Args...>
@@ -206,18 +223,19 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
         Index &idx = m_Sparse[k];
         if (idx == Null)
         {
-            TKIT_ASSERT(m_Dense.GetSize() + 1 < Null,
+            TKIT_ASSERT(m_Values.GetSize() + 1 < Null,
                         "[TOOLKIT][BITFIELD] Maximum amount of elements representable with provided index type ({}) "
                         "reached. Use a bigger index type",
                         Null);
             if (didInsert)
                 *didInsert = true;
-            idx = m_Dense.GetSize();
-            return m_Dense.Append(k, std::forward<Args>(args)...).Value;
+            idx = m_Values.GetSize();
+            m_Keys.Append(k);
+            return m_Values.Append(std::forward<Args>(args)...);
         }
         if (didInsert)
             *didInsert = false;
-        return m_Dense[idx].Value;
+        return m_Values[idx];
     }
     template <typename... Args>
         requires std::constructible_from<T, Args...>
@@ -231,14 +249,18 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
         k = canon(k);
         CHECK_KEY_EXISTS(k);
         Index &idx = m_Sparse[k];
-        const usize backIdx = m_Dense.GetSize() - 1;
+        const usize backIdx = m_Values.GetSize() - 1;
 
         if (idx == backIdx)
-            m_Dense.Pop();
+        {
+            m_Keys.Pop();
+            m_Values.Pop();
+        }
         else
         {
-            m_Sparse[m_Dense[backIdx].Key] = idx;
-            m_Dense.RemoveUnordered(m_Dense.begin() + idx);
+            m_Sparse[m_Keys[backIdx]] = idx;
+            m_Values.RemoveUnordered(m_Values.begin() + idx);
+            m_Keys.RemoveUnordered(m_Keys.begin() + idx);
         }
         idx = Null;
     }
@@ -252,6 +274,47 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
         return false;
     }
 
+#define EMIT_LOOP(...)                                                                                                 \
+    for (usize i = 0; i < GetSize(); ++i)                                                                              \
+        if ((m_Keys[i] & mask) == partialKey)                                                                          \
+        {                                                                                                              \
+            if constexpr (hasRet)                                                                                      \
+            {                                                                                                          \
+                if (!func(__VA_ARGS__))                                                                                \
+                    return false;                                                                                      \
+            }                                                                                                          \
+            else                                                                                                       \
+                func(__VA_ARGS__);                                                                                     \
+        }
+
+#define QUERY_IMPL(type)                                                                                               \
+    if constexpr (std::is_invocable_v<F, type>)                                                                        \
+    {                                                                                                                  \
+        constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, type>, bool>;                                   \
+        EMIT_LOOP(m_Values[i]);                                                                                        \
+        if constexpr (hasRet)                                                                                          \
+            return true;                                                                                               \
+    }                                                                                                                  \
+    else                                                                                                               \
+    {                                                                                                                  \
+        constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, Key, type>, bool>;                              \
+        EMIT_LOOP(m_Keys[i], m_Values[i]);                                                                             \
+        if constexpr (hasRet)                                                                                          \
+            return true;                                                                                               \
+    }
+
+    template <typename F> auto Query(const Key partialKey, const Key mask, const F func) const
+    {
+        QUERY_IMPL(const T &)
+    }
+    template <typename F> auto Query(const Key partialKey, const Key mask, const F func)
+    {
+        QUERY_IMPL(T &);
+    }
+
+#undef EMIT_LOOP
+#undef QUERY_IMPL
+
 #undef CHECK_KEY_WITHIN_BOUNDS
 #undef CHECK_INDEX_WITHIN_BOUNDS
 #undef CHECK_KEY_EXISTS
@@ -261,10 +324,10 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
     // its size (and keys), so the source stays consistent and its sparse array must be left alone
     template <typename Other> constexpr void releaseFrom(Other &other)
     {
-        if (!other.m_Dense.IsEmpty())
+        if (!other.m_Keys.IsEmpty())
             return;
-        for (const Pair &p : m_Dense)
-            other.m_Sparse[p.Key] = Null;
+        for (const Key k : m_Keys)
+            other.m_Sparse[k] = Null;
     }
     constexpr Key canon(const Key k) const
     {
@@ -284,7 +347,8 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
             return k;
     }
     TKit::FixedArray<Index, 1U << BitCount> m_Sparse{};
-    TKit::Array<Pair, AllocState> m_Dense{};
+    TKit::Array<Key, KeyAllocState> m_Keys{};
+    TKit::Array<T, AllocState> m_Values{};
 
     template <typename U, typename OtherFieldDesc, typename OtherAllocState, UnsignedInteger OtherIndex>
     friend class BitFieldMap;
