@@ -179,7 +179,7 @@ static WideString widen(const char *str)
 // UTF-16 -> UTF-8
 static FileSystemPath narrow(const wchar_t *str, const usize length)
 {
-    DynamicString narrow{};
+    FileSystemString narrow{};
     if (length == 0)
         return FileSystemPath{std::move(narrow)};
     const int size = WideCharToMultiByte(CP_UTF8, 0, str, int(length), nullptr, 0, nullptr, nullptr);
@@ -689,7 +689,7 @@ struct StreamHandle
     HANDLE Find = INVALID_HANDLE_VALUE;
     WIN32_FIND_DATAW Data;
     bool First = true;
-    DynamicString Name{};
+    FileSystemString Name{};
     FileType Type = FileType_None;
 };
 
@@ -713,7 +713,7 @@ FileSystemResult<> DirectoryStream::Open(const char *path)
 {
     Close();
 
-    DynamicString pattern{path};
+    FileSystemString pattern{path};
     const usize size = pattern.GetSize();
     if (size == 0)
         return FileSystemError_NotFound;
@@ -1009,7 +1009,7 @@ FileSystemResult<> CreateHardLink(const char *target, const char *link)
 
 FileSystemResult<FileSystemPath> ReadSymlink(const char *path)
 {
-    DynamicString buffer{};
+    FileSystemString buffer{};
     usize capacity = 256;
     for (;;)
     {
@@ -1020,7 +1020,7 @@ FileSystemResult<FileSystemPath> ReadSymlink(const char *path)
         if (usize(length) < capacity)
         {
             buffer.Resize(usize(length));
-            return ok(FileSystemPath{FileSystemPath::StringType(std::move(buffer))});
+            return ok(FileSystemPath{std::move(buffer)});
         }
         capacity *= 2;
     }
@@ -1153,7 +1153,7 @@ FileSystemResult<SpaceInfo> GetSpace(const char *path)
 
 FileSystemResult<FileSystemPath> GetCurrentPath()
 {
-    DynamicString buffer{};
+    FileSystemString buffer{};
     usize capacity = 256;
     for (;;)
     {
@@ -1162,7 +1162,7 @@ FileSystemResult<FileSystemPath> GetCurrentPath()
         if (::getcwd(buffer.GetData(), capacity + 1))
         {
             buffer.Resize(usize(std::char_traits<char>::length(buffer.GetData())));
-            return ok(FileSystemPath{FileSystemPath::StringType(std::move(buffer))});
+            return ok(FileSystemPath{std::move(buffer)});
         }
         if (errno != ERANGE)
             return lastError<FileSystemPath>();
@@ -1374,7 +1374,7 @@ FileSystemResult<bool> IsEmpty(const char *path)
 
 FileSystemResult<bool> CreateDirectories(const char *path)
 {
-    DynamicString buffer{path};
+    FileSystemString buffer{path};
     const usize size = buffer.GetSize();
     if (size == 0)
         return error<bool>(FileSystemError_InvalidArgument);

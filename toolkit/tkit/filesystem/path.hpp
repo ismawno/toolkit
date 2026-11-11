@@ -338,10 +338,10 @@ template <typename AllocState> class Path
     {
     }
 
-    constexpr Path(const StringType &path) : m_Path(path)
+    template <typename OtherAllocState> constexpr Path(const String<OtherAllocState> &path) : m_Path(path)
     {
     }
-    constexpr Path(StringType &&path) : m_Path(std::move(path))
+    template <typename OtherAllocState> constexpr Path(String<OtherAllocState> &&path) : m_Path(std::move(path))
     {
     }
 

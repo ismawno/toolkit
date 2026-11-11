@@ -16,6 +16,9 @@
 #ifndef TKIT_FILESYSTEM_DEFAULT_PATH
 #    define TKIT_FILESYSTEM_DEFAULT_PATH TKit::TierPath
 #endif
+#ifndef TKIT_FILESYSTEM_DEFAULT_STRING
+#    define TKIT_FILESYSTEM_DEFAULT_STRING TKit::TierString
+#endif
 #ifndef TKIT_FILESYSTEM_DEFAULT_ARRAY
 #    define TKIT_FILESYSTEM_DEFAULT_ARRAY TKit::TierArray
 #endif
@@ -23,6 +26,7 @@
 namespace TKit
 {
 using FileSystemPath = TKIT_FILESYSTEM_DEFAULT_PATH;
+using FileSystemString = TKIT_FILESYSTEM_DEFAULT_STRING;
 template <typename T> using FileSystemArray = TKIT_FILESYSTEM_DEFAULT_ARRAY<T>;
 
 enum FileSystemError : u8

@@ -130,7 +130,7 @@ TKIT_NO_DISCARD FileSystemResult<> ReadFile(const P &path, String<AllocState> &c
 /**
  * @brief Read a whole file into a new string. Allocators that need one use the currently pushed allocator.
  */
-template <typename StringType = DynamicString, PathLike P>
+template <typename StringType = FileSystemString, PathLike P>
 TKIT_NO_DISCARD FileSystemResult<StringType> ReadFile(const P &path)
 {
     StringType contents{};

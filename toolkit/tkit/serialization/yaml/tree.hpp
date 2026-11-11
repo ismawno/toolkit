@@ -21,7 +21,7 @@ class YamlTree
     TKIT_NO_DISCARD static Result<YamlTree, YamlString> FromString(StringView str);
     TKIT_NO_DISCARD static Result<YamlTree, YamlString> FromFile(const YamlPath &path);
 
-    template <typename Str> Str ToString() const;
+    template <typename Str = YamlString> Str ToString() const;
     TKIT_NO_DISCARD FileSystemResult<> ToFile(const YamlPath &path) const;
 
     ConstYamlNode GetRoot() const;
