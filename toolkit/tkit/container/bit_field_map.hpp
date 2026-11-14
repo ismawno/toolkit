@@ -15,18 +15,21 @@ template <usize N> struct IdentityFieldDesc
     static constexpr usize BitCount = N;
 };
 template <usize BitCount> using BitFieldKey = u<Math::Max(NextPowerOfTwo(BitCount), usize(8))>;
+template <usize BitCount> using BitFieldIndex = BitFieldKey<BitCount + 1>;
+template <usize BitCount> constexpr usize BitFieldIndexSpace = TKit::Limits<BitFieldIndex<BitCount>>::Max();
 
-template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger Index = u16> class BitFieldMap
+template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
 {
   public:
     static constexpr usize BitCount = FieldDesc::BitCount;
 
     using Key = BitFieldKey<BitCount>;
+    using Index = BitFieldIndex<BitCount>;
     using Pair = KeyValuePair<Key, T>;
     using KeyAllocState = AllocState::template Rebind<Key>;
 
     static constexpr ArrayType Type = AllocState::Type;
-    static constexpr Index Null = TKit::Limits<Index>::Max();
+    static constexpr Index Null = BitFieldIndexSpace<BitCount>;
 
     constexpr BitFieldMap()
     {
@@ -59,27 +62,25 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
     }
 
     template <typename OtherAlloc>
-    constexpr BitFieldMap(const BitFieldMap<T, FieldDesc, OtherAlloc, Index> &other)
+    constexpr BitFieldMap(const BitFieldMap<T, FieldDesc, OtherAlloc> &other)
         : m_Sparse(other.m_Sparse), m_Keys(other.m_Keys), m_Values(other.m_Values)
     {
     }
     template <typename OtherAlloc>
-    constexpr BitFieldMap(BitFieldMap<T, FieldDesc, OtherAlloc, Index> &&other)
+    constexpr BitFieldMap(BitFieldMap<T, FieldDesc, OtherAlloc> &&other)
         : m_Sparse(other.m_Sparse), m_Keys(std::move(other.m_Keys)), m_Values(std::move(other.m_Values))
     {
         releaseFrom(other);
     }
 
-    template <typename OtherAlloc>
-    constexpr BitFieldMap &operator=(const BitFieldMap<T, FieldDesc, OtherAlloc, Index> &other)
+    template <typename OtherAlloc> constexpr BitFieldMap &operator=(const BitFieldMap<T, FieldDesc, OtherAlloc> &other)
     {
         m_Sparse = other.m_Sparse;
         m_Keys = other.m_Keys;
         m_Values = other.m_Values;
         return *this;
     }
-    template <typename OtherAlloc>
-    constexpr BitFieldMap &operator=(BitFieldMap<T, FieldDesc, OtherAlloc, Index> &&other)
+    template <typename OtherAlloc> constexpr BitFieldMap &operator=(BitFieldMap<T, FieldDesc, OtherAlloc> &&other)
     {
         m_Sparse = other.m_Sparse;
         m_Keys = std::move(other.m_Keys);
@@ -364,15 +365,11 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
     friend class BitFieldMap;
 };
 
-template <typename T, typename FieldDesc, UnsignedInteger Index = u16>
-using ArenaBitFieldMap = BitFieldMap<T, FieldDesc, ArenaAllocation<T>, Index>;
-template <typename T, typename FieldDesc, UnsignedInteger Index = u16>
-using StackBitFieldMap = BitFieldMap<T, FieldDesc, StackAllocation<T>, Index>;
-template <typename T, typename FieldDesc, UnsignedInteger Index = u16>
-using TierBitFieldMap = BitFieldMap<T, FieldDesc, TierAllocation<T>, Index>;
-template <typename T, typename FieldDesc, UnsignedInteger Index = u16>
-using DynamicBitFieldMap = BitFieldMap<T, FieldDesc, DynamicAllocation<T>, Index>;
-template <typename T, usize N, typename FieldDesc, UnsignedInteger Index = u16>
-using StaticBitFieldMap = BitFieldMap<T, FieldDesc, StaticAllocation<T, N>, Index>;
+template <typename T, typename FieldDesc> using ArenaBitFieldMap = BitFieldMap<T, FieldDesc, ArenaAllocation<T>>;
+template <typename T, typename FieldDesc> using StackBitFieldMap = BitFieldMap<T, FieldDesc, StackAllocation<T>>;
+template <typename T, typename FieldDesc> using TierBitFieldMap = BitFieldMap<T, FieldDesc, TierAllocation<T>>;
+template <typename T, typename FieldDesc> using DynamicBitFieldMap = BitFieldMap<T, FieldDesc, DynamicAllocation<T>>;
+template <typename T, typename FieldDesc, usize N = BitFieldIndexSpace<FieldDesc::BitCount>>
+using StaticBitFieldMap = BitFieldMap<T, FieldDesc, StaticAllocation<T, N>>;
 
 } // namespace TKit
