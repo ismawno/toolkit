@@ -1,7 +1,10 @@
 #pragma once
 
-#include "tkit/container/array.hpp"
-#include "tkit/container/fixed_array.hpp"
+#include "tkit/container/arena_array.hpp"
+#include "tkit/container/dynamic_array.hpp"
+#include "tkit/container/stack_array.hpp"
+#include "tkit/container/static_array.hpp"
+#include "tkit/container/tier_array.hpp"
 #include "tkit/utils/bit.hpp"
 #include "tkit/math/math.hpp"
 
@@ -360,4 +363,16 @@ template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger I
     template <typename U, typename OtherFieldDesc, typename OtherAllocState, UnsignedInteger OtherIndex>
     friend class BitFieldMap;
 };
+
+template <typename T, typename FieldDesc, UnsignedInteger Index = u16>
+using ArenaBitFieldMap = BitFieldMap<T, FieldDesc, ArenaAllocation<T>, Index>;
+template <typename T, typename FieldDesc, UnsignedInteger Index = u16>
+using StackBitFieldMap = BitFieldMap<T, FieldDesc, StackAllocation<T>, Index>;
+template <typename T, typename FieldDesc, UnsignedInteger Index = u16>
+using TierBitFieldMap = BitFieldMap<T, FieldDesc, TierAllocation<T>, Index>;
+template <typename T, typename FieldDesc, UnsignedInteger Index = u16>
+using DynamicBitFieldMap = BitFieldMap<T, FieldDesc, DynamicAllocation<T>, Index>;
+template <typename T, usize N, typename FieldDesc, UnsignedInteger Index = u16>
+using StaticBitFieldMap = BitFieldMap<T, FieldDesc, StaticAllocation<T, N>, Index>;
+
 } // namespace TKit
