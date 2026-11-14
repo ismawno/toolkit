@@ -1,4 +1,4 @@
-#include "tkit/container/bitfield_map.hpp"
+#include "tkit/container/bit_field_map.hpp"
 #include "tkit/container/arena_array.hpp"
 #include "tkit/container/dynamic_array.hpp"
 #include "tkit/container/stack_array.hpp"
