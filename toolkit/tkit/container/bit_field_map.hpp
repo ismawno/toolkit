@@ -16,7 +16,7 @@ template <usize N> struct IdentityFieldDesc
 };
 template <usize BitCount> using BitFieldKey = u<Math::Max(NextPowerOfTwo(BitCount), usize(8))>;
 template <usize BitCount> using BitFieldIndex = BitFieldKey<BitCount + 1>;
-template <usize BitCount> constexpr usize BitFieldIndexSpace = TKit::Limits<BitFieldIndex<BitCount>>::Max();
+template <usize BitCount> constexpr usize BitFieldKeySpace = 1U << BitCount;
 
 template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
 {
@@ -29,7 +29,7 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
     using KeyAllocState = AllocState::template Rebind<Key>;
 
     static constexpr ArrayType Type = AllocState::Type;
-    static constexpr Index Null = BitFieldIndexSpace<BitCount>;
+    static constexpr Index Null = TKit::Limits<Index>::Max();
 
     constexpr BitFieldMap()
     {
@@ -361,15 +361,14 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
     TKit::Array<Key, KeyAllocState> m_Keys{};
     TKit::Array<T, AllocState> m_Values{};
 
-    template <typename U, typename OtherFieldDesc, typename OtherAllocState, UnsignedInteger OtherIndex>
-    friend class BitFieldMap;
+    template <typename U, typename OtherFieldDesc, typename OtherAllocState> friend class BitFieldMap;
 };
 
 template <typename T, typename FieldDesc> using ArenaBitFieldMap = BitFieldMap<T, FieldDesc, ArenaAllocation<T>>;
 template <typename T, typename FieldDesc> using StackBitFieldMap = BitFieldMap<T, FieldDesc, StackAllocation<T>>;
 template <typename T, typename FieldDesc> using TierBitFieldMap = BitFieldMap<T, FieldDesc, TierAllocation<T>>;
 template <typename T, typename FieldDesc> using DynamicBitFieldMap = BitFieldMap<T, FieldDesc, DynamicAllocation<T>>;
-template <typename T, typename FieldDesc, usize N = BitFieldIndexSpace<FieldDesc::BitCount>>
+template <typename T, typename FieldDesc, usize N = BitFieldKeySpace<FieldDesc::BitCount>>
 using StaticBitFieldMap = BitFieldMap<T, FieldDesc, StaticAllocation<T, N>>;
 
 } // namespace TKit
