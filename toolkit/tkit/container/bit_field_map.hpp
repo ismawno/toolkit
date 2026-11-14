@@ -11,13 +11,14 @@ template <usize N> struct IdentityFieldDesc
 {
     static constexpr usize BitCount = N;
 };
+template <usize BitCount> using BitFieldKey = u<Math::Max(NextPowerOfTwo(BitCount), usize(8))>;
 
 template <typename T, typename FieldDesc, typename AllocState, UnsignedInteger Index = u16> class BitFieldMap
 {
   public:
     static constexpr usize BitCount = FieldDesc::BitCount;
 
-    using Key = u<Math::Max(NextPowerOfTwo(BitCount), usize(8))>;
+    using Key = BitFieldKey<BitCount>;
     using Pair = KeyValuePair<Key, T>;
     using KeyAllocState = AllocState::template Rebind<Key>;
 
