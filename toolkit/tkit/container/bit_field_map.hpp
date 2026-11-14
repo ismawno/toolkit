@@ -28,13 +28,14 @@ concept HasKeyValidityCheck = requires(BitFieldKey<Desc::BitCount> k) {
     { Desc::IsValid(k) } -> std::same_as<bool>;
 };
 
-template <typename FieldDesc> constexpr BitFieldKey<FieldDesc::BitCount> ComputeKeySpace()
+template <typename FieldDesc> constexpr BitFieldIndex<FieldDesc::BitCount> ComputeKeySpace()
 {
+    // we use Index here because type Key can hold 0...(KeySpace - 1)
     constexpr usize bcount = FieldDesc::BitCount;
-    constexpr usize baseSpace = usize(1) << bcount;
-    using Key = BitFieldKey<bcount>;
+    using Index = BitFieldKey<bcount + 1>;
+    constexpr Index baseSpace = Index(1) << bcount;
 
-    constexpr auto doesCount = [](const Key k) {
+    constexpr auto doesCount = [](const Index k) {
         if constexpr (HasCanonicalize<FieldDesc> && HasKeyValidityCheck<FieldDesc>)
             return FieldDesc::Canonicalize(k) == k && FieldDesc::IsValid(k);
         else if constexpr (HasCanonicalize<FieldDesc>)
@@ -45,8 +46,8 @@ template <typename FieldDesc> constexpr BitFieldKey<FieldDesc::BitCount> Compute
             return true;
     };
 
-    Key count = 0;
-    for (Key k = 0; k < baseSpace; ++k)
+    Index count = 0;
+    for (Index k = 0; k < baseSpace; ++k)
         if (doesCount(k))
             ++count;
     return count;
@@ -400,7 +401,7 @@ template <typename T, typename FieldDesc> using ArenaBitFieldMap = BitFieldMap<T
 template <typename T, typename FieldDesc> using StackBitFieldMap = BitFieldMap<T, FieldDesc, StackAllocation<T>>;
 template <typename T, typename FieldDesc> using TierBitFieldMap = BitFieldMap<T, FieldDesc, TierAllocation<T>>;
 template <typename T, typename FieldDesc> using DynamicBitFieldMap = BitFieldMap<T, FieldDesc, DynamicAllocation<T>>;
-template <typename T, typename FieldDesc, usize N = ComputeKeySpace<FieldDesc>>
+template <typename T, typename FieldDesc, usize N = ComputeKeySpace<FieldDesc>()>
 using StaticBitFieldMap = BitFieldMap<T, FieldDesc, StaticAllocation<T, N>>;
 
 } // namespace TKit
