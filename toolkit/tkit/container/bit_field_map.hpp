@@ -14,9 +14,43 @@ template <usize N> struct IdentityFieldDesc
 {
     static constexpr usize BitCount = N;
 };
+
 template <usize BitCount> using BitFieldKey = u<Math::Max(NextPowerOfTwo(BitCount), usize(8))>;
 template <usize BitCount> using BitFieldIndex = BitFieldKey<BitCount + 1>;
-template <usize BitCount> constexpr usize BitFieldKeySpace = 1U << BitCount;
+
+template <typename Desc>
+concept HasCanonicalize = requires(BitFieldKey<Desc::BitCount> k) {
+    { Desc::Canonicalize(k) } -> std::convertible_to<BitFieldKey<Desc::BitCount>>;
+};
+
+template <typename Desc>
+concept HasKeyValidityCheck = requires(BitFieldKey<Desc::BitCount> k) {
+    { Desc::IsValid(k) } -> std::same_as<bool>;
+};
+
+template <typename FieldDesc> constexpr BitFieldKey<FieldDesc::BitCount> ComputeKeySpace()
+{
+    constexpr usize bcount = FieldDesc::BitCount;
+    constexpr usize baseSpace = usize(1) << bcount;
+    using Key = BitFieldKey<bcount>;
+
+    constexpr auto doesCount = [](const Key k) {
+        if constexpr (HasCanonicalize<FieldDesc> && HasKeyValidityCheck<FieldDesc>)
+            return FieldDesc::Canonicalize(k) == k && FieldDesc::IsValid(k);
+        else if constexpr (HasCanonicalize<FieldDesc>)
+            return FieldDesc::Canonicalize(k) == k;
+        else if constexpr (HasKeyValidityCheck<FieldDesc>)
+            return FieldDesc::IsValid(k);
+        else
+            return true;
+    };
+
+    Key count = 0;
+    for (Key k = 0; k < baseSpace; ++k)
+        if (doesCount(k))
+            ++count;
+    return count;
+}
 
 template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
 {
@@ -342,9 +376,7 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
     }
     constexpr Key canon(const Key k) const
     {
-        if constexpr (requires {
-                          { FieldDesc::Canonicalize(k) } -> std::convertible_to<Key>;
-                      })
+        if constexpr (HasCanonicalize<FieldDesc>)
         {
             TKIT_ASSERT(FieldDesc::Canonicalize(FieldDesc::Canonicalize(k)) == FieldDesc::Canonicalize(k),
                         "[TOOLKIT][BITFIELD-MAP] Canonicalize function is not idempotent for key {:#0{}b}, as "
@@ -357,7 +389,7 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
         else
             return k;
     }
-    TKit::FixedArray<Index, 1U << BitCount> m_Sparse{};
+    TKit::FixedArray<Index, usize(1) << BitCount> m_Sparse{};
     TKit::Array<Key, KeyAllocState> m_Keys{};
     TKit::Array<T, AllocState> m_Values{};
 
@@ -368,7 +400,7 @@ template <typename T, typename FieldDesc> using ArenaBitFieldMap = BitFieldMap<T
 template <typename T, typename FieldDesc> using StackBitFieldMap = BitFieldMap<T, FieldDesc, StackAllocation<T>>;
 template <typename T, typename FieldDesc> using TierBitFieldMap = BitFieldMap<T, FieldDesc, TierAllocation<T>>;
 template <typename T, typename FieldDesc> using DynamicBitFieldMap = BitFieldMap<T, FieldDesc, DynamicAllocation<T>>;
-template <typename T, typename FieldDesc, usize N = BitFieldKeySpace<FieldDesc::BitCount>>
+template <typename T, typename FieldDesc, usize N = ComputeKeySpace<FieldDesc>>
 using StaticBitFieldMap = BitFieldMap<T, FieldDesc, StaticAllocation<T, N>>;
 
 } // namespace TKit
