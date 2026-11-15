@@ -133,18 +133,19 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
 #define CHECK_KEY_WITHIN_BOUNDS(k)                                                                                     \
     TKIT_ASSERT(                                                                                                       \
         (k) < m_Sparse.GetSize(),                                                                                      \
-        "[TOOLKIT][BITFIELD-MAP] The key {:#0{}b} exceeds sparse array size ({}) derived from the bit count of {} "    \
+        "[TOOLKIT][BIT-FIELD-MAP] The key {:#0{}b} exceeds sparse array size ({}) derived from the bit count of {} "   \
         "specified at compile time",                                                                                   \
         k, BitCount + 2, m_Sparse.GetSize(), BitCount)
 #define CHECK_INDEX_WITHIN_BOUNDS(idx)                                                                                 \
-    TKIT_ASSERT((idx) < GetSize(),                                                                                     \
-                "[TOOLKIT][BITFIELD-MAP] The key {:#0{}b} is contained in the map, but it is not stored in the dense " \
-                "array. This datastructure has been corrupted",                                                        \
-                k, BitCount + 2);
+    TKIT_ASSERT(                                                                                                       \
+        (idx) < GetSize(),                                                                                             \
+        "[TOOLKIT][BIT-FIELD-MAP] The key {:#0{}b} is contained in the map, but it is not stored in the dense "        \
+        "array. This datastructure has been corrupted",                                                                \
+        k, BitCount + 2);
 
 #define CHECK_KEY_EXISTS(k)                                                                                            \
     CHECK_KEY_WITHIN_BOUNDS(k);                                                                                        \
-    TKIT_ASSERT(m_Sparse[k] != Null, "[TOOLKIT][BITFIELD-MAP] The key {:#0{}b} is not contained in the map", k,        \
+    TKIT_ASSERT(m_Sparse[k] != Null, "[TOOLKIT][BIT-FIELD-MAP] The key {:#0{}b} is not contained in the map", k,       \
                 BitCount + 2);                                                                                         \
     CHECK_INDEX_WITHIN_BOUNDS(m_Sparse[k])
 
@@ -243,12 +244,12 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
         CHECK_KEY_WITHIN_BOUNDS(k);
         TKIT_ASSERT(
             !Contains(k),
-            "[TOOLKIT][BITFIELD-MAP] Insert() can only be used when entry to be inserted does not exist, but key "
+            "[TOOLKIT][BIT-FIELD-MAP] Insert() can only be used when entry to be inserted does not exist, but key "
             "{:#0{}b} is contained. Use TryInsert() in case the entry may be contained already",
             k, BitCount + 2);
 
         TKIT_ASSERT(m_Values.GetSize() + 1 < Null,
-                    "[TOOLKIT][BITFIELD-MAP] Maximum amount of elements representable with provided index type ({}) "
+                    "[TOOLKIT][BIT-FIELD-MAP] Maximum amount of elements representable with provided index type ({}) "
                     "reached. Use a bigger index type",
                     Null);
         m_Sparse[k] = m_Values.GetSize();
@@ -266,7 +267,7 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
         {
             TKIT_ASSERT(
                 m_Values.GetSize() + 1 < Null,
-                "[TOOLKIT][BITFIELD-MAP] Maximum amount of elements representable with provided index type ({}) "
+                "[TOOLKIT][BIT-FIELD-MAP] Maximum amount of elements representable with provided index type ({}) "
                 "reached. Use a bigger index type",
                 Null);
             if (didInsert)
@@ -331,7 +332,7 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
 
 #define QUERY_IMPL(type)                                                                                               \
     TKIT_ASSERT((partialKey & mask) == partialKey,                                                                     \
-                "[TOOLKIT][BITFIELD-MAP] The mask {:#0{}b} does not fully cover the "                                  \
+                "[TOOLKIT][BIT-FIELD-MAP] The mask {:#0{}b} does not fully cover the "                                 \
                 "breadth of bits that the partial key {:#0{}b} includes",                                              \
                 mask, BitCount + 2, partialKey, BitCount + 2);                                                         \
     if constexpr (std::is_invocable_v<F, type>)                                                                        \
@@ -375,20 +376,28 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
         for (const Key k : m_Keys)
             other.m_Sparse[k] = Null;
     }
-    constexpr Key canon(const Key k) const
+    constexpr Key canon(Key k) const
     {
         if constexpr (HasCanonicalize<FieldDesc>)
         {
             TKIT_ASSERT(FieldDesc::Canonicalize(FieldDesc::Canonicalize(k)) == FieldDesc::Canonicalize(k),
-                        "[TOOLKIT][BITFIELD-MAP] Canonicalize function is not idempotent for key {:#0{}b}, as "
+                        "[TOOLKIT][BIT-FIELD-MAP] Canonicalize function is not idempotent for key {:#0{}b}, as "
                         "Canonicalize(Canonicalize(k)) = {:#0{}b} != {:#0{}b} = Canonicalize(k)",
                         k, BitCount + 2, FieldDesc::Canonicalize(FieldDesc::Canonicalize(k)), BitCount + 2,
                         FieldDesc::Canonicalize(k), BitCount + 2);
 
-            return FieldDesc::Canonicalize(k);
+            k = FieldDesc::Canonicalize(k);
         }
-        else
-            return k;
+#ifdef TKIT_ENABLE_ENSURE
+        if constexpr (HasKeyValidityCheck<FieldDesc>)
+        {
+            TKIT_ENSURE(FieldDesc::IsValid(k),
+                        "[TOOLKIT][BIT-FIELD-MAP] The key {:#0{}b} has been flagged as invalid by the user defined "
+                        "function IsValid()",
+                        k, BitCount + 2);
+        }
+#endif
+        return k;
     }
     TKit::FixedArray<Index, usize(1) << BitCount> m_Sparse{};
     TKit::Array<Key, KeyAllocState> m_Keys{};
