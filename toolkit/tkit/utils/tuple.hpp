@@ -167,30 +167,30 @@ constexpr auto ConcatenateTuples(T0 &&tuple0, T1 &&tuple1, T &&...rest)
                              std::forward<T>(rest)...);
 }
 
-template <usize I, typename... T> auto &Get(Tuple<T...> &t)
+template <usize I, typename... T> constexpr auto &Get(Tuple<T...> &t)
 {
     return t.template Get<I>();
 }
 
-template <usize I, typename... T> const auto &Get(const Tuple<T...> &t)
+template <usize I, typename... T> constexpr const auto &Get(const Tuple<T...> &t)
 {
     return t.template Get<I>();
 }
 
-template <usize I, typename... T> auto &&Get(Tuple<T...> &&t)
+template <usize I, typename... T> constexpr auto &&Get(Tuple<T...> &&t)
 {
     return std::move(t).template Get<I>();
 }
 
-template <usize I, typename... T> auto &get(Tuple<T...> &t)
+template <usize I, typename... T> constexpr auto &get(Tuple<T...> &t)
 {
     return Get<I>(t);
 }
-template <usize I, typename... T> const auto &get(const Tuple<T...> &t)
+template <usize I, typename... T> constexpr const auto &get(const Tuple<T...> &t)
 {
     return Get<I>(t);
 }
-template <usize I, typename... T> auto &&get(Tuple<T...> &&t)
+template <usize I, typename... T> constexpr auto &&get(Tuple<T...> &&t)
 {
     return Get<I>(std::move(t));
 }
