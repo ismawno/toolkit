@@ -209,6 +209,10 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
     {
         return m_Keys;
     }
+    const TKit::Array<T, AllocState> &GetValues() const
+    {
+        return m_Values;
+    }
     Key GetKey(const usize idx) const
     {
         return m_Keys[idx];
