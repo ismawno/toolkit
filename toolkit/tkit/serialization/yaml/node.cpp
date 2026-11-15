@@ -97,6 +97,14 @@ ConstYamlNode::operator bool() const
     return get().readable();
 }
 
+bool ConstYamlNode::IsKeyNull() const
+{
+    return get().key_is_null();
+}
+bool ConstYamlNode::IsValueNull() const
+{
+    return get().val_is_null();
+}
 bool ConstYamlNode::IsMap() const
 {
     return get().is_map();
@@ -289,6 +297,14 @@ YamlNode::operator bool() const
     return get().readable();
 }
 
+bool YamlNode::IsKeyNull() const
+{
+    return get().key_is_null();
+}
+bool YamlNode::IsValueNull() const
+{
+    return get().val_is_null();
+}
 bool YamlNode::IsMap() const
 {
     return get().is_map();
