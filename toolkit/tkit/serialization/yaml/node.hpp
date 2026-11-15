@@ -185,6 +185,8 @@ class ConstYamlNode
     }
 
     explicit operator bool() const;
+    bool IsKeyNull() const;
+    bool IsValueNull() const;
     bool IsMap() const;
     bool IsSequence() const;
     bool IsContainer() const;
@@ -433,6 +435,8 @@ class YamlNode
 
     explicit operator bool() const;
 
+    bool IsKeyNull() const;
+    bool IsValueNull() const;
     bool IsMap() const;
     bool IsSequence() const;
     bool IsContainer() const;
