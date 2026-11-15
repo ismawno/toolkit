@@ -156,21 +156,31 @@ template <typename T, usize KeyCount, typename AllocState> class DenseMap
         return m_Values.end();
     }
 
-    const TKit::FixedArray<Index, KeyCount> &GetSparse() const
+    constexpr const TKit::FixedArray<Index, KeyCount> &GetSparse() const
     {
         return m_Sparse;
     }
-    const TKit::Array<Key, KeyAllocState> &GetKeys() const
+    constexpr const TKit::Array<Key, KeyAllocState> &GetKeys() const
     {
         return m_Keys;
     }
-    const TKit::Array<T, AllocState> &GetValues() const
+    constexpr const TKit::Array<T, AllocState> &GetValues() const
     {
         return m_Values;
     }
-    Key GetKey(const usize idx) const
+
+    constexpr Key GetKey(const usize idx) const
     {
         return m_Keys[idx];
+    }
+
+    constexpr const T &GetValue(const usize idx) const
+    {
+        return m_Values[idx];
+    }
+    constexpr T &GetValue(const usize idx)
+    {
+        return m_Values[idx];
     }
 
     constexpr usize GetSize() const

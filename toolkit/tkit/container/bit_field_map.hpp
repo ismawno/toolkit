@@ -172,17 +172,26 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
         return m_Map.end();
     }
 
-    const TKit::Array<Key, KeyAllocState> &GetKeys() const
+    constexpr const TKit::Array<Key, KeyAllocState> &GetKeys() const
     {
         return m_Map.GetKeys();
     }
-    const TKit::Array<T, AllocState> &GetValues() const
+    constexpr const TKit::Array<T, AllocState> &GetValues() const
     {
         return m_Map.GetValues();
     }
-    Key GetKey(const usize idx) const
+    constexpr Key GetKey(const usize idx) const
     {
         return m_Map.GetKey(idx);
+    }
+
+    constexpr const T &GetValue(const usize idx) const
+    {
+        return m_Map.GetValue(idx);
+    }
+    constexpr T &GetValue(const usize idx)
+    {
+        return m_Map.GetValue(idx);
     }
 
     constexpr usize GetSize() const
@@ -285,11 +294,11 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
             return true;                                                                                               \
     }
 
-    template <typename F> auto Query(const Key partialKey, const Key mask, F func) const
+    template <typename F> constexpr auto Query(const Key partialKey, const Key mask, F func) const
     {
         QUERY_IMPL(const T &)
     }
-    template <typename F> auto Query(const Key partialKey, const Key mask, F func)
+    template <typename F> constexpr auto Query(const Key partialKey, const Key mask, F func)
     {
         QUERY_IMPL(T &);
     }
@@ -302,7 +311,7 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
 #undef CHECK_KEY_EXISTS
 
   private:
-    constexpr Key canon(Key k) const
+    static constexpr Key canon(Key k)
     {
         if constexpr (HasCanonicalize<FieldDesc>)
         {
