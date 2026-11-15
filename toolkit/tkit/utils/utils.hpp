@@ -38,4 +38,10 @@ inline const char *GetEnvironmentVariable(const char *name)
     TKIT_COMPILER_WARNING_IGNORE_POP()
 }
 
+template <typename T, typename U> struct Pair
+{
+    T First;
+    U Second;
+};
+
 } // namespace TKit
