@@ -1,12 +1,6 @@
 #pragma once
 
-#include "tkit/container/arena_array.hpp"
-#include "tkit/container/dynamic_array.hpp"
-#include "tkit/container/stack_array.hpp"
-#include "tkit/container/static_array.hpp"
-#include "tkit/container/tier_array.hpp"
-#include "tkit/utils/bit.hpp"
-#include "tkit/math/math.hpp"
+#include "tkit/container/dense_map.hpp"
 
 namespace TKit
 {
@@ -60,82 +54,58 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
 
     using Key = BitFieldKey<BitCount>;
     using Index = BitFieldIndex<BitCount>;
-    using Pair = KeyValuePair<Key, T>;
     using KeyAllocState = AllocState::template Rebind<Key>;
 
     static constexpr ArrayType Type = AllocState::Type;
     static constexpr Index Null = TKit::Limits<Index>::Max();
 
-    constexpr BitFieldMap()
+    constexpr BitFieldMap() : m_Map()
     {
-        for (Index &i : m_Sparse)
-            i = Null;
     }
     constexpr BitFieldMap(const usize capacity)
         requires(Type != Array_Static)
-        : BitFieldMap()
+        : m_Map(capacity)
     {
-        m_Keys.Reserve(capacity);
-        m_Values.Reserve(capacity);
     }
 
     constexpr BitFieldMap(const BitFieldMap &) = default;
     constexpr BitFieldMap &operator=(const BitFieldMap &) = default;
 
-    constexpr BitFieldMap(BitFieldMap &&other)
-        : m_Sparse(other.m_Sparse), m_Keys(std::move(other.m_Keys)), m_Values(std::move(other.m_Values))
-    {
-        releaseFrom(other);
-    }
-    constexpr BitFieldMap &operator=(BitFieldMap &&other)
-    {
-        m_Sparse = other.m_Sparse;
-        m_Keys = std::move(other.m_Keys);
-        m_Values = std::move(other.m_Values);
-        releaseFrom(other);
-        return *this;
-    }
+    constexpr BitFieldMap(BitFieldMap &&) = default;
+    constexpr BitFieldMap &operator=(BitFieldMap &&) = default;
 
     template <typename OtherAlloc>
-    constexpr BitFieldMap(const BitFieldMap<T, FieldDesc, OtherAlloc> &other)
-        : m_Sparse(other.m_Sparse), m_Keys(other.m_Keys), m_Values(other.m_Values)
+    constexpr BitFieldMap(const BitFieldMap<T, FieldDesc, OtherAlloc> &other) : m_Map(other.m_Map)
     {
     }
     template <typename OtherAlloc>
-    constexpr BitFieldMap(BitFieldMap<T, FieldDesc, OtherAlloc> &&other)
-        : m_Sparse(other.m_Sparse), m_Keys(std::move(other.m_Keys)), m_Values(std::move(other.m_Values))
+    constexpr BitFieldMap(BitFieldMap<T, FieldDesc, OtherAlloc> &&other) : m_Map(std::move(other.m_Map))
     {
-        releaseFrom(other);
     }
 
     template <typename OtherAlloc> constexpr BitFieldMap &operator=(const BitFieldMap<T, FieldDesc, OtherAlloc> &other)
     {
-        m_Sparse = other.m_Sparse;
-        m_Keys = other.m_Keys;
-        m_Values = other.m_Values;
+        m_Map = other.m_Map;
         return *this;
     }
     template <typename OtherAlloc> constexpr BitFieldMap &operator=(BitFieldMap<T, FieldDesc, OtherAlloc> &&other)
     {
-        m_Sparse = other.m_Sparse;
-        m_Keys = std::move(other.m_Keys);
-        m_Values = std::move(other.m_Values);
-        releaseFrom(other);
+        m_Map = std::move(other.m_Map);
         return *this;
     }
 
     constexpr bool Contains(Key k) const
     {
         k = canon(k);
-        return k < m_Sparse.GetSize() && m_Sparse[k] != Null;
+        return m_Map.Contains(k);
     }
 
 #define CHECK_KEY_WITHIN_BOUNDS(k)                                                                                     \
     TKIT_ASSERT(                                                                                                       \
-        (k) < m_Sparse.GetSize(),                                                                                      \
+        (k) < m_Map.m_Sparse.GetSize(),                                                                                \
         "[TOOLKIT][BIT-FIELD-MAP] The key {:#0{}b} exceeds sparse array size ({}) derived from the bit count of {} "   \
         "specified at compile time",                                                                                   \
-        k, BitCount + 2, m_Sparse.GetSize(), BitCount)
+        k, BitCount + 2, m_Map.m_Sparse.GetSize(), BitCount)
 #define CHECK_INDEX_WITHIN_BOUNDS(idx)                                                                                 \
     TKIT_ASSERT(                                                                                                       \
         (idx) < GetSize(),                                                                                             \
@@ -145,21 +115,21 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
 
 #define CHECK_KEY_EXISTS(k)                                                                                            \
     CHECK_KEY_WITHIN_BOUNDS(k);                                                                                        \
-    TKIT_ASSERT(m_Sparse[k] != Null, "[TOOLKIT][BIT-FIELD-MAP] The key {:#0{}b} is not contained in the map", k,       \
-                BitCount + 2);                                                                                         \
-    CHECK_INDEX_WITHIN_BOUNDS(m_Sparse[k])
+    TKIT_ASSERT(m_Map.GetSparse()[k] != Null, "[TOOLKIT][BIT-FIELD-MAP] The key {:#0{}b} is not contained in the map", \
+                k, BitCount + 2);                                                                                      \
+    CHECK_INDEX_WITHIN_BOUNDS(m_Map.GetSparse()[k])
 
     constexpr const T &At(Key k) const
     {
         k = canon(k);
         CHECK_KEY_EXISTS(k);
-        return m_Values[m_Sparse[k]];
+        return m_Map[k];
     }
     constexpr T &At(Key k)
     {
         k = canon(k);
         CHECK_KEY_EXISTS(k);
-        return m_Values[m_Sparse[k]];
+        return m_Map[k];
     }
     constexpr const T &operator[](const Key k) const
     {
@@ -172,72 +142,69 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
 
     constexpr void Clear()
     {
-        for (Key &k : m_Keys)
-            m_Sparse[k] = Null;
-        m_Keys.Clear();
-        m_Values.Clear();
+        m_Map.Clear();
     }
 
     constexpr const T *GetData() const
     {
-        return m_Values.GetData();
+        return m_Map.GetData();
     }
     constexpr T *GetData()
     {
-        return m_Values.GetData();
+        return m_Map.GetData();
     }
 
     constexpr const T *begin() const
     {
-        return m_Values.begin();
+        return m_Map.begin();
     }
     constexpr const T *end() const
     {
-        return m_Values.end();
+        return m_Map.end();
     }
 
     constexpr T *begin()
     {
-        return m_Values.begin();
+        return m_Map.begin();
     }
     constexpr T *end()
     {
-        return m_Values.end();
+        return m_Map.end();
     }
 
     const TKit::Array<Key, KeyAllocState> &GetKeys() const
     {
-        return m_Keys;
+        return m_Map.GetKeys();
     }
     const TKit::Array<T, AllocState> &GetValues() const
     {
-        return m_Values;
+        return m_Map.GetValues();
     }
     Key GetKey(const usize idx) const
     {
-        return m_Keys[idx];
+        return m_Map.GetKey(idx);
     }
 
     constexpr usize GetSize() const
     {
-        return m_Values.GetSize();
+        return m_Map.GetSize();
     }
     constexpr usize GetCapacity() const
     {
-        return m_Values.GetCapacity();
+        return m_Map.GetCapacity();
     }
     constexpr usz GetBytes() const
     {
-        return m_Values.GetBytes();
+        return m_Map.GetBytes();
     }
 
     constexpr bool IsEmpty() const
     {
-        return m_Values.IsEmpty();
+        return m_Map.IsEmpty();
     }
     constexpr bool IsFull() const
     {
-        return m_Values.IsFull();
+        return m_Map.IsFull();
     }
 
     template <typename... Args>
@@ -252,13 +219,7 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
             "{:#0{}b} is contained. Use TryInsert() in case the entry may be contained already",
             k, BitCount + 2);
 
-        TKIT_ASSERT(m_Values.GetSize() + 1 < Null,
-                    "[TOOLKIT][BIT-FIELD-MAP] Maximum amount of elements representable with provided index type ({}) "
-                    "reached. Use a bigger index type",
-                    Null);
-        m_Sparse[k] = m_Values.GetSize();
-        m_Keys.Append(k);
-        return m_Values.Append(std::forward<Args>(args)...);
+        return m_Map.Insert(k, std::forward<Args>(args)...);
     }
     template <typename... Args>
         requires std::constructible_from<T, Args...>
@@ -266,23 +227,7 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
     {
         k = canon(k);
         CHECK_KEY_WITHIN_BOUNDS(k);
-        Index &idx = m_Sparse[k];
-        if (idx == Null)
-        {
-            TKIT_ASSERT(
-                m_Values.GetSize() + 1 < Null,
-                "[TOOLKIT][BIT-FIELD-MAP] Maximum amount of elements representable with provided index type ({}) "
-                "reached. Use a bigger index type",
-                Null);
-            if (didInsert)
-                *didInsert = true;
-            idx = m_Values.GetSize();
-            m_Keys.Append(k);
-            return m_Values.Append(std::forward<Args>(args)...);
-        }
-        if (didInsert)
-            *didInsert = false;
-        return m_Values[idx];
+        return m_Map.TryInsert(didInsert, k, std::forward<Args>(args)...);
     }
     template <typename... Args>
         requires std::constructible_from<T, Args...>
@@ -295,21 +240,7 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
     {
         k = canon(k);
         CHECK_KEY_EXISTS(k);
-        Index &idx = m_Sparse[k];
-        const usize backIdx = m_Values.GetSize() - 1;
-
-        if (idx == backIdx)
-        {
-            m_Keys.Pop();
-            m_Values.Pop();
-        }
-        else
-        {
-            m_Sparse[m_Keys[backIdx]] = idx;
-            m_Values.RemoveUnordered(m_Values.begin() + idx);
-            m_Keys.RemoveUnordered(m_Keys.begin() + idx);
-        }
-        idx = Null;
+        m_Map.Remove(k);
     }
     constexpr bool TryRemove(const Key k)
     {
@@ -323,7 +254,7 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
 
 #define EMIT_LOOP(...)                                                                                                 \
     for (usize i = 0; i < GetSize(); ++i)                                                                              \
-        if ((m_Keys[i] & mask) == partialKey)                                                                          \
+        if ((m_Map.m_Keys[i] & mask) == partialKey)                                                                    \
         {                                                                                                              \
             if constexpr (hasRet)                                                                                      \
             {                                                                                                          \
@@ -342,14 +273,14 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
     if constexpr (std::is_invocable_v<F, type>)                                                                        \
     {                                                                                                                  \
         constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, type>, bool>;                                   \
-        EMIT_LOOP(m_Values[i]);                                                                                        \
+        EMIT_LOOP(m_Map.m_Values[i]);                                                                                  \
         if constexpr (hasRet)                                                                                          \
             return true;                                                                                               \
     }                                                                                                                  \
     else                                                                                                               \
     {                                                                                                                  \
         constexpr bool hasRet = std::is_same_v<std::invoke_result_t<F, Key, type>, bool>;                              \
-        EMIT_LOOP(m_Keys[i], m_Values[i]);                                                                             \
+        EMIT_LOOP(m_Map.m_Keys[i], m_Map.m_Values[i]);                                                                 \
         if constexpr (hasRet)                                                                                          \
             return true;                                                                                               \
     }
@@ -371,15 +302,6 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
 #undef CHECK_KEY_EXISTS
 
   private:
-    // The source's dense array is empty only if its storage was actually stolen. Static storage element-moves and keeps
-    // its size (and keys), so the source stays consistent and its sparse array must be left alone
-    template <typename Other> constexpr void releaseFrom(Other &other)
-    {
-        if (!other.m_Keys.IsEmpty())
-            return;
-        for (const Key k : m_Keys)
-            other.m_Sparse[k] = Null;
-    }
     constexpr Key canon(Key k) const
     {
         if constexpr (HasCanonicalize<FieldDesc>)
@@ -403,9 +325,7 @@ template <typename T, typename FieldDesc, typename AllocState> class BitFieldMap
 #endif
         return k;
     }
-    TKit::FixedArray<Index, usize(1) << BitCount> m_Sparse{};
-    TKit::Array<Key, KeyAllocState> m_Keys{};
-    TKit::Array<T, AllocState> m_Values{};
+    TKit::DenseMap<T, usize(1) << BitCount, AllocState> m_Map;
 
     template <typename U, typename OtherFieldDesc, typename OtherAllocState> friend class BitFieldMap;
 };
