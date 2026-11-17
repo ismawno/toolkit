@@ -292,47 +292,6 @@ class DirectoryStream
   private:
     void *m_Handle = nullptr;
 };
-
-template <typename AllocState> struct StaticCapacity;
-template <usize Capacity> struct StaticCapacity<StaticAllocation<char, Capacity>>
-{
-    static constexpr usize Value = Capacity;
-};
-
-// Converts a result coming from the OS layer into a path of the requested allocation type, sharing the allocator of
-// `like` if it is provided.
-template <typename AllocState>
-TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> ConvertPath(FileSystemResult<FileSystemPath> &&result,
-                                                               [[maybe_unused]] const Path<AllocState> *like = nullptr)
-{
-    using PathType = Path<AllocState>;
-    if (!result)
-        return FileSystemResult<PathType>::Error(result.GetError());
-
-    if constexpr (std::is_same_v<PathType, FileSystemPath>)
-        return std::move(result);
-    else
-    {
-        const StringView view = result->GetView();
-        if constexpr (PathType::Type == Array_Static)
-        {
-            if (view.GetSize() >= StaticCapacity<AllocState>::Value)
-                return FileSystemResult<PathType>::Error(FileSystemError_NameTooLong);
-            return FileSystemResult<PathType>::Ok(view);
-        }
-        else if constexpr (PathType::Type == Array_Dynamic)
-            return FileSystemResult<PathType>::Ok(view);
-        else
-        {
-            // A null allocator makes the string grab the currently pushed one when it allocates
-            typename PathType::StringType str{};
-            str.ResetAllocator(like ? like->GetString().GetAllocator() : nullptr);
-            str.Resize(view.GetSize());
-            std::char_traits<char>::copy(str.GetData(), view.GetData(), view.GetSize());
-            return FileSystemResult<PathType>::Ok(std::move(str));
-        }
-    }
-}
 } // namespace TKit::Detail
 
 namespace TKit
@@ -569,82 +528,78 @@ template <PathLike P> TKIT_NO_DISCARD FileSystemResult<SpaceInfo> GetSpace(const
 
 // === Paths ===
 
-template <typename PathType = FileSystemPath> TKIT_NO_DISCARD FileSystemResult<PathType> GetCurrentPath()
+TKIT_NO_DISCARD inline FileSystemResult<FileSystemPath> GetCurrentPath()
 {
-    return Detail::ConvertPath<typename PathType::AllocStateType>(Detail::GetCurrentPath());
+    return Detail::GetCurrentPath();
 }
 template <PathLike P> TKIT_NO_DISCARD FileSystemResult<> SetCurrentPath(const P &path)
 {
     return Detail::SetCurrentPath(Detail::ToCString(path));
 }
 
-template <typename PathType = FileSystemPath> TKIT_NO_DISCARD FileSystemResult<PathType> GetTempDirectoryPath()
+TKIT_NO_DISCARD inline FileSystemResult<FileSystemPath> GetTempDirectoryPath()
 {
-    return Detail::ConvertPath<typename PathType::AllocStateType>(Detail::GetTempDirectoryPath());
+    return Detail::GetTempDirectoryPath();
 }
 
-template <typename AllocState>
-TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> ReadSymlink(const Path<AllocState> &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<FileSystemPath> ReadSymlink(const P &path)
 {
-    return Detail::ConvertPath(Detail::ReadSymlink(path.CString()), &path);
+    return Detail::ReadSymlink(Detail::ToCString(path));
 }
 
 /**
  * @brief Make a path absolute by prepending the current path (if needed). The file does not need to exist.
  */
-template <typename AllocState> TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> Absolute(const Path<AllocState> &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<FileSystemPath> Absolute(const P &path)
 {
-    return Detail::ConvertPath(Detail::Absolute(path.CString()), &path);
+    return Detail::Absolute(Detail::ToCString(path));
 }
 
 /**
  * @brief Get the absolute path with no symlinks, "." or ".." elements. The file must exist.
  */
-template <typename AllocState>
-TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> Canonical(const Path<AllocState> &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<FileSystemPath> Canonical(const P &path)
 {
-    return Detail::ConvertPath(Detail::Canonical(path.CString()), &path);
+    return Detail::Canonical(Detail::ToCString(path));
 }
 
 /**
  * @brief Same as `Canonical()`, but the trailing elements that do not exist are lexically normalized and appended
  * instead.
  */
-template <typename AllocState>
-TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> WeaklyCanonical(const Path<AllocState> &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<FileSystemPath> WeaklyCanonical(const P &path)
 {
-    return Detail::ConvertPath(Detail::WeaklyCanonical(path.CString()), &path);
+    return Detail::WeaklyCanonical(Detail::ToCString(path));
 }
 
 /**
  * @brief Get `path` relative to `base`, after resolving both with `WeaklyCanonical()`. The result is empty if no
  * relative path exists.
  */
-template <typename AllocState, PathLike P>
-TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> Relative(const Path<AllocState> &path, const P &base)
+template <PathLike P1, PathLike P2>
+TKIT_NO_DISCARD FileSystemResult<FileSystemPath> Relative(const P1 &path, const P2 &base)
 {
-    return Detail::ConvertPath(Detail::Relative(path.CString(), Detail::ToCString(base)), &path);
+    return Detail::Relative(Detail::ToCString(path), Detail::ToCString(base));
 }
 /**
  * @brief Get `path` relative to the current path.
  */
-template <typename AllocState> TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> Relative(const Path<AllocState> &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<FileSystemPath> Relative(const P &path)
 {
-    return Detail::ConvertPath(Detail::Relative(path.CString(), "."), &path);
+    return Detail::Relative(Detail::ToCString(path), ".");
 }
 
 /**
  * @brief Same as `Relative()`, but returns `WeaklyCanonical(path)` if no relative path exists.
  */
-template <typename AllocState, PathLike P>
-TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> Proximate(const Path<AllocState> &path, const P &base)
+template <PathLike P1, PathLike P2>
+TKIT_NO_DISCARD FileSystemResult<FileSystemPath> Proximate(const P1 &path, const P2 &base)
 {
-    return Detail::ConvertPath(Detail::Proximate(path.CString(), Detail::ToCString(base)), &path);
+    return Detail::Proximate(Detail::ToCString(path), Detail::ToCString(base));
 }
-template <typename AllocState>
-TKIT_NO_DISCARD FileSystemResult<Path<AllocState>> Proximate(const Path<AllocState> &path)
+template <PathLike P> TKIT_NO_DISCARD FileSystemResult<FileSystemPath> Proximate(const P &path)
 {
-    return Detail::ConvertPath(Detail::Proximate(path.CString(), "."), &path);
+    return Detail::Proximate(Detail::ToCString(path), ".");
 }
 
 // === Directory iteration ===

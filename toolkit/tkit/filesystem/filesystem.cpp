@@ -177,17 +177,22 @@ static WideString widen(const char *str)
 }
 
 // UTF-16 -> UTF-8
-static FileSystemPath narrow(const wchar_t *str, const usize length)
+static FileSystemString narrow(const wchar_t *str, const usize length)
 {
     FileSystemString narrow{};
     if (length == 0)
-        return FileSystemPath{std::move(narrow)};
+        return narrow;
     const int size = WideCharToMultiByte(CP_UTF8, 0, str, int(length), nullptr, 0, nullptr, nullptr);
     if (size <= 0)
-        return FileSystemPath{std::move(narrow)};
+        return narrow;
     narrow.Resize(usize(size));
     WideCharToMultiByte(CP_UTF8, 0, str, int(length), narrow.GetData(), size, nullptr, nullptr);
-    return FileSystemPath{std::move(narrow)};
+    return narrow;
+}
+// UTF-16 -> UTF-8 path
+static FileSystemResult<FileSystemPath> narrowPath(const wchar_t *str, const usize length)
+{
+    return ok(FileSystemPath{narrow(str, length)});
 }
 
 #    define TKIT_WIDEN(name, path)                                                                                     \
@@ -499,7 +504,7 @@ FileSystemResult<FileSystemPath> ReadSymlink(const char *path)
 
     // offsets and lengths are in bytes
     if (printLength != 0)
-        return ok(narrow(names + printOffset / sizeof(WCHAR), printLength / sizeof(WCHAR)));
+        return narrowPath(names + printOffset / sizeof(WCHAR), printLength / sizeof(WCHAR));
 
     const WCHAR *name = names + subOffset / sizeof(WCHAR);
     usize length = subLength / sizeof(WCHAR);
@@ -509,7 +514,7 @@ FileSystemResult<FileSystemPath> ReadSymlink(const char *path)
         name += 4;
         length -= 4;
     }
-    return ok(narrow(name, length));
+    return narrowPath(name, length);
 }
 
 TKIT_NO_DISCARD static FileSystemResult<> copyContents(const char *from, const char *to)
@@ -593,7 +598,7 @@ FileSystemResult<FileSystemPath> GetCurrentPath()
     const DWORD length = GetCurrentDirectoryW(size, buffer.GetData());
     if (length == 0 || length >= size)
         return lastError<FileSystemPath>();
-    return ok(narrow(buffer.GetData(), usize(length)));
+    return narrowPath(buffer.GetData(), usize(length));
 }
 
 FileSystemResult<> SetCurrentPath(const char *path)
@@ -622,7 +627,7 @@ FileSystemResult<FileSystemPath> GetTempDirectoryPath()
     // GetTempPathW returns a trailing separator
     if (length > 1 && (buffer[length - 1] == L'\\' || buffer[length - 1] == L'/') && buffer[length - 2] != L':')
         --length;
-    return ok(narrow(buffer.GetData(), usize(length)));
+    return narrowPath(buffer.GetData(), usize(length));
 }
 
 FileSystemResult<FileSystemPath> Absolute(const char *path)
@@ -640,7 +645,7 @@ FileSystemResult<FileSystemPath> Absolute(const char *path)
     const DWORD length = GetFullPathNameW(wpath.GetData(), size, buffer.GetData(), nullptr);
     if (length == 0 || length >= size)
         return lastError<FileSystemPath>();
-    return ok(narrow(buffer.GetData(), usize(length)));
+    return narrowPath(buffer.GetData(), usize(length));
 }
 
 FileSystemResult<FileSystemPath> Canonical(const char *path)
@@ -681,7 +686,7 @@ FileSystemResult<FileSystemPath> Canonical(const char *path)
         name += 4;
         nlength -= 4;
     }
-    return ok(narrow(name, nlength));
+    return narrowPath(name, nlength);
 }
 
 struct StreamHandle
@@ -755,8 +760,7 @@ FileSystemResult<bool> DirectoryStream::Next()
         if (name[0] == L'.' && (name[1] == L'\0' || (name[1] == L'.' && name[2] == L'\0')))
             continue;
 
-        FileSystemPath narrowed = narrow(name, usize(wcslen(name)));
-        handle->Name = narrowed.GetString();
+        handle->Name = narrow(name, usize(wcslen(name)));
 
         const DWORD attributes = handle->Data.dwFileAttributes;
         if ((attributes & FILE_ATTRIBUTE_REPARSE_POINT) && isSymlinkTag(handle->Data.dwReserved0))
