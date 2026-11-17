@@ -403,17 +403,14 @@ TEST_CASE("Directory iteration (tier)", "[filesystem]")
     testDirectoryIteration<TierAllocation<char>>();
 }
 
-TEST_CASE("Path returning functions keep the allocation type", "[filesystem]")
+TEST_CASE("Path returning functions accept any path type", "[filesystem]")
 {
     PushTier(&s_Tier);
     const FileSystem_TempDirectory tmp{};
 
-    const auto current = GetCurrentPath<StaticPath1024>();
+    const auto current = GetCurrentPath();
     REQUIRE(current);
     REQUIRE(current->GetString() == fs::current_path().string());
-
-    const auto tooSmall = GetCurrentPath<StaticPath<1>>();
-    REQUIRE(tooSmall.GetError() == FileSystemError_NameTooLong);
 
     StackAllocator stack{4_kib};
     PushStack(&stack);
@@ -421,15 +418,15 @@ TEST_CASE("Path returning functions keep the allocation type", "[filesystem]")
         const StackPath path{tmp.Root.GetView()};
         const auto canonical = Canonical(path);
         REQUIRE(canonical);
-        REQUIRE(canonical->GetString().GetAllocator() == &stack);
         REQUIRE(canonical.GetValue() == Canonical(tmp.Root).GetValue());
     }
     PopStack();
     REQUIRE(stack.IsEmpty());
-    const TierPath tpath{"some/relative"};
-    const auto absolute = Absolute(tpath);
+
+    const StaticPath64 spath{"some/relative"};
+    const auto absolute = Absolute(spath);
     REQUIRE(absolute);
-    REQUIRE(absolute->GetString().GetAllocator() == &s_Tier);
     REQUIRE(absolute->IsAbsolute());
+    REQUIRE(Absolute("some/relative").GetValue() == absolute.GetValue());
     PopTier();
 }
