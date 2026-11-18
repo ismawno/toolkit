@@ -267,7 +267,7 @@ def generate_serialization_code(hpp: CPPGenerator, classes: ClassCollection) -> 
                                     )
 
                         if in_options("skip-if-missing", options):
-                            with hpp.scope(f'if (node.HasChild("{field.name}"))', delimiters=False):
+                            with hpp.scope(f'if (node.HasChild("{field.name}"))'):
                                 hpp(f"{vtype} val;")
                                 hpp(f'const YamlReadResult res = node["{field.name}"].TryRead(val);')
 
